@@ -60,7 +60,7 @@ final class ContentService
 
         Transaction::run($this->database, function () use (
             $actorUserId, $workspaceId, $typeKey, $typeId, $title, $description, $formatKey, $accessLevel,
-            $targetScopeId, $academic, $json, $checksum, $resourceId, $versionId, $scopeId,
+            $targetScopeId, $academic, $metadata, $json, $checksum, $resourceId, $versionId, $scopeId,
             $visibility, $sourceKind,
         ): void {
             $this->execute(<<<'SQL'
