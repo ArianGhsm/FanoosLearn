@@ -1,0 +1,4 @@
+---
+deployment:
+  tasks:
+    - FANOOS_DEPLOY_ROOT="$HOME/fanoos" FANOOS_PUBLIC_LINK="$HOME/public_html/fanoos" FANOOS_DEPLOY_CONFIRMED="1" /bin/bash scripts/ops/cpanel-deploy.sh "$(git rev-parse HEAD)"

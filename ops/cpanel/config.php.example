@@ -1,0 +1,18 @@
+<?php
+
+declare(strict_types=1);
+
+// Store the populated file outside the repository as ~/fanoos/shared/config.php.
+return [
+    'FANOOS_ENV' => 'production',
+    'FANOOS_DB_DSN' => 'mysql:host=localhost;port=3306;dbname=ACCOUNT_fanoos;charset=utf8mb4',
+    'FANOOS_DB_USER' => 'ACCOUNT_fanoos',
+    'FANOOS_DB_PASSWORD' => 'replace-me',
+    'FANOOS_STORAGE_ROOT' => '/home/ACCOUNT/fanoos/shared/objects',
+    'FANOOS_DOWNLOAD_SIGNING_KEY' => 'replace-with-at-least-32-random-bytes',
+    'FANOOS_UPLOAD_MAX_BYTES' => 52428800,
+    'FANOOS_MYSQL_DEFAULTS_FILE' => '/home/ACCOUNT/fanoos/shared/mysql-client.cnf',
+    'FANOOS_MYSQLDUMP_BIN' => 'mysqldump',
+    'FANOOS_MYSQL_BIN' => 'mysql',
+    'FANOOS_BACKUP_ROOT' => '/home/ACCOUNT/fanoos/shared/backups',
+];

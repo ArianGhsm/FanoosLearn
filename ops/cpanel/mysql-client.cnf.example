@@ -1,0 +1,5 @@
+[client]
+user=ACCOUNT_fanoos
+password=replace-me
+host=localhost
+protocol=tcp

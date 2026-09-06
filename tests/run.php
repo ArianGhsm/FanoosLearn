@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 use Fanoos\Platform\Support\DatabaseConnection;
 use Fanoos\Tests\Integration\TenantIsolationTest;
+use Fanoos\Tests\Operations\BackupContractTest;
 use Fanoos\Tests\Schema\SchemaContractTest;
+use Fanoos\Tests\Storage\StorageSecurityTest;
 
 $root = dirname(__DIR__);
 require $root . '/apps/platform/bootstrap.php';
@@ -23,6 +25,10 @@ spl_autoload_register(static function (string $class) use ($root): void {
 try {
     $assertions = (new SchemaContractTest($root))->run();
     echo "PASS schema contracts\n";
+    $assertions += (new StorageSecurityTest())->run();
+    echo "PASS storage security contracts\n";
+    $assertions += (new BackupContractTest())->run();
+    echo "PASS backup integrity contracts\n";
 
     $mode = getenv('FANOOS_TEST_MODE') ?: 'all';
     if ($mode !== 'static') {
@@ -42,7 +48,7 @@ try {
             $root,
             $hmacKey,
         ))->run();
-        echo "PASS MariaDB tenant isolation and rerun scenarios\n";
+        echo "PASS database tenant isolation and rerun scenarios\n";
     }
 
     echo "PASS {$assertions} assertions\n";
