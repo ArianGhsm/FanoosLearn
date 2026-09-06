@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Fanoos\Platform\Support\DatabaseConnection;
 use Fanoos\Tests\Integration\TenantIsolationTest;
+use Fanoos\Tests\Integration\CorePlatformTest;
 use Fanoos\Tests\Operations\BackupContractTest;
 use Fanoos\Tests\Schema\SchemaContractTest;
 use Fanoos\Tests\Storage\StorageSecurityTest;
@@ -49,6 +50,8 @@ try {
             $hmacKey,
         ))->run();
         echo "PASS database tenant isolation and rerun scenarios\n";
+        $assertions += (new CorePlatformTest(DatabaseConnection::fromEnvironment()))->run();
+        echo "PASS core platform adaptation scenarios\n";
     }
 
     echo "PASS {$assertions} assertions\n";

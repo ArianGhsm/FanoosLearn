@@ -129,3 +129,18 @@ Indexes follow the expected authorization and operational access paths:
 - source-system/entity/digest and target type/ID for import reconciliation.
 
 Query plans and index cardinality must be checked with production-shaped synthetic data before cutover. Prompt 4 must confirm the actual MariaDB/MySQL version supports the CHECK, JSON, recursive CTE, and advisory-lock behavior used here.
+
+## Prompt 5 implementation extension
+
+Migration `0006_core_platform.sql` turns the Prompt 3 foundations into the core application boundary without changing their ownership model:
+
+- sessions gain a selected workspace, CSRF digest and non-authoritative client metadata;
+- login attempts provide digest-keyed throttling without retaining raw network or identifier values;
+- forms use definition/version/submission records, and search uses a disposable workspace-keyed projection;
+- products point to an entitlement target scope; orders and payment attempts gain callback/idempotency/failure evidence;
+- entitlement grants gain an idempotent grant key and optimistic version;
+- content access policies compose RBAC, entitlement and bounded download TTL;
+- reconciliation and grade-import batches preserve operator/idempotency evidence;
+- notification preferences remain separate from message/recipient authority.
+
+All new tenant-owned records carry `workspace_id` and use composite foreign keys where a cross-workspace reference is otherwise possible. Payment callback tokens, provider authorities, sessions, CSRF values and login keys are persisted only as digests.

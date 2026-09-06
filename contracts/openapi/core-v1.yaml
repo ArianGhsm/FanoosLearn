@@ -1,0 +1,196 @@
+openapi: 3.1.0
+info:
+  title: Fanoos Core API
+  version: 1.0.0
+  description: Tenant-scoped contract shared by the web client, bots and future applications.
+servers:
+  - url: /api/v1
+security:
+  - bearerSession: []
+paths:
+  /auth/login:
+    post:
+      security: []
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [identifier, password]
+              properties:
+                identifier: { type: string, minLength: 1, maxLength: 320 }
+                password: { type: string, minLength: 1, maxLength: 4096 }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '401': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+  /auth/logout:
+    post:
+      operationId: logout
+      parameters: [{ $ref: '#/components/parameters/Csrf' }]
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+  /account:
+    get:
+      operationId: getCanonicalAccount
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+  /workspaces:
+    get:
+      operationId: listMembershipWorkspaces
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+  /workspaces/select:
+    post:
+      operationId: selectWorkspace
+      parameters: [{ $ref: '#/components/parameters/Csrf' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workspace_id]
+              properties: { workspace_id: { $ref: '#/components/schemas/Uuid' } }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '403': { $ref: '#/components/responses/Error' }
+  /workspaces/{workspaceId}/academics:
+    get:
+      operationId: getAcademicNavigation
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/schedule:
+    get:
+      operationId: listSchedule
+      parameters:
+        - { $ref: '#/components/parameters/WorkspaceId' }
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/grades/me:
+    get:
+      operationId: listMyPublishedGrades
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/announcements:
+    get:
+      operationId: listAnnouncements
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+    post:
+      operationId: publishAnnouncement
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, body]
+              properties: { title: { type: string, maxLength: 200 }, body: { type: string } }
+      responses: { '201': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/forms:
+    get:
+      operationId: listOpenForms
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+    post:
+      operationId: createForm
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
+      responses: { '201': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/forms/{formId}/submissions:
+    post:
+      operationId: submitForm
+      parameters:
+        - { $ref: '#/components/parameters/WorkspaceId' }
+        - { name: formId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+        - { $ref: '#/components/parameters/Csrf' }
+      responses: { '201': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/search:
+    get:
+      operationId: searchWorkspace
+      parameters:
+        - { $ref: '#/components/parameters/WorkspaceId' }
+        - { name: q, in: query, required: true, schema: { type: string, minLength: 2, maxLength: 120 } }
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+  /workspaces/{workspaceId}/orders:
+    get:
+      operationId: listMyOrders
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+    post:
+      operationId: createOrder
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
+      responses: { '201': { $ref: '#/components/responses/Success' }, '503': { $ref: '#/components/responses/Error' } }
+  /payments/callback:
+    post:
+      security: []
+      operationId: verifyPaymentCallback
+      description: Public provider edge; callback token and authority are matched by digests and verification is idempotent.
+      responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/entitlements/check:
+    get:
+      operationId: checkEntitlement
+      parameters:
+        - { $ref: '#/components/parameters/WorkspaceId' }
+        - { name: scope_id, in: query, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+  /workspaces/{workspaceId}/resources/{resourceId}/authorize:
+    get:
+      operationId: authorizeProtectedResource
+      parameters:
+        - { $ref: '#/components/parameters/WorkspaceId' }
+        - { name: resourceId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+  /workspaces/{workspaceId}/admin/members:
+    get:
+      operationId: listScopedMembers
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/admin/dashboard:
+    get:
+      operationId: getScopedAdminDashboard
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+  /admin/dashboard:
+    get:
+      operationId: getGlobalAdminDashboard
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+components:
+  securitySchemes:
+    bearerSession: { type: http, scheme: bearer }
+  schemas:
+    Uuid: { type: string, format: uuid }
+    Envelope:
+      type: object
+      required: [ok, data, meta]
+      properties:
+        ok: { const: true }
+        data: {}
+        meta:
+          type: object
+          required: [api_version, request_id]
+          properties: { api_version: { const: v1 }, request_id: { type: string } }
+    ErrorEnvelope:
+      type: object
+      required: [ok, error, meta]
+      properties:
+        ok: { const: false }
+        error:
+          type: object
+          required: [code, message]
+          properties: { code: { type: string }, message: { type: string } }
+        meta: { type: object }
+  parameters:
+    WorkspaceId: { name: workspaceId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+    Csrf: { name: X-CSRF-Token, in: header, required: true, schema: { type: string } }
+  responses:
+    Success:
+      description: Successful response
+      content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } }
+    Error:
+      description: Error response
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } }

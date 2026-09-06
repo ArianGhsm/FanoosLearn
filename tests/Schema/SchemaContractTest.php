@@ -18,7 +18,7 @@ final class SchemaContractTest
     {
         $migrationPaths = glob($this->root . '/database/migrations/*.sql') ?: [];
         sort($migrationPaths, SORT_STRING);
-        self::assert(count($migrationPaths) === 5, 'Expected exactly five Prompt 3 migrations.');
+        self::assert(count($migrationPaths) === 6, 'Expected exactly six versioned platform migrations through Prompt 5.');
 
         $sql = '';
         foreach ($migrationPaths as $path) {
@@ -43,6 +43,9 @@ final class SchemaContractTest
             'commerce_orders', 'commerce_payment_attempts', 'entitlement_grants',
             'notification_messages', 'exam_assessments', 'grade_gradebooks',
             'schedule_events', 'audit_events', 'migration_legacy_id_mappings',
+            'iam_login_attempts', 'notification_preferences', 'form_definitions',
+            'form_versions', 'form_submissions', 'search_documents',
+            'commerce_reconciliation_runs', 'content_access_policies', 'grade_import_batches',
         ];
         foreach ($requiredTables as $table) {
             self::assert(in_array($table, $tables, true), "Required table is missing: {$table}");
@@ -57,6 +60,9 @@ final class SchemaContractTest
             'content_resources', 'content_resource_versions', 'content_resource_bindings',
             'commerce_products', 'commerce_orders', 'exam_assessments', 'grade_gradebooks',
             'grade_results', 'schedule_events',
+            'notification_preferences', 'form_definitions', 'form_versions',
+            'form_submissions', 'search_documents', 'commerce_reconciliation_runs',
+            'content_access_policies', 'grade_import_batches',
         ];
         foreach ($tenantTables as $table) {
             $pattern = '/CREATE TABLE IF NOT EXISTS\s+' . preg_quote($table, '/') . '\s*\((.*?)\) ENGINE=InnoDB/is';
@@ -68,11 +74,16 @@ final class SchemaContractTest
             self::assert(is_file($this->root . '/docs/fanoos-migration/' . $document), "Required document is missing: {$document}");
         }
 
+        foreach (['index.php', 'api.php', 'assets/app.css', 'assets/app.js'] as $asset) {
+            self::assert(is_file($this->root . '/apps/platform/public/' . $asset), "Prompt 5 UI/API asset is missing: {$asset}");
+        }
+        self::assert(is_file($this->root . '/contracts/openapi/core-v1.yaml'), 'Shared API contract is missing.');
+
         $split = SqlStatementSplitter::split("SELECT ';' AS value; -- comment\nSELECT 2;");
         self::assert(count($split) === 2, 'SQL statement splitter does not preserve quoted semicolons.');
         self::assert((bool) preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', Uuid::v7()), 'UUIDv7 format is invalid.');
 
-        return 1 + count($requiredTables) + count($tenantTables) + 7;
+        return 1 + count($requiredTables) + count($tenantTables) + 12;
     }
 
     private static function assert(bool $condition, string $message): void
