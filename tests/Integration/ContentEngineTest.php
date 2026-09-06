@@ -202,8 +202,8 @@ final class ContentEngineTest
             $workspace = $this->database->prepare('SELECT id FROM tenant_workspaces WHERE name = :name ORDER BY created_at DESC LIMIT 1');
             $workspace->execute(['name' => 'Fixture Workspace ' . $name]);
             $result['workspace_' . $side] = (string) $workspace->fetchColumn();
-            $scope = $this->database->prepare("SELECT id FROM rbac_scopes WHERE scope_type = 'workspace' AND workspace_id = :workspace AND entity_id = :workspace");
-            $scope->execute(['workspace' => $result['workspace_' . $side]]);
+            $scope = $this->database->prepare("SELECT id FROM rbac_scopes WHERE scope_type = 'workspace' AND workspace_id = :workspace AND entity_id = :entity_workspace");
+            $scope->execute(['workspace' => $result['workspace_' . $side], 'entity_workspace' => $result['workspace_' . $side]]);
             $result['scope_' . $side] = (string) $scope->fetchColumn();
             $term = $this->database->prepare('SELECT id FROM academic_terms WHERE workspace_id = :workspace ORDER BY created_at DESC LIMIT 1');
             $term->execute(['workspace' => $result['workspace_' . $side]]);

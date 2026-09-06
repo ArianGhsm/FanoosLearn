@@ -374,8 +374,10 @@ SQL, [
             if (mb_strlen($query) < 2 || mb_strlen($query) > 120) {
                 throw new PlatformException('search_query_invalid', 'Search query length is invalid.', 422);
             }
-            $where[] = '(resource.title LIKE :query OR resource.description LIKE :query OR metadata.topic LIKE :query)';
-            $parameters['query'] = '%' . $query . '%';
+            $where[] = '(resource.title LIKE :query_title OR resource.description LIKE :query_description OR metadata.topic LIKE :query_topic)';
+            $parameters['query_title'] = '%' . $query . '%';
+            $parameters['query_description'] = '%' . $query . '%';
+            $parameters['query_topic'] = '%' . $query . '%';
         }
         $orders = ['newest' => 'resource.updated_at DESC', 'oldest' => 'resource.updated_at ASC', 'title' => 'resource.title ASC'];
         $order = $orders[$filters['sort'] ?? 'newest'] ?? $orders['newest'];
@@ -572,8 +574,8 @@ SQL, [
 
     private function workspaceScopeId(string $workspaceId): string
     {
-        $query = $this->database->prepare("SELECT id FROM rbac_scopes WHERE scope_type = 'workspace' AND entity_id = :workspace AND workspace_id = :workspace AND archived_at IS NULL");
-        $query->execute(['workspace' => $workspaceId]);
+        $query = $this->database->prepare("SELECT id FROM rbac_scopes WHERE scope_type = 'workspace' AND entity_id = :entity_workspace AND workspace_id = :workspace AND archived_at IS NULL");
+        $query->execute(['entity_workspace' => $workspaceId, 'workspace' => $workspaceId]);
         $id = $query->fetchColumn();
         if ($id === false) {
             throw new PlatformException('workspace_scope_missing', 'Workspace scope is unavailable.', 409);

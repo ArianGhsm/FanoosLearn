@@ -599,8 +599,8 @@ SQL, ['workspace' => $workspaceId, 'assessment' => $assessmentId, 'version' => $
 
     private function workspaceScope(string $workspaceId): string
     {
-        $query = $this->database->prepare("SELECT id FROM rbac_scopes WHERE scope_type = 'workspace' AND entity_id = :workspace AND workspace_id = :workspace AND archived_at IS NULL");
-        $query->execute(['workspace' => $workspaceId]);
+        $query = $this->database->prepare("SELECT id FROM rbac_scopes WHERE scope_type = 'workspace' AND entity_id = :entity_workspace AND workspace_id = :workspace AND archived_at IS NULL");
+        $query->execute(['entity_workspace' => $workspaceId, 'workspace' => $workspaceId]);
         $scope = $query->fetchColumn();
         if ($scope === false) {
             throw new PlatformException('workspace_scope_missing', 'Workspace scope is unavailable.', 409);
