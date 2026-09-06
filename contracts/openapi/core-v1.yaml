@@ -145,6 +145,89 @@ paths:
         - { $ref: '#/components/parameters/WorkspaceId' }
         - { name: resourceId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
       responses: { '200': { $ref: '#/components/responses/Success' } }
+  /workspaces/{workspaceId}/resources:
+    get:
+      operationId: listResourceLibrary
+      parameters:
+        - { $ref: '#/components/parameters/WorkspaceId' }
+        - { name: q, in: query, schema: { type: string, minLength: 2, maxLength: 120 } }
+        - { name: type, in: query, schema: { type: string } }
+        - { name: course_id, in: query, schema: { $ref: '#/components/schemas/Uuid' } }
+        - { name: sort, in: query, schema: { type: string, enum: [newest, oldest, title] } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+    post:
+      operationId: createStructuredResource
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
+      description: Creates a draft resource and immutable version. The resource type and format are data, not discipline-specific routes.
+      responses: { '201': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/resources/{resourceId}:
+    get:
+      operationId: viewAuthorizedResource
+      parameters:
+        - { $ref: '#/components/parameters/WorkspaceId' }
+        - { name: resourceId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/resources/{resourceId}/deliveries:
+    post:
+      operationId: issueProtectedDelivery
+      description: Rechecks RBAC and entitlement, records an issuance, and returns a user/workspace/version-bound short-lived token plus watermark contract.
+      parameters:
+        - { $ref: '#/components/parameters/WorkspaceId' }
+        - { name: resourceId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+        - { $ref: '#/components/parameters/Csrf' }
+      responses: { '201': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '503': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/deliveries/consume:
+    post:
+      operationId: consumeProtectedDelivery
+      description: Bot/web delivery edge. It reauthorizes on every serve; Telegram/Bale clients must apply forward protection when required by the response.
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/assessments:
+    get:
+      operationId: listPublishedAssessments
+      parameters:
+        - { $ref: '#/components/parameters/WorkspaceId' }
+        - { name: course_id, in: query, schema: { $ref: '#/components/schemas/Uuid' } }
+        - { name: kind, in: query, schema: { type: string, enum: [practice, mock_exam, past_exam] } }
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+    post:
+      operationId: createAssessmentDraft
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
+      responses: { '201': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/assessments/{assessmentId}/attempts:
+    post:
+      operationId: startAssessmentAttempt
+      description: Hydrates questions only after tenant-scoped RBAC and entitlement checks; correct answers are omitted.
+      parameters:
+        - { $ref: '#/components/parameters/WorkspaceId' }
+        - { name: assessmentId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+        - { $ref: '#/components/parameters/Csrf' }
+      responses: { '201': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/assessments/{assessmentId}/analytics:
+    get:
+      operationId: getAssessmentAnalytics
+      parameters:
+        - { $ref: '#/components/parameters/WorkspaceId' }
+        - { name: assessmentId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/attempts/{attemptId}:
+    patch:
+      operationId: saveAssessmentProgress
+      description: Optimistic revision is required; stale saves are rejected.
+      parameters:
+        - { $ref: '#/components/parameters/WorkspaceId' }
+        - { name: attemptId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+        - { $ref: '#/components/parameters/Csrf' }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/attempts/{attemptId}/submit:
+    post:
+      operationId: submitAndScoreAssessment
+      description: Rechecks the attempt owner and revision, then scores against the immutable server-side version.
+      parameters:
+        - { $ref: '#/components/parameters/WorkspaceId' }
+        - { name: attemptId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+        - { $ref: '#/components/parameters/Csrf' }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/admin/members:
     get:
       operationId: listScopedMembers

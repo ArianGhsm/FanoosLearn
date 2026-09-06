@@ -18,7 +18,7 @@ final class SchemaContractTest
     {
         $migrationPaths = glob($this->root . '/database/migrations/*.sql') ?: [];
         sort($migrationPaths, SORT_STRING);
-        self::assert(count($migrationPaths) === 6, 'Expected exactly six versioned platform migrations through Prompt 5.');
+        self::assert(count($migrationPaths) === 7, 'Expected exactly seven versioned platform migrations through Prompt 6.');
 
         $sql = '';
         foreach ($migrationPaths as $path) {
@@ -46,6 +46,10 @@ final class SchemaContractTest
             'iam_login_attempts', 'notification_preferences', 'form_definitions',
             'form_versions', 'form_submissions', 'search_documents',
             'commerce_reconciliation_runs', 'content_access_policies', 'grade_import_batches',
+            'content_resource_metadata', 'content_version_reviews', 'content_derivations',
+            'content_import_batches', 'content_import_items', 'content_import_results',
+            'content_delivery_issuances', 'content_delivery_events', 'exam_assessment_metadata',
+            'exam_access_policies', 'exam_version_reviews', 'exam_version_states', 'exam_attempt_results',
         ];
         foreach ($requiredTables as $table) {
             self::assert(in_array($table, $tables, true), "Required table is missing: {$table}");
@@ -63,6 +67,10 @@ final class SchemaContractTest
             'notification_preferences', 'form_definitions', 'form_versions',
             'form_submissions', 'search_documents', 'commerce_reconciliation_runs',
             'content_access_policies', 'grade_import_batches',
+            'content_resource_metadata', 'content_version_reviews', 'content_derivations',
+            'content_import_batches', 'content_import_items', 'content_import_results',
+            'content_delivery_issuances', 'content_delivery_events', 'exam_assessment_metadata',
+            'exam_access_policies', 'exam_version_reviews', 'exam_version_states', 'exam_attempt_results',
         ];
         foreach ($tenantTables as $table) {
             $pattern = '/CREATE TABLE IF NOT EXISTS\s+' . preg_quote($table, '/') . '\s*\((.*?)\) ENGINE=InnoDB/is';
@@ -78,6 +86,10 @@ final class SchemaContractTest
             self::assert(is_file($this->root . '/apps/platform/public/' . $asset), "Prompt 5 UI/API asset is missing: {$asset}");
         }
         self::assert(is_file($this->root . '/contracts/openapi/core-v1.yaml'), 'Shared API contract is missing.');
+        foreach (['06_CONTENT_ENGINE.md', '06_CONTENT_REUSE_AND_ADAPTATION_REPORT.md', '06_SECURE_DELIVERY_CONTRACT.md', '06_CONTENT_PARITY_MATRIX.md'] as $document) {
+            self::assert(is_file($this->root . '/docs/fanoos-migration/' . $document), "Prompt 6 document is missing: {$document}");
+        }
+        self::assert(is_file($this->root . '/scripts/import/content-manifest.php'), 'Content import tool is missing.');
 
         $split = SqlStatementSplitter::split("SELECT ';' AS value; -- comment\nSELECT 2;");
         self::assert(count($split) === 2, 'SQL statement splitter does not preserve quoted semicolons.');

@@ -26,7 +26,9 @@ function updatePath(){const item=state.account?.workspaces.find(workspace=>works
 
 const views={
   schedule:{title:'برنامه و آزمون‌ها',path:()=>`/api/v1/workspaces/${state.workspace}/schedule?from=${new Date().toISOString().slice(0,10)}&to=${new Date(Date.now()+90*86400000).toISOString().slice(0,10)}`},
-  grades:{title:'مرکز نمرات',path:()=>`/api/v1/workspaces/${state.workspace}/grades/me`},announcements:{title:'اطلاعیه‌ها',path:()=>`/api/v1/workspaces/${state.workspace}/announcements`},academics:{title:'درس‌ها و جلسه‌ها',path:()=>`/api/v1/workspaces/${state.workspace}/academics`,pick:data=>data.courses},forms:{title:'فرم‌های فعال',path:()=>`/api/v1/workspaces/${state.workspace}/forms`},orders:{title:'خریدهای من',path:()=>`/api/v1/workspaces/${state.workspace}/orders`}
+  grades:{title:'مرکز نمرات',path:()=>`/api/v1/workspaces/${state.workspace}/grades/me`},announcements:{title:'اطلاعیه‌ها',path:()=>`/api/v1/workspaces/${state.workspace}/announcements`},academics:{title:'درس‌ها و جلسه‌ها',path:()=>`/api/v1/workspaces/${state.workspace}/academics`,pick:data=>data.courses},forms:{title:'فرم‌های فعال',path:()=>`/api/v1/workspaces/${state.workspace}/forms`},orders:{title:'خریدهای من',path:()=>`/api/v1/workspaces/${state.workspace}/orders`},
+  resources:{title:'کتابخانه منابع',path:()=>`/api/v1/workspaces/${state.workspace}/resources?sort=newest`},
+  assessments:{title:'تمرین و آزمون',path:()=>`/api/v1/workspaces/${state.workspace}/assessments`}
 };
 async function loadView(key){const view=views[key];if(!view||!state.workspace)return;document.querySelectorAll('[data-view]').forEach(button=>button.classList.toggle('active',button.dataset.view===key));$('#view-title').textContent=view.title;$('#result-list').innerHTML='<div class="empty-state">در حال دریافت…</div>';try{const data=await api(view.path());renderRows(view.pick?view.pick(data):data)}catch(error){$('#result-list').innerHTML='';renderRows([{title:'دریافت اطلاعات ممکن نشد',message:error.message}])}}
 

@@ -6,6 +6,9 @@ namespace Fanoos\Platform\Http;
 
 use Fanoos\Platform\Commerce\CommerceService;
 use Fanoos\Platform\Content\ProtectedResourceAuthorizer;
+use Fanoos\Platform\Content\ContentService;
+use Fanoos\Platform\Content\ExamService;
+use Fanoos\Platform\Content\SecureDeliveryService;
 use Fanoos\Platform\Core\WorkspacePlatformService;
 use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Identity\AuthService;
@@ -22,6 +25,9 @@ final class ApiKernel
         private readonly EntitlementService $entitlements,
         private readonly ProtectedResourceAuthorizer $resources,
         private readonly bool $paymentsEnabled,
+        private readonly ?ContentService $content = null,
+        private readonly ?ExamService $exams = null,
+        private readonly ?SecureDeliveryService $delivery = null,
     ) {
     }
 
@@ -190,6 +196,105 @@ final class ApiKernel
         if ($request->method === 'GET' && preg_match('#^/resources/([0-9a-f-]+)/authorize$#', $suffix, $match)) {
             return ['status' => 200, 'data' => $this->resources->decide($session->userId, $workspaceId, $match[1])];
         }
+        if ($request->method === 'GET' && $suffix === '/resources') {
+            return ['status' => 200, 'data' => $this->requireContent()->library($session->userId, $workspaceId, [
+                'q' => $request->query['q'] ?? '', 'type' => $request->query['type'] ?? '',
+                'course_id' => $request->query['course_id'] ?? '', 'status' => $request->query['status'] ?? '',
+                'sort' => $request->query['sort'] ?? 'newest',
+            ])];
+        }
+        if ($request->method === 'POST' && $suffix === '/resources') {
+            $payload = is_array($request->body['content'] ?? null) ? $request->body['content'] : [];
+            $metadata = is_array($request->body['metadata'] ?? null) ? $request->body['metadata'] : [];
+            return ['status' => 201, 'data' => $this->requireContent()->createResource(
+                $session->userId, $workspaceId, (string) ($request->body['type'] ?? ''),
+                (string) ($request->body['title'] ?? ''), $payload, $metadata,
+            )];
+        }
+        if ($request->method === 'GET' && preg_match('#^/resources/([0-9a-f-]+)$#', $suffix, $match)) {
+            return ['status' => 200, 'data' => $this->requireContent()->view($session->userId, $workspaceId, $match[1])];
+        }
+        if ($request->method === 'POST' && preg_match('#^/resources/([0-9a-f-]+)/versions$#', $suffix, $match)) {
+            $payload = is_array($request->body['content'] ?? null) ? $request->body['content'] : [];
+            return ['status' => 201, 'data' => $this->requireContent()->addStructuredVersion($session->userId, $workspaceId, $match[1], $payload)];
+        }
+        if ($request->method === 'POST' && preg_match('#^/resources/([0-9a-f-]+)/versions/([0-9a-f-]+)/review-request$#', $suffix, $match)) {
+            $this->requireContent()->submitForReview($session->userId, $workspaceId, $match[1], $match[2]);
+            return ['status' => 200, 'data' => ['status' => 'review']];
+        }
+        if ($request->method === 'POST' && preg_match('#^/resources/([0-9a-f-]+)/versions/([0-9a-f-]+)/review$#', $suffix, $match)) {
+            $this->requireContent()->reviewVersion(
+                $session->userId, $workspaceId, $match[1], $match[2],
+                (string) ($request->body['decision'] ?? ''),
+                isset($request->body['note']) ? (string) $request->body['note'] : null,
+            );
+            return ['status' => 200, 'data' => ['status' => (string) ($request->body['decision'] ?? '')]];
+        }
+        if ($request->method === 'POST' && preg_match('#^/resources/([0-9a-f-]+)/versions/([0-9a-f-]+)/publish$#', $suffix, $match)) {
+            $this->requireContent()->publishVersion($session->userId, $workspaceId, $match[1], $match[2]);
+            return ['status' => 200, 'data' => ['status' => 'published']];
+        }
+        if ($request->method === 'POST' && preg_match('#^/resources/([0-9a-f-]+)/deliveries$#', $suffix, $match)) {
+            return ['status' => 201, 'data' => $this->requireDelivery()->issue(
+                $session->userId, $workspaceId, $match[1], (string) ($request->body['channel'] ?? 'web'),
+            )];
+        }
+        if ($request->method === 'POST' && $suffix === '/deliveries/consume') {
+            return ['status' => 200, 'data' => $this->requireDelivery()->consume(
+                (string) ($request->body['delivery_token'] ?? ''), $session->userId, $workspaceId,
+            )];
+        }
+        if ($request->method === 'GET' && $suffix === '/assessments') {
+            return ['status' => 200, 'data' => $this->requireExams()->catalog(
+                $session->userId, $workspaceId,
+                ($request->query['course_id'] ?? '') === '' ? null : $request->query['course_id'],
+                ($request->query['kind'] ?? '') === '' ? null : $request->query['kind'],
+            )];
+        }
+        if ($request->method === 'POST' && $suffix === '/assessments') {
+            $definition = is_array($request->body['definition'] ?? null) ? $request->body['definition'] : [];
+            $metadata = is_array($request->body['metadata'] ?? null) ? $request->body['metadata'] : [];
+            return ['status' => 201, 'data' => $this->requireExams()->createAssessment(
+                $session->userId, $workspaceId, (string) ($request->body['title'] ?? ''), $definition, $metadata,
+            )];
+        }
+        if ($request->method === 'POST' && preg_match('#^/assessments/([0-9a-f-]+)/versions/([0-9a-f-]+)/review-request$#', $suffix, $match)) {
+            $this->requireExams()->submitForReview($session->userId, $workspaceId, $match[1], $match[2]);
+            return ['status' => 200, 'data' => ['status' => 'review']];
+        }
+        if ($request->method === 'POST' && preg_match('#^/assessments/([0-9a-f-]+)/versions/([0-9a-f-]+)/review$#', $suffix, $match)) {
+            $this->requireExams()->reviewVersion(
+                $session->userId, $workspaceId, $match[1], $match[2],
+                (string) ($request->body['decision'] ?? ''),
+                isset($request->body['note']) ? (string) $request->body['note'] : null,
+            );
+            return ['status' => 200, 'data' => ['status' => (string) ($request->body['decision'] ?? '')]];
+        }
+        if ($request->method === 'POST' && preg_match('#^/assessments/([0-9a-f-]+)/versions/([0-9a-f-]+)/publish$#', $suffix, $match)) {
+            $this->requireExams()->publishVersion($session->userId, $workspaceId, $match[1], $match[2]);
+            return ['status' => 200, 'data' => ['status' => 'published']];
+        }
+        if ($request->method === 'POST' && preg_match('#^/assessments/([0-9a-f-]+)/attempts$#', $suffix, $match)) {
+            return ['status' => 201, 'data' => $this->requireExams()->startAttempt($session->userId, $workspaceId, $match[1])];
+        }
+        if ($request->method === 'GET' && preg_match('#^/assessments/([0-9a-f-]+)/analytics$#', $suffix, $match)) {
+            return ['status' => 200, 'data' => $this->requireExams()->analytics($session->userId, $workspaceId, $match[1])];
+        }
+        if ($request->method === 'PATCH' && preg_match('#^/attempts/([0-9a-f-]+)$#', $suffix, $match)) {
+            $answers = is_array($request->body['answers'] ?? null) ? $request->body['answers'] : [];
+            return ['status' => 200, 'data' => $this->requireExams()->saveProgress(
+                $session->userId, $workspaceId, $match[1], (int) ($request->body['revision'] ?? 0), $answers,
+            )];
+        }
+        if ($request->method === 'POST' && preg_match('#^/attempts/([0-9a-f-]+)/submit$#', $suffix, $match)) {
+            $answers = is_array($request->body['answers'] ?? null) ? $request->body['answers'] : [];
+            return ['status' => 200, 'data' => $this->requireExams()->submitAttempt(
+                $session->userId, $workspaceId, $match[1], (int) ($request->body['revision'] ?? 0), $answers,
+            )];
+        }
+        if ($request->method === 'GET' && preg_match('#^/attempts/([0-9a-f-]+)/review$#', $suffix, $match)) {
+            return ['status' => 200, 'data' => $this->requireExams()->attemptReview($session->userId, $workspaceId, $match[1])];
+        }
 
         throw new PlatformException('route_not_found', 'API route was not found.', 404);
     }
@@ -211,5 +316,32 @@ final class ApiKernel
         if (!$this->paymentsEnabled) {
             throw new PlatformException('payment_provider_not_configured', 'A payment provider is not configured in this environment.', 503);
         }
+    }
+
+    private function requireContent(): ContentService
+    {
+        if ($this->content === null) {
+            throw new PlatformException('content_service_unavailable', 'Content service is not configured.', 503);
+        }
+
+        return $this->content;
+    }
+
+    private function requireExams(): ExamService
+    {
+        if ($this->exams === null) {
+            throw new PlatformException('exam_service_unavailable', 'Assessment service is not configured.', 503);
+        }
+
+        return $this->exams;
+    }
+
+    private function requireDelivery(): SecureDeliveryService
+    {
+        if ($this->delivery === null) {
+            throw new PlatformException('delivery_service_unavailable', 'Secure delivery is not configured.', 503);
+        }
+
+        return $this->delivery;
     }
 }

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "items": [
+    {
+      "source_key": "catalog/resource-001",
+      "type": "lecture_note",
+      "title": "نمونه منبع آموزشی",
+      "metadata": {
+        "format_key": "standard",
+        "access_level": "workspace",
+        "topic": "موضوع نمونه"
+      },
+      "content": {
+        "blocks": [
+          { "kind": "paragraph", "text": "محتوای نمونه برای اعتبارسنجی import." }
+        ]
+      }
+    }
+  ]
+}

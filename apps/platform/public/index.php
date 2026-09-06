@@ -55,6 +55,8 @@ declare(strict_types=1);
             <button data-view="grades"><span class="module-icon amber">نم</span><strong>مرکز نمرات</strong><small>فقط نمرات منتشرشده‌ی شما</small></button>
             <button data-view="announcements"><span class="module-icon coral">اع</span><strong>اطلاعیه‌ها</strong><small>پیام‌های فضای فعال</small></button>
             <button data-view="academics"><span class="module-icon blue">در</span><strong>درس‌ها</strong><small>ترم، درس و جلسه</small></button>
+            <button data-view="resources"><span class="module-icon mint">من</span><strong>کتابخانه منابع</strong><small>جزوه، خلاصه و بانک سؤال</small></button>
+            <button data-view="assessments"><span class="module-icon amber">آز</span><strong>تمرین و آزمون</strong><small>تمرین، آزمون آزمایشی و گذشته</small></button>
             <button data-view="forms"><span class="module-icon violet">فر</span><strong>فرم‌ها</strong><small>فرم‌های فعال و پاسخ‌ها</small></button>
             <button data-view="orders"><span class="module-icon slate">خر</span><strong>خریدهای من</strong><small>وضعیت سفارش و دسترسی</small></button>
         </nav>
