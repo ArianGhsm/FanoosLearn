@@ -12,6 +12,8 @@ The main architectural risk is accidental creation of parallel authorities. FANO
 
 No production implementation was rewritten, no legacy repository was mutated, and no production endpoint was exercised during this stage.
 
+Per the project-owner clarification, legacy reuse in this audit means behavioral evidence and architectural inspiration. No legacy code file is authorized for copying into FANOOS unless the owner later grants explicit, file/scope-specific permission. The products, repositories, state, credentials, and deployments remain completely separate.
+
 ## Audit scope and evidence baseline
 
 | Label | Inspected source | Baseline | Role in this audit |

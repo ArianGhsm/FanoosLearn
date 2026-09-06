@@ -10,6 +10,8 @@
 
 No status authorizes copying secrets, production data, generated caches, private content, or personally identifiable roster data into Git.
 
+These statuses describe technical reuse potential, not permission to copy a legacy file. The default is behavior-level inspiration and a separate FANOOS implementation. Any literal code extraction requires later explicit, file/scope-specific owner permission; repositories, histories, databases, configuration, credentials, and deployments remain separate.
+
 ## Capability decisions
 
 | Capability | Primary source evidence | Status | Preserve | Adapt/replace boundary | Exit evidence |
@@ -61,7 +63,7 @@ No status authorizes copying secrets, production data, generated caches, private
 
 ## Reuse constraints
 
-1. Copy the smallest coherent unit with its tests and provenance. Do not bulk-copy `public_html`, a complete SQLite database, or generated question artifacts.
+1. Do not copy legacy code without explicit owner permission. If a later prompt grants file/scope-specific permission, extract only the smallest coherent unit with its tests and provenance; never bulk-copy `public_html`, a database, runtime state, configuration, credentials, or generated artifacts.
 2. Every extracted website write path must receive an explicit `workspace_id` or a server-resolved scope; client-supplied tenant context alone is insufficient.
 3. Preserve legacy identifiers in migration aliases, not as FANOOS primary keys.
 4. Payment, entitlement, identity, and grades each have one canonical target authority. Bot and search read models must be disposable/rebuildable projections.
