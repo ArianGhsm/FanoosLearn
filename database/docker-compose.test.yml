@@ -1,0 +1,19 @@
+services:
+  database:
+    image: mariadb:11.4
+    environment:
+      MARIADB_DATABASE: fanoos_test
+      MARIADB_USER: fanoos_test
+      MARIADB_PASSWORD: local_test_only
+      MARIADB_ROOT_PASSWORD: local_root_test_only
+      TZ: UTC
+    ports:
+      - "127.0.0.1:${FANOOS_TEST_DB_PORT:-33079}:3306"
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
