@@ -72,8 +72,8 @@ final class ServiceAuthLinkTest
         $this->database->prepare("UPDATE tenant_workspace_memberships SET status = 'active' WHERE workspace_id = :workspace AND user_id = :user")
             ->execute(['workspace' => $fixture['workspace_a'], 'user' => $fixture['student']]);
 
-        $expired = $links->createChallenge($fixture['representative'], 'bale', $now);
-        $this->database->prepare('UPDATE messaging_link_challenges SET expires_at = FROM_UNIXTIME(:expired) WHERE id = :id')->execute(['expired' => $now - 1, 'id' => $expired['challenge_id']]);
+        $expiredCreatedAt = $now - 600;
+        $expired = $links->createChallenge($fixture['representative'], 'bale', $expiredCreatedAt);
         $this->expectCode('link_challenge_expired', fn () => $links->consumeChallenge('bale', $expired['challenge_token'], 'bale-subject-expired', $now));
 
         $wrongPlatform = $links->createChallenge($fixture['global_admin'], 'telegram', $now);
