@@ -39,6 +39,24 @@ jobs:
       - name: Exact-commit release artifact
         run: php scripts/ops/build-release.php "$GITHUB_SHA"
 
+  python-bot-worker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Verify supported Python runtime
+        run: |
+          python3 - <<'PY'
+          import sys
+          version = sys.version_info[:2]
+          if not ((3, 11) <= version < (3, 15)):
+              raise SystemExit(f"Unsupported Python runtime: {sys.version}")
+          print(sys.version)
+          PY
+      - name: Deterministic Telegram Bale and worker tests
+        run: bash ops/stage7-bots/run-deterministic-tests.sh
+
   mysql-integration:
     runs-on: ubuntu-latest
     services:
