@@ -1,0 +1,20 @@
+[Unit]
+Description=FANOOS Bale Bot
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=simple
+User=fanoos-bale
+Group=fanoos-bale
+EnvironmentFile=/etc/fanoos/bale.env
+WorkingDirectory=/opt/fanoos/current
+ExecStart=/usr/bin/python3 /opt/fanoos/current/apps/bale-bot/runtime.py
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/lib/fanoos/bale
+[Install]
+WantedBy=multi-user.target
