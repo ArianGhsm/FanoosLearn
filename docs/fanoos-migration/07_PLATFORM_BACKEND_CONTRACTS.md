@@ -12,6 +12,10 @@ Canonical invariants:
 - protected delivery reauthorizes every consume;
 - channel-local cached file/message IDs are delivery optimizations only and never authorization evidence.
 
+## Audit integration reconciliation
+
+The historical pre-Stage 7 platform audit and Telegram/Bale audit are now part of the `main` integration baseline. Their HIGH/WAIT_FOR_PLATFORM findings were reconciled before this implementation was accepted: interrupted migration recovery, verified-backup gating, OpenAPI/service-auth drift, account linking, notification/protected-delivery receipts, protected-media worker protocol, bot payment projection and the safe Update Server control plane all have machine-testable contracts in this branch. The audit documents remain historical evidence; production runtime/bootstrap validation remains a separate gate and is not claimed by source CI.
+
 ## Human messaging linking
 
 Human endpoints use the existing FANOOS bearer/session and CSRF contract:
