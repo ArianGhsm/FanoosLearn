@@ -81,7 +81,7 @@ INSERT INTO content_objects (
 )
 SQL, [
                 'id' => $objectId, 'workspace' => $workspaceId, 'storage_key' => $storageKey,
-                'name' => $upload->safeName, 'mime' => $upload->mime, 'bytes' => $upload->bytes,
+                'name' => $upload->displayName, 'mime' => $upload->detectedMime, 'bytes' => $upload->bytes,
                 'checksum' => hex2bin($upload->sha256), 'classification' => $classification,
             ]);
             $this->execute(<<<'SQL'
@@ -102,7 +102,7 @@ SQL, [
                 'resource_id' => $resourceId,
                 'object_id' => $objectId,
                 'classification' => $classification,
-                'mime' => $upload->mime,
+                'mime' => $upload->detectedMime,
                 'bytes' => $upload->bytes,
             ]);
 
