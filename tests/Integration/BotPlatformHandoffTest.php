@@ -263,7 +263,9 @@ FROM rbac_role_assignments assignment
 JOIN rbac_role_permissions role_permission ON role_permission.role_template_id = assignment.role_template_id
 JOIN rbac_permissions permission ON permission.id = role_permission.permission_id
 WHERE permission.permission_key = 'deployment.manage' AND assignment.user_id IS NOT NULL
-  AND assignment.revoked_at IS NULL AND (assignment.expires_at IS NULL OR assignment.expires_at > UTC_TIMESTAMP(6))
+  AND assignment.revoked_at IS NULL
+  AND assignment.valid_from <= UTC_TIMESTAMP(6)
+  AND (assignment.valid_until IS NULL OR assignment.valid_until > UTC_TIMESTAMP(6))
 ORDER BY assignment.created_at LIMIT 1
 SQL);
         $userId = $query->fetchColumn();
