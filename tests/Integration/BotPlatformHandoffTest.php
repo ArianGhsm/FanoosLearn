@@ -87,7 +87,9 @@ final class BotPlatformHandoffTest
         $unlink = new MessagingUnlinkService($this->database, $audit, $protector);
         $this->database->prepare("UPDATE messaging_links SET status = 'revoked', revoked_at = COALESCE(revoked_at, UTC_TIMESTAMP(6)), revoke_reason = COALESCE(revoke_reason, 'handoff_test_setup'), updated_at = UTC_TIMESTAMP(6) WHERE (user_id = :student OR user_id = :representative) AND status = 'active'")
             ->execute(['student' => $fixture['student'], 'representative' => $fixture['representative']]);
-        $now = time();
+        // Earlier integration suites intentionally reuse these canonical fixture users. Move this test's
+        // synthetic clock beyond their link-challenge cooldown without deleting prior rate-limit evidence.
+        $now = time() + 120;
         $telegramSubject = 'handoff-tg-' . substr(str_replace('-', '', Uuid::v7()), -12);
         $baleSubject = 'handoff-bale-' . substr(str_replace('-', '', Uuid::v7()), -12);
         $otherSubject = 'handoff-other-' . substr(str_replace('-', '', Uuid::v7()), -12);
