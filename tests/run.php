@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 use Fanoos\Platform\Support\DatabaseConnection;
 use Fanoos\Tests\Integration\TenantIsolationTest;
+use Fanoos\Tests\Integration\MigrationSafetyTest;
 use Fanoos\Tests\Integration\CorePlatformTest;
 use Fanoos\Tests\Integration\ContentEngineTest;
+use Fanoos\Tests\Integration\Stage7PlatformTest;
+use Fanoos\Tests\Integration\ServiceAuthLinkTest;
+use Fanoos\Tests\Integration\DeploymentControlTest;
 use Fanoos\Tests\Operations\BackupContractTest;
 use Fanoos\Tests\Schema\SchemaContractTest;
 use Fanoos\Tests\Storage\StorageSecurityTest;
@@ -45,16 +49,21 @@ try {
             throw new RuntimeException('Integration tests require a test-only FANOOS_LEGACY_ID_HMAC_KEY of at least 16 characters.');
         }
 
-        $assertions += (new TenantIsolationTest(
-            DatabaseConnection::fromEnvironment(),
-            $root,
-            $hmacKey,
-        ))->run();
+        $database = DatabaseConnection::fromEnvironment();
+        $assertions += (new TenantIsolationTest($database, $root, $hmacKey))->run();
         echo "PASS database tenant isolation and rerun scenarios\n";
-        $assertions += (new CorePlatformTest(DatabaseConnection::fromEnvironment()))->run();
+        $assertions += (new MigrationSafetyTest($database))->run();
+        echo "PASS interrupted migration recovery scenarios\n";
+        $assertions += (new CorePlatformTest($database))->run();
         echo "PASS core platform adaptation scenarios\n";
-        $assertions += (new ContentEngineTest(DatabaseConnection::fromEnvironment(), $hmacKey))->run();
+        $assertions += (new ContentEngineTest($database, $hmacKey))->run();
         echo "PASS content engine and secure learning scenarios\n";
+        $assertions += (new Stage7PlatformTest($database))->run();
+        echo "PASS Stage 7 commerce notification delivery and media scenarios\n";
+        $assertions += (new ServiceAuthLinkTest($database))->run();
+        echo "PASS Stage 7 service authentication and messaging link scenarios\n";
+        $assertions += (new DeploymentControlTest($database))->run();
+        echo "PASS Stage 7 deployment control-plane scenarios\n";
     }
 
     echo "PASS {$assertions} assertions\n";
