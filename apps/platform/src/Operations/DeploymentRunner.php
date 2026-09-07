@@ -25,6 +25,29 @@ final class DeploymentRunner
     /** @return array<string,mixed>|null */
     public function runNext(string $targetKey): ?array
     {
+        $lockName = self::targetLockName($targetKey);
+        $lock = $this->database->prepare('SELECT GET_LOCK(:name, 0)');
+        $lock->execute(['name' => $lockName]);
+        if ((int) $lock->fetchColumn() !== 1) {
+            return null;
+        }
+
+        try {
+            return $this->runLocked($targetKey);
+        } finally {
+            try {
+                $release = $this->database->prepare('SELECT RELEASE_LOCK(:name)');
+                $release->execute(['name' => $lockName]);
+                $release->fetchColumn();
+            } catch (Throwable) {
+                // Connection-scoped advisory locks are released by MySQL on disconnect.
+            }
+        }
+    }
+
+    /** @return array<string,mixed>|null */
+    private function runLocked(string $targetKey): ?array
+    {
         $request = $this->claim($targetKey);
         if ($request === null) {
             return null;
@@ -192,6 +215,11 @@ SQL)->execute([
             'current_sha' => $row['current_sha'], 'candidate_sha' => $row['candidate_sha'], 'rollback_sha' => $row['rollback_sha'],
             'failure_code' => $row['safe_failure_code'], 'updated_at' => $row['updated_at'], 'finished_at' => $row['finished_at'],
         ];
+    }
+
+    private static function targetLockName(string $targetKey): string
+    {
+        return 'fanoos-deploy-' . substr(hash('sha256', $targetKey), 0, 40);
     }
 
     private function requireSha(string $sha): void
