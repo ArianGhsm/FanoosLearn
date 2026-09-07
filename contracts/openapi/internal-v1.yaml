@@ -1,0 +1,222 @@
+openapi: 3.1.0
+info:
+  title: Fanoos Internal Service API
+  version: 1.0.0
+  description: |
+    Signed service-only API for Telegram, Bale and narrow workers. Human bearer sessions and browser CSRF are not accepted here.
+    Every request is signed over the exact raw body using HMAC-SHA256. Canonical bytes are:
+    `fanoos-service-v1\nMETHOD\nPATH\nUNIX_SECONDS\nNONCE\nLOWERCASE_SHA256_RAW_BODY`.
+    Required headers are X-Fanoos-Key-Id, X-Fanoos-Timestamp, X-Fanoos-Nonce,
+    X-Fanoos-Content-SHA256 and X-Fanoos-Signature. Timestamp skew is at most 300 seconds and nonces are persisted to reject replay.
+servers:
+  - url: /api/internal/v1
+security:
+  - serviceKey: []
+paths:
+  /messaging/link-challenges/consume:
+    post:
+      operationId: consumeMessagingLinkChallenge
+      x-required-service-action: messaging.link.consume
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LinkConsume' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' } }
+  /messaging/workspaces/list:
+    post:
+      operationId: listLinkedWorkspaces
+      x-required-service-action: messaging.workspace.read
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LinkedSubject' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+  /messaging/workspaces/select:
+    post:
+      operationId: selectLinkedWorkspace
+      x-required-service-action: messaging.workspace.select
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LinkedWorkspace' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /commerce/orders:
+    post:
+      operationId: createBotOrder
+      x-required-service-action: commerce.order.create
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CreateOrder' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '503': { $ref: '#/components/responses/Error' } }
+  /commerce/orders/status:
+    post:
+      operationId: getBotOrderStatus
+      x-required-service-action: commerce.order.read
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/OrderStatus' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+  /notifications/project:
+    post:
+      operationId: projectNotificationOutbox
+      x-required-service-action: notification.project
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+  /notifications/claim:
+    post:
+      operationId: claimNotificationDelivery
+      x-required-service-action: notification.claim
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PlatformOnly' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+  /notifications/receipt:
+    post:
+      operationId: recordNotificationReceipt
+      x-required-service-action: notification.receipt
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/NotificationReceipt' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+  /deliveries/issue:
+    post:
+      operationId: issueBotProtectedDelivery
+      x-required-service-action: delivery.issue
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/DeliveryIssue' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /deliveries/consume:
+    post:
+      operationId: consumeBotProtectedDelivery
+      x-required-service-action: delivery.consume
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/DeliveryConsume' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /deliveries/receipt:
+    post:
+      operationId: recordProtectedDeliveryReceipt
+      x-required-service-action: delivery.receipt
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/DeliveryReceipt' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+  /protected-media/enqueue:
+    post:
+      operationId: enqueueProtectedMedia
+      x-required-service-action: protected_media.enqueue
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MediaEnqueue' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+  /protected-media/claim:
+    post:
+      operationId: claimProtectedMedia
+      x-required-service-action: protected_media.claim
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+  /protected-media/complete:
+    post:
+      operationId: completeProtectedMedia
+      x-required-service-action: protected_media.complete
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MediaComplete' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+  /protected-media/fail:
+    post:
+      operationId: failProtectedMedia
+      x-required-service-action: protected_media.fail
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MediaFail' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+  /deployments/request:
+    post:
+      operationId: requestCanonicalMainDeployment
+      description: Does not accept repository, remote, branch, ref, SHA, path, command or shell fields. Candidate resolution occurs only inside the privileged updater.
+      x-required-service-action: deployment.request
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/DeploymentRequest' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '409': { $ref: '#/components/responses/Error' } }
+  /deployments/status:
+    post:
+      operationId: getDeploymentStatus
+      x-required-service-action: deployment.status
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/DeploymentStatus' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+components:
+  securitySchemes:
+    serviceKey:
+      type: apiKey
+      in: header
+      name: X-Fanoos-Key-Id
+      description: Key identifier only. The request is additionally authenticated by timestamp, nonce, raw-body digest and HMAC signature headers described above.
+  schemas:
+    Uuid: { type: string, format: uuid }
+    Platform: { type: string, enum: [telegram, bale] }
+    LinkedSubject:
+      type: object
+      required: [platform, subject]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, subject: { type: string, minLength: 1, maxLength: 160 } }
+      additionalProperties: false
+    LinkedWorkspace:
+      type: object
+      required: [platform, subject, workspace_id]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, subject: { type: string }, workspace_id: { $ref: '#/components/schemas/Uuid' } }
+      additionalProperties: false
+    LinkConsume:
+      type: object
+      required: [platform, challenge_token, subject]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, challenge_token: { type: string }, subject: { type: string } }
+      additionalProperties: false
+    PlatformOnly:
+      type: object
+      required: [platform]
+      properties: { platform: { $ref: '#/components/schemas/Platform' } }
+      additionalProperties: false
+    CreateOrder:
+      type: object
+      required: [platform, subject, workspace_id, product_id, idempotency_key]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, subject: { type: string }, workspace_id: { $ref: '#/components/schemas/Uuid' }, product_id: { $ref: '#/components/schemas/Uuid' }, idempotency_key: { type: string, maxLength: 160 } }
+      additionalProperties: false
+    OrderStatus:
+      type: object
+      required: [platform, subject, workspace_id, order_id]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, subject: { type: string }, workspace_id: { $ref: '#/components/schemas/Uuid' }, order_id: { $ref: '#/components/schemas/Uuid' } }
+      additionalProperties: false
+    NotificationReceipt:
+      type: object
+      required: [platform, delivery_id, lease_token, idempotency_key, outcome]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, delivery_id: { $ref: '#/components/schemas/Uuid' }, lease_token: { type: string }, idempotency_key: { type: string }, outcome: { type: string, enum: [delivered, retry, failed] }, provider_message_ref: { type: [string, 'null'] }, error_code: { type: [string, 'null'] } }
+      additionalProperties: false
+    DeliveryIssue:
+      type: object
+      required: [platform, subject, workspace_id, resource_id]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, subject: { type: string }, workspace_id: { $ref: '#/components/schemas/Uuid' }, resource_id: { $ref: '#/components/schemas/Uuid' } }
+      additionalProperties: false
+    DeliveryConsume:
+      type: object
+      required: [platform, subject, workspace_id, delivery_token]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, subject: { type: string }, workspace_id: { $ref: '#/components/schemas/Uuid' }, delivery_token: { type: string } }
+      additionalProperties: false
+    DeliveryReceipt:
+      type: object
+      required: [platform, workspace_id, issuance_id, idempotency_key, outcome]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, workspace_id: { $ref: '#/components/schemas/Uuid' }, issuance_id: { $ref: '#/components/schemas/Uuid' }, idempotency_key: { type: string }, outcome: { type: string, enum: [delivered, failed] }, provider_message_ref: { type: [string, 'null'] }, error_code: { type: [string, 'null'] } }
+      additionalProperties: false
+    MediaEnqueue:
+      type: object
+      required: [workspace_id, issuance_id, renderer_algorithm_version]
+      properties: { workspace_id: { $ref: '#/components/schemas/Uuid' }, issuance_id: { $ref: '#/components/schemas/Uuid' }, renderer_algorithm_version: { type: string, maxLength: 64 }, limits: { type: object, additionalProperties: { type: integer } } }
+      additionalProperties: false
+    MediaComplete:
+      type: object
+      required: [job_id, lease_token, completion_key, result]
+      properties:
+        job_id: { $ref: '#/components/schemas/Uuid' }
+        lease_token: { type: string }
+        completion_key: { type: string }
+        result:
+          type: object
+          required: [checksum_sha256, size, mime, artifact_ref]
+          properties: { checksum_sha256: { type: string, pattern: '^[0-9a-f]{64}$' }, size: { type: integer, minimum: 1 }, mime: { const: application/pdf }, artifact_ref: { type: string, pattern: '^[A-Za-z0-9._:-]{1,200}$' } }
+          additionalProperties: false
+      additionalProperties: false
+    MediaFail:
+      type: object
+      required: [job_id, lease_token, failure_code]
+      properties: { job_id: { $ref: '#/components/schemas/Uuid' }, lease_token: { type: string }, failure_code: { type: string, enum: [input_unavailable, authorization_changed, input_too_large, page_limit, time_limit, render_failed, output_invalid, internal_error] } }
+      additionalProperties: false
+    DeploymentRequest:
+      type: object
+      required: [platform, subject, target_key, idempotency_key]
+      properties: { platform: { const: telegram }, subject: { type: string }, target_key: { type: string, pattern: '^[A-Za-z0-9._:-]{1,96}$' }, idempotency_key: { type: string, maxLength: 160 } }
+      additionalProperties: false
+    DeploymentStatus:
+      type: object
+      required: [platform, subject, request_id]
+      properties: { platform: { const: telegram }, subject: { type: string }, request_id: { $ref: '#/components/schemas/Uuid' } }
+      additionalProperties: false
+    SuccessEnvelope:
+      type: object
+      required: [ok, data, meta]
+      properties: { ok: { const: true }, data: {}, meta: { type: object, properties: { api_version: { const: internal-v1 }, request_id: { type: string } } } }
+    ErrorEnvelope:
+      type: object
+      required: [ok, error, meta]
+      properties: { ok: { const: false }, error: { type: object, required: [code, message], properties: { code: { type: string }, message: { type: string } } }, meta: { type: object } }
+  responses:
+    Success: { description: Signed service request accepted, content: { application/json: { schema: { $ref: '#/components/schemas/SuccessEnvelope' } } } }
+    Error: { description: Safe error without secrets, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
