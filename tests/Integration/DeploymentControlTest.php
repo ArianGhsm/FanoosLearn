@@ -10,6 +10,7 @@ use Fanoos\Platform\Authorization\ScopeAuthorizer;
 use Fanoos\Platform\Operations\DeploymentControlService;
 use Fanoos\Platform\Operations\DeploymentExecutor;
 use Fanoos\Platform\Operations\DeploymentRunner;
+use Fanoos\Platform\Support\DatabaseConnection;
 use Fanoos\Platform\Support\PlatformException;
 use Fanoos\Platform\Support\Uuid;
 use PDO;
@@ -50,6 +51,21 @@ final class DeploymentControlTest
         $duplicate = $control->request($operator, 'telegram', $target, 'op-1');
         self::assert($duplicate['request_id'] === $requested['request_id'] && $duplicate['idempotent'] === true, 'Deployment request replay was not idempotent.');
         $this->expectCode('deployment_in_progress', fn () => $control->request($operator, 'telegram', $target, 'op-concurrent'));
+
+        $otherDatabase = DatabaseConnection::fromEnvironment();
+        $lockName = 'fanoos-deploy-' . substr(hash('sha256', $target), 0, 40);
+        $acquire = $otherDatabase->prepare('SELECT GET_LOCK(:name, 0)');
+        $acquire->execute(['name' => $lockName]);
+        self::assert((int) $acquire->fetchColumn() === 1, 'Deployment contention fixture could not acquire the target lock.');
+        try {
+            $blockedExecutor = new FakeDeploymentExecutor();
+            $blocked = (new DeploymentRunner($this->database, $blockedExecutor, 120))->runNext($target);
+            self::assert($blocked === null && $blockedExecutor->calls === [], 'Concurrent runner bypassed the per-target advisory lock.');
+        } finally {
+            $release = $otherDatabase->prepare('SELECT RELEASE_LOCK(:name)');
+            $release->execute(['name' => $lockName]);
+            $release->fetchColumn();
+        }
 
         $successExecutor = new FakeDeploymentExecutor();
         $success = (new DeploymentRunner($this->database, $successExecutor, 120))->runNext($target);
