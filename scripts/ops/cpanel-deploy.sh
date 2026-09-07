@@ -34,14 +34,17 @@ mkdir -p "$RELEASES_DIR" "$SHARED_DIR"
 export FANOOS_CONFIG_FILE="$CONFIG_FILE"
 export FANOOS_RELEASE_SHA="$RELEASE_SHA"
 
-# A database/object snapshot is mandatory before every schema or pointer change.
-php "$REPO_ROOT/scripts/ops/backup.php"
+# Git is never a production-data backup. The snapshot must be independently verified before any schema or pointer mutation.
+BACKUP_DIR="$(php "$REPO_ROOT/scripts/ops/backup.php")"
+[[ -n "$BACKUP_DIR" ]] || fail 'Backup did not return a finalized directory.'
+php "$REPO_ROOT/scripts/ops/verify-backup.php" "$BACKUP_DIR"
 
 mkdir "$STAGING_DIR"
 git -C "$REPO_ROOT" archive "$RELEASE_SHA" | tar -x -C "$STAGING_DIR"
 mv "$STAGING_DIR" "$RELEASE_DIR"
 
 php "$RELEASE_DIR/scripts/db/check.php"
+php "$RELEASE_DIR/scripts/db/preflight.php" --allow-bootstrap
 php "$RELEASE_DIR/scripts/db/migrate.php"
 php "$RELEASE_DIR/scripts/db/seed.php"
 php "$RELEASE_DIR/scripts/ops/health.php"

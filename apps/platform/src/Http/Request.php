@@ -16,6 +16,7 @@ final class Request
         public readonly array $query = [],
         public readonly array $body = [],
         public readonly string $source = 'unknown',
+        public readonly string $rawBody = '',
     ) {
     }
 
@@ -31,8 +32,9 @@ final class Request
             $headers['content-type'] = (string) $_SERVER['CONTENT_TYPE'];
         }
         $raw = file_get_contents('php://input');
+        $raw = is_string($raw) ? $raw : '';
         $body = [];
-        if (is_string($raw) && trim($raw) !== '') {
+        if (trim($raw) !== '') {
             try {
                 $decoded = json_decode($raw, true, 64, JSON_THROW_ON_ERROR);
             } catch (\JsonException) {
@@ -51,6 +53,7 @@ final class Request
             array_map('strval', $_GET),
             $body,
             (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown'),
+            $raw,
         );
     }
 

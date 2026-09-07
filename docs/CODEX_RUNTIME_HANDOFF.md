@@ -2,97 +2,130 @@
 
 ## Scope
 
-Codex is the runtime, environment and deployment operator for FANOOS after ChatGPT integration is complete.
+The preferred FANOOS operating model is GitHub-first development plus a **one-time supervised Codex runtime bootstrap**. After bootstrap, routine updates are control-plane driven from canonical GitHub `main`; Codex is not required as the normal release operator.
 
-Codex must not redesign architecture, silently change shared contracts, perform broad refactors or implement unrelated product features during deployment verification.
+Codex may later be used for exceptional runtime/environment troubleshooting. It must not redesign architecture, silently change shared contracts, perform broad refactors or implement unrelated product features during bootstrap/troubleshooting.
 
-## Required handoff input
+Canonical source repository:
 
-The integration stage must provide:
+`ArianGhsm/FanoosLearn`
+
+Full bootstrap contract:
+
+`docs/fanoos-migration/07_CODEX_ONE_TIME_BOOTSTRAP.md`
+
+Update-control contract:
+
+`docs/fanoos-migration/07_UPDATE_CONTROL_PLANE.md`
+
+## MODE A — One-time supervised bootstrap
+
+Codex should, on the target host:
+1. verify repository identity and accepted exact source SHA;
+2. inspect real OS/PHP/Python/MySQL/disk/service/storage capabilities rather than assume them;
+3. install/verify approved dependencies;
+4. create least-privilege application/updater/worker service identities as required;
+5. create immutable release/current-pointer layout and durable config/log/backup/object roots outside releases;
+6. provision NEW FANOOS DB/storage access without reusing legacy runtime state;
+7. inject FANOOS secrets outside Git;
+8. register Stage 7 service identities/keys and deployment target using tracked tooling;
+9. install the fixed updater service/timer from tracked templates;
+10. scope the private-repository deploy credential to the updater service and FANOOS repository;
+11. configure fixed restart/health/smoke hooks for services actually present;
+12. configure production backups and run independent backup verification;
+13. perform an isolated restore rehearsal;
+14. run the initial migration/preflight/test suite;
+15. perform the first supervised control-plane exact-SHA activation and application-pointer rollback rehearsal;
+16. return a redacted runtime inventory and evidence report.
+
+Any required NEW FANOOS server/domain/database/storage/service credentials are provided by the user only at runtime and remain outside Git.
+
+## Normal operation after bootstrap
+
+Routine release path is:
 
 ```text
-Repository: ArianGhsm/FanoosLearn
-Release candidate SHA: <exact 40-character SHA>
-Environment: <staging|production>
-Expected migration set: <if any>
-Expected deploy/runbook: docs/fanoos-migration/04_DEPLOY_RUNBOOK.md
+reviewed/accepted GitHub main
+→ owner Update Server action
+→ signed internal API
+→ canonical linked user + deployment.manage
+→ durable update request
+→ fixed privileged updater
+→ canonical origin/main exact SHA + exact-SHA CI
+→ migration preflight + verified backup + tests
+→ immutable activation + fixed restart/health hooks
+→ durable SUCCEEDED / FAILED / ROLLED_BACK
 ```
 
-Any required NEW FANOOS server, domain, database/storage or service credentials are provided by the user only at runtime/deployment time and remain outside Git.
+Codex must not be inserted into this routine path merely to run a deployment shell command.
 
-## MODE A — Verification
+The bot/web request never supplies arbitrary command, path, remote, branch, ref or candidate SHA.
 
-Codex should:
-1. verify repository full name and exact SHA;
-2. verify the deploy checkout is clean and corresponds to that SHA;
-3. inspect real OS/PHP/Python/MySQL/service/storage capabilities rather than assume them;
-4. install/verify dependencies required by the approved source;
-5. run repository/static/integration checks applicable to the environment;
-6. perform migration dry-run/ledger verification before any approved migration;
-7. run runtime, integration, smoke and health checks;
-8. inspect relevant logs and resource state;
-9. verify backup prerequisites before any risky production mutation;
-10. deploy only through the canonical runbook and verify live state afterward.
+## MODE B — Exceptional runtime/environment fix
 
-## MODE B — Small runtime/environment fix
-
-Codex may directly diagnose and fix a small, obvious environment-specific defect such as:
-- missing OS package or extension;
-- service/systemd/cPanel path mismatch;
+Codex may diagnose and fix a small environment-specific defect such as:
+- missing OS package or PHP/Python extension;
+- systemd/cPanel/runtime path mismatch;
 - filesystem permission/ownership;
 - environment wiring;
 - executable path;
-- runtime-specific migration command;
-- safe service configuration issue.
+- fixed service configuration issue;
+- backup/health hook wiring.
 
-If the fix is represented by source/declarative config/docs, it must be committed to a dedicated branch and returned to ChatGPT for review/CI before the corrected SHA is considered deployable.
+If the fix is representable by source/declarative config/docs, it must be committed to a dedicated branch and returned to normal ChatGPT review/CI before the corrected SHA becomes the baseline.
 
 Do not leave a reproducible production configuration fix only as an undocumented server edit.
 
 ## MODE C — Source defect escalation
 
-If the failure requires any of the following, stop source modification and return evidence to ChatGPT:
+If the failure requires any of the following, stop ad-hoc source modification and return evidence to the GitHub development workflow:
 - architecture redesign;
 - shared API/DTO/contract change;
 - schema/domain redesign;
 - broad refactor;
 - multi-module business logic change;
 - authorization/payment/entitlement redesign;
+- deployment-control policy change;
 - feature redesign.
 
-Report:
-- exact command;
-- full relevant error/log without secret values;
+Report, with secret values removed:
+- exact attempted operation/command;
+- relevant error/log;
 - OS/runtime/service/version context;
 - failing test/health check;
 - expected vs observed behavior;
-- likely module/file when reasonably identifiable;
+- likely module/file when identifiable;
 - whether production state was mutated;
-- rollback/restore state.
+- backup/rollback/restore state.
 
 ## Safety rules
 
 - Never print or commit secret values.
 - Never reuse legacy project tokens, env files, databases, queues, storage or service directories for FANOOS.
 - Never overwrite production data from the Git checkout or a developer backup.
+- Git is code source of truth; production DB/object storage are data source of truth.
 - Backups and restore verification remain separate from Git.
-- Do not deploy a dirty checkout or a SHA different from the approved release candidate.
-- Do not bypass a failed backup, migration, readiness, tenant-isolation or security gate.
-- Application rollback does not silently reverse forward database migrations; verify schema compatibility first.
+- Do not bypass failed exact-SHA CI, backup verification, migration preflight, readiness, tenant-isolation or security gates.
+- Application rollback does not reverse forward database migrations; schema compatibility must be known first.
+- Do not add a raw-shell or arbitrary-ref interface to the owner bot/control plane.
+- Do not give the web/Bot process updater deploy credentials.
 
-## Expected final report
+## Expected one-time bootstrap report
 
 Return:
-- repository and exact deployed SHA;
+- repository and exact accepted/deployed SHA;
 - environment/runtime versions inspected;
+- service/user and filesystem layout (without secrets);
 - dependency result;
-- migration result;
+- DB/migration result;
+- service identity/deployment-target registration result (IDs/names only);
+- backup verification + isolated restore result;
+- updater service/timer result;
 - tests/smoke/health result;
-- backup verification result;
-- deployment result;
-- live log/health result;
-- any runtime fixes made and their branch/commit;
+- first control-plane deployment result;
+- pointer rollback rehearsal result;
+- any runtime fixes made and source branch/commit where applicable;
 - remaining risks;
 - final status: `COMPLETE`, `PARTIAL` or `BLOCKED`.
 
-Do not declare deployment complete without observed live verification.
+Do not declare bootstrap or deployment complete without observed live verification.

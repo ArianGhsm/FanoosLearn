@@ -1,0 +1,22 @@
+[Unit]
+Description=FANOOS canonical-main update runner
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=fanoos-updater
+Group=fanoos-updater
+WorkingDirectory=/srv/fanoos/updater-checkout
+Environment=FANOOS_CONFIG_FILE=/etc/fanoos/updater-config.php
+EnvironmentFile=/etc/fanoos/updater-secrets.env
+ExecStart=/usr/bin/php /srv/fanoos/updater-checkout/scripts/ops/update-runner.php
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/srv/fanoos /var/lib/fanoos /var/backups/fanoos
+UMask=0027
+
+# Bootstrap must grant only the exact filesystem/service privileges required by this node.
+# Do not add shell arguments, branch names, refs or SHA parameters to ExecStart.
