@@ -33,15 +33,15 @@ It is platform-scoped and is seeded only into `platform-super-admin` and `platfo
 
 Internal endpoint:
 
-`POST /api/internal/v1/deployments/requests`
+`POST /api/internal/v1/deployments/request`
 
 Allowed body fields are limited to:
-- `platform`: `telegram|bale`
-- `subject`: platform subject observed by the signed adapter
+- `platform`: `telegram`
+- `subject`: Telegram subject observed by the signed adapter
 - `target_key`: configured deployment target
 - `idempotency_key`: caller-stable key for callback retry
 
-Unknown fields are rejected. In particular the contract has no `command`, `shell`, `path`, `remote`, `branch`, `ref`, or user-supplied SHA field.
+Unknown fields are rejected. In particular the contract has no `command`, `shell`, `path`, `remote`, `branch`, `ref`, or user-supplied SHA field. Stage 7 enables the owner update control through Telegram only; Bale remains a normal FANOOS client and does not receive deployment-control scope.
 
 Status endpoint:
 
