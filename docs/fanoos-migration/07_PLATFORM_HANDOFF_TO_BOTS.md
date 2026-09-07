@@ -61,7 +61,7 @@ uses normal FANOOS session + CSRF.
 
 ### Adapter confirmation
 
-`POST /api/internal/v1/messaging/links/confirm`
+`POST /api/internal/v1/messaging/link-challenges/consume`
 
 The signed adapter sends the challenge token plus the platform subject observed from Telegram/Bale. Subject ID alone, phone number, student number, username or chat ID is not identity proof.
 
@@ -174,7 +174,7 @@ Claim contract provides:
 
 It does not provide a raw unscoped storage path or secret.
 
-Completion returns only bounded metadata: output SHA-256, size, MIME, renderer version and opaque artifact reference. Full Python rendering is owned by Chat 2; the backend job contract is the authority.
+Completion returns only bounded output metadata: SHA-256, size, MIME and opaque artifact reference. The renderer algorithm version is fixed by the claimed job and cannot be overridden by worker completion. Full Python rendering is owned by Chat 2; the backend job contract is the authority.
 
 ## Update Server button
 
@@ -190,10 +190,10 @@ It is platform-scoped and is not granted to ordinary representatives/workspace a
 
 ### Request
 
-`POST /api/internal/v1/deployments/requests`
+`POST /api/internal/v1/deployments/request`
 
 Allowed body fields only:
-- `platform`;
+- `platform` — must be `telegram` for Stage 7 deployment control;
 - `subject`;
 - `target_key`;
 - `idempotency_key`.
