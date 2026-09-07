@@ -32,12 +32,13 @@ try {
             'current_sha' => $preflight['current_sha'],
             'candidate_sha' => $preflight['candidate_sha'],
         ], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . PHP_EOL;
-    } catch (PlatformException $error) {
-        $snapshots->recordFailure($target, $error->errorCode);
-        fwrite(STDERR, 'Update status refresh failed: ' . $error->errorCode . PHP_EOL);
+    } catch (Throwable $error) {
+        $safeCode = $error instanceof PlatformException ? $error->errorCode : 'status_check_failed';
+        $snapshots->recordFailure($target, $safeCode);
+        fwrite(STDERR, 'Update status refresh failed: ' . $safeCode . PHP_EOL);
         exit(2);
     }
-} catch (Throwable $error) {
+} catch (Throwable) {
     fwrite(STDERR, 'Update status refresher failed.' . PHP_EOL);
     exit(1);
 }
