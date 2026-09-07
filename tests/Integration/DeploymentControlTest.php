@@ -35,10 +35,12 @@ final class DeploymentControlTest
         $this->database->prepare("INSERT INTO rbac_role_assignments (id, user_id, role_template_id, scope_id, valid_from, created_at) VALUES (:id, :user, :role, '00000000-0000-7000-8000-000000000001', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))")
             ->execute(['id' => Uuid::v7(), 'user' => $operator, 'role' => $role]);
 
+        $student = $this->user('Multi member');
         $representative = $this->user('Representative');
         $audit = new AuditLogger($this->database);
         $access = new AccessGate($this->database, new ScopeAuthorizer($this->database));
         $control = new DeploymentControlService($this->database, $access, $audit);
+        $this->expectCode('forbidden', fn () => $control->request($student, 'telegram', 'stage7-test-target', 'member-denied'));
         $this->expectCode('forbidden', fn () => $control->request($representative, 'telegram', 'stage7-test-target', 'rep-denied'));
 
         $target = $this->target('stage7-test-target');
