@@ -26,6 +26,7 @@ final class MigrationRunner
         }
 
         $result = ['applied' => [], 'skipped' => []];
+        $alterGuard = new AdditiveAlterGuard($this->database);
 
         try {
             $files = glob(rtrim($this->migrationDirectory, '/\\') . '/*.sql') ?: [];
@@ -49,6 +50,9 @@ final class MigrationRunner
                 }
 
                 foreach (SqlStatementSplitter::split($sql) as $statement) {
+                    if ($alterGuard->decision($statement) === 'skip') {
+                        continue;
+                    }
                     $this->database->exec($statement);
                 }
 
