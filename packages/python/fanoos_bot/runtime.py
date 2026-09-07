@@ -45,10 +45,14 @@ class DeliveryReceiptPump:
         return True
 
     def run_once(self) -> bool:
-        rows = self.state.pending_delivery_receipts(1)
+        rows = self.state.pending_delivery_receipts(25)
         if not rows:
             return False
-        return self.run_key(str(rows[0]["idempotency_key"]))
+        # One permanently failing/poison receipt must not starve later rows.
+        for row in rows:
+            if self.run_key(str(row["idempotency_key"])):
+                return True
+        return False
 
 
 class BotRuntime:
