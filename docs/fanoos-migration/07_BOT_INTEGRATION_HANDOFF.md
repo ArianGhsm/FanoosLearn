@@ -1,139 +1,124 @@
 # Stage 7 Bot → Platform / Integration Handoff
 
-Status: **SOURCE INTEGRATED / RUNTIME VALIDATION REQUIRED**
+Status: **PLATFORM SOURCE CONTRACTS RESOLVED / BOT RE-GATE REQUIRED / RUNTIME VALIDATION REQUIRED**
 
-Source baseline audited for this handoff: `c8ece207bb6f6555e283c593020fdedf518b6420`.
+Original bot handoff baseline: `e21b606d920ee16bad145ad66deee6fed4852044`.
 
-The Telegram + Bale Stage 7 consumer workstream is merged. PR #5 added the bot/worker source surface and PR #6 hardened protected-delivery receipt replay safety. This document lists only the remaining work that cannot be completed safely inside the bot-owned paths without a new/frozen Platform or Integration contract.
+The bot workstream correctly stopped at Platform-owned boundaries instead of inventing APIs. This document now records how those gaps are resolved by the Platform/Integration workstream. Exact request schemas, actions and response media types are authoritative in `contracts/openapi/internal-v1.yaml`; bot implementation must consume that contract rather than this prose alone.
 
-## Already integrated on main
+## 1. Messaging unlink / revoke — RESOLVED
 
-- shared Python `internal-v1` HMAC client; exact raw-body digest/signature, nonce/timestamp and bounded safe retries;
-- separate Telegram and Bale runtimes, tokens, offsets and disposable local state;
-- secure link-challenge consume and canonical workspace selection;
-- server-owned order creation/status and entitlement projection;
-- notification projection/lease/send/receipt flow;
-- protected delivery issue → consume/re-authorize → provider send → receipt;
-- Telegram `protect_content` and explicit Bale fail-closed behavior when forward protection is required;
-- Telegram-only two-step Update Server requester/status flow without arbitrary repository/ref/SHA/path/shell input;
-- bounded protected-PDF processing engine and private temporary/spool handling;
-- restart-safe protected-delivery receipt outbox with processed-update dedupe, bounded fail-closed capacity and poison-row starvation protection;
-- bot/worker service templates, health/smoke entrypoints and one-time Codex runtime bootstrap documentation.
+Frozen endpoint:
+- `POST /api/internal/v1/messaging/links/revoke`
+- service action: `messaging.link.revoke`
+- input authority: signed adapter platform + exact platform subject only.
 
-## Platform contract work still required
+Properties:
+- no `user_id` or `link_id` input;
+- revokes only the addressed canonical messaging link;
+- canonical user remains intact;
+- unrelated Telegram/Bale link remains intact;
+- selected-workspace context is removed;
+- repeated/already-missing revoke is idempotent;
+- audit action: `messaging.unlink`.
 
-The route names below are deliberately **not invented here**. Platform owns the names, schemas, service-action identifiers, error codes and OpenAPI freeze. Bots must consume only the subsequently merged `internal-v1` contract.
+## 2. Bot-safe academic/content reads — RESOLVED
 
-### 1. Messaging unlink / revoke
+Frozen endpoints:
+- `POST /api/internal/v1/academics/schedule` — `academic.schedule.read`
+- `POST /api/internal/v1/academics/grades` — `grade.self.read`
+- `POST /api/internal/v1/announcements/list` — `announcement.read`
+- `POST /api/internal/v1/content/resources/list` — `content.catalog.read`
 
-Current `internal-v1` exposes link challenge **consume** but no bot-safe unlink/revoke operation.
+All require signed adapter identity plus linked `platform + subject`, explicit workspace, active canonical membership and the relevant existing RBAC/entitlement check.
 
-Platform must freeze a service-authenticated operation that:
-- identifies the channel with canonical `platform + subject`, never by an inferred user id;
-- revokes only the requested messaging identifier/link;
-- does not delete the canonical user or unrelated channel links;
-- invalidates any channel-local selected-workspace projection as appropriate;
-- is idempotent and auditable;
-- returns a safe machine-testable result/error envelope.
+Schedule uses canonical `tenant_workspaces.timezone_name`, local `YYYY-MM-DD` boundaries, bounded range/pagination and ISO-8601 localized timestamps. Grades are only the linked canonical user's published results. Announcements and resource catalog use stable IDs and bounded pagination. Resource catalog reuses `ProtectedResourceAuthorizer`; it does not return object/storage paths or keys.
 
-Acceptance tests must cover repeated revoke, already-revoked link, cross-channel isolation, and inability to revoke another subject.
+## 3. Protected-media source capability redemption — RESOLVED
 
-### 2. Bot-safe academic and content read projections
+Frozen endpoint:
+- `POST /api/internal/v1/protected-media/source/redeem`
+- action: `protected_media.source.redeem`
+- caller: `protected_media_worker` service identity only.
 
-Current `internal-v1` has no read operation for the Stage 7 student UX covering schedule/today/tomorrow, grades, announcements, or accessible resource/catalog listing.
+Signed JSON binds `job_id`, `lease_token`, `object_capability`. Platform validates current job lease, issuance, exact object/version/classification capability, current resource authorization, verified object state, `application/pdf` MIME and hard byte limit. Response is streamed PDF bytes with no storage address/credential.
 
-Platform must freeze read-only projections for the linked canonical user and selected/explicit workspace. At minimum the semantic surface must support:
-- schedule by canonical date/range and workspace timezone;
-- the linked user's grades/results only;
-- workspace announcements with stable ids and bounded pagination;
-- accessible resource/catalog metadata with stable canonical `resource_id` suitable for the existing secure delivery flow.
+Exact signed-request replay is rejected by the service nonce ledger. Fresh transport retry of the same source capability is permitted only while its original capability and the same current job lease remain valid. Expiry or authorization change fails closed.
 
-Requirements:
-- linked subject + canonical membership/workspace authorization on every request;
-- no browser session or CSRF impersonation;
-- no bot-local clone of academic/content domain state;
-- bounded result sizes/pagination;
-- stable ids and explicit timezone/date semantics;
-- no raw storage path/key in any response;
-- least-privilege service actions selected and frozen by Platform.
+## 4. Protected derivative publication/retrieval — RESOLVED
 
-After this is merged, the bot workstream can replace the current web/navigation fallback with native quick views without duplicating the website domain model.
+Publication is a two-step cryptographic boundary:
 
-### 3. Protected-media source capability redemption
+1. `POST /api/internal/v1/protected-media/artifacts/authorize-publish`
+   - action `protected_media.artifact.authorize`
+   - signed JSON binds job, lease, completion key, checksum, size and `application/pdf` MIME;
+   - returns a short-lived upload capability bound to exactly that metadata.
 
-`protected-media/claim` currently returns an opaque `object_capability`, and `ProtectedMediaJobService` intentionally does not expose a storage key/path. There is no frozen service/HTTP operation that redeems that capability into bounded source bytes, so the production worker correctly stops before claiming jobs.
+2. `POST /api/internal/v1/protected-media/artifacts/publish`
+   - action `protected_media.artifact.publish`
+   - worker-only;
+   - raw `application/pdf` body plus opaque `X-Fanoos-Upload-Capability`;
+   - normal service HMAC binds exact PDF bytes, upload capability separately binds expected job/checksum/size/MIME.
 
-Platform must freeze the redemption boundary with all of these properties:
-- capability is opaque and short-lived and cannot be converted by the worker into a raw storage address;
-- redemption is bound to the leased job/source and expires no later than the permitted processing window;
-- server enforces an upper byte bound and safe MIME/content expectations;
-- no directory traversal, arbitrary filesystem path, bucket key or unrestricted URL is accepted from the worker;
-- replay/expiry and authorization-change behavior is defined and tested;
-- logs contain ids/hashes/sizes/timings, not source bytes or secrets.
+Canonical table `protected_media_artifacts` binds one artifact to job/issuance/user/resource/version. Same-byte publication retry is idempotent; conflicting bytes fail closed. Platform-generated `artifact_ref` is opaque and not a storage address.
 
-The exact transport (streaming internal response, a separately constrained object capability, or another Platform-owned mechanism) belongs to Platform and must be frozen before the worker adapter is enabled.
+Completion through `/protected-media/complete` now validates that result checksum/size/MIME/artifact_ref match the canonical published artifact.
 
-### 4. Protected derivative publication and retrieval
+Bot retrieval:
+- `/protected-media/derivatives/issue` — `protected_media.derivative.issue`
+- `/protected-media/derivatives/redeem` — `protected_media.derivative.redeem`
 
-`MediaComplete` currently records checksum, size, MIME and opaque `artifact_ref`, but there is no frozen end-to-end contract for publishing the derivative into canonical protected storage and later retrieving that exact derivative for a re-authorized bot delivery.
+Issue/redeem both enforce canonical user/workspace and current resource/version authorization. Artifact capability is short-lived and user/platform/job bound. Expired/deleted/revoked artifacts fail closed. The original source must never be used as fallback.
 
-Platform must define:
-- how the worker publishes the derivative without exposing a general-purpose storage credential;
-- canonical ownership/lifetime of the resulting artifact;
-- how `artifact_ref` is validated and associated with the correct job/issuance/user/resource-version;
-- how a bot receives only a short-lived capability for the completed derivative after a fresh delivery re-authorization;
-- checksum/size/MIME verification before provider upload;
-- idempotent completion/retry and no cross-user derivative reuse;
-- cleanup/expiry semantics for failed, superseded and expired artifacts.
+## 5. Read-only Owner Control Plane — RESOLVED
 
-The bot must never fall back to the original protected source merely because derivative retrieval is unavailable.
+Frozen Telegram-only endpoint:
+- `POST /api/internal/v1/deployments/overview`
+- action: `deployment.overview`
 
-### 5. Owner control-plane read projection
+If the linked user lacks platform-scoped `deployment.manage`, the response exposes only `can_manage_deployments=false`. It does not probe by creating an update request.
 
-The current control plane safely supports deployment **request** and **status**, but there is no side-effect-free bot-safe projection for the owner panel sections requested by Stage 7: current release, candidate/update availability, system/update health, last deployment and whether the linked user may see deployment controls.
+Authorized overview returns safe current/candidate/update-availability/health/last-deployment fields. Candidate/current health snapshot is produced only by updater-side `scripts/ops/refresh-update-status.php`, which uses existing `CanonicalMainUpdateExecutor` canonical-main/exact-SHA/CI/health preflight and writes `release_update_snapshots`.
 
-Platform must freeze a read-only, permission-filtered owner projection. It must:
-- reveal no secret/env/raw log or unrelated PII;
-- resolve the deploy candidate server-side from the canonical approved source only;
-- expose real states only, never invented percentage/ETA;
-- allow the Telegram adapter to hide/deny Update Server controls for users without canonical deployment permission without performing a deployment request as a permission probe.
+The HTTP owner read path never executes Git/shell/process commands and never has updater credentials. Bale deployment controls remain disabled.
 
-Bale must remain without deployment controls unless a later explicit product/security decision changes that policy.
+## 6. Integration-only Python CI — RESOLVED
 
-## Integration-only CI wiring requested
+Central `.github/workflows/ci.yml` now contains a dedicated `python-bot-worker` job that verifies a supported Python 3 runtime and executes:
 
-`.github/workflows/**` is Integration-Only and was intentionally not edited by the bot workstream.
+```bash
+bash ops/stage7-bots/run-deterministic-tests.sh
+```
 
-Integration should add the smallest Python bot/worker CI job that:
-1. checks out the exact PR commit;
-2. provides a supported Python 3 runtime;
-3. runs `bash ops/stage7-bots/run-deterministic-tests.sh`;
-4. fails the PR if compileall or any `tests/bots` / `tests/workers` unittest fails.
+Existing PHP 8.2/8.4, MySQL 8.4, repository-safety and exact-commit artifact gates remain intact.
 
-Do not weaken the existing PHP/MySQL, repository-safety or exact-commit artifact gates. The deterministic Python tests do not require live Telegram/Bale tokens, paid providers, or production secrets.
+## New Platform state/runtime requirements
 
-## Runtime/bootstrap work after the contracts merge
+Migration `0010_bot_handoff_contracts.sql` adds:
+- canonical workspace timezone field;
+- `protected_media_artifacts` for personalized derivative ownership/lifetime;
+- `release_update_snapshots` for safe read-only owner status.
 
-Only after Sections 1–5 that are required for the chosen launch scope are merged and bot adapters are updated:
-- execute `07_CODEX_ONE_TIME_RUNTIME_BOOTSTRAP.md` against one exact approved main SHA;
-- create separate runtime identities/env/state for Telegram, Bale, notification projector and protected-media worker;
-- install and verify qpdf, Poppler and required Pillow/font shaping support for protected media;
-- run backend/API health plus Telegram and Bale `getMe` smoke;
-- run safe message/callback/workspace/payment/notification smoke without paid-provider side effects;
-- verify Telegram protected-content behavior with an authorized disposable fixture;
-- verify Bale required-protection case fails closed;
-- rehearse protected-media malformed/oversize/page/time/cleanup cases;
-- exercise Update Server dry/supervised flow only if the user explicitly authorizes the real update step;
-- keep live results as `RUNTIME_VALIDATION_REQUIRED` until actually observed.
+One-time runtime/bootstrap must provision:
+- `FANOOS_PROTECTED_MEDIA_ROOT` outside public/release roots;
+- `FANOOS_PROTECTED_MEDIA_CAPABILITY_KEY` outside Git;
+- bounded `FANOOS_INTERNAL_BINARY_MAX_BYTES`;
+- service-action allowlists for the new internal operations;
+- updater-side status refresh service/timer;
+- real workspace timezone values;
+- expired derivative cleanup scheduling.
 
-## Re-entry gate for the bot workstream
+No server changes are performed by this source task.
 
-Resume bot feature coding only after the relevant new Platform contracts are merged to `main` and visible in `contracts/openapi/internal-v1.yaml` plus the Platform handoff docs. At re-entry:
-1. read the new `main` SHA and open PRs;
-2. compare the new internal contract to this handoff;
-3. update only bot/worker consumers first;
-4. add deterministic contract/regression tests;
-5. open a scoped PR and require green repository CI;
-6. do not claim production parity before live runtime smoke.
+## Bot re-entry gate
 
-Until then the correct product status is **PARTIAL / RUNTIME_VALIDATION_REQUIRED**, not production-complete.
+Chat 2 may resume only after this Platform branch is merged to `main` with green repository CI. At re-entry it must:
+1. verify the new exact `main` SHA and no conflicting open PR;
+2. read `contracts/openapi/internal-v1.yaml` and `07_PLATFORM_HANDOFF_TO_BOTS.md`;
+3. update adapter/worker consumers only—do not invent alternate domain APIs;
+4. wire native schedule/grades/announcements/resource views;
+5. wire subject-bound unlink;
+6. replace protected-media private-spool/source placeholders with frozen redeem/authorize-publish/publish/complete/derivative contracts;
+7. wire Telegram owner overview without enabling Bale deployment controls;
+8. run deterministic bot/worker tests plus repository CI;
+9. retain **RUNTIME_VALIDATION_REQUIRED** until one-time runtime bootstrap and live Telegram/Bale/worker smoke are actually observed.

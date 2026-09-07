@@ -1,0 +1,17 @@
+[Unit]
+Description=FANOOS canonical-main update status refresh
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=fanoos-updater
+Group=fanoos-updater
+WorkingDirectory=/absolute/private/path/fanoos/current
+EnvironmentFile=/absolute/private/path/fanoos-updater.env
+ExecStart=/usr/bin/php /absolute/private/path/fanoos/current/scripts/ops/refresh-update-status.php
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/absolute/private/path/fanoos-updater-checkout /absolute/private/path/fanoos

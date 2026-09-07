@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Fanoos Internal Service API
-  version: 1.0.0
+  version: 1.1.0
   description: |
     Signed service-only API for Telegram, Bale and narrow workers. Human bearer sessions and browser CSRF are not accepted here.
     Every request is signed over the exact raw body using HMAC-SHA256. Canonical bytes are:
@@ -19,6 +19,13 @@ paths:
       x-required-service-action: messaging.link.consume
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LinkConsume' } } } }
       responses: { '200': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' } }
+  /messaging/links/revoke:
+    post:
+      operationId: revokeLinkedMessagingSubject
+      x-required-service-action: messaging.link.revoke
+      description: Revokes only the canonical link addressed by the signed adapter's own platform plus subject. No user_id or link_id is accepted.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LinkedSubject' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' } }
   /messaging/workspaces/list:
     post:
       operationId: listLinkedWorkspaces
@@ -30,6 +37,32 @@ paths:
       operationId: selectLinkedWorkspace
       x-required-service-action: messaging.workspace.select
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LinkedWorkspace' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /academics/schedule:
+    post:
+      operationId: getBotSchedule
+      x-required-service-action: academic.schedule.read
+      description: Returns a bounded local-date range in the canonical workspace timezone. Today/tomorrow are expressed as workspace-local YYYY-MM-DD dates.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ScheduleRead' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /academics/grades:
+    post:
+      operationId: getBotSelfGrades
+      x-required-service-action: grade.self.read
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PagedWorkspaceRead' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /announcements/list:
+    post:
+      operationId: listBotAnnouncements
+      x-required-service-action: announcement.read
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PagedWorkspaceRead' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+  /content/resources/list:
+    post:
+      operationId: listBotAccessibleResources
+      x-required-service-action: content.catalog.read
+      description: Returns only canonical resource/version identifiers and safe catalog metadata after current RBAC/entitlement authorization. Storage paths and object keys are never returned.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PagedWorkspaceRead' } } } }
       responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
   /commerce/orders:
     post:
@@ -91,18 +124,78 @@ paths:
       x-required-service-action: protected_media.claim
       requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false } } } }
       responses: { '200': { $ref: '#/components/responses/Success' } }
+  /protected-media/source/redeem:
+    post:
+      operationId: redeemProtectedMediaSource
+      x-required-service-action: protected_media.source.redeem
+      description: Worker-only redemption of the opaque source capability. The response contains PDF bytes, never a filesystem path, storage key, bucket credential or unrestricted URL.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MediaSourceRedeem' } } } }
+      responses:
+        '200':
+          description: Authorized bounded source PDF bytes.
+          content: { application/pdf: { schema: { type: string, format: binary } } }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+  /protected-media/artifacts/authorize-publish:
+    post:
+      operationId: authorizeProtectedMediaArtifactPublish
+      x-required-service-action: protected_media.artifact.authorize
+      description: Binds job/lease/completion metadata plus expected checksum, size and MIME in a signed JSON request and returns a short-lived upload capability.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MediaArtifactAuthorize' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' } }
+  /protected-media/artifacts/publish:
+    post:
+      operationId: publishProtectedMediaArtifact
+      x-required-service-action: protected_media.artifact.publish
+      description: Worker-only raw PDF upload. X-Fanoos-Upload-Capability is separately signed and bound to job/checksum/size/MIME; normal service HMAC also covers the exact PDF body.
+      parameters:
+        - in: header
+          name: X-Fanoos-Upload-Capability
+          required: true
+          schema: { type: string, minLength: 16, maxLength: 2048 }
+      requestBody:
+        required: true
+        content: { application/pdf: { schema: { type: string, format: binary } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '401': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } }
   /protected-media/complete:
     post:
       operationId: completeProtectedMedia
       x-required-service-action: protected_media.complete
+      description: Completion succeeds only when result metadata matches the canonically published artifact for the same job.
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MediaComplete' } } } }
-      responses: { '200': { $ref: '#/components/responses/Success' } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' } }
   /protected-media/fail:
     post:
       operationId: failProtectedMedia
       x-required-service-action: protected_media.fail
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MediaFail' } } } }
       responses: { '200': { $ref: '#/components/responses/Success' } }
+  /protected-media/derivatives/issue:
+    post:
+      operationId: issueProtectedMediaDerivative
+      x-required-service-action: protected_media.derivative.issue
+      description: Reauthorizes the linked canonical user and exact resource version before issuing a short-lived user/platform/job-bound artifact capability.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MediaDerivativeIssue' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /protected-media/derivatives/redeem:
+    post:
+      operationId: redeemProtectedMediaDerivative
+      x-required-service-action: protected_media.derivative.redeem
+      description: Freshly reauthorizes before returning personalized PDF bytes; it never falls back to the original source object.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MediaDerivativeRedeem' } } } }
+      responses:
+        '200':
+          description: Authorized personalized PDF bytes.
+          content: { application/pdf: { schema: { type: string, format: binary } } }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+  /deployments/overview:
+    post:
+      operationId: getOwnerDeploymentOverview
+      x-required-service-action: deployment.overview
+      description: Telegram-only read projection. Unauthorized linked users receive only can_manage_deployments=false. Authorized users receive safe updater-side snapshot and last deployment metadata; no shell command, secret, environment value, raw log or PII is exposed.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/DeploymentOverview' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
   /deployments/request:
     post:
       operationId: requestCanonicalMainDeployment
@@ -122,10 +215,11 @@ components:
       type: apiKey
       in: header
       name: X-Fanoos-Key-Id
-      description: Key identifier only. The request is additionally authenticated by timestamp, nonce, raw-body digest and HMAC signature headers described above.
+      description: Key identifier only. Timestamp, nonce, exact raw-body digest and HMAC signature headers are also required.
   schemas:
     Uuid: { type: string, format: uuid }
     Platform: { type: string, enum: [telegram, bale] }
+    Cursor: { type: [string, 'null'], maxLength: 32, pattern: '^[A-Za-z0-9_-]*$' }
     LinkedSubject:
       type: object
       required: [platform, subject]
@@ -134,12 +228,34 @@ components:
     LinkedWorkspace:
       type: object
       required: [platform, subject, workspace_id]
-      properties: { platform: { $ref: '#/components/schemas/Platform' }, subject: { type: string }, workspace_id: { $ref: '#/components/schemas/Uuid' } }
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, subject: { type: string, minLength: 1, maxLength: 160 }, workspace_id: { $ref: '#/components/schemas/Uuid' } }
       additionalProperties: false
     LinkConsume:
       type: object
       required: [platform, challenge_token, subject]
-      properties: { platform: { $ref: '#/components/schemas/Platform' }, challenge_token: { type: string }, subject: { type: string } }
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, challenge_token: { type: string, minLength: 1, maxLength: 128 }, subject: { type: string, minLength: 1, maxLength: 160 } }
+      additionalProperties: false
+    PagedWorkspaceRead:
+      type: object
+      required: [platform, subject, workspace_id]
+      properties:
+        platform: { $ref: '#/components/schemas/Platform' }
+        subject: { type: string, minLength: 1, maxLength: 160 }
+        workspace_id: { $ref: '#/components/schemas/Uuid' }
+        limit: { type: integer, minimum: 1, maximum: 100 }
+        cursor: { $ref: '#/components/schemas/Cursor' }
+      additionalProperties: false
+    ScheduleRead:
+      type: object
+      required: [platform, subject, workspace_id, from_date, to_date]
+      properties:
+        platform: { $ref: '#/components/schemas/Platform' }
+        subject: { type: string, minLength: 1, maxLength: 160 }
+        workspace_id: { $ref: '#/components/schemas/Uuid' }
+        from_date: { type: string, format: date }
+        to_date: { type: string, format: date }
+        limit: { type: integer, minimum: 1, maximum: 100 }
+        cursor: { $ref: '#/components/schemas/Cursor' }
       additionalProperties: false
     PlatformOnly:
       type: object
@@ -181,6 +297,22 @@ components:
       required: [workspace_id, issuance_id, renderer_algorithm_version]
       properties: { workspace_id: { $ref: '#/components/schemas/Uuid' }, issuance_id: { $ref: '#/components/schemas/Uuid' }, renderer_algorithm_version: { type: string, maxLength: 64 }, limits: { type: object, additionalProperties: { type: integer } } }
       additionalProperties: false
+    MediaSourceRedeem:
+      type: object
+      required: [job_id, lease_token, object_capability]
+      properties: { job_id: { $ref: '#/components/schemas/Uuid' }, lease_token: { type: string, minLength: 16 }, object_capability: { type: string, minLength: 16 } }
+      additionalProperties: false
+    MediaArtifactAuthorize:
+      type: object
+      required: [job_id, lease_token, completion_key, checksum_sha256, size, mime]
+      properties:
+        job_id: { $ref: '#/components/schemas/Uuid' }
+        lease_token: { type: string, minLength: 16 }
+        completion_key: { type: string, minLength: 32, maxLength: 160 }
+        checksum_sha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+        size: { type: integer, minimum: 5 }
+        mime: { const: application/pdf }
+      additionalProperties: false
     MediaComplete:
       type: object
       required: [job_id, lease_token, completion_key, result]
@@ -191,13 +323,28 @@ components:
         result:
           type: object
           required: [checksum_sha256, size, mime, artifact_ref]
-          properties: { checksum_sha256: { type: string, pattern: '^[0-9a-f]{64}$' }, size: { type: integer, minimum: 1 }, mime: { const: application/pdf }, artifact_ref: { type: string, pattern: '^[A-Za-z0-9._:-]{1,200}$' } }
+          properties: { checksum_sha256: { type: string, pattern: '^[0-9a-f]{64}$' }, size: { type: integer, minimum: 1 }, mime: { const: application/pdf }, artifact_ref: { type: string, pattern: '^pma:[0-9a-f-]{36}$' } }
           additionalProperties: false
       additionalProperties: false
     MediaFail:
       type: object
       required: [job_id, lease_token, failure_code]
       properties: { job_id: { $ref: '#/components/schemas/Uuid' }, lease_token: { type: string }, failure_code: { type: string, enum: [input_unavailable, authorization_changed, input_too_large, page_limit, time_limit, render_failed, output_invalid, internal_error] } }
+      additionalProperties: false
+    MediaDerivativeIssue:
+      type: object
+      required: [platform, subject, workspace_id, job_id]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, subject: { type: string, minLength: 1, maxLength: 160 }, workspace_id: { $ref: '#/components/schemas/Uuid' }, job_id: { $ref: '#/components/schemas/Uuid' } }
+      additionalProperties: false
+    MediaDerivativeRedeem:
+      type: object
+      required: [platform, subject, workspace_id, artifact_capability]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, subject: { type: string, minLength: 1, maxLength: 160 }, workspace_id: { $ref: '#/components/schemas/Uuid' }, artifact_capability: { type: string, minLength: 16, maxLength: 2048 } }
+      additionalProperties: false
+    DeploymentOverview:
+      type: object
+      required: [platform, subject, target_key]
+      properties: { platform: { const: telegram }, subject: { type: string, minLength: 1, maxLength: 160 }, target_key: { type: string, pattern: '^[A-Za-z0-9._:-]{1,96}$' } }
       additionalProperties: false
     DeploymentRequest:
       type: object

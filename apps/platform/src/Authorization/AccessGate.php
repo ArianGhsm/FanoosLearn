@@ -39,15 +39,20 @@ final class AccessGate
         return $decision;
     }
 
-    public function requirePlatform(string $actorUserId, string $permission): AuthorizationDecision
+    public function platform(string $actorUserId, string $permission): AuthorizationDecision
     {
-        $decision = $this->authorizer->decide(
+        return $this->authorizer->decide(
             $actorUserId,
             $permission,
             'platform',
             '00000000-0000-7000-8000-000000000001',
             null,
         );
+    }
+
+    public function requirePlatform(string $actorUserId, string $permission): AuthorizationDecision
+    {
+        $decision = $this->platform($actorUserId, $permission);
         if (!$decision->allowed) {
             throw new PlatformException('forbidden', 'The platform permission was not granted.', 403);
         }

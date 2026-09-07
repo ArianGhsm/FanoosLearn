@@ -1,23 +1,19 @@
 # Stage 7 — Platform Handoff to Telegram / Bale Bots
 
-## Ownership boundary
+Status: **PLATFORM CONTRACTS FROZEN / BOT RE-GATE REQUIRED / RUNTIME VALIDATION REQUIRED**
 
-Chat 2 owns Telegram/Bale adapter runtime and UX. This document freezes the platform contract it consumes.
+Chat 2 owns Telegram/Bale adapter runtime and UX. Platform remains the authority for identity, membership/RBAC, payments, entitlements, academics, content, notifications, protected delivery/media and deployment authorization. Bot-local state is transport-only and non-authoritative.
 
-Bots are adapters over canonical FANOOS state. They must not create independent canonical identity, membership, payment, entitlement, content or notification databases. Transport-local cursor/cache/message/file IDs are allowed only as non-authoritative adapter state.
+## Signed internal service authentication
 
-## Internal service authentication
-
-All `/api/internal/v1/*` requests use the service-auth contract in `contracts/openapi/internal-v1.yaml`.
-
-Headers:
+All `/api/internal/v1/*` requests use `contracts/openapi/internal-v1.yaml` and the existing `fanoos-service-v1` HMAC contract.
 
 ```text
-X-Fanoos-Key-Id: <registered key id>
-X-Fanoos-Timestamp: <unix seconds>
-X-Fanoos-Nonce: <fresh opaque nonce>
-X-Fanoos-Content-SHA256: <lowercase SHA256 of exact raw body bytes>
-X-Fanoos-Signature: <lowercase HMAC-SHA256 hex>
+X-Fanoos-Key-Id
+X-Fanoos-Timestamp
+X-Fanoos-Nonce
+X-Fanoos-Content-SHA256
+X-Fanoos-Signature
 ```
 
 Canonical signing input:
@@ -28,234 +24,218 @@ fanoos-service-v1
 <PATH>
 <TIMESTAMP>
 <NONCE>
-<SHA256_RAW_BODY>
+<SHA256_EXACT_RAW_BODY>
 ```
 
-Do not normalize/re-serialize JSON after computing the body hash. Sign the exact UTF-8 bytes sent. Nonces are one-time and timestamps are bounded. Safe auth failure must be treated as terminal for that attempt; do not retry with the same nonce.
+Use a fresh nonce for every HTTP attempt. Business idempotency keys may be reused where the operation contract allows it. Telegram and Bale use separate service identities/action allowlists.
 
-Each adapter has its own service identity/action allowlist. Telegram credentials/actions cannot be used as Bale identity and vice versa.
+## Account linking and unlinking
 
-## Account linking
+Human challenge creation remains:
+- `POST /api/v1/messaging/link-challenges`
 
-### Human side
+Adapter confirmation:
+- `POST /api/internal/v1/messaging/link-challenges/consume`
+- action: `messaging.link.consume`
 
-Authenticated browser/app user creates a challenge:
+Bot-safe unlink is now frozen:
+- `POST /api/internal/v1/messaging/links/revoke`
+- action: `messaging.link.revoke`
+- body: `platform`, `subject`
 
-`POST /api/v1/messaging/link-challenges`
+Unlink is subject-bound and idempotent. It does not accept `user_id` or `link_id`, does not delete the canonical user, does not revoke the other messaging platform, and removes the selected-workspace context for the revoked link.
 
-Body:
+## Workspace projection
 
-```json
-{"platform":"telegram"}
-```
+- `POST /api/internal/v1/messaging/workspaces/list` — `messaging.workspace.read`
+- `POST /api/internal/v1/messaging/workspaces/select` — `messaging.workspace.select`
 
-or `bale`.
+Every bot read below still supplies `platform + subject + workspace_id`; backend resolves the canonical linked user and rechecks active membership. Cached selected workspace is UX state only.
 
-The returned challenge is short-lived and shown once; FANOOS stores only its digest.
+## Native bot academic/content reads
 
-Human unlink:
+### Schedule / Today / Tomorrow
 
-`POST /api/v1/messaging/links/{platform}/revoke`
+- `POST /api/internal/v1/academics/schedule`
+- action: `academic.schedule.read`
 
-uses normal FANOOS session + CSRF.
+Input includes `from_date`, `to_date` as `YYYY-MM-DD`, optional bounded `limit` and opaque `cursor`. Dates are interpreted in the canonical `tenant_workspaces.timezone_name`. Response includes the timezone and ISO-8601 localized timestamps. Maximum date range is bounded by Platform.
 
-### Adapter confirmation
+For Today/Tomorrow UX, derive the date labels using the timezone returned/canonicalized by Platform; do not use the bot host timezone as authority.
 
-`POST /api/internal/v1/messaging/link-challenges/consume`
+### Self grades
 
-The signed adapter sends the challenge token plus the platform subject observed from Telegram/Bale. Subject ID alone, phone number, student number, username or chat ID is not identity proof.
+- `POST /api/internal/v1/academics/grades`
+- action: `grade.self.read`
 
-Confirmation is one-time, platform-bound and replay-protected. A platform subject cannot be actively linked to two FANOOS users.
+Only published grade results belonging to the linked canonical user's active enrollment are projected. Stable result/course/gradebook/item IDs are returned with bounded pagination.
 
-## Canonical workspace projection
+### Announcements
 
-List:
+- `POST /api/internal/v1/announcements/list`
+- action: `announcement.read`
 
-`POST /api/internal/v1/messaging/workspaces/list`
+Returns the linked user's canonical workspace announcement inbox with stable IDs and bounded pagination.
 
-Select/switch:
+### Accessible resources/content
 
-`POST /api/internal/v1/messaging/workspaces/select`
+- `POST /api/internal/v1/content/resources/list`
+- action: `content.catalog.read`
 
-The adapter identifies its linked platform subject. The backend resolves the canonical user and rechecks active membership. Client-provided workspace ID is a requested context only; it never proves membership.
-
-The adapter may cache the selected workspace for UX, but authorization must use backend results. If membership is suspended/ended, FANOOS invalidates/ignores the channel context.
+Each candidate is rechecked by canonical resource/RBAC/entitlement authorization. Response contains safe catalog metadata plus stable `resource_id` and authorized current `resource_version_id`; no object ID, storage key or filesystem path is a delivery authority. Use the existing protected-delivery flow for actual delivery.
 
 ## Commerce / payment
 
-Create an order/deep link:
+Unchanged:
+- create: `POST /api/internal/v1/commerce/orders` — `commerce.order.create`
+- status: `POST /api/internal/v1/commerce/orders/status` — `commerce.order.read`
 
-`POST /api/internal/v1/commerce/orders`
-
-Read canonical status:
-
-`POST /api/internal/v1/commerce/orders/status`
-
-Rules:
-- send product/workspace identifiers and an idempotency key, never a trusted amount;
-- display server-returned title/amount/currency/payment URL;
-- adapter callback/redirect text is not payment proof;
-- never grant entitlement locally;
-- success is the backend canonical order/payment projection after provider verification;
-- duplicate create/callback paths are expected and idempotent.
-
-Provider callback tokens/authority material are intentionally not part of bot projection.
+Server title/amount/currency/status are authoritative. Redirect/callback messages are not payment proof. Bots never grant entitlements locally.
 
 ## Notifications
 
-Project eligible outbox events:
+Unchanged:
+- project: `/notifications/project`
+- claim: `/notifications/claim`
+- receipt: `/notifications/receipt`
 
-`POST /api/internal/v1/notifications/project`
-
-Claim a Telegram/Bale delivery:
-
-`POST /api/internal/v1/notifications/claim`
-
-Return delivery result:
-
-`POST /api/internal/v1/notifications/receipt`
-
-The adapter must treat the lease/delivery ID as the idempotency boundary. A successful retry must not fan out a second canonical recipient delivery. Failures use bounded retry semantics from the backend.
-
-Payloads must not be copied into verbose logs. Avoid logging subjects, message bodies or identifiers unless the structured safe logging contract explicitly allows them.
+Use backend lease/idempotency semantics. Protected-delivery receipt outbox hardening in bot source remains required.
 
 ## Protected delivery
 
-Issue:
+Unchanged core sequence:
+1. `/deliveries/issue`
+2. `/deliveries/consume` immediately before provider send
+3. provider send with required channel protection
+4. `/deliveries/receipt`
 
-`POST /api/internal/v1/deliveries/issue`
+Cached provider file/message IDs never bypass consume/reauthorization.
 
-Consume immediately before send:
+## Protected-media worker — complete transport contract
 
-`POST /api/internal/v1/deliveries/consume`
+### Claim
 
-Receipt:
+- `POST /api/internal/v1/protected-media/claim`
+- action: `protected_media.claim`
 
-`POST /api/internal/v1/deliveries/receipt`
+Claim returns job/lease/completion identifiers, resource/version/issuance binding, forensic/watermark metadata, hard limits and an opaque short-lived `object_capability`. No raw path/storage key is returned.
 
-Consume is mandatory even if Telegram/Bale has a cached platform `file_id`; the cached ID is only an optimization. FANOOS rechecks user, workspace, entitlement, resource and exact version on every consume.
+### Source redemption
 
-Important response fields include:
-- exact resource/version;
-- short-lived object capability when an object is present;
-- `forward_protection_required`;
-- watermark/forensic metadata;
-- expiry.
+- `POST /api/internal/v1/protected-media/source/redeem`
+- action: `protected_media.source.redeem`
+- worker service type only
 
-Telegram adapter should use the official protected-content send capability when required. The bot audit found no equivalent official Bale capability at audit time; required direct Bale forward-protection must therefore fail closed or use the approved protected-media/document fallback defined by the bot workstream rather than silently downgrading protection.
+Signed JSON body contains `job_id`, `lease_token`, `object_capability`. Backend validates the current lease, issuance, capability object/version/classification, current authorization, object verification, MIME and byte limit, then streams `application/pdf` bytes. Exact service-request replay is rejected by the nonce ledger; a fresh request may retry the same capability only while the same lease/capability remains valid.
 
-## Protected-media worker
+The worker never receives a path, bucket key, unrestricted URL or storage credential.
 
-Enqueue:
+### Personalized derivative publication
 
-`POST /api/internal/v1/protected-media/enqueue`
+Publication is intentionally two-step so job/lease/completion metadata is cryptographically bound rather than placed in unsigned metadata headers.
 
-Worker claim:
+1. `POST /api/internal/v1/protected-media/artifacts/authorize-publish`
+   - action: `protected_media.artifact.authorize`
+   - signed JSON: `job_id`, `lease_token`, `completion_key`, expected `checksum_sha256`, `size`, `mime=application/pdf`
+   - returns a short-lived upload capability bound to the exact job/checksum/size/MIME.
 
-`POST /api/internal/v1/protected-media/claim`
+2. `POST /api/internal/v1/protected-media/artifacts/publish`
+   - action: `protected_media.artifact.publish`
+   - worker service type only
+   - `Content-Type: application/pdf`
+   - `X-Fanoos-Upload-Capability: <opaque capability>`
+   - exact PDF bytes are also covered by normal service HMAC body digest.
 
-Complete:
+Platform stores one canonical personalized artifact per job. Same-byte retry is idempotent; conflicting bytes for the same job fail closed. `artifact_ref` is server-generated (`pma:<uuid>`) and never a client storage address.
 
-`POST /api/internal/v1/protected-media/complete`
+Completion remains:
+- `POST /api/internal/v1/protected-media/complete`
+- action: `protected_media.complete`
 
-Fail:
+Completion succeeds only when checksum/size/MIME/artifact_ref match the canonically published artifact for that job.
 
-`POST /api/internal/v1/protected-media/fail`
+### Derivative issue + retrieval
 
-Claim contract provides:
-- `job_id`;
-- workspace/resource/version/issuance binding;
-- short-lived scoped object capability;
-- watermark label;
-- forensic ID;
-- renderer algorithm version;
-- input byte/page/time limits;
-- lease/completion key.
+After worker completion:
+- issue: `POST /api/internal/v1/protected-media/derivatives/issue` — `protected_media.derivative.issue`
+- redeem: `POST /api/internal/v1/protected-media/derivatives/redeem` — `protected_media.derivative.redeem`
 
-It does not provide a raw unscoped storage path or secret.
+Issue is tied to linked user/workspace/platform/job and rechecks current resource authorization + exact resource version. It returns a short-lived artifact capability plus checksum/size/MIME metadata. Redeem reauthorizes again and streams only the personalized PDF.
 
-Completion returns only bounded output metadata: SHA-256, size, MIME and opaque artifact reference. The renderer algorithm version is fixed by the claimed job and cannot be overridden by worker completion. Full Python rendering is owned by Chat 2; the backend job contract is the authority.
+If entitlement/membership/resource-version authorization changes, or the artifact expires/is cleaned up, retrieval fails closed. **Never fall back to the original protected source.**
 
-## Update Server button
+## Owner control plane
 
-### Required bot gates
+### Read-only overview
 
-The Telegram owner UX must additionally require private chat and explicit owner-facing confirmation. These are adapter gates. Backend authorization remains mandatory.
+Telegram-only:
+- `POST /api/internal/v1/deployments/overview`
+- action: `deployment.overview`
 
-Permission name:
+Body: `platform=telegram`, `subject`, `target_key`.
 
-`deployment.manage`
+For a linked user without canonical platform-scoped `deployment.manage`, response is only:
 
-It is platform-scoped and is not granted to ordinary representatives/workspace admins.
-
-### Request
-
-`POST /api/internal/v1/deployments/request`
-
-Allowed body fields only:
-- `platform` — must be `telegram` for Stage 7 deployment control;
-- `subject`;
-- `target_key`;
-- `idempotency_key`.
-
-The bot must never send or offer UI for:
-- shell/command;
-- filesystem path;
-- repository URL;
-- branch/ref/tag;
-- candidate SHA;
-- restart command;
-- environment overrides.
-
-Candidate SHA is resolved by the privileged updater from canonical FANOOS `origin/main`.
-
-### Status
-
-`POST /api/internal/v1/deployments/status`
-
-Callback-safe states to display:
-
-```text
-REQUESTED
-PREFLIGHT
-BACKUP
-TESTING
-MIGRATING
-ACTIVATING
-RESTARTING
-HEALTHCHECK
-SUCCEEDED
-FAILED
-ROLLED_BACK
+```json
+{"can_manage_deployments":false}
 ```
 
-Do not invent percentages. Duplicate callback/request retries must reuse an idempotency key and display the canonical existing request rather than create parallel deployments.
+This lets Telegram hide Update Server without creating a deployment request as a permission probe.
 
-`FAILED` must display a safe failure code/message only. Never expose command output, tokens, environment variables or deploy credential details.
+For an authorized operator the response includes only safe fields:
+- target key/node/service;
+- current release SHA;
+- server-resolved canonical-main candidate SHA;
+- `update_available` (`true|false|null` when not yet observed);
+- health state/safe check code/check time;
+- last deployment state and safe SHA/failure/timestamps.
 
-## No-cost bot/worker smoke hooks
+HTTP does **not** run Git/shell/preflight. `scripts/ops/refresh-update-status.php`, executed by the separately privileged updater-side timer, resolves canonical `ArianGhsm/FanoosLearn origin/main`, exact-SHA CI and health using the existing preflight, then writes `release_update_snapshots`. The API only reads that safe snapshot. Updater credentials never enter bot/PHP response state.
 
-The updater supports server-configured fixed hooks. Chat 2 may provide deployment-time hook commands/scripts for:
-- Telegram API/process identity smoke;
-- Bale official equivalent;
-- adapter process health;
-- protected-delivery no-cost authorization smoke;
-- protected-media worker process health.
+Bale remains without deployment controls.
 
-These hooks are installed by one-time runtime bootstrap and are never supplied by a bot callback.
+### Update request/status
 
-## Error/retry guidance
+Telegram-only and unchanged:
+- request: `/deployments/request` — `deployment.request`
+- status: `/deployments/status` — `deployment.status`
 
-- 401/403 service-auth or authorization: do not blind-retry; fix identity/scope/link state.
-- stale timestamp/nonce replay: create a new signed request with a fresh nonce.
-- idempotent create/receipt endpoints: reuse the business idempotency key but use a fresh service-auth nonce.
-- 409 lock/in-progress: show the existing deployment/delivery state; do not create a second operation.
-- entitlement/workspace denial: fail closed and do not use cached adapter state to bypass it.
+Request accepts only `platform`, `subject`, `target_key`, `idempotency_key`; no command/path/remote/branch/ref/SHA input.
 
-## Secrets and logs
+Observable states:
+`REQUESTED → PREFLIGHT → BACKUP → TESTING → MIGRATING → ACTIVATING → RESTARTING → HEALTHCHECK → SUCCEEDED`, with terminal `FAILED` or `ROLLED_BACK`. Never display fake progress percentages/ETA.
 
-Bot source/config must not contain FANOOS production HMAC keys, updater credentials, DB credentials or legacy secrets. Service secrets are injected at runtime. Responses and logs must not contain them.
+## Central CI gate
 
-## Stage 7 integration readiness for Chat 2
+Integration CI now also runs:
 
-Once this platform branch is accepted as the integration baseline and its CI is green, Chat 2 can implement adapters/workers against `contracts/openapi/internal-v1.yaml` and this document. If a bot implementation needs a contract change, return it to the integration owner rather than inventing an adapter-local variant.
+```bash
+bash ops/stage7-bots/run-deterministic-tests.sh
+```
+
+under a supported Python 3 runtime. This is additive to PHP 8.2/8.4, MySQL 8.4, repository-safety and exact-commit artifact gates.
+
+## Runtime/bootstrap delta
+
+One-time runtime bootstrap must additionally provision:
+- `FANOOS_PROTECTED_MEDIA_ROOT` outside public/release directories;
+- independent `FANOOS_PROTECTED_MEDIA_CAPABILITY_KEY` outside Git;
+- bounded `FANOOS_INTERNAL_BINARY_MAX_BYTES`;
+- new internal service action allowlists above;
+- updater-side `fanoos-update-status.service/timer` templates;
+- workspace timezone values for production tenants;
+- cleanup scheduling for expired personalized artifacts.
+
+Live Telegram/Bale/provider/worker/systemd/storage behavior remains `RUNTIME_VALIDATION_REQUIRED` until observed on the supervised runtime.
+
+## Re-entry gate for Chat 2
+
+After this Platform branch is merged and repository CI is green, Chat 2 should:
+1. re-read exact `main` SHA and `contracts/openapi/internal-v1.yaml`;
+2. update only adapter/worker consumers to these frozen paths/actions;
+3. replace web/navigation fallbacks with native reads where desired;
+4. replace the private-spool worker publication adapter with authorize-publish/raw-upload/complete;
+5. use source/derivative binary redemption contracts without storage credentials;
+6. use owner overview only for Telegram private owner UX;
+7. add deterministic regression tests and merge through repository CI;
+8. keep production status as runtime validation required until live smoke is complete.

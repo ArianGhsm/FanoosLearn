@@ -31,10 +31,28 @@ final class Request
         if (isset($_SERVER['CONTENT_TYPE'])) {
             $headers['content-type'] = (string) $_SERVER['CONTENT_TYPE'];
         }
+        if (isset($_SERVER['CONTENT_LENGTH'])) {
+            $headers['content-length'] = (string) $_SERVER['CONTENT_LENGTH'];
+        }
+
+        $contentType = strtolower(trim(explode(';', $headers['content-type'] ?? '')[0]));
+        $binaryLimit = self::binaryLimit();
+        $declaredLength = isset($headers['content-length']) && ctype_digit($headers['content-length']) ? (int) $headers['content-length'] : null;
+        if ($contentType === 'application/pdf' && $declaredLength !== null && $declaredLength > $binaryLimit) {
+            throw new PlatformException('payload_too_large', 'Binary request exceeds the configured limit.', 413);
+        }
+
         $raw = file_get_contents('php://input');
         $raw = is_string($raw) ? $raw : '';
         $body = [];
-        if (trim($raw) !== '') {
+        if ($contentType === 'application/pdf') {
+            if (strlen($raw) > $binaryLimit) {
+                throw new PlatformException('payload_too_large', 'Binary request exceeds the configured limit.', 413);
+            }
+        } elseif (trim($raw) !== '') {
+            if ($contentType !== '' && $contentType !== 'application/json') {
+                throw new PlatformException('unsupported_media_type', 'Request content type is not supported.', 415);
+            }
             try {
                 $decoded = json_decode($raw, true, 64, JSON_THROW_ON_ERROR);
             } catch (\JsonException) {
@@ -69,5 +87,12 @@ final class Request
             return trim($match[1]);
         }
         return isset($_COOKIE['fanoos_session']) ? (string) $_COOKIE['fanoos_session'] : '';
+    }
+
+    private static function binaryLimit(): int
+    {
+        $configured = getenv('FANOOS_INTERNAL_BINARY_MAX_BYTES');
+        $value = is_string($configured) && ctype_digit($configured) ? (int) $configured : 104857600;
+        return max(1048576, min(209715200, $value));
     }
 }
