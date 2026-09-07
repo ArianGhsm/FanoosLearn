@@ -10,6 +10,7 @@ use Fanoos\Tests\Integration\ContentEngineTest;
 use Fanoos\Tests\Integration\Stage7PlatformTest;
 use Fanoos\Tests\Integration\ServiceAuthLinkTest;
 use Fanoos\Tests\Integration\DeploymentControlTest;
+use Fanoos\Tests\Integration\BotPlatformHandoffTest;
 use Fanoos\Tests\Operations\BackupContractTest;
 use Fanoos\Tests\Schema\SchemaContractTest;
 use Fanoos\Tests\Storage\StorageSecurityTest;
@@ -64,6 +65,8 @@ try {
         echo "PASS Stage 7 service authentication and messaging link scenarios\n";
         $assertions += (new DeploymentControlTest($database))->run();
         echo "PASS Stage 7 deployment control-plane scenarios\n";
+        $assertions += (new BotPlatformHandoffTest($database))->run();
+        echo "PASS Stage 7 bot/platform handoff scenarios\n";
     }
 
     echo "PASS {$assertions} assertions\n";
