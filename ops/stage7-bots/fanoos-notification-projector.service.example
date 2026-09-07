@@ -1,0 +1,19 @@
+[Unit]
+Description=FANOOS Notification Projector
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=simple
+User=fanoos-notify
+Group=fanoos-notify
+EnvironmentFile=/etc/fanoos/notification-projector.env
+WorkingDirectory=/opt/fanoos/current
+ExecStart=/usr/bin/python3 /opt/fanoos/current/apps/workers/notification-projector/runtime.py
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,20 @@
+[Unit]
+Description=FANOOS Protected Media Worker (disabled until capability redemption contract exists)
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=simple
+User=fanoos-media
+Group=fanoos-media
+EnvironmentFile=/etc/fanoos/protected-media.env
+WorkingDirectory=/opt/fanoos/current
+ExecStart=/usr/bin/python3 /opt/fanoos/current/apps/workers/protected-media/runtime.py
+Restart=no
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/fanoos/protected-media
+# Do not enable this unit until the canonical object-capability redemption adapter is frozen and live-smoked.
+[Install]
+WantedBy=multi-user.target
