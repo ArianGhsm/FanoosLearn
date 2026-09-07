@@ -122,7 +122,7 @@ final class Stage7PlatformTest
     private function assertDeliveryAndMedia(array $fixture, AuditLogger $audit, ProtectedResourceAuthorizer $protected, MessagingLinkService $links, string $linkId): void
     {
         $query = $this->database->prepare(<<<'SQL'
-SELECT policy.resource_id, policy.target_scope_id, grant_record.id AS grant_id
+SELECT policy.resource_id, policy.target_scope_id
 FROM content_access_policies policy
 JOIN entitlement_grants grant_record ON grant_record.workspace_id = policy.workspace_id
  AND grant_record.subject_user_id = :user AND grant_record.target_scope_id = policy.target_scope_id
@@ -154,10 +154,21 @@ SQL);
         $receiptReplay = $receipts->record($fixture['workspace_a'], $issued['issuance_id'], 'bale', 'delivery-ok-1', 'delivered', 'cached-platform-file-id');
         self::assert($receiptReplay['idempotent'] === true, 'Protected delivery receipt replay was not idempotent.');
 
-        $this->database->prepare("UPDATE entitlement_grants SET revoked_at = UTC_TIMESTAMP(6), revoke_reason = 'stage7_test' WHERE id = :id")
-            ->execute(['id' => $protectedFixture['grant_id']]);
+        $this->database->prepare(<<<'SQL'
+UPDATE entitlement_grants
+SET revoked_at = UTC_TIMESTAMP(6), revoke_reason = 'stage7_test'
+WHERE workspace_id = :workspace AND subject_user_id = :user AND target_scope_id = :scope AND revoked_at IS NULL
+SQL)->execute([
+            'workspace' => $fixture['workspace_a'], 'user' => $fixture['student'], 'scope' => $protectedFixture['target_scope_id'],
+        ]);
         $this->expectCode('resource_access_denied', fn () => $delivery->consume($issued['delivery_token'], $fixture['student'], $fixture['workspace_a']));
-        $this->database->prepare('UPDATE entitlement_grants SET revoked_at = NULL, revoke_reason = NULL WHERE id = :id')->execute(['id' => $protectedFixture['grant_id']]);
+        $this->database->prepare(<<<'SQL'
+UPDATE entitlement_grants
+SET revoked_at = NULL, revoke_reason = NULL
+WHERE workspace_id = :workspace AND subject_user_id = :user AND target_scope_id = :scope AND revoke_reason = 'stage7_test'
+SQL)->execute([
+            'workspace' => $fixture['workspace_a'], 'user' => $fixture['student'], 'scope' => $protectedFixture['target_scope_id'],
+        ]);
 
         $expired = $delivery->issue($fixture['student'], $fixture['workspace_a'], (string) $protectedFixture['resource_id'], 'bale', time() - 1000);
         $this->expectCode('delivery_token_expired', fn () => $delivery->consume($expired['delivery_token'], $fixture['student'], $fixture['workspace_a'], time()));
