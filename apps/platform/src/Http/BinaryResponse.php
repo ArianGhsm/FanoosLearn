@@ -32,13 +32,19 @@ final class BinaryResponse
         foreach ($this->headers as $header) {
             header($header, false);
         }
+        $output = fopen('php://output', 'wb');
+        if ($output === false) {
+            fclose($this->stream);
+            throw new RuntimeException('Binary response output stream is unavailable.');
+        }
         try {
-            $copied = stream_copy_to_stream($this->stream, fopen('php://output', 'wb'));
-            if ($copied === false) {
-                throw new RuntimeException('Binary response could not be streamed.');
+            $copied = stream_copy_to_stream($this->stream, $output);
+            if ($copied === false || $copied !== $this->length) {
+                throw new RuntimeException('Binary response could not be streamed completely.');
             }
         } finally {
             fclose($this->stream);
+            fclose($output);
         }
     }
 }
