@@ -246,13 +246,17 @@ components:
         cursor: { $ref: '#/components/schemas/Cursor' }
       additionalProperties: false
     ScheduleRead:
-      allOf:
-        - $ref: '#/components/schemas/PagedWorkspaceRead'
-        - type: object
-          required: [from_date, to_date]
-          properties:
-            from_date: { type: string, format: date }
-            to_date: { type: string, format: date }
+      type: object
+      required: [platform, subject, workspace_id, from_date, to_date]
+      properties:
+        platform: { $ref: '#/components/schemas/Platform' }
+        subject: { type: string, minLength: 1, maxLength: 160 }
+        workspace_id: { $ref: '#/components/schemas/Uuid' }
+        from_date: { type: string, format: date }
+        to_date: { type: string, format: date }
+        limit: { type: integer, minimum: 1, maximum: 100 }
+        cursor: { $ref: '#/components/schemas/Cursor' }
+      additionalProperties: false
     PlatformOnly:
       type: object
       required: [platform]
