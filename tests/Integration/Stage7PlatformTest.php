@@ -198,8 +198,8 @@ SQL);
             $result[$key] = (string) $query->fetchColumn();
         }
         foreach (['a', 'b'] as $side) {
-            $scope = $this->database->prepare("SELECT id FROM rbac_scopes WHERE scope_type = 'workspace' AND workspace_id = :workspace AND entity_id = :workspace LIMIT 1");
-            $scope->execute(['workspace' => $result['workspace_' . $side]]);
+            $scope = $this->database->prepare("SELECT id FROM rbac_scopes WHERE scope_type = 'workspace' AND workspace_id = :workspace AND entity_id = :entity_workspace LIMIT 1");
+            $scope->execute(['workspace' => $result['workspace_' . $side], 'entity_workspace' => $result['workspace_' . $side]]);
             $result['scope_' . $side] = (string) $scope->fetchColumn();
         }
         foreach ($result as $key => $value) {
