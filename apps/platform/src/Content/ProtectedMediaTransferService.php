@@ -11,6 +11,7 @@ use Fanoos\Platform\Storage\SignedDownloadToken;
 use Fanoos\Platform\Support\PlatformException;
 use Fanoos\Platform\Support\Uuid;
 use PDO;
+use PDOException;
 use Throwable;
 
 final class ProtectedMediaTransferService
@@ -22,6 +23,7 @@ final class ProtectedMediaTransferService
         private readonly FilesystemObjectStore $sourceStore,
         private readonly ProtectedMediaArtifactStore $artifactStore,
         private readonly ProtectedMediaArtifactCapability $artifactCapabilities,
+        private readonly ProtectedMediaUploadCapability $uploadCapabilities,
         private readonly ProtectedMediaJobService $jobs,
         private readonly AuditLogger $audit,
         private readonly int $artifactTtlSeconds = 86400,
@@ -34,9 +36,7 @@ final class ProtectedMediaTransferService
     {
         $now ??= time();
         $job = $this->leasedJob($jobId, $leaseToken, $now);
-        if ($job['issuance_revoked_at'] !== null || $this->timestamp((string) $job['issuance_expires_at']) < $now) {
-            throw new PlatformException('authorization_changed', 'Protected media authorization changed.', 403);
-        }
+        $this->requireIssuance($job, $now);
         try {
             $payload = $this->sourceCapabilities->verify($objectCapability, (string) $job['workspace_id'], $now);
         } catch (Throwable) {
@@ -73,77 +73,59 @@ final class ProtectedMediaTransferService
         return ['stream' => $stream, 'size' => $size, 'mime' => 'application/pdf'];
     }
 
-    /** @return array{artifact_ref:string,checksum_sha256:string,size:int,mime:string,idempotent:bool} */
-    public function publishArtifact(string $jobId, string $leaseToken, string $completionKey, string $bytes, string $declaredChecksum, ?int $now = null): array
-    {
+    /** @return array{upload_capability:string,checksum_sha256:string,size:int,mime:string,expires_at:string} */
+    public function authorizeArtifactPublish(
+        string $jobId,
+        string $leaseToken,
+        string $completionKey,
+        string $checksum,
+        int $size,
+        string $mime,
+        ?int $now = null,
+    ): array {
         $now ??= time();
         $job = $this->leasedJob($jobId, $leaseToken, $now);
+        $this->requireIssuance($job, $now);
         if (!hash_equals((string) $job['completion_key'], $completionKey)) {
             throw new PlatformException('protected_media_job_not_found', 'Protected media job was not found.', 404);
         }
         $this->requireCurrentAuthorization($job);
+        $checksum = strtolower($checksum);
+        $limit = $this->outputLimit($job);
+        if (!preg_match('/^[0-9a-f]{64}$/', $checksum) || $size < 5 || $size > $limit || $mime !== 'application/pdf') {
+            throw new PlatformException('protected_media_output_invalid', 'Protected media output metadata is invalid.', 422);
+        }
+        $leaseExpiry = $this->timestamp((string) $job['leased_until']);
+        $issuanceExpiry = $this->timestamp((string) $job['issuance_expires_at']);
+        $ttl = min(120, $leaseExpiry - $now, $issuanceExpiry - $now);
+        if ($ttl < 1) {
+            throw new PlatformException('protected_media_lease_invalid', 'Protected media lease is invalid.', 409);
+        }
+        return [
+            'upload_capability' => $this->uploadCapabilities->issue($jobId, $checksum, $size, $mime, $now, $ttl),
+            'checksum_sha256' => $checksum,
+            'size' => $size,
+            'mime' => $mime,
+            'expires_at' => gmdate(DATE_ATOM, $now + $ttl),
+        ];
+    }
+
+    /** @return array{artifact_ref:string,checksum_sha256:string,size:int,mime:string,idempotent:bool} */
+    public function publishAuthorizedArtifact(string $uploadCapability, string $bytes, ?int $now = null): array
+    {
+        $now ??= time();
+        $authorization = $this->uploadCapabilities->verify($uploadCapability, $now);
+        $job = $this->leasedJobById($authorization['job'], $now);
+        $this->requireIssuance($job, $now);
+        $this->requireCurrentAuthorization($job);
         $size = strlen($bytes);
-        $limits = $this->limits($job);
-        $limit = min($this->maximumPublishedBytes, max(1, (int) $limits['max_input_bytes'] * 4));
         $checksum = hash('sha256', $bytes);
-        if ($size < 5 || $size > $limit || !str_starts_with($bytes, '%PDF-')
-            || !preg_match('/^[0-9a-f]{64}$/', strtolower($declaredChecksum))
-            || !hash_equals($checksum, strtolower($declaredChecksum))) {
-            throw new PlatformException('protected_media_output_invalid', 'Protected media output bytes are invalid.', 422);
+        if ($size !== $authorization['size'] || $authorization['mime'] !== 'application/pdf'
+            || !hash_equals($authorization['sha256'], $checksum)
+            || $size < 5 || $size > $this->outputLimit($job) || !str_starts_with($bytes, '%PDF-')) {
+            throw new PlatformException('protected_media_output_invalid', 'Protected media output bytes do not match the upload authorization.', 422);
         }
-
-        $existing = $this->artifactForJob($jobId);
-        if ($existing !== null) {
-            if (!hash_equals(bin2hex((string) $existing['checksum_sha256']), $checksum)
-                || (int) $existing['byte_size'] !== $size || (string) $existing['mime'] !== 'application/pdf') {
-                throw new PlatformException('protected_media_artifact_conflict', 'A different artifact is already published for this job.', 409);
-            }
-            return [
-                'artifact_ref' => (string) $existing['artifact_ref'], 'checksum_sha256' => $checksum,
-                'size' => $size, 'mime' => 'application/pdf', 'idempotent' => true,
-            ];
-        }
-
-        $artifactId = Uuid::v7();
-        $artifactRef = 'pma:' . $artifactId;
-        $storageKey = null;
-        try {
-            $storageKey = $this->artifactStore->put($artifactId, $bytes, $checksum);
-            $insert = $this->database->prepare(<<<'SQL'
-INSERT INTO protected_media_artifacts (
-    id, job_id, workspace_id, issuance_id, user_id, resource_id, resource_version_id,
-    artifact_ref, checksum_sha256, byte_size, mime, storage_key, state, expires_at, created_at
-) VALUES (
-    :id, :job, :workspace, :issuance, :user, :resource, :version,
-    :artifact_ref, :checksum, :size, 'application/pdf', :storage_key, 'active', FROM_UNIXTIME(:expires), UTC_TIMESTAMP(6)
-)
-SQL);
-            $insert->bindValue(':id', $artifactId);
-            $insert->bindValue(':job', $jobId);
-            $insert->bindValue(':workspace', (string) $job['workspace_id']);
-            $insert->bindValue(':issuance', (string) $job['issuance_id']);
-            $insert->bindValue(':user', (string) $job['user_id']);
-            $insert->bindValue(':resource', (string) $job['resource_id']);
-            $insert->bindValue(':version', (string) $job['resource_version_id']);
-            $insert->bindValue(':artifact_ref', $artifactRef);
-            $insert->bindValue(':checksum', hex2bin($checksum), PDO::PARAM_LOB);
-            $insert->bindValue(':size', $size, PDO::PARAM_INT);
-            $insert->bindValue(':storage_key', $storageKey);
-            $insert->bindValue(':expires', $now + max(300, min(604800, $this->artifactTtlSeconds)), PDO::PARAM_INT);
-            $insert->execute();
-        } catch (Throwable $error) {
-            if (is_string($storageKey)) {
-                try {
-                    $this->artifactStore->delete($storageKey);
-                } catch (Throwable) {
-                }
-            }
-            throw $error;
-        }
-        $this->audit->record((string) $job['workspace_id'], null, 'protected_media.artifact_publish', 'protected_media_artifact', $artifactId, 'success', [
-            'job_id' => $jobId, 'bytes' => $size, 'checksum_prefix' => substr($checksum, 0, 16),
-        ]);
-        return ['artifact_ref' => $artifactRef, 'checksum_sha256' => $checksum, 'size' => $size, 'mime' => 'application/pdf', 'idempotent' => false];
+        return $this->storeArtifact($job, $bytes, $checksum, $size, $now);
     }
 
     /** @param array<string,mixed> $result @return array{job_id:string,state:string,idempotent:bool} */
@@ -261,8 +243,98 @@ SQL);
         return $count;
     }
 
+    /** @param array<string,mixed> $job @return array{artifact_ref:string,checksum_sha256:string,size:int,mime:string,idempotent:bool} */
+    private function storeArtifact(array $job, string $bytes, string $checksum, int $size, int $now): array
+    {
+        $existing = $this->artifactForJob((string) $job['id']);
+        if ($existing !== null) {
+            return $this->existingArtifactResult($existing, $checksum, $size);
+        }
+        $artifactId = Uuid::v7();
+        $artifactRef = 'pma:' . $artifactId;
+        $storageKey = $this->artifactStore->put($artifactId, $bytes, $checksum);
+        try {
+            $insert = $this->database->prepare(<<<'SQL'
+INSERT INTO protected_media_artifacts (
+    id, job_id, workspace_id, issuance_id, user_id, resource_id, resource_version_id,
+    artifact_ref, checksum_sha256, byte_size, mime, storage_key, state, expires_at, created_at
+) VALUES (
+    :id, :job, :workspace, :issuance, :user, :resource, :version,
+    :artifact_ref, :checksum, :size, 'application/pdf', :storage_key, 'active', FROM_UNIXTIME(:expires), UTC_TIMESTAMP(6)
+)
+SQL);
+            $insert->bindValue(':id', $artifactId);
+            $insert->bindValue(':job', (string) $job['id']);
+            $insert->bindValue(':workspace', (string) $job['workspace_id']);
+            $insert->bindValue(':issuance', (string) $job['issuance_id']);
+            $insert->bindValue(':user', (string) $job['user_id']);
+            $insert->bindValue(':resource', (string) $job['resource_id']);
+            $insert->bindValue(':version', (string) $job['resource_version_id']);
+            $insert->bindValue(':artifact_ref', $artifactRef);
+            $insert->bindValue(':checksum', hex2bin($checksum), PDO::PARAM_LOB);
+            $insert->bindValue(':size', $size, PDO::PARAM_INT);
+            $insert->bindValue(':storage_key', $storageKey);
+            $insert->bindValue(':expires', $now + max(300, min(604800, $this->artifactTtlSeconds)), PDO::PARAM_INT);
+            $insert->execute();
+        } catch (PDOException $error) {
+            try {
+                $this->artifactStore->delete($storageKey);
+            } catch (Throwable) {
+            }
+            if ($error->getCode() === '23000') {
+                $raced = $this->artifactForJob((string) $job['id']);
+                if ($raced !== null) {
+                    return $this->existingArtifactResult($raced, $checksum, $size);
+                }
+            }
+            throw $error;
+        } catch (Throwable $error) {
+            try {
+                $this->artifactStore->delete($storageKey);
+            } catch (Throwable) {
+            }
+            throw $error;
+        }
+        $this->audit->record((string) $job['workspace_id'], null, 'protected_media.artifact_publish', 'protected_media_artifact', $artifactId, 'success', [
+            'job_id' => (string) $job['id'], 'bytes' => $size, 'checksum_prefix' => substr($checksum, 0, 16),
+        ]);
+        return ['artifact_ref' => $artifactRef, 'checksum_sha256' => $checksum, 'size' => $size, 'mime' => 'application/pdf', 'idempotent' => false];
+    }
+
+    /** @param array<string,mixed> $existing @return array{artifact_ref:string,checksum_sha256:string,size:int,mime:string,idempotent:bool} */
+    private function existingArtifactResult(array $existing, string $checksum, int $size): array
+    {
+        if (!hash_equals(bin2hex((string) $existing['checksum_sha256']), $checksum)
+            || (int) $existing['byte_size'] !== $size || (string) $existing['mime'] !== 'application/pdf') {
+            throw new PlatformException('protected_media_artifact_conflict', 'A different artifact is already published for this job.', 409);
+        }
+        return ['artifact_ref' => (string) $existing['artifact_ref'], 'checksum_sha256' => $checksum, 'size' => $size, 'mime' => 'application/pdf', 'idempotent' => true];
+    }
+
     /** @return array<string,mixed> */
     private function leasedJob(string $jobId, string $leaseToken, int $now): array
+    {
+        $row = $this->job($jobId);
+        if ($row['state'] !== 'leased' || $leaseToken === '' || !is_string($row['lease_token_digest'])
+            || !hash_equals((string) $row['lease_token_digest'], hash('sha256', $leaseToken, true))
+            || $row['leased_until'] === null || $this->timestamp((string) $row['leased_until']) < $now) {
+            throw new PlatformException('protected_media_lease_invalid', 'Protected media lease is invalid.', 409);
+        }
+        return $row;
+    }
+
+    /** @return array<string,mixed> */
+    private function leasedJobById(string $jobId, int $now): array
+    {
+        $row = $this->job($jobId);
+        if ($row['state'] !== 'leased' || $row['leased_until'] === null || $this->timestamp((string) $row['leased_until']) < $now) {
+            throw new PlatformException('protected_media_lease_invalid', 'Protected media lease is invalid.', 409);
+        }
+        return $row;
+    }
+
+    /** @return array<string,mixed> */
+    private function job(string $jobId): array
     {
         $query = $this->database->prepare(<<<'SQL'
 SELECT job.id, job.workspace_id, job.resource_id, job.resource_version_id, job.object_id,
@@ -278,12 +350,18 @@ LIMIT 1
 SQL);
         $query->execute(['job' => $jobId]);
         $row = $query->fetch();
-        if ($row === false || $row['state'] !== 'leased' || $leaseToken === '' || !is_string($row['lease_token_digest'])
-            || !hash_equals((string) $row['lease_token_digest'], hash('sha256', $leaseToken, true))
-            || $row['leased_until'] === null || $this->timestamp((string) $row['leased_until']) < $now) {
-            throw new PlatformException('protected_media_lease_invalid', 'Protected media lease is invalid.', 409);
+        if ($row === false) {
+            throw new PlatformException('protected_media_job_not_found', 'Protected media job was not found.', 404);
         }
         return $row;
+    }
+
+    /** @param array<string,mixed> $job */
+    private function requireIssuance(array $job, int $now): void
+    {
+        if ($job['issuance_revoked_at'] !== null || $this->timestamp((string) $job['issuance_expires_at']) < $now) {
+            throw new PlatformException('authorization_changed', 'Protected media authorization changed.', 403);
+        }
     }
 
     /** @param array<string,mixed> $job */
@@ -307,6 +385,13 @@ SQL);
             'max_pages' => (int) ($limits['max_pages'] ?? 0),
             'max_seconds' => (int) ($limits['max_seconds'] ?? 0),
         ];
+    }
+
+    /** @param array<string,mixed> $job */
+    private function outputLimit(array $job): int
+    {
+        $limits = $this->limits($job);
+        return min($this->maximumPublishedBytes, max(1, (int) $limits['max_input_bytes'] * 4));
     }
 
     /** @return array<string,mixed>|null */
