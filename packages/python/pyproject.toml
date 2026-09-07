@@ -1,14 +1,12 @@
+[project]
+name = "fanoos-bot"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = []
+
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
-[project]
-name = "fanoos-bot-core"
-version = "0.1.0"
-description = "Shared canonical-backend client and semantic bot application for FANOOS"
-requires-python = ">=3.11"
-dependencies = []
-
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["fanoos_bot*"]
+[tool.setuptools]
+packages = ["fanoos_bot"]
