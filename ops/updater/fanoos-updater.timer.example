@@ -1,0 +1,12 @@
+[Unit]
+Description=Run the FANOOS update queue worker
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1min
+AccuracySec=15s
+Persistent=true
+Unit=fanoos-updater.service
+
+[Install]
+WantedBy=timers.target
