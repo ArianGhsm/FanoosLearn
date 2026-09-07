@@ -260,7 +260,7 @@ SQL);
         $query = $this->database->query(<<<'SQL'
 SELECT assignment.user_id
 FROM rbac_role_assignments assignment
-JOIN rbac_role_template_permissions role_permission ON role_permission.role_template_id = assignment.role_template_id
+JOIN rbac_role_permissions role_permission ON role_permission.role_template_id = assignment.role_template_id
 JOIN rbac_permissions permission ON permission.id = role_permission.permission_id
 WHERE permission.permission_key = 'deployment.manage' AND assignment.user_id IS NOT NULL
   AND assignment.revoked_at IS NULL AND (assignment.expires_at IS NULL OR assignment.expires_at > UTC_TIMESTAMP(6))
