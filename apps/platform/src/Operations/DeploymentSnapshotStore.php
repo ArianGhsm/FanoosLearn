@@ -9,8 +9,11 @@ use PDO;
 
 final class DeploymentSnapshotStore
 {
-    public function __construct(private readonly PDO $database)
+    private int $maximumAgeSeconds;
+
+    public function __construct(private readonly PDO $database, int $maximumAgeSeconds = 900)
     {
+        $this->maximumAgeSeconds = max(60, min(3600, $maximumAgeSeconds));
     }
 
     /** @param array{current_sha:string,candidate_sha:string,noop:bool} $preflight */
@@ -28,13 +31,16 @@ final class DeploymentSnapshotStore
         $this->database->prepare(<<<'SQL'
 INSERT INTO release_update_snapshots (target_id, current_sha, candidate_sha, update_available, health_status, safe_check_code, checked_at, updated_at)
 VALUES (:target, NULL, NULL, NULL, 'degraded', :code, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))
-ON DUPLICATE KEY UPDATE health_status = 'degraded', safe_check_code = VALUES(safe_check_code), checked_at = UTC_TIMESTAMP(6), updated_at = UTC_TIMESTAMP(6)
+ON DUPLICATE KEY UPDATE current_sha = NULL, candidate_sha = NULL, update_available = NULL,
+    health_status = 'degraded', safe_check_code = VALUES(safe_check_code),
+    checked_at = UTC_TIMESTAMP(6), updated_at = UTC_TIMESTAMP(6)
 SQL)->execute(['target' => $target, 'code' => $safeCode]);
     }
 
     /** @return array<string,mixed>|null */
-    public function read(string $targetKey): ?array
+    public function read(string $targetKey, ?int $now = null): ?array
     {
+        $now ??= time();
         $query = $this->database->prepare(<<<'SQL'
 SELECT target.target_key, target.node_key, target.service_key, snapshot.current_sha,
        snapshot.candidate_sha, snapshot.update_available, snapshot.health_status,
@@ -49,14 +55,19 @@ SQL);
         if ($row === false) {
             return null;
         }
+
+        $checkedAt = $row['checked_at'] === null ? null : (string) $row['checked_at'];
+        $checkedTimestamp = $checkedAt === null ? false : strtotime($checkedAt . ' UTC');
+        $stale = $checkedTimestamp !== false && $checkedTimestamp < $now - $this->maximumAgeSeconds;
+
         return [
             'target' => ['key' => (string) $row['target_key'], 'node' => (string) $row['node_key'], 'service' => (string) $row['service_key']],
-            'current_sha' => $row['current_sha'] === null ? null : (string) $row['current_sha'],
-            'candidate_sha' => $row['candidate_sha'] === null ? null : (string) $row['candidate_sha'],
-            'update_available' => $row['update_available'] === null ? null : (bool) $row['update_available'],
-            'health_status' => $row['health_status'] === null ? 'unknown' : (string) $row['health_status'],
-            'safe_check_code' => $row['safe_check_code'] === null ? null : (string) $row['safe_check_code'],
-            'checked_at' => $row['checked_at'] === null ? null : (string) $row['checked_at'],
+            'current_sha' => $stale || $row['current_sha'] === null ? null : (string) $row['current_sha'],
+            'candidate_sha' => $stale || $row['candidate_sha'] === null ? null : (string) $row['candidate_sha'],
+            'update_available' => $stale || $row['update_available'] === null ? null : (bool) $row['update_available'],
+            'health_status' => $stale ? 'unknown' : ($row['health_status'] === null ? 'unknown' : (string) $row['health_status']),
+            'safe_check_code' => $stale ? 'status_stale' : ($row['safe_check_code'] === null ? null : (string) $row['safe_check_code']),
+            'checked_at' => $checkedAt,
         ];
     }
 
