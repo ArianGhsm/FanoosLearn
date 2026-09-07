@@ -16,6 +16,7 @@ use Fanoos\Platform\Content\ProtectedMediaArtifactStore;
 use Fanoos\Platform\Content\ProtectedMediaEnqueueService;
 use Fanoos\Platform\Content\ProtectedMediaJobService;
 use Fanoos\Platform\Content\ProtectedMediaTransferService;
+use Fanoos\Platform\Content\ProtectedMediaUploadCapability;
 use Fanoos\Platform\Content\ProtectedResourceAuthorizer;
 use Fanoos\Platform\Content\SecureDeliveryService;
 use Fanoos\Platform\Entitlements\EntitlementService;
@@ -76,7 +77,9 @@ final class Stage7Factory
             $config->requireString('FANOOS_DELIVERY_SIGNING_KEY'),
         );
         $mediaJobs = new ProtectedMediaJobService($database, $resources, $downloadTokens);
-        $artifactCapabilities = new ProtectedMediaArtifactCapability($config->requireString('FANOOS_PROTECTED_MEDIA_CAPABILITY_KEY'));
+        $mediaCapabilityKey = $config->requireString('FANOOS_PROTECTED_MEDIA_CAPABILITY_KEY');
+        $artifactCapabilities = new ProtectedMediaArtifactCapability($mediaCapabilityKey);
+        $uploadCapabilities = new ProtectedMediaUploadCapability($mediaCapabilityKey);
         $mediaTransfers = new ProtectedMediaTransferService(
             $database,
             $resources,
@@ -84,6 +87,7 @@ final class Stage7Factory
             new FilesystemObjectStore($config->requireString('FANOOS_STORAGE_ROOT')),
             new ProtectedMediaArtifactStore($config->requireString('FANOOS_PROTECTED_MEDIA_ROOT')),
             $artifactCapabilities,
+            $uploadCapabilities,
             $mediaJobs,
             $audit,
         );
