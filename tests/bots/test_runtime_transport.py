@@ -77,6 +77,17 @@ class DeliveryBackend:
         return {"recorded": True}
 
 
+class SelectiveDeliveryBackend:
+    def __init__(self):
+        self.receipts = []
+
+    def delivery_receipt(self, *args):
+        self.receipts.append(args)
+        if args[3] == "poison-idem":
+            raise RuntimeError("permanent poison receipt")
+        return {"recorded": True}
+
+
 class ProtectedApp:
     def __init__(self, backend, result):
         self.backend = backend
@@ -192,5 +203,30 @@ class RuntimeTest(unittest.TestCase):
         self.assertEqual(transport.n, 1)
         self.assertNotEqual(transport.events[0][2], "x" * 5000)
         self.assertEqual(backend.receipts[-1][4], "failed")
+        state.close()
+        temp.cleanup()
+
+    def test_poison_receipt_does_not_starve_later_pending_receipt(self):
+        temp = tempfile.TemporaryDirectory()
+        state = LocalState(Path(temp.name) / "s")
+        state.record_delivery_outcome(
+            "telegram", "workspace-0", "issuance-0", "poison-idem", "failed", error_code="x"
+        )
+        state.record_delivery_outcome(
+            "telegram", "workspace-1", "issuance-1", "good-idem", "delivered", provider_ref="77"
+        )
+        backend = SelectiveDeliveryBackend()
+        app = ProtectedApp(
+            backend,
+            ActionResult(
+                Screen("protected", protect_content=True),
+                DeliveryReceiptContext("workspace", "issuance", "unused-idem"),
+            ),
+        )
+        runtime = BotRuntime("telegram", RecordingTransport(), app, state)
+
+        self.assertTrue(runtime.flush_delivery_receipt_once())
+        self.assertIsNotNone(state.pending_delivery_receipt("poison-idem"))
+        self.assertIsNone(state.pending_delivery_receipt("good-idem"))
         state.close()
         temp.cleanup()
