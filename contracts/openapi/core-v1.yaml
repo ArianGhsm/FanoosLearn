@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: Fanoos Core API
-  version: 1.0.0
-  description: Tenant-scoped contract shared by the web client, bots and future applications.
+  version: 1.1.0
+  description: Canonical human/browser API. Mutating authenticated operations require the existing session CSRF contract.
 servers:
   - url: /api/v1
 security:
@@ -12,236 +12,134 @@ paths:
     post:
       security: []
       operationId: login
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [identifier, password]
-              properties:
-                identifier: { type: string, minLength: 1, maxLength: 320 }
-                password: { type: string, minLength: 1, maxLength: 4096 }
-      responses:
-        '200': { $ref: '#/components/responses/Success' }
-        '401': { $ref: '#/components/responses/Error' }
-        '429': { $ref: '#/components/responses/Error' }
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [identifier, password], properties: { identifier: { type: string }, password: { type: string } }, additionalProperties: false } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '401': { $ref: '#/components/responses/Error' }, '429': { $ref: '#/components/responses/Error' } }
   /auth/logout:
     post:
       operationId: logout
       parameters: [{ $ref: '#/components/parameters/Csrf' }]
-      responses:
-        '200': { $ref: '#/components/responses/Success' }
+      responses: { '200': { $ref: '#/components/responses/Success' } }
   /account:
-    get:
-      operationId: getCanonicalAccount
-      responses:
-        '200': { $ref: '#/components/responses/Success' }
+    get: { operationId: getCanonicalAccount, responses: { '200': { $ref: '#/components/responses/Success' } } }
   /workspaces:
-    get:
-      operationId: listMembershipWorkspaces
-      responses:
-        '200': { $ref: '#/components/responses/Success' }
+    get: { operationId: listMembershipWorkspaces, responses: { '200': { $ref: '#/components/responses/Success' } } }
   /workspaces/select:
     post:
       operationId: selectWorkspace
       parameters: [{ $ref: '#/components/parameters/Csrf' }]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [workspace_id]
-              properties: { workspace_id: { $ref: '#/components/schemas/Uuid' } }
-      responses:
-        '200': { $ref: '#/components/responses/Success' }
-        '403': { $ref: '#/components/responses/Error' }
-  /workspaces/{workspaceId}/academics:
-    get:
-      operationId: getAcademicNavigation
-      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [workspace_id], properties: { workspace_id: { $ref: '#/components/schemas/Uuid' } }, additionalProperties: false } } } }
       responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
-  /workspaces/{workspaceId}/schedule:
-    get:
-      operationId: listSchedule
+  /messaging/link-challenges:
+    post:
+      operationId: createMessagingLinkChallenge
+      parameters: [{ $ref: '#/components/parameters/Csrf' }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [platform], properties: { platform: { type: string, enum: [telegram, bale] } }, additionalProperties: false } } } }
+      responses: { '201': { $ref: '#/components/responses/Success' }, '429': { $ref: '#/components/responses/Error' } }
+  /messaging/links/{platform}/revoke:
+    post:
+      operationId: revokeMessagingLink
       parameters:
-        - { $ref: '#/components/parameters/WorkspaceId' }
-        - { name: from, in: query, schema: { type: string, format: date } }
-        - { name: to, in: query, schema: { type: string, format: date } }
-      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
-  /workspaces/{workspaceId}/grades/me:
-    get:
-      operationId: listMyPublishedGrades
-      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
-      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
-  /workspaces/{workspaceId}/announcements:
-    get:
-      operationId: listAnnouncements
-      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
-      responses: { '200': { $ref: '#/components/responses/Success' } }
-    post:
-      operationId: publishAnnouncement
-      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [title, body]
-              properties: { title: { type: string, maxLength: 200 }, body: { type: string } }
-      responses: { '201': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
-  /workspaces/{workspaceId}/forms:
-    get:
-      operationId: listOpenForms
-      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
-      responses: { '200': { $ref: '#/components/responses/Success' } }
-    post:
-      operationId: createForm
-      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
-      responses: { '201': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
-  /workspaces/{workspaceId}/forms/{formId}/submissions:
-    post:
-      operationId: submitForm
-      parameters:
-        - { $ref: '#/components/parameters/WorkspaceId' }
-        - { name: formId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
         - { $ref: '#/components/parameters/Csrf' }
-      responses: { '201': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' } }
-  /workspaces/{workspaceId}/search:
-    get:
-      operationId: searchWorkspace
-      parameters:
-        - { $ref: '#/components/parameters/WorkspaceId' }
-        - { name: q, in: query, required: true, schema: { type: string, minLength: 2, maxLength: 120 } }
-      responses: { '200': { $ref: '#/components/responses/Success' } }
-  /workspaces/{workspaceId}/orders:
-    get:
-      operationId: listMyOrders
-      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
-      responses: { '200': { $ref: '#/components/responses/Success' } }
-    post:
-      operationId: createOrder
-      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
-      responses: { '201': { $ref: '#/components/responses/Success' }, '503': { $ref: '#/components/responses/Error' } }
+        - { name: platform, in: path, required: true, schema: { type: string, enum: [telegram, bale] } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' } }
   /payments/callback:
     post:
       security: []
       operationId: verifyPaymentCallback
-      description: Public provider edge; callback token and authority are matched by digests and verification is idempotent.
       responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' } }
-  /workspaces/{workspaceId}/entitlements/check:
-    get:
-      operationId: checkEntitlement
-      parameters:
-        - { $ref: '#/components/parameters/WorkspaceId' }
-        - { name: scope_id, in: query, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
-      responses: { '200': { $ref: '#/components/responses/Success' } }
-  /workspaces/{workspaceId}/resources/{resourceId}/authorize:
-    get:
-      operationId: authorizeProtectedResource
-      parameters:
-        - { $ref: '#/components/parameters/WorkspaceId' }
-        - { name: resourceId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
-      responses: { '200': { $ref: '#/components/responses/Success' } }
-  /workspaces/{workspaceId}/resources:
-    get:
-      operationId: listResourceLibrary
-      parameters:
-        - { $ref: '#/components/parameters/WorkspaceId' }
-        - { name: q, in: query, schema: { type: string, minLength: 2, maxLength: 120 } }
-        - { name: type, in: query, schema: { type: string } }
-        - { name: course_id, in: query, schema: { $ref: '#/components/schemas/Uuid' } }
-        - { name: sort, in: query, schema: { type: string, enum: [newest, oldest, title] } }
-      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
-    post:
-      operationId: createStructuredResource
-      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
-      description: Creates a draft resource and immutable version. The resource type and format are data, not discipline-specific routes.
-      responses: { '201': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } }
-  /workspaces/{workspaceId}/resources/{resourceId}:
-    get:
-      operationId: viewAuthorizedResource
-      parameters:
-        - { $ref: '#/components/parameters/WorkspaceId' }
-        - { name: resourceId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
-      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
-  /workspaces/{workspaceId}/resources/{resourceId}/deliveries:
-    post:
-      operationId: issueProtectedDelivery
-      description: Rechecks RBAC and entitlement, records an issuance, and returns a user/workspace/version-bound short-lived token plus watermark contract.
-      parameters:
-        - { $ref: '#/components/parameters/WorkspaceId' }
-        - { name: resourceId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
-        - { $ref: '#/components/parameters/Csrf' }
-      responses: { '201': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '503': { $ref: '#/components/responses/Error' } }
-  /workspaces/{workspaceId}/deliveries/consume:
-    post:
-      operationId: consumeProtectedDelivery
-      description: Bot/web delivery edge. It reauthorizes on every serve; Telegram/Bale clients must apply forward protection when required by the response.
-      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
-      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
-  /workspaces/{workspaceId}/assessments:
-    get:
-      operationId: listPublishedAssessments
-      parameters:
-        - { $ref: '#/components/parameters/WorkspaceId' }
-        - { name: course_id, in: query, schema: { $ref: '#/components/schemas/Uuid' } }
-        - { name: kind, in: query, schema: { type: string, enum: [practice, mock_exam, past_exam] } }
-      responses: { '200': { $ref: '#/components/responses/Success' } }
-    post:
-      operationId: createAssessmentDraft
-      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
-      responses: { '201': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } }
-  /workspaces/{workspaceId}/assessments/{assessmentId}/attempts:
-    post:
-      operationId: startAssessmentAttempt
-      description: Hydrates questions only after tenant-scoped RBAC and entitlement checks; correct answers are omitted.
-      parameters:
-        - { $ref: '#/components/parameters/WorkspaceId' }
-        - { name: assessmentId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
-        - { $ref: '#/components/parameters/Csrf' }
-      responses: { '201': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
-  /workspaces/{workspaceId}/assessments/{assessmentId}/analytics:
-    get:
-      operationId: getAssessmentAnalytics
-      parameters:
-        - { $ref: '#/components/parameters/WorkspaceId' }
-        - { name: assessmentId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
-      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
-  /workspaces/{workspaceId}/attempts/{attemptId}:
-    patch:
-      operationId: saveAssessmentProgress
-      description: Optimistic revision is required; stale saves are rejected.
-      parameters:
-        - { $ref: '#/components/parameters/WorkspaceId' }
-        - { name: attemptId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
-        - { $ref: '#/components/parameters/Csrf' }
-      responses: { '200': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' } }
-  /workspaces/{workspaceId}/attempts/{attemptId}/submit:
-    post:
-      operationId: submitAndScoreAssessment
-      description: Rechecks the attempt owner and revision, then scores against the immutable server-side version.
-      parameters:
-        - { $ref: '#/components/parameters/WorkspaceId' }
-        - { name: attemptId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
-        - { $ref: '#/components/parameters/Csrf' }
-      responses: { '200': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' } }
-  /workspaces/{workspaceId}/admin/members:
-    get:
-      operationId: listScopedMembers
-      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
-      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
-  /workspaces/{workspaceId}/admin/dashboard:
-    get:
-      operationId: getScopedAdminDashboard
-      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
-      responses: { '200': { $ref: '#/components/responses/Success' } }
   /admin/dashboard:
+    get: { operationId: getGlobalAdminDashboard, responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } } }
+  /workspaces/{workspaceId}/academics:
+    get: { operationId: getAcademicNavigation, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/schedule:
     get:
-      operationId: getGlobalAdminDashboard
+      operationId: listSchedule
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: from, in: query, schema: { type: string, format: date } }, { name: to, in: query, schema: { type: string, format: date } }]
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+  /workspaces/{workspaceId}/grades/me:
+    get: { operationId: listMyPublishedGrades, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/announcements:
+    get: { operationId: listAnnouncements, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+    post: { operationId: publishAnnouncement, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/announcements/{announcementId}/read:
+    post:
+      operationId: markAnnouncementRead
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: announcementId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }, { $ref: '#/components/parameters/Csrf' }]
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+  /workspaces/{workspaceId}/forms:
+    get: { operationId: listOpenForms, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+    post: { operationId: createForm, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/forms/{formId}/submissions:
+    post:
+      operationId: submitForm
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: formId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }, { $ref: '#/components/parameters/Csrf' }]
+      responses: { '201': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/search:
+    get:
+      operationId: searchWorkspace
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: q, in: query, required: true, schema: { type: string } }]
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+  /workspaces/{workspaceId}/admin/members:
+    get: { operationId: listScopedMembers, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/admin/representatives:
+    post: { operationId: assignRepresentative, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } } }
+  /workspaces/{workspaceId}/admin/dashboard:
+    get: { operationId: getScopedAdminDashboard, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/orders:
+    get: { operationId: listMyOrders, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+    post: { operationId: createOrder, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' }, '503': { $ref: '#/components/responses/Error' } } }
+  /workspaces/{workspaceId}/payments/{attemptId}/reconcile:
+    post:
+      operationId: reconcilePayment
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: attemptId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }, { $ref: '#/components/parameters/Csrf' }]
       responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/entitlements:
+    post: { operationId: grantEntitlement, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } } }
+  /workspaces/{workspaceId}/entitlements/{grantId}/revoke:
+    post:
+      operationId: revokeEntitlement
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: grantId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }, { $ref: '#/components/parameters/Csrf' }]
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+  /workspaces/{workspaceId}/entitlements/check:
+    get: { operationId: checkEntitlement, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: scope_id, in: query, required: true, schema: { $ref: '#/components/schemas/Uuid' } }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/resources:
+    get: { operationId: listResourceLibrary, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+    post: { operationId: createStructuredResource, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/resources/{resourceId}:
+    get: { operationId: viewAuthorizedResource, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/ResourceId' }], responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } } }
+  /workspaces/{workspaceId}/resources/{resourceId}/authorize:
+    get: { operationId: authorizeProtectedResource, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/ResourceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/resources/{resourceId}/versions:
+    post: { operationId: createResourceVersion, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/ResourceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/resources/{resourceId}/versions/{versionId}/review-request:
+    post: { operationId: requestResourceReview, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/ResourceId' }, { $ref: '#/components/parameters/VersionId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/resources/{resourceId}/versions/{versionId}/review:
+    post: { operationId: reviewResourceVersion, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/ResourceId' }, { $ref: '#/components/parameters/VersionId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/resources/{resourceId}/versions/{versionId}/publish:
+    post: { operationId: publishResourceVersion, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/ResourceId' }, { $ref: '#/components/parameters/VersionId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/resources/{resourceId}/deliveries:
+    post: { operationId: issueProtectedDelivery, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/ResourceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/deliveries/consume:
+    post: { operationId: consumeProtectedDelivery, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/assessments:
+    get: { operationId: listPublishedAssessments, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+    post: { operationId: createAssessmentDraft, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/assessments/{assessmentId}/versions/{versionId}/review-request:
+    post: { operationId: requestAssessmentReview, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AssessmentId' }, { $ref: '#/components/parameters/VersionId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/assessments/{assessmentId}/versions/{versionId}/review:
+    post: { operationId: reviewAssessmentVersion, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AssessmentId' }, { $ref: '#/components/parameters/VersionId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/assessments/{assessmentId}/versions/{versionId}/publish:
+    post: { operationId: publishAssessmentVersion, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AssessmentId' }, { $ref: '#/components/parameters/VersionId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/assessments/{assessmentId}/attempts:
+    post: { operationId: startAssessmentAttempt, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AssessmentId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/assessments/{assessmentId}/analytics:
+    get: { operationId: getAssessmentAnalytics, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AssessmentId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/attempts/{attemptId}:
+    patch: { operationId: saveAssessmentProgress, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AttemptId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' } } }
+  /workspaces/{workspaceId}/attempts/{attemptId}/submit:
+    post: { operationId: submitAndScoreAssessment, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AttemptId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/attempts/{attemptId}/review:
+    get: { operationId: reviewAssessmentAttempt, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AttemptId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
 components:
   securitySchemes:
     bearerSession: { type: http, scheme: bearer }
@@ -250,30 +148,18 @@ components:
     Envelope:
       type: object
       required: [ok, data, meta]
-      properties:
-        ok: { const: true }
-        data: {}
-        meta:
-          type: object
-          required: [api_version, request_id]
-          properties: { api_version: { const: v1 }, request_id: { type: string } }
+      properties: { ok: { const: true }, data: {}, meta: { type: object, required: [api_version, request_id], properties: { api_version: { const: v1 }, request_id: { type: string } } } }
     ErrorEnvelope:
       type: object
       required: [ok, error, meta]
-      properties:
-        ok: { const: false }
-        error:
-          type: object
-          required: [code, message]
-          properties: { code: { type: string }, message: { type: string } }
-        meta: { type: object }
+      properties: { ok: { const: false }, error: { type: object, required: [code, message], properties: { code: { type: string }, message: { type: string } } }, meta: { type: object } }
   parameters:
     WorkspaceId: { name: workspaceId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+    ResourceId: { name: resourceId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+    AssessmentId: { name: assessmentId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+    AttemptId: { name: attemptId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+    VersionId: { name: versionId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
     Csrf: { name: X-CSRF-Token, in: header, required: true, schema: { type: string } }
   responses:
-    Success:
-      description: Successful response
-      content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } }
-    Error:
-      description: Error response
-      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } }
+    Success: { description: Successful response, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
+    Error: { description: Error response, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
