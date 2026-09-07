@@ -32,7 +32,7 @@ final class BotReadProjectionService
         }
         $endExclusive = $to->modify('+1 day');
         $offset = $this->decodeCursor($cursor);
-        $limit = max(1, min(200, $limit));
+        $limit = max(1, min(100, $limit));
         $query = $this->database->prepare(<<<'SQL'
 SELECT event.id, event.event_type, event.title, event.starts_at, event.ends_at,
        event.location_text, event.status, offering.id AS offering_id,
@@ -115,7 +115,7 @@ SQL);
     {
         $this->access->requireWorkspace($userId, $workspaceId, 'notification.receive');
         $offset = $this->decodeCursor($cursor);
-        $limit = max(1, min(50, $limit));
+        $limit = max(1, min(100, $limit));
         $query = $this->database->prepare(<<<'SQL'
 SELECT message.id, message.title, message.body, message.published_at,
        recipient.status, recipient.read_at
@@ -144,8 +144,8 @@ SQL);
     {
         $this->access->requireWorkspace($userId, $workspaceId, 'resource.view');
         $offset = $this->decodeCursor($cursor);
-        $limit = max(1, min(50, $limit));
-        $scanLimit = min(200, max($limit + 1, $limit * 4));
+        $limit = max(1, min(100, $limit));
+        $scanLimit = min(400, max($limit + 1, $limit * 4));
         $query = $this->database->prepare(<<<'SQL'
 SELECT resource.id AS resource_id, resource.title, resource.description,
        resource.visibility, resource.updated_at, type.type_key,
@@ -167,7 +167,9 @@ SQL);
         $query->execute();
         $candidates = $query->fetchAll();
         $items = [];
+        $consumed = 0;
         foreach ($candidates as $candidate) {
+            ++$consumed;
             $decision = $this->resources->decide($userId, $workspaceId, (string) $candidate['resource_id']);
             if (!$decision['allowed']) {
                 continue;
@@ -179,11 +181,13 @@ SQL);
                 break;
             }
         }
-        $nextOffset = $offset + count($candidates);
-        $hasMore = count($candidates) === $scanLimit;
+        $hasUnconsumedCandidates = $consumed < count($candidates);
+        $mayHaveAnotherBatch = count($candidates) === $scanLimit;
         return [
             'items' => $items,
-            'next_cursor' => $hasMore ? $this->encodeCursor($nextOffset) : null,
+            'next_cursor' => ($hasUnconsumedCandidates || $mayHaveAnotherBatch)
+                ? $this->encodeCursor($offset + $consumed)
+                : null,
         ];
     }
 
