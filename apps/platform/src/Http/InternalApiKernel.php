@@ -8,12 +8,16 @@ use Fanoos\Platform\Commerce\BotCommerceService;
 use Fanoos\Platform\Content\DeliveryReceiptService;
 use Fanoos\Platform\Content\ProtectedMediaEnqueueService;
 use Fanoos\Platform\Content\ProtectedMediaJobService;
+use Fanoos\Platform\Content\ProtectedMediaTransferService;
 use Fanoos\Platform\Content\SecureDeliveryService;
+use Fanoos\Platform\Core\BotReadProjectionService;
 use Fanoos\Platform\Integration\ServiceAuthenticator;
 use Fanoos\Platform\Integration\ServicePrincipal;
 use Fanoos\Platform\Messaging\MessagingLinkService;
+use Fanoos\Platform\Messaging\MessagingUnlinkService;
 use Fanoos\Platform\Notifications\NotificationDeliveryService;
 use Fanoos\Platform\Operations\DeploymentControlService;
+use Fanoos\Platform\Operations\OwnerControlPlaneService;
 use Fanoos\Platform\Support\PlatformException;
 use Throwable;
 
@@ -22,18 +26,22 @@ final class InternalApiKernel
     public function __construct(
         private readonly ServiceAuthenticator $serviceAuth,
         private readonly MessagingLinkService $links,
+        private readonly MessagingUnlinkService $unlink,
+        private readonly BotReadProjectionService $reads,
         private readonly BotCommerceService $commerce,
         private readonly NotificationDeliveryService $notifications,
         private readonly SecureDeliveryService $delivery,
         private readonly DeliveryReceiptService $deliveryReceipts,
         private readonly ProtectedMediaEnqueueService $mediaEnqueue,
         private readonly ProtectedMediaJobService $mediaJobs,
+        private readonly ProtectedMediaTransferService $mediaTransfers,
         private readonly DeploymentControlService $deployments,
+        private readonly OwnerControlPlaneService $ownerControl,
         private readonly bool $paymentsEnabled,
     ) {
     }
 
-    public function handle(Request $request): Response
+    public function handle(Request $request): Response|BinaryResponse
     {
         $requestId = bin2hex(random_bytes(8));
         try {
@@ -41,6 +49,9 @@ final class InternalApiKernel
                 throw new PlatformException('route_not_found', 'Internal API route was not found.', 404);
             }
             $data = $this->dispatch($request);
+            if ($data instanceof BinaryResponse) {
+                return $data;
+            }
             return new Response(200, ['ok' => true, 'data' => $data, 'meta' => ['api_version' => 'internal-v1', 'request_id' => $requestId]]);
         } catch (PlatformException $error) {
             return new Response($error->httpStatus, [
@@ -66,6 +77,12 @@ final class InternalApiKernel
             $platform = $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
             return $this->links->consumeChallenge($platform, (string) ($request->body['challenge_token'] ?? ''), (string) ($request->body['subject'] ?? ''));
         }
+        if ($path === '/api/internal/v1/messaging/links/revoke') {
+            $this->assertKeys($request->body, ['platform', 'subject']);
+            $principal = $this->serviceAuth->authenticate($request, 'messaging.link.revoke');
+            $platform = $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
+            return $this->unlink->revokeSubject($platform, (string) ($request->body['subject'] ?? ''));
+        }
         if ($path === '/api/internal/v1/messaging/workspaces/list') {
             $this->assertKeys($request->body, ['platform', 'subject']);
             $principal = $this->serviceAuth->authenticate($request, 'messaging.workspace.read');
@@ -79,6 +96,34 @@ final class InternalApiKernel
             $workspace = (string) ($request->body['workspace_id'] ?? '');
             $this->links->selectWorkspace($link['link_id'], $workspace);
             return ['selected_workspace_id' => $workspace];
+        }
+        if ($path === '/api/internal/v1/academics/schedule') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id', 'from_date', 'to_date', 'limit', 'cursor']);
+            $principal = $this->serviceAuth->authenticate($request, 'academic.schedule.read');
+            $context = $this->linkedWorkspace($principal, $request->body);
+            return $this->reads->schedule(
+                $context['user_id'], $context['workspace_id'],
+                (string) ($request->body['from_date'] ?? ''), (string) ($request->body['to_date'] ?? ''),
+                (int) ($request->body['limit'] ?? 100), $this->nullableString($request->body['cursor'] ?? null),
+            );
+        }
+        if ($path === '/api/internal/v1/academics/grades') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id', 'limit', 'cursor']);
+            $principal = $this->serviceAuth->authenticate($request, 'grade.self.read');
+            $context = $this->linkedWorkspace($principal, $request->body);
+            return $this->reads->grades($context['user_id'], $context['workspace_id'], (int) ($request->body['limit'] ?? 50), $this->nullableString($request->body['cursor'] ?? null));
+        }
+        if ($path === '/api/internal/v1/announcements/list') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id', 'limit', 'cursor']);
+            $principal = $this->serviceAuth->authenticate($request, 'announcement.read');
+            $context = $this->linkedWorkspace($principal, $request->body);
+            return $this->reads->announcements($context['user_id'], $context['workspace_id'], (int) ($request->body['limit'] ?? 20), $this->nullableString($request->body['cursor'] ?? null));
+        }
+        if ($path === '/api/internal/v1/content/resources/list') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id', 'limit', 'cursor']);
+            $principal = $this->serviceAuth->authenticate($request, 'content.catalog.read');
+            $context = $this->linkedWorkspace($principal, $request->body);
+            return $this->reads->resourceCatalog($context['user_id'], $context['workspace_id'], (int) ($request->body['limit'] ?? 20), $this->nullableString($request->body['cursor'] ?? null));
         }
         if ($path === '/api/internal/v1/commerce/orders') {
             $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id', 'product_id', 'idempotency_key']);
@@ -96,9 +141,7 @@ final class InternalApiKernel
         if ($path === '/api/internal/v1/notifications/project') {
             $this->assertKeys($request->body, []);
             $principal = $this->serviceAuth->authenticate($request, 'notification.project');
-            if ($principal->serviceType !== 'notification_worker') {
-                throw new PlatformException('service_scope_denied', 'Service action is not permitted.', 403);
-            }
+            $this->requireServiceType($principal, 'notification_worker');
             return ['event_id' => $this->notifications->projectNext()];
         }
         if ($path === '/api/internal/v1/notifications/claim') {
@@ -112,12 +155,9 @@ final class InternalApiKernel
             $principal = $this->serviceAuth->authenticate($request, 'notification.receipt');
             $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
             return $this->notifications->receipt(
-                (string) ($request->body['delivery_id'] ?? ''),
-                (string) ($request->body['lease_token'] ?? ''),
-                (string) ($request->body['idempotency_key'] ?? ''),
-                (string) ($request->body['outcome'] ?? ''),
-                isset($request->body['provider_message_ref']) ? (string) $request->body['provider_message_ref'] : null,
-                isset($request->body['error_code']) ? (string) $request->body['error_code'] : null,
+                (string) ($request->body['delivery_id'] ?? ''), (string) ($request->body['lease_token'] ?? ''),
+                (string) ($request->body['idempotency_key'] ?? ''), (string) ($request->body['outcome'] ?? ''),
+                $this->nullableString($request->body['provider_message_ref'] ?? null), $this->nullableString($request->body['error_code'] ?? null),
             );
         }
         if ($path === '/api/internal/v1/deliveries/issue') {
@@ -137,13 +177,9 @@ final class InternalApiKernel
             $principal = $this->serviceAuth->authenticate($request, 'delivery.receipt');
             $platform = $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
             return $this->deliveryReceipts->record(
-                (string) ($request->body['workspace_id'] ?? ''),
-                (string) ($request->body['issuance_id'] ?? ''),
-                $platform,
-                (string) ($request->body['idempotency_key'] ?? ''),
-                (string) ($request->body['outcome'] ?? ''),
-                isset($request->body['provider_message_ref']) ? (string) $request->body['provider_message_ref'] : null,
-                isset($request->body['error_code']) ? (string) $request->body['error_code'] : null,
+                (string) ($request->body['workspace_id'] ?? ''), (string) ($request->body['issuance_id'] ?? ''), $platform,
+                (string) ($request->body['idempotency_key'] ?? ''), (string) ($request->body['outcome'] ?? ''),
+                $this->nullableString($request->body['provider_message_ref'] ?? null), $this->nullableString($request->body['error_code'] ?? null),
             );
         }
         if ($path === '/api/internal/v1/protected-media/enqueue') {
@@ -158,19 +194,72 @@ final class InternalApiKernel
             $this->requireServiceType($principal, 'protected_media_worker');
             return ['job' => $this->mediaJobs->claim()];
         }
+        if ($path === '/api/internal/v1/protected-media/source/redeem') {
+            $this->assertKeys($request->body, ['job_id', 'lease_token', 'object_capability']);
+            $principal = $this->serviceAuth->authenticate($request, 'protected_media.source.redeem');
+            $this->requireServiceType($principal, 'protected_media_worker');
+            $source = $this->mediaTransfers->redeemSource((string) ($request->body['job_id'] ?? ''), (string) ($request->body['lease_token'] ?? ''), (string) ($request->body['object_capability'] ?? ''));
+            return new BinaryResponse(200, $source['stream'], $source['mime'], $source['size']);
+        }
+        if ($path === '/api/internal/v1/protected-media/artifacts/authorize-publish') {
+            $this->assertKeys($request->body, ['job_id', 'lease_token', 'completion_key', 'checksum_sha256', 'size', 'mime']);
+            $principal = $this->serviceAuth->authenticate($request, 'protected_media.artifact.authorize');
+            $this->requireServiceType($principal, 'protected_media_worker');
+            return $this->mediaTransfers->authorizeArtifactPublish(
+                (string) ($request->body['job_id'] ?? ''), (string) ($request->body['lease_token'] ?? ''),
+                (string) ($request->body['completion_key'] ?? ''), (string) ($request->body['checksum_sha256'] ?? ''),
+                (int) ($request->body['size'] ?? 0), (string) ($request->body['mime'] ?? ''),
+            );
+        }
+        if ($path === '/api/internal/v1/protected-media/artifacts/publish') {
+            $this->assertKeys($request->body, []);
+            $principal = $this->serviceAuth->authenticate($request, 'protected_media.artifact.publish');
+            $this->requireServiceType($principal, 'protected_media_worker');
+            if ($this->contentType($request) !== 'application/pdf') {
+                throw new PlatformException('unsupported_media_type', 'Protected media artifact upload requires application/pdf.', 415);
+            }
+            $capability = $request->header('x-fanoos-upload-capability');
+            if ($capability === '') {
+                throw new PlatformException('artifact_upload_authorization_invalid', 'Artifact upload authorization is required.', 401);
+            }
+            return $this->mediaTransfers->publishAuthorizedArtifact($capability, $request->rawBody);
+        }
         if ($path === '/api/internal/v1/protected-media/complete') {
             $this->assertKeys($request->body, ['job_id', 'lease_token', 'completion_key', 'result']);
             $principal = $this->serviceAuth->authenticate($request, 'protected_media.complete');
             $this->requireServiceType($principal, 'protected_media_worker');
             $result = is_array($request->body['result'] ?? null) ? $request->body['result'] : [];
             $this->assertKeys($result, ['checksum_sha256', 'size', 'mime', 'artifact_ref']);
-            return $this->mediaJobs->complete((string) ($request->body['job_id'] ?? ''), (string) ($request->body['lease_token'] ?? ''), (string) ($request->body['completion_key'] ?? ''), $result);
+            return $this->mediaTransfers->complete((string) ($request->body['job_id'] ?? ''), (string) ($request->body['lease_token'] ?? ''), (string) ($request->body['completion_key'] ?? ''), $result);
         }
         if ($path === '/api/internal/v1/protected-media/fail') {
             $this->assertKeys($request->body, ['job_id', 'lease_token', 'failure_code']);
             $principal = $this->serviceAuth->authenticate($request, 'protected_media.fail');
             $this->requireServiceType($principal, 'protected_media_worker');
             return $this->mediaJobs->fail((string) ($request->body['job_id'] ?? ''), (string) ($request->body['lease_token'] ?? ''), (string) ($request->body['failure_code'] ?? ''));
+        }
+        if ($path === '/api/internal/v1/protected-media/derivatives/issue') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id', 'job_id']);
+            $principal = $this->serviceAuth->authenticate($request, 'protected_media.derivative.issue');
+            $context = $this->linkedWorkspace($principal, $request->body);
+            return $this->mediaTransfers->issueDerivative($context['user_id'], $context['workspace_id'], (string) ($request->body['job_id'] ?? ''), $context['platform']);
+        }
+        if ($path === '/api/internal/v1/protected-media/derivatives/redeem') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id', 'artifact_capability']);
+            $principal = $this->serviceAuth->authenticate($request, 'protected_media.derivative.redeem');
+            $context = $this->linkedWorkspace($principal, $request->body);
+            $artifact = $this->mediaTransfers->redeemDerivative($context['user_id'], $context['workspace_id'], $context['platform'], (string) ($request->body['artifact_capability'] ?? ''));
+            return new BinaryResponse(200, $artifact['stream'], $artifact['mime'], $artifact['size']);
+        }
+        if ($path === '/api/internal/v1/deployments/overview') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'target_key']);
+            $principal = $this->serviceAuth->authenticate($request, 'deployment.overview');
+            $platform = $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
+            if ($platform !== 'telegram') {
+                throw new PlatformException('deployment_channel_forbidden', 'Deployment controls are not enabled for this channel.', 403);
+            }
+            $link = $this->linked($principal, $request->body);
+            return $this->ownerControl->overview($link['user_id'], (string) ($request->body['target_key'] ?? ''));
         }
         if ($path === '/api/internal/v1/deployments/request') {
             $this->assertKeys($request->body, ['platform', 'subject', 'target_key', 'idempotency_key']);
@@ -259,5 +348,15 @@ final class InternalApiKernel
         if (!$this->paymentsEnabled) {
             throw new PlatformException('payment_provider_not_configured', 'A payment provider is not configured in this environment.', 503);
         }
+    }
+
+    private function nullableString(mixed $value): ?string
+    {
+        return $value === null ? null : (string) $value;
+    }
+
+    private function contentType(Request $request): string
+    {
+        return strtolower(trim(explode(';', $request->header('content-type'))[0]));
     }
 }
