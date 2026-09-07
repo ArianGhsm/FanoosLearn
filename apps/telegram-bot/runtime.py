@@ -48,6 +48,8 @@ def main():
                         elif text:runtime.handle_message(ctx,text)
                     offset=max(offset,int(update.get('update_id',0))+1);state.set_offset('telegram',offset)
                 for _ in range(5):
+                    if not runtime.flush_delivery_receipt_once():break
+                for _ in range(5):
                     if not pump.run_once():break
             except BotApiError as exc:
                 logging.warning('telegram transport failure code=%s transient=%s',exc.code,exc.transient);time.sleep(min(10,max(1,exc.retry_after or 2)))
