@@ -2,4 +2,11 @@
 .env.*
 !.env.example
 /var/
+/.codex-local/
+/server-only/
+/runtime/
+/storage/
+/backups/
+/logs/
+/tmp/
 /مشخصات مهم.txt

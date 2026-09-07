@@ -2,7 +2,7 @@
 
 Status: procedures implemented locally; production deployment not yet authorized
 
-Last updated: 2026-09-06
+Last updated: 2026-09-07
 
 ## Invariants
 
@@ -12,6 +12,27 @@ Last updated: 2026-09-06
 - Back up before migrations or pointer changes.
 - Treat migrations as forward-only and backward-compatible. Application rollback does not undo data changes.
 - Stop if any command, backup verification, migration, seed, or readiness probe fails.
+- GitHub is the canonical source of code; production SQL/object storage remains the canonical source of production data.
+- ChatGPT/GitHub performs primary source development and integration. Codex receives an exact approved SHA for runtime verification and deployment.
+
+## Development-to-deploy handoff
+
+Feature/parallel branches are not production deployment units. Workers do not deploy and do not write directly to `main`.
+
+The expected release path is:
+
+```text
+ChatGPT feature branches
+  -> Integration Chat
+  -> CI/review
+  -> approved exact main SHA
+  -> Codex runtime verification
+  -> verified backup
+  -> canonical deployment
+  -> live health/log/smoke verification
+```
+
+Codex must follow `docs/CODEX_RUNTIME_HANDOFF.md`. Small environment-specific fixes that have a source/declarative representation must return through a branch + ChatGPT review/CI before a corrected SHA is deployed. Architectural, shared-contract and broad source defects return to ChatGPT with evidence instead of being redesigned on the server.
 
 ## Laptop and pull-request validation
 
@@ -54,6 +75,8 @@ The template deliberately publishes to a `fanoos` subpath. Changing it to a doma
 
 Record the operator, ticket, target environment, source SHA, current SHA, CI URL, expected change, and rollback SHA. Confirm the most recent scheduled backup and enough free space.
 
+Before server mutation, Codex must verify that the provided release SHA is the exact approved `main` commit and that the deployment checkout is clean. Runtime inspection must verify actual OS/PHP/MySQL/storage/service state rather than relying on an old assumption.
+
 In cPanel Git Version Control, update using fast-forward-only semantics and confirm HEAD equals the approved 40-character SHA. Trigger deployment only after reviewing `.cpanel.yml`. The guarded command represented by the template is:
 
 ```bash
@@ -76,9 +99,19 @@ Then check through HTTPS:
 - liveness returns 200 and `status=ok`;
 - readiness returns 200 and every named check is true;
 - one authenticated tenant-safe read and write works;
-- one allowed upload and controlled download works when Prompt 5 provides the endpoints;
+- one allowed upload and controlled download works when the endpoints are enabled;
 - audit/log correlation appears without credentials or personal payloads;
 - no elevated error rate, disk jump, or unexpected cron overlap occurs.
+
+## Production data and backup direction
+
+A release contains code/declarative configuration only. It must not become a transport for production state.
+
+- Production SQL/object storage remains authoritative for live data.
+- Verified snapshots/mirrors flow out of production into the approved backup location.
+- A local development/runtime copy never overwrites production simply because it is newer or structurally different.
+- Runtime data, uploaded objects, env files, logs, caches, sessions, locks and backup archives stay outside Git/release artifacts.
+- A risky migration or pointer switch requires the existing backup/restoreability gates; Git history is not a substitute for data restore.
 
 ## Automatic failure behavior
 
@@ -101,8 +134,8 @@ Verify readiness and smoke tests again. Record why rollback occurred and keep th
 
 ## Emergency stop conditions
 
-Stop and leave the old pointer untouched when backup cannot complete, manifest verification fails, free space is unsafe, target SHA differs, checkout is dirty, exact PHP/extension checks differ between CLI and web, storage is under the document root, config/defaults files are readable too broadly, or any tenant-isolation check fails.
+Stop and leave the old pointer untouched when backup cannot complete, manifest verification fails, free space is unsafe, target SHA differs, checkout is dirty, exact PHP/extension checks differ between CLI and web, storage is under the document root, config/defaults files are readable too broadly, any tenant-isolation check fails, or runtime evidence shows that the approved source requires an architectural/shared-contract change.
 
 ## Current status
 
-No server files, Git repositories, cron jobs, databases, symlinks, DNS, or cPanel settings were created or changed during Prompt 4. The procedure remains inactive until staging evidence and user authorization exist.
+No server files, Git repositories, cron jobs, databases, symlinks, DNS, or cPanel settings were created or changed during Prompt 4 or this workflow migration. The procedure remains inactive until staging evidence and user authorization exist.
