@@ -2,6 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from fanoos_bot.botapi import BotApiError
 from fanoos_bot.capabilities import BALE, TELEGRAM
 from fanoos_bot.models import ActionResult, DeliveryReceiptContext, DocumentPayload, Screen
 from fanoos_bot.runtime import BotRuntime, NotificationPump, UpdateContext
@@ -83,3 +84,47 @@ class RuntimeTest(unittest.TestCase):
     def test_document_callback_replay_does_not_resend(self):
         temp=tempfile.TemporaryDirectory();state=LocalState(Path(temp.name)/'s');backend=DeliveryBackend(fail=True);result=ActionResult(Screen('fallback',protect_content=True),DeliveryReceiptContext('workspace','issuance','media-idem'),DocumentPayload(b'%PDF-derived'),{'media_job_id':'job-1'});app=ProtectedApp(backend,result);transport=RecordingTransport();runtime=BotRuntime('telegram',transport,app,state);ctx=UpdateContext('42','42',True,1,'cb','update-media-2')
         first=runtime.handle_callback(ctx,'pm:ref');second=runtime.handle_callback(ctx,'pm:ref');self.assertEqual(first,'1');self.assertEqual(second,'1');self.assertEqual(sum(1 for e in transport.events if e[0]=='document'),1);self.assertEqual(app.calls,1);self.assertEqual(len(state.pending_delivery_receipts()),1);state.close();temp.cleanup()
+
+
+class AckFailureTransport(RecordingTransport):
+    def answer_callback(self,callback_id):
+        self.events.append(('ack',callback_id))
+        raise BotApiError('network_unavailable',transient=True)
+
+
+class OrderingApp(App):
+    def __init__(self,events):
+        super().__init__();self.events=events;self.calls=0
+    def callback(self,*args):
+        self.calls+=1;self.events.append(('app','callback'));return ActionResult(Screen('done'))
+
+
+class RuntimeFeedbackTest(unittest.TestCase):
+    def test_callback_ack_failure_does_not_block_business_action(self):
+        temp=tempfile.TemporaryDirectory();state=LocalState(Path(temp.name)/'s');transport=AckFailureTransport();app=OrderingApp(transport.events);runtime=BotRuntime('telegram',transport,app,state)
+        runtime.handle_callback(UpdateContext('1','1',True,1,'cb','ack-fail'),'home')
+        self.assertEqual(transport.events[0],('ack','cb'));self.assertEqual(transport.events[1],('app','callback'));self.assertEqual(app.calls,1);state.close();temp.cleanup()
+
+    def test_single_chunk_preserves_screen_instance_for_future_semantic_metadata(self):
+        class RecordingIdentityTransport(RecordingTransport):
+            def send_screen(self,chat,screen):
+                self.received=screen;return {'message_id':1}
+        temp=tempfile.TemporaryDirectory();state=LocalState(Path(temp.name)/'s');transport=RecordingIdentityTransport();app=App();runtime=BotRuntime('telegram',transport,app,state);screen=Screen('home');result=ActionResult(screen)
+        runtime.deliver(UpdateContext('1','1',True),result)
+        self.assertIs(transport.received,screen);state.close();temp.cleanup()
+
+
+def load_tests(loader, tests, pattern):
+    """Run Worker 4 UX tests through the existing bot-test CI entrypoint."""
+    import importlib.util
+
+    path = Path(__file__).resolve().parents[1] / "ux" / "worker04_channel_presentation_test.py"
+    spec = importlib.util.spec_from_file_location("worker04_channel_presentation_test", path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("worker04 UX test module could not be loaded")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    suite = unittest.TestSuite()
+    suite.addTests(tests)
+    suite.addTests(loader.loadTestsFromModule(module))
+    return suite

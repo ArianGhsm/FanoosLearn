@@ -39,6 +39,21 @@ jobs:
       - name: Exact-commit release artifact
         run: php scripts/ops/build-release.php "$GITHUB_SHA"
 
+  web-ux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Web syntax and integrated UX checks
+        run: |
+          php -l apps/platform/public/index.php
+          node --check apps/platform/public/assets/app.js
+          node --check apps/platform/public/assets/domain-ux.js
+          python3 tests/ux/worker01_static_quality.py
+          node tests/ux/worker02_domain_ux_test.js
+          node tests/ux/integration_web_ux_test.js
+
   python-bot-worker:
     runs-on: ubuntu-latest
     steps:
