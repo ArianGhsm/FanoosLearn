@@ -29,7 +29,15 @@ def run_once(api,processor):
         result=processor.process(job);api.media_complete(job['job_id'],job['lease_token'],job['completion_key'],result)
     except WorkerFailure as exc:_safe_failure(api,job,exc.code)
     except FanoosApiError as exc:
-        mapping={'authorization_changed':'authorization_changed','resource_access_denied':'authorization_changed','input_unavailable':'input_unavailable','input_too_large':'input_too_large'}
+        mapping={
+            'authorization_changed':'authorization_changed',
+            'resource_access_denied':'authorization_changed',
+            'input_unavailable':'input_unavailable',
+            'input_too_large':'input_too_large',
+            'protected_media_output_invalid':'output_invalid',
+            'protected_media_artifact_conflict':'output_invalid',
+            'protected_media_artifact_mismatch':'output_invalid',
+        }
         if exc.status<500 and exc.code in mapping:_safe_failure(api,job,mapping[exc.code])
         else:raise
     except Exception:_safe_failure(api,job,'internal_error')
