@@ -46,6 +46,12 @@ def _metadata(screen: Any) -> Any:
     return None
 
 
+def _semantic_kind(metadata: Any) -> str:
+    if isinstance(metadata, dict):
+        return str(metadata.get("semantic_kind") or "")
+    return str(getattr(metadata, "semantic_kind", "") or "")
+
+
 def _as_mapping(value: Any) -> dict[str, Any] | None:
     return semantic_mapping(value)
 
@@ -235,13 +241,15 @@ class TelegramPresentation:
 
     def render(self, screen: Any) -> TelegramRenderedScreen:
         plain = str(getattr(screen, "text", ""))
-        # Protected delivery must be one exact provider operation. Rich-to-plain
-        # fallback after an ambiguous transport failure could duplicate content.
-        if bool(getattr(screen, "protect_content", False)):
+        metadata = _metadata(screen)
+        # Actual protected-delivery screens may contain an authorized text
+        # payload that deliberately overrides their generic semantic summary.
+        # Keep that path to one exact provider operation so an ambiguous Rich
+        # failure cannot trigger a second protected send.
+        if bool(getattr(screen, "protect_content", False)) and _semantic_kind(metadata) == "protected_delivery_ready":
             return TelegramRenderedScreen(plain, None)
         if not self.enabled or len(plain) > self.max_rich_chars:
             return TelegramRenderedScreen(plain, None)
-        metadata = _metadata(screen)
         mapping = _as_mapping(metadata) if metadata is not None else None
         # Metadata is authoritative when present. Malformed/unsupported metadata
         # falls back to Screen.text rather than silently re-interpreting it.
