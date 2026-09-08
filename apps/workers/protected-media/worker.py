@@ -94,9 +94,11 @@ class PrivateSpoolArtifactSink:
         target=self.root/f'{job_id}-{checksum[:16]}.pdf';shutil.copyfile(source,target);os.chmod(target,0o600);return f'pm:{job_id}:{checksum[:16]}'
 
 class JobProcessor:
+    RENDERER_ALGORITHM_VERSION='fanoos-raster-v1'
     MAX_OUTPUT_BYTES=100*1024*1024
     def __init__(self,source:CapabilitySource,sink:ArtifactSink,inspector=None,rasterizer=None,temp_root:Path|None=None):self.source=source;self.sink=sink;self.inspector=inspector or CommandPdfInspector();self.rasterizer=rasterizer or PopplerPillowRasterizer();self.temp_root=temp_root
     def process(self,job:dict)->dict:
+        if str(job.get('renderer_algorithm_version') or '')!=self.RENDERER_ALGORITHM_VERSION:raise WorkerFailure('render_failed','renderer algorithm version is unsupported')
         limits=JobLimits.parse(job.get('limits'));deadline=time.monotonic()+limits.max_seconds
         with tempfile.TemporaryDirectory(prefix='fanoos-pm-',dir=str(self.temp_root) if self.temp_root else None) as d:
             root=Path(d);os.chmod(root,0o700);src=root/'input.pdf';out=root/'output.pdf'
