@@ -8,6 +8,7 @@ const appCss = fs.readFileSync(path.join(root, 'apps/platform/public/assets/app.
 const domainCss = fs.readFileSync(path.join(root, 'apps/platform/public/assets/domain-ux.css'), 'utf8');
 const domainJs = fs.readFileSync(path.join(root, 'apps/platform/public/assets/domain-ux.js'), 'utf8');
 const indexPhp = fs.readFileSync(path.join(root, 'apps/platform/public/index.php'), 'utf8');
+const authPhp = fs.readFileSync(path.join(root, 'apps/platform/src/Identity/AuthService.php'), 'utf8');
 
 for (const legacy of ['--line', '--muted', '--ink', '--card', '--green']) {
   assert.equal(domainCss.includes(`var(${legacy})`), false, `legacy CSS token still used: ${legacy}`);
@@ -35,6 +36,9 @@ assert.equal(appJs.includes("if(focus)$('#dashboard').focus()"), true, 'post-log
 
 assert.equal(appJs.includes("workspace:sessionStorage.getItem('fanoos_workspace')"), false, 'sessionStorage must not choose canonical workspace');
 assert.equal(appJs.includes("account?.selected_workspace_id"), true, 'canonical selected workspace must come from backend account projection');
+assert.equal(authPhp.includes('workspace.timezone_name'), true, 'canonical account projection must expose workspace timezone');
+assert.equal(appJs.includes('workspaceTimezone:workspaceTimezone()'), true, 'domain render context must receive canonical workspace timezone');
+assert.equal(domainJs.includes("timeZone: validTimeZone(context.workspaceTimezone)"), true, 'domain renderer must use canonical workspace timezone');
 assert.equal(appJs.includes('workspaceMutation=true;select.disabled=true;++state.requestSerial'), true, 'workspace switch must invalidate stale GETs before mutation');
 assert.equal(appJs.includes('if(!view||state.workspaceMutation)return'), true, 'view loads must not race a workspace mutation');
 assert.equal(appJs.includes('!state.workspace||state.workspaceMutation||q.length<2'), true, 'search must not race a workspace mutation');
