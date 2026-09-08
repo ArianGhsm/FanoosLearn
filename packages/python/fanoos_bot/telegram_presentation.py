@@ -235,10 +235,18 @@ class TelegramPresentation:
 
     def render(self, screen: Any) -> TelegramRenderedScreen:
         plain = str(getattr(screen, "text", ""))
+        # Protected delivery must be one exact provider operation. Rich-to-plain
+        # fallback after an ambiguous transport failure could duplicate content.
+        if bool(getattr(screen, "protect_content", False)):
+            return TelegramRenderedScreen(plain, None)
         if not self.enabled or len(plain) > self.max_rich_chars:
             return TelegramRenderedScreen(plain, None)
         metadata = _metadata(screen)
         mapping = _as_mapping(metadata) if metadata is not None else None
+        # Metadata is authoritative when present. Malformed/unsupported metadata
+        # falls back to Screen.text rather than silently re-interpreting it.
+        if metadata is not None and mapping is None:
+            return TelegramRenderedScreen(plain, None)
         try:
             rich_html = (
                 _metadata_html(
