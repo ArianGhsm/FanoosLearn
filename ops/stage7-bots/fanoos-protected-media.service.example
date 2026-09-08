@@ -1,5 +1,5 @@
 [Unit]
-Description=FANOOS Protected Media Worker (disabled until capability redemption contract exists)
+Description=FANOOS Protected Media Worker
 After=network-online.target
 Wants=network-online.target
 [Service]
@@ -9,12 +9,14 @@ Group=fanoos-media
 EnvironmentFile=/etc/fanoos/protected-media.env
 WorkingDirectory=/opt/fanoos/current
 ExecStart=/usr/bin/python3 /opt/fanoos/current/apps/workers/protected-media/runtime.py
-Restart=no
+Restart=on-failure
+RestartSec=3s
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
 ReadWritePaths=/var/lib/fanoos/protected-media
-# Do not enable this unit until the canonical object-capability redemption adapter is frozen and live-smoked.
+# Enable only after one-time bootstrap has provisioned the signed service identity/action allowlist,
+# qpdf/pdfinfo/pdftoppm/Pillow dependencies, private temp root, and live smoke validation.
 [Install]
 WantedBy=multi-user.target

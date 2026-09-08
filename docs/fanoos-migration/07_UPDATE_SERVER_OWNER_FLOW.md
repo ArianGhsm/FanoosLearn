@@ -1,15 +1,20 @@
 # Stage 7 — Telegram Owner Update Server Flow
 
-Update Server exists only in Telegram and only in private chat. It is intentionally omitted from ordinary help/menu because the current internal contract has no side-effect-free `deployment.manage` permission probe. A linked user may invoke the unadvertised command, but the canonical backend rechecks `deployment.manage` when the request is submitted and denies non-owners.
+Update Server exists only in Telegram and only in private chat. It is intentionally omitted from ordinary help/menu. The Platform now exposes a side-effect-free signed `deployment.overview` contract, so the bot checks canonical `deployment.manage` before it creates any local confirmation or exposes deployment metadata.
 
 Flow:
-1. private-chat gate;
-2. canonical link resolution through the messaging workspace projection;
-3. short-lived local confirmation with opaque <=64-byte callback reference;
-4. callback acknowledgement before backend work;
-5. second confirmation submits `{platform=telegram, subject, target_key, idempotency_key}` only;
-6. backend permission + one-active-deployment + idempotency controls apply;
-7. bot renders only durable states (`REQUESTED`, `PREFLIGHT`, `BACKUP`, `TESTING`, `MIGRATING`, `ACTIVATING`, `RESTARTING`, `HEALTHCHECK`, `SUCCEEDED`, `FAILED`, `ROLLED_BACK`);
-8. restart recovery reads durable status by request ID.
+1. private-chat + Telegram gate;
+2. signed `POST /api/internal/v1/deployments/overview` with only `platform=telegram`, messaging `subject` and fixed configured `target_key`;
+3. canonical link resolution + platform-scoped `deployment.manage` check;
+4. unauthorized user receives only the generic denial UX and no confirmation is created;
+5. authorized user sees only safe current/canonical-main SHA prefixes, update availability and health status returned by the read-only snapshot contract;
+6. bot creates a short-lived local confirmation with opaque <=64-byte callback reference;
+7. callback acknowledgement precedes backend work;
+8. second confirmation submits `{platform=telegram, subject, target_key, idempotency_key}` only;
+9. backend permission + one-active-deployment + idempotency + canonical-main/CI/health gates apply again;
+10. bot renders only durable states (`REQUESTED`, `PREFLIGHT`, `BACKUP`, `TESTING`, `MIGRATING`, `ACTIVATING`, `RESTARTING`, `HEALTHCHECK`, `SUCCEEDED`, `FAILED`, `ROLLED_BACK`);
+11. restart recovery reads durable status by request ID.
 
-No percentage/ETA is fabricated. No callback can supply a repository, remote, path, branch, ref, SHA, command, restart command or environment override. Bot credentials are distinct from privileged updater credentials.
+The overview endpoint itself executes no Git/shell/process command and holds no updater credential. Candidate resolution is performed separately by the privileged updater-side status refresher and exposed only as a safe bounded snapshot.
+
+No percentage/ETA is fabricated. No callback can supply a repository, remote, path, branch, ref, SHA, command, restart command or environment override. Bot service credentials are distinct from privileged updater credentials. Bale has no deployment-control path.

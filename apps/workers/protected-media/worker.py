@@ -7,9 +7,9 @@ from typing import Protocol
 class WorkerFailure(RuntimeError):
     def __init__(self,code:str,message:str):super().__init__(message);self.code=code
 class CapabilitySource(Protocol):
-    def fetch(self,capability:str,destination:Path,max_bytes:int)->None:...
+    def fetch(self,job:dict,destination:Path,max_bytes:int)->None:...
 class ArtifactSink(Protocol):
-    def publish(self,job_id:str,source:Path,checksum:str)->str:...
+    def publish(self,job:dict,source:Path,checksum:str)->str:...
 @dataclass(frozen=True)
 class JobLimits:
     max_input_bytes:int
@@ -63,19 +63,46 @@ class PopplerPillowRasterizer:
         for im in images:im.close()
         return len(pages)
 
+class ApiCapabilitySource:
+    def __init__(self,api):self.api=api
+    def fetch(self,job:dict,destination:Path,max_bytes:int)->None:
+        data=self.api.media_source_redeem(str(job['job_id']),str(job['lease_token']),str(job['object_capability']),max_bytes)
+        if not isinstance(data,bytes) or len(data)<5 or len(data)>max_bytes or not data.startswith(b'%PDF-'):raise WorkerFailure('input_unavailable','Platform source response is not a bounded PDF')
+        destination.write_bytes(data);os.chmod(destination,0o600)
+
+class ApiArtifactSink:
+    def __init__(self,api):self.api=api
+    def publish(self,job:dict,source:Path,checksum:str)->str:
+        if not re.fullmatch(r'[0-9a-f]{64}',checksum):raise WorkerFailure('output_invalid','output checksum invalid')
+        size=source.stat().st_size
+        authorization=self.api.media_authorize_publish(str(job['job_id']),str(job['lease_token']),str(job['completion_key']),checksum,size,'application/pdf')
+        capability=str((authorization or {}).get('upload_capability') or '')
+        if not capability:raise WorkerFailure('output_invalid','upload capability missing')
+        published=self.api.media_publish_pdf(capability,source.read_bytes())
+        if not isinstance(published,dict):raise WorkerFailure('output_invalid','artifact publication response invalid')
+        ref=str(published.get('artifact_ref') or '')
+        if not re.fullmatch(r'pma:[0-9a-f-]{36}',ref,re.I):raise WorkerFailure('output_invalid','artifact reference invalid')
+        if str(published.get('checksum_sha256') or '').lower()!=checksum or int(published.get('size') or 0)!=size or published.get('mime')!='application/pdf':raise WorkerFailure('output_invalid','artifact publication metadata mismatch')
+        return ref
+
 class PrivateSpoolArtifactSink:
+    """Test/reference sink only. Production runtime must use ApiArtifactSink."""
     def __init__(self,root:Path):self.root=root;root.mkdir(parents=True,exist_ok=True);os.chmod(root,0o700)
-    def publish(self,job_id:str,source:Path,checksum:str)->str:
+    def publish(self,job:dict,source:Path,checksum:str)->str:
+        job_id=str(job.get('job_id') or '')
         if not re.fullmatch(r'[0-9a-f-]{36}',job_id,re.I):raise WorkerFailure('output_invalid','job id invalid')
         target=self.root/f'{job_id}-{checksum[:16]}.pdf';shutil.copyfile(source,target);os.chmod(target,0o600);return f'pm:{job_id}:{checksum[:16]}'
 
 class JobProcessor:
+    RENDERER_ALGORITHM_VERSION='fanoos-raster-v1'
+    MAX_OUTPUT_BYTES=100*1024*1024
     def __init__(self,source:CapabilitySource,sink:ArtifactSink,inspector=None,rasterizer=None,temp_root:Path|None=None):self.source=source;self.sink=sink;self.inspector=inspector or CommandPdfInspector();self.rasterizer=rasterizer or PopplerPillowRasterizer();self.temp_root=temp_root
     def process(self,job:dict)->dict:
+        if str(job.get('renderer_algorithm_version') or '')!=self.RENDERER_ALGORITHM_VERSION:raise WorkerFailure('render_failed','renderer algorithm version is unsupported')
         limits=JobLimits.parse(job.get('limits'));deadline=time.monotonic()+limits.max_seconds
         with tempfile.TemporaryDirectory(prefix='fanoos-pm-',dir=str(self.temp_root) if self.temp_root else None) as d:
             root=Path(d);os.chmod(root,0o700);src=root/'input.pdf';out=root/'output.pdf'
-            self.source.fetch(str(job['object_capability']),src,limits.max_input_bytes)
+            self.source.fetch(job,src,limits.max_input_bytes)
             if not src.is_file() or src.stat().st_size<5 or src.stat().st_size>limits.max_input_bytes:raise WorkerFailure('input_too_large','input size invalid')
             with src.open('rb') as f:
                 if f.read(5)!=b'%PDF-':raise WorkerFailure('output_invalid','input is not a PDF')
@@ -84,7 +111,7 @@ class JobProcessor:
             if pages>limits.max_pages:raise WorkerFailure('page_limit','PDF exceeds page limit')
             rendered=self.rasterizer.render(src,out,str(job.get('watermark_label') or 'FANOOS'),str(job.get('forensic_id') or ''),deadline)
             if rendered!=pages or not out.is_file():raise WorkerFailure('output_invalid','rendered output mismatch')
-            size=out.stat().st_size
-            if size<1 or size>limits.max_input_bytes*4:raise WorkerFailure('output_invalid','output size invalid')
-            checksum=hashlib.sha256(out.read_bytes()).hexdigest();ref=self.sink.publish(str(job['job_id']),out,checksum)
+            size=out.stat().st_size;output_limit=min(self.MAX_OUTPUT_BYTES,limits.max_input_bytes*4)
+            if size<1 or size>output_limit:raise WorkerFailure('output_invalid','output size invalid')
+            checksum=hashlib.sha256(out.read_bytes()).hexdigest();ref=self.sink.publish(job,out,checksum)
             return {'checksum_sha256':checksum,'size':size,'mime':'application/pdf','artifact_ref':ref}
