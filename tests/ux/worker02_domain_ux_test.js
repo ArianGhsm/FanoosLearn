@@ -25,7 +25,7 @@ assert.ok(!/\.innerHTML\s*=/.test(domain),'domain renderer must not write untrus
 assert.ok(!/\.innerHTML\s*=/.test(app),'app flow must not use innerHTML state rendering');
 assert.ok(!/\balert\s*\(/.test(app),'normal alert() must not be used');
 for(const key of ['schedule','grades','announcements','academics','resources','assessments','forms','orders','search'])assert.strictEqual(typeof ux.renderers[key],'function',`${key} dedicated renderer missing`);
-for(const raw of ['workspace_id','source_id','provider_key','provider_reference','schema_json']){
+for(const raw of ['workspace_id','source_type','source_id','amount_minor','provider_key','provider_reference','schema_json']){
   const dumpPattern=new RegExp('\\$\\{[^}]*'+raw+'[^}]*\\}\\s*:');
   assert.ok(!dumpPattern.test(domain),`${raw} must not be dumped as a label`);
 }
