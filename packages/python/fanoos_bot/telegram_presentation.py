@@ -5,6 +5,8 @@ import os
 from dataclasses import dataclass
 from typing import Any, Iterable
 
+from .semantic_adapter import semantic_mapping
+
 
 _TITLE_TERMINATORS = (".", "!", "?", "؟", "؛", "،", ":")
 _SEVERITY_PREFIXES = ("⚠️", "❌", "✅", "ℹ️")
@@ -45,14 +47,7 @@ def _metadata(screen: Any) -> Any:
 
 
 def _as_mapping(value: Any) -> dict[str, Any] | None:
-    if isinstance(value, dict):
-        return value
-    if value is None:
-        return None
-    blocks = getattr(value, "blocks", None)
-    if blocks is not None:
-        return {"blocks": blocks, "rtl": getattr(value, "rtl", True)}
-    return None
+    return semantic_mapping(value)
 
 
 def _block_mapping(value: Any) -> dict[str, Any] | None:
@@ -185,8 +180,7 @@ def _heuristic_html(text: str, *, max_blocks: int) -> str:
     block_count = 0
     index = 0
     while index < len(lines):
-        raw = lines[index]
-        value = raw.strip()
+        value = lines[index].strip()
         if not value:
             index += 1
             continue
@@ -244,14 +238,15 @@ class TelegramPresentation:
         if not self.enabled or len(plain) > self.max_rich_chars:
             return TelegramRenderedScreen(plain, None)
         metadata = _metadata(screen)
+        mapping = _as_mapping(metadata) if metadata is not None else None
         try:
             rich_html = (
                 _metadata_html(
-                    metadata,
+                    mapping,
                     max_columns=self.max_table_columns,
                     max_blocks=self.max_blocks,
                 )
-                if metadata is not None
+                if mapping is not None
                 else _heuristic_html(plain, max_blocks=self.max_blocks)
             )
         except (TypeError, ValueError):
@@ -262,6 +257,6 @@ class TelegramPresentation:
             plain,
             {
                 "html": rich_html,
-                "is_rtl": True,
+                "is_rtl": bool(mapping.get("rtl", True)) if mapping is not None else True,
             },
         )
