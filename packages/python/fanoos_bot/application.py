@@ -54,7 +54,7 @@ class BotApplication:
             if not ws: return ActionResult(Screen('حساب شما متصل است، اما فضای آموزشی فعالی برای این حساب وجود ندارد.'))
             rows=(
                 (Button('امروز',CallbackCodec.encode('today')),Button('فردا',CallbackCodec.encode('tomorrow'))),
-                (Button('نمرات من',CallbackCodec.encode('grades')),Button('اطلاعیه‌ها',CallbackCodec.encode('announcements'))),
+                (Button('نمرات من',CallbackCodec.encode('grades')),Button('اطلاعیه‌ها',CallbackCodec.encode('ann'))),
                 (Button('منابع',CallbackCodec.encode('resources')),Button('خرید و دسترسی',CallbackCodec.encode('payments'))),
                 (Button('فضای فعال',CallbackCodec.encode('workspaces')),Button('حساب',CallbackCodec.encode('account'))),
             )
@@ -247,7 +247,7 @@ class BotApplication:
         if action=='today':return self.day_schedule(subject,0)
         if action=='tomorrow':return self.day_schedule(subject,1)
         if action=='grades':return self.grades(subject)
-        if action=='announcements':return self.announcements(subject)
+        if action=='ann':return self.announcements(subject)
         if action=='payments':return self.payments(subject)
         if action=='resources':return self.resources(subject)
         if action=='resource' and ref:return self.protected_resource(subject,ref)
