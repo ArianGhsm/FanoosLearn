@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fanoos\Platform\Migration;
 
+use DateTimeImmutable;
 use Fanoos\Platform\Support\Uuid;
 use PDO;
 use RuntimeException;
@@ -201,7 +202,7 @@ final class LegacyImportEngine
         foreach ($values as $field => $value) {
             $insert[$field] = $this->convertValue($value, $schema[$field]);
         }
-        $now = gmdate('Y-m-d H:i:s.u');
+        $now = gmdate('Y-m-d H:i:s') . '.000000';
         foreach (['created_at', 'updated_at'] as $timestamp) {
             if (isset($schema[$timestamp]) && !array_key_exists($timestamp, $insert)) {
                 $insert[$timestamp] = $now;
@@ -277,6 +278,23 @@ SQL);
             }
             return $decoded;
         }
+        if (in_array($type, ['datetime', 'timestamp'], true)) {
+            if (!is_string($value)) {
+                throw new RuntimeException('Datetime migration fields must be strings.');
+            }
+            return $this->canonicalDateTime($value);
+        }
+        if ($type === 'date') {
+            if (!is_string($value) || preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) !== 1) {
+                throw new RuntimeException('Date migration fields must use YYYY-MM-DD.');
+            }
+            $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+            $errors = DateTimeImmutable::getLastErrors();
+            if ($date === false || ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0))) {
+                throw new RuntimeException('Invalid date migration field.');
+            }
+            return $date->format('Y-m-d');
+        }
         if (is_bool($value)) {
             return $value ? 1 : 0;
         }
@@ -318,6 +336,19 @@ SQL);
             }
             if (in_array($type, ['binary', 'varbinary'], true)) {
                 if (!is_string($actual) || !is_string($expected) || !hash_equals($actual, $expected)) {
+                    return false;
+                }
+                continue;
+            }
+            if (in_array($type, ['datetime', 'timestamp'], true)) {
+                if (!is_string($actual) || !is_string($expected)
+                    || !hash_equals($this->canonicalDateTime($actual), $this->canonicalDateTime($expected))) {
+                    return false;
+                }
+                continue;
+            }
+            if ($type === 'date') {
+                if ((string) $actual !== (string) $expected) {
                     return false;
                 }
                 continue;
@@ -556,6 +587,22 @@ SQL);
     private function sourceDigest(string $sourceKey): string
     {
         return hash_hmac('sha256', $sourceKey, $this->hmacKey, true);
+    }
+
+    private function canonicalDateTime(string $value): string
+    {
+        $value = trim($value);
+        foreach (['Y-m-d H:i:s.u', 'Y-m-d H:i:s'] as $format) {
+            $parsed = DateTimeImmutable::createFromFormat('!' . $format, $value);
+            if ($parsed === false) {
+                continue;
+            }
+            $errors = DateTimeImmutable::getLastErrors();
+            if ($errors === false || ($errors['warning_count'] === 0 && $errors['error_count'] === 0)) {
+                return $parsed->format('Y-m-d H:i:s.u');
+            }
+        }
+        throw new RuntimeException('Datetime migration fields must be explicit UTC wall-clock values using YYYY-MM-DD HH:MM:SS[.uuuuuu].');
     }
 
     /** @param mixed $value */
