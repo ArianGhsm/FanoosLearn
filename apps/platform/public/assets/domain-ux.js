@@ -8,7 +8,8 @@
   const STATUS_LABELS = Object.freeze({
     pending: 'در انتظار',
     payment_pending: 'در انتظار پرداخت',
-    paid: 'پرداخت‌شده',
+    paid: 'پرداخت تأیید شده',
+    succeeded: 'پرداخت تأیید شده',
     failed: 'ناموفق',
     canceled: 'لغوشده',
     cancelled: 'لغوشده',
@@ -43,6 +44,7 @@
     booklet: 'جزوه',
     lecture_note: 'جزوه',
     note: 'جزوه',
+    notes: 'جزوه',
     summary: 'خلاصه',
     dentnote: 'DentNote',
     discipline_note: 'یادداشت تخصصی',
@@ -86,10 +88,7 @@
     grade: 'نمره'
   });
 
-  const CURRENCY_LABELS = Object.freeze({
-    IRR: 'ریال',
-    IRT: 'تومان'
-  });
+  const CURRENCY_LABELS = Object.freeze({ IRR: 'ریال', IRT: 'تومان' });
 
   const EMPTY_MESSAGES = Object.freeze({
     schedule: 'برای این بازه برنامه‌ای ثبت نشده است.',
@@ -137,42 +136,76 @@
     return new Intl.NumberFormat(FA_LOCALE, options).format(number);
   }
 
-  function parseDate(value) {
+  function isDateOnly(value) {
+    return /^(\d{4})-(\d{2})-(\d{2})$/.test(normalizeText(value));
+  }
+
+  function parseDate(value, options = {}) {
     if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
     const text = normalizeText(value);
     if (!text) return null;
     const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
     if (dateOnly) {
-      return new Date(Date.UTC(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]), 12, 0, 0));
+      const year = Number(dateOnly[1]);
+      const month = Number(dateOnly[2]);
+      const day = Number(dateOnly[3]);
+      const parsed = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+      if (parsed.getUTCFullYear() !== year || parsed.getUTCMonth() !== month - 1 || parsed.getUTCDate() !== day) return null;
+      return parsed;
     }
-    const isoLike = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(text) ? text.replace(' ', 'T') : text;
+    let isoLike = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(text) ? text.replace(' ', 'T') : text;
+    isoLike = isoLike.replace(/(\.\d{3})\d+(?=Z|[+-]\d{2}:?\d{2}|$)/i, '$1');
+    const naive = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?$/.test(isoLike);
+    if (naive) {
+      if (options.assumeUtc !== true) return null;
+      isoLike += 'Z';
+    }
     const parsed = new Date(isoLike);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
+  function dateFormatOptions(options, value) {
+    const { assumeUtc, ...display } = options || {};
+    if (isDateOnly(value)) display.timeZone = 'UTC';
+    return display;
+  }
+
   function formatDate(value, options = {}) {
-    const date = parseDate(value);
+    const date = parseDate(value, options);
     if (!date) return '—';
-    const base = { year: 'numeric', month: 'long', day: 'numeric', ...options };
+    const base = { year: 'numeric', month: 'long', day: 'numeric', ...dateFormatOptions(options, value) };
     try { return new Intl.DateTimeFormat(FA_LOCALE, base).format(date); } catch { return '—'; }
   }
 
   function formatTime(value, options = {}) {
-    const date = parseDate(value);
+    const date = parseDate(value, options);
     if (!date) return '—';
     try {
-      return new Intl.DateTimeFormat(FA_LOCALE, { hour: '2-digit', minute: '2-digit', ...options }).format(date);
+      return new Intl.DateTimeFormat(FA_LOCALE, { hour: '2-digit', minute: '2-digit', ...dateFormatOptions(options, value) }).format(date);
     } catch { return '—'; }
   }
 
   function formatDateTime(value, options = {}) {
-    const date = parseDate(value);
+    const date = parseDate(value, options);
     if (!date) return '—';
     try {
       return new Intl.DateTimeFormat(FA_LOCALE, {
-        year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', ...options
+        year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', ...dateFormatOptions(options, value)
       }).format(date);
     } catch { return '—'; }
+  }
+
+  function validTimeZone(value) {
+    const timeZone = normalizeText(value);
+    if (!timeZone) return 'UTC';
+    try {
+      new Intl.DateTimeFormat('en-US', { timeZone }).format(new Date(0));
+      return timeZone;
+    } catch { return 'UTC'; }
+  }
+
+  function temporalOptions(context = {}) {
+    return { assumeUtc: true, timeZone: validTimeZone(context.workspaceTimezone) };
   }
 
   function currencyFractionDigits(currency) {
@@ -247,7 +280,7 @@
 
   function statusChip(status) {
     const key = normalizeText(status).toLowerCase();
-    const tone = ['paid', 'published', 'active', 'approved', 'completed', 'read'].includes(key)
+    const tone = ['paid', 'succeeded', 'published', 'active', 'approved', 'completed', 'read'].includes(key)
       ? 'positive'
       : ['failed', 'cancelled', 'canceled', 'rejected', 'expired'].includes(key)
         ? 'negative'
@@ -316,19 +349,23 @@
     if (excerpt) card.append(createElement('p', { className: 'domain-excerpt', text: excerpt }));
   }
 
-  function dateGroupKey(value) {
-    const raw = normalizeText(value);
-    const match = /^(\d{4}-\d{2}-\d{2})/.exec(raw);
-    if (match) return match[1];
-    const date = parseDate(value);
-    return date ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` : 'unknown';
+  function dateGroupKey(value, context = {}) {
+    const date = parseDate(value, { assumeUtc: true });
+    if (!date) return 'unknown';
+    const timeZone = validTimeZone(context.workspaceTimezone);
+    try {
+      const parts = new Intl.DateTimeFormat('en-US', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date);
+      const map = Object.fromEntries(parts.map(part => [part.type, part.value]));
+      return map.year && map.month && map.day ? `${map.year}-${map.month}-${map.day}` : 'unknown';
+    } catch { return 'unknown'; }
   }
 
-  function renderSchedule(container, rows) {
+  function renderSchedule(container, rows, context = {}) {
     if (!Array.isArray(rows) || !rows.length) return renderEmpty(container, 'schedule');
+    const temporal = temporalOptions(context);
     const groups = new Map();
     rows.forEach(row => {
-      const key = dateGroupKey(row.starts_at);
+      const key = dateGroupKey(row.starts_at, context);
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(row);
     });
@@ -336,13 +373,13 @@
     groups.forEach((items, key) => {
       const section = createElement('section', { className: 'schedule-group' });
       const firstStart = items[0] && items[0].starts_at;
-      section.append(createElement('h3', { className: 'schedule-group__date', text: key === 'unknown' ? 'زمان ثبت‌نشده' : formatDate(firstStart, { weekday: 'long' }) }));
+      section.append(createElement('h3', { className: 'schedule-group__date', text: key === 'unknown' ? 'زمان ثبت‌نشده' : formatDate(firstStart, { weekday: 'long', ...temporal }) }));
       items.forEach(row => {
         const title = firstValue(row, ['course_title', 'title']) || 'رویداد آموزشی';
         const card = cardBase(title, row.status);
         card.classList.add('schedule-card');
         const timeText = hasValue(row.starts_at)
-          ? (hasValue(row.ends_at) ? `${formatTime(row.starts_at)} تا ${formatTime(row.ends_at)}` : formatTime(row.starts_at))
+          ? (hasValue(row.ends_at) ? `${formatTime(row.starts_at, temporal)} تا ${formatTime(row.ends_at, temporal)}` : formatTime(row.starts_at, temporal))
           : '—';
         const type = localizeEventType(row.event_type);
         const chips = createElement('div', { className: 'domain-chip-row' });
@@ -361,8 +398,9 @@
     replace(container, nodes);
   }
 
-  function renderGrades(container, rows) {
+  function renderGrades(container, rows, context = {}) {
     if (!Array.isArray(rows) || !rows.length) return renderEmpty(container, 'grades');
+    const temporal = temporalOptions(context);
     const nodes = rows.map(row => {
       const title = firstValue(row, ['item_title', 'gradebook_title', 'course_title']) || 'نمره';
       const card = cardBase(title, row.status || 'published');
@@ -374,7 +412,7 @@
       appendMeta(card, [
         metaLine('درس', row.course_title),
         metaLine('کد درس', row.course_code, { token: true }),
-        metaLine('به‌روزرسانی', row.updated_at ? formatDateTime(row.updated_at) : null)
+        metaLine('به‌روزرسانی', row.updated_at ? formatDateTime(row.updated_at, temporal) : null)
       ]);
       return card;
     });
@@ -393,21 +431,19 @@
     } catch { return null; }
   }
 
-  function renderAnnouncements(container, rows) {
+  function renderAnnouncements(container, rows, context = {}) {
     if (!Array.isArray(rows) || !rows.length) return renderEmpty(container, 'announcements');
+    const temporal = temporalOptions(context);
     const nodes = rows.map(row => {
       const card = cardBase(row.title || 'اطلاعیه', row.status || 'published');
       card.classList.add('announcement-card');
       appendExcerpt(card, row.body, 320);
       appendMeta(card, [
-        metaLine('انتشار', row.published_at ? formatDateTime(row.published_at) : null),
-        metaLine('خوانده‌شدن', row.read_at ? formatDateTime(row.read_at) : null)
+        metaLine('انتشار', row.published_at ? formatDateTime(row.published_at, temporal) : null),
+        metaLine('خوانده‌شدن', row.read_at ? formatDateTime(row.read_at, temporal) : null)
       ]);
       const actionUrl = safeActionUrl(firstValue(row, ['safe_url', 'action_url', 'url']));
-      if (actionUrl) {
-        const link = createElement('a', { className: 'domain-link', text: 'مشاهده', attrs: { href: actionUrl } });
-        card.append(link);
-      }
+      if (actionUrl) card.append(createElement('a', { className: 'domain-link', text: 'مشاهده', attrs: { href: actionUrl } }));
       return card;
     });
     replace(container, nodes);
@@ -415,6 +451,7 @@
 
   function renderAcademics(container, rows, context = {}) {
     if (!Array.isArray(rows) || !rows.length) return renderEmpty(container, 'academics');
+    const temporal = temporalOptions(context);
     const nodes = rows.map(row => {
       const card = cardBase(row.title || 'درس', row.session_status || row.offering_status || row.status);
       card.classList.add('academic-card');
@@ -424,7 +461,7 @@
       if (chips.childNodes.length) card.append(chips);
       appendMeta(card, [
         metaLine('جلسه', row.session_title || (hasValue(row.sequence_no) ? `جلسه ${formatNumber(row.sequence_no)}` : null)),
-        metaLine('زمان جلسه', row.starts_at ? formatDateTime(row.starts_at) : null),
+        metaLine('زمان جلسه', row.starts_at ? formatDateTime(row.starts_at, temporal) : null),
         metaLine('گروه', row.section_key, { token: true })
       ]);
       if (!hasValue(row.session_title) && hasValue(context.workspaceName)) appendMeta(card, [metaLine('فضای آموزشی', context.workspaceName)]);
@@ -485,15 +522,16 @@
     replace(container, nodes);
   }
 
-  function renderForms(container, rows) {
+  function renderForms(container, rows, context = {}) {
     if (!Array.isArray(rows) || !rows.length) return renderEmpty(container, 'forms');
+    const temporal = temporalOptions(context);
     const nodes = rows.map(row => {
       const card = cardBase(row.title || 'فرم', row.status || 'open');
       card.classList.add('form-card');
       appendExcerpt(card, row.description, 220);
       appendMeta(card, [
-        metaLine('مهلت', row.closes_at ? formatDateTime(row.closes_at) : 'بدون مهلت ثبت‌شده'),
-        metaLine('شروع', row.opens_at ? formatDateTime(row.opens_at) : null),
+        metaLine('مهلت', row.closes_at ? formatDateTime(row.closes_at, temporal) : 'بدون مهلت ثبت‌شده'),
+        metaLine('شروع', row.opens_at ? formatDateTime(row.opens_at, temporal) : null),
         metaLine('ارسال چندباره', row.allow_multiple === true || Number(row.allow_multiple) === 1 ? 'مجاز' : 'یک پاسخ')
       ]);
       return card;
@@ -503,6 +541,7 @@
 
   function entitlementLabel(row) {
     if (row.has_entitlement === true || Number(row.has_entitlement) === 1) return 'دسترسی فعال';
+    if (row.has_entitlement === false || Number(row.has_entitlement) === 0 && hasValue(row.has_entitlement)) return 'دسترسی فعال نیست';
     const status = normalizeText(row.entitlement_status).toLowerCase();
     if (status === 'active') return 'دسترسی فعال';
     if (status === 'expired') return 'دسترسی منقضی‌شده';
@@ -510,8 +549,9 @@
     return '';
   }
 
-  function renderOrders(container, rows) {
+  function renderOrders(container, rows, context = {}) {
     if (!Array.isArray(rows) || !rows.length) return renderEmpty(container, 'orders');
+    const temporal = temporalOptions(context);
     const nodes = rows.map(row => {
       const card = cardBase(row.product_name_snapshot || row.title || 'سفارش', row.status);
       card.classList.add('order-card');
@@ -521,23 +561,24 @@
       if (entitlement) chips.append(chip(entitlement, entitlement === 'دسترسی فعال' ? 'positive' : 'neutral'));
       if (chips.childNodes.length) card.append(chips);
       appendMeta(card, [
-        metaLine('ثبت سفارش', row.created_at ? formatDateTime(row.created_at) : null),
-        metaLine('پرداخت', row.paid_at ? formatDateTime(row.paid_at) : null)
+        metaLine('ثبت سفارش', row.created_at ? formatDateTime(row.created_at, temporal) : null),
+        metaLine('پرداخت', row.paid_at ? formatDateTime(row.paid_at, temporal) : null)
       ]);
       return card;
     });
     replace(container, nodes);
   }
 
-  function renderSearch(container, rows) {
+  function renderSearch(container, rows, context = {}) {
     if (!Array.isArray(rows) || !rows.length) return renderEmpty(container, 'search');
+    const temporal = temporalOptions(context);
     const nodes = rows.map(row => {
       const card = cardBase(row.title || 'نتیجه جست‌وجو', null);
       card.classList.add('search-card');
       const chips = createElement('div', { className: 'domain-chip-row' });
       chips.append(chip(localizeSearchType(firstValue(row, ['source_type', 'type']))));
       card.append(chips);
-      appendMeta(card, [metaLine('به‌روزرسانی', row.updated_at ? formatDateTime(row.updated_at) : null)]);
+      appendMeta(card, [metaLine('به‌روزرسانی', row.updated_at ? formatDateTime(row.updated_at, temporal) : null)]);
       appendExcerpt(card, firstValue(row, ['excerpt', 'description', 'context']), 180);
       return card;
     });
