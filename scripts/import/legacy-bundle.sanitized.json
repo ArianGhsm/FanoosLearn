@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "source": {
+    "key": "dentistry1402-sanitized",
+    "snapshot_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "exported_at": "2026-09-08T00:00:00Z"
+  },
+  "batch_key": "sanitized-fixture-v1",
+  "workspace_map": {
+    "dentistry-1402": "018f4e2a-5d51-7abc-8def-0123456789ab"
+  },
+  "rows": [
+    {
+      "entity_type": "user",
+      "source_key": "student-001",
+      "target_id": "c7431eca-8850-5bcb-afc8-47b3962d66b9",
+      "values": {
+        "display_name": "دانشجوی نمونه",
+        "status": "active",
+        "locale": "fa-IR"
+      },
+      "transformed": true
+    },
+    {
+      "entity_type": "membership",
+      "source_key": "membership-001",
+      "target_id": "e015d992-6630-5f1a-a5d0-f1511e81dcc5",
+      "workspace_key": "dentistry-1402",
+      "values": {
+        "user_id": "c7431eca-8850-5bcb-afc8-47b3962d66b9",
+        "status": "active",
+        "joined_at": "2026-09-01 00:00:00"
+      },
+      "transformed": true
+    },
+    {
+      "entity_type": "course",
+      "source_key": "course-001",
+      "target_id": "dd6f335e-1705-50da-9027-6c65334ee1cb",
+      "workspace_key": "dentistry-1402",
+      "values": {
+        "course_code": "SANITIZED-001",
+        "title": "درس نمونه مهاجرت",
+        "status": "active"
+      },
+      "transformed": true
+    }
+  ],
+  "expectations": {
+    "row_count": 3,
+    "accepted_count": 3,
+    "destination_count": 3,
+    "orphan_count": 0,
+    "cross_tenant_mismatch_count": 0
+  }
+}
