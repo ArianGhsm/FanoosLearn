@@ -22,6 +22,12 @@ def _metadata(screen: Any) -> Any:
     return None
 
 
+def _semantic_kind(metadata: Any) -> str:
+    if isinstance(metadata, dict):
+        return str(metadata.get("semantic_kind") or "")
+    return str(getattr(metadata, "semantic_kind", "") or "")
+
+
 def _mapping(value: Any) -> dict[str, Any] | None:
     return semantic_mapping(value)
 
@@ -101,6 +107,11 @@ class BalePresentation:
             raise ValueError("invalid message text")
         normalized = text.replace("\r\n", "\n").replace("\r", "\n")
         metadata = _metadata(screen)
+        # An inline protected-delivery Screen can intentionally override the
+        # generic semantic fallback with the actual authorized content. Never
+        # replace that payload with a presentation-only "ready" message.
+        if bool(getattr(screen, "protect_content", False)) or _semantic_kind(metadata) == "protected_delivery_ready":
+            return BaleRenderedScreen(normalized)
         if metadata is None:
             return BaleRenderedScreen(normalized)
         try:
