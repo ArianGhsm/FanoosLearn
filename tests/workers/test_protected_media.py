@@ -20,9 +20,13 @@ class Api:
         self.calls.append(('publish',cap,pdf));self.published=pdf;return {'artifact_ref':'pma:77777777-7777-4777-8777-777777777777','checksum_sha256':__import__('hashlib').sha256(pdf).hexdigest(),'size':len(pdf),'mime':'application/pdf'}
 class ProtectedMediaTest(unittest.TestCase):
     def job(self,**kw):
-        j={'job_id':'11111111-1111-4111-8111-111111111111','lease_token':'lease','completion_key':'completion','object_capability':'opaque','watermark_label':'کاربر','forensic_id':'ABCDEF123456','limits':{'max_input_bytes':1024,'max_pages':10,'max_seconds':30}};j.update(kw);return j
+        j={'job_id':'11111111-1111-4111-8111-111111111111','lease_token':'lease','completion_key':'completion','object_capability':'opaque','renderer_algorithm_version':'fanoos-raster-v1','watermark_label':'کاربر','forensic_id':'ABCDEF123456','limits':{'max_input_bytes':1024,'max_pages':10,'max_seconds':30}};j.update(kw);return j
     def test_limits_bounded(self):
         l=worker.JobLimits.parse({'max_input_bytes':9999999999,'max_pages':9999,'max_seconds':9999});self.assertLessEqual(l.max_input_bytes,200*1024*1024);self.assertEqual(l.max_pages,2000);self.assertEqual(l.max_seconds,1800)
+    def test_renderer_version_mismatch_fails_closed(self):
+        p=worker.JobProcessor(Source(),Sink(),Inspector(),Raster())
+        with self.assertRaises(worker.WorkerFailure) as c:p.process(self.job(renderer_algorithm_version='future-v2'))
+        self.assertEqual(c.exception.code,'render_failed')
     def test_non_pdf_rejected(self):
         p=worker.JobProcessor(Source(b'hello'),Sink(),Inspector(),Raster())
         with self.assertRaises(worker.WorkerFailure) as c:p.process(self.job())
