@@ -71,7 +71,6 @@ function updateToday(){
 function updatePath(){
   const item=currentWorkspace();
   $('#workspace-path').textContent=item?[item.institution_name,item.faculty_name,item.program_name,item.cohort_label].filter(Boolean).join(' / '):'فضایی انتخاب نشده';
-  if(state.workspace)sessionStorage.setItem('fanoos_workspace',state.workspace);else sessionStorage.removeItem('fanoos_workspace');
   updateToday()
 }
 
@@ -170,7 +169,7 @@ function bindInteractions(){
       await api('/api/v1/auth/logout',{method:'POST'});
       sessionStorage.clear();location.reload()
     }catch{
-      window.FanoosDomainUX.renderError($('#result-list'),{title:'خروج انجام نشد',message:'اتصال با سامانه برقرار نشد. حساب شما همچنان فعال است؛ دوباره تلاش کنید.'});
+      window.FanoosDomainUX.renderError($('#result-list'),{title:'وضعیت خروج تأیید نشد',message:'پاسخ نهایی از سامانه دریافت نشد. دوباره تلاش کنید یا صفحه را تازه کنید.'});
       button.disabled=false
     }
   });
