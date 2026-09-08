@@ -185,7 +185,7 @@ SQL);
         }
 
         $workspaces = $this->database->prepare(<<<'SQL'
-SELECT workspace.id, workspace.slug, workspace.name, membership.status,
+SELECT workspace.id, workspace.slug, workspace.name, workspace.timezone_name, membership.status,
        institution.name AS institution_name, faculty.name AS faculty_name,
        program.name AS program_name, cohort.label AS cohort_label
 FROM tenant_workspace_memberships membership
