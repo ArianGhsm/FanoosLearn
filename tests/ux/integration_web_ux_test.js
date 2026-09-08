@@ -34,7 +34,7 @@ assert.match(appJs, /clearActiveView\(\)/);
 assert.equal(indexPhp.includes('id="dashboard" aria-labelledby="greeting" tabindex="-1"'), true, 'dashboard focus target missing');
 assert.equal(appJs.includes("if(focus)$('#dashboard').focus()"), true, 'post-login focus handoff missing');
 
-assert.equal(appJs.includes("workspace:sessionStorage.getItem('fanoos_workspace')"), false, 'sessionStorage must not choose canonical workspace');
+assert.equal(appJs.includes('fanoos_workspace'), false, 'workspace must not be cached in presentation sessionStorage');
 assert.equal(appJs.includes("account?.selected_workspace_id"), true, 'canonical selected workspace must come from backend account projection');
 assert.equal(authPhp.includes('workspace.timezone_name'), true, 'canonical account projection must expose workspace timezone');
 assert.equal(appJs.includes('workspaceTimezone:workspaceTimezone()'), true, 'domain render context must receive canonical workspace timezone');
@@ -42,7 +42,8 @@ assert.equal(domainJs.includes("timeZone: validTimeZone(context.workspaceTimezon
 assert.equal(appJs.includes('workspaceMutation=true;select.disabled=true;++state.requestSerial'), true, 'workspace switch must invalidate stale GETs before mutation');
 assert.equal(appJs.includes('if(!view||state.workspaceMutation)return'), true, 'view loads must not race a workspace mutation');
 assert.equal(appJs.includes('!state.workspace||state.workspaceMutation||q.length<2'), true, 'search must not race a workspace mutation');
-assert.equal(appJs.includes("title:'خروج انجام نشد'"), true, 'logout failure must be visible');
+assert.equal(appJs.includes("title:'وضعیت خروج تأیید نشد'"), true, 'ambiguous logout outcome must be described truthfully');
+assert.equal(appJs.includes('حساب شما همچنان فعال است'), false, 'logout timeout must not invent canonical session state');
 assert.equal(/finally\s*\{\s*sessionStorage\.clear\(\)/.test(appJs), false, 'logout failure must not masquerade as success');
 
 for (const view of ['schedule', 'grades', 'announcements', 'academics', 'resources', 'assessments', 'forms', 'orders']) {
