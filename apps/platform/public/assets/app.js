@@ -1,7 +1,7 @@
 const state={
   token:'',
   csrf:sessionStorage.getItem('fanoos_csrf')||'',
-  workspace:sessionStorage.getItem('fanoos_workspace')||'',
+  workspace:'',
   view:sessionStorage.getItem('fanoos_view')||'schedule',
   account:null,
   requestSerial:0,
@@ -11,21 +11,6 @@ const $=selector=>document.querySelector(selector);
 
 class ApiError extends Error{
   constructor(code,status){super('API request failed');this.name='ApiError';this.code=code||'request_failed';this.status=status||0}
-}
-
-function ensureDomainAssets(){
-  if(!document.querySelector('link[data-fanoos-domain-ux]')){
-    const link=document.createElement('link');
-    link.rel='stylesheet';link.href='/assets/domain-ux.css';link.dataset.fanoosDomainUx='true';
-    document.head.append(link);
-  }
-  if(window.FanoosDomainUX)return Promise.resolve(window.FanoosDomainUX);
-  return new Promise((resolve,reject)=>{
-    const existing=document.querySelector('script[data-fanoos-domain-ux]');
-    if(existing){existing.addEventListener('load',()=>resolve(window.FanoosDomainUX),{once:true});existing.addEventListener('error',reject,{once:true});return}
-    const script=document.createElement('script');script.src='/assets/domain-ux.js';script.defer=true;script.dataset.fanoosDomainUx='true';
-    script.addEventListener('load',()=>resolve(window.FanoosDomainUX),{once:true});script.addEventListener('error',reject,{once:true});document.head.append(script)
-  })
 }
 
 async function api(path,options={}){
@@ -50,26 +35,62 @@ function safeAuthMessage(error){
 
 function currentWorkspace(){return state.account?.workspaces?.find(workspace=>workspace.id===state.workspace)||null}
 
+function workspaceTimezone(){
+  const value=currentWorkspace()?.timezone_name;
+  return typeof value==='string'&&value.trim()?value.trim():''
+}
+
+function dateKeyInTimezone(date,timeZone){
+  try{
+    const parts=new Intl.DateTimeFormat('en-US',{timeZone:timeZone||'UTC',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date);
+    const values=Object.fromEntries(parts.map(part=>[part.type,part.value]));
+    if(values.year&&values.month&&values.day)return `${values.year}-${values.month}-${values.day}`
+  }catch{}
+  return date.toISOString().slice(0,10)
+}
+
+function addCalendarDays(dateKey,days){
+  const [year,month,day]=dateKey.split('-').map(Number);
+  const date=new Date(Date.UTC(year,month-1,day+days,12,0,0));
+  return date.toISOString().slice(0,10)
+}
+
+function scheduleRange(){
+  const today=dateKeyInTimezone(new Date(),workspaceTimezone()||'UTC');
+  return {from:today,to:addCalendarDays(today,90)}
+}
+
+function updateToday(){
+  const options={dateStyle:'full'};
+  const timeZone=workspaceTimezone();
+  if(timeZone)options.timeZone=timeZone;
+  try{$('#today').textContent=new Intl.DateTimeFormat('fa-IR',options).format(new Date())}
+  catch{$('#today').textContent=new Intl.DateTimeFormat('fa-IR',{dateStyle:'full'}).format(new Date())}
+}
+
 function updatePath(){
   const item=currentWorkspace();
   $('#workspace-path').textContent=item?[item.institution_name,item.faculty_name,item.program_name,item.cohort_label].filter(Boolean).join(' / '):'فضایی انتخاب نشده';
-  if(state.workspace)sessionStorage.setItem('fanoos_workspace',state.workspace);else sessionStorage.removeItem('fanoos_workspace')
+  if(state.workspace)sessionStorage.setItem('fanoos_workspace',state.workspace);else sessionStorage.removeItem('fanoos_workspace');
+  updateToday()
 }
 
-function showAccount(account){
+function showAccount(account,{focus=false}={}){
   state.account=account;
   $('#login-panel').hidden=true;$('#dashboard').hidden=false;$('#logout').hidden=false;$('#workspace-picker').hidden=false;
   $('#greeting').textContent=`سلام ${account?.user?.display_name||''}`.trim();
   const select=$('#workspace-select');select.replaceChildren();
+  const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='انتخاب فضای آموزشی';placeholder.disabled=true;select.append(placeholder);
   const workspaces=Array.isArray(account?.workspaces)?account.workspaces:[];
   workspaces.forEach(workspace=>{const option=document.createElement('option');option.value=workspace.id;option.textContent=workspace.name;select.append(option)});
-  const available=workspaces.some(item=>item.id===state.workspace);
-  state.workspace=available?state.workspace:(account?.selected_workspace_id||workspaces[0]?.id||'');
-  select.value=state.workspace;updatePath()
+  const canonical=typeof account?.selected_workspace_id==='string'&&workspaces.some(item=>item.id===account.selected_workspace_id)?account.selected_workspace_id:'';
+  state.workspace=canonical;
+  select.value=canonical;updatePath();
+  if(focus)$('#dashboard').focus()
 }
 
 const views={
-  schedule:{title:'برنامه',path:()=>`/api/v1/workspaces/${state.workspace}/schedule?from=${new Date().toISOString().slice(0,10)}&to=${new Date(Date.now()+90*86400000).toISOString().slice(0,10)}`},
+  schedule:{title:'برنامه',path:()=>{const range=scheduleRange();return `/api/v1/workspaces/${state.workspace}/schedule?from=${range.from}&to=${range.to}`}},
   grades:{title:'نمرات',path:()=>`/api/v1/workspaces/${state.workspace}/grades/me`},
   announcements:{title:'اطلاعیه‌ها',path:()=>`/api/v1/workspaces/${state.workspace}/announcements`},
   academics:{title:'فضای آموزشی',path:()=>`/api/v1/workspaces/${state.workspace}/academics`,pick:data=>data?.courses},
@@ -95,15 +116,19 @@ function clearActiveView(){
   })
 }
 
+function renderContext(extra={}){
+  return {workspaceName:currentWorkspace()?.name||'',workspaceTimezone:workspaceTimezone(),...extra}
+}
+
 async function loadView(key){
   const Domain=window.FanoosDomainUX;const view=views[key];
-  if(!view)return;
+  if(!view||state.workspaceMutation)return;
   setActiveView(key);$('#view-title').textContent=view.title;
   if(!state.workspace){Domain.renderEmpty($('#result-list'),key,'برای مشاهده اطلاعات، ابتدا یک فضای آموزشی انتخاب کنید.');return}
   const serial=++state.requestSerial;Domain.renderLoading($('#result-list'));
   try{
     const data=await api(view.path());if(serial!==state.requestSerial)return;
-    Domain.renderView(key,$('#result-list'),view.pick?view.pick(data):data,{workspaceName:currentWorkspace()?.name||''})
+    Domain.renderView(key,$('#result-list'),view.pick?view.pick(data):data,renderContext())
   }catch(error){
     if(serial!==state.requestSerial)return;
     Domain.renderError($('#result-list'),{onRetry:()=>loadView(key)})
@@ -112,13 +137,13 @@ async function loadView(key){
 
 async function runSearch(query){
   const Domain=window.FanoosDomainUX;const form=$('#search-form');const button=form.querySelector('button');
-  const q=Domain.normalizeText(query);if(!state.workspace||q.length<2)return;
-  state.requestSerial+=1;const serial=state.requestSerial;
+  const q=Domain.normalizeText(query);if(!state.workspace||state.workspaceMutation||q.length<2)return;
+  const serial=++state.requestSerial;
   $('#view-title').textContent='نتایج جست‌وجو';clearActiveView();
   sessionStorage.setItem('fanoos_search_query',q);button.disabled=true;Domain.renderLoading($('#result-list'),'در حال جست‌وجو…');
   try{
     const rows=await api(`/api/v1/workspaces/${state.workspace}/search?q=${encodeURIComponent(q)}`);if(serial!==state.requestSerial)return;
-    Domain.renderView('search',$('#result-list'),rows,{query:q})
+    Domain.renderView('search',$('#result-list'),rows,renderContext({query:q}))
   }catch(error){
     if(serial!==state.requestSerial)return;
     Domain.renderError($('#result-list'),{title:'جست‌وجو انجام نشد',onRetry:()=>runSearch(q)})
@@ -134,27 +159,36 @@ function bindInteractions(){
     try{
       const fields=new FormData(event.currentTarget);
       const data=await api('/api/v1/auth/login',{method:'POST',body:JSON.stringify({identifier:fields.get('identifier'),password:fields.get('password')})});
-      state.token=data.token;state.csrf=data.csrf_token;sessionStorage.setItem('fanoos_csrf',state.csrf);showAccount(data.account);
+      state.token=data.token;state.csrf=data.csrf_token;sessionStorage.setItem('fanoos_csrf',state.csrf);showAccount(data.account,{focus:true});
       await loadView(views[state.view]?state.view:'schedule')
     }catch(error){$('#login-message').textContent=safeAuthMessage(error)}finally{button.disabled=false}
   });
 
   $('#logout').addEventListener('click',async event=>{
-    const button=event.currentTarget;if(button.disabled)return;button.disabled=true;
-    try{await api('/api/v1/auth/logout',{method:'POST'})}catch{}finally{sessionStorage.clear();location.reload()}
+    const button=event.currentTarget;if(button.disabled)return;button.disabled=true;++state.requestSerial;
+    try{
+      await api('/api/v1/auth/logout',{method:'POST'});
+      sessionStorage.clear();location.reload()
+    }catch{
+      window.FanoosDomainUX.renderError($('#result-list'),{title:'خروج انجام نشد',message:'اتصال با سامانه برقرار نشد. حساب شما همچنان فعال است؛ دوباره تلاش کنید.'});
+      button.disabled=false
+    }
   });
 
   $('#workspace-select').addEventListener('change',async event=>{
     if(state.workspaceMutation)return;
     const select=event.currentTarget;const prior=state.workspace;const next=select.value;
-    state.workspaceMutation=true;select.disabled=true;
+    if(!next||next===prior){select.value=prior;return}
+    state.workspaceMutation=true;select.disabled=true;++state.requestSerial;
+    let changed=false;
     try{
       await api('/api/v1/workspaces/select',{method:'POST',body:JSON.stringify({workspace_id:next})});
-      state.workspace=next;updatePath();await loadView(views[state.view]?state.view:'schedule')
-    }catch(error){
+      state.workspace=next;updatePath();changed=true
+    }catch{
       select.value=prior;
       window.FanoosDomainUX.renderError($('#result-list'),{title:'تغییر فضای آموزشی انجام نشد',message:'فضای قبلی همچنان فعال است. دوباره تلاش کنید.'})
     }finally{state.workspaceMutation=false;select.disabled=false}
+    if(changed)await loadView(views[state.view]?state.view:'schedule')
   });
 
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>loadView(button.dataset.view)));
@@ -165,10 +199,10 @@ function bindInteractions(){
 }
 
 async function boot(){
-  await ensureDomainAssets();
+  if(!window.FanoosDomainUX)throw new Error('domain UX unavailable');
   bindInteractions();
   const savedSearch=sessionStorage.getItem('fanoos_search_query')||'';if(savedSearch)$('#search-form [name="q"]').value=savedSearch;
-  $('#today').textContent=new Intl.DateTimeFormat('fa-IR',{dateStyle:'full'}).format(new Date());
+  updateToday();
   try{
     const account=await api('/api/v1/account');showAccount(account);await loadView(views[state.view]?state.view:'schedule')
   }catch{}
