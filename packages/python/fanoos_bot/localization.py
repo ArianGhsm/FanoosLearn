@@ -43,17 +43,24 @@ HEALTH_STATUS_LABELS = {
 
 RESOURCE_TYPE_LABELS = {
     "pdf": "PDF",
-    "document": "سند",
+    "document": "فایل آموزشی",
+    "file": "فایل آموزشی",
     "booklet": "جزوه",
+    "lecture_note": "جزوه",
     "note": "جزوه",
     "notes": "جزوه",
-    "video": "ویدئو",
-    "audio": "صوت",
+    "summary": "خلاصه",
+    "dentnote": "DentNote",
+    "discipline_note": "یادداشت تخصصی",
+    "question_bank": "بانک سؤال",
+    "past_exam": "آزمون گذشته",
+    "past_questions": "سؤالات آزمون گذشته",
+    "flashcard": "فلش‌کارت",
+    "video": "فایل ویدیویی",
+    "audio": "فایل صوتی",
     "image": "تصویر",
     "link": "پیوند",
-    "file": "فایل",
-    "quiz": "آزمون",
-    "question_bank": "بانک سؤال",
+    "quiz": "آزمون کوتاه",
 }
 
 ERROR_MESSAGES = {
@@ -93,7 +100,11 @@ def order_status_label(value: object) -> str:
 
 
 def entitlement_label(granted: object) -> str:
-    return "فعال" if granted is True else "هنوز فعال نشده"
+    if granted is True:
+        return "فعال"
+    if granted is False:
+        return "فعال نیست"
+    return "نامشخص"
 
 
 def deployment_state_label(value: object) -> str:
