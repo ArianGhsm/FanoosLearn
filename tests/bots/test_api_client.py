@@ -18,6 +18,13 @@ class ApiClientTest(unittest.TestCase):
         c=FanoosApiClient('https://f.test','kid','0123456789abcdef',sender=sender)
         with self.assertRaises(FanoosApiError):c.post('/api/internal/v1/x',{},safe_to_retry=False)
         self.assertEqual(calls,1)
+    def test_lease_claim_and_fail_transitions_are_not_auto_retried(self):
+        calls=[]
+        def sender(url,*args):calls.append(url);return HttpResponse(503,b'{"ok":false,"error":{"code":"busy","message":"busy"},"meta":{}}',{})
+        c=FanoosApiClient('https://f.test','kid','0123456789abcdef',sender=sender,sleep=lambda _:None)
+        for operation in (lambda:c.claim_notification('telegram'),lambda:c.media_claim(),lambda:c.media_fail('j','lease','internal_error')):
+            with self.assertRaises(FanoosApiError):operation()
+        self.assertEqual(len(calls),3)
     def test_contract_mismatch_fails(self):
         c=FanoosApiClient('https://f.test','kid','0123456789abcdef',sender=lambda *a:HttpResponse(200,b'{"ok":true,"data":{},"meta":{"api_version":"v1"}}',{}))
         with self.assertRaises(FanoosContractError):c.post('/api/internal/v1/x',{})
