@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import os
+import tempfile
 from dataclasses import dataclass
+from pathlib import Path
 
 from .botapi import BotApiError
 from .chunking import chunks
@@ -48,7 +51,6 @@ class DeliveryReceiptPump:
         rows = self.state.pending_delivery_receipts(25)
         if not rows:
             return False
-        # One permanently failing/poison receipt must not starve later rows.
         for row in rows:
             if self.run_key(str(row["idempotency_key"])):
                 return True
@@ -76,10 +78,22 @@ class BotRuntime:
             result = self.app.start(ctx.subject, arg or None)
         elif command == "/link":
             result = self.app.link(ctx.subject, arg)
+        elif command == "/unlink":
+            result = self.app.unlink(ctx.subject)
         elif command in {"/menu", "/home"}:
             result = self.app.home(ctx.subject)
         elif command in {"/workspace", "/workspaces"}:
             result = self.app.workspaces(ctx.subject)
+        elif command == "/today":
+            result = self.app.day_schedule(ctx.subject, 0)
+        elif command == "/tomorrow":
+            result = self.app.day_schedule(ctx.subject, 1)
+        elif command == "/grades":
+            result = self.app.grades(ctx.subject)
+        elif command == "/announcements":
+            result = self.app.announcements(ctx.subject)
+        elif command == "/resources":
+            result = self.app.resources(ctx.subject)
         elif command == "/buy":
             result = self.app.create_order(
                 ctx.subject,
@@ -103,6 +117,10 @@ class BotRuntime:
     def handle_callback(self, ctx: UpdateContext, value: str):
         if ctx.callback_id:
             self.transport.answer_callback(ctx.callback_id)
+        if ctx.event_id:
+            prior = self.state.processed_update(self.platform, ctx.event_id)
+            if prior is not None:
+                return prior
         result = self.app.callback(ctx.subject, ctx.private, value)
         return self.deliver(ctx, result)
 
@@ -133,18 +151,72 @@ class BotRuntime:
             except Exception:
                 pass
 
+    def _record_success(self, ctx: UpdateContext, result: ActionResult, provider_ref: str) -> None:
+        if not result.receipt:
+            return
+        self.state.record_delivery_outcome(
+            self.platform,
+            result.receipt.workspace_id,
+            result.receipt.issuance_id,
+            result.receipt.idempotency_key,
+            "delivered",
+            provider_ref=provider_ref,
+            event_id=ctx.event_id,
+        )
+        self.delivery_receipts.run_key(result.receipt.idempotency_key)
+
+    def _deliver_document(self, ctx: UpdateContext, result: ActionResult):
+        document = result.document
+        if document is None:
+            raise RuntimeError("document result is missing payload")
+        with tempfile.TemporaryDirectory(prefix="fanoos-bot-document-") as root:
+            try:
+                os.chmod(root, 0o700)
+            except OSError:
+                pass
+            path = Path(root) / document.filename
+            path.write_bytes(document.data)
+            try:
+                os.chmod(path, 0o600)
+            except OSError:
+                pass
+            sent = self.transport.send_document(
+                ctx.chat_id,
+                path,
+                caption=document.caption,
+                protect_content=document.protect_content,
+            )
+        provider_ref = (
+            str(sent.get("message_id"))
+            if isinstance(sent, dict) and sent.get("message_id") is not None
+            else "sent"
+        )
+        self._record_success(ctx, result, provider_ref)
+        job_id = result.metadata.get("media_job_id") if isinstance(result.metadata, dict) else None
+        if isinstance(job_id, str):
+            try:
+                self.app.media_state.forget(job_id, ctx.subject)
+            except Exception:
+                pass
+        return provider_ref
+
     def deliver(self, ctx: UpdateContext, result: ActionResult):
         refs: list[str] = []
         screen = result.screen
-        texts = chunks(screen.text, 4096)
 
         if result.receipt and not self.state.delivery_receipt_capacity_available(
             result.receipt.idempotency_key
         ):
             raise RuntimeError("delivery receipt outbox is full")
 
-        # Receipt-bearing deliveries must be one provider operation. This avoids
-        # partially delivered protected text being duplicated after a retry.
+        if result.document is not None:
+            try:
+                return self._deliver_document(ctx, result)
+            except BotApiError as exc:
+                self._queue_failed_receipt(result, exc.code)
+                raise
+
+        texts = chunks(screen.text, 4096)
         if result.receipt and len(texts) != 1:
             self._queue_failed_receipt(result, "delivery_not_atomic")
             sent = self.transport.send_screen(
@@ -171,19 +243,7 @@ class BotRuntime:
                     refs.append(str(sent["message_id"]))
 
             provider_ref = refs[-1] if refs else "sent"
-            if result.receipt:
-                self.state.record_delivery_outcome(
-                    self.platform,
-                    result.receipt.workspace_id,
-                    result.receipt.issuance_id,
-                    result.receipt.idempotency_key,
-                    "delivered",
-                    provider_ref=provider_ref,
-                    event_id=ctx.event_id,
-                )
-                # A receipt failure must not make the transport update retry and
-                # re-send protected content. The durable local outbox owns retry.
-                self.delivery_receipts.run_key(result.receipt.idempotency_key)
+            self._record_success(ctx, result, provider_ref)
             return refs[-1] if refs else None
         except BotApiError as exc:
             self._queue_failed_receipt(result, exc.code)
