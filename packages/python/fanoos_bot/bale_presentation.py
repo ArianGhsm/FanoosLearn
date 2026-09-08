@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from .semantic_adapter import semantic_mapping
+
 
 @dataclass(frozen=True)
 class BaleRenderedScreen:
@@ -21,17 +23,14 @@ def _metadata(screen: Any) -> Any:
 
 
 def _mapping(value: Any) -> dict[str, Any] | None:
-    if isinstance(value, dict):
-        return value
-    blocks = getattr(value, "blocks", None)
-    if blocks is None:
-        return None
-    return {"blocks": blocks}
+    return semantic_mapping(value)
 
 
 def _block(value: Any) -> dict[str, Any] | None:
     if isinstance(value, dict):
         return value
+    if value is None:
+        return None
     kind = getattr(value, "kind", getattr(value, "type", None))
     if kind is None:
         return None
