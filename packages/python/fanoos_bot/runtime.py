@@ -9,6 +9,7 @@ from .activity import ActivityController
 from .botapi import BotApiError
 from .chunking import chunks
 from .models import ActionResult, Screen
+from .presentation import notification_detail_screen
 
 
 @dataclass(frozen=True)
@@ -120,9 +121,6 @@ class BotRuntime:
         return self.deliver(ctx, result)
 
     def handle_callback(self, ctx: UpdateContext, value: str):
-        # Callback acknowledgement is presentation feedback only. It deliberately
-        # happens before idempotency reads or application/backend work and is
-        # best-effort: an acknowledgement timeout must not block the action.
         if ctx.callback_id:
             try:
                 self.transport.answer_callback(ctx.callback_id)
@@ -246,9 +244,6 @@ class BotRuntime:
 
         try:
             for index, text in enumerate(texts):
-                # Preserve the original Screen object for the common one-chunk
-                # path. This keeps additive semantic metadata from Worker 3
-                # available through getattr without creating a hard dependency.
                 if len(texts) == 1:
                     part = screen
                 else:
@@ -302,12 +297,9 @@ class NotificationPump:
                 None,
             )
             return True
+
         payload = delivery.get("payload") or {}
-        text = (
-            str(payload.get("title") or "")
-            + "\n\n"
-            + str(payload.get("body") or "")
-        ).strip()
+        screen = notification_detail_screen(payload)
         try:
             ref = None
             limit = int(
@@ -317,10 +309,12 @@ class NotificationPump:
                     4096,
                 )
             )
-            for part in chunks(text, limit):
+            texts = chunks(screen.text, limit)
+            for index, text in enumerate(texts):
+                part = screen if len(texts) == 1 else Screen(text)
                 sent = self.transport.send_screen(
                     str(delivery["subject"]),
-                    Screen(part),
+                    part,
                 )
                 ref = (
                     str(sent.get("message_id"))
