@@ -6,6 +6,9 @@
 - Original parallel base: `fef86a4adcad99cb75327582750dd4cd2df88dea`
 - Integration branch: `integration/ux-presentation-wave`
 - Main was still exactly the original parallel base when integration started.
+- Final integrated main SHA: `f61be504b24975b82a35702705eecdcd799cee7a`
+
+`UX_INTEGRATED_MAIN_SHA=f61be504b24975b82a35702705eecdcd799cee7a`
 
 Workers consumed:
 
@@ -50,12 +53,14 @@ No legacy token aliases were added to `:root` solely for compatibility.
 
 ### Domain asset loading
 
-The authoritative strategy remains Worker 2's deterministic local dynamic loader in `app.js`:
+At the integration SHA, Worker 2's deterministic local dynamic loader in `app.js` was the authoritative strategy:
 
-- `/assets/domain-ux.css` is injected once using `data-fanoos-domain-ux`.
-- `/assets/domain-ux.js` is injected once and `boot()` awaits successful module load before binding/rendering.
-- `index.php` does not also statically include these assets, preventing duplicate load.
-- No remote dependency or CSP relaxation was introduced.
+- `/assets/domain-ux.css` was injected once using `data-fanoos-domain-ux`.
+- `/assets/domain-ux.js` was injected once and `boot()` awaited successful module load before binding/rendering.
+- `index.php` did not also statically include these assets.
+- no remote dependency or CSP relaxation was introduced.
+
+**Post-integration stabilization correction:** the global debugging pass proved that this compatibility loader was unnecessary complexity and a race/duplicate-load surface. The stabilization branch replaces it with one parser-declared local path: `domain-ux.css`, then deferred `domain-ux.js`, then deferred `app.js`. This is a stabilization fact, not a retroactive claim about the integrated SHA. See `UX_GLOBAL_STABILIZATION_REPORT.md`.
 
 ### Web active accessibility state
 
@@ -143,9 +148,9 @@ Existing worker tests are retained. Integration adds:
   - required shell/domain view coverage
   - raw-object/unsafe HTML presentation guards
 
-The deterministic bot runner now compiles `tests/ux` and explicitly runs Worker 3 UX tests. Worker 4's suite continues to run through the existing runtime transport test bridge.
+The deterministic bot runner compiles `tests/ux` and explicitly runs Worker 3 UX tests. Worker 4's suite continues to run through the existing runtime transport test bridge.
 
-CI now includes a dedicated `web-ux` job that runs:
+CI includes a dedicated `web-ux` job that runs:
 
 - PHP syntax for `index.php`
 - JS syntax for app/domain modules
@@ -176,4 +181,8 @@ These are `RUNTIME_VALIDATION_REQUIRED` / `LIVE_BROWSER_VALIDATION_REQUIRED`, no
 
 ## Integration status
 
-The branch is ready for the final integration PR once its full CI is green. The final `UX_INTEGRATED_MAIN_SHA` is intentionally not recorded until the integration PR is merged into `main` and the resulting SHA is verified.
+Prompt 1 integration completed and was merged to `main` as exact SHA:
+
+`f61be504b24975b82a35702705eecdcd799cee7a`
+
+The subsequent repository-side global debugging work is tracked separately by `UX_GLOBAL_STABILIZATION_REPORT.md` and must not be confused with the historical integration SHA.
