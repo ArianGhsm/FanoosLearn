@@ -80,8 +80,19 @@ const views={
 };
 
 function setActiveView(key){
-  document.querySelectorAll('[data-view]').forEach(button=>button.classList.toggle('active',button.dataset.view===key));
+  document.querySelectorAll('[data-view]').forEach(button=>{
+    const active=button.dataset.view===key;
+    button.classList.toggle('active',active);
+    button.setAttribute('aria-pressed',active?'true':'false')
+  });
   state.view=key;sessionStorage.setItem('fanoos_view',key)
+}
+
+function clearActiveView(){
+  document.querySelectorAll('[data-view]').forEach(button=>{
+    button.classList.remove('active');
+    button.setAttribute('aria-pressed','false')
+  })
 }
 
 async function loadView(key){
@@ -103,7 +114,7 @@ async function runSearch(query){
   const Domain=window.FanoosDomainUX;const form=$('#search-form');const button=form.querySelector('button');
   const q=Domain.normalizeText(query);if(!state.workspace||q.length<2)return;
   state.requestSerial+=1;const serial=state.requestSerial;
-  $('#view-title').textContent='نتایج جست‌وجو';document.querySelectorAll('[data-view]').forEach(button=>button.classList.remove('active'));
+  $('#view-title').textContent='نتایج جست‌وجو';clearActiveView();
   sessionStorage.setItem('fanoos_search_query',q);button.disabled=true;Domain.renderLoading($('#result-list'),'در حال جست‌وجو…');
   try{
     const rows=await api(`/api/v1/workspaces/${state.workspace}/search?q=${encodeURIComponent(q)}`);if(serial!==state.requestSerial)return;
@@ -115,6 +126,8 @@ async function runSearch(query){
 }
 
 function bindInteractions(){
+  document.querySelectorAll('[data-view]').forEach(button=>button.setAttribute('aria-pressed','false'));
+
   $('#login-form').addEventListener('submit',async event=>{
     event.preventDefault();const button=event.currentTarget.querySelector('button');if(button.disabled)return;
     button.disabled=true;$('#login-message').textContent='';
