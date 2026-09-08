@@ -53,6 +53,7 @@ jobs:
           python3 tests/ux/worker01_static_quality.py
           node tests/ux/worker02_domain_ux_test.js
           node tests/ux/integration_web_ux_test.js
+          node tests/ux/domain_fuzz_test.js
 
   python-bot-worker:
     runs-on: ubuntu-latest
