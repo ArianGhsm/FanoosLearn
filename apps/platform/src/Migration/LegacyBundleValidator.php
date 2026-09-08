@@ -120,7 +120,7 @@ final class LegacyBundleValidator
                 $errors[] = "{$path}.entity_type is unsupported; raw/ad-hoc table migration is prohibited.";
                 continue;
             }
-            ++$entityCounts[$entityType];
+            $entityCounts[$entityType] = ($entityCounts[$entityType] ?? 0) + 1;
 
             $sourceRowKey = is_string($row['source_key'] ?? null) ? (string) $row['source_key'] : '';
             if ($sourceRowKey === '' || strlen($sourceRowKey) > 500) {
