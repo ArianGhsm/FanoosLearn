@@ -196,7 +196,7 @@ class AppTest(unittest.TestCase):
 
     def test_cross_tenant_denied(self):
         result = self.app.select_workspace('1', '99999999-9999-4999-8999-999999999999')
-        self.assertIn('دسترسی', result.screen.text)
+        self.assertIn('در دسترس نیست', result.screen.text)
         self.assertNotIn('workspace_forbidden', result.screen.text)
 
     def test_home_and_account_are_human_labeled(self):
