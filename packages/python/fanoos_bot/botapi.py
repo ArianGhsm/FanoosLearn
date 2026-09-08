@@ -82,6 +82,14 @@ class JsonBotApiTransport:
         )
 
     def _call(self, method: str, payload: dict[str, Any] | None = None) -> Any:
+        request_timeout = self.timeout
+        if method == "getUpdates" and isinstance(payload, dict):
+            long_poll_timeout = payload.get("timeout")
+            if isinstance(long_poll_timeout, (int, float)) and long_poll_timeout >= 0:
+                # The client socket must outlive Telegram/Bale's server-side
+                # long poll. Otherwise an idle queue is misreported as a
+                # transport outage before the provider can answer normally.
+                request_timeout = max(self.timeout, float(long_poll_timeout) + 5)
         body = json.dumps(
             payload or {},
             ensure_ascii=False,
@@ -95,7 +103,7 @@ class JsonBotApiTransport:
         )
         data: Any
         try:
-            with request.urlopen(req, timeout=self.timeout) as res:
+            with request.urlopen(req, timeout=request_timeout) as res:
                 data = json.loads(res.read().decode("utf-8"))
         except error.HTTPError as exc:
             try:
