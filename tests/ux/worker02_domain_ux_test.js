@@ -30,7 +30,7 @@ for(const raw of ['workspace_id','source_type','source_id','amount_minor','provi
   assert.ok(!dumpPattern.test(domain),`${raw} must not be dumped as a label`);
 }
 assert.ok(!domain.includes('Object.entries(row)'), 'generic raw row iteration must not return');
-assert.ok(domain.includes("dir: 'ltr'")&&css.includes('unicode-bidi:isolate'),'mixed LTR token isolation missing');
+assert.ok(domain.includes("dir: 'ltr'")&&/unicode-bidi\s*:\s*isolate\b/.test(css),'mixed LTR token isolation missing');
 assert.ok(domain.includes('در حال دریافت اطلاعات')&&domain.includes('دریافت اطلاعات ممکن نشد'),'loading/error Persian states missing');
 assert.ok(domain.includes('برای این بازه برنامه‌ای ثبت نشده است.'),'schedule empty state missing');
 console.log('worker02 domain UX tests: OK');
