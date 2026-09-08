@@ -9,7 +9,7 @@ const domain=fs.readFileSync(path.join(root,'apps/platform/public/assets/domain-
 const css=fs.readFileSync(path.join(root,'apps/platform/public/assets/domain-ux.css'),'utf8');
 
 assert.strictEqual(ux.localizeStatus('pending'),'در انتظار');
-assert.strictEqual(ux.localizeStatus('paid'),'پرداخت‌شده');
+assert.strictEqual(ux.localizeStatus('paid'),'پرداخت تأیید شده');
 assert.strictEqual(ux.localizeStatus('cancelled'),'لغوشده');
 assert.strictEqual(ux.localizeStatus('provider_weird_code'),'وضعیت نامشخص');
 assert.strictEqual(ux.localizeResourceType('question_bank'),'بانک سؤال');
@@ -20,6 +20,12 @@ assert.strictEqual(ux.formatNumber(null),'—');
 assert.strictEqual(ux.formatNumber(undefined),'—');
 assert.strictEqual(ux.formatMoney(250000,'IRR'),'۲۵۰٬۰۰۰ ریال');
 assert.strictEqual(ux.normalizeText('<img src=x onerror=alert(1)>'),'<img src=x onerror=alert(1)>');
+assert.strictEqual(ux.formatDateTime('2026-09-08 20:15:00'),'—','naive datetime must not use browser-local timezone without an explicit assumption');
+const tehran=ux.formatDateTime('2026-09-08 20:15:00',{assumeUtc:true,timeZone:'Asia/Tehran'});
+assert.notStrictEqual(tehran,'—');
+assert.ok(tehran.includes('۲۳:۴۵')||tehran.includes('۲۳:۴۵'),'UTC-naive database datetime must render in workspace timezone');
+const offset=ux.formatDateTime('2026-09-08T20:15:00+03:30',{timeZone:'Asia/Tehran'});
+assert.notStrictEqual(offset,'—','offset-aware datetime should be accepted');
 assert.ok(domain.includes('textContent'),'safe DOM textContent must be used');
 assert.ok(!/\.innerHTML\s*=/.test(domain),'domain renderer must not write untrusted innerHTML');
 assert.ok(!/\.innerHTML\s*=/.test(app),'app flow must not use innerHTML state rendering');
