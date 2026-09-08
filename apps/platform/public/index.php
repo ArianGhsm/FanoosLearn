@@ -11,6 +11,8 @@ declare(strict_types=1);
     <meta name="theme-color" content="#0b4a45">
     <title>فانوس | فضای یادگیری</title>
     <link rel="stylesheet" href="/assets/app.css">
+    <link rel="stylesheet" href="/assets/domain-ux.css">
+    <script src="/assets/domain-ux.js" defer></script>
     <script src="/assets/app.js" defer></script>
 </head>
 <body>
@@ -71,7 +73,7 @@ declare(strict_types=1);
         </form>
     </section>
 
-    <section class="dashboard" id="dashboard" aria-labelledby="greeting" hidden>
+    <section class="dashboard" id="dashboard" aria-labelledby="greeting" tabindex="-1" hidden>
         <header class="dashboard-heading">
             <div class="dashboard-heading-copy">
                 <span class="eyebrow">امروز در فانوس</span>
