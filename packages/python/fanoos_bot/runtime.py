@@ -5,6 +5,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
+from .activity import ActivityController
 from .botapi import BotApiError
 from .chunking import chunks
 from .models import ActionResult, Screen
@@ -58,12 +59,52 @@ class DeliveryReceiptPump:
 
 
 class BotRuntime:
-    def __init__(self, platform, transport, application, state):
+    def __init__(self, platform, transport, application, state, *, activity=None):
         self.platform = platform
         self.transport = transport
         self.app = application
         self.state = state
+        self.activity = activity or ActivityController(transport)
         self.delivery_receipts = DeliveryReceiptPump(platform, application.backend, state)
+
+    def _message_result(self, ctx: UpdateContext, command: str, arg: str):
+        if command.startswith("/start"):
+            return self.app.start(ctx.subject, arg or None)
+        if command == "/link":
+            return self.app.link(ctx.subject, arg)
+        if command == "/unlink":
+            return self.app.unlink(ctx.subject)
+        if command in {"/menu", "/home"}:
+            return self.app.home(ctx.subject)
+        if command in {"/workspace", "/workspaces"}:
+            return self.app.workspaces(ctx.subject)
+        if command == "/today":
+            return self.app.day_schedule(ctx.subject, 0)
+        if command == "/tomorrow":
+            return self.app.day_schedule(ctx.subject, 1)
+        if command == "/grades":
+            return self.app.grades(ctx.subject)
+        if command == "/announcements":
+            return self.app.announcements(ctx.subject)
+        if command == "/resources":
+            return self.app.resources(ctx.subject)
+        if command == "/buy":
+            return self.app.create_order(
+                ctx.subject,
+                arg,
+                f"bot-order:{self.platform}:{ctx.event_id}" if ctx.event_id else None,
+            )
+        if command == "/order":
+            return self.app.order_status(ctx.subject, arg)
+        if command == "/resource":
+            return self.app.protected_resource(ctx.subject, arg)
+        if command == "/update_server":
+            return self.app.update_begin(ctx.subject, ctx.private)
+        if command == "/update_status":
+            return self.app.update_status(ctx.subject, ctx.private, arg or None)
+        if command == "/help":
+            return self.app.help()
+        return self.app.home(ctx.subject)
 
     def handle_message(self, ctx: UpdateContext, text: str):
         command, *rest = (text or "").strip().split(maxsplit=1)
@@ -74,54 +115,25 @@ class BotRuntime:
             if prior is not None:
                 return prior
 
-        if command.startswith("/start"):
-            result = self.app.start(ctx.subject, arg or None)
-        elif command == "/link":
-            result = self.app.link(ctx.subject, arg)
-        elif command == "/unlink":
-            result = self.app.unlink(ctx.subject)
-        elif command in {"/menu", "/home"}:
-            result = self.app.home(ctx.subject)
-        elif command in {"/workspace", "/workspaces"}:
-            result = self.app.workspaces(ctx.subject)
-        elif command == "/today":
-            result = self.app.day_schedule(ctx.subject, 0)
-        elif command == "/tomorrow":
-            result = self.app.day_schedule(ctx.subject, 1)
-        elif command == "/grades":
-            result = self.app.grades(ctx.subject)
-        elif command == "/announcements":
-            result = self.app.announcements(ctx.subject)
-        elif command == "/resources":
-            result = self.app.resources(ctx.subject)
-        elif command == "/buy":
-            result = self.app.create_order(
-                ctx.subject,
-                arg,
-                f"bot-order:{self.platform}:{ctx.event_id}" if ctx.event_id else None,
-            )
-        elif command == "/order":
-            result = self.app.order_status(ctx.subject, arg)
-        elif command == "/resource":
-            result = self.app.protected_resource(ctx.subject, arg)
-        elif command == "/update_server":
-            result = self.app.update_begin(ctx.subject, ctx.private)
-        elif command == "/update_status":
-            result = self.app.update_status(ctx.subject, ctx.private, arg or None)
-        elif command == "/help":
-            result = self.app.help()
-        else:
-            result = self.app.home(ctx.subject)
+        with self.activity.operation(ctx.chat_id, private=ctx.private):
+            result = self._message_result(ctx, command, arg)
         return self.deliver(ctx, result)
 
     def handle_callback(self, ctx: UpdateContext, value: str):
+        # Callback acknowledgement is presentation feedback only. It deliberately
+        # happens before idempotency reads or application/backend work and is
+        # best-effort: an acknowledgement timeout must not block the action.
         if ctx.callback_id:
-            self.transport.answer_callback(ctx.callback_id)
+            try:
+                self.transport.answer_callback(ctx.callback_id)
+            except Exception:
+                pass
         if ctx.event_id:
             prior = self.state.processed_update(self.platform, ctx.event_id)
             if prior is not None:
                 return prior
-        result = self.app.callback(ctx.subject, ctx.private, value)
+        with self.activity.operation(ctx.chat_id, private=ctx.private):
+            result = self.app.callback(ctx.subject, ctx.private, value)
         return self.deliver(ctx, result)
 
     def _queue_failed_receipt(self, result: ActionResult, error_code: str) -> None:
@@ -216,12 +228,17 @@ class BotRuntime:
                 self._queue_failed_receipt(result, exc.code)
                 raise
 
-        texts = chunks(screen.text, 4096)
+        limit = int(
+            getattr(getattr(self.transport, "capabilities", None), "max_text_chars", 4096)
+        )
+        texts = chunks(screen.text, limit)
         if result.receipt and len(texts) != 1:
             self._queue_failed_receipt(result, "delivery_not_atomic")
             sent = self.transport.send_screen(
                 ctx.chat_id,
-                Screen("⚠️ این محتوای محافظت‌شده برای ارسال مستقیم در پیام‌رسان بیش از حد بزرگ است."),
+                Screen(
+                    "⚠️ این محتوای محافظت‌شده برای ارسال مستقیم در پیام‌رسان بیش از حد بزرگ است."
+                ),
             )
             if isinstance(sent, dict) and sent.get("message_id") is not None:
                 return str(sent["message_id"])
@@ -229,12 +246,18 @@ class BotRuntime:
 
         try:
             for index, text in enumerate(texts):
-                part = Screen(
-                    text,
-                    screen.rows if index == len(texts) - 1 else (),
-                    edit=screen.edit and len(texts) == 1,
-                    protect_content=screen.protect_content,
-                )
+                # Preserve the original Screen object for the common one-chunk
+                # path. This keeps additive semantic metadata from Worker 3
+                # available through getattr without creating a hard dependency.
+                if len(texts) == 1:
+                    part = screen
+                else:
+                    part = Screen(
+                        text,
+                        screen.rows if index == len(texts) - 1 else (),
+                        edit=False,
+                        protect_content=screen.protect_content,
+                    )
                 if part.edit and ctx.message_id is not None:
                     sent = self.transport.edit_screen(ctx.chat_id, ctx.message_id, part)
                 else:
@@ -280,11 +303,25 @@ class NotificationPump:
             )
             return True
         payload = delivery.get("payload") or {}
-        text = (str(payload.get("title") or "") + "\n\n" + str(payload.get("body") or "")).strip()
+        text = (
+            str(payload.get("title") or "")
+            + "\n\n"
+            + str(payload.get("body") or "")
+        ).strip()
         try:
             ref = None
-            for part in chunks(text, 4096):
-                sent = self.transport.send_screen(str(delivery["subject"]), Screen(part))
+            limit = int(
+                getattr(
+                    getattr(self.transport, "capabilities", None),
+                    "max_text_chars",
+                    4096,
+                )
+            )
+            for part in chunks(text, limit):
+                sent = self.transport.send_screen(
+                    str(delivery["subject"]),
+                    Screen(part),
+                )
                 ref = (
                     str(sent.get("message_id"))
                     if isinstance(sent, dict) and sent.get("message_id") is not None
