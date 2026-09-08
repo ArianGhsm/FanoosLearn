@@ -94,6 +94,7 @@ class PrivateSpoolArtifactSink:
         target=self.root/f'{job_id}-{checksum[:16]}.pdf';shutil.copyfile(source,target);os.chmod(target,0o600);return f'pm:{job_id}:{checksum[:16]}'
 
 class JobProcessor:
+    MAX_OUTPUT_BYTES=100*1024*1024
     def __init__(self,source:CapabilitySource,sink:ArtifactSink,inspector=None,rasterizer=None,temp_root:Path|None=None):self.source=source;self.sink=sink;self.inspector=inspector or CommandPdfInspector();self.rasterizer=rasterizer or PopplerPillowRasterizer();self.temp_root=temp_root
     def process(self,job:dict)->dict:
         limits=JobLimits.parse(job.get('limits'));deadline=time.monotonic()+limits.max_seconds
@@ -108,7 +109,7 @@ class JobProcessor:
             if pages>limits.max_pages:raise WorkerFailure('page_limit','PDF exceeds page limit')
             rendered=self.rasterizer.render(src,out,str(job.get('watermark_label') or 'FANOOS'),str(job.get('forensic_id') or ''),deadline)
             if rendered!=pages or not out.is_file():raise WorkerFailure('output_invalid','rendered output mismatch')
-            size=out.stat().st_size
-            if size<1 or size>limits.max_input_bytes*4:raise WorkerFailure('output_invalid','output size invalid')
+            size=out.stat().st_size;output_limit=min(self.MAX_OUTPUT_BYTES,limits.max_input_bytes*4)
+            if size<1 or size>output_limit:raise WorkerFailure('output_invalid','output size invalid')
             checksum=hashlib.sha256(out.read_bytes()).hexdigest();ref=self.sink.publish(job,out,checksum)
             return {'checksum_sha256':checksum,'size':size,'mime':'application/pdf','artifact_ref':ref}
