@@ -1,212 +1,496 @@
-const state={
-  token:'',
-  csrf:sessionStorage.getItem('fanoos_csrf')||'',
-  workspace:'',
-  view:sessionStorage.getItem('fanoos_view')||'schedule',
-  account:null,
-  requestSerial:0,
-  workspaceMutation:false
-};
-const $=selector=>document.querySelector(selector);
+'use strict';
+(() => {
+  const UI = window.FanoosProductUI;
+  const UX = window.FanoosDomainUX;
+  if (!UI || !UX) return;
 
-class ApiError extends Error{
-  constructor(code,status){super('API request failed');this.name='ApiError';this.code=code||'request_failed';this.status=status||0}
-}
+  const $ = (selector) => document.querySelector(selector);
+  const $$ = (selector) => [...document.querySelectorAll(selector)];
+  const ambiguousLogout={title:'وضعیت خروج تأیید نشد'};
+  const viewMap = { academics: 'courses', schedule: 'schedule', resources: 'resources', assessments: 'assessments', grades: 'grades', announcements: 'announcements', forms: 'forms', orders: 'orders' };
+  const state = {
+    token: sessionStorage.getItem('fanoos_token') || '',
+    csrf: sessionStorage.getItem('fanoos_csrf') || '',
+    workspace: null,
+    account: null,
+    route: UI.routeFromHash(location.hash),
+    requestSerial: 0,
+    workspaceMutation: false,
+    selectedAnnouncement: null,
+    selectedForm: null,
+    selectedResource: null,
+    selectedAssessment: null,
+    management: null,
+    managementCheckedFor: null,
+  };
 
-async function api(path,options={}){
-  const method=(options.method||'GET').toUpperCase();
-  const headers={'Content-Type':'application/json',...(options.headers||{})};
-  if(state.token)headers.Authorization=`Bearer ${state.token}`;
-  if(method!=='GET')headers['X-CSRF-Token']=state.csrf;
-  let response;
-  try{response=await fetch(path,{...options,method,headers})}catch{throw new ApiError('network_error',0)}
-  let payload={};
-  try{payload=await response.json()}catch{payload={}}
-  if(!response.ok)throw new ApiError(payload?.error?.code||'request_failed',response.status);
-  return payload.data;
-}
-
-function safeAuthMessage(error){
-  const code=error&&error.code;
-  if(['invalid_credentials','authentication_failed','invalid_login'].includes(code))return 'شناسه یا رمز عبور درست نیست.';
-  if(code==='rate_limited')return 'تعداد تلاش‌ها زیاد بوده است. کمی بعد دوباره امتحان کنید.';
-  return 'ورود انجام نشد. اطلاعات را بررسی کنید و دوباره تلاش کنید.';
-}
-
-function currentWorkspace(){return state.account?.workspaces?.find(workspace=>workspace.id===state.workspace)||null}
-
-function workspaceTimezone(){
-  const value=currentWorkspace()?.timezone_name;
-  return typeof value==='string'&&value.trim()?value.trim():''
-}
-
-function dateKeyInTimezone(date,timeZone){
-  try{
-    const parts=new Intl.DateTimeFormat('en-US',{timeZone:timeZone||'UTC',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date);
-    const values=Object.fromEntries(parts.map(part=>[part.type,part.value]));
-    if(values.year&&values.month&&values.day)return `${values.year}-${values.month}-${values.day}`
-  }catch{}
-  return date.toISOString().slice(0,10)
-}
-
-function addCalendarDays(dateKey,days){
-  const [year,month,day]=dateKey.split('-').map(Number);
-  const date=new Date(Date.UTC(year,month-1,day+days,12,0,0));
-  return date.toISOString().slice(0,10)
-}
-
-function scheduleRange(){
-  const today=dateKeyInTimezone(new Date(),workspaceTimezone()||'UTC');
-  return {from:today,to:addCalendarDays(today,90)}
-}
-
-function updateToday(){
-  const options={dateStyle:'full'};
-  const timeZone=workspaceTimezone();
-  if(timeZone)options.timeZone=timeZone;
-  try{$('#today').textContent=new Intl.DateTimeFormat('fa-IR',options).format(new Date())}
-  catch{$('#today').textContent=new Intl.DateTimeFormat('fa-IR',{dateStyle:'full'}).format(new Date())}
-}
-
-function updatePath(){
-  const item=currentWorkspace();
-  $('#workspace-path').textContent=item?[item.institution_name,item.faculty_name,item.program_name,item.cohort_label].filter(Boolean).join(' / '):'فضایی انتخاب نشده';
-  updateToday()
-}
-
-function showAccount(account,{focus=false}={}){
-  state.account=account;
-  $('#login-panel').hidden=true;$('#dashboard').hidden=false;$('#logout').hidden=false;$('#workspace-picker').hidden=false;
-  $('#greeting').textContent=`سلام ${account?.user?.display_name||''}`.trim();
-  const select=$('#workspace-select');select.replaceChildren();
-  const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='انتخاب فضای آموزشی';placeholder.disabled=true;select.append(placeholder);
-  const workspaces=Array.isArray(account?.workspaces)?account.workspaces:[];
-  workspaces.forEach(workspace=>{const option=document.createElement('option');option.value=workspace.id;option.textContent=workspace.name;select.append(option)});
-  const canonical=typeof account?.selected_workspace_id==='string'&&workspaces.some(item=>item.id===account.selected_workspace_id)?account.selected_workspace_id:'';
-  state.workspace=canonical;
-  select.value=canonical;updatePath();
-  if(focus)$('#dashboard').focus()
-}
-
-const views={
-  schedule:{title:'برنامه',path:()=>{const range=scheduleRange();return `/api/v1/workspaces/${state.workspace}/schedule?from=${range.from}&to=${range.to}`}},
-  grades:{title:'نمرات',path:()=>`/api/v1/workspaces/${state.workspace}/grades/me`},
-  announcements:{title:'اطلاعیه‌ها',path:()=>`/api/v1/workspaces/${state.workspace}/announcements`},
-  academics:{title:'فضای آموزشی',path:()=>`/api/v1/workspaces/${state.workspace}/academics`,pick:data=>data?.courses},
-  resources:{title:'منابع',path:()=>`/api/v1/workspaces/${state.workspace}/resources?sort=newest`},
-  assessments:{title:'تمرین و آزمون',path:()=>`/api/v1/workspaces/${state.workspace}/assessments`},
-  forms:{title:'فرم‌ها',path:()=>`/api/v1/workspaces/${state.workspace}/forms`},
-  orders:{title:'خرید و دسترسی',path:()=>`/api/v1/workspaces/${state.workspace}/orders`}
-};
-
-function setActiveView(key){
-  document.querySelectorAll('[data-view]').forEach(button=>{
-    const active=button.dataset.view===key;
-    button.classList.toggle('active',active);
-    button.setAttribute('aria-pressed',active?'true':'false')
-  });
-  state.view=key;sessionStorage.setItem('fanoos_view',key)
-}
-
-function clearActiveView(){
-  document.querySelectorAll('[data-view]').forEach(button=>{
-    button.classList.remove('active');
-    button.setAttribute('aria-pressed','false')
-  })
-}
-
-function renderContext(extra={}){
-  return {workspaceName:currentWorkspace()?.name||'',workspaceTimezone:workspaceTimezone(),...extra}
-}
-
-async function loadView(key){
-  const Domain=window.FanoosDomainUX;const view=views[key];
-  if(!view||state.workspaceMutation)return;
-  setActiveView(key);$('#view-title').textContent=view.title;
-  if(!state.workspace){Domain.renderEmpty($('#result-list'),key,'برای مشاهده اطلاعات، ابتدا یک فضای آموزشی انتخاب کنید.');return}
-  const serial=++state.requestSerial;Domain.renderLoading($('#result-list'));
-  try{
-    const data=await api(view.path());if(serial!==state.requestSerial)return;
-    Domain.renderView(key,$('#result-list'),view.pick?view.pick(data):data,renderContext())
-  }catch(error){
-    if(serial!==state.requestSerial)return;
-    Domain.renderError($('#result-list'),{onRetry:()=>loadView(key)})
+  function currentWorkspace() {
+    const workspaces = Array.isArray(state.account?.workspaces) ? state.account.workspaces : [];
+    return workspaces.find((workspace) => String(workspace.id) === String(state.workspace)) || null;
   }
-}
+  function workspaceTimezone() {
+    const value = currentWorkspace()?.timezone_name;
+    return typeof value === 'string' && value.trim() ? value.trim() : '';
+  }
+  function workspaceName() { return currentWorkspace()?.name || currentWorkspace()?.label || 'فضای آموزشی'; }
+  function routeContext() {
+    let todayLabel = '';
+    try { todayLabel = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { weekday: 'long', day: 'numeric', month: 'long', timeZone: workspaceTimezone() || undefined }).format(new Date()); } catch (_error) {}
+    return {workspaceTimezone:workspaceTimezone(),workspaceName:workspaceName(),todayLabel};
+  }
 
-async function runSearch(query){
-  const Domain=window.FanoosDomainUX;const form=$('#search-form');const button=form.querySelector('button');
-  const q=Domain.normalizeText(query);if(!state.workspace||state.workspaceMutation||q.length<2)return;
-  const serial=++state.requestSerial;
-  $('#view-title').textContent='نتایج جست‌وجو';clearActiveView();
-  sessionStorage.setItem('fanoos_search_query',q);button.disabled=true;Domain.renderLoading($('#result-list'),'در حال جست‌وجو…');
-  try{
-    const rows=await api(`/api/v1/workspaces/${state.workspace}/search?q=${encodeURIComponent(q)}`);if(serial!==state.requestSerial)return;
-    Domain.renderView('search',$('#result-list'),rows,renderContext({query:q}))
-  }catch(error){
-    if(serial!==state.requestSerial)return;
-    Domain.renderError($('#result-list'),{title:'جست‌وجو انجام نشد',onRetry:()=>runSearch(q)})
-  }finally{button.disabled=false}
-}
+  function safeError(error) {
+    return { status: Number(error?.status) || 0, code: String(error?.code || 'request_failed').slice(0, 80) };
+  }
 
-function bindInteractions(){
-  document.querySelectorAll('[data-view]').forEach(button=>button.setAttribute('aria-pressed','false'));
-
-  $('#login-form').addEventListener('submit',async event=>{
-    event.preventDefault();const button=event.currentTarget.querySelector('button');if(button.disabled)return;
-    button.disabled=true;$('#login-message').textContent='';
-    try{
-      const fields=new FormData(event.currentTarget);
-      const data=await api('/api/v1/auth/login',{method:'POST',body:JSON.stringify({identifier:fields.get('identifier'),password:fields.get('password')})});
-      state.token=data.token;state.csrf=data.csrf_token;sessionStorage.setItem('fanoos_csrf',state.csrf);showAccount(data.account,{focus:true});
-      await loadView(views[state.view]?state.view:'schedule')
-    }catch(error){$('#login-message').textContent=safeAuthMessage(error)}finally{button.disabled=false}
-  });
-
-  $('#logout').addEventListener('click',async event=>{
-    const button=event.currentTarget;if(button.disabled)return;button.disabled=true;++state.requestSerial;
-    try{
-      await api('/api/v1/auth/logout',{method:'POST'});
-      sessionStorage.clear();location.reload()
-    }catch{
-      window.FanoosDomainUX.renderError($('#result-list'),{title:'وضعیت خروج تأیید نشد',message:'پاسخ نهایی از سامانه دریافت نشد. دوباره تلاش کنید یا صفحه را تازه کنید.'});
-      button.disabled=false
+  async function api(path, options = {}) {
+    const method = String(options.method || 'GET').toUpperCase();
+    const headers = { Accept: 'application/json', ...(options.headers || {}) };
+    if (state.token) headers.Authorization = `Bearer ${state.token}`;
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && state.csrf) headers['X-CSRF-Token'] = state.csrf;
+    if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+    let response;
+    try {
+      response = await fetch(path, { method, headers, credentials: 'same-origin', body: options.body === undefined ? undefined : JSON.stringify(options.body) });
+    } catch (_error) {
+      const failure = new Error('network'); failure.status = 0; failure.code = 'network_error'; throw failure;
     }
-  });
+    let payload = null;
+    try { payload = await response.json(); } catch (_error) { /* safe generic error below */ }
+    if (!response.ok || !payload?.ok) {
+      const failure = new Error('api');
+      failure.status = response.status;
+      failure.code = String(payload?.error?.code || 'request_failed').slice(0, 80);
+      if (response.status === 401) handleSessionExpired();
+      throw failure;
+    }
+    return payload.data;
+  }
 
-  $('#workspace-select').addEventListener('change',async event=>{
-    if(state.workspaceMutation)return;
-    const select=event.currentTarget;const prior=state.workspace;const next=select.value;
-    if(!next||next===prior){select.value=prior;return}
+  async function safeRead(path) {
+    try { return { ok: true, data: await api(path) }; }
+    catch (error) { return { ok: false, error: safeError(error) }; }
+  }
+
+  function handleSessionExpired() {
+    state.token = ''; state.csrf = ''; state.workspace = null; state.account = null;
+    sessionStorage.removeItem('fanoos_token'); sessionStorage.removeItem('fanoos_csrf');
+    showLoggedOut('نشست شما منقضی شده است. دوباره وارد شوید.');
+  }
+
+  function showLoggedOut(message = '') {
+    $('#login-panel').hidden = false;
+    $('#dashboard').hidden = true;
+    $('#workspace-picker').hidden = true;
+    $('#header-actions').hidden = true;
+    $('#mobile-bottom-nav').hidden = true;
+    closeDrawer(false);
+    if (message) $('#login-message').textContent = message;
+  }
+
+  function showLoggedIn(account, focus = false) {
+    $('#login-panel').hidden = true;
+    $('#dashboard').hidden = false;
+    $('#workspace-picker').hidden = false;
+    $('#header-actions').hidden = false;
+    $('#mobile-bottom-nav').hidden = false;
+    $('#header-user-name').textContent = account?.user?.display_name || 'حساب';
+    $('#greeting').textContent = 'خانه';
+    const select = $('#workspace-select');
+    select.replaceChildren();
+    (Array.isArray(account?.workspaces) ? account.workspaces : []).forEach((workspace) => {
+      const option = document.createElement('option');
+      option.value = String(workspace.id || '');
+      option.textContent = String(workspace.name || workspace.label || workspace.slug || 'فضای آموزشی');
+      option.selected = String(workspace.id || '') === String(state.workspace || '');
+      select.append(option);
+    });
+    renderWorkspaceContext();
+    if(focus)$('#dashboard').focus();
+  }
+
+  function renderWorkspaceContext() {
+    const workspace = currentWorkspace();
+    $('#sidebar-workspace-name').textContent = workspace?.name || workspace?.label || '—';
+    const path = workspace?.path_label || workspace?.directory_path || workspace?.slug || '';
+    $('#workspace-path').textContent = path || '—';
+    const now = new Date();
+    try {
+      $('#today').textContent = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { weekday: 'long', day: 'numeric', month: 'long', timeZone: workspaceTimezone() || undefined }).format(now);
+    } catch (_error) {
+      $('#today').textContent = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { day: 'numeric', month: 'long' }).format(now);
+    }
+  }
+
+  async function loadAccount(focus = false) {
+    const account = await api('/api/v1/account');
+    state.account = account;
+    const selected = account?.selected_workspace_id;
+    const workspaces = Array.isArray(account?.workspaces) ? account.workspaces : [];
+    state.workspace = selected && workspaces.some((workspace) => String(workspace.id) === String(selected)) ? selected : (workspaces[0]?.id || null);
+    showLoggedIn(account, focus);
+    if (!state.workspace) {
+      UI.stateBlock($('#result-list'), 'فضای آموزشی فعالی وجود ندارد', 'برای این حساب هنوز عضویت فعالی در یک فضای آموزشی ثبت نشده است.');
+      return;
+    }
+    await probeManagement();
+    await renderRoute();
+  }
+
+  function setActiveView(key) {
+    $$('[data-view]').forEach(button => {
+      const active = button.dataset.view === key;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed',active?'true':'false');
+      if (active) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
+    });
+    $$('[data-route]').forEach(button => {
+      const active = button.dataset.route === state.route.name;
+      button.classList.toggle('active', active);
+      if (active) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
+    });
+  }
+  function clearActiveView() {
+    $$('[data-view]').forEach(button => { button.classList.remove('active'); button.setAttribute('aria-pressed', 'false'); button.removeAttribute('aria-current'); });
+  }
+
+  function applyRouteMeta() {
+    const meta = UI.pageMeta(state.route.name);
+    $('#page-eyebrow').textContent = meta.eyebrow || 'فانوس';
+    $('#greeting').textContent = meta.title;
+    $('#page-subtitle').textContent = meta.subtitle || '';
+    $('#view-title').textContent = meta.title;
+    $('#view-description').textContent = meta.description || meta.subtitle || '';
+    document.title = `${meta.title} | فانوس`;
+    const legacy = Object.entries(viewMap).find(([, route]) => route === state.route.name)?.[0];
+    if (legacy) setActiveView(legacy); else { clearActiveView(); setActiveView(''); }
+    if (state.route.name === 'home') $$('[data-route="home"]').forEach(node => { node.classList.add('active'); node.setAttribute('aria-current', 'page'); });
+  }
+
+  function navigate(name, query = {}, subview = '') {
+    closeDrawer(false);
+    state.selectedAnnouncement = null; state.selectedForm = null; state.selectedResource = null; state.selectedAssessment = null;
+    const hash = UI.routeHash(name, query, subview);
+    if (location.hash === hash) { state.route = UI.routeFromHash(hash); renderRoute(); }
+    else location.hash = hash;
+  }
+
+  function encodeQuery(params) {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => { if (value != null && String(value).trim() !== '') query.set(key, String(value)); });
+    return query.toString();
+  }
+
+  function dateRange(days = 120) {
+    const start = new Date(); start.setUTCDate(start.getUTCDate() - 7);
+    const end = new Date(); end.setUTCDate(end.getUTCDate() + days);
+    return { from: start.toISOString().slice(0, 10), to: end.toISOString().slice(0, 10) };
+  }
+
+  function courseIdForCode(academics, code) {
+    if (!code || !academics?.ok) return '';
+    const courses = UI.courseGroups(academics.data?.courses || []);
+    return UI.findCourse(courses, code)?.id || '';
+  }
+
+  function handlers(serial) {
+    return {
+      navigate,
+      retry: () => renderRoute(),
+      switchWorkspace,
+      openAnnouncement: (row) => { state.selectedAnnouncement = row; renderRoute({ reuse: true }); },
+      closeAnnouncement: () => { state.selectedAnnouncement = null; renderRoute({ reuse: true }); },
+      markAnnouncementRead: (row) => markAnnouncementRead(row, serial),
+      openForm: (row) => { state.selectedForm = row; renderRoute({ reuse: true }); },
+      closeForm: () => { state.selectedForm = null; renderRoute({ reuse: true }); },
+      submitForm: (row, answers, form) => submitForm(row, answers, form, serial),
+      openResource: (row) => openResource(row, serial),
+      closeResource: () => { state.selectedResource = null; renderRoute({ reuse: true }); },
+      requestDelivery: (row) => requestDelivery(row, serial),
+      openAssessment: (row) => { state.selectedAssessment = row; renderRoute({ reuse: true }); },
+      closeAssessment: () => { state.selectedAssessment = null; renderRoute({ reuse: true }); },
+    };
+  }
+
+  function setBusy(busy) {
+    $('#result-list').setAttribute('aria-busy', busy ? 'true' : 'false');
+  }
+
+  async function renderRoute(options = {}) {
+    if (!state.workspace || state.workspaceMutation) return;
+    const serial = options.reuse ? state.requestSerial : ++state.requestSerial;
+    applyRouteMeta(); renderWorkspaceContext();
+    const container = $('#result-list');
+    if (!options.reuse) { setBusy(true); UI.skeleton(container, state.route.name === 'home' ? 5 : 4); }
+    const context = routeContext();
+    const h = handlers(serial);
+    try {
+      if (state.route.name === 'home') {
+        const range = dateRange(90);
+        const [schedule, assessments, announcements, resources, grades] = await Promise.all([
+          safeRead(`/api/v1/workspaces/${state.workspace}/schedule?${encodeQuery(range)}`),
+          safeRead(`/api/v1/workspaces/${state.workspace}/assessments`),
+          safeRead(`/api/v1/workspaces/${state.workspace}/announcements`),
+          safeRead(`/api/v1/workspaces/${state.workspace}/resources?sort=newest`),
+          safeRead(`/api/v1/workspaces/${state.workspace}/grades/me`),
+        ]);
+        if (serial !== state.requestSerial || state.workspaceMutation) return;
+        UI.renderHome(container, { parts: { schedule, assessments, announcements, resources, grades }, context, handlers: h });
+        updateAnnouncementBadge(announcements);
+      } else if (state.route.name === 'courses') {
+        const academics = await safeRead(`/api/v1/workspaces/${state.workspace}/academics`);
+        if (serial !== state.requestSerial || state.workspaceMutation) return;
+        let parts = null;
+        if (state.route.query.course && academics.ok) {
+          const courseId = courseIdForCode(academics, state.route.query.course);
+          const range = dateRange(180);
+          const [schedule, resources, assessments, grades] = await Promise.all([
+            safeRead(`/api/v1/workspaces/${state.workspace}/schedule?${encodeQuery(range)}`),
+            safeRead(`/api/v1/workspaces/${state.workspace}/resources?${encodeQuery({ sort: 'newest', course_id: courseId })}`),
+            safeRead(`/api/v1/workspaces/${state.workspace}/assessments?${encodeQuery({ course_id: courseId })}`),
+            safeRead(`/api/v1/workspaces/${state.workspace}/grades/me`),
+          ]);
+          if (serial !== state.requestSerial || state.workspaceMutation) return;
+          parts = { schedule, resources, assessments, grades };
+        }
+        UI.renderCourses(container, { academics, parts, route: state.route, context, handlers: h });
+      } else if (state.route.name === 'schedule') {
+        const range = dateRange(state.route.subview === 'upcoming' ? 180 : 35);
+        const schedule = await safeRead(`/api/v1/workspaces/${state.workspace}/schedule?${encodeQuery(range)}`);
+        if (serial !== state.requestSerial || state.workspaceMutation) return;
+        UI.renderSchedule(container, { schedule, route: state.route, context, handlers: h });
+      } else if (state.route.name === 'resources') {
+        const academics = await safeRead(`/api/v1/workspaces/${state.workspace}/academics`);
+        if (serial !== state.requestSerial || state.workspaceMutation) return;
+        const courseId = courseIdForCode(academics, state.route.query.course);
+        const query = encodeQuery({ q: state.route.query.q, type: state.route.query.type, course_id: courseId, sort: 'newest' });
+        const resources = await safeRead(`/api/v1/workspaces/${state.workspace}/resources?${query}`);
+        if (serial !== state.requestSerial || state.workspaceMutation) return;
+        if (state.selectedResource) UI.renderResourceDetail(container, state.selectedResource, { route: state.route, context, handlers: h });
+        else UI.renderResources(container, { resources, academics, route: state.route, context, handlers: h });
+      } else if (state.route.name === 'assessments') {
+        const [academics, assessments] = await Promise.all([
+          safeRead(`/api/v1/workspaces/${state.workspace}/academics`),
+          safeRead(`/api/v1/workspaces/${state.workspace}/assessments?${encodeQuery({ kind: state.route.query.kind })}`),
+        ]);
+        if (serial !== state.requestSerial || state.workspaceMutation) return;
+        if (state.selectedAssessment) UI.renderAssessmentDetail(container, state.selectedAssessment, { context, handlers: h });
+        else UI.renderAssessments(container, { assessments, academics, route: state.route, context, handlers: h });
+      } else if (state.route.name === 'grades') {
+        const grades = await safeRead(`/api/v1/workspaces/${state.workspace}/grades/me`);
+        if (serial !== state.requestSerial || state.workspaceMutation) return;
+        UI.renderGrades(container, { grades, context, handlers: h });
+      } else if (state.route.name === 'announcements') {
+        const announcements = await safeRead(`/api/v1/workspaces/${state.workspace}/announcements`);
+        if (serial !== state.requestSerial || state.workspaceMutation) return;
+        UI.renderAnnouncements(container, { announcements, selectedAnnouncement: state.selectedAnnouncement, context, handlers: h });
+        updateAnnouncementBadge(announcements);
+      } else if (state.route.name === 'forms') {
+        const forms = await safeRead(`/api/v1/workspaces/${state.workspace}/forms`);
+        if (serial !== state.requestSerial || state.workspaceMutation) return;
+        UI.renderForms(container, { forms, selectedForm: state.selectedForm, context, handlers: h });
+      } else if (state.route.name === 'orders') {
+        const orders = await safeRead(`/api/v1/workspaces/${state.workspace}/orders`);
+        if (serial !== state.requestSerial || state.workspaceMutation) return;
+        UI.renderOrders(container, { orders, context, handlers: h });
+      } else if (state.route.name === 'search') {
+        const q = String(state.route.query.q || '').trim();
+        if(!state.workspace||state.workspaceMutation||q.length<2) { UI.renderSearch(container, { route: state.route, search: { ok: true, data: [] }, context, handlers: h }); return; }
+        const search = await safeRead(`/api/v1/workspaces/${state.workspace}/search?${encodeQuery({ q })}`);
+        if (serial !== state.requestSerial || state.workspaceMutation) return;
+        UI.renderSearch(container, { route: state.route, search, context, handlers: h });
+      } else if (state.route.name === 'account') {
+        UI.renderAccount(container, { account: state.account || {}, context, handlers: h });
+      } else if (state.route.name === 'management') {
+        await probeManagement();
+        if (serial !== state.requestSerial || state.workspaceMutation) return;
+        UI.renderManagement(container, { management: state.management, context, handlers: h });
+      } else {
+        navigate('home');
+      }
+    } finally {
+      if (serial === state.requestSerial) setBusy(false);
+    }
+  }
+
+  // Compatibility shim for existing UI checks and old view hooks; V2 routing owns presentation.
+  function loadView(view) {
+    if(!view||state.workspaceMutation)return;
+    navigate(viewMap[view] || 'home');
+  }
+
+  async function probeManagement() {
+    if (!state.workspace || state.managementCheckedFor === state.workspace) return;
+    const result = await safeRead(`/api/v1/workspaces/${state.workspace}/admin/dashboard`);
+    state.managementCheckedFor = state.workspace;
+    state.management = result.ok ? result : null;
+    const allowed = !!result.ok;
+    $('#management-nav').hidden = !allowed;
+    $('#mobile-management-nav').hidden = !allowed;
+    if (!allowed && state.route.name === 'management') navigate('home');
+  }
+
+  async function switchWorkspace(workspaceId) {
+    const select = $('#workspace-select');
+    if (!workspaceId || state.workspaceMutation || String(workspaceId) === String(state.workspace)) return;
+    const previous = state.workspace;
     state.workspaceMutation=true;select.disabled=true;++state.requestSerial;
-    let changed=false;
-    try{
-      await api('/api/v1/workspaces/select',{method:'POST',body:JSON.stringify({workspace_id:next})});
-      state.workspace=next;updatePath();changed=true
-    }catch{
-      select.value=prior;
-      window.FanoosDomainUX.renderError($('#result-list'),{title:'تغییر فضای آموزشی انجام نشد',message:'فضای قبلی همچنان فعال است. دوباره تلاش کنید.'})
-    }finally{state.workspaceMutation=false;select.disabled=false}
-    if(changed)await loadView(views[state.view]?state.view:'schedule')
+    try {
+      await api('/api/v1/workspaces/select', { method: 'POST', body: { workspace_id: workspaceId } });
+      state.workspace = workspaceId;
+      if (state.account) state.account.selected_workspace_id = workspaceId;
+      state.management = null; state.managementCheckedFor = null;
+      state.selectedAnnouncement = null; state.selectedForm = null; state.selectedResource = null; state.selectedAssessment = null;
+      renderWorkspaceContext();
+      toast('فضای آموزشی تغییر کرد.', 'success');
+    } catch (_error) {
+      state.workspace = previous;
+      select.value = String(previous || '');
+      toast('تغییر فضای آموزشی انجام نشد.', 'error');
+    } finally {
+      state.workspaceMutation = false; select.disabled = false;
+      if (state.workspace) { await probeManagement(); await renderRoute(); }
+    }
+  }
+
+  async function markAnnouncementRead(row, serial) {
+    if (!row?.id) return;
+    try {
+      await api(`/api/v1/workspaces/${state.workspace}/announcements/${encodeURIComponent(row.id)}/read`, { method: 'POST', body: {} });
+      if (serial !== state.requestSerial) return;
+      state.selectedAnnouncement = { ...row, status: 'read', read_at: new Date().toISOString() };
+      toast('اطلاعیه خوانده‌شده ثبت شد.', 'success');
+      await renderRoute();
+    } catch (_error) { toast('ثبت وضعیت اطلاعیه انجام نشد.', 'error'); }
+  }
+
+  async function submitForm(row, answers, form, serial) {
+    if (!row?.id || !form) return;
+    const submit = form.querySelector('[type="submit"]');
+    if (submit) submit.disabled = true;
+    const idempotencyKey = (globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`).slice(0, 128);
+    try {
+      await api(`/api/v1/workspaces/${state.workspace}/forms/${encodeURIComponent(row.id)}/submissions`, { method: 'POST', body: { answers, idempotency_key: idempotencyKey } });
+      if (serial !== state.requestSerial) return;
+      toast('پاسخ فرم ثبت شد.', 'success'); state.selectedForm = null; await renderRoute();
+    } catch (_error) { toast('ثبت فرم انجام نشد. پاسخ‌ها را بررسی کنید و دوباره تلاش کنید.', 'error'); }
+    finally { if (submit) submit.disabled = false; }
+  }
+
+  async function openResource(row, serial) {
+    if (!row?.id) return;
+    $('#result-list').setAttribute('aria-busy', 'true');
+    const detail = await safeRead(`/api/v1/workspaces/${state.workspace}/resources/${encodeURIComponent(row.id)}`);
+    if (serial !== state.requestSerial || state.workspaceMutation) return;
+    state.selectedResource = detail;
+    UI.renderResourceDetail($('#result-list'), detail, { context: routeContext(), handlers: handlers(serial) });
+    setBusy(false);
+  }
+
+  async function requestDelivery(row, serial) {
+    if (!row?.id) return;
+    try {
+      const issued = await api(`/api/v1/workspaces/${state.workspace}/resources/${encodeURIComponent(row.id)}/deliveries`, { method: 'POST', body: { channel: 'web' } });
+      const served = await api(`/api/v1/workspaces/${state.workspace}/deliveries/consume`, { method: 'POST', body: { delivery_token: issued.delivery_token } });
+      if (serial !== state.requestSerial || state.workspaceMutation) return;
+      if (served?.content && typeof served.content === 'object') {
+        toast('دسترسی منبع تأیید شد. محتوای ساختاریافته از مسیر امن دریافت شد.', 'success');
+      } else if (served?.download_token) {
+        toast('دسترسی فایل تأیید شد؛ endpoint عمومی مرورگر برای مصرف download token در contract فعلی ارائه نشده است.', 'info');
+      } else {
+        toast('دسترسی منبع تأیید شد، اما محتوای قابل تحویل در projection فعلی وجود ندارد.', 'info');
+      }
+    } catch (_error) { toast('دسترسی یا تحویل این منبع تأیید نشد.', 'error'); }
+  }
+
+  function updateAnnouncementBadge(result) {
+    const rows = result?.ok && Array.isArray(result.data) ? result.data : [];
+    const unread = rows.filter((row) => String(row.status || '').toLowerCase() !== 'read' && !row.read_at).length;
+    const badge = $('#announcement-nav-badge');
+    badge.hidden = unread < 1; badge.textContent = unread ? UX.formatNumber(unread) : '';
+  }
+
+  function toast(message, kind = 'info') {
+    const region = $('#toast-region');
+    const item = document.createElement('div');
+    item.className = `toast toast--${kind}`; item.setAttribute('role', 'status'); item.textContent = String(message || '').slice(0, 240);
+    region.append(item); setTimeout(() => item.remove(), 4500);
+  }
+
+  function openDrawer(trigger) {
+    const drawer = $('#mobile-more-drawer'); drawer.hidden = false; $('#drawer-backdrop').hidden = false; document.body.classList.add('drawer-open');
+    drawer.dataset.returnFocus = trigger?.dataset?.route || 'more';
+    drawer.querySelector('[data-drawer-close]')?.focus();
+  }
+  function closeDrawer(restore = true) {
+    const drawer = $('#mobile-more-drawer'); if (!drawer || drawer.hidden) return;
+    drawer.hidden = true; $('#drawer-backdrop').hidden = true; document.body.classList.remove('drawer-open');
+    if (restore) $('[data-route="more"]')?.focus();
+  }
+
+  $('#login-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget; const submit = form.querySelector('[type="submit"]');
+    $('#login-message').textContent = ''; submit.disabled = true;
+    try {
+      const result = await api('/api/v1/auth/login', { method: 'POST', body: { identifier: $('#login-identifier').value.trim(), password: $('#login-password').value } });
+      state.token = String(result.token || ''); state.csrf = String(result.csrf_token || ''); state.account = result.account || null;
+      sessionStorage.setItem('fanoos_token', state.token); sessionStorage.setItem('fanoos_csrf', state.csrf);
+      await loadAccount(true);
+    } catch (_error) { $('#login-message').textContent = 'ورود انجام نشد. شناسه و رمز عبور را بررسی کنید.'; }
+    finally { submit.disabled = false; }
   });
 
-  document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>loadView(button.dataset.view)));
+  $('#logout').addEventListener('click', async () => {
+    const button = $('#logout'); button.disabled = true;
+    try {
+      await api('/api/v1/auth/logout', { method: 'POST', body: {} });
+      state.token = ''; state.csrf = ''; state.workspace = null; state.account = null;
+      sessionStorage.removeItem('fanoos_token'); sessionStorage.removeItem('fanoos_csrf');
+      showLoggedOut('از حساب خارج شدید.');
+    } catch (error) {
+      if (Number(error?.status) === 401) {
+        state.token = ''; state.csrf = ''; sessionStorage.removeItem('fanoos_token'); sessionStorage.removeItem('fanoos_csrf'); showLoggedOut('نشست شما پایان یافته است.');
+      } else {
+        UI.stateBlock($('#result-list'), ambiguousLogout.title, 'ارتباط با سرور قطع شد و نمی‌توان پایان نشست را تأیید کرد. برای جلوگیری از نمایش وضعیت نادرست، نشست محلی پاک نشد.', { actionLabel: 'تلاش دوباره', onAction: () => button.click() });
+      }
+    } finally { button.disabled = false; }
+  });
 
-  $('#search-form').addEventListener('submit',event=>{
-    event.preventDefault();const fields=new FormData(event.currentTarget);runSearch(fields.get('q'))
-  })
-}
+  $('#workspace-select').addEventListener('change', (event) => switchWorkspace(event.target.value));
 
-async function boot(){
-  if(!window.FanoosDomainUX)throw new Error('domain UX unavailable');
-  bindInteractions();
-  const savedSearch=sessionStorage.getItem('fanoos_search_query')||'';if(savedSearch)$('#search-form [name="q"]').value=savedSearch;
-  updateToday();
-  try{
-    const account=await api('/api/v1/account');showAccount(account);await loadView(views[state.view]?state.view:'schedule')
-  }catch{}
-}
+  $$('[data-view]').forEach(button => button.addEventListener('click', () => loadView(button.dataset.view)));
+  $$('[data-route]').forEach(button => button.addEventListener('click', (event) => {
+    const name = button.dataset.route;
+    if (name === 'more') { event.preventDefault(); openDrawer(button); return; }
+    event.preventDefault(); navigate(name);
+  }));
+  $('[data-drawer-close]').addEventListener('click', () => closeDrawer(true));
+  $('#drawer-backdrop').addEventListener('click', () => closeDrawer(true));
 
-boot().catch(()=>{
-  const message=$('#login-message');if(message)message.textContent='رابط کاربری کامل بارگذاری نشد. صفحه را دوباره باز کنید.'
-});
+  $('#search-form').addEventListener('submit', (event) => {
+    event.preventDefault(); const q = $('#search-query').value.trim();
+    if (q.length < 2) { toast('برای جست‌وجو حداقل دو نویسه وارد کنید.', 'info'); return; }
+    navigate('search', { q });
+  });
+  $('.global-search-trigger').addEventListener('click', () => { navigate('search'); requestAnimationFrame(() => $('#search-query')?.focus()); });
+
+  window.addEventListener('hashchange', () => {
+    state.route = UI.routeFromHash(location.hash);
+    state.selectedAnnouncement = null; state.selectedForm = null; state.selectedResource = null; state.selectedAssessment = null;
+    if (state.token && state.workspace) renderRoute();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeDrawer(true);
+    if (event.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) { event.preventDefault(); $('#search-query')?.focus(); }
+  });
+
+  async function boot() {
+    if (!location.hash) history.replaceState(null, '', '#/home');
+    state.route = UI.routeFromHash(location.hash);
+    if (!state.token) { showLoggedOut(); return; }
+    try { await loadAccount(false); }
+    catch (_error) { handleSessionExpired(); }
+  }
+  boot();
+})();
