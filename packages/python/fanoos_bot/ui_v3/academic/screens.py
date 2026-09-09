@@ -38,6 +38,10 @@ _PAIR_MAX_COMBINED = 36
 
 _INTENT_NAMES = {
     actions.HOME: "home",
+    actions.COURSES: "courses",
+    actions.SCHEDULE: "schedule",
+    actions.GRADES: "grades",
+    actions.NOTIFICATIONS: "notifications",
     actions.RETRY: "retry",
 }
 
