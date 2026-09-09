@@ -105,6 +105,11 @@
       return wrapper;
     }
 
+  function orderStatus(value) {
+      const key = String(value || '').trim().toLowerCase();
+      return key === 'pending' ? 'در انتظار پرداخت' : status(value);
+    }
+
   function renderOrders(container, model) {
       if (!model.orders?.ok) return stateBlock(container, 'سفارش‌ها دریافت نشدند', 'وضعیت خرید و دسترسی فعلاً در دسترس نیست.', { actionLabel: 'تلاش دوباره', onAction: model.handlers.retry });
       const rows = resultRows(model.orders);
@@ -115,7 +120,7 @@
       rows.forEach((row) => {
         const amount = money(row.total_minor ?? row.amount_minor, row.currency);
         list.append(el('div', { className: 'order-row' },
-          el('div', {}, el('h3', { text: text(row.product_name_snapshot || row.title) || 'سفارش' }), el('p', { text: [status(row.status), row.created_at ? faDate(row.created_at, model.context) : ''].filter(Boolean).join(' · ') })),
+          el('div', {}, el('h3', { text: text(row.product_name_snapshot || row.title) || 'سفارش' }), el('p', { text: [orderStatus(row.status), row.created_at ? faDate(row.created_at, model.context) : ''].filter(Boolean).join(' · ') })),
           el('div', { className: 'order-amount-v2' }, document.createTextNode(amount), row.entitlement_status ? el('small', { text: status(row.entitlement_status) }) : el('small', { text: 'دسترسی مستقل از پرداخت بررسی می‌شود' }))
         ));
       });
@@ -137,6 +142,6 @@
       container.append(list);
     }
 
-  Object.assign(UI, { renderAnnouncements, renderAnnouncementDetail, parseFormSchema, schemaFields, renderForms, renderFormDetail, renderFormField, renderOrders, renderSearch });
+  Object.assign(UI, { renderAnnouncements, renderAnnouncementDetail, parseFormSchema, schemaFields, renderForms, renderFormDetail, renderFormField, orderStatus, renderOrders, renderSearch });
   if (typeof module !== 'undefined' && module.exports) module.exports = UI;
 })(typeof window !== 'undefined' ? window : globalThis);
