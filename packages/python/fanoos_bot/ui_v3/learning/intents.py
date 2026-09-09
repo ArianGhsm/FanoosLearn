@@ -50,9 +50,9 @@ class LearningIntent(str, Enum):
     FORM_OPEN = "learning.form.open"
     FORM_OPEN_WEB = "learning.form.open_web"
 
-    # Shared exits. bot-01 may map these to its canonical shell intents.
-    BACK = "core.back"
-    HOME = "core.home"
+    # These values intentionally match bot-01/core navigation.py.
+    BACK = "back"
+    HOME = "home"
 
     def __str__(self) -> str:
         return self.value
