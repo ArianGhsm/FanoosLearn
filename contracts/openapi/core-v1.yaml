@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Fanoos Core API
-  version: 1.1.0
+  version: 1.2.0
   description: Canonical human/browser API. Mutating authenticated operations require the existing session CSRF contract.
 servers:
   - url: /api/v1
@@ -54,6 +54,7 @@ paths:
   /workspaces/{workspaceId}/schedule:
     get:
       operationId: listSchedule
+      description: Interprets from/to as inclusive local calendar dates in the canonical tenant_workspaces.timezone_name and returns the matching canonical schedule events. Host and browser timezones are not authoritative.
       parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: from, in: query, schema: { type: string, format: date } }, { name: to, in: query, schema: { type: string, format: date } }]
       responses: { '200': { $ref: '#/components/responses/Success' } }
   /workspaces/{workspaceId}/grades/me:
@@ -121,6 +122,28 @@ paths:
     post: { operationId: issueProtectedDelivery, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/ResourceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' } } }
   /workspaces/{workspaceId}/deliveries/consume:
     post: { operationId: consumeProtectedDelivery, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/downloads/consume:
+    post:
+      operationId: redeemAuthorizedObjectDownload
+      description: Redeems a short-lived workspace-bound object capability only after current session, workspace, resource authorization, entitlement, exact resource version and object identity are revalidated. The capability is supplied in the POST body and must never be placed in a user-visible URL.
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [download_token]
+              properties: { download_token: { type: string, minLength: 16, maxLength: 4096 } }
+              additionalProperties: false
+      responses:
+        '200':
+          description: Authorized bounded object bytes.
+          content:
+            application/pdf: { schema: { type: string, format: binary } }
+            application/octet-stream: { schema: { type: string, format: binary } }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
   /workspaces/{workspaceId}/assessments:
     get: { operationId: listPublishedAssessments, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
     post: { operationId: createAssessmentDraft, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' } } }
