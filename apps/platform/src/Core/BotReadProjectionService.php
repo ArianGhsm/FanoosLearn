@@ -21,6 +21,37 @@ final class BotReadProjectionService
     }
 
     /** @return array<string,mixed> */
+    public function courses(string $userId, string $workspaceId, int $limit = 100, ?string $cursor = null): array
+    {
+        $this->access->requireWorkspace($userId, $workspaceId, 'academic.view');
+        $offset = $this->decodeCursor($cursor);
+        $limit = max(1, min(100, $limit));
+        $query = $this->database->prepare(<<<'SQL'
+SELECT course.id AS course_id, course.course_code, course.title AS course_title,
+       course.credit_value, course.status,
+       offering.id AS offering_id, offering.section_key, offering.status AS offering_status,
+       term.id AS term_id, term.term_key, term.name AS term_name
+FROM academic_courses course
+LEFT JOIN academic_course_offerings offering ON offering.course_id = course.id
+ AND offering.workspace_id = course.workspace_id AND offering.archived_at IS NULL
+LEFT JOIN academic_terms term ON term.id = offering.term_id AND term.workspace_id = offering.workspace_id
+WHERE course.workspace_id = :workspace AND course.archived_at IS NULL
+ORDER BY course.title, course.id, offering.section_key
+LIMIT :limit OFFSET :offset
+SQL);
+        $query->bindValue(':workspace', $workspaceId);
+        $query->bindValue(':limit', $limit + 1, PDO::PARAM_INT);
+        $query->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $query->execute();
+        $rows = $query->fetchAll();
+        $hasMore = count($rows) > $limit;
+        if ($hasMore) {
+            array_pop($rows);
+        }
+        return ['items' => $rows, 'next_cursor' => $hasMore ? $this->encodeCursor($offset + count($rows)) : null];
+    }
+
+    /** @return array<string,mixed> */
     public function schedule(string $userId, string $workspaceId, string $fromDate, string $toDate, int $limit = 100, ?string $cursor = null): array
     {
         $this->access->requireWorkspace($userId, $workspaceId, 'academic.view');
