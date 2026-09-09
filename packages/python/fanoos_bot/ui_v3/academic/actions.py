@@ -1,16 +1,28 @@
 from __future__ import annotations
 
-"""Semantic action identifiers owned by the V3 academic bot workstream.
+"""Provider-neutral academic action identifiers.
 
-The identifiers are provider-neutral. Telegram/Bale adapters may encode them into
-provider callbacks, but the visible label and the routing identifier are separate
-concerns. Canonical object IDs belong only in action payloads and must never be
-rendered as user-facing labels.
+Core destinations reuse bot-01 identifiers so the shell has one navigation
+vocabulary. Academic child journeys use workstream-owned identifiers. Canonical
+object IDs belong only in callback intents/route references and are never labels.
 """
 
-HOME = "core.home"
+from ..core import (
+    ACTION_COURSES,
+    ACTION_GRADES,
+    ACTION_HOME,
+    ACTION_NOTIFICATIONS,
+    ACTION_RETRY,
+    ACTION_SCHEDULE,
+)
 
-COURSES = "academic.courses"
+HOME = ACTION_HOME
+COURSES = ACTION_COURSES
+SCHEDULE = ACTION_SCHEDULE
+GRADES = ACTION_GRADES
+NOTIFICATIONS = ACTION_NOTIFICATIONS
+RETRY = ACTION_RETRY
+
 COURSES_PAGE = "academic.courses.page"
 COURSE_OPEN = "academic.course.open"
 COURSE_SCHEDULE = "academic.course.schedule"
@@ -20,14 +32,12 @@ COURSE_GRADES = "academic.course.grades"
 COURSE_ANNOUNCEMENTS = "academic.course.announcements"
 COURSE_SESSIONS = "academic.course.sessions"
 
-SCHEDULE = "academic.schedule"
 SCHEDULE_TODAY = "academic.schedule.today"
 SCHEDULE_TOMORROW = "academic.schedule.tomorrow"
 SCHEDULE_UPCOMING = "academic.schedule.upcoming"
 SCHEDULE_PAGE = "academic.schedule.page"
 SCHEDULE_EVENT_OPEN = "academic.schedule.event.open"
 
-GRADES = "academic.grades"
 GRADES_PAGE = "academic.grades.page"
 COURSE_GRADE_OPEN = "academic.grades.course.open"
 
@@ -35,10 +45,6 @@ ANNOUNCEMENTS = "academic.announcements"
 ANNOUNCEMENTS_PAGE = "academic.announcements.page"
 ANNOUNCEMENT_OPEN = "academic.announcement.open"
 ANNOUNCEMENT_LINK_OPEN = "academic.announcement.link.open"
-
-NOTIFICATIONS = "academic.notifications"
-
-RETRY = "core.retry"
 
 COURSE_CONTEXT_ACTIONS: dict[str, str] = {
     "schedule": COURSE_SCHEDULE,
