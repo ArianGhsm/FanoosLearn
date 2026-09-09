@@ -9,6 +9,7 @@ use Fanoos\Platform\Content\ProtectedResourceAuthorizer;
 use Fanoos\Platform\Content\ContentService;
 use Fanoos\Platform\Content\ExamService;
 use Fanoos\Platform\Content\SecureDeliveryService;
+use Fanoos\Platform\Content\SecureObjectDownloadService;
 use Fanoos\Platform\Core\WorkspacePlatformService;
 use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Identity\AuthService;
@@ -28,14 +29,18 @@ final class ApiKernel
         private readonly ?ContentService $content = null,
         private readonly ?ExamService $exams = null,
         private readonly ?SecureDeliveryService $delivery = null,
+        private readonly ?SecureObjectDownloadService $downloads = null,
     ) {
     }
 
-    public function handle(Request $request): Response
+    public function handle(Request $request): Response|BinaryResponse
     {
         $requestId = bin2hex(random_bytes(8));
         try {
             $result = $this->dispatch($request);
+            if ($result instanceof BinaryResponse) {
+                return $result;
+            }
             return new Response($result['status'], [
                 'ok' => true,
                 'data' => $result['data'],
@@ -56,8 +61,8 @@ final class ApiKernel
         }
     }
 
-    /** @return array{status:int,data:mixed,headers?:list<string>} */
-    private function dispatch(Request $request): array
+    /** @return array{status:int,data:mixed,headers?:list<string>}|BinaryResponse */
+    private function dispatch(Request $request): array|BinaryResponse
     {
         if ($request->method === 'POST' && $request->path === '/api/v1/auth/login') {
             $session = $this->auth->login(
@@ -244,6 +249,12 @@ final class ApiKernel
                 (string) ($request->body['delivery_token'] ?? ''), $session->userId, $workspaceId,
             )];
         }
+        if ($request->method === 'POST' && $suffix === '/downloads/consume') {
+            $download = $this->requireDownload()->redeem(
+                $session->userId, $workspaceId, (string) ($request->body['download_token'] ?? ''),
+            );
+            return new BinaryResponse(200, $download['stream'], $download['mime'], $download['size']);
+        }
         if ($request->method === 'GET' && $suffix === '/assessments') {
             return ['status' => 200, 'data' => $this->requireExams()->catalog(
                 $session->userId, $workspaceId,
@@ -343,5 +354,14 @@ final class ApiKernel
         }
 
         return $this->delivery;
+    }
+
+    private function requireDownload(): SecureObjectDownloadService
+    {
+        if ($this->downloads === null) {
+            throw new PlatformException('download_service_unavailable', 'Secure object download is not configured.', 503);
+        }
+
+        return $this->downloads;
     }
 }
