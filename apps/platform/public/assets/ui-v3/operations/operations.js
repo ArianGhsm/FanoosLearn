@@ -6,6 +6,8 @@ const ROUTES = Object.freeze({
   management: 'management',
 });
 
+const mountedControllers = new WeakMap();
+
 const STATUS_LABELS = Object.freeze({
   pending: 'در انتظار',
   payment_pending: 'در انتظار پرداخت',
@@ -30,6 +32,20 @@ const STATUS_LABELS = Object.freeze({
   read: 'خوانده‌شده',
   delivered: 'تحویل‌شده',
   submitted: 'ثبت‌شده',
+});
+
+const ROLE_LABELS = Object.freeze({
+  owner: 'مالک',
+  'platform-owner': 'مالک سامانه',
+  administrator: 'مدیر',
+  admin: 'مدیر',
+  'workspace-admin': 'مدیر فضای آموزشی',
+  'cohort-representative': 'نماینده ورودی',
+  representative: 'نماینده',
+  instructor: 'مدرس',
+  teacher: 'مدرس',
+  student: 'دانشجو',
+  member: 'عضو',
 });
 
 const FORM_TYPES = Object.freeze([
@@ -94,7 +110,6 @@ function icon(name) {
     arrow: ['M5 12h14', 'm13 6 6 6-6 6'],
     check: ['m5 12 4 4L19 6'],
     clock: ['M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z', 'M12 7v5l3 2'],
-    shield: ['M12 3 5 6v5c0 4.5 3 7 7 8 4-1 7-3.5 7-8V6z', 'm9 12 2 2 4-5'],
     users: ['M16 20v-1.5c0-2-1.8-3.5-4-3.5H7c-2.2 0-4 1.5-4 3.5V20', 'M9.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z', 'M18 7a3 3 0 0 1 0 6'],
     content: ['M5 4h14v16H5z', 'M8 8h8', 'M8 12h8', 'M8 16h5'],
     plus: ['M12 5v14', 'M5 12h14'],
@@ -182,9 +197,22 @@ function rowsOf(result) {
   return [];
 }
 
+function dedupeOrders(rows) {
+  const seen = new Set();
+  return rows.filter((row, index) => {
+    const id = text(row?.id || row?.order_id);
+    if (!id) return true;
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}
+
 function formatDate(ctx, value, withTime = false) {
   if (!value) return '';
-  const date = new Date(String(value).includes('T') ? value : `${value.replace(' ', 'T')}Z`);
+  const source = String(value);
+  const isoLike = source.includes('T') ? source : `${source.replace(' ', 'T')}Z`;
+  const date = new Date(isoLike);
   if (Number.isNaN(date.getTime())) return '';
   if (ctx?.format?.dateTime && withTime) return text(ctx.format.dateTime(value));
   if (ctx?.format?.date && !withTime) return text(ctx.format.date(value));
@@ -232,6 +260,12 @@ function statusChip(value, label = null) {
     className: `f3-ops-status f3-ops-status--${statusTone(value)}`,
     text: label || statusLabel(value),
   });
+}
+
+function roleLabels(value) {
+  const keys = text(value).split(',').map((item) => item.trim()).filter(Boolean);
+  if (!keys.length) return 'عضو';
+  return keys.map((key) => ROLE_LABELS[key.toLowerCase()] || 'نقش اختصاصی').join('، ');
 }
 
 function stateBlock(title, description, { tone = 'neutral', actionLabel, onAction } = {}) {
@@ -283,6 +317,7 @@ function safeLink(value) {
   try {
     const url = new URL(raw, window.location.origin);
     if (!['https:', 'http:'].includes(url.protocol)) return null;
+    if (url.protocol === 'http:' && url.origin !== window.location.origin) return null;
     return url;
   } catch (_error) {
     return null;
@@ -454,9 +489,7 @@ function schemaFields(row) {
   return Array.isArray(schema?.fields) ? schema.fields.filter((field) => field && typeof field === 'object' && text(field.id)) : [];
 }
 
-function formAvailability(ctx, row) {
-  const closes = row?.closes_at ? new Date(String(row.closes_at).replace(' ', 'T') + (String(row.closes_at).includes('Z') ? '' : 'Z')) : null;
-  if (closes && !Number.isNaN(closes.getTime()) && closes.getTime() <= Date.now()) return { key: 'closed', label: 'مهلت پایان یافته' };
+function formAvailability() {
   return { key: 'open', label: 'باز' };
 }
 
@@ -479,7 +512,7 @@ function renderForms(ctx, result, controller) {
   }
   const list = element('section', { className: 'f3-ops-card-list', attrs: { 'aria-label': 'فرم‌های فعال' } });
   rows.forEach((row) => {
-    const availability = formAvailability(ctx, row);
+    const availability = formAvailability();
     list.append(element('article', { className: 'f3-ops-form-card' },
       element('div', { className: 'f3-ops-form-card__top' },
         element('div', { className: 'f3-ops-feature-icon f3-ops-feature-icon--small' }, icon('form')),
@@ -583,7 +616,7 @@ function renderFormDetail(ctx, row, controller) {
     root.append(stateBlock('ساختار این فرم قابل نمایش نیست', 'فیلدهای قابل‌استفاده از سمت سرور ارائه نشده‌اند. دادهٔ خام فرم نمایش داده نمی‌شود.', { tone: 'warning' }));
     return;
   }
-  const form = element('form', { className: 'f3-ops-form', attrs: { novalidate: false } });
+  const form = element('form', { className: 'f3-ops-form' });
   fields.forEach((field) => form.append(renderFormField(field)));
   const submit = button('ثبت پاسخ', { variant: 'primary', type: 'submit' });
   const feedback = element('p', { className: 'f3-ops-form-feedback', attrs: { role: 'status', 'aria-live': 'polite' } });
@@ -632,7 +665,7 @@ function renderOrders(ctx, result, controller) {
     ));
     return;
   }
-  const rows = rowsOf(result);
+  const rows = dedupeOrders(rowsOf(result));
   if (!rows.length) {
     root.append(stateBlock('هنوز سفارشی ثبت نشده است', 'پس از فراهم‌شدن فهرست خرید و ثبت سفارش معتبر، سابقهٔ سفارش‌ها اینجا نمایش داده می‌شود.'));
     return;
@@ -684,7 +717,7 @@ function renderOrderDetail(ctx, row, controller) {
   if (access === 'active') timeline.append(timelineItem('دسترسی فعال است', 'وضعیت دسترسی به‌صورت مستقل تأیید شده است.', 'complete'));
   else if (access === 'expired') timeline.append(timelineItem('دسترسی منقضی شده است', 'پرداخت قبلی به‌تنهایی به معنی دسترسی فعال نیست.', 'warning'));
   else if (access === 'revoked') timeline.append(timelineItem('دسترسی لغو شده است', 'این وضعیت مستقل از نتیجهٔ پرداخت نمایش داده می‌شود.', 'danger'));
-  else timeline.append(timelineItem('وضعیت دسترسی جداگانه ارائه نشده است', 'فهرست عمومی سفارش‌ها در حال حاضر وضعیت entitlement را برنمی‌گرداند؛ از روی پرداخت حدس زده نمی‌شود.', 'neutral'));
+  else timeline.append(timelineItem('وضعیت دسترسی جداگانه ارائه نشده است', 'فهرست عمومی سفارش‌ها در حال حاضر وضعیت دسترسی را برنمی‌گرداند؛ از روی پرداخت حدس زده نمی‌شود.', 'neutral'));
   root.append(element('section', { className: 'f3-ops-order-detail' },
     element('div', { className: 'f3-ops-order-summary' },
       element('div', {}, element('span', { text: 'مبلغ' }), element('strong', { text: formatMoney(ctx, row.total_minor ?? row.amount_minor, row.currency) })),
@@ -714,7 +747,7 @@ function announcementComposer(ctx, controller) {
   form.append(
     element('div', { className: 'f3-ops-field' }, element('label', { attrs: { for: 'f3-ops-ann-title' }, text: 'عنوان' }), titleInput),
     element('div', { className: 'f3-ops-field' }, element('label', { attrs: { for: 'f3-ops-ann-body' }, text: 'متن اطلاعیه' }), bodyInput),
-    element('p', { className: 'f3-ops-inline-note', text: 'این endpoint اطلاعیه را بلافاصله منتشر می‌کند؛ پیش‌نویس یا ویرایش پس از انتشار در قرارداد فعلی وجود ندارد.' }),
+    element('p', { className: 'f3-ops-inline-note', text: 'قرارداد فعلی اطلاعیه را بلافاصله منتشر می‌کند؛ پیش‌نویس یا ویرایش پس از انتشار در حال حاضر وجود ندارد.' }),
     element('div', { className: 'f3-ops-form__footer' }, submit, feedback),
   );
   form.addEventListener('submit', async (event) => {
@@ -786,7 +819,7 @@ function formCreator(ctx, controller) {
     element('div', { className: 'f3-ops-section-heading' }, element('strong', { text: 'پرسش‌ها' }), add),
     fields,
     element('label', { className: 'f3-ops-switch-row', attrs: { for: 'f3-ops-form-open' } }, openNow, element('span', { text: 'فرم بلافاصله باز شود' })),
-    element('p', { className: 'f3-ops-inline-note', text: 'قرارداد فعلی ساخت فرم، مهلت و توضیح را دریافت نمی‌کند؛ این موارد در این UI جعل نمی‌شوند.' }),
+    element('p', { className: 'f3-ops-inline-note', text: 'قرارداد فعلی ساخت فرم، مهلت و توضیح را دریافت نمی‌کند؛ این موارد در رابط کاربری جعل نمی‌شوند.' }),
     element('div', { className: 'f3-ops-form__footer' }, submit, feedback),
   );
   form.addEventListener('submit', async (event) => {
@@ -819,7 +852,7 @@ function memberTable(ctx, result, controller) {
     return stateBlock('فهرست اعضا در دسترس نیست', result?.error?.status === 403 ? 'مجوز مشاهده اعضا برای این حساب وجود ندارد.' : 'دریافت اعضای فضای آموزشی انجام نشد.', { tone: 'warning' });
   }
   const rows = rowsOf(result);
-  if (!rows.length) return stateBlock('عضوی برای نمایش وجود ندارد', 'در projection مدیریتی فعلی عضوی برگردانده نشد.');
+  if (!rows.length) return stateBlock('عضوی برای نمایش وجود ندارد', 'در دادهٔ مدیریتی فعلی عضوی برای نمایش برگردانده نشد.');
   const table = element('div', { className: 'f3-ops-member-table', attrs: { role: 'table', 'aria-label': 'اعضای فضای آموزشی' } });
   table.append(element('div', { className: 'f3-ops-member-table__head', attrs: { role: 'row' } },
     element('span', { attrs: { role: 'columnheader' }, text: 'عضو' }),
@@ -828,7 +861,6 @@ function memberTable(ctx, result, controller) {
     element('span', { attrs: { role: 'columnheader' }, text: 'عملیات' }),
   ));
   rows.forEach((row) => {
-    const roleText = text(row.role_keys).split(',').filter(Boolean).join('، ') || 'عضو';
     const action = hasCapability(ctx, 'membership.manage')
       ? button('نماینده شود', { variant: 'quiet', onClick: async (event) => {
         const control = event.currentTarget;
@@ -845,8 +877,8 @@ function memberTable(ctx, result, controller) {
       : element('span', { className: 'f3-ops-muted', text: 'فقط مشاهده' });
     table.append(element('div', { className: 'f3-ops-member-table__row', attrs: { role: 'row' } },
       element('span', { attrs: { role: 'cell' }, text: text(row.display_name, 'عضو') }),
-      element('span', { attrs: { role: 'cell' }, text: roleText }),
-      element('span', { attrs: { role: 'cell' } }, statusChip(row.status || 'active', statusLabel(row.status || 'active', 'فعال'))),
+      element('span', { attrs: { role: 'cell' }, text: roleLabels(row.role_keys) }),
+      element('span', { attrs: { role: 'cell' } }, statusChip(row.status || 'active', statusLabel(row.status || 'active'))),
       element('span', { attrs: { role: 'cell' } }, action),
     ));
   });
@@ -885,18 +917,18 @@ async function renderManagement(ctx, dashboardResult, controller) {
   if (memberSectionAvailable || hasCapability(ctx, 'membership.manage')) {
     const members = await safeRead(ctx, pathFor(ctx, '/admin/members'), controller.signal);
     if (controller.signal.aborted) return;
-    grid.append(capabilityCard('users', 'اعضای فضای آموزشی', managementCount(ctx, dashboard, 'members') ? `${managementCount(ctx, dashboard, 'members')} عضو در projection مدیریتی` : 'مشاهده اعضا و عملیات مجاز نقش‌ها', memberTable(ctx, members, controller)));
+    grid.append(capabilityCard('users', 'اعضای فضای آموزشی', managementCount(ctx, dashboard, 'members') ? `${managementCount(ctx, dashboard, 'members')} عضو در دادهٔ مدیریتی` : 'مشاهده اعضا و عملیات مجاز نقش‌ها', memberTable(ctx, members, controller)));
   }
   if (hasCapability(ctx, 'resource.review') || hasCapability(ctx, 'resource.publish')) {
-    grid.append(capabilityCard('content', 'بررسی و انتشار محتوا', 'عملیات review/publish در API وجود دارد، اما صف عمومی فعلی شناسهٔ نسخهٔ در انتظار را ارائه نمی‌کند.',
-      stateBlock('صف بررسی به projection کامل‌تری نیاز دارد', 'تا وقتی سرور نسخهٔ هدف را به‌صورت مجاز و قابل‌نمایش مشخص نکند، دکمهٔ تأیید یا انتشار ساخته نمی‌شود.', { tone: 'warning' })));
+    grid.append(capabilityCard('content', 'بررسی و انتشار محتوا', 'عملیات بررسی و انتشار در قرارداد سرور وجود دارد، اما فهرست فعلی شناسهٔ نسخهٔ در انتظار را ارائه نمی‌کند.',
+      stateBlock('صف بررسی به دادهٔ کامل‌تری نیاز دارد', 'تا وقتی سرور نسخهٔ هدف را به‌صورت مجاز و مشخص ارائه نکند، دکمهٔ تأیید یا انتشار ساخته نمی‌شود.', { tone: 'warning' })));
   }
   if (hasCapability(ctx, 'payment.reconcile') || hasCapability(ctx, 'commerce.manage_catalog') || hasCapability(ctx, 'entitlement.grant')) {
     grid.append(capabilityCard('wallet', 'تجارت و دسترسی', managementCount(ctx, dashboard, 'orders') ? `${managementCount(ctx, dashboard, 'orders')} سفارش در فضای آموزشی` : 'عملیات مالی و دسترسی',
-      stateBlock('مدیریت مالی نیازمند projection عملیاتی مشخص است', 'فهرست عمومی سفارش‌های دانشجو، شناسهٔ تلاش پرداخت یا فهرست entitlement مدیریتی را برای این عملیات برنمی‌گرداند؛ ورودی شناسهٔ فنی دستی نمایش داده نمی‌شود.', { tone: 'neutral' })));
+      stateBlock('مدیریت مالی به دادهٔ عملیاتی مشخص نیاز دارد', 'فهرست سفارش‌های دانشجو، شناسهٔ لازم برای پیگیری پرداخت یا فهرست دسترسی‌های مدیریتی را برنمی‌گرداند؛ ورودی شناسهٔ فنی دستی نمایش داده نمی‌شود.', { tone: 'neutral' })));
   }
   if (!grid.childElementCount) {
-    grid.append(stateBlock('عملیات مدیریتی قابل نمایش نیست', 'مجوز مدیریت تأیید شده است، اما قابلیت قابل‌اتکایی برای این ماژول از سمت shell/capability projection ارائه نشده است.'));
+    grid.append(stateBlock('عملیات مدیریتی قابل نمایش نیست', 'مجوز کلی مدیریت تأیید شده است، اما قابلیت قابل‌اتکایی برای این ماژول از زیرساخت مشترک مجوزها ارائه نشده است.'));
   }
   root.append(grid);
 }
@@ -980,6 +1012,18 @@ export function createPurchaseHandoff(ctx) {
   };
 }
 
+export async function beginPurchase(ctx, product, { signal } = {}) {
+  const productId = text(product?.id || product?.product_id);
+  if (!productId) throw new Error('ops_catalog_product_missing');
+  const order = await apiRequest(ctx, pathFor(ctx, '/orders'), {
+    method: 'POST',
+    body: { product_id: productId, idempotency_key: idempotencyKey() },
+    signal,
+  });
+  if (order?.redirect_url) createPurchaseHandoff(ctx)(order.redirect_url);
+  return order;
+}
+
 export const operationsCapabilityMap = Object.freeze({
   announcementPublish: 'notification.broadcast',
   formManage: 'form.manage',
@@ -1001,16 +1045,21 @@ export const moduleDefinition = Object.freeze({
     { id: ROUTES.notifications, label: 'اعلان‌ها', group: 'more', icon: 'bell' },
     { id: ROUTES.forms, label: 'فرم‌ها', group: 'more', icon: 'form' },
     { id: ROUTES.orders, label: 'خرید و دسترسی', group: 'more', icon: 'wallet' },
-    { id: ROUTES.management, label: 'مدیریت', group: 'conditional', icon: 'manage', capability: 'management_available' },
+    { id: ROUTES.management, label: 'مدیریت', group: 'conditional', icon: 'manage', conditional: true },
   ],
+  styles: ['/assets/ui-v3/operations/operations.css'],
   mount(ctx) {
     const controller = createController(ctx);
+    mountedControllers.set(ctx.root, controller);
     controller.render();
     return controller;
   },
   unmount(ctx) {
-    const controller = ctx?.operationsController;
-    if (controller && typeof controller.destroy === 'function') controller.destroy();
+    const controller = ctx?.root ? mountedControllers.get(ctx.root) : null;
+    if (controller) {
+      controller.destroy();
+      mountedControllers.delete(ctx.root);
+    }
   },
 });
 
