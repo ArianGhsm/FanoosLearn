@@ -6,15 +6,15 @@ PLATFORM_LABELS = {
 }
 
 ORDER_STATUS_LABELS = {
-    "pending": "در انتظار پرداخت",
-    "created": "در انتظار پرداخت",
+    "pending": "در انتظار",
+    "created": "ایجادشده",
     "payment_pending": "در انتظار پرداخت",
     "paid": "پرداخت تأیید شده",
     "succeeded": "پرداخت تأیید شده",
     "failed": "ناموفق",
     "cancelled": "لغوشده",
     "canceled": "لغوشده",
-    "expired": "منقضی",
+    "expired": "منقضی‌شده",
     "refunded": "بازپرداخت‌شده",
 }
 
