@@ -7,10 +7,10 @@ values. Integration owns binding them to bot-01 routing and bot-04 provider acti
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import Enum
 
 
-class LearningIntent(StrEnum):
+class LearningIntent(str, Enum):
     # Learning/resource navigation.
     RESOURCES_OPEN = "learning.resources.open"
     RESOURCES_RECENT = "learning.resources.recent"
@@ -53,3 +53,6 @@ class LearningIntent(StrEnum):
     # Shared exits. bot-01 may map these to its canonical shell intents.
     BACK = "core.back"
     HOME = "core.home"
+
+    def __str__(self) -> str:
+        return self.value
