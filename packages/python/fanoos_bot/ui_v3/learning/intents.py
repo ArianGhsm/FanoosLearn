@@ -16,6 +16,8 @@ class LearningIntent(str, Enum):
     RESOURCES_RECENT = "learning.resources.recent"
     RESOURCES_FILTER_COURSE = "learning.resources.filter.course"
     RESOURCES_FILTER_TYPE = "learning.resources.filter.type"
+    RESOURCES_APPLY_COURSE = "learning.resources.apply.course"
+    RESOURCES_APPLY_TYPE = "learning.resources.apply.type"
     RESOURCES_PAGE_PREVIOUS = "learning.resources.page.previous"
     RESOURCES_PAGE_NEXT = "learning.resources.page.next"
     RESOURCE_OPEN = "learning.resource.open"
@@ -33,6 +35,8 @@ class LearningIntent(str, Enum):
     ASSESSMENTS_OPEN = "learning.assessments.open"
     ASSESSMENTS_FILTER_COURSE = "learning.assessments.filter.course"
     ASSESSMENTS_FILTER_STATE = "learning.assessments.filter.state"
+    ASSESSMENTS_APPLY_COURSE = "learning.assessments.apply.course"
+    ASSESSMENTS_APPLY_STATE = "learning.assessments.apply.state"
     ASSESSMENT_OPEN = "learning.assessment.open"
     ASSESSMENT_OPEN_WEB = "learning.assessment.open_web"
 
