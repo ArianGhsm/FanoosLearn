@@ -2,52 +2,48 @@
 
 Design Lock: `FANOOS-UX-2026.09-R1`  
 Workstream: `02_ACADEMIC_JOURNEYS`  
-Channel model: provider-neutral; Telegram and Bale render the same semantic screen with provider-native presentation.
+Presentation: provider-neutral; Telegram and Bale consume the same semantic screens.
 
-## Shared rules
+## Shared behavior
 
-- Persian-first, RTL, concise and student-facing.
-- Academic screens render canonical backend facts only. Presentation code never becomes enrollment, schedule, grade, announcement or notification authority.
-- Human-facing text never exposes course/event/announcement UUIDs, opaque cursors, backend route names or service actions.
-- Canonical IDs may exist only in hidden semantic action payloads and must be reauthorized when the integration handler performs the next backend read.
-- Lists are bounded even if an integration caller accidentally passes a larger collection.
-- Short peer actions may be packed two per row. Long labels occupy a row without forced squeezing.
-- Pagination carries an opaque `page_ref`; the screen layer does not decode backend cursors or claim authorization from route state.
-- Every secondary screen keeps a contextual back action and `🏠 خانه`.
-- Empty state means the projection is empty, not that the underlying domain can never contain data.
-- Errors expose recovery wording, not exception/provider details.
-- No fake progress, ETA, GPA, weighted average, notification history or course binding is synthesized.
+- Persian-first, RTL and student-facing.
+- Domain truth always comes from fresh authorized backend projections.
+- Canonical IDs/cursors exist only in callback intents or short subject-bound route references; they are never visible text.
+- Short peer actions may be packed two per row. Long labels are not squeezed.
+- `Screen.action_rows` stays within bot-01/core's bounded 10-row contract even in the one-button-per-row worst case.
+- Every secondary journey has contextual Back plus `🏠 خانه`.
+- Empty/error/loading states never invent data, progress percent or ETA.
+- No GPA/average, course binding, personal notification history or safe link is inferred from incomplete data.
 
-## 1. Course list
+## Courses
 
-Semantic ID: `academic.course.list`
+### Course list — `academic.course.list`
 
-### Populated
+Rendered page bound: **8 courses**.
 
 ```text
 📚 درس‌ها
-فضای آموزشی: دانشکده نمونه
-ترم: نیمسال اول
+فضای آموزشی: دانشکده نمونه · ترم: نیمسال اول
 
-• ترمیمی ۱ · REST-301 · نیمسال اول
-• پریودنتولوژی ۱ · PERIO-301 · نیمسال اول
-• رادیولوژی ۱ · RAD-301 · نیمسال اول
+• ترمیمی ۱
+  REST-301 · نیمسال اول
+• پریودنتولوژی ۱
+  PERIO-301 · نیمسال اول
 
 [ ترمیمی ۱ ] [ پریودنتولوژی ۱ ]
-[ رادیولوژی ۱ ]
-[ ‹ قبلی ] [ بعدی › ]        # only when a page ref exists
+[ ‹ قبلی ] [ بعدی › ]   # only when route refs exist
 [ 🏠 خانه ]
 ```
 
 Rules:
-- Source is the canonical course projection attached to the bot academic schedule projection at the frozen base.
-- Duplicate offering rows with the same canonical `course_id` collapse to one visible course entry.
-- `course_code` is secondary metadata, never the primary label.
-- `term_name`/`term_key` is shown only when the canonical rows agree; multiple offering terms are not guessed into a current term.
-- Page bound: `10` visible courses.
-- Course button payload: `{course_id}`; ID is never visible.
+- consume the canonical `courses` projection currently attached to the bot schedule response;
+- collapse duplicate offering rows by hidden canonical `course_id`;
+- show `course_code` as secondary metadata;
+- show course term only when canonical offering rows do not conflict;
+- optional workspace/selected-term context is shown only when integration has canonical labels;
+- pagination uses opaque route references, never raw cursors.
 
-### Empty
+### Course empty — `academic.course.empty`
 
 ```text
 📚 درس‌ها
@@ -58,7 +54,7 @@ Rules:
 [ 🏠 خانه ]
 ```
 
-### Not found / unauthorized
+### Course unavailable — `academic.course.unavailable`
 
 ```text
 📚 درس در دسترس نیست
@@ -68,11 +64,9 @@ Rules:
 [ ‹ درس‌ها ] [ 🏠 خانه ]
 ```
 
-Permission-denied copy is deliberately distinct and does not reveal whether a foreign course exists.
+Permission-denied copy is separate and does not reveal foreign-course existence beyond the already-authorized context.
 
-## 2. Course detail
-
-Semantic ID: `academic.course.detail`
+### Course detail — `academic.course.detail`
 
 ```text
 📚 ترمیمی ۱
@@ -86,24 +80,25 @@ Semantic ID: `academic.course.detail`
 [ ‹ درس‌ها ] [ 🏠 خانه ]
 ```
 
-Actions are capability/projection driven. The builder accepts `supported_actions`; unsupported destinations are omitted rather than rendered as fake buttons.
+Destinations are capability/projection driven through `supported_actions`. At the frozen base the safe default is schedule + resources + grades. Assessments, course announcements and sessions stay hidden until canonical support exists.
 
-Known action IDs:
+Course child action IDs:
 
-| Meaning | Action ID | Current frozen backend status |
-| --- | --- | --- |
-| Course schedule | `academic.course.schedule` | canonical facts available; server-side course filter missing |
-| Course resources | `academic.course.resources` | canonical resource rows available; destination composition integrates with bot-03 |
-| Course assessments | `academic.course.assessments` | no bot-native assessment projection; omit unless integration adds one |
-| Course grades | `academic.course.grades` | canonical published self grades available; server-side course filter missing |
-| Course announcements | `academic.course.announcements` | no canonical course binding; omit |
-| Course sessions | `academic.course.sessions` | no bot-safe session projection at frozen base; omit |
+| Meaning | Action ID |
+| --- | --- |
+| Open course | `academic.course.open` |
+| Course schedule | `academic.course.schedule` |
+| Course resources | `academic.course.resources` |
+| Course assessments | `academic.course.assessments` |
+| Course grades | `academic.course.grades` |
+| Course announcements | `academic.course.announcements` |
+| Course sessions | `academic.course.sessions` |
 
-## 3. Schedule hub
+Top-level Course/Schedule/Grades/Home/Notifications action identifiers reuse bot-01/core rather than creating duplicates.
 
-Semantic ID: `academic.schedule.hub`
+## Schedule
 
-Workspace scope:
+### Schedule hub — `academic.schedule.hub`
 
 ```text
 📅 برنامه
@@ -115,40 +110,40 @@ Workspace scope:
 [ 🏠 خانه ]
 ```
 
-Course scope keeps course context and returns to that course.
+A course-scoped hub keeps course context and returns to that course. `پیشِ رو` is valid because the frozen schedule projection supports bounded local-date ranges up to 31 days.
 
-`پیشِ رو` is shown only when the integration can back it with the existing bounded schedule range projection. At the frozen base the schedule endpoint supports up to 31 local calendar days, so a bounded 7-day/upcoming journey is supported.
+### Schedule list/day — `academic.schedule.list`
 
-## 4. Schedule list/day
-
-Semantic ID: `academic.schedule.list`
-
-Page bound: `12` items.
+Rendered page bound: **8 events**.
 
 ```text
 📅 امروز
 برنامه › امروز
 
-• ترمیمی ۱
-  ۰۸:۳۰ · ترمیمی ۱ · کلینیک ترمیمی
+• جلسه ترمیمی
+  ترمیمی ۱
+  ۰۸:۳۰ · کلینیک ترمیمی
 
 • جراحی ۱
-  ۱۰:۳۰ · جراحی ۱ · بخش جراحی
+  ۱۰:۳۰ · بخش جراحی
 
 صفحه ۱
-زمان‌ها بر اساس منطقه زمانی فضای آموزشی (Asia/Tehran) نمایش داده می‌شوند.
+زمان‌ها بر اساس منطقه زمانی فضای آموزشی نمایش داده می‌شوند.
 
+[ جزئیات · جلسه ترمیمی ]
+[ جزئیات · جراحی ۱ ]
 [ ‹ برنامه ] [ 🏠 خانه ]
 ```
 
 Rules:
-- `starts_at`/`ends_at` must originate from the canonical schedule projection.
-- `tenant_workspaces.timezone_name` is authoritative. Host/device timezone is never used as truth.
-- The backend returns schedule instants localized to the workspace timezone and includes the IANA timezone name.
-- Course/title/location are optional canonical facts. Missing values are omitted, not invented.
-- A list row receives a detail action only when a canonical event ID exists.
+- request date bounds are workspace-local calendar dates;
+- `tenant_workspaces.timezone_name` is authoritative;
+- `starts_at`/`ends_at` are formatted using the canonical timezone input;
+- the technical timezone slug is not leaked to student copy;
+- course/title/location are omitted when absent, not guessed;
+- if integration has a short subject-bound event route ref, detail actions use it; otherwise hidden canonical event ID may be used only to drive a fresh authorized re-read.
 
-### Empty
+### Schedule empty
 
 ```text
 📅 فردا
@@ -159,9 +154,7 @@ Rules:
 [ ‹ برنامه ] [ 🏠 خانه ]
 ```
 
-## 5. Event detail
-
-Semantic ID: `academic.schedule.event.detail`
+### Event detail — `academic.schedule.event.detail`
 
 ```text
 📅 جلسه ترمیمی
@@ -171,31 +164,29 @@ Semantic ID: `academic.schedule.event.detail`
 درس: ترمیمی ۱
 مکان: کلینیک ترمیمی
 
-زمان‌ها بر اساس منطقه زمانی فضای آموزشی (Asia/Tehran) نمایش داده می‌شوند.
+زمان‌ها بر اساس منطقه زمانی فضای آموزشی نمایش داده می‌شوند.
 
 [ ‹ برنامه ] [ 🏠 خانه ]
 ```
 
-Only canonical event title/time/course/location are presented. Raw `event_type`, internal status enums and IDs are not surfaced unless a future presentation contract maps them explicitly.
+Raw internal status/event-type enums and identifiers are not shown.
 
-## 6. Grades hub/list
+## Grades
 
-Semantic ID: `academic.grades.list`
+### Grade list — `academic.grades.list`
 
-Page bound: `16` grade rows. Rows are grouped by canonical course title inside the currently fetched page.
+Rendered page bound: **16 grade rows**, grouped by canonical course title inside the fetched page.
 
 ```text
 🎓 نمرات
 
 ترمیمی ۱
-• میان‌ترم — ۱۷٫۵ از ۲۰
-  وضعیت: منتشرشده
-• پایان‌ترم — ۱۸ از ۲۰
-  وضعیت: منتشرشده
-
-پریودنتولوژی ۱
-• کوییز ۱ — ۹ از ۱۰
-  وضعیت: منتشرشده
+• میان‌ترم
+  ۱۷٫۵ از ۲۰
+  منتشرشده
+• پایان‌ترم
+  ۱۸ از ۲۰
+  منتشرشده
 
 صفحه ۱
 فقط نمره‌های منتشرشده نمایش داده می‌شوند. معدل یا میانگین در این بخش محاسبه نمی‌شود.
@@ -203,11 +194,11 @@ Page bound: `16` grade rows. Rows are grouped by canonical course title inside t
 [ 🏠 خانه ]
 ```
 
-The backend query already restricts this projection to published gradebooks/results for the linked student's authorized enrollment. The V3 label `منتشرشده` reflects that projection contract; it does not infer an unpublished state.
+The frozen backend projection only returns published gradebook/result rows for the linked student's authorized enrollment. `منتشرشده` therefore describes the projection contract; the presentation does not infer unpublished state.
 
-No GPA, weighted course total, class rank or average is calculated.
+Never calculate GPA, weighted course total, class average or rank.
 
-### Empty
+### Grade empty
 
 ```text
 🎓 نمرات
@@ -217,51 +208,47 @@ No GPA, weighted course total, class rank or average is calculated.
 [ 🏠 خانه ]
 ```
 
-## 7. Course grade detail
-
-Semantic ID: `academic.grades.course`
+### Course grade detail — `academic.grades.course`
 
 ```text
 🎓 نمرات · ترمیمی ۱
 درس‌ها › ترمیمی ۱ › نمرات
 
-• میان‌ترم — ۱۷٫۵ از ۲۰
-  وضعیت: منتشرشده
-• پایان‌ترم — ۱۸ از ۲۰
-  وضعیت: منتشرشده
+• میان‌ترم
+  ۱۷٫۵ از ۲۰
+  منتشرشده
 
 هیچ معدل یا میانگینی از روی داده ناقص محاسبه نمی‌شود.
 
 [ ‹ بازگشت به درس ] [ 🏠 خانه ]
 ```
 
-At the frozen base this requires bounded authorized grade pages to be fetched and filtered by canonical `course_id` in integration code. A native server-side course filter remains preferable for pagination completeness at scale.
+At the frozen base integration must bounded-fetch authorized grade pages and filter using canonical `course_id`; native server-side course filtering is still a gap.
 
-## 8. Announcement list
+## Announcements
 
-Semantic ID: `academic.announcements.list`
+### Announcement list — `academic.announcements.list`
 
-Page bound: `8` items.
+Rendered page bound: **8 announcements**.
 
 ```text
 📢 اطلاعیه‌ها
 
 • تغییر زمان جلسه جراحی
-  ۱۴۰۵/۰۶/۱۹، ۱۲:۳۰
+  ۲۰۲۶/۰۹/۱۰، ۱۲:۳۰
 • انتشار منبع جدید
-  ۱۴۰۵/۰۶/۱۸، ۱۸:۱۰ · خوانده‌شده
+  ۲۰۲۶/۰۹/۰۹، ۱۸:۱۰ · خوانده‌شده
 
 صفحه ۱
 
+[ مشاهده · تغییر زمان جلسه جراحی ]
 [ ‹ قبلی ] [ بعدی › ]
 [ 🏠 خانه ]
 ```
 
-List view is intentionally title-first and concise. Full body belongs to detail.
+List is intentionally title-first; full body belongs to detail. If integration has a short subject-bound detail route ref, it is preferred so the handler can retain only correlation and re-read canonical data.
 
-## 9. Announcement detail
-
-Semantic ID: `academic.announcement.detail`
+### Announcement detail — `academic.announcement.detail`
 
 ```text
 📢 تغییر زمان جلسه جراحی
@@ -269,7 +256,7 @@ Semantic ID: `academic.announcement.detail`
 
 متن کامل اطلاعیه در اینجا نمایش داده می‌شود.
 
-زمان انتشار: ۱۴۰۵/۰۶/۱۹، ۱۲:۳۰
+زمان انتشار: ۲۰۲۶/۰۹/۱۰، ۱۲:۳۰
 وضعیت: خوانده‌شده
 
 [ ‹ اطلاعیه‌ها ] [ 🏠 خانه ]
@@ -277,32 +264,35 @@ Semantic ID: `academic.announcement.detail`
 
 ### Safe link semantics
 
-The frozen announcement projection contains no trusted link field. The builder therefore never extracts URLs from body text and never accepts a raw user-visible/provider URL as domain truth. If a future integration produces a separately validated, short-lived or canonical safe-link reference, it may pass an opaque `safe_link_ref`; the screen then exposes `academic.announcement.link.open` with that hidden reference.
+The frozen announcement projection contains no trusted link field. Academic presentation:
+- never extracts a URL from body text;
+- never treats a provider token or arbitrary raw URL as domain truth;
+- shows `academic.announcement.link.open` only when integration supplies a validated opaque `safe_link_ref` compatible with bot-01/core route-reference rules.
 
-## 10. Personal notification entry
+## Personal notifications
 
-Semantic ID: `academic.notifications.entry`
+### Entry only — `academic.notifications.entry`
 
 ```text
 🔔 اعلان‌های شخصی
 
-اعلان‌های شخصی ممکن است از مسیر پیام‌رسان به شما تحویل شوند، اما تحویل push یک صندوق ورودی دائمی نیست.
+اعلان‌های شخصی ممکن است به‌صورت خودکار در پیام‌رسان به شما تحویل شوند، اما این تحویل به معنی وجود صندوق ورودی دائمی در ربات نیست.
 
 📢 اطلاعیه‌ها
 اطلاعیه‌های منتشرشده فضای آموزشی فهرست مستقل و قابل‌مشاهده دارند.
 
 🔔 تاریخچه شخصی
-در قرارداد فعلی، projection قابل‌اعتماد برای تاریخچه اعلان‌های شخصی وجود ندارد؛ بنابراین تاریخچه محلی ساخته نمی‌شود.
+در حال حاضر تاریخچه قابل‌اعتمادی برای نمایش اعلان‌های شخصی در ربات وجود ندارد؛ بنابراین ربات از روی پیام‌های تحویل‌شده تاریخچه نمی‌سازد.
 
 [ 📢 اطلاعیه‌ها ]
 [ 🏠 خانه ]
 ```
 
-`/notifications/project`, `/claim` and `/receipt` are worker delivery/idempotency contracts, not a user inbox. Delivery receipts must never be reconstructed into notification history.
+`/notifications/project`, `/claim` and `/receipt` are transport worker contracts, not a user inbox. They must never be reconstructed into durable history.
 
-## 11. Loading/error/pagination states
+## Loading, error and pagination
 
-### Loading
+### Loading — `academic.loading`
 
 ```text
 📚 درس‌ها
@@ -311,9 +301,9 @@ Semantic ID: `academic.notifications.entry`
 [ 🏠 خانه ]
 ```
 
-Provider adapters should normally use truthful native activity feedback for short reads. This semantic state exists for renderers that need a persistent loading surface. It has no percent or ETA.
+Prefer provider-native activity feedback for short reads. No percentage or ETA is invented.
 
-### Error
+### Error — `academic.error`
 
 ```text
 ❌ نمرات
@@ -324,16 +314,17 @@ Provider adapters should normally use truthful native activity feedback for shor
 [ 🏠 خانه ]
 ```
 
-Security-sensitive errors should be normalized by bot-01/core before reaching this presentation. Raw backend/provider messages are never expected here.
+Raw backend/provider errors are normalized before presentation.
 
-### Pagination
+### Pagination contract
 
-- Page labels use Persian human digits.
-- Previous/next appear only when an opaque page reference exists.
-- Page references are subject/provider-bound presentation correlation owned by core/integration, not authorization.
-- Opening a page must perform a fresh canonical backend read.
-- Bot-02 never persists cursors, membership, grades, read state or course truth.
+- page label uses Persian human digits;
+- Previous/Next appear only when an opaque route ref exists;
+- route refs are short, expiring, provider+subject-bound presentation correlation;
+- a route ref is never authorization;
+- page/detail handlers must re-read and reauthorize canonical backend state;
+- bot-02 stores no course truth, membership truth, cursor authority, grade truth or notification history.
 
-## Provider rendering expectation
+## Provider rendering
 
-Telegram may render headings, semantic lists/facts and RTL through its verified rich-message capability. Bale renders the same semantic hierarchy with readable native text and inline actions. Academic source does not branch on provider, emit Telegram-only rich payloads or infer Bale capabilities.
+Telegram may render semantic headings/lists/facts with its verified rich-message capability. Bale renders the same hierarchy using its own native text/actions. Academic source contains no provider branch and no Telegram-only or Bale-only domain behavior.
