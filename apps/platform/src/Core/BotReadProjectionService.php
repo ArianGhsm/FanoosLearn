@@ -98,6 +98,7 @@ SQL);
             'from_date' => $fromDate,
             'to_date' => $toDate,
             'items' => $rows,
+            'courses' => $this->courses($userId, $workspaceId, 100, null)['items'],
             'next_cursor' => $hasMore ? $this->encodeCursor($offset + count($rows)) : null,
         ];
     }
