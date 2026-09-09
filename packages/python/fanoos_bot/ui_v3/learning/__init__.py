@@ -5,6 +5,12 @@ screens to bot-01/core and its intents to bot-04/providers/current application
 routing without moving business authority into presentation code.
 """
 
+from .filters import (
+    assessment_course_filter_screen,
+    assessment_state_filter_screen,
+    resource_course_filter_screen,
+    resource_type_filter_screen,
+)
 from .intents import LearningIntent
 from .screens import (
     ProtectedDeliveryState,
@@ -24,9 +30,13 @@ __all__ = [
     "LearningIntent",
     "ProtectedDeliveryState",
     "resource_hub_screen",
+    "resource_course_filter_screen",
+    "resource_type_filter_screen",
     "resource_detail_screen",
     "protected_delivery_screen",
     "assessment_hub_screen",
+    "assessment_course_filter_screen",
+    "assessment_state_filter_screen",
     "assessment_detail_screen",
     "commerce_hub_screen",
     "order_access_detail_screen",
