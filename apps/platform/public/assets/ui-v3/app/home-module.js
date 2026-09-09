@@ -1,3 +1,4 @@
+import './notification-nav.js';
 import '../home/home.js';
 import { addDays, formatDateKey, workspaceTodayKey } from '../schedule/schedule-model.js';
 
