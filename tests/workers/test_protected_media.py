@@ -54,5 +54,7 @@ class ProtectedMediaTest(unittest.TestCase):
             source=Path(d)/'out.pdf';source.write_bytes(b'%PDF-output');checksum=__import__('hashlib').sha256(source.read_bytes()).hexdigest();ref=sink.publish(self.job(),source,checksum);self.assertTrue(ref.startswith('pma:'));self.assertEqual(api.published,b'%PDF-output');self.assertEqual(api.calls[0][0],'authorize');self.assertEqual(api.calls[1][0],'publish')
     def test_runtime_uses_platform_adapters_not_private_spool(self):
         rp=Path(__file__).resolve().parents[2]/'apps/workers/protected-media/runtime.py';text=rp.read_text();self.assertIn('ApiCapabilitySource',text);self.assertIn('ApiArtifactSink',text);self.assertNotIn('PrivateSpoolArtifactSink',text);self.assertNotIn('canonical object-capability redemption adapter is not frozen',text)
+    def test_health_matches_active_capability_runtime_without_claiming_jobs(self):
+        hp=Path(__file__).resolve().parents[2]/'apps/workers/protected-media/health.py';text=hp.read_text();self.assertIn('from runtime import build',text);self.assertIn('build()',text);self.assertIn('OK protected-media dependencies/configuration',text);self.assertNotIn('media_claim',text);self.assertNotIn('integration is not frozen',text);self.assertNotIn('worker must remain stopped',text)
     def test_forensic_trace_is_page_bound(self):
         text=P.read_text();self.assertIn("f'{forensic}:{idx}'",text);self.assertIn('FANOOS·{forensic[:12]}',text)
