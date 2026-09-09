@@ -126,6 +126,7 @@ export function createSheet(node, options = {}) {
     node.hidden = true;
     node.setAttribute('aria-hidden', 'true');
     options.backdrop?.setAttribute('hidden', '');
+    if (returnFocus?.isConnected) returnFocus.setAttribute('aria-expanded', 'false');
     if (restoreFocus && returnFocus?.isConnected) returnFocus.focus();
     options.onClose?.();
   }
@@ -134,6 +135,7 @@ export function createSheet(node, options = {}) {
     if (open) return;
     open = true;
     returnFocus = trigger || document.activeElement;
+    if (returnFocus?.isConnected) returnFocus.setAttribute('aria-expanded', 'true');
     node.hidden = false;
     node.setAttribute('aria-hidden', 'false');
     options.backdrop?.removeAttribute('hidden');
