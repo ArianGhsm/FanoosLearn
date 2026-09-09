@@ -72,6 +72,8 @@ class MessageDensityPolicy:
     typical_max_sections: int = 3
     typical_max_actions: int = 8
     typical_max_list_items: int = 8
+    hard_max_sections: int = 4
+    hard_max_list_items: int = 12
     hard_max_actions: int = 12
 
     def assess(self, screen: ProviderScreen) -> DensityAssessment:
@@ -93,6 +95,10 @@ class MessageDensityPolicy:
 
     def validate(self, screen: ProviderScreen) -> DensityAssessment:
         assessment = self.assess(screen)
+        if assessment.section_count > self.hard_max_sections:
+            raise ProviderRenderError("section_density_requires_upstream_pagination")
+        if assessment.list_item_count > self.hard_max_list_items:
+            raise ProviderRenderError("list_density_requires_upstream_pagination")
         if assessment.action_count > self.hard_max_actions:
             raise ProviderRenderError("action_density_requires_secondary_screen")
         return assessment
