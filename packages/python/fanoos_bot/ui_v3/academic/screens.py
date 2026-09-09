@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from collections.abc import Iterable, Mapping, Sequence
-from datetime import datetime
-from typing import Any
 
 from ...formatting import (
     format_datetime,
@@ -13,16 +11,35 @@ from ...formatting import (
     is_uuid,
     truncate_text,
 )
-from ..core import Action, ActionRow, Context, Fact, ListItem, Pagination, Screen, Section, Severity
+from ..core import (
+    Action,
+    ActionRow,
+    Breadcrumb,
+    CallbackIntent,
+    Context,
+    Fact,
+    ListItem,
+    Pagination,
+    Screen,
+    Section,
+    Severity,
+)
 from . import actions
 
-COURSE_PAGE_SIZE = 10
-SCHEDULE_PAGE_SIZE = 12
+# A page can still fit its worst-case one-action-per-row buttons plus the final
+# navigation row under bot-01/core's 10-row screen bound.
+COURSE_PAGE_SIZE = 8
+SCHEDULE_PAGE_SIZE = 8
 GRADE_PAGE_SIZE = 16
 ANNOUNCEMENT_PAGE_SIZE = 8
 
 _PAIR_MAX_LABEL = 22
 _PAIR_MAX_COMBINED = 36
+
+_INTENT_NAMES = {
+    actions.HOME: "home",
+    actions.RETRY: "retry",
+}
 
 
 def _text(value: object, limit: int = 120) -> str:
@@ -30,12 +47,41 @@ def _text(value: object, limit: int = 120) -> str:
 
 
 def _action(action_id: str, label: str, payload: Mapping[str, object] | None = None) -> Action:
-    return Action(id=action_id, label=label, payload=dict(payload or {}))
+    raw = dict(payload or {})
+    route_ref = ""
+    for key in ("route_ref", "page_ref", "link_ref"):
+        value = str(raw.pop(key, "") or "")
+        if value:
+            route_ref = value
+            break
+
+    params: tuple[tuple[str, str], ...] = ()
+    if not route_ref:
+        params = tuple(
+            (str(key), str(value))
+            for key, value in raw.items()
+            if value is not None and str(value)
+        )
+    intent = CallbackIntent(
+        name=_INTENT_NAMES.get(action_id, action_id),
+        params=params,
+        route_ref=route_ref or None,
+    )
+    return Action(identifier=action_id, label=label, intent=intent)
 
 
-def _context(*parts: str) -> Context:
-    labels = tuple(value for value in (_text(part, 80) for part in parts) if value)
-    return Context(breadcrumb=" › ".join(labels))
+def _breadcrumbs(*parts: str) -> tuple[Breadcrumb, ...]:
+    return tuple(Breadcrumb(value) for value in (_text(part, 80) for part in parts) if value)
+
+
+def _course_list_context(workspace_label: str, selected_term: str) -> Context | None:
+    workspace = _text(workspace_label, 70)
+    term = _text(selected_term, 60)
+    if workspace:
+        return Context("فضای آموزشی", workspace, f"ترم: {term}" if term else "")
+    if term:
+        return Context("ترم", term)
+    return None
 
 
 def _pack_actions(items: Sequence[tuple[str, str, Mapping[str, object] | None]]) -> tuple[ActionRow, ...]:
@@ -53,12 +99,23 @@ def _pack_actions(items: Sequence[tuple[str, str, Mapping[str, object] | None]])
                 and len(current[1]) + len(following[1]) <= _PAIR_MAX_COMBINED
             ):
                 pair.append(following)
-        rows.append(ActionRow(actions=tuple(_action(action_id, label, payload) for action_id, label, payload in pair)))
+        rows.append(
+            ActionRow(
+                tuple(
+                    _action(action_id, label, payload)
+                    for action_id, label, payload in pair
+                )
+            )
+        )
         index += len(pair)
     return tuple(rows)
 
 
-def _nav_rows(back_id: str | None = None, back_label: str = "‹ بازگشت", back_payload: Mapping[str, object] | None = None) -> tuple[ActionRow, ...]:
+def _nav_rows(
+    back_id: str | None = None,
+    back_label: str = "‹ بازگشت",
+    back_payload: Mapping[str, object] | None = None,
+) -> tuple[ActionRow, ...]:
     nav: list[tuple[str, str, Mapping[str, object] | None]] = []
     if back_id and back_id != actions.HOME:
         nav.append((back_id, back_label, back_payload))
@@ -77,8 +134,10 @@ def _page(
     following = _action(action_id, "بعدی ›", {"page_ref": next_ref}) if next_ref else None
     if not previous and not following and page <= 1:
         return None
+    safe_page = max(1, page)
     return Pagination(
-        label=f"صفحه {format_human_number(max(1, page))}",
+        page=safe_page,
+        label=f"صفحه {format_human_number(safe_page)}",
         previous=previous,
         next=following,
     )
@@ -107,16 +166,14 @@ def _dedupe_courses(rows: Iterable[Mapping[str, object]]) -> tuple[dict[str, obj
     by_id: OrderedDict[str, dict[str, object]] = OrderedDict()
     for source in rows:
         course_id = str(source.get("course_id") or "")
-        if not is_uuid(course_id):
-            continue
-        title = _course_title(source)
-        if title == "درس":
+        raw_title = _text(source.get("course_title") or source.get("title"), 90)
+        if not is_uuid(course_id) or not raw_title:
             continue
         current = by_id.get(course_id)
         if current is None:
             by_id[course_id] = {
                 "course_id": course_id,
-                "course_title": title,
+                "course_title": raw_title,
                 "course_code": _course_code(source),
                 "term": _course_term(source),
             }
@@ -126,8 +183,8 @@ def _dedupe_courses(rows: Iterable[Mapping[str, object]]) -> tuple[dict[str, obj
         incoming_term = _course_term(source)
         existing_term = str(current.get("term") or "")
         if incoming_term and existing_term and incoming_term != existing_term:
-            # Multiple offering terms are canonical facts, but none is assumed to
-            # be the selected/current term unless the projection says so.
+            # Multiple offering terms are canonical, but none is assumed to be
+            # the selected/current term unless the projection says so.
             current["term"] = ""
         elif incoming_term and not existing_term:
             current["term"] = incoming_term
@@ -155,29 +212,23 @@ def course_list_screen(
         code = str(course.get("course_code") or "")
         term = str(course.get("term") or "")
         meta = " · ".join(value for value in (code, term) if value)
-        list_items.append(
-            ListItem(
-                title=title,
-                subtitle=meta,
-                action=_action(actions.COURSE_OPEN, "باز کردن درس", {"course_id": course_id}),
-            )
-        )
+        list_items.append(ListItem(title=title, meta=meta))
         buttons.append((actions.COURSE_OPEN, truncate_text(title, 28), {"course_id": course_id}))
 
-    facts: list[Fact] = []
-    if workspace_label:
-        facts.append(Fact(label="فضای آموزشی", value=_text(workspace_label, 70)))
-    if selected_term:
-        facts.append(Fact(label="ترم", value=_text(selected_term, 60)))
-
     return Screen(
-        id="academic.course.list",
+        identifier="academic.course.list",
         title="📚 درس‌ها",
-        context=_context("درس‌ها"),
         intro="یک درس را برای دیدن بخش‌های آموزشی آن انتخاب کنید.",
-        sections=(Section(items=tuple(list_items), facts=tuple(facts)),),
+        context=_course_list_context(workspace_label, selected_term),
+        breadcrumb=_breadcrumbs("درس‌ها"),
+        sections=(Section(items=tuple(list_items)),),
         action_rows=_pack_actions(buttons) + _nav_rows(),
-        pagination=_page(page=page, previous_ref=previous_ref, next_ref=next_ref, action_id=actions.COURSES_PAGE),
+        pagination=_page(
+            page=page,
+            previous_ref=previous_ref,
+            next_ref=next_ref,
+            action_id=actions.COURSES_PAGE,
+        ),
         severity=Severity.INFO,
     )
 
@@ -187,10 +238,10 @@ def course_empty_screen(*, workspace_label: str = "") -> Screen:
     if workspace_label:
         body = f"برای «{_text(workspace_label, 70)}» هنوز درسی در فهرست قابل‌نمایش منتشر نشده است."
     return Screen(
-        id="academic.course.empty",
+        identifier="academic.course.empty",
         title="📚 درس‌ها",
-        context=_context("درس‌ها"),
         intro=body,
+        breadcrumb=_breadcrumbs("درس‌ها"),
         sections=(Section(body="بعداً دوباره این بخش را بررسی کنید یا فضای آموزشی فعال را تغییر دهید."),),
         action_rows=_nav_rows(),
         severity=Severity.INFO,
@@ -204,10 +255,10 @@ def course_unavailable_screen(*, permission_denied: bool = False) -> Screen:
         else "این درس در فهرست مجاز فعلی پیدا نشد. فهرست درس‌ها را دوباره باز کنید."
     )
     return Screen(
-        id="academic.course.unavailable",
+        identifier="academic.course.unavailable",
         title="📚 درس در دسترس نیست",
-        context=_context("درس‌ها"),
         intro=message,
+        breadcrumb=_breadcrumbs("درس‌ها"),
         action_rows=_nav_rows(actions.COURSES, "‹ درس‌ها"),
         severity=Severity.WARNING,
     )
@@ -245,9 +296,9 @@ def course_detail_screen(
         if value
     )
     return Screen(
-        id="academic.course.detail",
+        identifier="academic.course.detail",
         title=f"📚 {title}",
-        context=_context("درس‌ها", title),
+        breadcrumb=_breadcrumbs("درس‌ها", title),
         intro="بخش موردنظر این درس را انتخاب کنید.",
         sections=(Section(facts=facts),) if facts else (),
         action_rows=_pack_actions(action_specs) + _nav_rows(actions.COURSES, "‹ درس‌ها"),
@@ -255,7 +306,11 @@ def course_detail_screen(
     )
 
 
-def schedule_hub_screen(*, course: Mapping[str, object] | None = None, upcoming_supported: bool = True) -> Screen:
+def schedule_hub_screen(
+    *,
+    course: Mapping[str, object] | None = None,
+    upcoming_supported: bool = True,
+) -> Screen:
     course_id = str((course or {}).get("course_id") or "")
     course_title = _course_title(course or {}) if course else ""
     payload = {"course_id": course_id} if is_uuid(course_id) else None
@@ -267,9 +322,13 @@ def schedule_hub_screen(*, course: Mapping[str, object] | None = None, upcoming_
         specs.append((actions.SCHEDULE_UPCOMING, "🗓 پیشِ رو", payload))
     back_id = actions.COURSE_OPEN if payload else None
     return Screen(
-        id="academic.schedule.hub",
+        identifier="academic.schedule.hub",
         title="📅 برنامه" if not course_title else f"📅 برنامه · {course_title}",
-        context=_context("درس‌ها", course_title, "برنامه") if course_title else _context("برنامه"),
+        breadcrumb=(
+            _breadcrumbs("درس‌ها", course_title, "برنامه")
+            if course_title
+            else _breadcrumbs("برنامه")
+        ),
         intro="بازه موردنظر را انتخاب کنید. تاریخ و ساعت از منطقه زمانی فضای آموزشی می‌آید.",
         action_rows=_pack_actions(specs) + _nav_rows(back_id, "‹ بازگشت به درس", payload),
         severity=Severity.INFO,
@@ -280,11 +339,14 @@ def _event_title(item: Mapping[str, object]) -> str:
     return _text(item.get("title") or item.get("course_title"), 100) or "رویداد آموزشی"
 
 
-def _event_subtitle(item: Mapping[str, object], timezone_name: str) -> str:
-    start = format_time(item.get("starts_at"), timezone_name)
+def _event_item(item: Mapping[str, object], timezone_name: str) -> ListItem:
+    title = _event_title(item)
     course = _text(item.get("course_title"), 70)
+    start = format_time(item.get("starts_at"), timezone_name)
     location = _text(item.get("location_text"), 80)
-    return " · ".join(value for value in (start, course, location) if value)
+    description = course if course and course != title else ""
+    meta = " · ".join(value for value in (start, location) if value)
+    return ListItem(title=title, description=description, meta=meta)
 
 
 def schedule_list_screen(
@@ -296,30 +358,52 @@ def schedule_list_screen(
     previous_ref: str | None = None,
     next_ref: str | None = None,
     course: Mapping[str, object] | None = None,
+    event_route_refs: Mapping[str, str] | None = None,
 ) -> Screen:
     visible = tuple(item for item in items if isinstance(item, Mapping))[:SCHEDULE_PAGE_SIZE]
     course_id = str((course or {}).get("course_id") or "")
     course_title = _course_title(course or {}) if course else ""
+    event_route_refs = event_route_refs or {}
+
     list_items: list[ListItem] = []
+    detail_actions: list[tuple[str, str, Mapping[str, object] | None]] = []
     for item in visible:
+        list_items.append(_event_item(item, timezone_name))
         event_id = str(item.get("id") or item.get("event_id") or "")
-        action = _action(actions.SCHEDULE_EVENT_OPEN, "جزئیات", {"event_id": event_id}) if is_uuid(event_id) else None
-        list_items.append(ListItem(title=_event_title(item), subtitle=_event_subtitle(item, timezone_name), action=action))
+        if not is_uuid(event_id):
+            continue
+        title = _event_title(item)
+        route_ref = str(event_route_refs.get(event_id) or "")
+        payload: Mapping[str, object] = (
+            {"route_ref": route_ref} if route_ref else {"event_id": event_id}
+        )
+        detail_actions.append(
+            (actions.SCHEDULE_EVENT_OPEN, f"جزئیات · {truncate_text(title, 24)}", payload)
+        )
 
     intro = "" if list_items else f"برای {label} برنامه‌ای ثبت نشده است."
     payload = {"course_id": course_id} if is_uuid(course_id) else None
     back_id = actions.COURSE_SCHEDULE if payload else actions.SCHEDULE
     back_label = "‹ برنامه درس" if payload else "‹ برنامه"
     title = f"📅 {label}" if not course_title else f"📅 {label} · {course_title}"
-    context = _context("درس‌ها", course_title, "برنامه", label) if course_title else _context("برنامه", label)
+    breadcrumb = (
+        _breadcrumbs("درس‌ها", course_title, "برنامه", label)
+        if course_title
+        else _breadcrumbs("برنامه", label)
+    )
     return Screen(
-        id="academic.schedule.list",
+        identifier="academic.schedule.list",
         title=title,
-        context=context,
+        breadcrumb=breadcrumb,
         intro=intro,
         sections=(Section(items=tuple(list_items)),) if list_items else (),
-        action_rows=_nav_rows(back_id, back_label, payload),
-        pagination=_page(page=page, previous_ref=previous_ref, next_ref=next_ref, action_id=actions.SCHEDULE_PAGE),
+        action_rows=_pack_actions(detail_actions) + _nav_rows(back_id, back_label, payload),
+        pagination=_page(
+            page=page,
+            previous_ref=previous_ref,
+            next_ref=next_ref,
+            action_id=actions.SCHEDULE_PAGE,
+        ),
         severity=Severity.INFO,
         footer=_timezone_footer(timezone_name),
     )
@@ -343,9 +427,9 @@ def event_detail_screen(
     if location:
         facts.append(Fact(label="مکان", value=location))
     return Screen(
-        id="academic.schedule.event.detail",
+        identifier="academic.schedule.event.detail",
         title=f"📅 {title}",
-        context=_context("برنامه", "جزئیات رویداد"),
+        breadcrumb=_breadcrumbs("برنامه", "جزئیات رویداد"),
         sections=(Section(facts=tuple(facts)),),
         action_rows=_nav_rows(actions.SCHEDULE, "‹ برنامه", back_payload),
         severity=Severity.INFO,
@@ -373,60 +457,72 @@ def grade_list_screen(
     visible = tuple(item for item in items if isinstance(item, Mapping))[:GRADE_PAGE_SIZE]
     grouped: OrderedDict[tuple[str, str], list[Mapping[str, object]]] = OrderedDict()
     for item in visible:
-        key = (str(item.get("course_id") or ""), _text(item.get("course_title"), 80) or "درس")
+        key = (
+            str(item.get("course_id") or ""),
+            _text(item.get("course_title"), 80) or "درس",
+        )
         grouped.setdefault(key, []).append(item)
 
     sections: list[Section] = []
-    for (course_id, course_title), course_items in grouped.items():
-        rows = tuple(
+    for (_, course_title), course_items in grouped.items():
+        grade_items = tuple(
             ListItem(
                 title=_grade_title(item),
-                subtitle=_grade_value(item),
-                facts=(Fact(label="وضعیت", value="منتشرشده"),),
-                action=(
-                    _action(actions.COURSE_GRADE_OPEN, "نمرات درس", {"course_id": course_id})
-                    if is_uuid(course_id)
-                    else None
-                ),
+                description=_grade_value(item),
+                meta="منتشرشده",
             )
             for item in course_items
         )
-        sections.append(Section(title=course_title, items=rows))
+        sections.append(Section(title=course_title, items=grade_items))
 
     return Screen(
-        id="academic.grades.list",
+        identifier="academic.grades.list",
         title="🎓 نمرات",
-        context=_context("نمرات"),
+        breadcrumb=_breadcrumbs("نمرات"),
         intro="" if sections else "نمره منتشرشده‌ای برای شما پیدا نشد.",
         sections=tuple(sections),
         action_rows=_nav_rows(),
-        pagination=_page(page=page, previous_ref=previous_ref, next_ref=next_ref, action_id=actions.GRADES_PAGE),
+        pagination=_page(
+            page=page,
+            previous_ref=previous_ref,
+            next_ref=next_ref,
+            action_id=actions.GRADES_PAGE,
+        ),
         severity=Severity.INFO,
         footer="فقط نمره‌های منتشرشده نمایش داده می‌شوند. معدل یا میانگین در این بخش محاسبه نمی‌شود.",
     )
 
 
-def course_grade_detail_screen(course: Mapping[str, object], items: Iterable[Mapping[str, object]]) -> Screen:
+def course_grade_detail_screen(
+    course: Mapping[str, object],
+    items: Iterable[Mapping[str, object]],
+) -> Screen:
     course_id = str(course.get("course_id") or "")
     if not is_uuid(course_id):
         return course_unavailable_screen()
     title = _course_title(course)
-    visible = tuple(item for item in items if str(item.get("course_id") or "") == course_id)[:GRADE_PAGE_SIZE]
+    visible = tuple(
+        item for item in items if str(item.get("course_id") or "") == course_id
+    )[:GRADE_PAGE_SIZE]
     grade_items = tuple(
         ListItem(
             title=_grade_title(item),
-            subtitle=_grade_value(item),
-            facts=(Fact(label="وضعیت", value="منتشرشده"),),
+            description=_grade_value(item),
+            meta="منتشرشده",
         )
         for item in visible
     )
     return Screen(
-        id="academic.grades.course",
+        identifier="academic.grades.course",
         title=f"🎓 نمرات · {title}",
-        context=_context("درس‌ها", title, "نمرات"),
+        breadcrumb=_breadcrumbs("درس‌ها", title, "نمرات"),
         intro="" if grade_items else "نمره منتشرشده‌ای برای این درس پیدا نشد.",
         sections=(Section(items=grade_items),) if grade_items else (),
-        action_rows=_nav_rows(actions.COURSE_OPEN, "‹ بازگشت به درس", {"course_id": course_id}),
+        action_rows=_nav_rows(
+            actions.COURSE_OPEN,
+            "‹ بازگشت به درس",
+            {"course_id": course_id},
+        ),
         severity=Severity.INFO,
         footer="هیچ معدل یا میانگینی از روی داده ناقص محاسبه نمی‌شود.",
     )
@@ -443,24 +539,47 @@ def announcement_list_screen(
     page: int = 1,
     previous_ref: str | None = None,
     next_ref: str | None = None,
+    detail_route_refs: Mapping[str, str] | None = None,
 ) -> Screen:
     visible = tuple(item for item in items if isinstance(item, Mapping))[:ANNOUNCEMENT_PAGE_SIZE]
+    detail_route_refs = detail_route_refs or {}
     list_items: list[ListItem] = []
+    detail_actions: list[tuple[str, str, Mapping[str, object] | None]] = []
     for item in visible:
         announcement_id = str(item.get("id") or item.get("announcement_id") or "")
         published = _announcement_time(item)
         read_label = "خوانده‌شده" if item.get("read_at") else ""
-        subtitle = " · ".join(value for value in (published, read_label) if value)
-        action = _action(actions.ANNOUNCEMENT_OPEN, "مشاهده اطلاعیه", {"announcement_id": announcement_id}) if is_uuid(announcement_id) else None
-        list_items.append(ListItem(title=_text(item.get("title"), 100) or "اطلاعیه", subtitle=subtitle, action=action))
+        meta = " · ".join(value for value in (published, read_label) if value)
+        title = _text(item.get("title"), 100) or "اطلاعیه"
+        list_items.append(ListItem(title=title, meta=meta))
+        if not is_uuid(announcement_id):
+            continue
+        route_ref = str(detail_route_refs.get(announcement_id) or "")
+        payload: Mapping[str, object] = (
+            {"route_ref": route_ref}
+            if route_ref
+            else {"announcement_id": announcement_id}
+        )
+        detail_actions.append(
+            (
+                actions.ANNOUNCEMENT_OPEN,
+                f"مشاهده · {truncate_text(title, 24)}",
+                payload,
+            )
+        )
     return Screen(
-        id="academic.announcements.list",
+        identifier="academic.announcements.list",
         title="📢 اطلاعیه‌ها",
-        context=_context("اطلاعیه‌ها"),
+        breadcrumb=_breadcrumbs("اطلاعیه‌ها"),
         intro="" if list_items else "اطلاعیه منتشرشده‌ای برای این فضای آموزشی پیدا نشد.",
         sections=(Section(items=tuple(list_items)),) if list_items else (),
-        action_rows=_nav_rows(),
-        pagination=_page(page=page, previous_ref=previous_ref, next_ref=next_ref, action_id=actions.ANNOUNCEMENTS_PAGE),
+        action_rows=_pack_actions(detail_actions) + _nav_rows(),
+        pagination=_page(
+            page=page,
+            previous_ref=previous_ref,
+            next_ref=next_ref,
+            action_id=actions.ANNOUNCEMENTS_PAGE,
+        ),
         severity=Severity.INFO,
     )
 
@@ -480,12 +599,14 @@ def announcement_detail_screen(
         facts.append(Fact(label="وضعیت", value="خوانده‌شده"))
     rows: tuple[ActionRow, ...] = ()
     if safe_link_ref:
-        rows += _pack_actions(((actions.ANNOUNCEMENT_LINK_OPEN, "🔗 باز کردن پیوند", {"link_ref": safe_link_ref}),))
+        rows += _pack_actions(
+            ((actions.ANNOUNCEMENT_LINK_OPEN, "🔗 باز کردن پیوند", {"link_ref": safe_link_ref}),)
+        )
     rows += _nav_rows(actions.ANNOUNCEMENTS, "‹ اطلاعیه‌ها")
     return Screen(
-        id="academic.announcement.detail",
+        identifier="academic.announcement.detail",
         title=f"📢 {title}",
-        context=_context("اطلاعیه‌ها", title),
+        breadcrumb=_breadcrumbs("اطلاعیه‌ها", title),
         intro=body or "متنی برای این اطلاعیه ثبت نشده است.",
         sections=(Section(facts=tuple(facts)),) if facts else (),
         action_rows=rows,
@@ -495,9 +616,9 @@ def announcement_detail_screen(
 
 def notifications_entry_screen() -> Screen:
     return Screen(
-        id="academic.notifications.entry",
+        identifier="academic.notifications.entry",
         title="🔔 اعلان‌های شخصی",
-        context=_context("اعلان‌های شخصی"),
+        breadcrumb=_breadcrumbs("اعلان‌های شخصی"),
         intro="اعلان‌های شخصی ممکن است از مسیر پیام‌رسان به شما تحویل شوند، اما تحویل push یک صندوق ورودی دائمی نیست.",
         sections=(
             Section(
@@ -514,13 +635,18 @@ def notifications_entry_screen() -> Screen:
     )
 
 
-def academic_error_screen(*, area_label: str, retry_action: str | None = None, back_action: str | None = None) -> Screen:
+def academic_error_screen(
+    *,
+    area_label: str,
+    retry_action: str | None = None,
+    back_action: str | None = None,
+) -> Screen:
     specs: list[tuple[str, str, Mapping[str, object] | None]] = []
     if retry_action:
         specs.append((retry_action, "🔄 تلاش دوباره", None))
     rows = _pack_actions(specs) + _nav_rows(back_action)
     return Screen(
-        id="academic.error",
+        identifier="academic.error",
         title=f"❌ {area_label}",
         intro="این بخش فعلاً بارگذاری نشد. دوباره تلاش کنید؛ اگر مشکل ادامه داشت از خانه مسیر را از نو باز کنید.",
         action_rows=rows,
@@ -530,7 +656,7 @@ def academic_error_screen(*, area_label: str, retry_action: str | None = None, b
 
 def academic_loading_screen(*, area_label: str) -> Screen:
     return Screen(
-        id="academic.loading",
+        identifier="academic.loading",
         title=area_label,
         intro="در حال دریافت اطلاعات از فانوس…",
         action_rows=_nav_rows(),
