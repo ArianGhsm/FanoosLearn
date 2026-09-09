@@ -1,17 +1,24 @@
 from __future__ import annotations
 
+import json
 import os
+import re
 import secrets
 import sqlite3
 import time
 from pathlib import Path
 
 
+_ROUTE_KIND = re.compile(r"^[a-z][a-z0-9_]{0,31}$")
+
+
 class LocalState:
-    """Disposable, bounded transport-local state; never authorization/domain truth."""
+    """Disposable, bounded transport/presentation state; never domain authority."""
 
     PENDING_DELIVERY_RECEIPT_LIMIT = 500
     PROCESSED_UPDATE_LIMIT = 10_000
+    PRESENTATION_ROUTE_LIMIT = 2_000
+    PRESENTATION_ROUTE_MAX_BYTES = 4_096
 
     def __init__(self, path: str | Path):
         self.path = Path(path)
@@ -72,6 +79,17 @@ class LocalState:
               created_at INTEGER NOT NULL,
               PRIMARY KEY(platform, event_id)
             );
+            CREATE TABLE IF NOT EXISTS presentation_routes(
+              ref TEXT PRIMARY KEY,
+              platform TEXT NOT NULL,
+              subject TEXT NOT NULL,
+              kind TEXT NOT NULL,
+              payload_json TEXT NOT NULL,
+              expires_at INTEGER NOT NULL,
+              created_at INTEGER NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS presentation_routes_subject_idx
+              ON presentation_routes(platform,subject,created_at);
             """
         )
         self.db.commit()
@@ -94,6 +112,83 @@ class LocalState:
             (f"offset:{platform}", str(int(value))),
         )
         self.db.commit()
+
+    def create_route(
+        self,
+        platform: str,
+        subject: str,
+        kind: str,
+        payload: dict,
+        *,
+        ttl: int = 24 * 3600,
+        now: int | None = None,
+    ) -> str:
+        """Store restart-safe presentation correlation only.
+
+        The returned payload must always be revalidated against the canonical
+        backend before it is used for a sensitive read or any mutation.
+        """
+        if platform not in {"telegram", "bale"}:
+            raise ValueError("unsupported route platform")
+        if not _ROUTE_KIND.fullmatch(str(kind or "")):
+            raise ValueError("invalid route kind")
+        encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        if len(encoded.encode("utf-8")) > self.PRESENTATION_ROUTE_MAX_BYTES:
+            raise ValueError("presentation route payload is too large")
+        now = int(now or time.time())
+        ttl = max(60, min(int(ttl), 7 * 86400))
+        ref = secrets.token_hex(8)
+        with self.db:
+            self.db.execute(
+                """
+                INSERT INTO presentation_routes(ref,platform,subject,kind,payload_json,expires_at,created_at)
+                VALUES(?,?,?,?,?,?,?)
+                """,
+                (ref, platform, str(subject), kind, encoded, now + ttl, now),
+            )
+            self.db.execute("DELETE FROM presentation_routes WHERE expires_at<?", (now,))
+            count = int(self.db.execute("SELECT COUNT(*) AS n FROM presentation_routes").fetchone()["n"])
+            excess = max(0, count - self.PRESENTATION_ROUTE_LIMIT)
+            if excess:
+                self.db.execute(
+                    """
+                    DELETE FROM presentation_routes
+                    WHERE rowid IN (
+                      SELECT rowid FROM presentation_routes ORDER BY created_at ASC LIMIT ?
+                    )
+                    """,
+                    (excess,),
+                )
+        return ref
+
+    def route(
+        self,
+        ref: str,
+        platform: str,
+        subject: str,
+        *,
+        kind: str | None = None,
+        now: int | None = None,
+    ) -> dict | None:
+        now = int(now or time.time())
+        row = self.db.execute(
+            """
+            SELECT kind,payload_json,expires_at FROM presentation_routes
+            WHERE ref=? AND platform=? AND subject=?
+            """,
+            (str(ref), platform, str(subject)),
+        ).fetchone()
+        if not row or int(row["expires_at"]) < now:
+            return None
+        if kind is not None and str(row["kind"]) != kind:
+            return None
+        try:
+            payload = json.loads(str(row["payload_json"]))
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return None
+        if not isinstance(payload, dict):
+            return None
+        return {"kind": str(row["kind"]), "payload": payload}
 
     def create_confirmation(self, subject: str, target_key: str, ttl: int = 120, now: int | None = None):
         now = int(now or time.time())
@@ -281,7 +376,9 @@ class LocalState:
 
     def prune(self, max_age: int = 7 * 86400):
         cutoff = int(time.time()) - max_age
+        now = int(time.time())
         with self.db:
             self.db.execute("DELETE FROM sent_deliveries WHERE created_at<?", (cutoff,))
             self.db.execute("DELETE FROM file_cache WHERE updated_at<?", (cutoff,))
             self.db.execute("DELETE FROM processed_updates WHERE created_at<?", (cutoff,))
+            self.db.execute("DELETE FROM presentation_routes WHERE expires_at<?", (now,))

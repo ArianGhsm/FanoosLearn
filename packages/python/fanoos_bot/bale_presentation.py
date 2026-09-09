@@ -55,7 +55,8 @@ def _semantic_plain(metadata: Any) -> str:
     blocks = mapping.get("blocks")
     if not isinstance(blocks, (list, tuple)) or not blocks:
         raise ValueError("semantic blocks are malformed")
-    lines: list[str] = []
+
+    groups: list[str] = []
     for raw in blocks:
         block = _block(raw)
         if block is None:
@@ -63,21 +64,22 @@ def _semantic_plain(metadata: Any) -> str:
         kind_value = block.get("kind") or block.get("type") or ""
         kind = str(getattr(kind_value, "value", kind_value)).strip().lower()
         text = str(block.get("text") or "").strip()
+
         if kind in {"heading", "title", "section_heading", "paragraph", "text"}:
             if not text:
                 raise ValueError("empty text block")
-            lines.append(text)
+            groups.append(text)
         elif kind in {"quote", "warning", "success", "error", "info"}:
             if not text:
                 raise ValueError("empty status block")
-            lines.append(text)
+            groups.append(text)
         elif kind in {"divider", "separator"}:
-            lines.append("—")
+            groups.append("—")
         elif kind in {"list", "bullets", "bullet_list"}:
             items = block.get("items")
             if not isinstance(items, (list, tuple)) or not items:
                 raise ValueError("malformed list")
-            lines.extend(f"• {str(item)}" for item in items)
+            groups.append("\n".join(f"• {str(item)}" for item in items))
         elif kind == "table":
             headers = block.get("headers")
             rows = block.get("rows")
@@ -85,21 +87,30 @@ def _semantic_plain(metadata: Any) -> str:
                 raise ValueError("table headers missing")
             if not isinstance(rows, (list, tuple)) or not rows:
                 raise ValueError("table rows missing")
+            table_lines: list[str] = []
             if block.get("caption"):
-                lines.append(str(block["caption"]))
+                table_lines.append(str(block["caption"]))
             width = len(headers)
             for row in rows:
                 if not isinstance(row, (list, tuple)) or len(row) != width:
                     raise ValueError("malformed table row")
-                fields = [f"{headers[index]}: {row[index]}" for index in range(width)]
-                lines.append("• " + " · ".join(fields))
+                fields = [
+                    f"{headers[index]}: {row[index]}"
+                    for index in range(width)
+                ]
+                table_lines.append("• " + " · ".join(fields))
+            groups.append("\n".join(table_lines))
         else:
             raise ValueError("unsupported semantic block")
-    return "\n\n".join(lines)
+    return "\n\n".join(group for group in groups if group)
 
 
 class BalePresentation:
-    """Bale uses only capabilities documented by Bale's official Bot API."""
+    """Readable semantic rendering using only the project's verified Bale surface.
+
+    Telegram Rich payloads are never forwarded to Bale. Inline-keyboard/edit
+    support remains transport capability-driven, not guessed here.
+    """
 
     def render(self, screen: Any) -> BaleRenderedScreen:
         text = str(getattr(screen, "text", ""))
@@ -107,9 +118,9 @@ class BalePresentation:
             raise ValueError("invalid message text")
         normalized = text.replace("\r\n", "\n").replace("\r", "\n")
         metadata = _metadata(screen)
-        # An inline protected-delivery Screen can intentionally override the
-        # generic semantic fallback with the actual authorized content. Never
-        # replace that payload with a presentation-only "ready" message.
+        # Authorized protected payloads must remain byte-for-byte presentation
+        # equivalents; replacing them with a semantic summary could hide the
+        # actual delivery content or accidentally trigger a second operation.
         if bool(getattr(screen, "protect_content", False)) or _semantic_kind(metadata) == "protected_delivery_ready":
             return BaleRenderedScreen(normalized)
         if metadata is None:
