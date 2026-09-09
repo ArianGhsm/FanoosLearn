@@ -9,6 +9,7 @@ const read = (file) => fs.readFileSync(path.join(ROOT, file), 'utf8');
 const index = read('apps/platform/public/index.php');
 const bootstrap = read('apps/platform/public/assets/ui-v3/app/bootstrap.js');
 const homeAdapter = read('apps/platform/public/assets/ui-v3/app/home-module.js');
+const notificationNav = read('apps/platform/public/assets/ui-v3/app/notification-nav.js');
 const shell = read('apps/platform/public/assets/ui-v3/shell/module.js');
 const router = read('apps/platform/public/assets/ui-v3/shell/router.js');
 const courses = read('apps/platform/public/assets/ui-v3/courses/index.js');
@@ -41,7 +42,8 @@ const cssAssets = [
 ];
 for (const asset of cssAssets) {
   const needle = `/assets/ui-v3/${asset}`;
-  assert.equal((index.match(new RegExp(needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length, 1, `${asset} must load exactly once`);
+  const literal = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  assert.equal((index.match(new RegExp(`href="${literal}"`, 'g')) || []).length, 1, `${asset} must load exactly once as a stylesheet`);
 }
 assert.ok(index.indexOf('/foundation/tokens.css') < index.indexOf('/foundation/base.css'));
 assert.ok(index.indexOf('/foundation/base.css') < index.indexOf('/foundation/components.css'));
@@ -51,10 +53,15 @@ assert.equal((index.match(/data-f3-schedule-style=/g) || []).length, 1, 'schedul
 for (const imported of ['../shell/index.js', '../courses/index.js', '../schedule/index.js', '../learning/index.js', '../progress/module.js', '../operations/operations.js', './home-module.js']) {
   assert.ok(bootstrap.includes(imported), `bootstrap missing ${imported}`);
 }
+assert.ok(homeAdapter.includes("import './notification-nav.js'"), 'notification navigation integration hook must load through the module graph');
+assert.ok(notificationNav.includes(".f3-shell-sidebar__secondary"), 'personal notification gap must be discoverable on desktop');
+assert.ok(notificationNav.includes(".f3-shell-more-page__groups .f3-shell-more-group"), 'personal notification gap must be discoverable on the More destination');
+assert.ok(notificationNav.includes("aria-current"), 'injected notification destinations must expose active-route state');
 assert.ok(bootstrap.includes("notifications: operationsDefinition"), 'personal notification route must map to the operations gap state');
 assert.ok(bootstrap.includes("routes: [{ id: 'notifications', path: '/notifications'"), 'notification route registration missing');
 assert.ok(bootstrap.includes("raw === '/learning' || raw === 'learning'"), '/learning compatibility alias must normalize to /resources');
 assert.equal((bootstrap.match(/addEventListener\('hashchange'/g) || []).length, 0, 'integration layer must not create a second hash router');
+assert.equal((notificationNav.match(/addEventListener\('hashchange'/g) || []).length, 0, 'notification integration must not create a second hash router');
 assert.equal((router.match(/addEventListener\(mode === 'history' \? 'popstate' : 'hashchange'/g) || []).length, 1, 'shell must remain the navigation listener authority');
 
 for (const key of ['root', 'api', 'state', 'navigate', 'format', 'ui', 'capabilities', 'signal']) assert.ok(foundation.includes(`'${key}'`), `runtime context key missing: ${key}`);
