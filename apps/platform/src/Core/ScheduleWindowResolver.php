@@ -44,8 +44,8 @@ final class ScheduleWindowResolver
         }
         $utc = new DateTimeZone('UTC');
         return [
-            'from_utc' => $from->setTimezone($utc)->format('Y-m-d H:i:s'),
-            'to_utc_exclusive' => $to->modify('+1 day')->setTimezone($utc)->format('Y-m-d H:i:s'),
+            'from_utc' => $from->setTimezone($utc)->format('Y-m-d\TH:i:s\Z'),
+            'to_utc_exclusive' => $to->modify('+1 day')->setTimezone($utc)->format('Y-m-d\TH:i:s\Z'),
             'timezone' => $timezone->getName(),
         ];
     }
