@@ -52,6 +52,11 @@ final class PlatformFactory
         $downloads = $downloadTokens !== null && is_string($storageRoot) && trim($storageRoot) !== ''
             ? new SecureObjectDownloadService($database, $resources, $downloadTokens, new FilesystemObjectStore($storageRoot))
             : null;
+        $schedule = new ScheduleProjectionService(
+            $database,
+            $access,
+            new ScheduleWindowResolver($database),
+        );
 
         return new ApiKernel(
             new AuthService($database, new PasswordHasher(), $audit),
@@ -64,6 +69,7 @@ final class PlatformFactory
             $exams,
             $delivery,
             $downloads,
+            $schedule,
         );
     }
 }
