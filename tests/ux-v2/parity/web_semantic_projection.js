@@ -19,18 +19,13 @@ const courseRows = [{
 const course = ui.courseGroups(courseRows)[0];
 const tz = fixture.workspace.timezone_name;
 const schedule = fixture.schedule;
+const orderStatus = (value) => String(value || '').trim().toLowerCase() === 'pending'
+  ? 'در انتظار پرداخت'
+  : domain.localizeStatus(value);
 
 const result = {
-  workspace: {
-    id: fixture.workspace.id,
-    name: fixture.workspace.name,
-    timezone: tz,
-  },
-  course: {
-    id: course.id,
-    code: course.code,
-    title: course.title,
-  },
+  workspace: { id: fixture.workspace.id, name: fixture.workspace.name, timezone: tz },
+  course: { id: course.id, code: course.code, title: course.title },
   schedule: {
     title: schedule.title,
     course: schedule.course_title,
@@ -44,10 +39,7 @@ const result = {
     score: Number(fixture.grade.score),
     max_score: Number(fixture.grade.max_score),
   },
-  announcement: {
-    title: fixture.announcement.title,
-    body: fixture.announcement.body,
-  },
+  announcement: { title: fixture.announcement.title, body: fixture.announcement.body },
   resource: {
     title: fixture.resource.title,
     course: fixture.resource.course_title,
@@ -64,14 +56,10 @@ const result = {
   order: {
     title: fixture.order.product_name_snapshot,
     amount: domain.formatMoney(fixture.order.total_minor, fixture.order.currency),
-    status: domain.localizeStatus(fixture.order.status),
+    status: orderStatus(fixture.order.status),
   },
-  payment: {
-    status: domain.localizeStatus(fixture.payment.status),
-  },
-  entitlement: {
-    granted: fixture.entitlement.granted === true,
-  },
+  payment: { status: domain.localizeStatus(fixture.payment.status) },
+  entitlement: { granted: fixture.entitlement.granted === true },
   errors: fixture.errors,
 };
 process.stdout.write(JSON.stringify(result));
