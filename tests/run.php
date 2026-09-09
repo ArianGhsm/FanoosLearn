@@ -13,6 +13,7 @@ use Fanoos\Tests\Integration\DeploymentControlTest;
 use Fanoos\Tests\Integration\BotPlatformHandoffTest;
 use Fanoos\Tests\Integration\Stage8FinalClosureTest;
 use Fanoos\Tests\Operations\BackupContractTest;
+use Fanoos\Tests\Operations\GitHubCiVerifierContractTest;
 use Fanoos\Tests\Schema\SchemaContractTest;
 use Fanoos\Tests\Storage\StorageSecurityTest;
 
@@ -37,6 +38,8 @@ try {
     echo "PASS storage security contracts\n";
     $assertions += (new BackupContractTest())->run();
     echo "PASS backup integrity contracts\n";
+    $assertions += (new GitHubCiVerifierContractTest())->run();
+    echo "PASS GitHub Actions CI verifier contracts\n";
 
     $mode = getenv('FANOOS_TEST_MODE') ?: 'all';
     if ($mode !== 'static') {
