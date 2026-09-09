@@ -276,6 +276,11 @@ def _actions(screen: Any) -> tuple[ProviderAction, ...]:
             if _looks_like_action(raw_row):
                 out.append(_action(raw_row))
                 continue
+            row_actions = _first_value(raw_row, ("actions", "buttons", "items"), None)
+            if isinstance(row_actions, (list, tuple)):
+                for raw_action in row_actions:
+                    out.append(_action(raw_action))
+                continue
             if isinstance(raw_row, (list, tuple)):
                 for raw_action in raw_row:
                     out.append(_action(raw_action))
@@ -286,6 +291,14 @@ def _actions(screen: Any) -> tuple[ProviderAction, ...]:
     if isinstance(raw_actions, (list, tuple)):
         return tuple(_action(item) for item in raw_actions)
     return ()
+
+
+def _pagination_text(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value.strip()
+    return _string(_first_value(value, ("label", "text", "summary", "status"), ""))
 
 
 def _fallback_title(text: str) -> str:
@@ -363,7 +376,7 @@ def adapt_screen(screen: Any) -> ProviderScreen:
             _first_value(screen, ("sections",), ()),
         )
     )
-    pagination = _string(
+    pagination = _pagination_text(
         _first_value(
             presentation,
             ("pagination", "page_label"),
