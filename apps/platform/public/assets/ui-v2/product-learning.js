@@ -138,6 +138,95 @@
       container.append(panel);
     }
 
-  Object.assign(UI, { renderResources, renderResourceCards, renderAssessments, renderAssessmentCards, renderGrades, renderGradeRows, renderResourceDetail, renderAssessmentDetail });
+  function assessmentAnswers(form, questions) {
+      const answers = {};
+      (Array.isArray(questions) ? questions : []).forEach((question) => {
+        const id = text(question?.id);
+        if (!id) return;
+        const selected = form.querySelector(`input[name="q-${CSS.escape(id)}"]:checked`);
+        if (selected) answers[id] = Number(selected.value);
+      });
+      return answers;
+    }
+
+  function renderAssessmentAttempt(container, assessment, attempt, model) {
+      clear(container);
+      const questions = Array.isArray(attempt?.questions) ? attempt.questions : [];
+      const panel = el('article', { className: 'detail-panel surface-card' },
+        el('button', { className: 'text-link detail-panel__back', text: '‹ آزمون‌ها', attrs: { type: 'button' }, on: { click: model.handlers.closeAssessment } }),
+        el('span', { className: 'assessment-card-v2__type', text: assessmentType(assessment?.assessment_kind || assessment?.type) }),
+        el('h3', { text: text(attempt?.title || assessment?.title) || 'آزمون' }),
+        el('div', { className: 'metadata-row' },
+          el('span', { text: `${faNumber(questions.length)} سؤال` }),
+          el('span', { text: `نسخه تلاش ${faNumber(attempt?.revision || 1)}` })
+        )
+      );
+      if (!questions.length) {
+        panel.append(el('div', { className: 'ui-state ui-state-warning', text: 'سؤال قابل‌نمایشی برای این تلاش از سرور دریافت نشد.' }));
+        container.append(panel);
+        return;
+      }
+      const form = el('form', { className: 'assessment-attempt', on: { submit: (event) => { event.preventDefault(); model.handlers.submitAssessment(assessmentAnswers(event.currentTarget, questions), event.currentTarget); } } });
+      questions.forEach((question, questionIndex) => {
+        const fieldset = el('fieldset', { className: 'assessment-question' },
+          el('legend', { text: `${faNumber(questionIndex + 1)}. ${text(question.prompt) || 'سؤال'}` })
+        );
+        (Array.isArray(question.choices) ? question.choices : []).forEach((choice, choiceIndex) => {
+          const inputId = `assessment-${questionIndex}-${choiceIndex}`;
+          const input = el('input', { attrs: { id: inputId, type: 'radio', name: `q-${text(question.id)}`, value: String(choiceIndex) } });
+          fieldset.append(el('label', { className: 'assessment-choice', attrs: { for: inputId } }, input, el('span', { text: text(choice) })));
+        });
+        form.append(fieldset);
+      });
+      const actions = el('div', { className: 'detail-actions' });
+      if (model.handlers.saveAssessment) actions.append(button('ذخیره موقت', { variant: 'secondary', onClick: () => model.handlers.saveAssessment(assessmentAnswers(form, questions), form) }));
+      actions.append(button('ثبت نهایی پاسخ‌ها', { variant: 'primary', type: 'submit' }));
+      form.append(actions);
+      panel.append(
+        el('div', { className: 'ui-state ui-state-info', text: 'پاسخ صحیح در این مرحله به مرورگر ارسال نشده است. ذخیره و ثبت نهایی با revision فعلی همین تلاش روی سرور انجام می‌شود.' }),
+        form
+      );
+      container.append(panel);
+    }
+
+  function renderAssessmentResult(container, assessment, attempt, result, model) {
+      clear(container);
+      const basisPoints = Number(result?.score_basis_points);
+      const hasScore = Number.isFinite(basisPoints);
+      const scoreText = hasScore ? `${faNumber(basisPoints / 100)}٪` : 'نتیجه ثبت شد';
+      const panel = el('article', { className: 'detail-panel surface-card' },
+        el('button', { className: 'text-link detail-panel__back', text: '‹ آزمون‌ها', attrs: { type: 'button' }, on: { click: model.handlers.closeAssessment } }),
+        el('span', { className: 'assessment-card-v2__type', text: 'نتیجه آزمون' }),
+        el('h3', { text: text(assessment?.title || attempt?.title) || 'آزمون' }),
+        el('div', { className: 'metadata-row' },
+          el('span', { text: `امتیاز: ${scoreText}` }),
+          result?.correct_count != null && result?.question_count != null ? el('span', { text: `${faNumber(result.correct_count)} پاسخ صحیح از ${faNumber(result.question_count)}` }) : null
+        )
+      );
+      const review = Array.isArray(result?.review) ? result.review : [];
+      const questions = new Map((Array.isArray(attempt?.questions) ? attempt.questions : []).map((question) => [String(question.id), question]));
+      if (review.length) {
+        const reviewRoot = el('div', { className: 'assessment-review' });
+        review.forEach((row, index) => {
+          const question = questions.get(String(row.id)) || {};
+          const choices = Array.isArray(question.choices) ? question.choices : [];
+          const selected = Number.isInteger(Number(row.selected)) ? choices[Number(row.selected)] : '';
+          const correct = Number.isInteger(Number(row.correct)) ? choices[Number(row.correct)] : '';
+          const section = el('section', { className: 'assessment-review__item' },
+            el('h4', { text: `${faNumber(index + 1)}. ${text(question.prompt) || `سؤال ${text(row.id)}`}` }),
+            el('p', { text: row.is_correct ? 'پاسخ شما صحیح بود.' : 'پاسخ شما صحیح نبود.' })
+          );
+          if (selected) section.append(el('p', { text: `پاسخ شما: ${text(selected)}` }));
+          if (correct) section.append(el('p', { text: `پاسخ صحیح: ${text(correct)}` }));
+          if (row.explanation) section.append(el('p', { text: text(row.explanation) }));
+          reviewRoot.append(section);
+        });
+        panel.append(reviewRoot);
+      }
+      panel.append(el('div', { className: 'ui-state ui-state-success', text: 'این نتیجه از scoring canonical سرور دریافت شده است و در مرورگر محاسبه نشده است.' }));
+      container.append(panel);
+    }
+
+  Object.assign(UI, { renderResources, renderResourceCards, renderAssessments, renderAssessmentCards, renderGrades, renderGradeRows, renderResourceDetail, renderAssessmentDetail, renderAssessmentAttempt, renderAssessmentResult, assessmentAnswers });
   if (typeof module !== 'undefined' && module.exports) module.exports = UI;
 })(typeof window !== 'undefined' ? window : globalThis);
