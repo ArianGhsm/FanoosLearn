@@ -82,7 +82,10 @@ final class CorePlatformTest
 
         $members = $core->members($fixture['representative'], $fixture['workspace_a']);
         self::assert(count($members) >= 2, 'Representative could not read members in the assigned workspace.');
+        $studentDashboard = $core->adminDashboard($fixture['student'], $fixture['workspace_a']);
+        self::assert(($studentDashboard['management_available'] ?? true) === false, 'Student dashboard incorrectly advertised management capability.');
         $dashboard = $core->adminDashboard($fixture['representative'], $fixture['workspace_a']);
+        self::assert(($dashboard['management_available'] ?? false) === true, 'Representative dashboard did not advertise canonical management capability.');
         self::assert(isset($dashboard['sections']['members'], $dashboard['sections']['forms']), 'Representative dashboard omitted allowed sections.');
         self::assert(!isset($dashboard['sections']['orders'], $dashboard['sections']['audit_events']), 'Dashboard exposed privileged sections to representative.');
         self::assert($core->globalAdminDashboard($fixture['global_admin'])['scope'] === 'platform', 'Global administrator dashboard was not available at platform scope.');

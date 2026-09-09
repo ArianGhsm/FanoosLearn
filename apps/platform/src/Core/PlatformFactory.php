@@ -13,13 +13,15 @@ use Fanoos\Platform\Content\ProtectedResourceAuthorizer;
 use Fanoos\Platform\Content\ContentService;
 use Fanoos\Platform\Content\ExamService;
 use Fanoos\Platform\Content\SecureDeliveryService;
+use Fanoos\Platform\Content\SecureObjectDownloadService;
 use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Http\ApiKernel;
 use Fanoos\Platform\Identity\AuthService;
 use Fanoos\Platform\Identity\PasswordHasher;
+use Fanoos\Platform\Storage\FilesystemObjectStore;
+use Fanoos\Platform\Storage\SignedDownloadToken;
 use Fanoos\Platform\Support\DatabaseConnection;
 use Fanoos\Platform\Support\RuntimeConfig;
-use Fanoos\Platform\Storage\SignedDownloadToken;
 
 final class PlatformFactory
 {
@@ -40,10 +42,21 @@ final class PlatformFactory
         $exams = new ExamService($database, $access, $authorizer, $entitlements, $audit);
         $deliveryKey = $config->optionalString('FANOOS_DELIVERY_SIGNING_KEY');
         $downloadKey = $config->optionalString('FANOOS_DOWNLOAD_SIGNING_KEY');
-        $delivery = is_string($deliveryKey) && strlen($deliveryKey) >= 32
-            && is_string($downloadKey) && strlen($downloadKey) >= 32
-            ? new SecureDeliveryService($database, $resources, new SignedDownloadToken($downloadKey), $audit, $deliveryKey)
+        $storageRoot = $config->optionalString('FANOOS_OBJECT_STORAGE_ROOT');
+        $downloadTokens = is_string($downloadKey) && strlen($downloadKey) >= 32
+            ? new SignedDownloadToken($downloadKey)
             : null;
+        $delivery = is_string($deliveryKey) && strlen($deliveryKey) >= 32 && $downloadTokens !== null
+            ? new SecureDeliveryService($database, $resources, $downloadTokens, $audit, $deliveryKey)
+            : null;
+        $downloads = $downloadTokens !== null && is_string($storageRoot) && trim($storageRoot) !== ''
+            ? new SecureObjectDownloadService($database, $resources, $downloadTokens, new FilesystemObjectStore($storageRoot))
+            : null;
+        $schedule = new ScheduleProjectionService(
+            $database,
+            $access,
+            new ScheduleWindowResolver($database),
+        );
 
         return new ApiKernel(
             new AuthService($database, new PasswordHasher(), $audit),
@@ -55,6 +68,8 @@ final class PlatformFactory
             $content,
             $exams,
             $delivery,
+            $downloads,
+            $schedule,
         );
     }
 }

@@ -40,10 +40,12 @@ class ScreenPresentation:
     title: str
     semantic_kind: str
     severity: str = "info"
+    breadcrumb: str = ""
     intro: str = ""
     facts: tuple[tuple[str, str], ...] = ()
     list_items: tuple[str, ...] = ()
     sections: tuple[SemanticSection, ...] = ()
+    pagination: str = ""
     footer: str = ""
     rtl: bool = True
 
@@ -52,10 +54,12 @@ class ScreenPresentation:
             "title": self.title,
             "semantic_kind": self.semantic_kind,
             "severity": self.severity,
+            "breadcrumb": self.breadcrumb,
             "intro": self.intro,
             "facts": [{"label": label, "value": value} for label, value in self.facts],
             "list_items": list(self.list_items),
             "sections": [section.to_dict() for section in self.sections],
+            "pagination": self.pagination,
             "footer": self.footer,
             "rtl": self.rtl,
         }

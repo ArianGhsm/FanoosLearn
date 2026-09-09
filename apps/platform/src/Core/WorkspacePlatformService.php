@@ -443,6 +443,20 @@ SQL);
             'forms' => ['form.manage', 'form_definitions'],
             'audit_events' => ['audit.view', 'audit_events'],
         ];
+        $managementPermissions = [
+            'membership.manage', 'academic.manage', 'resource.create', 'resource.review',
+            'resource.publish', 'exam.manage', 'grade.manage', 'form.manage',
+            'commerce.manage_catalog', 'payment.reconcile', 'entitlement.grant',
+            'notification.broadcast', 'audit.view',
+        ];
+        $managementAvailable = false;
+        foreach ($managementPermissions as $permission) {
+            if ($this->access->workspace($actorUserId, $workspaceId, $permission)->allowed) {
+                $managementAvailable = true;
+                break;
+            }
+        }
+
         $sections = [];
         foreach ($definitions as $key => [$permission, $table]) {
             if (!$this->access->workspace($actorUserId, $workspaceId, $permission)->allowed) {
@@ -452,7 +466,12 @@ SQL);
             $query->execute(['workspace' => $workspaceId]);
             $sections[$key] = (int) $query->fetchColumn();
         }
-        return ['workspace_id' => $workspaceId, 'sections' => $sections, 'generated_at' => gmdate(DATE_ATOM)];
+        return [
+            'workspace_id' => $workspaceId,
+            'management_available' => $managementAvailable,
+            'sections' => $sections,
+            'generated_at' => gmdate(DATE_ATOM),
+        ];
     }
 
     /** @return array<string, mixed> */

@@ -18,9 +18,9 @@ def _section_value(section: Any, name: str, default: Any = None) -> Any:
 def semantic_mapping(metadata: Any) -> dict[str, Any] | None:
     """Return transport-neutral presentation blocks.
 
-    Worker 3 exposes ScreenPresentation fields while Worker 4 transport adapters
-    consume a bounded block vocabulary. This adapter is presentation-only and
-    never carries authorization, callback or business state.
+    Presentation metadata is deliberately non-authoritative: it can describe
+    context, severity and pagination, but it cannot carry a permission grant,
+    payment result or entitlement decision.
     """
     if metadata is None:
         return None
@@ -44,16 +44,21 @@ def semantic_mapping(metadata: Any) -> dict[str, Any] | None:
         return None
 
     severity = str(_value(metadata, "severity", "info") or "info").lower()
+    breadcrumb = _value(metadata, "breadcrumb", "")
     intro = _value(metadata, "intro", "")
     facts = _value(metadata, "facts", ()) or ()
     list_items = _value(metadata, "list_items", ()) or ()
     sections = _value(metadata, "sections", ()) or ()
+    pagination = _value(metadata, "pagination", "")
     footer = _value(metadata, "footer", "")
     rtl = bool(_value(metadata, "rtl", True))
 
     blocks: list[dict[str, Any]] = []
     if title:
         blocks.append({"kind": "heading", "text": str(title), "level": 3})
+
+    if breadcrumb:
+        blocks.append({"kind": "paragraph", "text": str(breadcrumb)})
 
     if intro:
         kind = severity if severity in {"warning", "success", "error"} else "paragraph"
@@ -88,6 +93,9 @@ def semantic_mapping(metadata: Any) -> dict[str, Any] | None:
         normalized_section_items = [str(item) for item in section_items if str(item)]
         if normalized_section_items:
             blocks.append({"kind": "list", "items": normalized_section_items})
+
+    if pagination:
+        blocks.append({"kind": "paragraph", "text": str(pagination)})
 
     if footer:
         blocks.append({"kind": "paragraph", "text": str(footer)})

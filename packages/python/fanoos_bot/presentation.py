@@ -8,6 +8,8 @@ from .models import Button, Screen, ScreenPresentation, SemanticSection
 
 def render_fallback(presentation: ScreenPresentation) -> str:
     lines: list[str] = [presentation.title]
+    if presentation.breadcrumb:
+        lines.extend(("", presentation.breadcrumb))
     if presentation.intro:
         lines.extend(("", presentation.intro))
     if presentation.facts:
@@ -26,6 +28,10 @@ def render_fallback(presentation: ScreenPresentation) -> str:
         if section.body:
             lines.append(section.body)
         lines.extend(f"• {item}" for item in section.items)
+    if presentation.pagination:
+        if lines[-1] != "":
+            lines.append("")
+        lines.append(presentation.pagination)
     if presentation.footer:
         if lines[-1] != "":
             lines.append("")
@@ -38,10 +44,12 @@ def semantic_screen(
     semantic_kind: str,
     *,
     severity: str = "info",
+    breadcrumb: str = "",
     intro: str = "",
     facts: Iterable[tuple[str, str]] = (),
     list_items: Iterable[str] = (),
     sections: Iterable[SemanticSection] = (),
+    pagination: str = "",
     footer: str = "",
     rows: tuple[tuple[Button, ...], ...] = (),
     edit: bool = False,
@@ -52,10 +60,12 @@ def semantic_screen(
         title=title,
         semantic_kind=semantic_kind,
         severity=severity,
+        breadcrumb=breadcrumb,
         intro=intro,
         facts=tuple((str(label), str(value)) for label, value in facts),
         list_items=tuple(str(item) for item in list_items),
         sections=tuple(sections),
+        pagination=pagination,
         footer=footer,
         rtl=True,
     )
@@ -68,16 +78,58 @@ def semantic_screen(
     )
 
 
-def error_screen(message: str, *, title: str = "❌ خطا", kind: str = "error") -> Screen:
-    return semantic_screen(title, kind, severity="error", intro=message)
+def error_screen(
+    message: str,
+    *,
+    title: str = "❌ خطا",
+    kind: str = "error",
+    breadcrumb: str = "",
+    rows=(),
+) -> Screen:
+    return semantic_screen(
+        title,
+        kind,
+        severity="error",
+        breadcrumb=breadcrumb,
+        intro=message,
+        rows=rows,
+    )
 
 
-def warning_screen(message: str, *, title: str = "⚠️ هشدار", kind: str = "warning") -> Screen:
-    return semantic_screen(title, kind, severity="warning", intro=message)
+def warning_screen(
+    message: str,
+    *,
+    title: str = "⚠️ هشدار",
+    kind: str = "warning",
+    breadcrumb: str = "",
+    rows=(),
+) -> Screen:
+    return semantic_screen(
+        title,
+        kind,
+        severity="warning",
+        breadcrumb=breadcrumb,
+        intro=message,
+        rows=rows,
+    )
 
 
-def success_screen(message: str, *, title: str = "✅ موفق", kind: str = "success", rows=()) -> Screen:
-    return semantic_screen(title, kind, severity="success", intro=message, rows=rows)
+def success_screen(
+    message: str,
+    *,
+    title: str = "✅ موفق",
+    kind: str = "success",
+    breadcrumb: str = "",
+    rows=(),
+) -> Screen:
+    return semantic_screen(
+        title,
+        kind,
+        severity="success",
+        breadcrumb=breadcrumb,
+        intro=message,
+        rows=rows,
+    )
 
 
 def notification_detail_screen(payload: dict, *, unread: bool | None = None, rows=()) -> Screen:
@@ -100,6 +152,7 @@ def notification_detail_screen(payload: dict, *, unread: bool | None = None, row
     return semantic_screen(
         f"🔔 {title}",
         "notification_detail",
+        breadcrumb="اعلان‌ها",
         intro=body,
         facts=facts,
         rows=rows,
