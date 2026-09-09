@@ -26,8 +26,8 @@ from ..core import (
 )
 from . import actions
 
-# A page can still fit its worst-case one-action-per-row buttons plus the final
-# navigation row under bot-01/core's 10-row screen bound.
+# Keep worst-case one-action-per-row pages below bot-01/core's 10-row bound
+# after the contextual navigation row is added.
 COURSE_PAGE_SIZE = 8
 SCHEDULE_PAGE_SIZE = 8
 GRADE_PAGE_SIZE = 16
@@ -143,15 +143,14 @@ def _page(
     )
 
 
-def _timezone_footer(timezone_name: object) -> str:
-    name = _text(timezone_name, 64)
-    if not name:
-        return "زمان‌ها بر اساس منطقه زمانی فضای آموزشی نمایش داده می‌شوند."
-    return f"زمان‌ها بر اساس منطقه زمانی فضای آموزشی ({name}) نمایش داده می‌شوند."
+def _timezone_footer(_timezone_name: object) -> str:
+    # The IANA identifier remains an integration/formatting input. The student
+    # only needs the truthful authority statement, not a technical zone slug.
+    return "زمان‌ها بر اساس منطقه زمانی فضای آموزشی نمایش داده می‌شوند."
 
 
 def _course_term(course: Mapping[str, object]) -> str:
-    return _text(course.get("term_name") or course.get("term_key"), 60)
+    return _text(course.get("term_name") or course.get("term_key") or course.get("term"), 60)
 
 
 def _course_title(course: Mapping[str, object]) -> str:
@@ -176,19 +175,33 @@ def _dedupe_courses(rows: Iterable[Mapping[str, object]]) -> tuple[dict[str, obj
                 "course_title": raw_title,
                 "course_code": _course_code(source),
                 "term": _course_term(source),
+                "_term_conflict": False,
             }
             continue
         if not current.get("course_code"):
             current["course_code"] = _course_code(source)
+
         incoming_term = _course_term(source)
         existing_term = str(current.get("term") or "")
+        if current.get("_term_conflict"):
+            continue
         if incoming_term and existing_term and incoming_term != existing_term:
-            # Multiple offering terms are canonical, but none is assumed to be
-            # the selected/current term unless the projection says so.
+            # Several offering terms are canonical facts, but none is assumed to
+            # be the selected/current term without an explicit projection field.
             current["term"] = ""
+            current["_term_conflict"] = True
         elif incoming_term and not existing_term:
             current["term"] = incoming_term
-    return tuple(by_id.values())
+
+    return tuple(
+        {
+            "course_id": row["course_id"],
+            "course_title": row["course_title"],
+            "course_code": row.get("course_code", ""),
+            "term": row.get("term", ""),
+        }
+        for row in by_id.values()
+    )
 
 
 def course_list_screen(
@@ -619,7 +632,7 @@ def notifications_entry_screen() -> Screen:
         identifier="academic.notifications.entry",
         title="🔔 اعلان‌های شخصی",
         breadcrumb=_breadcrumbs("اعلان‌های شخصی"),
-        intro="اعلان‌های شخصی ممکن است از مسیر پیام‌رسان به شما تحویل شوند، اما تحویل push یک صندوق ورودی دائمی نیست.",
+        intro="اعلان‌های شخصی ممکن است به‌صورت خودکار در پیام‌رسان به شما تحویل شوند، اما این تحویل به معنی وجود صندوق ورودی دائمی در ربات نیست.",
         sections=(
             Section(
                 title="📢 اطلاعیه‌ها",
@@ -627,7 +640,7 @@ def notifications_entry_screen() -> Screen:
             ),
             Section(
                 title="🔔 تاریخچه شخصی",
-                body="در قرارداد فعلی، projection قابل‌اعتماد برای تاریخچه اعلان‌های شخصی وجود ندارد؛ بنابراین تاریخچه محلی ساخته نمی‌شود.",
+                body="در حال حاضر تاریخچه قابل‌اعتمادی برای نمایش اعلان‌های شخصی در ربات وجود ندارد؛ بنابراین ربات از روی پیام‌های تحویل‌شده تاریخچه نمی‌سازد.",
             ),
         ),
         action_rows=_pack_actions(((actions.ANNOUNCEMENTS, "📢 اطلاعیه‌ها", None),)) + _nav_rows(),
