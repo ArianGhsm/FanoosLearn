@@ -2,54 +2,44 @@
 
 Design Lock: `FANOOS-UX-2026.09-R1`  
 Workstream: `03_LEARNING_COMMERCE`  
-Channel model: provider-neutral semantics; Telegram/Bale rendering is owned by bot-04.
+Base: `9e72ef32b331ad41626229c28ed24dcc43a49292`
 
-## Product grammar
+These are provider-neutral product screens. Telegram/Bale rendering is owned by bot-04; authorization, payment, entitlement, protected delivery and scoring remain backend-owned.
 
-These screens are compact product surfaces, not endpoint output. Each screen has one purpose, bounded content, predictable exits and no raw UUID/provider/storage/payment identifiers in visible copy.
+## Core contract
 
-Normal action hierarchy:
+The implementation was aligned read-only against completed bot-01 commit `faead96a4bedca34151562c81c712ae42b2a7693` without merging/rebasing it. It uses the exact bot-01 primitives:
 
-1. one full-width high-value action when one exists;
-2. up to two short filter/navigation actions per row;
-3. pagination in one row;
-4. Back/Home at the bottom.
+`Screen`, `Section`, `Fact`, `ListItem`, `Action`, `ActionRow`, `Pagination`, `Severity`, `Context`, `Breadcrumb`, `ProtectContent`, `EditPolicy`, `CallbackIntent`.
 
-Backend truth is never reconstructed in presentation code. Resource authorization, protected delivery, payment verification, entitlement and assessment scoring remain canonical backend decisions.
+Navigation exits use bot-01 callback names `back` and `home`. Learning identifiers/UUIDs may exist only inside `CallbackIntent.params`; none are user-visible and none are authority.
 
 ## Screen inventory
 
-| Family | Screen kind | Primary purpose | Canonical input | Normal next action |
-| --- | --- | --- | --- | --- |
-| Resources | `learning.resource_hub` | Browse bounded authorized resources | internal resource catalog | open detail / filter / page |
-| Resources | `learning.resource_detail` | Understand resource before delivery | authorized resource row | secure delivery |
-| Protected | `learning.protected.checking` | Explain access check | delivery state | check again |
-| Protected | `learning.protected.preparing` | Explain derivative preparation | protected-media state | refresh |
-| Protected | `learning.protected.ready` | Durable ready state | authorized result | provider delivery |
-| Protected | `learning.protected.expired` | Expired correlation/capability | safe state only | restart from resource |
-| Protected | `learning.protected.denied` | Current access denied | canonical denial | access center / safe web |
-| Protected | `learning.protected.unsupported_channel` | Required channel protection unavailable | provider capability + canonical requirement | safe web if supplied |
-| Protected | `learning.protected.temporary_failure` | Retryable service failure | safe failure taxonomy | retry |
-| Assessments | `learning.assessment_hub` | Active/upcoming/practice/past destination | bot-safe projection if one exists | detail / website |
-| Assessments | `learning.assessment_detail` | Title/course/deadline/state | canonical metadata if exposed | safe website handoff |
-| Commerce | `learning.commerce_hub` | Human order/access summary | bot-safe summaries if exposed | order / website |
-| Commerce | `learning.order_access_detail` | Separate order/payment/access truth | order + payment + entitlement projections | refresh / web |
-| Forms | `learning.forms_hub` | List forms or explain safe handoff | bot-safe list if exposed | detail / website |
-| Forms | `learning.form_detail` | Human form metadata | canonical metadata if exposed | website submission |
-| Shared | `learning.<domain>.<state>` | empty/error/denied/unavailable | safe state | retry/back/web |
+| Family | Screen | Purpose |
+| --- | --- | --- |
+| Resources | `learning.resource_hub` | bounded authorized library + filters/pagination |
+| Resources | `learning.resource_detail` | title/course/type/version/access/protection + delivery intent |
+| Protected | `learning.protected.checking` | current authorization check |
+| Protected | `learning.protected.preparing` | truthful unmeasured preparation |
+| Protected | `learning.protected.ready` | protected delivery ready state |
+| Protected | `learning.protected.expired` | expired request; restart from resource |
+| Protected | `learning.protected.denied` | access not currently authorized |
+| Protected | `learning.protected.unsupported_channel` | provider cannot meet required protection |
+| Protected | `learning.protected.temporary_failure` | retryable temporary failure |
+| Assessments | `learning.assessment_hub` | active/upcoming/completed/practice/past if canonical |
+| Assessments | `learning.assessment_detail` | title/course/deadline/state + safe website continuation |
+| Commerce | `learning.commerce_hub` | order/access summary; catalog only when bot-safe |
+| Commerce | `learning.order_access_detail` | separate order/payment/entitlement + amount/currency |
+| Forms | `learning.forms_hub` | list if bot-safe; otherwise explicit web handoff |
+| Forms | `learning.form_detail` | metadata + canonical web submission |
+| Shared | `learning.<domain>.<state>` | empty/error/denied/unavailable recovery |
 
 ## Resources
 
-### Hub
+Current `/api/internal/v1/content/resources/list` is sufficient for a native resource experience. `BotReadProjectionService::resourceCatalog()` reauthorizes each candidate and exposes safe metadata plus `resource_id`, authorized `resource_version_id` and `delivery_supported`; it never exposes object/storage paths.
 
-Current canonical bot resource projection is sufficient for a real native hub. It returns only already-authorized catalog rows, with stable resource/version identifiers for action correlation and no storage path/key. The UI displays at most 8 items per screen even if the backend page is larger.
-
-Entry choices are exposed only when canonical context exists:
-
-- `درس` when canonical course choices are supplied;
-- `نوع` when canonical resource types are supplied;
-- `تازه‌ها` because the current bot catalog is canonically ordered by resource update time;
-- pagination from the canonical opaque cursor.
+The hub renders at most 8 items. Up to 6 item CTAs are grouped two per row. Filter controls appear only when canonical choices are supplied. `تازه‌ها` is valid because the current canonical catalog is ordered by resource update time. Pagination uses canonical opaque cursor data inside callback correlation only.
 
 Example:
 
@@ -58,60 +48,38 @@ Example:
 منابع مجاز فضای آموزشی شما
 
 📚 کتابخانه
-• اندو ۱ — جلسه ۳
-  اندودانتیکس ۱ · جزوه
-  نسخهٔ جاری مجاز · قابل دریافت
-• بانک سؤال ترمیمی
-  ترمیمی ۱ · بانک سؤال
-  نسخهٔ جاری مجاز · قابل دریافت
+🔒 اندو ۱ — جلسه ۳
+اندودانتیکس ۱ · جزوه
+نسخهٔ جاری مجاز
+
+📄 رفرنس پالپ
+اندودانتیکس ۱ · رفرنس
+نسخهٔ جاری مجاز
 
 [ درس ] [ نوع ]
 [ تازه‌ها ]
+[ اندو ۱ — جلسه ۳ ] [ رفرنس پالپ ]
 [ ‹ قبلی ] [ بعدی › ]
 [ ‹ بازگشت ] [ 🏠 خانه ]
 ```
 
-No `resource_id`, `resource_version_id`, object ID or cursor is rendered.
-
-### Empty hub
-
-```text
-📚 منابع و یادگیری
-درس: پریو ۱ · نوع: خلاصه
-
-📚 کتابخانه
-منبعی با این فیلترها پیدا نشد.
-فیلترها را تغییر دهید یا بعداً دوباره بررسی کنید.
-
-[ درس ] [ نوع ]
-[ تازه‌ها ]
-[ ‹ بازگشت ] [ 🏠 خانه ]
-```
-
-This is intentionally richer than a warning plus website button.
+No UUID, cursor, object ID or storage key appears in text.
 
 ### Resource detail
 
-Required facts:
+Facts are title, course when available, type, version, access and protection. The current projection exposes a version UUID but no human version number, so copy is `نسخهٔ جاری مجاز`; the UUID is never converted to a fake version label.
 
-- title;
-- course when supplied;
-- localized type;
-- version state;
-- access state;
-- protection state if canonical projection exposes one;
-- optional topic/professor/format;
-- `🔒 دریافت امن` only when canonical projection says direct delivery is supported.
+If the backend does not expose a human protected-state value, copy says:
 
-The current internal projection exposes `resource_version_id` but no human version number/name, so V3 says `نسخهٔ جاری مجاز`; it never converts the UUID into a user-facing version label.
+`حفاظت: هنگام دریافت بر اساس سیاست منبع بررسی می‌شود`
 
-If no protected-state projection is exposed, copy is explicit: `هنگام دریافت بر اساس سیاست منبع بررسی می‌شود`.
+`🔒 دریافت امن` appears only when `delivery_supported` is true. Clicking it is only an intent to begin the canonical delivery flow; it does not carry authorization.
 
-## Protected delivery
+## Protected delivery state family
 
-Presentation does not issue or redeem delivery tokens. Integration/current application performs the canonical issue/consume/derivative flow; this workstream only defines screen states and action intents.
+Presentation does not issue/redeem tokens or send files. Current application/backend owns delivery issue/consume, protected-media preparation, derivative issue/redeem and receipts.
 
-### Checking access
+### Checking
 
 ```text
 🔒 بررسی دسترسی
@@ -123,8 +91,6 @@ Presentation does not issue or redeem delivery tokens. Integration/current appli
 [ 🔄 بررسی دوباره ]
 [ ‹ بازگشت ] [ 🏠 خانه ]
 ```
-
-No fake spinner percentage or ETA.
 
 ### Preparing
 
@@ -141,20 +107,7 @@ No fake spinner percentage or ETA.
 
 ### Ready
 
-```text
-✅ نسخه محافظت‌شده آماده است
-«جزوه اندو ۱» برای تحویل امن آماده است.
-
-وضعیت
-ارسال فقط با سیاست حفاظتی تأییدشده و مجوز فعلی انجام می‌شود.
-```
-
-Semantic requirements:
-
-- `ProtectContent = required`;
-- durable/new-message edit policy;
-- provider send is owned by bot-04;
-- provider failure cannot replay delivery authorization/business logic.
+`learning.protected.ready` sets `ProtectContent.REQUIRED` and `EditPolicy.SEND_NEW`. bot-04 must use the verified protected provider path for the accompanying delivery payload; rich-render failure must not replay business actions.
 
 ### Denied — required example
 
@@ -166,20 +119,15 @@ backend دریافت «جزوه اندو ۱» را برای وضعیت فعلی 
 اگر اخیراً خرید یا دسترسی شما تغییر کرده است، وضعیت را از بخش خرید و دسترسی بررسی کنید.
 
 [ 💳 خرید و دسترسی ]
-[ 🌐 بررسی در فانوس ]     ← only when integration supplies a safe HTTPS destination
+[ 🌐 بررسی در فانوس ]   ← only when integration supplies a safe HTTPS route
 [ ‹ بازگشت ] [ 🏠 خانه ]
 ```
 
-Security properties:
-
-- do not distinguish secret authorization internals;
-- do not expose entitlement IDs or failure payloads;
-- do not promise that payment automatically grants access;
-- a new delivery action must reauthorize.
+Denied copy does not expose authorization internals and never promises that payment itself grants access.
 
 ### Unsupported channel — required example
 
-Bale example when canonical delivery requires forward/save protection and current Bale capability cannot satisfy it:
+When forward/save protection is required and the provider cannot satisfy it (current Bale invariant):
 
 ```text
 ⚠️ ارسال محافظت‌شده در این پیام‌رسان ممکن نیست
@@ -188,25 +136,21 @@ Bale example when canonical delivery requires forward/save protection and curren
 وضعیت
 نسخهٔ بدون حفاظت ارسال نمی‌شود. این محدودیت امنیتی عمداً fail-closed است.
 
-[ 🌐 دریافت امن در فانوس ]  ← only when a safe canonical web route is supplied
+[ 🌐 دریافت امن در فانوس ]  ← only with a safe canonical web destination
 [ ‹ بازگشت ] [ 🏠 خانه ]
 ```
 
-There is no fallback to original source bytes, cached provider file IDs or a less-protected document.
+Never fall back to original bytes, cached provider media, an unrestricted URL or weaker protection.
 
-### Expired
+### Expired / temporary failure
 
-Expired correlation/capability does not get retried in place. User restarts from resource detail so authorization is fresh.
+Expired requests restart from resource context so authorization is fresh. Temporary failures are not rendered as denial or success; retry invokes the canonical flow once through integration. No fake ETA/percentage is shown.
 
-### Temporary failure
+## Assessments
 
-Temporary failure is not displayed as denied and is not displayed as success. `🔄 تلاش دوباره` starts the canonical flow again through integration; presentation itself does not replay a mutation.
+The source supports active/upcoming/completed/practice/past-exam grouping only when a bot-safe canonical projection is supplied.
 
-## Assessment hub
-
-The source builder supports active/upcoming/completed/practice/past-exam grouping **only when a bot-safe canonical projection is supplied**. No grouping data is synthesized from website HTML or local bot storage.
-
-At this base SHA the internal bot API exposes no assessment catalog/detail/attempt/result contract, while the browser Core API does expose canonical assessments and attempt flows. Therefore the current integration state must use the explicit safe handoff variant:
+At this base SHA, `core-v1` exposes browser assessment catalog/attempt/submit/review routes, but `internal-v1` exposes no assessment list/detail/attempt/result contract. Therefore current bot integration must use this structured handoff rather than synthesizing exam truth:
 
 ```text
 📝 آزمون‌ها
@@ -222,36 +166,19 @@ At this base SHA the internal bot API exposes no assessment catalog/detail/attem
 [ ‹ بازگشت ] [ 🏠 خانه ]
 ```
 
-### Assessment detail
-
-When a future bot-safe projection exists, detail is limited to:
-
-- title;
-- course;
-- deadline;
-- canonical state;
-- safe website handoff.
-
-No question payload, answer key, scoring formula or client-side answer state belongs in this workstream.
+Future native detail is limited to title, course, deadline and canonical state plus safe website continuation. No answer/scoring logic exists in this workstream.
 
 ## Purchase & access
 
-The normal bot UX never asks the human for `/buy <product_id>` or renders a raw product/order identifier.
+Normal UX never asks the user for `/buy <product_id>` and never displays raw product/order IDs.
 
-At this base SHA internal commerce supports:
+At this base SHA internal commerce exposes create-order (only when a product is already known) and order-status-by-ID. `BotCommerceService` projects title snapshot, amount, currency, order status and `entitlement.granted`. It does not expose product catalog, order history, full payment-attempt status, or a complete self-service entitlement list.
 
-- create order only when product ID is already known by a compatible technical path;
-- read order status only when order ID is already known;
-- order title snapshot;
-- amount/currency;
-- order status;
-- entitlement `granted` boolean.
+Accordingly `learning.commerce_hub` can consume those richer projections later, but today shows explicit gaps plus the website center when configured.
 
-It does **not** expose bot-safe product catalog, order history or complete entitlement/access list. Therefore the hub truthfully shows these as projection gaps and provides the browser center when configured.
+### Order/payment/access separation
 
-### Order/payment/access detail
-
-Three status lines are always separate:
+Three lines never collapse into one:
 
 ```text
 💳 بانک سؤال ترمیمی
@@ -270,9 +197,9 @@ Three status lines are always separate:
 
 ### Payment pending vs access active — required example
 
-The state above is valid and must not be collapsed. A user can have an already-active entitlement while a newer order/payment is still pending. The UI therefore says both facts independently.
+This combination is valid. An entitlement may already be active while a newer order is pending. The bot must display both facts independently.
 
-Likewise this is possible and must remain explicit:
+The inverse must also remain explicit:
 
 ```text
 وضعیت سفارش: پرداخت تأیید شده
@@ -280,24 +207,19 @@ Likewise this is possible and must remain explicit:
 دسترسی: دسترسی فعال نیست
 ```
 
-The UI must not change the last line to `دسترسی فعال` merely because payment is paid. Only canonical entitlement truth can do that.
+Payment success never causes presentation code to invent entitlement success.
 
-If the current bot projection does not contain a distinct payment-status field, V3 renders:
+Because the current bot order projection has no distinct payment-status field, `order_access_detail_screen(..., payment_status=None)` renders:
 
 `وضعیت پرداخت: در projection فعلی جداگانه گزارش نشده`
 
-rather than copying `order.status` into a second label and pretending they are independent facts.
+It deliberately does not duplicate `order.status` under a second label.
 
-Money rules:
+Money uses backend snapshot amount and canonical currency. `IRR` is shown as `ریال`; no implicit rial→toman conversion exists.
 
-- use backend snapshot amount;
-- always show canonical currency;
-- IRR is rendered as `ریال`;
-- never silently convert rial to toman.
+## Forms / services
 
-## Forms / secondary services
-
-Core browser API has canonical open-form listing and submission, but internal bot API has no bot-safe forms projection at this base SHA. Current bot V3 therefore uses:
+`core-v1` has canonical form listing/submission. `internal-v1` has no forms projection at this base SHA. Current native state is therefore:
 
 ```text
 📝 فرم‌ها و خدمات
@@ -310,58 +232,43 @@ Core browser API has canonical open-form listing and submission, but internal bo
 [ ‹ بازگشت ] [ 🏠 خانه ]
 ```
 
-The source can render a list/detail if a future bot-safe projection is supplied, but native submission remains off until an explicit canonical bot submission contract exists.
+The builders can render list/detail once a bot-safe projection exists. Submission remains a website handoff until an explicit bot-safe canonical submission contract is added.
 
-## Domain empty/error family
+## Error / empty states
 
-Every domain can render:
+Each owned domain supports `empty`, `denied`, `unavailable`, and `error` screens. Copy states what happened, whether retry is meaningful and the next safe step. Stale content is never labeled current. Raw HTTP codes, enums, HMAC details, provider tokens and IDs are never surfaced.
 
-- `empty` — no current items; normal-state explanation + back/retry;
-- `denied` — permission/access not confirmed; no sensitive details;
-- `unavailable` — channel capability absent; safe alternative if supplied;
-- `error` — temporary read failure; stale data not presented as current.
+## Protected action intents for bot-04
 
-Error grammar always answers:
-
-1. what happened;
-2. whether recovery is possible;
-3. what to do next.
-
-## Action intent contract for bot-04
-
-Protected-related intents that bot-04 must recognize after bot-01/application routing binds them:
-
-| Intent | Meaning | Provider requirement |
+| Intent | Meaning | Requirement |
 | --- | --- | --- |
-| `learning.resource.deliver` | begin canonical protected-delivery flow | no provider send before backend result |
-| `learning.protected.check` | re-read/restart authorization check | activity feedback allowed; no fake progress |
-| `learning.protected.refresh` | check prepared derivative state | no business replay on render failure |
-| `learning.protected.retry` | retry after temporary failure through application | must invoke canonical flow once |
-| `learning.protected.resource` | return/restart from resource context | no expired capability reuse |
+| `learning.resource.deliver` | start canonical secure-delivery journey | no provider send before backend result |
+| `learning.protected.check` | re-check current access | no fake progress |
+| `learning.protected.refresh` | check derivative readiness | render failure must not replay mutation |
+| `learning.protected.retry` | retry temporary failure via application | invoke canonical flow once |
+| `learning.protected.resource` | restart/return from resource | never reuse expired capability |
 
-`learning.protected.ready` semantic screen with `ProtectContent=required` means:
+Provider capability requirements:
 
-- Telegram: use the verified protected-send capability required by the final delivery result;
-- Bale: if equivalent required protection is unavailable, refuse direct delivery and render `unsupported_channel`;
-- neither provider may downgrade to an unprotected original.
+- Telegram may satisfy `ProtectContent.REQUIRED` only with verified native protection behavior.
+- Bale must fail closed when equivalent required protection is unavailable.
+- Provider layer may adapt formatting/edit behavior, never authorization or entitlement truth.
+- Protected send failure must report through the existing receipt semantics; it must not silently downgrade.
 
 ## Website handoff requirements
 
-Integration should supply HTTPS destinations from canonical application configuration/router, never from provider payloads or resource capability URLs.
+Integration supplies only canonical HTTPS destinations from application configuration/router:
 
-Required destinations:
-
-- resources/detail when web delivery is the safe alternative;
-- assessments catalog/detail/attempt;
-- purchase/access center and checkout/retry;
+- resource/detail or safe web delivery where appropriate;
+- assessment catalog/detail/attempt;
+- purchase/access center, browser checkout and retry;
 - forms list/detail/submission.
 
-Do not put permanent signed download capabilities, storage keys, checkout secrets or CSRF material into buttons.
+Never place download capabilities, storage keys, provider IDs, checkout secrets, CSRF material or HMAC data in button URLs.
 
-## Source assumptions for merge
+## Merge assumptions
 
-bot-01/core is a parallel dependency and had not materialized on its branch when this workstream was authored. `screens.py` codes to the Design Lock concepts and assumes bot-01 exports:
-
-`Screen`, `Section`, `Fact`, `ListItem`, `Action`, `ActionRow`, `Pagination`, `Severity`, `Context`, `ProtectContent`, `EditPolicy`.
-
-The merge worker must reconcile only constructor/field naming if bot-01 chooses different exact Python signatures. Domain semantics, copy, actions and security boundaries should remain unchanged.
+- Merge bot-01/core before wiring these imports; this workstream was aligned to bot-01 commit `faead96a4bedca34151562c81c712ae42b2a7693` without importing its files into this branch.
+- Application integration must translate learning `CallbackIntent` names into current routing and re-read canonical state before actions.
+- bot-04 owns provider rendering and protected-send capability checks.
+- No new backend projection is assumed by the native paths marked as gaps above.
