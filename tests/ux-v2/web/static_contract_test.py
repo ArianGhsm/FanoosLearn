@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
-INDEX = ROOT / 'apps/platform/public/index.php'
+INDEX = ROOT / 'tests/fixtures/ui-v2/index.php'
 APP = ROOT / 'apps/platform/public/assets/app.js'
 CSS = ROOT / 'apps/platform/public/assets/app.css'
 PRODUCT_DIR = ROOT / 'apps/platform/public/assets/ui-v2'
@@ -11,7 +11,6 @@ PRODUCT_CSS = ROOT / 'apps/platform/public/assets/ui-v2/product-ui.css'
 SHELL_CSS = ROOT / 'apps/platform/public/assets/ui-v2/product-shell.css'
 RESPONSIVE_CSS = ROOT / 'apps/platform/public/assets/ui-v2/product-shell-responsive.css'
 ICONS = ROOT / 'apps/platform/public/assets/web-shell/icons.svg'
-
 html = INDEX.read_text(encoding='utf-8')
 app = APP.read_text(encoding='utf-8')
 css = CSS.read_text(encoding='utf-8')
@@ -20,7 +19,6 @@ product = '\n'.join(path.read_text(encoding='utf-8') for path in product_files)
 product_css = PRODUCT_CSS.read_text(encoding='utf-8')
 shell_css = SHELL_CSS.read_text(encoding='utf-8') + RESPONSIVE_CSS.read_text(encoding='utf-8')
 icons = ICONS.read_text(encoding='utf-8')
-
 assert '<html lang="fa" dir="rtl">' in html
 assert 'id="dashboard" aria-labelledby="greeting" tabindex="-1"' in html
 assert 'class="skip-link" href="#main-content"' in html
