@@ -10,6 +10,7 @@ use Fanoos\Platform\Content\ContentService;
 use Fanoos\Platform\Content\ExamService;
 use Fanoos\Platform\Content\SecureDeliveryService;
 use Fanoos\Platform\Content\SecureObjectDownloadService;
+use Fanoos\Platform\Core\ScheduleProjectionService;
 use Fanoos\Platform\Core\WorkspacePlatformService;
 use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Identity\AuthService;
@@ -30,6 +31,7 @@ final class ApiKernel
         private readonly ?ExamService $exams = null,
         private readonly ?SecureDeliveryService $delivery = null,
         private readonly ?SecureObjectDownloadService $downloads = null,
+        private readonly ?ScheduleProjectionService $schedule = null,
     ) {
     }
 
@@ -115,11 +117,12 @@ final class ApiKernel
             return ['status' => 200, 'data' => $this->platform->academicNavigation($session->userId, $workspaceId)];
         }
         if ($request->method === 'GET' && $suffix === '/schedule') {
-            return ['status' => 200, 'data' => $this->platform->schedule(
-                $session->userId, $workspaceId,
-                $request->query['from'] ?? gmdate('Y-m-01'),
-                $request->query['to'] ?? gmdate('Y-m-d', strtotime('+90 days')),
-            )];
+            $from = $request->query['from'] ?? gmdate('Y-m-01');
+            $to = $request->query['to'] ?? gmdate('Y-m-d', strtotime('+90 days'));
+            $data = $this->schedule !== null
+                ? $this->schedule->list($session->userId, $workspaceId, $from, $to)
+                : $this->platform->schedule($session->userId, $workspaceId, $from, $to);
+            return ['status' => 200, 'data' => $data];
         }
         if ($request->method === 'GET' && $suffix === '/grades/me') {
             return ['status' => 200, 'data' => $this->platform->myGrades($session->userId, $workspaceId)];
