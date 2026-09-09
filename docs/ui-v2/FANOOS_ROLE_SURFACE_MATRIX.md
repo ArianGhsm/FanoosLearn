@@ -20,7 +20,7 @@ Repository role templates currently include: `student`, `cohort-representative`,
 
 ## Management presentation rule
 
-The Website management destination is a projection of canonical capabilities, not a role-name switch. A `200` response from a read-only dashboard is not permission to expose unrelated mutations. Each management action is shown only when its corresponding backend endpoint exists and the returned projection indicates that action/context is supported; the backend still performs the authoritative check.
+The Website management destination is a projection of canonical capabilities, not a role-name switch. The backend computes `management_available` from management-class permissions such as membership/academic/content/form/grade/commerce/broadcast/audit capabilities. A `200` response from the read-only dashboard is not enough: Website navigation requires `management_available=true`, while dashboard sections remain independently permission-filtered. Every mutation still performs its authoritative backend permission check.
 
 ## Update Server invariant
 

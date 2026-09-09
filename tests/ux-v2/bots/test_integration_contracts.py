@@ -18,8 +18,8 @@ class IntegrationContractTest(unittest.TestCase):
         web = read("apps/platform/public/assets/app.js")
         contract = read("contracts/openapi/core-v1.yaml")
 
-        self.assertIn("$this->downloadTokens->verify", service)
-        self.assertIn("$this->resources->decide", service)
+        self.assertIn("$this->tokens->verify", service)
+        self.assertIn("$this->authorizer->decide", service)
         self.assertIn("resource_version_id", service)
         self.assertIn("object_id", service)
         self.assertIn("hash_equals", service)
@@ -83,7 +83,22 @@ class IntegrationContractTest(unittest.TestCase):
         self.assertIn("from fanoos_bot.integrated_application import ApplicationConfig, BotApplication", telegram)
         self.assertIn("from fanoos_bot.integrated_application import ApplicationConfig, BotApplication", bale)
         self.assertIn("projection.get(\"courses\")", integrated)
-        self.assertNotIn("course_catalog(", integrated)
+        self.assertIn("return course_catalog(rows)", integrated)
+        self.assertNotIn("self._schedule_window(", integrated)
+        self.assertNotIn("self._grade_items(", integrated)
+        self.assertNotIn("self._resource_items(", integrated)
+        self.assertIn('action == "coursep"', integrated)
+
+    def test_web_management_navigation_requires_explicit_canonical_capability(self):
+        platform = read("apps/platform/src/Core/WorkspacePlatformService.php")
+        web = read("apps/platform/public/assets/app.js")
+
+        self.assertIn("'management_available' => $managementAvailable", platform)
+        self.assertIn("'membership.manage'", platform)
+        self.assertIn("'resource.review'", platform)
+        self.assertIn("'payment.reconcile'", platform)
+        self.assertIn("result.data?.management_available === true", web)
+        self.assertNotIn("const allowed = !!result.ok;", web)
 
     def test_update_server_surface_remains_telegram_private_only(self):
         application = read("packages/python/fanoos_bot/application.py")

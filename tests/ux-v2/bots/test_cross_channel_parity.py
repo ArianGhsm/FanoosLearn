@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 
 from fanoos_bot.api import FanoosApiError
+from fanoos_bot.callbacks import CallbackCodec
 from fanoos_bot.integrated_application import ApplicationConfig, BotApplication
 from fanoos_bot.state import LocalState
 
@@ -155,6 +156,45 @@ class CrossChannelSemanticParityTest(unittest.TestCase):
             self.assertIn(self.web["resource"]["course"], resource)
             self.assertIn(self.web["resource"]["type"], resource)
             self.assertNotIn(self.fixture["resource"]["resource_id"], resource)
+
+    def test_all_canonical_courses_remain_reachable_through_opaque_pagination(self):
+        canonical_courses = [
+            {
+                "course_id": f"00000000-0000-4000-8000-{index:012x}",
+                "course_code": f"C-{index:02d}",
+                "course_title": f"درس {index:02d}",
+            }
+            for index in range(1, 36)
+        ]
+        original_schedule = self.backend.schedule
+
+        def schedule_with_many_courses(*args, **kwargs):
+            projection = original_schedule(*args, **kwargs)
+            projection["courses"] = canonical_courses
+            return projection
+
+        self.backend.schedule = schedule_with_many_courses
+        for app, state, platform in (
+            (self.telegram, self.telegram_state, "telegram"),
+            (self.bale, self.bale_state, "bale"),
+        ):
+            first = app.courses("student").screen
+            self.assertIn("درس 01", first.text)
+            self.assertNotIn("درس 13", first.text)
+            next_button = next(button for row in first.rows for button in row if button.text == "بعدی ›")
+            self.assertLessEqual(len(next_button.callback.encode("utf-8")), 64)
+            action, ref = CallbackCodec.decode(next_button.callback)
+            self.assertEqual(action, "coursep")
+            self.assertIsNone(state.route(ref, platform, "other-user", kind="courses_page"))
+
+            second = app.callback("student", True, next_button.callback).screen
+            self.assertIn("درس 13", second.text)
+            second_next = next(button for row in second.rows for button in row if button.text == "بعدی ›")
+            third = app.callback("student", True, second_next.callback).screen
+            self.assertIn("درس 25", third.text)
+            self.assertIn("درس 35", third.text)
+            for course in canonical_courses:
+                self.assertNotIn(course["course_id"], first.text + second.text + third.text)
 
     def test_assessment_capability_difference_is_explicit_and_safe(self):
         self.assertEqual(self.web["assessment"]["type"], "تمرین")

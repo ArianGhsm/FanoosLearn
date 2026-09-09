@@ -6,11 +6,11 @@ Classification follows Prompt 3: **A** presentation-only, **B** existing canonic
 
 | Source gap | Class | Resolution |
 | --- | --- | --- |
-| Bot complete course/enrollment list | D | Added an authorized canonical course projection from `academic_courses`/offerings to the existing bot academic read projection. Final Telegram/Bale runtime consumes that projection; it no longer derives course truth from schedule/grade/resource activity. No DB migration. |
+| Bot complete course/enrollment list | D | Added an authorized canonical course projection from `academic_courses`/offerings to the existing bot academic read projection. Final Telegram/Bale runtime consumes that projection, uses opaque subject-bound pagination so every projected course remains reachable, and no longer derives course truth from schedule/grade/resource activity. No DB migration. |
 | Web browser binary handoff | D | Added `SecureObjectDownloadService` and versioned core-v1 `POST /workspaces/{workspaceId}/downloads/consume`. POST+CSRF capability redemption reauthorizes current resource entitlement and exact resource-version/object before same-origin binary streaming. No storage key/capability URL. |
 | Web assessment catalog/detail attempt wiring | B | Existing ExamService start/save/submit/review contracts are now consumed by UI V2. Start sends only safe questions; revision is server-owned; submit/scoring and review are backend canonical. No local answer key/scoring authority. |
 | Schedule day-boundary mismatch | A/B | Website request dates now originate in workspace timezone and public backend date-only bounds are resolved with `tenant_workspaces.timezone_name` before UTC query. Bot already used canonical timezone. |
-| Cross-channel `pending` wording mismatch | A | Normalized `pending` → `در انتظار`; `payment_pending` → `در انتظار پرداخت`. |
+| Cross-channel pending wording mismatch | A | Normalized status meaning by context: generic `pending` remains `در انتظار`, while a commerce order with `status=pending` and explicit `payment_pending` both render as `در انتظار پرداخت` across channels. |
 
 ## Deferred canonical projections
 

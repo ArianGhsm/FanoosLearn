@@ -368,8 +368,8 @@
     if (!state.workspace || state.managementCheckedFor === state.workspace) return;
     const result = await safeRead(`/api/v1/workspaces/${state.workspace}/admin/dashboard`);
     state.managementCheckedFor = state.workspace;
-    state.management = result.ok ? result : null;
-    const allowed = !!result.ok;
+    const allowed = !!result.ok && result.data?.management_available === true;
+    state.management = allowed ? result : null;
     $('#management-nav').hidden = !allowed;
     $('#mobile-management-nav').hidden = !allowed;
     if (!allowed && state.route.name === 'management') navigate('home');

@@ -26,7 +26,7 @@ FANOOS is one student academic/content platform with three presentation channels
 
 A Course is identified by canonical `course_id`; title/code are presentation metadata. Website and bots may remember a selected course for navigation, but neither stores a shadow course truth. Course-sensitive operations are reauthorized against the selected workspace.
 
-Course detail maps to the same concepts: overview, sessions, schedule, resources, assessments, grades and announcements. A channel that lacks a safe native projection uses an explicit fallback rather than inferred data.
+Course detail maps to the same concepts: overview, sessions, schedule, resources, assessments, grades and announcements. Telegram/Bale course lists use opaque subject-bound pagination over a freshly rebuilt canonical projection, so list size never creates a second course authority or hides later courses. A channel that lacks a safe native projection uses an explicit fallback rather than inferred data.
 
 ## Home priority
 
