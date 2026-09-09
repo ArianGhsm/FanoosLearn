@@ -20,6 +20,8 @@
     selectedForm: null,
     selectedResource: null,
     selectedAssessment: null,
+    assessmentAttempt: null,
+    assessmentReview: null,
     management: null,
     managementCheckedFor: null,
   };
@@ -65,6 +67,29 @@
       throw failure;
     }
     return payload.data;
+  }
+
+  async function apiBinary(path, body) {
+    const headers = { Accept: 'application/pdf,application/octet-stream' };
+    if (state.token) headers.Authorization = `Bearer ${state.token}`;
+    if (state.csrf) headers['X-CSRF-Token'] = state.csrf;
+    headers['Content-Type'] = 'application/json';
+    let response;
+    try {
+      response = await fetch(path, { method: 'POST', headers, credentials: 'same-origin', body: JSON.stringify(body || {}) });
+    } catch (_error) {
+      const failure = new Error('network'); failure.status = 0; failure.code = 'network_error'; throw failure;
+    }
+    if (!response.ok) {
+      let payload = null;
+      try { payload = await response.json(); } catch (_error) {}
+      const failure = new Error('api');
+      failure.status = response.status;
+      failure.code = String(payload?.error?.code || 'request_failed').slice(0, 80);
+      if (response.status === 401) handleSessionExpired();
+      throw failure;
+    }
+    return response.blob();
   }
 
   async function safeRead(path) {
@@ -167,9 +192,15 @@
     if (state.route.name === 'home') $$('[data-route="home"]').forEach(node => { node.classList.add('active'); node.setAttribute('aria-current', 'page'); });
   }
 
+  function clearAssessmentState() {
+    state.selectedAssessment = null;
+    state.assessmentAttempt = null;
+    state.assessmentReview = null;
+  }
+
   function navigate(name, query = {}, subview = '') {
     closeDrawer(false);
-    state.selectedAnnouncement = null; state.selectedForm = null; state.selectedResource = null; state.selectedAssessment = null;
+    state.selectedAnnouncement = null; state.selectedForm = null; state.selectedResource = null; clearAssessmentState();
     const hash = UI.routeHash(name, query, subview);
     if (location.hash === hash) { state.route = UI.routeFromHash(hash); renderRoute(); }
     else location.hash = hash;
@@ -182,9 +213,11 @@
   }
 
   function dateRange(days = 120) {
-    const start = new Date(); start.setUTCDate(start.getUTCDate() - 7);
-    const end = new Date(); end.setUTCDate(end.getUTCDate() + days);
-    return { from: start.toISOString().slice(0, 10), to: end.toISOString().slice(0, 10) };
+    const timezone = workspaceTimezone() || 'UTC';
+    const fallback = new Date().toISOString().slice(0, 10);
+    const today = UI.localDateKey(new Date().toISOString(), timezone) || fallback;
+    const move = UI._internal?.addNeutralDays || ((key, delta) => { const value = new Date(`${key}T00:00:00Z`); value.setUTCDate(value.getUTCDate() + delta); return value.toISOString().slice(0, 10); });
+    return { from: move(today, -7), to: move(today, days) };
   }
 
   function courseIdForCode(academics, code) {
@@ -207,8 +240,18 @@
       openResource: (row) => openResource(row, serial),
       closeResource: () => { state.selectedResource = null; renderRoute({ reuse: true }); },
       requestDelivery: (row) => requestDelivery(row, serial),
-      openAssessment: (row) => { state.selectedAssessment = row; renderRoute({ reuse: true }); },
+      openAssessment: (row) => {
+        const sameAttempt = String(state.assessmentAttempt?.assessment_id || '') === String(row?.id || '');
+        const sameReview = String(state.assessmentReview?.assessment_id || '') === String(row?.id || '');
+        state.selectedAssessment = row;
+        if (!sameAttempt) state.assessmentAttempt = null;
+        if (!sameReview) state.assessmentReview = null;
+        renderRoute({ reuse: true });
+      },
       closeAssessment: () => { state.selectedAssessment = null; renderRoute({ reuse: true }); },
+      startAssessment: (row) => startAssessment(row, serial),
+      saveAssessment: (answers, form) => saveAssessment(answers, form, serial),
+      submitAssessment: (answers, form) => submitAssessment(answers, form, serial),
     };
   }
 
@@ -274,7 +317,9 @@
           safeRead(`/api/v1/workspaces/${state.workspace}/assessments?${encodeQuery({ kind: state.route.query.kind })}`),
         ]);
         if (serial !== state.requestSerial || state.workspaceMutation) return;
-        if (state.selectedAssessment) UI.renderAssessmentDetail(container, state.selectedAssessment, { context, handlers: h });
+        if (state.selectedAssessment && state.assessmentReview) UI.renderAssessmentResult(container, state.selectedAssessment, state.assessmentAttempt, state.assessmentReview, { context, handlers: h });
+        else if (state.selectedAssessment && state.assessmentAttempt) UI.renderAssessmentAttempt(container, state.selectedAssessment, state.assessmentAttempt, { context, handlers: h });
+        else if (state.selectedAssessment) UI.renderAssessmentDetail(container, state.selectedAssessment, { context, handlers: h });
         else UI.renderAssessments(container, { assessments, academics, route: state.route, context, handlers: h });
       } else if (state.route.name === 'grades') {
         const grades = await safeRead(`/api/v1/workspaces/${state.workspace}/grades/me`);
@@ -340,7 +385,7 @@
       state.workspace = workspaceId;
       if (state.account) state.account.selected_workspace_id = workspaceId;
       state.management = null; state.managementCheckedFor = null;
-      state.selectedAnnouncement = null; state.selectedForm = null; state.selectedResource = null; state.selectedAssessment = null;
+      state.selectedAnnouncement = null; state.selectedForm = null; state.selectedResource = null; clearAssessmentState();
       renderWorkspaceContext();
       toast('فضای آموزشی تغییر کرد.', 'success');
     } catch (_error) {
@@ -396,11 +441,75 @@
       if (served?.content && typeof served.content === 'object') {
         toast('دسترسی منبع تأیید شد. محتوای ساختاریافته از مسیر امن دریافت شد.', 'success');
       } else if (served?.download_token) {
-        toast('دسترسی فایل تأیید شد؛ endpoint عمومی مرورگر برای مصرف download token در contract فعلی ارائه نشده است.', 'info');
+        const blob = await apiBinary(`/api/v1/workspaces/${state.workspace}/downloads/consume`, { download_token: served.download_token });
+        if (serial !== state.requestSerial || state.workspaceMutation) return;
+        const objectUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = 'fanoos-protected.pdf';
+        link.hidden = true;
+        document.body.append(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 30000);
+        toast('فایل پس از بازاعتبارسنجی دسترسی از مسیر امن دریافت شد.', 'success');
       } else {
         toast('دسترسی منبع تأیید شد، اما محتوای قابل تحویل در projection فعلی وجود ندارد.', 'info');
       }
     } catch (_error) { toast('دسترسی یا تحویل این منبع تأیید نشد.', 'error'); }
+  }
+
+  async function startAssessment(row, serial) {
+    if (!row?.id || state.assessmentAttempt) return;
+    setBusy(true);
+    try {
+      const attempt = await api(`/api/v1/workspaces/${state.workspace}/assessments/${encodeURIComponent(row.id)}/attempts`, { method: 'POST', body: {} });
+      if (serial !== state.requestSerial || state.workspaceMutation) return;
+      state.selectedAssessment = row;
+      state.assessmentAttempt = attempt;
+      state.assessmentReview = null;
+      toast('تلاش آزمون روی سرور آغاز شد.', 'success');
+      await renderRoute({ reuse: true });
+    } catch (error) {
+      const code = String(error?.code || '');
+      if (code === 'entitlement_required') toast('برای شروع این آزمون دسترسی فعال لازم است.', 'error');
+      else if (code === 'attempt_limit_reached') toast('حداکثر تعداد تلاش مجاز برای این آزمون استفاده شده است.', 'error');
+      else toast('شروع آزمون انجام نشد.', 'error');
+    } finally { setBusy(false); }
+  }
+
+  async function saveAssessment(answers, form, serial) {
+    const attempt = state.assessmentAttempt;
+    if (!attempt?.attempt_id || !form) return;
+    const buttons = [...form.querySelectorAll('button')];
+    buttons.forEach((item) => { item.disabled = true; });
+    try {
+      const saved = await api(`/api/v1/workspaces/${state.workspace}/attempts/${encodeURIComponent(attempt.attempt_id)}`, { method: 'PATCH', body: { revision: Number(attempt.revision || 0), answers } });
+      if (serial !== state.requestSerial || state.workspaceMutation) return;
+      state.assessmentAttempt = { ...attempt, revision: saved.revision, status: saved.status };
+      toast('پاسخ‌ها روی سرور ذخیره شدند.', 'success');
+    } catch (error) {
+      toast(String(error?.code || '') === 'attempt_revision_conflict' ? 'نسخه تلاش تغییر کرده است؛ آزمون را دوباره باز کنید.' : 'ذخیره پاسخ‌ها انجام نشد.', 'error');
+    } finally { buttons.forEach((item) => { item.disabled = false; }); }
+  }
+
+  async function submitAssessment(answers, form, serial) {
+    const attempt = state.assessmentAttempt;
+    if (!attempt?.attempt_id || !form) return;
+    const buttons = [...form.querySelectorAll('button')];
+    buttons.forEach((item) => { item.disabled = true; });
+    try {
+      const result = await api(`/api/v1/workspaces/${state.workspace}/attempts/${encodeURIComponent(attempt.attempt_id)}/submit`, { method: 'POST', body: { revision: Number(attempt.revision || 0), answers } });
+      if (serial !== state.requestSerial || state.workspaceMutation) return;
+      const review = await safeRead(`/api/v1/workspaces/${state.workspace}/attempts/${encodeURIComponent(attempt.attempt_id)}/review`);
+      if (serial !== state.requestSerial || state.workspaceMutation) return;
+      state.assessmentAttempt = { ...attempt, ...result };
+      state.assessmentReview = review.ok ? review.data : result;
+      toast('آزمون ثبت و توسط سرور امتیازدهی شد.', 'success');
+      await renderRoute({ reuse: true });
+    } catch (error) {
+      toast(String(error?.code || '') === 'attempt_revision_conflict' ? 'نسخه تلاش تغییر کرده است؛ پاسخ‌ها ثبت نشدند.' : 'ثبت نهایی آزمون انجام نشد.', 'error');
+    } finally { buttons.forEach((item) => { item.disabled = false; }); }
   }
 
   function updateAnnouncementBadge(result) {
@@ -477,7 +586,7 @@
 
   window.addEventListener('hashchange', () => {
     state.route = UI.routeFromHash(location.hash);
-    state.selectedAnnouncement = null; state.selectedForm = null; state.selectedResource = null; state.selectedAssessment = null;
+    state.selectedAnnouncement = null; state.selectedForm = null; state.selectedResource = null; clearAssessmentState();
     if (state.token && state.workspace) renderRoute();
   });
   document.addEventListener('keydown', (event) => {
