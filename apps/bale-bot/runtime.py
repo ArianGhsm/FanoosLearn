@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "packages/python"))
 
 from fanoos_bot.api import FanoosApiClient
-from fanoos_bot.application import ApplicationConfig, BotApplication
+from fanoos_bot.integrated_application import ApplicationConfig, BotApplication
 from fanoos_bot.botapi import BotApiError, JsonBotApiTransport
 from fanoos_bot.capabilities import BALE
 from fanoos_bot.runtime import BotRuntime, NotificationPump, UpdateContext
