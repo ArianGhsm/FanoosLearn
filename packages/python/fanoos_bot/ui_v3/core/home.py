@@ -17,7 +17,7 @@ from .actions import (
     website_action,
     workspace_action,
 )
-from .contracts import ActionRow, Context, ListItem, Screen, Section, Severity
+from .contracts import ActionRow, Context, ListItem, Screen, Section
 
 
 class SlotState(str, Enum):
@@ -39,39 +39,31 @@ class HomeSlot:
 
     def list_item(self) -> ListItem:
         marker = "" if self.state is SlotState.CONTENT else ("—" if self.state is SlotState.EMPTY else "⚠️")
-        return ListItem(self.headline, self.detail, marker=marker)
+        return ListItem(self.headline, self.detail, meta=self.title, marker=marker)
 
 
 def active_home_screen(
     workspace_label: str,
     *,
-    date_label: str = "",
-    next_schedule: HomeSlot | None = None,
+    next_schedule: HomeSlot,
+    latest_announcement: HomeSlot,
     today_schedule: HomeSlot | None = None,
-    latest_announcement: HomeSlot | None = None,
+    date_label: str = "",
 ) -> Screen:
-    """Build the bounded active-workspace home from canonical facts supplied by integration."""
+    """Build Home from explicit canonical content/empty/unavailable slot decisions."""
 
-    sections: list[Section] = []
-    schedule_items = tuple(
-        slot.list_item() for slot in (next_schedule, today_schedule) if slot is not None
-    )
-    if schedule_items:
-        sections.append(Section(title="📅 برنامه", items=schedule_items[:2]))
-    if latest_announcement is not None:
-        sections.append(Section(title="📢 تازه", items=(latest_announcement.list_item(),)))
-    if not sections:
-        sections.append(
-            Section(
-                body="خلاصه امروز هنوز در این نما آماده نیست. از بخش‌های اصلی می‌توانید مستقیم ادامه دهید."
-            )
-        )
+    schedule_items = (next_schedule.list_item(),)
+    if today_schedule is not None:
+        schedule_items += (today_schedule.list_item(),)
 
     return Screen(
         identifier="home.active",
         title="🏠 خانه",
         context=Context("فضای آموزشی", workspace_label, date_label),
-        sections=tuple(sections[:3]),
+        sections=(
+            Section(title="📅 برنامه", items=schedule_items[:2]),
+            Section(title="📢 تازه", items=(latest_announcement.list_item(),)),
+        ),
         action_rows=(
             ActionRow((courses_action(), schedule_action())),
             ActionRow((grades_action(), notifications_action())),

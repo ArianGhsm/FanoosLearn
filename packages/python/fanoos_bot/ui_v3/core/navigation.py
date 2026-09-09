@@ -74,6 +74,8 @@ class NavigationState:
         if self.cancel_target.name == "home":
             return self.home()
         base = self.stack[:-1] if len(self.stack) > 1 else self.stack
+        if base and base[-1] == self.cancel_target:
+            return NavigationState(base, 1, None, self.max_depth)
         return NavigationState(base + (self.cancel_target,), 1, None, self.max_depth)
 
 
