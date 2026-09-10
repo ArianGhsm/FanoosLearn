@@ -21,7 +21,7 @@
 - **Hierarchy:** app H1 scale increases, content edges breathe more, and Home retains a dominant next/today region.
 - **Card count:** structural cards remain where domain workers need them, but the Website layer removes or softens borders/shadows from normal grouping and keeps rows for dense content.
 - **One dominant purpose per page:** course title, schedule planner controls, library discovery and assessment/grade purpose remain domain-owned and visually emphasized.
-- **Persian typography:** one local variable family is applied across Website namespaces.
+- **Persian typography:** one local family with real 400/700 WOFF2 faces is applied across Website namespaces.
 - **Mobile:** existing bottom-nav architecture remains, with lighter background, safe-area padding and reduced chrome.
 
 ## Global

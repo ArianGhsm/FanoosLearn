@@ -4,6 +4,14 @@ const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const read = (file) => fs.readFileSync(path.join(ROOT, file), 'utf8');
+const readBinary = (file) => fs.readFileSync(path.join(ROOT, file));
+
+function assertWoff2Integrity(file) {
+  const data = readBinary(file);
+  assert.equal(data.subarray(0, 4).toString('ascii'), 'wOF2', `${file} must be WOFF2`);
+  assert.equal(data.readUInt32BE(8), data.length, `${file} WOFF2 header length must match actual bytes`);
+  assert.ok(data.length > 4096, `${file} is unexpectedly small`);
+}
 
 const index = read('apps/platform/public/index.php');
 const tokens = read('apps/platform/public/assets/ui-v3/foundation/tokens.css');
@@ -39,6 +47,8 @@ assert.ok(fontCss.includes('font-weight: 700'));
 assert.ok(fontCss.includes('unicode-range:'));
 assert.ok(fontCss.includes('font-display: swap'));
 assert.ok(tokens.includes('--f3-font-sans: "YekanBakh Fanoos"'));
+assertWoff2Integrity('apps/platform/public/assets/fonts/yekanbakh/YekanBakh-Regular-fa.woff2');
+assertWoff2Integrity('apps/platform/public/assets/fonts/yekanbakh/YekanBakh-Bold-fa.woff2');
 
 assert.ok(tokens.includes('--f3-bg: #F7F4EC'));
 assert.ok(tokens.includes('--f3-primary: #4954D6'));
