@@ -9,9 +9,9 @@ This matrix is source-level acceptance for Telegram and Bale. It does not replac
 | Unlinked / onboarding | Clear account-link continuation; no fake local account state | Rich RTL when available + plain fallback | Provider-native text | PASS by source contract |
 | Linked, no workspace | Full product shell; no invented workspace creation or membership | Compact actions | Compact actions | PASS by source contract |
 | Workspace picker | Explicit selection; no automatic single-membership mutation | Inline buttons | Inline buttons | PASS by deterministic test |
-| Home | Compact next-action overview, semantic sections, button-led navigation | Rich RTL primary path | Readable provider-native text | PASS by source contract |
-| Courses | Human labels only; IDs remain callback correlation | Bounded list/actions | Bounded list/actions | PASS by deterministic test |
-| Course detail | Schedule/resources/assessment/grades/announcements destinations from canonical course context | Compact buttons | Compact buttons | PASS by source contract |
+| Home | Canonical bot-01 active Home; schedule/announcement empty vs unavailable kept distinct | Rich RTL primary path | Readable provider-native text | PASS by deterministic test |
+| Courses | Canonical attached course projection only; no activity-derived course truth; IDs remain callback correlation | Bounded list/actions | Bounded list/actions | PASS by deterministic test |
+| Course detail | Schedule/resources/grades only; assessment and course-announcement actions stay hidden until bot-safe/course-bound contracts exist | Compact buttons | Compact buttons | PASS by deterministic test |
 | Schedule | Workspace-timezone authority; bounded navigation | Semantic list | Semantic list | PASS by source contract |
 | Grades | Published self-grade data only; no fabricated average | Semantic list | Semantic list | PASS by source contract |
 | Announcements | Canonical published announcements; bounded pagination | Semantic sections | Semantic sections | PASS by source contract |
