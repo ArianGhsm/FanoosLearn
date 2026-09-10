@@ -58,6 +58,7 @@ jobs:
           node tests/ux/integration_web_ux_test.js
           node tests/ux/domain_fuzz_test.js
           node tests/ux-v3/web_integration_contract_test.js
+          node tests/ux-v3/web_schoolhouse_redesign_contract_test.js
       - name: Web UI V2 product contracts
         run: |
           node --check apps/platform/public/assets/ui-v2/product-core.js
