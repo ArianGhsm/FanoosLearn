@@ -72,6 +72,10 @@ class Screen:
     edit: bool = False
     protect_content: bool = False
     presentation: ScreenPresentation | None = None
+    # Integration-only compatibility envelope. Runtime code may keep using the
+    # stable V2-shaped transport fields while provider V3 renderers consume the
+    # canonical bot-01 semantic Screen directly. This value is presentation only.
+    v3: Any | None = None
 
 
 @dataclass(frozen=True)
@@ -99,7 +103,7 @@ class DeliveryReceiptContext:
 
 @dataclass(frozen=True)
 class ActionResult:
-    screen: Screen
+    screen: Any
     receipt: DeliveryReceiptContext | None = None
     document: DocumentPayload | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
