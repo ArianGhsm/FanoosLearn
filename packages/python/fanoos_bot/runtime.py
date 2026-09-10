@@ -10,6 +10,7 @@ from .botapi import BotApiError
 from .chunking import chunks
 from .models import ActionResult, Screen
 from .presentation import notification_detail_screen
+from .ui_v3.providers import ProviderContext
 
 
 @dataclass(frozen=True)
@@ -36,13 +37,8 @@ class DeliveryReceiptPump:
             return False
         try:
             self.backend.delivery_receipt(
-                row["platform"],
-                row["workspace_id"],
-                row["issuance_id"],
-                row["idempotency_key"],
-                row["outcome"],
-                row.get("provider_ref"),
-                row.get("error_code"),
+                row["platform"], row["workspace_id"], row["issuance_id"],
+                row["idempotency_key"], row["outcome"], row.get("provider_ref"), row.get("error_code"),
             )
         except Exception:
             return False
@@ -71,56 +67,74 @@ class BotRuntime:
     def _message_result(self, ctx: UpdateContext, command: str, arg: str):
         if command.startswith("/start"):
             return self.app.start(ctx.subject, arg or None)
-        if command == "/link":
-            return self.app.link(ctx.subject, arg)
-        if command == "/unlink":
-            return self.app.unlink(ctx.subject)
-        if command in {"/menu", "/home"}:
-            return self.app.home(ctx.subject)
-        if command in {"/workspace", "/workspaces"}:
-            return self.app.workspaces(ctx.subject)
-        if command == "/today":
-            return self.app.day_schedule(ctx.subject, 0)
-        if command == "/tomorrow":
-            return self.app.day_schedule(ctx.subject, 1)
-        if command == "/grades":
-            return self.app.grades(ctx.subject)
-        if command == "/announcements":
-            return self.app.announcements(ctx.subject)
-        if command == "/resources":
-            return self.app.resources(ctx.subject)
+        if command == "/link": return self.app.link(ctx.subject, arg)
+        if command == "/unlink": return self.app.unlink(ctx.subject)
+        if command in {"/menu", "/home"}: return self.app.home(ctx.subject)
+        if command in {"/workspace", "/workspaces"}: return self.app.workspaces(ctx.subject)
+        if command == "/today": return self.app.day_schedule(ctx.subject, 0)
+        if command == "/tomorrow": return self.app.day_schedule(ctx.subject, 1)
+        if command == "/grades": return self.app.grades(ctx.subject)
+        if command == "/announcements": return self.app.announcements(ctx.subject)
+        if command == "/resources": return self.app.resources(ctx.subject)
         if command == "/buy":
             return self.app.create_order(
-                ctx.subject,
-                arg,
+                ctx.subject, arg,
                 f"bot-order:{self.platform}:{ctx.event_id}" if ctx.event_id else None,
             )
-        if command == "/order":
-            return self.app.order_status(ctx.subject, arg)
-        if command == "/resource":
-            return self.app.protected_resource(ctx.subject, arg)
-        if command == "/update_server":
-            return self.app.update_begin(ctx.subject, ctx.private)
-        if command == "/update_status":
-            return self.app.update_status(ctx.subject, ctx.private, arg or None)
-        if command == "/help":
-            return self.app.help()
+        if command == "/order": return self.app.order_status(ctx.subject, arg)
+        if command == "/resource": return self.app.protected_resource(ctx.subject, arg)
+        if command == "/update_server": return self.app.update_begin(ctx.subject, ctx.private)
+        if command == "/update_status": return self.app.update_status(ctx.subject, ctx.private, arg or None)
+        if command == "/help": return self.app.help()
         return self.app.home(ctx.subject)
+
+    def _prepare_result(self, ctx: UpdateContext, result: ActionResult) -> ActionResult:
+        prepare = getattr(self.app, "prepare_result", None)
+        if callable(prepare):
+            return prepare(ctx.subject, ctx.private, result)
+        return result
+
+    @staticmethod
+    def _provider_context(ctx: UpdateContext, result: ActionResult) -> ProviderContext:
+        raw_permissions = result.metadata.get("canonical_permissions", ()) if isinstance(result.metadata, dict) else ()
+        permissions = frozenset(str(value) for value in raw_permissions if str(value))
+        return ProviderContext(
+            private_chat=ctx.private,
+            callback_query=bool(ctx.callback_id),
+            current_message_id=ctx.message_id,
+            canonical_permissions=permissions,
+        )
+
+    def _send_screen(self, ctx: UpdateContext, result: ActionResult, screen: Screen, *, reply_to: int | None = None):
+        if getattr(self.transport, "supports_v3_context", False):
+            return self.transport.send_screen(
+                ctx.chat_id, screen, reply_to=reply_to,
+                context=self._provider_context(ctx, result),
+            )
+        return self.transport.send_screen(ctx.chat_id, screen)
+
+    def _edit_screen(self, ctx: UpdateContext, result: ActionResult, screen: Screen):
+        if getattr(self.transport, "supports_v3_context", False):
+            return self.transport.edit_screen(
+                ctx.chat_id, ctx.message_id, screen,
+                context=self._provider_context(ctx, result),
+            )
+        return self.transport.edit_screen(ctx.chat_id, ctx.message_id, screen)
 
     def handle_message(self, ctx: UpdateContext, text: str):
         command, *rest = (text or "").strip().split(maxsplit=1)
         arg = rest[0] if rest else ""
-
         if command == "/resource" and ctx.event_id:
             prior = self.state.processed_update(self.platform, ctx.event_id)
             if prior is not None:
                 return prior
-
         with self.activity.operation(ctx.chat_id, private=ctx.private):
             result = self._message_result(ctx, command, arg)
+            result = self._prepare_result(ctx, result)
         return self.deliver(ctx, result)
 
     def handle_callback(self, ctx: UpdateContext, value: str):
+        # ACK remains before dedupe, backend calls and all rendering work.
         if ctx.callback_id:
             try:
                 self.transport.answer_callback(ctx.callback_id)
@@ -132,6 +146,7 @@ class BotRuntime:
                 return prior
         with self.activity.operation(ctx.chat_id, private=ctx.private):
             result = self.app.callback(ctx.subject, ctx.private, value)
+            result = self._prepare_result(ctx, result)
         return self.deliver(ctx, result)
 
     def _queue_failed_receipt(self, result: ActionResult, error_code: str) -> None:
@@ -139,24 +154,15 @@ class BotRuntime:
             return
         try:
             self.state.record_delivery_outcome(
-                self.platform,
-                result.receipt.workspace_id,
-                result.receipt.issuance_id,
-                result.receipt.idempotency_key,
-                "failed",
-                error_code=error_code,
+                self.platform, result.receipt.workspace_id, result.receipt.issuance_id,
+                result.receipt.idempotency_key, "failed", error_code=error_code,
             )
             self.delivery_receipts.run_key(result.receipt.idempotency_key)
         except Exception:
             try:
                 self.app.backend.delivery_receipt(
-                    self.platform,
-                    result.receipt.workspace_id,
-                    result.receipt.issuance_id,
-                    result.receipt.idempotency_key,
-                    "failed",
-                    None,
-                    error_code,
+                    self.platform, result.receipt.workspace_id, result.receipt.issuance_id,
+                    result.receipt.idempotency_key, "failed", None, error_code,
                 )
             except Exception:
                 pass
@@ -165,12 +171,8 @@ class BotRuntime:
         if not result.receipt:
             return
         self.state.record_delivery_outcome(
-            self.platform,
-            result.receipt.workspace_id,
-            result.receipt.issuance_id,
-            result.receipt.idempotency_key,
-            "delivered",
-            provider_ref=provider_ref,
+            self.platform, result.receipt.workspace_id, result.receipt.issuance_id,
+            result.receipt.idempotency_key, "delivered", provider_ref=provider_ref,
             event_id=ctx.event_id,
         )
         self.delivery_receipts.run_key(result.receipt.idempotency_key)
@@ -180,43 +182,28 @@ class BotRuntime:
         if document is None:
             raise RuntimeError("document result is missing payload")
         with tempfile.TemporaryDirectory(prefix="fanoos-bot-document-") as root:
-            try:
-                os.chmod(root, 0o700)
-            except OSError:
-                pass
+            try: os.chmod(root, 0o700)
+            except OSError: pass
             path = Path(root) / document.filename
             path.write_bytes(document.data)
-            try:
-                os.chmod(path, 0o600)
-            except OSError:
-                pass
+            try: os.chmod(path, 0o600)
+            except OSError: pass
             sent = self.transport.send_document(
-                ctx.chat_id,
-                path,
-                caption=document.caption,
+                ctx.chat_id, path, caption=document.caption,
                 protect_content=document.protect_content,
             )
-        provider_ref = (
-            str(sent.get("message_id"))
-            if isinstance(sent, dict) and sent.get("message_id") is not None
-            else "sent"
-        )
+        provider_ref = str(sent.get("message_id")) if isinstance(sent, dict) and sent.get("message_id") is not None else "sent"
         self._record_success(ctx, result, provider_ref)
         job_id = result.metadata.get("media_job_id") if isinstance(result.metadata, dict) else None
         if isinstance(job_id, str):
-            try:
-                self.app.media_state.forget(job_id, ctx.subject)
-            except Exception:
-                pass
+            try: self.app.media_state.forget(job_id, ctx.subject)
+            except Exception: pass
         return provider_ref
 
     def deliver(self, ctx: UpdateContext, result: ActionResult):
         refs: list[str] = []
         screen = result.screen
-
-        if result.receipt and not self.state.delivery_receipt_capacity_available(
-            result.receipt.idempotency_key
-        ):
+        if result.receipt and not self.state.delivery_receipt_capacity_available(result.receipt.idempotency_key):
             raise RuntimeError("delivery receipt outbox is full")
 
         if result.document is not None:
@@ -226,17 +213,13 @@ class BotRuntime:
                 self._queue_failed_receipt(result, exc.code)
                 raise
 
-        limit = int(
-            getattr(getattr(self.transport, "capabilities", None), "max_text_chars", 4096)
-        )
+        limit = int(getattr(getattr(self.transport, "capabilities", None), "max_text_chars", 4096))
         texts = chunks(screen.text, limit)
         if result.receipt and len(texts) != 1:
             self._queue_failed_receipt(result, "delivery_not_atomic")
-            sent = self.transport.send_screen(
-                ctx.chat_id,
-                Screen(
-                    "⚠️ این محتوای محافظت‌شده برای ارسال مستقیم در پیام‌رسان بیش از حد بزرگ است."
-                ),
+            sent = self._send_screen(
+                ctx, result,
+                Screen("⚠️ این محتوای محافظت‌شده برای ارسال مستقیم در پیام‌رسان بیش از حد بزرگ است."),
             )
             if isinstance(sent, dict) and sent.get("message_id") is not None:
                 return str(sent["message_id"])
@@ -254,12 +237,11 @@ class BotRuntime:
                         protect_content=screen.protect_content,
                     )
                 if part.edit and ctx.message_id is not None:
-                    sent = self.transport.edit_screen(ctx.chat_id, ctx.message_id, part)
+                    sent = self._edit_screen(ctx, result, part)
                 else:
-                    sent = self.transport.send_screen(ctx.chat_id, part)
+                    sent = self._send_screen(ctx, result, part)
                 if isinstance(sent, dict) and sent.get("message_id") is not None:
                     refs.append(str(sent["message_id"]))
-
             provider_ref = refs[-1] if refs else "sent"
             self._record_success(ctx, result, provider_ref)
             return refs[-1] if refs else None
@@ -288,13 +270,8 @@ class NotificationPump:
         idem = "notification:" + delivery_id
         if prior:
             self.backend.notification_receipt(
-                self.platform,
-                delivery_id,
-                delivery["lease_token"],
-                idem,
-                "delivered",
-                prior,
-                None,
+                self.platform, delivery_id, delivery["lease_token"], idem,
+                "delivered", prior, None,
             )
             return True
 
@@ -302,43 +279,20 @@ class NotificationPump:
         screen = notification_detail_screen(payload)
         try:
             ref = None
-            limit = int(
-                getattr(
-                    getattr(self.transport, "capabilities", None),
-                    "max_text_chars",
-                    4096,
-                )
-            )
+            limit = int(getattr(getattr(self.transport, "capabilities", None), "max_text_chars", 4096))
             texts = chunks(screen.text, limit)
-            for index, text in enumerate(texts):
+            for text in texts:
                 part = screen if len(texts) == 1 else Screen(text)
-                sent = self.transport.send_screen(
-                    str(delivery["subject"]),
-                    part,
-                )
-                ref = (
-                    str(sent.get("message_id"))
-                    if isinstance(sent, dict) and sent.get("message_id") is not None
-                    else ref
-                )
+                sent = self.transport.send_screen(str(delivery["subject"]), part)
+                ref = str(sent.get("message_id")) if isinstance(sent, dict) and sent.get("message_id") is not None else ref
             self.state.remember_delivery(delivery_id, ref or "sent")
             self.backend.notification_receipt(
-                self.platform,
-                delivery_id,
-                delivery["lease_token"],
-                idem,
-                "delivered",
-                ref,
-                None,
+                self.platform, delivery_id, delivery["lease_token"], idem,
+                "delivered", ref, None,
             )
         except BotApiError as exc:
             self.backend.notification_receipt(
-                self.platform,
-                delivery_id,
-                delivery["lease_token"],
-                idem,
-                "retry" if exc.transient else "failed",
-                None,
-                exc.code,
+                self.platform, delivery_id, delivery["lease_token"], idem,
+                "retry" if exc.transient else "failed", None, exc.code,
             )
         return True
