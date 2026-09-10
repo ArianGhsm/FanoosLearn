@@ -21,15 +21,9 @@ class Backend:
             "selected_workspace_id": WORKSPACE,
         }
 
-    def schedule(self, platform, subject, workspace_id, from_date, to_date, limit, cursor):
-        return {"items": [], "timezone": "Asia/Tehran", "next_cursor": None}
-
-    def announcements(self, platform, subject, workspace_id, limit, cursor):
-        return {"items": [], "next_cursor": None}
-
 
 class LegacyCompatibilityTest(unittest.TestCase):
-    def test_selected_home_keeps_existing_callback_codec_values(self):
+    def test_secondary_legacy_screen_keeps_callback_codec_values(self):
         with tempfile.TemporaryDirectory() as root:
             state = LocalState(Path(root) / "state.sqlite3")
             try:
@@ -37,9 +31,9 @@ class LegacyCompatibilityTest(unittest.TestCase):
                     Backend(),
                     state,
                     "telegram",
-                    ApplicationConfig("https://fanoos.test/", "prod"),
+                    ApplicationConfig("https://fanoos.test/"),
                 )
-                result = app.home("student")
+                result = app.more("student", True)
                 self.assertIsInstance(result.screen, RuntimeScreen)
                 prepared = app.prepare_result("student", True, result)
                 self.assertIs(prepared.screen, result.screen)
@@ -49,8 +43,8 @@ class LegacyCompatibilityTest(unittest.TestCase):
                     for button in row
                     if button.callback
                 ]
-                self.assertIn("notifs", callbacks)
-                self.assertIn("today", callbacks)
+                self.assertIn("assess", callbacks)
+                self.assertIn("payments", callbacks)
 
                 plan = TelegramV3Renderer().render(
                     provider_screen(prepared.screen),
@@ -62,8 +56,8 @@ class LegacyCompatibilityTest(unittest.TestCase):
                     for item in row
                     if item.get("callback_data")
                 }
-                self.assertIn("notifs", rendered_callbacks)
-                self.assertIn("today", rendered_callbacks)
+                self.assertIn("assess", rendered_callbacks)
+                self.assertIn("payments", rendered_callbacks)
             finally:
                 state.close()
 
