@@ -11,6 +11,7 @@ from urllib import error, request
 
 from .capabilities import PlatformCapabilities
 from .models import Screen
+from .telegram_presentation import TelegramPresentation
 from .ui_v3.providers import BaleV3Renderer, ProviderContext, TelegramV3Renderer
 from .ui_v3.providers.core_adapter import provider_screen
 
@@ -140,6 +141,10 @@ class JsonBotApiTransport:
         if not keyboard: return None
         return {"inline_keyboard": [[dict(item) for item in row] for row in keyboard]}
 
+    def _ensure_keyboard_supported(self, keyboard: tuple[tuple[dict[str, str], ...], ...]) -> None:
+        if keyboard and not self.capabilities.supports_inline_callback:
+            raise BotApiError("inline_keyboard_unsupported")
+
     def _apply_reply(self, payload: dict[str, Any], reply_to: int | None) -> None:
         if reply_to is None: return
         if self.capabilities.reply_style == "reply_to_message_id": payload["reply_to_message_id"] = reply_to
@@ -152,18 +157,72 @@ class JsonBotApiTransport:
         self._apply_reply(payload, reply_to)
         return payload
 
-    def _rich_payload(self, chat_id: str, rich_message: dict[str, Any], *, reply_to: int | None = None, markup: dict[str, Any] | None = None) -> dict[str, Any]:
+    def _rich_payload(self, chat_id: str, rich_message: dict[str, Any], *, reply_to: int | None = None, markup: dict[str, Any] | None = None, protect_content: bool = False) -> dict[str, Any]:
         payload: dict[str, Any] = {"chat_id": chat_id, "rich_message": rich_message}
         if markup: payload["reply_markup"] = markup
+        if protect_content: payload["protect_content"] = True
         self._apply_reply(payload, reply_to)
         return payload
 
+    @staticmethod
+    def _is_v3_envelope(screen: Screen) -> bool:
+        return getattr(screen, "v3", None) is not None
+
     def _render(self, screen: Screen, context: ProviderContext | None):
-        source = screen.v3 if getattr(screen, "v3", None) is not None else screen
+        source = screen.v3 if self._is_v3_envelope(screen) else screen
         return self.presentation.render(provider_screen(source), context=context or ProviderContext())
 
+    def _send_legacy_protected_telegram(self, chat_id: str, screen: Screen, *, reply_to: int | None = None):
+        """Preserve the accepted Stage 7 transport contract during V3 migration.
+
+        A legacy protection-sensitive result has already been computed by the
+        canonical application. It may use one protected Rich provider operation,
+        but it never receives a second send fallback after an ambiguous attempt.
+        Canonical V3 envelopes continue through TelegramV3Renderer's stricter
+        protected plan.
+        """
+        rendered = TelegramPresentation(enabled=self.rich_ui_enabled).render(screen)
+        keyboard = tuple(
+            tuple(
+                {"text": button.text, **({"callback_data": str(button.callback)} if button.callback is not None else {"url": str(button.url)})}
+                for button in row
+            )
+            for row in screen.rows
+        )
+        self._ensure_keyboard_supported(keyboard)
+        markup = self._markup(keyboard)
+        if rendered.rich_message is not None and self.capabilities.supports_native_rich:
+            return self._call(
+                "sendRichMessage",
+                self._rich_payload(
+                    chat_id,
+                    rendered.rich_message,
+                    reply_to=reply_to,
+                    markup=markup,
+                    protect_content=True,
+                ),
+            )
+        return self._call(
+            "sendMessage",
+            self._plain_payload(
+                chat_id,
+                rendered.plain_text,
+                reply_to=reply_to,
+                markup=markup,
+                protect_content=True,
+            ),
+        )
+
     def send_screen(self, chat_id: str, screen: Screen, *, reply_to: int | None = None, context: ProviderContext | None = None):
+        is_v3 = self._is_v3_envelope(screen)
+        if not is_v3 and screen.protect_content:
+            if not self.capabilities.supports_forward_protection:
+                raise BotApiError("forward_protection_unsupported")
+            if self.capabilities.platform == "telegram":
+                return self._send_legacy_protected_telegram(chat_id, screen, reply_to=reply_to)
+
         plan = self._render(screen, context)
+        self._ensure_keyboard_supported(plan.keyboard)
         markup = self._markup(plan.keyboard)
         if self.capabilities.platform == "telegram":
             text = plan.plain_text
@@ -171,7 +230,7 @@ class JsonBotApiTransport:
                 raise ValueError("screen must be paginated before transport")
             if plan.protect_content and not self.capabilities.supports_forward_protection:
                 raise BotApiError("forward_protection_unsupported")
-            # Protected content is exactly one plain protected provider operation.
+            # Canonical V3 protected content is exactly one protected provider operation.
             if plan.protect_content:
                 return self._call("sendMessage", self._plain_payload(
                     chat_id, text, reply_to=reply_to, markup=markup, protect_content=True,
@@ -186,15 +245,18 @@ class JsonBotApiTransport:
                     pass
             return self._call("sendMessage", self._plain_payload(chat_id, text, reply_to=reply_to, markup=markup))
 
-        # Bale renderer has already transformed protected/owner-ineligible screens
-        # into a provider-native fail-closed screen with safe navigation.
+        # Bale renderer has already transformed V3 protected/owner-ineligible
+        # screens into provider-native fail-closed output. Legacy protected
+        # originals were refused above before any network call.
         text = plan.text
         if len(text) > self.capabilities.max_text_chars:
             raise ValueError("screen must be paginated before transport")
         return self._call("sendMessage", self._plain_payload(chat_id, text, reply_to=reply_to, markup=markup))
 
     def edit_screen(self, chat_id: str, message_id: int, screen: Screen, *, context: ProviderContext | None = None):
+        context = context or ProviderContext(current_message_id=message_id)
         plan = self._render(screen, context)
+        self._ensure_keyboard_supported(plan.keyboard)
         if self.capabilities.platform == "telegram":
             if plan.protect_content or plan.delivery_intent == "new_message" or not self.capabilities.supports_edit:
                 return self.send_screen(chat_id, screen, context=context)
