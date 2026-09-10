@@ -23,6 +23,7 @@ declare(strict_types=1);
     <link rel="stylesheet" href="/assets/ui-v3/operations/operations.css">
     <link rel="stylesheet" href="/assets/ui-v3/app/integration.css">
     <link rel="stylesheet" href="/assets/ui-v3/app/web-schoolhouse-r1.css">
+    <link rel="stylesheet" href="/assets/ui-v3/app/web-mobile-r1.css">
 </head>
 <body>
 <a class="f3-public-skip" href="#main-content">رفتن به محتوای اصلی</a>
