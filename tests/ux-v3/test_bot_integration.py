@@ -241,11 +241,13 @@ class BotV3IntegrationTest(unittest.TestCase):
             payment_status="paid",
         )
         facts = [fact for section in screen.sections for fact in section.facts]
-        labels = {fact.label for fact in facts}
+        labels = [fact.label for fact in facts]
         self.assertIn("وضعیت سفارش", labels)
         self.assertIn("وضعیت پرداخت", labels)
         self.assertIn("دسترسی", labels)
-        self.assertEqual(len({fact.value for fact in facts if fact.label in labels}), len(facts))
+        self.assertEqual(labels.count("وضعیت سفارش"), 1)
+        self.assertEqual(labels.count("وضعیت پرداخت"), 1)
+        self.assertEqual(labels.count("دسترسی"), 1)
 
 
 if __name__ == "__main__":
