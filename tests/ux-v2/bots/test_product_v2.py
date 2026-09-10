@@ -171,7 +171,10 @@ class BotProductV2Test(unittest.TestCase):
         self.assertLessEqual(len(callback.encode("utf-8")), 64)
         action, ref = CallbackCodec.decode(callback)
         self.assertEqual(action, "schp")
-        self.assertNotIn("c2", callback)
+        self.assertNotEqual(ref, "c2")
+        route = self.state.route(ref, "telegram", "student", kind="schedule_page")
+        self.assertIsNotNone(route)
+        self.assertEqual(route["payload"]["cursor"], "c2")
         self.assertIsNone(self.state.route(ref, "telegram", "other-user", kind="schedule_page"))
         second = self.app.callback("student", True, callback).screen
         self.assertIn("صفحه ۲", second.text)
