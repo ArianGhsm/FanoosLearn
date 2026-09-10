@@ -24,7 +24,7 @@ from .ui_v3.core.actions import account_action, help_action, home_action, worksp
 from .ui_v3.core.onboarding import linked_no_workspace_screen
 from .ui_v3.core.workspace import WorkspaceOption, workspace_list_screen
 from .ui_v3.learning import assessment_hub_screen, commerce_hub_screen, order_access_detail_screen, resource_detail_screen
-from .ui_v3.wiring import core_to_runtime, decode_v3_intent, dispatch_v3_intent, legacy_to_core
+from .ui_v3.wiring import core_to_runtime, decode_v3_intent, dispatch_v3_intent
 
 COURSE_PAGE_SIZE = 8
 WORKSPACE_PAGE_SIZE = 5
@@ -300,21 +300,20 @@ class BotApplication(BaseBotApplication):
         return super().callback(subject, private, value)
 
     def prepare_result(self, subject: str, private: bool, result: ActionResult) -> ActionResult:
-        """Attach the canonical V3 Screen without replaying the business action."""
+        """Attach canonical V3 semantics when present without replaying business logic.
+
+        Existing legacy application screens retain their already-valid compact
+        callback payloads and are adapted directly by bot-04. This compatibility
+        path prevents the integration intent registry from reinterpreting legacy
+        CallbackCodec values as new V3 semantic intents.
+        """
         source = result.screen
         if isinstance(source, CoreScreen):
             runtime_screen = core_to_runtime(self, subject, source)
             screen_id = runtime_screen.v3.identifier
         elif isinstance(source, RuntimeScreen):
-            # Protected legacy screens can carry the actual protected payload in
-            # screen.text. Leave that exact payload intact; bot-04 still renders
-            # it through its V3 provider adapter and never downgrades protection.
-            if source.protect_content:
-                runtime_screen = source
-                screen_id = source.presentation.semantic_kind if source.presentation else "protected"
-            else:
-                runtime_screen = core_to_runtime(self, subject, legacy_to_core(source))
-                screen_id = runtime_screen.v3.identifier
+            runtime_screen = source
+            screen_id = source.presentation.semantic_kind if source.presentation else "legacy"
         else:
             return result
 
