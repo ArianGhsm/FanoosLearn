@@ -5,7 +5,7 @@ from typing import Any
 
 from .application import ApplicationConfig, BotApplication as BaseBotApplication
 from .callbacks import CallbackCodec
-from .formatting import format_human_number, is_uuid
+from .formatting import format_human_number, format_time, is_uuid, truncate_text
 from .localization import platform_label
 from .models import ActionResult, Screen as RuntimeScreen
 from .ui_v3.academic import course_detail_screen, course_list_screen, course_unavailable_screen
@@ -21,6 +21,7 @@ from .ui_v3.core import (
 )
 from .ui_v3.core.account import linked_account_screen, unlink_confirmation_screen, unlink_success_screen
 from .ui_v3.core.actions import account_action, help_action, home_action, workspace_action
+from .ui_v3.core.home import HomeSlot, SlotState, active_home_screen
 from .ui_v3.core.onboarding import linked_no_workspace_screen
 from .ui_v3.core.workspace import WorkspaceOption, workspace_list_screen
 from .ui_v3.learning import assessment_hub_screen, commerce_hub_screen, order_access_detail_screen, resource_detail_screen
@@ -82,6 +83,58 @@ class BotApplication(BaseBotApplication):
             ),
         )
 
+    def _home_schedule_slot(self, subject: str, workspace_id: str) -> HomeSlot:
+        try:
+            today, timezone_name, _ = self._today_projection(subject, workspace_id)
+            items = [item for item in today.get("items") or [] if isinstance(item, dict)]
+            if not items:
+                return HomeSlot(
+                    "برنامه امروز",
+                    "برای امروز برنامه‌ای ثبت نشده است.",
+                    state=SlotState.EMPTY,
+                )
+            first = items[0]
+            title = truncate_text(
+                first.get("course_title") or first.get("title") or "رویداد آموزشی",
+                90,
+            )
+            when = format_time(first.get("starts_at"), timezone_name)
+            location = truncate_text(first.get("location_text") or "", 70)
+            detail = f"ساعت {when}" + (f" · {location}" if location else "")
+            return HomeSlot("برنامه نزدیک", title, detail, SlotState.CONTENT)
+        except Exception:
+            return HomeSlot(
+                "برنامه",
+                "برنامه فعلاً قابل دریافت نیست.",
+                "بعداً دوباره بررسی کنید.",
+                SlotState.UNAVAILABLE,
+            )
+
+    def _home_announcement_slot(self, subject: str, workspace_id: str) -> HomeSlot:
+        try:
+            items = self.backend.announcements(
+                self.platform, subject, workspace_id, 1, None
+            ).get("items") or []
+            item = next((value for value in items if isinstance(value, dict)), None)
+            if item is None:
+                return HomeSlot(
+                    "اطلاعیه تازه",
+                    "اطلاعیه تازه‌ای منتشر نشده است.",
+                    state=SlotState.EMPTY,
+                )
+            return HomeSlot(
+                "اطلاعیه تازه",
+                truncate_text(item.get("title") or "اطلاعیه", 100),
+                state=SlotState.CONTENT,
+            )
+        except Exception:
+            return HomeSlot(
+                "اطلاعیه‌ها",
+                "اطلاعیه‌ها فعلاً قابل دریافت نیستند.",
+                "بعداً دوباره بررسی کنید.",
+                SlotState.UNAVAILABLE,
+            )
+
     def home(self, subject: str, notice: str = ""):
         try:
             projection, selected = self._selected(subject)
@@ -94,7 +147,16 @@ class BotApplication(BaseBotApplication):
                 options = self._workspace_options(projection)
                 if options:
                     return self._v3_result(workspace_list_screen(options))
-            return super().home(subject, notice)
+                return self._v3_result(self._no_workspace_screen())
+
+            screen = active_home_screen(
+                self._selected_workspace_label(projection, selected),
+                next_schedule=self._home_schedule_slot(subject, selected),
+                latest_announcement=self._home_announcement_slot(subject, selected),
+            )
+            if notice:
+                screen = replace(screen, footer=f"✅ {truncate_text(notice, 180)}")
+            return self._v3_result(screen)
         except Exception as exc:
             return self._error(exc)
 
