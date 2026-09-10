@@ -7,7 +7,6 @@ import unittest
 from pathlib import Path
 
 from fanoos_bot.api import FanoosApiError
-from fanoos_bot.callbacks import CallbackCodec
 from fanoos_bot.integrated_application import ApplicationConfig, BotApplication
 from fanoos_bot.state import LocalState
 
@@ -15,6 +14,37 @@ from fanoos_bot.state import LocalState
 ROOT = Path(__file__).resolve().parents[3]
 FIXTURE = ROOT / "tests/ux-v2/parity/canonical_fixture.json"
 WEB_PROJECTION = ROOT / "tests/ux-v2/parity/web_semantic_projection.js"
+
+
+def screen_text(screen) -> str:
+    plain = getattr(screen, "plain_text", None)
+    if callable(plain):
+        return plain()
+    return str(getattr(screen, "text", ""))
+
+
+def action_urls(screen) -> list[str]:
+    rows = getattr(screen, "action_rows", None)
+    if rows is not None:
+        return [
+            action.url
+            for row in rows
+            for action in row.actions
+            if action.url
+        ]
+    return [
+        button.url
+        for row in getattr(screen, "rows", ())
+        for button in row
+        if button.url
+    ]
+
+
+def action_labels(screen) -> list[str]:
+    rows = getattr(screen, "action_rows", None)
+    if rows is not None:
+        return [action.label for row in rows for action in row.actions]
+    return [button.text for row in getattr(screen, "rows", ()) for button in row]
 
 
 class CanonicalBackend:
@@ -120,7 +150,12 @@ class CrossChannelSemanticParityTest(unittest.TestCase):
         self.bale_state = LocalState(Path(self.temp.name) / "bale.db")
         config = ApplicationConfig("https://fanoos.test/", "production")
         self.telegram = BotApplication(self.backend, self.telegram_state, "telegram", config)
-        self.bale = BotApplication(self.backend, self.bale_state, "bale", ApplicationConfig("https://fanoos.test/"))
+        self.bale = BotApplication(
+            self.backend,
+            self.bale_state,
+            "bale",
+            ApplicationConfig("https://fanoos.test/"),
+        )
 
     def tearDown(self):
         self.telegram_state.close()
@@ -129,29 +164,33 @@ class CrossChannelSemanticParityTest(unittest.TestCase):
 
     def test_workspace_course_schedule_grade_announcement_resource_parity(self):
         for app in (self.telegram, self.bale):
-            home = app.home("student").screen.text
+            home = screen_text(app.home("student").screen)
             self.assertIn(self.web["workspace"]["name"], home)
 
-            courses = app.courses("student").screen.text
+            courses = screen_text(app.courses("student").screen)
             self.assertIn(self.web["course"]["title"], courses)
             self.assertIn(self.web["course"]["code"], courses)
             self.assertNotIn(self.web["course"]["id"], courses)
 
-            schedule = app.day_schedule("student", 0).screen.text
+            schedule = screen_text(app.day_schedule("student", 0).screen)
             self.assertIn(self.web["schedule"]["title"], schedule)
             self.assertIn(self.web["schedule"]["course"], schedule)
             self.assertIn(self.web["schedule"]["time"], schedule)
             self.assertIn(self.web["schedule"]["location"], schedule)
 
-            grades = app.grades("student").screen.text
+            grades = screen_text(app.grades("student").screen)
             self.assertIn(self.web["grade"]["course"], grades)
             self.assertIn("۱۸ از ۲۰", grades)
 
-            announcements = app.announcements("student").screen.text
+            announcements = screen_text(app.announcements("student").screen)
             self.assertIn(self.web["announcement"]["title"], announcements)
             self.assertIn(self.web["announcement"]["body"], announcements)
 
-            resource = app.resource_detail("student", self.fixture["resource"]["resource_id"]).screen.text
+            resource = screen_text(
+                app.resource_detail(
+                    "student", self.fixture["resource"]["resource_id"]
+                ).screen
+            )
             self.assertIn(self.web["resource"]["title"], resource)
             self.assertIn(self.web["resource"]["course"], resource)
             self.assertIn(self.web["resource"]["type"], resource)
@@ -178,66 +217,91 @@ class CrossChannelSemanticParityTest(unittest.TestCase):
             (self.telegram, self.telegram_state, "telegram"),
             (self.bale, self.bale_state, "bale"),
         ):
-            first = app.courses("student").screen
-            self.assertIn("درس 01", first.text)
-            self.assertNotIn("درس 13", first.text)
-            next_button = next(button for row in first.rows for button in row if button.text == "بعدی ›")
-            self.assertLessEqual(len(next_button.callback.encode("utf-8")), 64)
-            action, ref = CallbackCodec.decode(next_button.callback)
-            self.assertEqual(action, "coursep")
-            self.assertIsNone(state.route(ref, platform, "other-user", kind="courses_page"))
+            screen = app.courses("student").screen
+            pages: list[str] = []
+            while True:
+                pages.append(screen_text(screen))
+                pagination = getattr(screen, "pagination", None)
+                next_action = getattr(pagination, "next", None) if pagination else None
+                if next_action is None:
+                    break
+                intent = next_action.intent
+                self.assertIsNotNone(intent)
+                callback = intent.compact()
+                self.assertIsNotNone(callback)
+                self.assertLessEqual(len(callback.encode("utf-8")), 64)
+                self.assertTrue(callback.startswith("r:"))
+                ref = callback[2:]
+                self.assertIsNone(
+                    state.route(ref, platform, "other-user", kind="v3_intent")
+                )
+                screen = app.callback("student", True, callback).screen
 
-            second = app.callback("student", True, next_button.callback).screen
-            self.assertIn("درس 13", second.text)
-            second_next = next(button for row in second.rows for button in row if button.text == "بعدی ›")
-            third = app.callback("student", True, second_next.callback).screen
-            self.assertIn("درس 25", third.text)
-            self.assertIn("درس 35", third.text)
+            combined = "\n".join(pages)
+            self.assertGreaterEqual(len(pages), 5)
             for course in canonical_courses:
-                self.assertNotIn(course["course_id"], first.text + second.text + third.text)
+                self.assertIn(course["course_title"], combined)
+                self.assertNotIn(course["course_id"], combined)
 
     def test_assessment_capability_difference_is_explicit_and_safe(self):
         self.assertEqual(self.web["assessment"]["type"], "تمرین")
         for app in (self.telegram, self.bale):
             screen = app.assessments("student").screen
-            self.assertIn("آزمون‌ها", screen.text)
-            self.assertIn("projection", screen.text)
-            self.assertNotIn("امتیاز", screen.text.replace("امتیاز یا وضعیت آزمون", ""))
-            self.assertTrue(any(button.url == "https://fanoos.test/" for row in screen.rows for button in row if button.url))
+            text = screen_text(screen)
+            self.assertIn("آزمون‌ها", text)
+            self.assertIn("projection", text)
+            self.assertNotIn("امتیاز", text.replace("امتیاز محلی", ""))
+            self.assertIn("https://fanoos.test/", action_urls(screen))
 
     def test_commerce_payment_and_entitlement_meanings_match(self):
         for app in (self.telegram, self.bale):
-            order = app.create_order("student", CanonicalBackend.PRODUCT, "parity-order-1").screen.text
+            order = screen_text(
+                app.create_order(
+                    "student", CanonicalBackend.PRODUCT, "parity-order-1"
+                ).screen
+            )
             self.assertIn(self.web["order"]["title"], order)
             self.assertIn(self.web["order"]["amount"], order)
             self.assertIn(self.web["order"]["status"], order)
 
-            status = app.order_status("student", "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee").screen.text
+            status = screen_text(
+                app.order_status(
+                    "student", "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee"
+                ).screen
+            )
             self.assertIn(self.web["payment"]["status"], status)
             self.assertIn("دسترسی: فعال نیست", status)
+            self.assertIn("وضعیت پرداخت", status)
 
     def test_security_parity_and_channel_specific_protection(self):
         for app in (self.telegram, self.bale):
-            denied = app.select_workspace("student", "99999999-9999-4999-8999-999999999999").screen.text
+            denied = screen_text(
+                app.select_workspace(
+                    "student", "99999999-9999-4999-8999-999999999999"
+                ).screen
+            )
             self.assertIn("در دسترس نیست", denied)
             self.assertNotIn("workspace_forbidden", denied)
 
-        telegram_delivery = self.telegram.protected_resource("student", self.fixture["resource"]["resource_id"])
+        telegram_delivery = self.telegram.protected_resource(
+            "student", self.fixture["resource"]["resource_id"]
+        )
         self.assertTrue(telegram_delivery.screen.protect_content)
-        bale_delivery = self.bale.protected_resource("student", self.fixture["resource"]["resource_id"])
-        self.assertIn("ارسال انجام نشد", bale_delivery.screen.text)
+        bale_delivery = self.bale.protected_resource(
+            "student", self.fixture["resource"]["resource_id"]
+        )
+        self.assertIn("ارسال انجام نشد", screen_text(bale_delivery.screen))
         self.assertFalse(bale_delivery.screen.protect_content)
 
     def test_owner_deployment_surface_exists_only_on_private_telegram_path(self):
         telegram_owner = self.telegram.more("owner", private=True).screen
-        owner_labels = [button.text for row in telegram_owner.rows for button in row]
-        self.assertIn("⚙️ مدیریت", owner_labels)
+        self.assertIn("⚙️ مدیریت", action_labels(telegram_owner))
 
         telegram_public = self.telegram.more("owner", private=False).screen
-        self.assertNotIn("⚙️ مدیریت", [button.text for row in telegram_public.rows for button in row])
+        self.assertNotIn("⚙️ مدیریت", action_labels(telegram_public))
 
         bale_owner = self.bale.more("owner", private=True).screen
-        self.assertNotIn("⚙️ مدیریت", [button.text for row in bale_owner.rows for button in row])
+        self.assertNotIn("⚙️ مدیریت", action_labels(bale_owner))
 
 
 if __name__ == "__main__":
