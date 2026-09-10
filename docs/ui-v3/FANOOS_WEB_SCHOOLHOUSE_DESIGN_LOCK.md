@@ -71,12 +71,12 @@ Use color blocks selectively. The default canvas is warm off-white. White is for
 
 ## Typography
 
-Primary Website family: `IRANSansX Fanoos`, sourced only from the user-supplied `IRANSansXVF.ttf` and served locally as a WOFF2 format conversion.
+Primary Website family: `YekanBakh Fanoos`, sourced only from the user-supplied `YekanBakh-Regular.ttf` and `YekanBakh-Bold.ttf`. The Persian/Arabic UI glyph set is served locally as WOFF2 with real 400 and 700 files; Latin/ASCII glyphs intentionally fall through to the system stack for mixed RTL/LTR stability.
 
 Rules:
 
 - `@font-face` must use `font-display: swap`.
-- Variable weight range `100 1000` is valid and real; do not synthesize bold from a regular master.
+- Use the real supplied 400 and 700 faces; do not synthesize bold from the regular face. Intermediate UI weights may resolve through the nearest real face/system fallback rather than fake a new font file.
 - No external font CDN.
 - Use the family throughout public and authenticated Website surfaces.
 - Public hero may reach approximately `3.1rem–5.65rem` when viewport permits.

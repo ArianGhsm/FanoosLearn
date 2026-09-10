@@ -7,7 +7,7 @@ const read = (file) => fs.readFileSync(path.join(ROOT, file), 'utf8');
 
 const index = read('apps/platform/public/index.php');
 const tokens = read('apps/platform/public/assets/ui-v3/foundation/tokens.css');
-const fontCss = read('apps/platform/public/assets/fonts/iransansx/fonts.css');
+const fontCss = read('apps/platform/public/assets/fonts/yekanbakh/fonts.css');
 const theme = read('apps/platform/public/assets/ui-v3/app/web-schoolhouse-r1.css');
 const designLock = read('docs/ui-v3/FANOOS_WEB_SCHOOLHOUSE_DESIGN_LOCK.md');
 
@@ -28,14 +28,17 @@ for (const text of ['دانشگاهت،', 'درس‌ها، برنامه، جزو
 }
 assert.equal(/testimonial|partner logo|دانشجوی فعال|هزار دانشجو|میلیون دانشجو/i.test(index), false, 'public Home must not fabricate social proof');
 
-assert.ok(index.includes('/assets/fonts/iransansx/fonts.css'));
+assert.ok(index.includes('/assets/fonts/yekanbakh/fonts.css'));
 assert.ok(index.includes('/assets/ui-v3/app/web-schoolhouse-r1.css'));
 assert.ok(index.indexOf('/assets/ui-v3/app/integration.css') < index.indexOf('/assets/ui-v3/app/web-schoolhouse-r1.css'), 'Website presentation authority must load after structural V3 CSS');
-assert.ok(fontCss.includes('font-family: "IRANSansX Fanoos"'));
-assert.ok(fontCss.includes('IRANSansXVF.woff2'));
-assert.ok(fontCss.includes('font-weight: 100 1000'));
+assert.ok(fontCss.includes('font-family: "YekanBakh Fanoos"'));
+assert.ok(fontCss.includes('YekanBakh-Regular-fa.woff2'));
+assert.ok(fontCss.includes('YekanBakh-Bold-fa.woff2'));
+assert.ok(fontCss.includes('font-weight: 400'));
+assert.ok(fontCss.includes('font-weight: 700'));
+assert.ok(fontCss.includes('unicode-range:'));
 assert.ok(fontCss.includes('font-display: swap'));
-assert.ok(tokens.includes('--f3-font-sans: "IRANSansX Fanoos"'));
+assert.ok(tokens.includes('--f3-font-sans: "YekanBakh Fanoos"'));
 
 assert.ok(tokens.includes('--f3-bg: #F7F4EC'));
 assert.ok(tokens.includes('--f3-primary: #4954D6'));

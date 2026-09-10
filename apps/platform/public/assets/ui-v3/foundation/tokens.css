@@ -87,8 +87,8 @@
   --f3-radius-feature: 28px;
   --f3-radius-pill: 999px;
 
-  /* Typography. IRANSansX is bundled locally from the user-supplied font package. */
-  --f3-font-sans: "IRANSansX Fanoos", "Vazirmatn", "IRANSansX", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, Arial, sans-serif;
+  /* Typography. YekanBakh regular/bold are bundled locally from the user-supplied font package. */
+  --f3-font-sans: "YekanBakh Fanoos", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, Arial, sans-serif;
   --f3-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   --f3-type-display-size: clamp(2.55rem, 5vw, 4.5rem);
   --f3-type-display-line: 1.18;

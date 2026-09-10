@@ -31,9 +31,11 @@ No Schoolhouse runtime URL, logo, illustration, photo, testimonial, copy or bran
 
 `Persian Fonts.zip` was inspected before source changes.
 
-Selected family: the supplied `IRANSansXVF.ttf` variable font (`wght` 100–1000). It is converted locally to WOFF2 only as a delivery format optimization and stored under:
+Selected family: the supplied `YekanBakh-Regular.ttf` and `YekanBakh-Bold.ttf`. Persian/Arabic UI glyphs are converted locally to WOFF2 and stored under:
 
-`apps/platform/public/assets/fonts/iransansx/`
+`apps/platform/public/assets/fonts/yekanbakh/`
+
+The 400 and 700 faces are real supplied weights rather than synthetic browser bolding. Latin/ASCII text falls through to the system stack for mixed RTL/LTR stability.
 
 `font-display: swap` is used. No external font source or CDN is introduced.
 
@@ -43,7 +45,7 @@ Selected family: the supplied `IRANSansXVF.ttf` variable font (`wght` 100–1000
 
 - `index.php`: adds complete Persian public landing composition and Website Design Lock marker while preserving one V3 application root/bootstrap.
 - Foundation tokens: changes Website color, typography, spacing, radius, shadow and compatibility aliases centrally.
-- `fonts.css`: local variable font registration.
+- `fonts.css`: two local WOFF2 faces using the supplied real 400/700 weights and a bounded Persian/Arabic Unicode range.
 - `web-schoolhouse-r1.css`: bounded Website presentation authority for public landing, auth continuation, shell and domain visual reconciliation.
 - Documentation: visual audit, Website visual addendum and source-level visual review.
 - Tests: deterministic redesign contract validates public sections, local font, design-lock marker, original/no-runtime-Schoolhouse rule, responsive guards, local-only dependencies and preserved single V3 boot.

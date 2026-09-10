@@ -10,7 +10,7 @@ declare(strict_types=1);
     <meta name="theme-color" content="#F7F4EC">
     <meta name="description" content="فانوس؛ فضای آموزشی دانشجو برای درس‌ها، برنامه، منابع، آزمون‌ها و نمرات.">
     <title>فانوس | دانشگاهت، مرتب‌تر از همیشه</title>
-    <link rel="stylesheet" href="/assets/fonts/iransansx/fonts.css">
+    <link rel="stylesheet" href="/assets/fonts/yekanbakh/fonts.css">
     <link rel="stylesheet" href="/assets/ui-v3/foundation/tokens.css">
     <link rel="stylesheet" href="/assets/ui-v3/foundation/base.css">
     <link rel="stylesheet" href="/assets/ui-v3/foundation/components.css">
