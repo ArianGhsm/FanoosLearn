@@ -152,6 +152,21 @@ class BotApplication(BaseBotApplication):
         except Exception as exc:
             return self._error(exc)
 
+    def _courses(self, subject: str, workspace_id: str):
+        """Use only the backend's authorized canonical course projection.
+
+        Internal-v1 currently exposes this projection nested in schedule. Activity
+        rows, grades and resources are not allowed to invent course truth.
+        """
+        projection, _, _ = self._today_projection(subject, workspace_id)
+        return [
+            dict(row)
+            for row in (projection.get("courses") or [])
+            if isinstance(row, dict)
+            and is_uuid(row.get("course_id"))
+            and str(row.get("course_title") or row.get("title") or "").strip()
+        ]
+
     def _course_page_ref(self, subject: str, page: int) -> str:
         return self.state.create_route(
             self.platform,
@@ -202,10 +217,13 @@ class BotApplication(BaseBotApplication):
             )
             if not course:
                 return self._v3_result(course_unavailable_screen())
+            # Assessments and course-scoped announcements are intentionally not
+            # advertised here because internal-v1 has no bot-safe assessment
+            # projection and announcements have no canonical course binding.
             return self._v3_result(
                 course_detail_screen(
                     course,
-                    supported_actions=("schedule", "resources", "assessments", "grades", "announcements"),
+                    supported_actions=("schedule", "resources", "grades"),
                 )
             )
         except Exception as exc:
