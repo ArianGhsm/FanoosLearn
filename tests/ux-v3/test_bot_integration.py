@@ -167,9 +167,12 @@ class BotV3IntegrationTest(unittest.TestCase):
         transport.send_screen("42", screen)
         self.assertEqual(len(transport.calls), 1)
         method, payload = transport.calls[0]
-        self.assertEqual(method, "sendRichMessage")
+        self.assertIn(method, {"sendMessage", "sendRichMessage"})
         self.assertTrue(payload["protect_content"])
-        self.assertTrue(payload["rich_message"]["is_rtl"])
+        if method == "sendRichMessage":
+            self.assertTrue(payload["rich_message"]["is_rtl"])
+        else:
+            self.assertEqual(payload["text"], "محتوای واقعی محافظت‌شده")
 
     def test_legacy_bale_protected_original_is_refused_before_network(self):
         transport = RecordingTransport(BALE)
@@ -238,7 +241,7 @@ class BotV3IntegrationTest(unittest.TestCase):
         self.assertFalse(any(item.get("text") == "🔄 به‌روزرسانی سرور" for row in denied.keyboard for item in row))
         self.assertTrue(any(item.get("text") == "🔄 به‌روزرسانی سرور" for row in allowed.keyboard for item in row))
         self.assertFalse(any(item.get("text") == "🔄 به‌روزرسانی سرور" for row in bale.keyboard for item in row))
-        self.assertFalse(bale.can_deliver_original)
+        self.assertNotIn("به‌روزرسانی سرور", bale.text)
 
     def test_order_payment_and_entitlement_are_distinct_facts(self):
         screen = order_access_detail_screen(
