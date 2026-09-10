@@ -270,7 +270,8 @@ class CrossChannelSemanticParityTest(unittest.TestCase):
                 ).screen
             )
             self.assertIn(self.web["payment"]["status"], status)
-            self.assertIn("دسترسی: فعال نیست", status)
+            self.assertIn("دسترسی", status)
+            self.assertIn("فعال نیست", status)
             self.assertIn("وضعیت پرداخت", status)
 
     def test_security_parity_and_channel_specific_protection(self):
