@@ -1,40 +1,54 @@
 :root {
-  /* Canonical V3 palette — FANOOS-UX-2026.09-R1 */
-  --f3-bg: #F6F8F7;
-  --f3-bg-elevated: #FBFCFB;
+  /*
+   * FANOOS Website visual system — FANOOS-WEB-UX-2026.09-SCHOOLHOUSE-R1
+   * Shared V3 behavior remains governed by FANOOS-UX-2026.09-R1.
+   */
+  --f3-bg: #F7F4EC;
+  --f3-bg-elevated: #FCFAF6;
   --f3-surface: #FFFFFF;
-  --f3-surface-subtle: #F0F4F2;
-  --f3-surface-strong: #E7EEEA;
+  --f3-surface-subtle: #F1EFE7;
+  --f3-surface-strong: #EAE6DA;
 
-  --f3-text: #13201C;
-  --f3-text-secondary: #53635D;
-  --f3-text-tertiary: #788680;
+  --f3-text: #22243A;
+  --f3-text-secondary: #62657A;
+  --f3-text-tertiary: #85879A;
   --f3-text-inverse: #FFFFFF;
 
-  --f3-border: #DCE5E1;
-  --f3-border-strong: #C8D6D0;
+  --f3-border: #E4E0D5;
+  --f3-border-strong: #D4CEBF;
 
-  --f3-primary: #126B57;
-  --f3-primary-hover: #0E5A49;
-  --f3-primary-pressed: #0A493C;
-  --f3-primary-soft: #E4F2EC;
+  --f3-primary: #4954D6;
+  --f3-primary-hover: #3D47C1;
+  --f3-primary-pressed: #313AA5;
+  --f3-primary-soft: #ECEEFF;
 
-  --f3-accent: #5B5BD6;
-  --f3-accent-soft: #EEEEFF;
+  --f3-accent: #D86658;
+  --f3-accent-soft: #FFF0EC;
 
-  --f3-lantern: #D99A22;
-  --f3-lantern-soft: #FFF4D9;
+  --f3-lantern: #F0B43C;
+  --f3-lantern-soft: #FFF3CD;
 
-  --f3-success: #067647;
-  --f3-success-soft: #E7F6EC;
-  --f3-warning: #A15C07;
-  --f3-warning-soft: #FFF1D6;
-  --f3-danger: #B42318;
-  --f3-danger-soft: #FDECEC;
-  --f3-info: #175CD3;
-  --f3-info-soft: #EAF2FF;
+  --f3-success: #287A5A;
+  --f3-success-soft: #E7F5EE;
+  --f3-warning: #94620D;
+  --f3-warning-soft: #FFF0CF;
+  --f3-danger: #B43E4D;
+  --f3-danger-soft: #FDECEF;
+  --f3-info: #3B63C8;
+  --f3-info-soft: #EAF0FF;
 
-  /* Semantic status aliases. Status presentation always includes readable text. */
+  /* Compatibility aliases consumed by existing V3 structural modules. */
+  --f3-primary-strong: var(--f3-primary-pressed);
+  --f3-surface-soft: var(--f3-surface-subtle);
+  --f3-secondary: #6871A8;
+  --f3-attention: var(--f3-warning);
+  --f3-text-muted: var(--f3-text-secondary);
+  --f3-shadow-sm: 0 8px 24px rgba(34, 36, 58, 0.06);
+  --f3-radius-xs: 8px;
+  --f3-radius-md: 16px;
+  --f3-radius-lg: 22px;
+
+  /* Semantic status aliases. Meaning always includes readable text. */
   --f3-status-neutral-fg: var(--f3-text-secondary);
   --f3-status-neutral-bg: var(--f3-surface-subtle);
   --f3-status-neutral-border: var(--f3-border);
@@ -51,7 +65,7 @@
   --f3-status-info-bg: var(--f3-info-soft);
   --f3-status-info-border: color-mix(in srgb, var(--f3-info) 24%, var(--f3-border));
 
-  /* Spacing */
+  /* Spacing: generous public rhythm, compact-enough authenticated work. */
   --f3-space-1: 4px;
   --f3-space-2: 8px;
   --f3-space-3: 12px;
@@ -62,49 +76,53 @@
   --f3-space-8: 40px;
   --f3-space-9: 48px;
   --f3-space-10: 64px;
+  --f3-space-11: 80px;
+  --f3-space-12: 96px;
 
-  /* Radius */
-  --f3-radius-sm: 8px;
-  --f3-radius-control: 11px;
-  --f3-radius-surface: 15px;
-  --f3-radius-dialog: 20px;
+  /* Shape: friendly, but surfaces are not automatically cards. */
+  --f3-radius-sm: 9px;
+  --f3-radius-control: 12px;
+  --f3-radius-surface: 16px;
+  --f3-radius-dialog: 22px;
+  --f3-radius-feature: 28px;
   --f3-radius-pill: 999px;
 
-  /* Typography */
-  --f3-font-sans: "Vazirmatn", "IRANSansX", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, Arial, sans-serif;
+  /* Typography. YekanBakh regular/bold are bundled locally from the user-supplied font package. */
+  --f3-font-sans: "YekanBakh Fanoos", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, Arial, sans-serif;
   --f3-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  --f3-type-display-size: clamp(2rem, 4vw, 2.25rem);
-  --f3-type-display-line: 1.25;
-  --f3-type-h1-size: clamp(1.75rem, 3vw, 2rem);
+  --f3-type-display-size: clamp(2.55rem, 5vw, 4.5rem);
+  --f3-type-display-line: 1.18;
+  --f3-type-h1-size: clamp(2rem, 3vw, 2.65rem);
   --f3-type-h1-line: 1.35;
-  --f3-type-h2-size: clamp(1.375rem, 2vw, 1.5rem);
-  --f3-type-h2-line: 1.45;
-  --f3-type-h3-size: clamp(1.125rem, 1.5vw, 1.25rem);
-  --f3-type-h3-line: 1.55;
-  --f3-type-body-lg-size: 1.0625rem;
-  --f3-type-body-size: 0.9375rem;
-  --f3-type-meta-size: 0.8125rem;
+  --f3-type-h2-size: clamp(1.45rem, 2vw, 1.8rem);
+  --f3-type-h2-line: 1.5;
+  --f3-type-h3-size: clamp(1.08rem, 1.5vw, 1.25rem);
+  --f3-type-h3-line: 1.6;
+  --f3-type-body-lg-size: 1.075rem;
+  --f3-type-body-size: 0.975rem;
+  --f3-type-meta-size: 0.8rem;
   --f3-type-body-line: 1.85;
-  --f3-type-body-lg-line: 1.9;
-  --f3-type-meta-line: 1.7;
+  --f3-type-body-lg-line: 1.95;
+  --f3-type-meta-line: 1.75;
   --f3-weight-regular: 400;
   --f3-weight-medium: 500;
-  --f3-weight-semibold: 650;
+  --f3-weight-semibold: 600;
   --f3-weight-bold: 700;
+  --f3-weight-extrabold: 800;
 
-  /* Elevation */
-  --f3-shadow-surface: 0 1px 2px rgba(19, 32, 28, 0.04);
-  --f3-shadow-float: 0 12px 32px rgba(19, 32, 28, 0.10), 0 2px 8px rgba(19, 32, 28, 0.06);
-  --f3-shadow-hero: 0 18px 44px rgba(18, 107, 87, 0.10), 0 1px 3px rgba(19, 32, 28, 0.05);
-  --f3-overlay: rgba(19, 32, 28, 0.44);
+  /* Depth is intentionally restrained. */
+  --f3-shadow-surface: 0 1px 2px rgba(34, 36, 58, 0.035);
+  --f3-shadow-float: 0 20px 52px rgba(34, 36, 58, 0.10), 0 3px 10px rgba(34, 36, 58, 0.05);
+  --f3-shadow-hero: 0 26px 70px rgba(73, 84, 214, 0.12);
+  --f3-overlay: rgba(34, 36, 58, 0.42);
 
   /* Interaction */
-  --f3-focus: #175CD3;
-  --f3-focus-ring: 0 0 0 3px rgba(23, 92, 211, 0.20);
+  --f3-focus: #3155C9;
+  --f3-focus-ring: 0 0 0 3px rgba(49, 85, 201, 0.18);
   --f3-control-min: 44px;
   --f3-motion-micro: 140ms;
-  --f3-motion-surface: 190ms;
-  --f3-motion-overlay: 230ms;
+  --f3-motion-surface: 180ms;
+  --f3-motion-overlay: 220ms;
   --f3-ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --f3-ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -119,12 +137,12 @@
 
   /* Responsive composition */
   --f3-viewport-min: 320px;
-  --f3-container-readable: 760px;
-  --f3-container-content: 1180px;
+  --f3-container-readable: 780px;
+  --f3-container-content: 1220px;
   --f3-container-wide: 1440px;
   --f3-edge-mobile: 16px;
-  --f3-edge-tablet: 24px;
-  --f3-edge-desktop: 36px;
-  --f3-section-gap: 36px;
-  --f3-group-gap: 20px;
+  --f3-edge-tablet: 28px;
+  --f3-edge-desktop: 44px;
+  --f3-section-gap: 52px;
+  --f3-group-gap: 24px;
 }
