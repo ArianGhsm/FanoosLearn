@@ -17,9 +17,10 @@ const index = read('apps/platform/public/index.php');
 const tokens = read('apps/platform/public/assets/ui-v3/foundation/tokens.css');
 const fontCss = read('apps/platform/public/assets/fonts/yekanbakh/fonts.css');
 const theme = read('apps/platform/public/assets/ui-v3/app/web-schoolhouse-r1.css');
+const mobileTheme = read('apps/platform/public/assets/ui-v3/app/web-mobile-r1.css');
 const designLock = read('docs/ui-v3/FANOOS_WEB_SCHOOLHOUSE_DESIGN_LOCK.md');
 
-const runtimeSource = [index, tokens, fontCss, theme].join('\n');
+const runtimeSource = [index, tokens, fontCss, theme, mobileTheme].join('\n');
 
 assert.equal((index.match(/class="f3-public-home"/g) || []).length, 1, 'one public landing root required');
 assert.equal((index.match(/id="fanoos-v3-root"/g) || []).length, 1, 'one V3 app root required');
@@ -38,6 +39,8 @@ assert.equal(/testimonial|partner logo|دانشجوی فعال|هزار دانش
 
 assert.ok(index.includes('/assets/fonts/yekanbakh/fonts.css'));
 assert.ok(index.includes('/assets/ui-v3/app/web-schoolhouse-r1.css'));
+assert.ok(index.includes('/assets/ui-v3/app/web-mobile-r1.css'));
+assert.ok(index.indexOf('/assets/ui-v3/app/web-schoolhouse-r1.css') < index.indexOf('/assets/ui-v3/app/web-mobile-r1.css'), 'Mobile presentation authority must load after the main Website theme');
 assert.ok(index.indexOf('/assets/ui-v3/app/integration.css') < index.indexOf('/assets/ui-v3/app/web-schoolhouse-r1.css'), 'Website presentation authority must load after structural V3 CSS');
 assert.ok(fontCss.includes('font-family: "YekanBakh Fanoos"'));
 assert.ok(fontCss.includes('YekanBakh-Regular-fa.woff2'));
@@ -68,6 +71,11 @@ assert.ok(theme.includes('min-width: var(--f3-viewport-min)'));
 assert.ok(tokens.includes('--f3-viewport-min: 320px'));
 assert.ok(theme.includes('@media (min-width: 1440px)'));
 assert.ok(theme.includes('env(safe-area-inset-bottom'));
+assert.ok(mobileTheme.includes('.f3-public-home *::before'), 'public mobile tree must use bounded box sizing');
+assert.ok(mobileTheme.includes('box-sizing: border-box'), 'mobile CTA sizing guard missing');
+assert.ok(mobileTheme.includes('.f3-public-login-shell .f3-shell-button--primary'), 'login primary override missing');
+assert.ok(mobileTheme.includes('color: #fff'), 'primary action contrast guard missing');
+assert.ok(mobileTheme.includes('grid-template-columns: repeat(2,minmax(0,1fr))'), 'mobile product strip must remain compact');
 
 assert.ok(theme.includes('@media (prefers-reduced-motion: reduce)'));
 assert.ok(index.includes('class="f3-public-skip"'));
@@ -80,7 +88,8 @@ assert.equal(/https?:\/\//i.test(runtimeSource), false, 'redesign runtime must r
 assert.equal(/schoolhouse\.world/i.test(runtimeSource), false, 'no Schoolhouse runtime dependency is allowed');
 const visibleIndex = index.replace(/FANOOS-WEB-UX-2026\.09-SCHOOLHOUSE-R1/g, 'DESIGN_LOCK');
 assert.equal(/>\s*Schoolhouse\s*</i.test(visibleIndex), false, 'Schoolhouse branding must never appear as user-facing HTML text');
-assert.equal(/!important/.test(theme), false, 'redesign layer must not use important carpet-bombing');
+assert.equal(/!important/.test(theme + mobileTheme), false, 'redesign layers must not use important carpet-bombing');
 assert.ok(theme.split('\n').length < 1200, 'Website presentation layer must remain bounded rather than becoming a second framework');
+assert.ok(mobileTheme.split('\n').length < 220, 'Mobile override must remain a small presentation layer');
 
 console.log('ui-v3 schoolhouse-inspired web redesign contract: PASS');
