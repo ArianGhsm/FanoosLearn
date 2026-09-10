@@ -4,13 +4,13 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from fanoos_bot.botapi import BotApiError, JsonBotApiTransport
 from fanoos_bot.capabilities import BALE, TELEGRAM
 from fanoos_bot.integrated_application import ApplicationConfig, BotApplication
 from fanoos_bot.models import Screen as RuntimeScreen, ScreenPresentation
-from fanoos_bot.botapi import JsonBotApiTransport
 from fanoos_bot.state import LocalState
 from fanoos_bot.ui_v3.academic import course_list_screen
-from fanoos_bot.ui_v3.core import Action, ActionRow, CallbackIntent, Screen as CoreScreen
+from fanoos_bot.ui_v3.core import Action, ActionRow, CallbackIntent, ProtectContent, Screen as CoreScreen
 from fanoos_bot.ui_v3.learning import order_access_detail_screen
 from fanoos_bot.ui_v3.providers import BaleV3Renderer, ProviderContext, TelegramV3Renderer
 from fanoos_bot.ui_v3.providers.core_adapter import provider_screen
@@ -153,7 +153,7 @@ class BotV3IntegrationTest(unittest.TestCase):
         self.assertTrue(plan.rich_message["is_rtl"])
         self.assertIn("نمای سریع آموزشی", plan.rich_message["html"])
 
-    def test_protected_telegram_send_is_one_plain_atomic_operation(self):
+    def test_legacy_protected_telegram_send_is_one_atomic_provider_operation(self):
         transport = RecordingTransport(TELEGRAM, rich=True)
         screen = RuntimeScreen(
             "محتوای واقعی محافظت‌شده",
@@ -167,12 +167,11 @@ class BotV3IntegrationTest(unittest.TestCase):
         transport.send_screen("42", screen)
         self.assertEqual(len(transport.calls), 1)
         method, payload = transport.calls[0]
-        self.assertEqual(method, "sendMessage")
-        self.assertEqual(payload["text"], "محتوای واقعی محافظت‌شده")
+        self.assertEqual(method, "sendRichMessage")
         self.assertTrue(payload["protect_content"])
-        self.assertNotIn("rich_message", payload)
+        self.assertTrue(payload["rich_message"]["is_rtl"])
 
-    def test_bale_protected_delivery_fails_closed_without_source_leak(self):
+    def test_legacy_bale_protected_original_is_refused_before_network(self):
         transport = RecordingTransport(BALE)
         screen = RuntimeScreen(
             "محتوای محرمانه منبع",
@@ -183,13 +182,25 @@ class BotV3IntegrationTest(unittest.TestCase):
                 severity="success",
             ),
         )
-        transport.send_screen("42", screen)
-        self.assertEqual(len(transport.calls), 1)
-        method, payload = transport.calls[0]
-        self.assertEqual(method, "sendMessage")
-        self.assertNotIn("محتوای محرمانه منبع", payload["text"])
-        self.assertIn("محافظت", payload["text"])
-        self.assertNotIn("protect_content", payload)
+        with self.assertRaisesRegex(BotApiError, "forward_protection_unsupported"):
+            transport.send_screen("42", screen)
+        self.assertEqual(transport.calls, [])
+
+    def test_v3_bale_protected_policy_produces_safe_explanation(self):
+        source = CoreScreen(
+            identifier="learning.protected.ready",
+            title="🔒 محتوای محافظت‌شده",
+            intro="نسخه امن آماده است.",
+            protect_content=ProtectContent.REQUIRED,
+        )
+        plan = BaleV3Renderer().render(
+            provider_screen(source),
+            context=ProviderContext(private_chat=True),
+        )
+        self.assertFalse(plan.can_deliver_original)
+        self.assertEqual(plan.failure_reason, "forward_protection_unavailable")
+        self.assertIn("محافظت", plan.text)
+        self.assertNotIn("نسخه امن آماده است", plan.text)
 
     def test_owner_management_requires_private_telegram_and_permission(self):
         source = CoreScreen(
