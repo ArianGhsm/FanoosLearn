@@ -32,7 +32,7 @@ WHERE NOT EXISTS (SELECT 1 FROM directory_countries WHERE code = 'IR');
 INSERT INTO directory_provinces (id, country_id, code, name, status, created_at, updated_at)
 SELECT UUID(), country.id, province.code, province.name, 'active', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
 FROM (
-    SELECT 'hormozgan' AS code, 'هرمزگان' AS name UNION ALL
+    SELECT 'hormozgan' AS `code`, 'هرمزگان' AS `name` UNION ALL
     SELECT 'hamedan', 'همدان' UNION ALL
     SELECT 'khorasan-shomali', 'خراسان شمالی' UNION ALL
     SELECT 'khuzestan', 'خوزستان' UNION ALL
@@ -84,7 +84,7 @@ SELECT UUID(), city.id, CONCAT('legacy-', LPAD(institution.ordinal, 3, '0')), in
        CASE WHEN institution.admission_system = 'azad' THEN 'azad_university' ELSE 'medical_university' END,
        'active', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
 FROM (
-    SELECT 1 AS ordinal, 'هرمزگان' AS province, 'دانشکده علوم پزشکی شرق هرمزگان' AS name, 'public' AS admission_system UNION ALL
+    SELECT 1 AS `ordinal`, 'هرمزگان' AS `province`, 'دانشکده علوم پزشکی شرق هرمزگان' AS `name`, 'public' AS `admission_system` UNION ALL
     SELECT 2, 'هرمزگان', 'دانشکده علوم پزشکی غرب هرمزگان', 'public' UNION ALL
     SELECT 3, 'همدان', 'دانشکده علوم پزشکی اسدآباد', 'public' UNION ALL
     SELECT 4, 'خراسان شمالی', 'دانشکده علوم پزشکی اسفراین', 'public' UNION ALL
