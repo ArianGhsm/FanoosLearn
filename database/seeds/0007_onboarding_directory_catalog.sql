@@ -81,10 +81,10 @@ WHERE NOT EXISTS (
 
 INSERT INTO directory_institutions (id, city_id, slug, name, institution_type, status, created_at, updated_at)
 SELECT UUID(), city.id, CONCAT('legacy-', LPAD(institution.ordinal, 3, '0')), institution.name,
-       CASE WHEN institution.system = 'azad' THEN 'azad_university' ELSE 'medical_university' END,
+       CASE WHEN institution.admission_system = 'azad' THEN 'azad_university' ELSE 'medical_university' END,
        'active', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
 FROM (
-    SELECT 1 AS ordinal, 'هرمزگان' AS province, 'دانشکده علوم پزشکی شرق هرمزگان' AS name, 'public' AS system UNION ALL
+    SELECT 1 AS ordinal, 'هرمزگان' AS province, 'دانشکده علوم پزشکی شرق هرمزگان' AS name, 'public' AS admission_system UNION ALL
     SELECT 2, 'هرمزگان', 'دانشکده علوم پزشکی غرب هرمزگان', 'public' UNION ALL
     SELECT 3, 'همدان', 'دانشکده علوم پزشکی اسدآباد', 'public' UNION ALL
     SELECT 4, 'خراسان شمالی', 'دانشکده علوم پزشکی اسفراین', 'public' UNION ALL
