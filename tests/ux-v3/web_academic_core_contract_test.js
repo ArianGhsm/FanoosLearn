@@ -29,13 +29,13 @@ assert.ok(platform.includes("course.status = 'active'"), 'web course projection 
 assert.ok(platform.includes("status <> 'archived' AND archived_at IS NULL"), 'web academic projection must apply status and archive gates');
 assert.ok(platform.includes("session.status <> 'archived'"), 'web session projection must hide archived sessions');
 assert.ok(platform.includes("offering.status <> 'archived'"), 'web offering projection must hide archived offerings');
-assert.ok(platform.includes('(event.offering_id IS NULL OR offering.id IS NOT NULL)'), 'web schedule must retain workspace events but reject stale academic links');
+assert.ok(platform.includes('event.offering_id IS NULL OR (offering.id IS NOT NULL AND term.id IS NOT NULL)'), 'web schedule must retain workspace events but reject stale academic links');
 assert.ok(bot.includes("course.status = 'active'"), 'bot course projection must expose active courses only');
 assert.ok(bot.includes("term.status <> 'archived'"), 'bot course projection must hide archived terms');
 assert.ok(bot.includes("offering.status <> 'archived'"), 'bot projections must hide archived offerings');
 assert.ok(scheduleProjection.includes("course.status = 'active'"), 'schedule projection must hide inactive courses');
 assert.ok(scheduleProjection.includes("offering.status <> 'archived'"), 'schedule projection must hide archived offerings');
-assert.ok(scheduleProjection.includes('(event.offering_id IS NULL OR offering.id IS NOT NULL)'), 'schedule must reject stale academic links');
+assert.ok(scheduleProjection.includes('event.offering_id IS NULL OR (offering.id IS NOT NULL AND term.id IS NOT NULL)'), 'schedule must reject stale academic links');
 
 assert.ok(courses.includes("pattern: '/courses/:courseCode'"), 'course route must use human course code');
 assert.ok(courses.includes('/api/v1/workspaces/${encodeURIComponent(workspace)}/academics'), 'course UI must use canonical workspace endpoint');
@@ -55,7 +55,7 @@ assert.ok(view.includes('course.code'), 'human course code must remain the visib
 
 for (const phrase of [
   'No new academic CRUD UI or endpoint was invented',
-  'Course-scoped announcements remain unavailable',
+  'Stage 5 time course-scoped announcements were unavailable',
   'workspace-scoped',
   'archived',
 ]) {

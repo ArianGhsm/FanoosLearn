@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fanoos\Platform\Core;
 
 use DateTimeImmutable;
+use DateTimeZone;
 use Fanoos\Platform\Audit\AuditLogger;
 use Fanoos\Platform\Authorization\AccessGate;
 use Fanoos\Platform\Support\PlatformException;
@@ -72,11 +73,19 @@ SQL);
     public function schedule(string $actorUserId, string $workspaceId, string $from, string $to): array
     {
         $this->access->requireWorkspace($actorUserId, $workspaceId, 'academic.view');
-        $start = new DateTimeImmutable($from);
-        $end = new DateTimeImmutable($to);
+        $timezone = $this->workspaceTimezone($workspaceId);
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $from) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $to)) {
+            throw new PlatformException('invalid_date', 'Schedule dates must use YYYY-MM-DD.', 422);
+        }
+        $start = DateTimeImmutable::createFromFormat('!Y-m-d', $from, $timezone);
+        $end = DateTimeImmutable::createFromFormat('!Y-m-d', $to, $timezone);
+        if ($start === false || $start->format('Y-m-d') !== $from || $end === false || $end->format('Y-m-d') !== $to) {
+            throw new PlatformException('invalid_date', 'Schedule date is invalid.', 422);
+        }
         if ($end < $start || $end->getTimestamp() - $start->getTimestamp() > 400 * 86400) {
             throw new PlatformException('invalid_date_range', 'Schedule range must be ordered and no longer than 400 days.', 422);
         }
+        $utc = new DateTimeZone('UTC');
         $query = $this->database->prepare(<<<'SQL'
 SELECT event.id, event.event_type, event.title, event.starts_at, event.ends_at,
        event.location_text, event.status, offering.id AS offering_id,
@@ -86,16 +95,18 @@ LEFT JOIN academic_course_offerings offering ON offering.id = event.offering_id 
  AND offering.status <> 'archived' AND offering.archived_at IS NULL
 LEFT JOIN academic_courses course ON course.id = offering.course_id AND course.workspace_id = offering.workspace_id
  AND course.status = 'active' AND course.archived_at IS NULL
+LEFT JOIN academic_terms term ON term.id = offering.term_id AND term.workspace_id = offering.workspace_id
+ AND term.status <> 'archived' AND term.archived_at IS NULL
 WHERE event.workspace_id = :workspace
   AND event.starts_at >= :starts_at AND event.starts_at < :ends_at
-  AND (event.offering_id IS NULL OR offering.id IS NOT NULL)
+  AND (event.offering_id IS NULL OR (offering.id IS NOT NULL AND term.id IS NOT NULL))
   AND event.status <> 'cancelled'
 ORDER BY event.starts_at, event.id
 SQL);
         $query->execute([
             'workspace' => $workspaceId,
-            'starts_at' => $start->format('Y-m-d H:i:s'),
-            'ends_at' => $end->format('Y-m-d H:i:s'),
+            'starts_at' => $start->setTimezone($utc)->format('Y-m-d H:i:s'),
+            'ends_at' => $end->modify('+1 day')->setTimezone($utc)->format('Y-m-d H:i:s'),
         ]);
         return $query->fetchAll();
     }
@@ -105,13 +116,19 @@ SQL);
     {
         $this->access->requireWorkspace($actorUserId, $workspaceId, 'grade.view_self');
         $query = $this->database->prepare(<<<'SQL'
-SELECT course.course_code, course.title AS course_title, gradebook.title AS gradebook_title,
-       item.item_key, item.title AS item_title, item.max_score, result.score, result.updated_at
+SELECT course.course_code, course.title AS course_title,
+       term.id AS term_id, term.term_key, term.name AS term_name,
+       offering.id AS offering_id, gradebook.title AS gradebook_title,
+       item.item_key, item.title AS item_title, item.max_score, result.score, result.status AS result_status, result.updated_at
 FROM tenant_workspace_memberships membership
 JOIN academic_enrollments enrollment ON enrollment.membership_id = membership.id
  AND enrollment.workspace_id = membership.workspace_id AND enrollment.status IN ('active', 'completed')
 JOIN academic_course_offerings offering ON offering.id = enrollment.offering_id AND offering.workspace_id = enrollment.workspace_id
+ AND offering.status <> 'archived' AND offering.archived_at IS NULL
+JOIN academic_terms term ON term.id = offering.term_id AND term.workspace_id = offering.workspace_id
+ AND term.status <> 'archived' AND term.archived_at IS NULL
 JOIN academic_courses course ON course.id = offering.course_id AND course.workspace_id = offering.workspace_id
+ AND course.status = 'active' AND course.archived_at IS NULL
 JOIN grade_gradebooks gradebook ON gradebook.offering_id = offering.id
  AND gradebook.workspace_id = offering.workspace_id AND gradebook.status = 'published'
 JOIN grade_items item ON item.gradebook_id = gradebook.id AND item.workspace_id = gradebook.workspace_id
@@ -125,19 +142,35 @@ SQL);
     }
 
     /** @return list<array<string, mixed>> */
-    public function announcements(string $actorUserId, string $workspaceId): array
+    public function announcements(string $actorUserId, string $workspaceId, ?string $courseId = null): array
     {
         $this->access->requireWorkspace($actorUserId, $workspaceId, 'notification.receive');
-        $query = $this->database->prepare(<<<'SQL'
-SELECT message.id, message.title, message.body, message.data_json, message.published_at,
+        $where = [
+            'recipient.workspace_id = :workspace',
+            'recipient.user_id = :user',
+            "recipient.channel = 'web'",
+            "message.status = 'published'",
+            'message.archived_at IS NULL',
+        ];
+        $parameters = ['workspace' => $workspaceId, 'user' => $actorUserId];
+        if ($courseId !== null && trim($courseId) !== '') {
+            $where[] = 'scope_course.id = :course';
+            $parameters['course'] = trim($courseId);
+        }
+        $query = $this->database->prepare(sprintf(<<<'SQL'
+SELECT message.id, message.title, message.body, message.published_at,
+       scope_course.course_code AS scope_course_code,
+       scope_course.title AS scope_course_title,
+       JSON_UNQUOTE(JSON_EXTRACT(message.data_json, '$.scope_label')) AS scope_label,
        recipient.status, recipient.read_at
 FROM notification_recipients recipient
 JOIN notification_messages message ON message.id = recipient.notification_id AND message.workspace_id = recipient.workspace_id
-WHERE recipient.workspace_id = :workspace AND recipient.user_id = :user
-  AND recipient.channel = 'web' AND message.status = 'published' AND message.archived_at IS NULL
+LEFT JOIN academic_courses scope_course ON scope_course.id = JSON_UNQUOTE(JSON_EXTRACT(message.data_json, '$.course_id'))
+ AND scope_course.workspace_id = message.workspace_id AND scope_course.status = 'active' AND scope_course.archived_at IS NULL
+WHERE %s
 ORDER BY message.published_at DESC, message.id DESC
-SQL);
-        $query->execute(['workspace' => $workspaceId, 'user' => $actorUserId]);
+SQL, implode(' AND ', $where)));
+        $query->execute($parameters);
         return $query->fetchAll();
     }
 
@@ -160,7 +193,7 @@ SQL);
         }
     }
 
-    public function publishAnnouncement(string $actorUserId, string $workspaceId, string $title, string $body): string
+    public function publishAnnouncement(string $actorUserId, string $workspaceId, string $title, string $body, ?string $courseId = null): string
     {
         $this->access->requireWorkspace($actorUserId, $workspaceId, 'notification.broadcast');
         $title = trim($title);
@@ -168,16 +201,25 @@ SQL);
         if ($title === '' || mb_strlen($title) > 200 || $body === '') {
             throw new PlatformException('invalid_announcement', 'Announcement title and body are required.', 422);
         }
+        $courseId = $courseId === null || trim($courseId) === '' ? null : trim($courseId);
+        if ($courseId !== null) {
+            $course = $this->database->prepare("SELECT 1 FROM academic_courses WHERE id = :course AND workspace_id = :workspace AND status = 'active' AND archived_at IS NULL LIMIT 1");
+            $course->execute(['course' => $courseId, 'workspace' => $workspaceId]);
+            if ($course->fetchColumn() === false) {
+                throw new PlatformException('course_not_found', 'Announcement course scope was not found in this workspace.', 404);
+            }
+        }
 
-        return Transaction::run($this->database, function () use ($actorUserId, $workspaceId, $title, $body): string {
+        return Transaction::run($this->database, function () use ($actorUserId, $workspaceId, $title, $body, $courseId): string {
             $id = Uuid::v7();
+            $data = json_encode($courseId === null ? [] : ['course_id' => $courseId], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
             $message = $this->database->prepare(<<<'SQL'
 INSERT INTO notification_messages (
     id, workspace_id, message_type, title, body, data_json, status,
     created_by_user_id, created_at, published_at
-) VALUES (:id, :workspace, 'announcement', :title, :body, JSON_OBJECT(), 'published', :actor, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))
+) VALUES (:id, :workspace, 'announcement', :title, :body, :data, 'published', :actor, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))
 SQL);
-            $message->execute(['id' => $id, 'workspace' => $workspaceId, 'title' => $title, 'body' => $body, 'actor' => $actorUserId]);
+            $message->execute(['id' => $id, 'workspace' => $workspaceId, 'title' => $title, 'body' => $body, 'data' => $data, 'actor' => $actorUserId]);
             $recipients = $this->database->prepare(<<<'SQL'
 INSERT INTO notification_recipients (
     id, workspace_id, notification_id, user_id, channel, status, delivered_at, created_at
@@ -238,16 +280,23 @@ SQL);
         $this->access->requireWorkspace($actorUserId, $workspaceId, 'form.submit');
         $query = $this->database->prepare(<<<'SQL'
 SELECT form.id, form.title, form.description, form.allow_multiple, form.opens_at, form.closes_at,
-       version.id AS version_id, version.schema_json
+       version.id AS version_id, version.schema_json,
+       submission.status AS submission_status, submission.submitted_at
 FROM form_definitions form
 JOIN form_versions version ON version.form_id = form.id AND version.workspace_id = form.workspace_id
  AND version.version_no = form.current_version_no
+LEFT JOIN (
+    SELECT form_id, MAX(status) AS status, MAX(submitted_at) AS submitted_at
+    FROM form_submissions
+    WHERE workspace_id = :submission_workspace AND submitter_user_id = :submission_user AND status = 'submitted'
+    GROUP BY form_id
+) submission ON submission.form_id = form.id
 WHERE form.workspace_id = :workspace AND form.status = 'open' AND form.archived_at IS NULL
   AND (form.opens_at IS NULL OR form.opens_at <= UTC_TIMESTAMP(6))
   AND (form.closes_at IS NULL OR form.closes_at > UTC_TIMESTAMP(6))
 ORDER BY form.created_at DESC
 SQL);
-        $query->execute(['workspace' => $workspaceId]);
+        $query->execute(['workspace' => $workspaceId, 'submission_workspace' => $workspaceId, 'submission_user' => $actorUserId]);
         return $query->fetchAll();
     }
 
@@ -559,5 +608,20 @@ SQL);
             throw new PlatformException('workspace_scope_not_found', 'Workspace authorization scope was not found.', 500);
         }
         return (string) $id;
+    }
+
+    private function workspaceTimezone(string $workspaceId): DateTimeZone
+    {
+        $query = $this->database->prepare("SELECT timezone_name FROM tenant_workspaces WHERE id = :workspace AND status = 'active' AND archived_at IS NULL LIMIT 1");
+        $query->execute(['workspace' => $workspaceId]);
+        $name = $query->fetchColumn();
+        if ($name === false) {
+            throw new PlatformException('workspace_not_found', 'Workspace was not found.', 404);
+        }
+        try {
+            return new DateTimeZone((string) $name);
+        } catch (\Exception) {
+            throw new PlatformException('workspace_timezone_invalid', 'Workspace timezone configuration is invalid.', 500);
+        }
     }
 }

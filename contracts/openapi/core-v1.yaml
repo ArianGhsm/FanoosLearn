@@ -60,7 +60,7 @@ paths:
   /workspaces/{workspaceId}/grades/me:
     get: { operationId: listMyPublishedGrades, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
   /workspaces/{workspaceId}/announcements:
-    get: { operationId: listAnnouncements, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+    get: { operationId: listAnnouncements, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: course_id, in: query, required: false, description: Optional active course scope; interpreted only within the selected workspace., schema: { $ref: '#/components/schemas/Uuid' } }], responses: { '200': { $ref: '#/components/responses/Success' } } }
     post: { operationId: publishAnnouncement, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' } } }
   /workspaces/{workspaceId}/announcements/{announcementId}/read:
     post:

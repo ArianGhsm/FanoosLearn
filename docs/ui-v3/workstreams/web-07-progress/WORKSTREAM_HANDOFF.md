@@ -116,8 +116,8 @@ The assessment analytics endpoint is intentionally not consumed because it is ma
 ### Grades
 
 - `GET /api/v1/workspaces/{workspaceId}/grades/me`
-  - current fields: `course_code`, `course_title`, `gradebook_title`, `item_key`, `item_title`, `max_score`, `score`, `updated_at`.
-  - backend already filters to published gradebooks/results and active/completed enrollment relation.
+  - current fields: `course_code`, `course_title`, `term_id`, `term_key`, `term_name`, `offering_id`, `gradebook_title`, `item_key`, `item_title`, `max_score`, `score`, `result_status`, `updated_at`.
+  - backend filters to published gradebooks/results, active/completed enrollment relation, active courses, non-archived offerings and non-archived terms.
 
 ## Integration imports / dependencies
 
@@ -188,7 +188,7 @@ Needed projection: presentation-safe assessment availability metadata with works
 
 ### GAP-PROGRESS-04 — Grade term/completeness/weighting authority is incomplete
 
-Current `/grades/me` rows do not include `term_id`, `term_name`, offering identity, item weight, completeness, finalization policy, GPA or an authoritative aggregate.
+Current `/grades/me` rows include explicit term/offering identity for grouping, but do not include item weight, completeness, finalization policy, GPA or an authoritative aggregate.
 
 The separate `/academics` projection has terms/offerings, but joining grade rows to it by title/code would be ambiguous across repeated offerings and is therefore not treated as academic truth.
 

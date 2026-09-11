@@ -87,7 +87,8 @@ assert.ok(read('apps/platform/public/assets/ui-v3/home/home.js').includes('parti
 
 assert.ok(courses.includes("pattern: '/courses/:courseCode'"), 'human course detail route missing');
 for (const slot of ['course.schedule', 'course.resources', 'course.assessments', 'course.grades', 'course.announcements']) assert.ok(courseView.includes(slot), `course slot missing: ${slot}`);
-assert.ok(bootstrap.includes("courseAnnouncements: false"), 'course announcement association must remain disabled without canonical binding');
+assert.ok(bootstrap.includes('courseAnnouncements: true'), 'course announcement slot must be enabled only after canonical binding support');
+assert.ok(bootstrap.includes("'course.announcements'"), 'course announcement slot must be registered');
 assert.ok(bootstrap.includes('createCourseLearningEmbed'));
 assert.ok(bootstrap.includes('renderCourseGradesSlot'));
 assert.ok(bootstrap.includes("slotName === 'course.schedule'"));

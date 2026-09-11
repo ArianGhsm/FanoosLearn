@@ -128,12 +128,13 @@ final class ApiKernel
             return ['status' => 200, 'data' => $this->platform->myGrades($session->userId, $workspaceId)];
         }
         if ($request->method === 'GET' && $suffix === '/announcements') {
-            return ['status' => 200, 'data' => $this->platform->announcements($session->userId, $workspaceId)];
+            return ['status' => 200, 'data' => $this->platform->announcements($session->userId, $workspaceId, $request->query['course_id'] ?? null)];
         }
         if ($request->method === 'POST' && $suffix === '/announcements') {
             return ['status' => 201, 'data' => ['id' => $this->platform->publishAnnouncement(
                 $session->userId, $workspaceId,
                 (string) ($request->body['title'] ?? ''), (string) ($request->body['body'] ?? ''),
+                isset($request->body['course_id']) ? (string) $request->body['course_id'] : null,
             )]];
         }
         if ($request->method === 'POST' && preg_match('#^/announcements/([0-9a-f-]+)/read$#', $suffix, $match)) {

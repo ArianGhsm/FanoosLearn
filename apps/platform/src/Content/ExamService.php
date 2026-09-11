@@ -209,11 +209,19 @@ SQL, ['version_no' => $state['version_no'], 'assessment' => $assessmentId, 'work
         }
         $query = $this->database->prepare(sprintf(<<<'SQL'
 SELECT assessment.id, assessment.title, assessment.current_version_no,
-       metadata.assessment_kind, metadata.course_id, policy.requires_entitlement, policy.max_attempts
+       metadata.assessment_kind, metadata.course_id, course.course_code, course.title AS course_title,
+       term.id AS term_id, term.term_key, term.name AS term_name,
+       policy.requires_entitlement, policy.max_attempts
 FROM exam_assessments assessment
 JOIN exam_assessment_metadata metadata ON metadata.assessment_id = assessment.id AND metadata.workspace_id = assessment.workspace_id
 JOIN exam_access_policies policy ON policy.assessment_id = assessment.id AND policy.workspace_id = assessment.workspace_id
+LEFT JOIN academic_course_offerings offering ON offering.id = assessment.offering_id AND offering.workspace_id = assessment.workspace_id
+LEFT JOIN academic_terms term ON term.id = offering.term_id AND term.workspace_id = offering.workspace_id
+LEFT JOIN academic_courses course ON course.id = metadata.course_id AND course.workspace_id = assessment.workspace_id
 WHERE %s
+  AND (assessment.offering_id IS NULL OR (offering.status <> 'archived' AND offering.archived_at IS NULL))
+  AND (assessment.offering_id IS NULL OR (term.status <> 'archived' AND term.archived_at IS NULL))
+  AND (metadata.course_id IS NULL OR (course.status = 'active' AND course.archived_at IS NULL))
 ORDER BY assessment.updated_at DESC
 LIMIT 100
 SQL, implode(' AND ', $where)));
@@ -405,8 +413,15 @@ JOIN exam_version_states state ON state.assessment_version_id = version.id
 JOIN rbac_scopes scope ON scope.scope_type = 'assessment' AND scope.entity_id = assessment.id
  AND scope.workspace_id = assessment.workspace_id AND scope.archived_at IS NULL
 JOIN exam_access_policies policy ON policy.assessment_id = assessment.id AND policy.workspace_id = assessment.workspace_id
+LEFT JOIN academic_course_offerings offering ON offering.id = assessment.offering_id AND offering.workspace_id = assessment.workspace_id
+LEFT JOIN academic_terms term ON term.id = offering.term_id AND term.workspace_id = offering.workspace_id
+LEFT JOIN exam_assessment_metadata metadata ON metadata.assessment_id = assessment.id AND metadata.workspace_id = assessment.workspace_id
+LEFT JOIN academic_courses course ON course.id = metadata.course_id AND course.workspace_id = assessment.workspace_id
 WHERE assessment.id = :assessment AND assessment.workspace_id = :workspace
  AND assessment.status = 'published' AND assessment.archived_at IS NULL
+ AND (assessment.offering_id IS NULL OR (offering.status <> 'archived' AND offering.archived_at IS NULL))
+ AND (assessment.offering_id IS NULL OR (term.status <> 'archived' AND term.archived_at IS NULL))
+ AND (metadata.course_id IS NULL OR (course.status = 'active' AND course.archived_at IS NULL))
 LIMIT 1
 SQL);
         $query->execute(['assessment' => $assessmentId, 'workspace' => $workspaceId]);
@@ -568,7 +583,7 @@ SQL, ['workspace' => $workspaceId, 'assessment' => $assessmentId, 'version' => $
         $offering = $this->uuid($metadata['offering_id'] ?? null, 'offering_id_invalid');
         $source = $this->uuid($metadata['source_resource_id'] ?? null, 'source_resource_id_invalid');
         if ($offering !== null) {
-            $query = $this->database->prepare('SELECT course_id FROM academic_course_offerings WHERE id = :offering AND workspace_id = :workspace');
+            $query = $this->database->prepare("SELECT course_id FROM academic_course_offerings WHERE id = :offering AND workspace_id = :workspace AND status <> 'archived' AND archived_at IS NULL");
             $query->execute(['offering' => $offering, 'workspace' => $workspaceId]);
             $foundCourse = $query->fetchColumn();
             if ($foundCourse === false || ($course !== null && !hash_equals($course, (string) $foundCourse))) {
@@ -632,7 +647,8 @@ SQL, [
         if (!in_array($table, ['academic_courses', 'content_resources'], true)) {
             throw new \LogicException('Unsupported exam metadata entity.');
         }
-        $query = $this->database->prepare("SELECT 1 FROM {$table} WHERE id = :id AND workspace_id = :workspace LIMIT 1");
+        $lifecycle = $table === 'academic_courses' ? " AND status = 'active' AND archived_at IS NULL" : '';
+        $query = $this->database->prepare("SELECT 1 FROM {$table} WHERE id = :id AND workspace_id = :workspace{$lifecycle} LIMIT 1");
         $query->execute(['id' => $id, 'workspace' => $workspaceId]);
         if ($query->fetchColumn() === false) {
             throw new PlatformException($errorCode, 'Assessment metadata does not belong to this workspace.', 422);

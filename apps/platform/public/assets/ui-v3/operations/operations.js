@@ -456,6 +456,45 @@ function renderAnnouncementDetail(ctx, row, controller) {
   root.append(article);
 }
 
+export async function renderCourseAnnouncementsSlot(ctx, { root, courseId, courseTitle } = {}) {
+  if (!(root instanceof Element) || !text(courseId)) return;
+  const heading = element('h2', { className: 'f3-ops-slot-title', text: 'اطلاعیه‌های درس' });
+  root.replaceChildren(heading, stateBlock('در حال دریافت اطلاعیه‌های درس…', 'فقط اطلاعیه‌های دارای ارتباط canonical با این درس نمایش داده می‌شوند.'));
+  try {
+    const result = await apiRequest(ctx, pathFor(ctx, `/announcements?course_id=${encodeURIComponent(text(courseId))}`), { signal: ctx?.signal });
+    const items = rowsOf(result);
+    if (!items.length) {
+      root.replaceChildren(heading, stateBlock('اطلاعیه‌ای برای این درس منتشر نشده است', courseTitle ? `برای «${bounded(courseTitle, 120)}» اطلاعیهٔ مرتبطی پیدا نشد.` : 'اطلاعیهٔ مرتبطی پیدا نشد.'));
+      return;
+    }
+    const list = element('div', { className: 'f3-ops-list', attrs: { 'aria-label': 'اطلاعیه‌های درس' } });
+    items.forEach((row) => list.append(element('article', { className: 'f3-ops-list-row' },
+      element('div', { className: 'f3-ops-list-row__body' },
+        element('h3', { className: 'f3-ops-list-row__title', text: text(row.title, 'اطلاعیه') }),
+        element('p', { className: 'f3-ops-list-row__preview', text: bounded(row.body, 180) || 'بدون متن پیش‌نمایش' }),
+        metaRow([{ icon: 'clock', value: formatDate(ctx, row.published_at, true) }, { value: row.scope_course_title || courseTitle || 'درس' }]),
+      ),
+      row.status !== 'read' && !row.read_at
+        ? button('خواندم', { variant: 'quiet', onClick: async (event) => {
+          const control = event.currentTarget;
+          control.disabled = true;
+          try {
+            await apiRequest(ctx, pathFor(ctx, `/announcements/${encodeURIComponent(row.id)}/read`), { method: 'POST', body: {}, signal: ctx?.signal });
+            row.status = 'read';
+            row.read_at = new Date().toISOString();
+            control.replaceWith(statusChip('read', 'خوانده‌شده'));
+          } catch (_error) {
+            control.disabled = false;
+          }
+        } })
+        : statusChip('read', 'خوانده‌شده'),
+    )));
+    root.replaceChildren(heading, list);
+  } catch (_error) {
+    root.replaceChildren(heading, stateBlock('اطلاعیه‌های درس دریافت نشدند', 'ارتباط با اطلاعیه‌های مرتبط برقرار نشد.', { tone: 'warning' }));
+  }
+}
+
 function renderNotifications(ctx, controller) {
   const root = controller.root;
   const openAnnouncements = button('رفتن به اطلاعیه‌ها', { variant: 'secondary', onClick: () => controller.navigate(ROUTES.announcements) });
@@ -489,7 +528,9 @@ function schemaFields(row) {
   return Array.isArray(schema?.fields) ? schema.fields.filter((field) => field && typeof field === 'object' && text(field.id)) : [];
 }
 
-function formAvailability() {
+function formAvailability(row) {
+  const submitted = text(row?.submission_status).toLowerCase() === 'submitted';
+  if (submitted) return { key: 'submitted', label: 'پاسخ ثبت شده' };
   return { key: 'open', label: 'باز' };
 }
 
@@ -512,7 +553,10 @@ function renderForms(ctx, result, controller) {
   }
   const list = element('section', { className: 'f3-ops-card-list', attrs: { 'aria-label': 'فرم‌های فعال' } });
   rows.forEach((row) => {
-    const availability = formAvailability();
+    const availability = formAvailability(row);
+    const submitted = availability.key === 'submitted';
+    const allowMultiple = row.allow_multiple === true || row.allow_multiple === 1 || row.allow_multiple === '1';
+    const singleSubmission = !allowMultiple;
     list.append(element('article', { className: 'f3-ops-form-card' },
       element('div', { className: 'f3-ops-form-card__top' },
         element('div', { className: 'f3-ops-feature-icon f3-ops-feature-icon--small' }, icon('form')),
@@ -524,9 +568,13 @@ function renderForms(ctx, result, controller) {
       ),
       metaRow([
         { value: row.closes_at ? `مهلت: ${formatDate(ctx, row.closes_at, true)}` : 'بدون مهلت اعلام‌شده' },
-        { value: row.allow_multiple ? 'امکان ثبت چند پاسخ' : 'یک پاسخ برای هر عضو' },
+        { value: allowMultiple ? 'امکان ثبت چند پاسخ' : 'یک پاسخ برای هر عضو' },
+        { value: row.submitted_at ? `آخرین ثبت: ${formatDate(ctx, row.submitted_at, true)}` : '' },
       ]),
-      element('div', { className: 'f3-ops-form-card__action' }, button('باز کردن فرم', { variant: 'secondary', onClick: () => renderFormDetail(ctx, row, controller) })),
+      element('div', { className: 'f3-ops-form-card__action' }, button(submitted && singleSubmission ? 'پاسخ ثبت شده' : 'باز کردن فرم', {
+        variant: 'secondary', disabled: submitted && singleSubmission,
+        onClick: () => renderFormDetail(ctx, row, controller),
+      })),
     ));
   });
   root.append(list);
@@ -612,6 +660,11 @@ function renderFormDetail(ctx, row, controller) {
   const back = button('بازگشت به فرم‌ها', { variant: 'quiet', onClick: () => controller.render(ROUTES.forms) });
   root.replaceChildren(pageHeader('فرم', text(row.title, 'فرم'), row.closes_at ? `مهلت ثبت: ${formatDate(ctx, row.closes_at, true)}` : 'فرم فعال', back));
   if (row.description) root.append(element('p', { className: 'f3-ops-detail-lead', text: text(row.description) }));
+  const allowMultiple = row.allow_multiple === true || row.allow_multiple === 1 || row.allow_multiple === '1';
+  if (text(row.submission_status).toLowerCase() === 'submitted' && !allowMultiple) {
+    root.append(stateBlock('پاسخ این فرم قبلاً ثبت شده است', row.submitted_at ? `آخرین ثبت: ${formatDate(ctx, row.submitted_at, true)}` : 'برای این فرم یک پاسخ برای هر عضو مجاز است.', { tone: 'success' }));
+    return;
+  }
   if (!fields.length) {
     root.append(stateBlock('ساختار این فرم قابل نمایش نیست', 'فیلدهای قابل‌استفاده از سمت سرور ارائه نشده‌اند. دادهٔ خام فرم نمایش داده نمی‌شود.', { tone: 'warning' }));
     return;

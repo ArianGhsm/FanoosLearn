@@ -51,7 +51,7 @@ The module uses `textContent`-based DOM construction and treats internal course/
 
 No new academic CRUD UI or endpoint was invented. Although the permission registry contains `academic.manage`, the current public canonical API does not expose audited create/update/archive operations for terms, courses, offerings or sessions. A future backend contract must define those operations, authorization, validation and audit semantics before a representative/admin action is added.
 
-Course-scoped announcements remain unavailable because the current notification projection has no trustworthy `course_id` or `offering_id` binding. The UI keeps that capability off instead of guessing from message text. Instructor fields, authoritative GPA/average and assessment progress are likewise not fabricated from unrelated metadata.
+At Stage 5 time course-scoped announcements were unavailable; Stage 6 adds a validated workspace-owned `data_json.course_id` binding and course-filtered projection. Instructor fields, authoritative GPA/average and assessment progress are likewise not fabricated from unrelated metadata.
 
 ## Validation and next handoff
 

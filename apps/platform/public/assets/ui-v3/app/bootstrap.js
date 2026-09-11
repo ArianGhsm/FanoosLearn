@@ -6,14 +6,14 @@ import coursesDefinition from '../courses/index.js';
 import scheduleDefinition from '../schedule/index.js';
 import learningDefinition, { createCourseLearningEmbed } from '../learning/index.js';
 import progressDefinition, { renderCourseGradesSlot } from '../progress/module.js';
-import { moduleDefinition as operationsDefinition } from '../operations/operations.js';
+import { moduleDefinition as operationsDefinition, renderCourseAnnouncementsSlot } from '../operations/operations.js';
 import homeDefinition from './home-module.js';
 
 const DESIGN_LOCK_ID = 'FANOOS-UX-2026.09-R1';
 const TOKEN_KEY = 'fanoos_token';
 const CSRF_KEY = 'fanoos_csrf';
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
-const COURSE_SLOTS = new Set(['course.schedule', 'course.resources', 'course.assessments', 'course.grades']);
+const COURSE_SLOTS = new Set(['course.schedule', 'course.resources', 'course.assessments', 'course.grades', 'course.announcements']);
 const DOMAIN_MODULES = Object.freeze({
   home: homeDefinition,
   courses: coursesDefinition,
@@ -341,7 +341,7 @@ function createCapabilities(api, signal) {
     courseResources: true,
     courseAssessments: true,
     courseGrades: true,
-    courseAnnouncements: false,
+    courseAnnouncements: true,
     routes: Object.freeze({ resources: '/resources' }),
     progress: Object.freeze({ resourcesRoute: '/resources' }),
     learning,
@@ -405,6 +405,10 @@ async function mountCourseSlot(parentCtx, slotName, host, payload = {}) {
   }
   if (slotName === 'course.grades') {
     await renderCourseGradesSlot(parentCtx, { root: host, courseCode: course.code, courseTitle: course.title });
+    return true;
+  }
+  if (slotName === 'course.announcements') {
+    await renderCourseAnnouncementsSlot(parentCtx, { root: host, courseId: course.id, courseCode: course.code, courseTitle: course.title });
     return true;
   }
   if (slotName === 'course.schedule') {
