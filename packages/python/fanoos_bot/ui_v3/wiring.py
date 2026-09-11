@@ -38,6 +38,7 @@ INTENT_REGISTRY: dict[str, str] = {
     "notifications": "notifications",
     "resources": "resources",
     "assessments": "assessments",
+    "payments": "payments",
     "ws.list": "workspaces",
     "ws.page": "workspaces_page",
     "ws.select": "workspace_select",
