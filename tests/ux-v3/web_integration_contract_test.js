@@ -30,7 +30,7 @@ assert.equal((index.match(/id="fanoos-v3-root"/g) || []).length, 1, 'one V3 appl
 assert.ok(index.includes('class="f3-root"'));
 assert.ok(index.includes('FANOOS-UX-2026.09-R1'));
 assert.equal((index.match(/\/assets\/ui-v3\/app\/bootstrap\.js/g) || []).length, 1, 'bootstrap must load once');
-assert.match(index, /<script type="module" src="\/assets\/ui-v3\/app\/bootstrap\.js"><\/script>/);
+assert.ok(index.includes("fanoosAsset('/assets/ui-v3/app/bootstrap.js')"), 'bootstrap must use the cache-busting asset helper');
 assert.equal(index.includes('/assets/ui-v2/'), false, 'V2 must not be part of the primary entrypoint');
 assert.equal(index.includes('/assets/app.js'), false, 'legacy app.js must not boot from the primary entrypoint');
 assert.equal(index.includes('/assets/domain-ux.js'), false, 'legacy domain UX must not boot from the primary entrypoint');
@@ -41,9 +41,9 @@ const cssAssets = [
   'progress/progress.css', 'operations/operations.css', 'app/integration.css',
 ];
 for (const asset of cssAssets) {
-  const needle = `/assets/ui-v3/${asset}`;
-  const literal = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  assert.equal((index.match(new RegExp(`href="${literal}"`, 'g')) || []).length, 1, `${asset} must load exactly once as a stylesheet`);
+  const pathLiteral = asset.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`fanoosAsset\\('/assets/ui-v3/${pathLiteral}'\\)`, 'g');
+  assert.equal((index.match(pattern) || []).length, 1, `${asset} must load exactly once as a stylesheet`);
 }
 assert.ok(index.indexOf('/foundation/tokens.css') < index.indexOf('/foundation/base.css'));
 assert.ok(index.indexOf('/foundation/base.css') < index.indexOf('/foundation/components.css'));
