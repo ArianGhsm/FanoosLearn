@@ -34,7 +34,7 @@ def home_action() -> Action:
 
 
 def back_action() -> Action:
-    return _callback(ACTION_BACK, "بازگشت", "back")
+    return _callback(ACTION_BACK, "‹ بازگشت", "back")
 
 
 def cancel_action() -> Action:
@@ -54,7 +54,7 @@ def help_action() -> Action:
 
 
 def more_action() -> Action:
-    return _callback(ACTION_MORE, "بیشتر", "more")
+    return _callback(ACTION_MORE, "➕ بیشتر", "more")
 
 
 def courses_action() -> Action:

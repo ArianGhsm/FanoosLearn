@@ -68,7 +68,7 @@ class BotManagementVisibilityTest(unittest.TestCase):
         result = self.app.more("owner", True)
         labels = self.labels(result.screen)
         self.assertIn("🏫 انتخاب فضای آموزشی", labels)
-        self.assertEqual(result.screen.presentation.semantic_kind, "workspace_required")
+        self.assertEqual(result.screen.presentation.semantic_kind, "management_without_workspace")
 
     def test_workspaceless_non_owner_sees_unchanged_blocked_screen(self):
         result = self.app.more("student", True)

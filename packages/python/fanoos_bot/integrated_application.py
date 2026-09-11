@@ -59,6 +59,7 @@ RESOURCE_PAGE_SIZE = 12
 _EMPTY_HISTORY_CURSOR = "~"
 _OWNER_ALLOWED_KINDS = {
     "management",
+    "management_without_workspace",
     "deployment_confirmation",
     "deployment_status",
     "deployment_cancelled",
