@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>نوید | ورودی ۱۴۰۲ دندانپزشکی تهران</title>
+    <meta name="description" content="پیگیری تکالیف فعال نوید با نمایش مهلت ارسال، تاریخ ایجاد، متن کامل تکلیف و آخرین به‌روزرسانی‌ها.">
+    <meta name="theme-color" content="#eef2f7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="ورودی ۱۴۰۲">
+    <link rel="manifest" href="/manifest.webmanifest?v=20260722-200509">
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png?v=20260722-200509">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png?v=20260722-200509">
+    <script src="/assets/site/scripts/theme.js?v=20260722-200509"></script>
+    <link rel="stylesheet" href="/assets/site/styles/core.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/navid.css?v=20260823-home-clean2">
+    <link rel="stylesheet" href="/assets/site/styles/theme.css?v=20260812-phase4b">
+</head>
+<body class="navid-page" data-shell-reserve="self">
+    <div class="background-overlay" aria-hidden="true"></div>
+
+    <header class="site-header">
+        <div class="logo-area">
+            <div class="logo-circle">
+                <img src="/assets/images/logo.png?v=20260722-200509" alt="لوگوی ورودی ۱۴۰۲ دندانپزشکی تهران">
+            </div>
+            <div class="site-info">
+                <h1>ورودی ۱۴۰۲ دندانپزشکی تهران</h1>
+                <p>نوید</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a class="header-link" href="/app/">خانه</a>
+        </div>
+    </header>
+
+    <main class="navid-flow" id="navid-flow" data-auth-state="restoring">
+        <section class="navid-hero">
+            <div class="navid-hero__copy">
+                <span class="navid-kicker"><i aria-hidden="true"></i> نوید</span>
+                <h2 class="navid-title">تکالیف</h2>
+                <p class="navid-desc">تکالیف فعال و مهلت‌های نزدیک، مرتب و یک‌جا.</p>
+            </div>
+
+            <aside class="navid-hero__panel" aria-label="خلاصه تکالیف">
+                <div class="navid-hero__panel-grid">
+                    <article class="navid-glance-card">
+                        <span>تعداد تکالیف فعال</span>
+                        <strong id="navid-count-assignments">۰</strong>
+                    </article>
+                    <article class="navid-glance-card">
+                        <span>درس‌های درگیر</span>
+                        <strong id="navid-count-courses">۰</strong>
+                    </article>
+                    <article class="navid-glance-card navid-glance-card--wide">
+                        <span>نزدیک‌ترین مهلت</span>
+                        <strong id="navid-next-deadline">—</strong>
+                    </article>
+                </div>
+            </aside>
+        </section>
+
+        <section id="navid-auth-stage" class="navid-auth-stage" hidden>
+            <div class="navid-auth-card site-login-guard" data-auth-guard data-auth-guard-home="/app/">
+                <span class="site-login-guard__eyebrow">ورود لازم</span>
+                <h3 class="site-login-guard__title">برای دیدن تکالیف وارد شو</h3>
+                <p class="site-login-guard__text">این بخش فقط برای اعضای کلاس نمایش داده می‌شود.</p>
+                <div class="site-login-guard__actions navid-auth-actions">
+                    <a id="navid-login-link" class="shell-action-btn shell-action-btn-primary" href="/account/">ورود به حساب کاربری</a>
+                    <a class="shell-action-btn" data-auth-guard-back data-auth-guard-home="/app/" href="/app/">بازگشت به خانه</a>
+                </div>
+                <div id="navid-auth-feedback" class="navid-feedback" aria-live="polite"></div>
+            </div>
+        </section>
+
+        <section id="navid-loading" class="navid-loading" aria-hidden="false">
+            <div class="navid-skeleton navid-skeleton--hero">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="navid-skeleton navid-skeleton--grid">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </section>
+
+        <section id="navid-dashboard" class="navid-dashboard" hidden>
+            <section class="navid-panel navid-panel--status">
+                <div class="navid-status-head">
+                    <div class="navid-status-head__copy">
+                        <span class="navid-panel__kicker">وضعیت اتصال</span>
+                        <h3 id="navid-status-title">در حال دریافت وضعیت نوید...</h3>
+                        <p id="navid-status-desc">خروجی فعلی، آخرین بررسی و سلامت نشست نوید اینجا خلاصه می‌شود.</p>
+                    </div>
+                    <div class="navid-status-head__actions">
+                        <button id="navid-sync-now" class="shell-action-btn shell-action-btn-primary" type="button" hidden>همگام‌سازی فوری</button>
+                        <button id="navid-owner-jump" class="shell-action-btn" type="button" hidden>تنظیمات مالک</button>
+                    </div>
+                </div>
+
+                <div class="navid-status-grid">
+                    <article class="navid-status-card">
+                        <span>تکالیف فعال</span>
+                        <strong id="navid-count-assignments-status">۰</strong>
+                    </article>
+                    <article class="navid-status-card">
+                        <span>به‌روزرسانی‌های اخیر</span>
+                        <strong id="navid-count-updates">۰</strong>
+                    </article>
+                    <article class="navid-status-card">
+                        <span>آخرین بررسی</span>
+                        <strong id="navid-last-check">—</strong>
+                    </article>
+                    <article class="navid-status-card">
+                        <span>وضعیت نشست</span>
+                        <strong id="navid-session-state">—</strong>
+                    </article>
+                    <article class="navid-status-card">
+                        <span>درس‌های درگیر</span>
+                        <strong id="navid-count-courses-status">۰</strong>
+                    </article>
+                    <article class="navid-status-card">
+                        <span>نزدیک‌ترین مهلت</span>
+                        <strong id="navid-next-deadline-status">—</strong>
+                    </article>
+                </div>
+
+                <div id="navid-feedback" class="navid-feedback navid-feedback--inline" aria-live="polite"></div>
+            </section>
+
+            <section id="navid-owner-box" class="navid-panel navid-panel--owner" hidden>
+                <div class="navid-owner-head">
+                    <div>
+                        <span class="navid-panel__kicker">مدیریت مالک</span>
+                        <h3>مدیریت یکپارچه‌سازی نوید</h3>
+                    </div>
+                    <p>اعتبار ورود، فاصله همگام‌سازی و reconnect کپچا از همین بخش مدیریت می‌شود.</p>
+                    <button id="navid-owner-toggle" class="shell-action-btn" type="button" aria-expanded="false">باز کردن تنظیمات مالک</button>
+                </div>
+                <div id="navid-owner-status-cards" class="navid-owner-status-cards"></div>
+                <div id="navid-owner-details" class="navid-owner-details" hidden>
+                    <form id="navid-owner-config-form" class="navid-owner-form" novalidate>
+                        <div class="navid-owner-form-grid">
+                            <label class="navid-owner-field" for="navid-owner-login-url">
+                                <span>آدرس ورود نوید</span>
+                                <input id="navid-owner-login-url" type="url" placeholder="https://navid.tums.ac.ir/account/loginsipadservice">
+                            </label>
+                            <label class="navid-owner-field" for="navid-owner-sync-interval">
+                                <span>فاصله بررسی (دقیقه)</span>
+                                <input id="navid-owner-sync-interval" type="number" min="5" max="720" step="5" value="30" inputmode="numeric" data-latin-digits="true">
+                            </label>
+                            <label class="navid-owner-field" for="navid-owner-captcha-strategy">
+                                <span>استراتژی کپچا</span>
+                                <select id="navid-owner-captcha-strategy">
+                                    <option value="python_ocr">OCR خودکار (در صورت پشتیبانی سرور)</option>
+                                    <option value="manual_challenge">اتصال مجدد دستی با کپچا</option>
+                                </select>
+                            </label>
+                            <label class="navid-owner-field" for="navid-owner-username">
+                                <span>نام کاربری نوید</span>
+                                <input id="navid-owner-username" type="text" inputmode="numeric" autocomplete="off" placeholder="مثلاً 40211272003" data-latin-digits="true">
+                            </label>
+                            <label class="navid-owner-field navid-owner-field--full" for="navid-owner-password">
+                                <span>رمز نوید</span>
+                                <input id="navid-owner-password" type="password" autocomplete="new-password" placeholder="برای تغییر وارد کن؛ برای حفظ مقدار قبلی خالی بگذار">
+                            </label>
+                        </div>
+                        <div class="navid-owner-actions">
+                            <button id="navid-owner-save-config" class="shell-action-btn shell-action-btn-primary" type="submit">ذخیره تنظیمات نوید</button>
+                            <button id="navid-owner-refresh-status" class="shell-action-btn" type="button">بازخوانی وضعیت</button>
+                        </div>
+                        <div id="navid-owner-config-feedback" class="navid-feedback navid-feedback--inline" aria-live="polite"></div>
+                    </form>
+
+                    <section class="navid-owner-reconnect" aria-label="اتصال مجدد دستی نوید">
+                        <div class="navid-panel__head">
+                            <div>
+                                <span class="navid-panel__kicker">اتصال مجدد</span>
+                                <h3>reconnect دستی با کپچا</h3>
+                            </div>
+                            <p>اگر نشست نوید منقضی شد یا همگام‌سازی به کپچا رسید، از این بخش چالش جدید بگیر و اتصال را کامل کن.</p>
+                        </div>
+                        <div class="navid-owner-reconnect__row">
+                            <button id="navid-owner-get-captcha" class="shell-action-btn" type="button">دریافت کپچا</button>
+                            <input id="navid-owner-captcha-code" type="text" maxlength="8" placeholder="کد کپچا" data-latin-digits="true">
+                            <button id="navid-owner-complete-reconnect" class="shell-action-btn shell-action-btn-primary" type="button">اتصال مجدد</button>
+                        </div>
+                        <img id="navid-owner-captcha-image" class="navid-captcha-image" alt="کپچای نوید" hidden>
+                        <div id="navid-owner-reconnect-feedback" class="navid-feedback navid-feedback--inline" aria-live="polite"></div>
+                    </section>
+                </div>
+            </section>
+
+            <section id="navid-switcher-panel" class="navid-panel navid-panel--switcher">
+                <div class="navid-panel__head">
+                    <div>
+                        <span class="navid-panel__kicker">نمایش محتوا</span>
+                        <h3>بین فهرست تکالیف و آپدیت‌های اخیر جابه‌جا شو</h3>
+                    </div>
+                    <p>برای کوتاه و متمرکز ماندن صفحه، فقط یک نمای اصلی را هم‌زمان می‌بینی.</p>
+                </div>
+                <div class="navid-view-switch" role="toolbar" aria-label="نمایش محتوا">
+                    <button class="navid-view-switch__btn is-active" type="button" data-navid-view="assignments" aria-pressed="true">
+                        <span class="navid-view-switch__label">تکالیف فعال</span>
+                        <strong class="navid-view-switch__count" id="navid-view-assignments-count">۰</strong>
+                    </button>
+                    <button class="navid-view-switch__btn" type="button" data-navid-view="updates" aria-pressed="false">
+                        <span class="navid-view-switch__label">آپدیت‌ها</span>
+                        <strong class="navid-view-switch__count" id="navid-view-updates-count">۰</strong>
+                    </button>
+                </div>
+            </section>
+
+            <section class="navid-content-grid">
+                <section class="navid-panel navid-panel--assignments" id="navid-assignments-panel">
+                    <div class="navid-panel__head">
+                        <div>
+                            <span class="navid-panel__kicker">تکالیف نوید</span>
+                            <h3>سه دسته: فعال، منقضی و آپدیت‌های اخیر</h3>
+                        </div>
+                        <p>تکالیف با مهلت باقی‌مانده بر اساس فوری‌ترین ددلاین مرتب شده‌اند. تکالیف منقضی و آپدیت‌های آخرین sync هم در ادامه قابل مشاهده‌اند.</p>
+                    </div>
+                    <div id="navid-assignments-list" class="navid-list navid-list--assignments"></div>
+                    <button id="navid-assignments-more" class="navid-list-toggle" type="button" hidden></button>
+                </section>
+
+                <aside class="navid-side-rail" id="navid-updates-panel" hidden>
+                    <section class="navid-panel navid-panel--updates">
+                        <div class="navid-panel__head">
+                            <div>
+                                <span class="navid-panel__kicker">آپدیت‌ها</span>
+                                <h3>آخرین تغییرات تشخیص‌داده‌شده</h3>
+                            </div>
+                            <p>برای دیدن اینکه کدام درس تکلیف جدید داده یا محتوایی را عوض کرده، این ستون را چک کن.</p>
+                        </div>
+                        <div id="navid-updates-list" class="navid-list navid-list--updates"></div>
+                        <button id="navid-updates-more" class="navid-list-toggle" type="button" hidden></button>
+                    </section>
+                </aside>
+            </section>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p>ورودی ۱۴۰۲ دندانپزشکی تهران</p>
+    </footer>
+
+    <script src="/assets/site/scripts/auth.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/navid-page.js?v=20260823-home-clean2"></script>
+    <script src="/assets/site/scripts/pwa.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/shell.js?v=20260812-phase3b"></script>
+</body>
+</html>

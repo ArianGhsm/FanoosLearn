@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>ثبت سفارش و پرداخت | ورودی ۱۴۰۲ دندانپزشکی</title>
+    <meta name="description" content="صفحه عمومی جزئیات آیتم مشخص، قیمت، ظرفیت، مهلت، سبد خرید و ثبت سفارش آنلاین دانشجویان دندانپزشکی ورودی ۱۴۰۲.">
+    <meta name="theme-color" content="#eef2f7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="ورودی ۱۴۰۲">
+    <link rel="manifest" href="/manifest.webmanifest?v=20260722-200509">
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png?v=20260722-200509">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png?v=20260722-200509">
+    <script src="/assets/site/scripts/theme.js?v=20260722-200509"></script>
+    <link rel="stylesheet" href="/assets/site/styles/core.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/buy.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/theme.css?v=20260812-phase4b">
+</head>
+<body class="buy-page" data-buy-page="item">
+    <div class="background-overlay" aria-hidden="true"></div>
+
+    <header class="site-header">
+        <div class="logo-area">
+            <div class="logo-circle">
+                <img src="/assets/images/logo.png?v=20260722-200509" alt="لوگوی ورودی ۱۴۰۲ دندانپزشکی">
+            </div>
+            <div class="site-info">
+                <h1>ثبت سفارش و پرداخت</h1>
+                <p>جزئیات آیتم، قیمت شفاف و ادامه پرداخت از سبد خرید</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a class="header-link" href="/buy/cart/">سبد خرید</a>
+            <a class="header-link" href="/buy/">همه آیتم‌ها</a>
+        </div>
+    </header>
+
+    <main class="buy-shell buy-shell--item">
+        <nav class="buy-detail-toolbar" aria-label="اکشن‌های سفارش">
+            <a class="buy-icon-btn" href="/buy/" aria-label="بازگشت به کاتالوگ">
+                <span aria-hidden="true">›</span>
+            </a>
+            <div class="buy-detail-toolbar__actions">
+                <button id="buy-share-item" class="buy-icon-btn" type="button" aria-label="اشتراک‌گذاری آیتم">
+                    <span aria-hidden="true">↗</span>
+                </button>
+                <button id="buy-save-item" class="buy-icon-btn" type="button" aria-label="افزودن به علاقه‌مندی‌ها">
+                    <span aria-hidden="true">♡</span>
+                </button>
+            </div>
+        </nav>
+
+        <section class="buy-item-layout">
+            <article class="buy-detail">
+                <div id="buy-item-hero" class="buy-item-main-hero"></div>
+                <div id="buy-item-gallery" class="buy-gallery" aria-label="گالری آیتم"></div>
+
+                <div class="buy-detail__body">
+                    <div class="buy-breadcrumb">خرید گروهی و ثبت‌نام / <span id="buy-item-category-label">آیتم</span></div>
+                    <span id="buy-item-state" class="buy-status">در حال بارگذاری</span>
+                    <h2 id="buy-item-title">در حال دریافت اطلاعات آیتم...</h2>
+                    <p id="buy-item-short" class="buy-muted">چند لحظه صبر کنید.</p>
+                    <div id="buy-rating-line" class="buy-rating-line"></div>
+
+                    <div class="buy-meta-line">
+                        <span id="buy-item-time">—</span>
+                    </div>
+
+                    <div class="buy-meta-grid">
+                        <div class="buy-meta-card">
+                            <span>مبلغ</span>
+                            <strong id="buy-item-price" class="buy-item-price">—</strong>
+                        </div>
+                        <div class="buy-meta-card">
+                            <span>ظرفیت</span>
+                            <strong id="buy-item-capacity">—</strong>
+                        </div>
+                        <div class="buy-meta-card">
+                            <span>مخاطب</span>
+                            <strong id="buy-item-audience">دانشجویان دندانپزشکی ۱۴۰۲</strong>
+                        </div>
+                        <div class="buy-meta-card">
+                            <span>تحویل/استفاده</span>
+                            <strong id="buy-item-delivery">دانشگاه علوم پزشکی تهران</strong>
+                        </div>
+                    </div>
+
+                    <details class="buy-safety" open>
+                        <summary>
+                            <span class="buy-safety__icon" aria-hidden="true"></span>
+                            <span>این پرداخت فقط برای همین آیتم ثبت می‌شود.</span>
+                        </summary>
+                        <p>این پرداخت فقط برای همین آیتم ثبت می‌شود و مبلغ، وضعیت و نتیجه سفارش در سرور ثبت و قابل پیگیری است.</p>
+                    </details>
+
+                    <section class="buy-copy-block">
+                        <h3>جزئیات</h3>
+                        <div id="buy-item-specs" class="buy-spec-list"></div>
+                    </section>
+
+                    <section class="buy-copy-block">
+                        <h3>توضیحات</h3>
+                        <p id="buy-item-full" class="buy-muted">—</p>
+                    </section>
+
+                    <section class="buy-copy-block buy-policy-list" aria-label="شرایط سفارش">
+                        <h3>شرایط سفارش</h3>
+                        <div id="buy-item-policy" class="buy-spec-list"></div>
+                    </section>
+
+                    <section class="buy-copy-block buy-reviews-block">
+                        <div class="buy-section-title buy-section-title--compact">
+                            <div>
+                                <span class="buy-kicker">دیدگاه‌ها</span>
+                                <h3>امتیاز و نظر کاربران</h3>
+                            </div>
+                            <p id="buy-review-count" class="buy-muted">—</p>
+                        </div>
+                        <div id="buy-item-reviews" class="buy-reviews-list"></div>
+                    </section>
+
+                    <section class="buy-report-block">
+                        <button id="buy-report-link" class="buy-report-btn" type="button">
+                            <span aria-hidden="true">ⓘ</span>
+                            گزارش مشکل در سفارش
+                        </button>
+                    </section>
+                </div>
+            </article>
+
+            <aside class="buy-checkout-card" aria-label="افزودن به سبد خرید">
+                <div class="buy-checkout-card__head">
+                    <span class="buy-kicker">ثبت سفارش</span>
+                    <h3>افزودن به سبد</h3>
+                    <p class="buy-muted">تعداد را انتخاب کنید و ادامه پرداخت را از سبد خرید مرحله‌ای انجام دهید.</p>
+                </div>
+
+                <form id="buy-order-form" class="buy-form" data-buy-item-route-cart="true" novalidate>
+                    <div class="buy-form-step">
+                        <span>۱</span>
+                        <strong>تعداد و مبلغ</strong>
+                    </div>
+
+                    <label class="buy-form__field">
+                        <span>تعداد</span>
+                        <input id="buy-order-quantity" type="number" inputmode="numeric" min="1" max="1" value="1" data-digit-locale="latin">
+                    </label>
+
+                    <div id="buy-price-breakdown" class="buy-price-breakdown" aria-live="polite"></div>
+
+                    <div class="buy-form-step">
+                        <span>۲</span>
+                        <strong>ادامه پرداخت</strong>
+                    </div>
+
+                    <button id="buy-add-to-cart" class="buy-secondary-btn" type="button">افزودن به سبد خرید</button>
+                    <button id="buy-order-submit" class="buy-primary-btn" type="submit">ادامه به پرداخت مرحله‌ای</button>
+                    <div id="buy-order-feedback" class="buy-feedback" aria-live="polite"></div>
+                </form>
+            </aside>
+        </section>
+
+        <div id="buy-floating-bar" class="buy-floating-bar" hidden>
+            <div>
+                <span>مبلغ پرداخت</span>
+                <strong id="buy-floating-price">—</strong>
+            </div>
+            <button id="buy-floating-submit" class="buy-primary-btn" type="button">ادامه پرداخت</button>
+        </div>
+
+        <div id="buy-image-modal" class="buy-image-modal" hidden>
+            <button id="buy-image-modal-close" class="buy-icon-btn" type="button" aria-label="بستن تصویر">×</button>
+            <img id="buy-image-modal-img" alt="">
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <p>ورودی ۱۴۰۲ دندانپزشکی تهران</p>
+    </footer>
+
+    <script src="/assets/site/scripts/auth.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/buy.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/pwa.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/shell.js?v=20260812-phase3b"></script>
+</body>
+</html>
+
+

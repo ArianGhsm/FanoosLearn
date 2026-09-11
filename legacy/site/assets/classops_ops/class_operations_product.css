@@ -1,0 +1,308 @@
+.class-operations-page {
+    --class-card-radius: 24px;
+    --class-gap: clamp(14px, 2vw, 22px);
+}
+
+.class-operations-page .site-header {
+    position: relative;
+    z-index: 2;
+}
+
+.class-operations-main {
+    width: min(1120px, calc(100% - 28px));
+    margin: 0 auto;
+    padding: 16px 0 96px;
+}
+
+.class-operations-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 4px 0 18px;
+}
+
+.class-operations-head__copy {
+    min-width: 0;
+}
+
+.class-operations-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--text-muted, #64748b);
+    font-size: .82rem;
+    font-weight: 700;
+}
+
+.class-operations-kicker::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: currentColor;
+    opacity: .55;
+}
+
+.class-operations-head h2 {
+    margin: 6px 0 0;
+    font-size: clamp(1.55rem, 4vw, 2.35rem);
+    line-height: 1.2;
+}
+
+.class-operations-head p {
+    max-width: 720px;
+    margin: 8px 0 0;
+    color: var(--text-muted, #64748b);
+    line-height: 1.9;
+}
+
+.class-operations-grid {
+    display: grid;
+    gap: var(--class-gap);
+}
+
+.class-operations-grid--two {
+    grid-template-columns: minmax(0, 1.25fr) minmax(280px, .75fr);
+}
+
+.class-operations-card {
+    border: 1px solid color-mix(in srgb, var(--border-color, #d9e2ec) 78%, transparent);
+    border-radius: var(--class-card-radius);
+    background: color-mix(in srgb, var(--surface-color, #fff) 94%, transparent);
+    box-shadow: 0 16px 42px rgba(15, 23, 42, .06);
+    padding: clamp(16px, 2.4vw, 24px);
+    backdrop-filter: blur(18px);
+}
+
+.class-operations-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.class-operations-card__head h3 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.class-operations-card__head p {
+    margin: 5px 0 0;
+    color: var(--text-muted, #64748b);
+    font-size: .88rem;
+    line-height: 1.75;
+}
+
+.class-operations-badge {
+    flex: 0 0 auto;
+    border-radius: 999px;
+    padding: 6px 10px;
+    background: color-mix(in srgb, var(--accent-color, #2563eb) 9%, transparent);
+    color: var(--accent-color, #2563eb);
+    font-size: .77rem;
+    font-weight: 750;
+}
+
+.class-operations-page .classops-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.class-operations-page .classops-form--stack,
+.class-operations-page .classops-form__full,
+.class-operations-page .classops-fieldset {
+    grid-column: 1 / -1;
+}
+
+.class-operations-page label,
+.class-operations-page legend {
+    font-weight: 650;
+    color: var(--text-color, #172033);
+}
+
+.class-operations-page input,
+.class-operations-page select,
+.class-operations-page textarea {
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 7px;
+    border: 1px solid var(--border-color, #dbe2ea);
+    border-radius: 14px;
+    background: var(--surface-color, #fff);
+    color: var(--text-color, #172033);
+    padding: 11px 12px;
+    font: inherit;
+    outline: none;
+    transition: border-color .16s ease, box-shadow .16s ease;
+}
+
+.class-operations-page textarea {
+    resize: vertical;
+    min-height: 92px;
+    line-height: 1.75;
+}
+
+.class-operations-page input:focus,
+.class-operations-page select:focus,
+.class-operations-page textarea:focus {
+    border-color: color-mix(in srgb, var(--accent-color, #2563eb) 68%, #fff);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color, #2563eb) 11%, transparent);
+}
+
+.class-operations-page .classops-fieldset {
+    min-width: 0;
+    margin: 2px 0;
+    border: 1px solid var(--border-color, #dbe2ea);
+    border-radius: 18px;
+    padding: 14px;
+}
+
+.class-operations-page .classops-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    font-weight: 550;
+}
+
+.class-operations-page .classops-check input {
+    width: 18px;
+    height: 18px;
+    margin: 2px 0 0;
+}
+
+.class-operations-page .classops-note {
+    margin: 10px 0 0;
+    color: var(--text-muted, #64748b);
+    line-height: 1.75;
+    font-size: .85rem;
+}
+
+.class-operations-page .classops-action-row,
+.class-operations-page .classops-form__actions,
+.class-operations-page .classops-destination-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+}
+
+.class-operations-page .classops-button {
+    min-height: 42px;
+    border: 0;
+    border-radius: 13px;
+    padding: 9px 14px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.class-operations-page .classops-button--primary {
+    background: var(--accent-color, #2563eb);
+    color: #fff;
+}
+
+.class-operations-page .classops-button--secondary {
+    background: color-mix(in srgb, var(--text-color, #172033) 6%, transparent);
+    color: var(--text-color, #172033);
+}
+
+.class-operations-page .classops-button--danger {
+    background: color-mix(in srgb, #dc2626 10%, transparent);
+    color: #b91c1c;
+}
+
+.class-operations-page .classops-state {
+    border-radius: 15px;
+    padding: 11px 13px;
+    margin: 0 0 14px;
+    background: color-mix(in srgb, var(--accent-color, #2563eb) 7%, transparent);
+    color: var(--text-muted, #64748b);
+    line-height: 1.65;
+}
+
+.class-operations-page .classops-item-list {
+    display: grid;
+    gap: 10px;
+}
+
+.class-operations-page .classops-item-list > * {
+    border-radius: 16px;
+}
+
+.class-operations-page .classops-preview {
+    max-width: 100%;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    border-radius: 16px;
+    padding: 13px;
+    background: color-mix(in srgb, var(--text-color, #172033) 4%, transparent);
+    color: var(--text-color, #172033);
+    font-family: inherit;
+    line-height: 1.8;
+}
+
+.class-operations-page .classops-inline-tools {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-color, #dbe2ea);
+}
+
+.class-operations-page .classops-dialog {
+    width: min(520px, calc(100% - 30px));
+    border: 0;
+    border-radius: 22px;
+    padding: 22px;
+    background: var(--surface-color, #fff);
+    color: var(--text-color, #172033);
+    box-shadow: 0 26px 80px rgba(15, 23, 42, .22);
+}
+
+.class-operations-page .classops-dialog::backdrop {
+    background: rgba(15, 23, 42, .42);
+    backdrop-filter: blur(4px);
+}
+
+.class-operations-page [data-technical-only] {
+    display: none !important;
+}
+
+.class-operations-page .class-operations-type-fields[hidden],
+.class-operations-page [hidden] {
+    display: none !important;
+}
+
+@media (max-width: 820px) {
+    .class-operations-grid--two {
+        grid-template-columns: 1fr;
+    }
+
+    .class-operations-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 560px) {
+    .class-operations-main {
+        width: min(100% - 20px, 1120px);
+        padding-top: 8px;
+    }
+
+    .class-operations-page .classops-form {
+        grid-template-columns: 1fr;
+    }
+
+    .class-operations-page .classops-form > *,
+    .class-operations-page .classops-form__full,
+    .class-operations-page .classops-fieldset {
+        grid-column: 1;
+    }
+
+    .class-operations-page .classops-action-row > .classops-button,
+    .class-operations-page .classops-form__actions > .classops-button {
+        flex: 1 1 140px;
+    }
+}

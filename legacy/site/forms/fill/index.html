@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#eef2f7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="فرم">
+    <link rel="manifest" href="/manifest.webmanifest?v=20260722-200509">
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png?v=20260722-200509">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png?v=20260722-200509">
+    <title>فرم | ورودی ۱۴۰۲ دندانپزشکی تهران</title>
+    <script src="/assets/site/scripts/theme.js?v=20260722-200509"></script>
+    <link rel="stylesheet" href="/assets/site/styles/core.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/forms.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/theme.css?v=20260812-phase4b">
+</head>
+<body class="forms-page forms-page--fill">
+    <div class="background-overlay" aria-hidden="true"></div>
+
+    <main class="forms-shell forms-shell--fill">
+        <header class="forms-topbar">
+            <a class="forms-icon-btn" href="/account/" aria-label="حساب">‹</a>
+            <div class="forms-topbar__copy">
+                <h1 id="fill-top-title">فرم</h1>
+                <p id="fill-top-copy">لینک عمومی</p>
+            </div>
+            <button id="fill-refresh" class="forms-icon-btn forms-icon-btn--text" type="button">بازخوانی</button>
+        </header>
+
+        <section id="fill-boot" class="forms-card forms-state-card">
+            <h2>در حال بارگذاری</h2>
+            <p>چند لحظه صبر کنید.</p>
+        </section>
+
+        <section id="fill-login" class="forms-card forms-state-card site-login-guard" hidden data-auth-guard data-auth-guard-home="/app/">
+            <span class="site-login-guard__eyebrow">ورود لازم است</span>
+            <h2 class="site-login-guard__title">برای مشاهده این بخش باید وارد حساب شوید</h2>
+            <p class="site-login-guard__text">برای حفظ حقوق دانشجویان، برای مشاهده این بخش باید وارد حساب کاربری خود در سایت شوید. می توانید از سایر بخش های سایت که نیاز به ورود ندارند، استفاده کنید.</p>
+            <div class="site-login-guard__actions forms-actions">
+                <a id="fill-login-link" class="forms-btn forms-btn--primary" href="/account/">ورود به حساب کاربری</a>
+                <a class="forms-btn" data-auth-guard-back data-auth-guard-home="/app/" href="/app/">برگشت به خانه</a>
+            </div>
+        </section>
+
+        <section id="fill-not-found" class="forms-card forms-state-card" hidden>
+            <h2>فرم پیدا نشد</h2>
+            <p>لینک ممکن است اشتباه باشد یا فرم بایگانی شده باشد.</p>
+        </section>
+
+        <section id="fill-stage" class="forms-panel" hidden>
+            <article class="forms-card forms-card--accent">
+                <div class="forms-card-head">
+                    <div>
+                        <span id="fill-kind" class="forms-chip">فرم</span>
+                        <h2 id="fill-title">—</h2>
+                    </div>
+                    <span id="fill-status" class="forms-chip forms-chip--soft">—</span>
+                </div>
+                <p id="fill-description" class="forms-muted"></p>
+            </article>
+
+            <form id="fill-form" class="forms-builder" novalidate>
+                <section id="fill-guest-box" class="forms-card" hidden>
+                    <div class="forms-card-head">
+                        <div>
+                            <span class="forms-chip forms-chip--soft">Guest</span>
+                            <h2>اطلاعات شرکت‌کننده</h2>
+                        </div>
+                    </div>
+                    <div class="forms-grid forms-grid--two">
+                        <label class="forms-field" for="fill-guest-name">
+                            <span>نام</span>
+                            <input id="fill-guest-name" type="text" maxlength="140" autocomplete="name">
+                        </label>
+                        <label class="forms-field" for="fill-guest-phone">
+                            <span>شماره تماس</span>
+                            <input id="fill-guest-phone" type="tel" maxlength="14" dir="ltr" data-latin-digits="true" autocomplete="tel">
+                        </label>
+                    </div>
+                </section>
+
+                <div id="fill-fields" class="forms-fill-fields"></div>
+
+                <section class="forms-card forms-submit-card">
+                    <div>
+                        <strong>ثبت پاسخ</strong>
+                        <p id="fill-feedback" class="forms-feedback" aria-live="polite"></p>
+                    </div>
+                    <button id="fill-submit" class="forms-btn forms-btn--primary" type="submit">ثبت</button>
+                </section>
+            </form>
+
+            <section id="fill-results-card" class="forms-card" hidden>
+                <div class="forms-card-head">
+                    <div>
+                        <span class="forms-chip forms-chip--soft">Results</span>
+                        <h2>نتایج</h2>
+                    </div>
+                    <span id="fill-results-total" class="forms-chip forms-chip--soft">۰</span>
+                </div>
+                <p id="fill-results-note" class="forms-muted"></p>
+                <div id="fill-results-list" class="forms-results-list"></div>
+            </section>
+
+            <section class="forms-card">
+                <div class="forms-card-head">
+                    <div>
+                        <span class="forms-chip forms-chip--soft">Share</span>
+                        <h2>لینک</h2>
+                    </div>
+                    <button id="fill-copy-link" class="forms-btn" type="button">کپی</button>
+                </div>
+                <input id="fill-share-link" class="forms-share-input" type="text" readonly dir="ltr" data-latin-digits="true">
+            </section>
+        </section>
+    </main>
+
+    <div id="fill-toast" class="forms-toast" aria-live="polite"></div>
+
+    <script src="/assets/site/scripts/auth.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/shell.js?v=20260812-phase3b"></script>
+    <script src="/assets/site/scripts/form-fill.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/pwa.js?v=20260722-200509"></script>
+</body>
+</html>

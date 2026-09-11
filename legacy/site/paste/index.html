@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#eef2f7">
+    <title>Pastebin شخصی | ورودی ۱۴۰۲ دندانپزشکی تهران</title>
+    <meta name="description" content="Pastebin مالک سایت برای ساخت لینک عمومی متن و کد، raw view و مدیریت امن pasteها.">
+    <link rel="manifest" href="/manifest.webmanifest?v=20260722-200509">
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png?v=20260722-200509">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png?v=20260722-200509">
+    <script src="/assets/site/scripts/theme.js?v=20260722-200509"></script>
+    <link rel="stylesheet" href="/assets/site/styles/core.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/content-tools.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/theme.css?v=20260812-phase4b">
+</head>
+<body class="content-tools-page content-tools-page--owner content-tools-page--paste" data-content-tool="paste" data-shell-reserve="self">
+    <div class="background-overlay" aria-hidden="true"></div>
+
+    <main class="ct-shell ct-shell--paste">
+        <header class="ct-paste-header">
+            <div>
+                <span class="ct-kicker">Pastebin</span>
+                <h1>Pastebin شخصی</h1>
+                <p>ساخت لینک عمومی برای متن و کد، با نمایش امن، raw view و مدیریت مالک.</p>
+            </div>
+            <nav class="ct-topbar-actions" aria-label="مسیرهای ابزار محتوا">
+                <a class="ct-btn ct-btn--ghost" href="/files/">مرکز آپلود</a>
+                <a class="ct-btn ct-btn--ghost" href="/app/">خانه</a>
+                <span class="ct-theme-slot" data-theme-toggle-slot></span>
+            </nav>
+        </header>
+
+        <section id="ct-auth-guard" class="ct-state-card" aria-live="polite"></section>
+
+        <section id="ct-owner-app" class="ct-paste-layout" hidden>
+            <div id="ct-feedback" class="ct-feedback" aria-live="polite"></div>
+
+            <section class="ct-manager-card ct-paste-editor" aria-labelledby="ct-paste-editor-title">
+                <div class="ct-section-head">
+                    <div>
+                        <span class="ct-kicker">New Paste</span>
+                        <h2 id="ct-paste-editor-title">ساخت یا ویرایش paste</h2>
+                        <p>محتوا به‌صورت متن امن ذخیره و در صفحه عمومی escape می‌شود.</p>
+                    </div>
+                    <button id="ct-paste-new" class="ct-btn" type="button">Paste جدید</button>
+                </div>
+                <form id="ct-paste-form" class="ct-paste-form" novalidate>
+                    <input id="ct-paste-id" type="hidden">
+                    <div class="ct-grid ct-grid--three">
+                        <label class="ct-field" for="ct-paste-title-input">
+                            <span>عنوان</span>
+                            <input id="ct-paste-title-input" type="text" maxlength="180" placeholder="مثلا کد نمونه پروتز">
+                        </label>
+                        <label class="ct-field" for="ct-paste-language-input">
+                            <span>زبان</span>
+                            <select id="ct-paste-language-input">
+                                <option value="plain">Plain text</option>
+                                <option value="php">PHP</option>
+                                <option value="javascript">JavaScript</option>
+                                <option value="html">HTML</option>
+                                <option value="css">CSS</option>
+                                <option value="json">JSON</option>
+                                <option value="markdown">Markdown</option>
+                                <option value="sql">SQL</option>
+                                <option value="bash">Bash</option>
+                                <option value="python">Python</option>
+                            </select>
+                        </label>
+                        <label class="ct-field" for="ct-paste-status-input">
+                            <span>وضعیت</span>
+                            <select id="ct-paste-status-input">
+                                <option value="active">فعال</option>
+                                <option value="hidden">مخفی</option>
+                            </select>
+                        </label>
+                    </div>
+                    <label class="ct-field" for="ct-paste-body-input">
+                        <span>متن یا کد</span>
+                        <textarea id="ct-paste-body-input" class="ct-code-input" rows="16" dir="ltr" spellcheck="false" data-latin-digits="true" placeholder="متن یا کد را اینجا وارد کنید"></textarea>
+                    </label>
+                    <div class="ct-grid ct-grid--three">
+                        <label class="ct-field" for="ct-paste-expire-input">
+                            <span>انقضا</span>
+                            <input id="ct-paste-expire-input" type="datetime-local" data-latin-digits="true">
+                        </label>
+                        <label class="ct-field" for="ct-paste-password-input">
+                            <span>رمز اختیاری</span>
+                            <input id="ct-paste-password-input" type="password" autocomplete="new-password" placeholder="برای تغییر رمز پر شود">
+                        </label>
+                        <label class="ct-toggle">
+                            <input id="ct-paste-clear-password-input" type="checkbox">
+                            <span>حذف رمز فعلی</span>
+                        </label>
+                    </div>
+                    <div class="ct-form-actions">
+                        <button id="ct-paste-submit" class="ct-btn ct-btn--primary" type="submit">ذخیره paste</button>
+                        <button id="ct-paste-copy-current" class="ct-btn" type="button" disabled>کپی لینک فعلی</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="ct-manager-card" aria-labelledby="ct-pastes-title">
+                <div class="ct-section-head">
+                    <div>
+                        <span class="ct-kicker">Archive</span>
+                        <h2 id="ct-pastes-title">مدیریت pasteها</h2>
+                        <p>جست‌وجو، ویرایش، raw view، کپی لینک و حذف گروهی pasteها.</p>
+                    </div>
+                    <button id="ct-pastes-refresh" class="ct-btn" type="button">بازخوانی</button>
+                </div>
+                <div class="ct-summary-strip" id="ct-paste-summary">
+                    <article><span>Pasteها</span><strong>—</strong></article>
+                    <article><span>بازدیدها</span><strong>—</strong></article>
+                    <article><span>Raw</span><strong>—</strong></article>
+                </div>
+                <div class="ct-toolbar">
+                    <input id="ct-pastes-query" type="search" placeholder="جست‌وجوی عنوان، زبان یا متن">
+                    <select id="ct-pastes-status">
+                        <option value="available" selected>Pasteهای موجود</option>
+                        <option value="active">فعال</option>
+                        <option value="hidden">مخفی</option>
+                        <option value="expired">منقضی</option>
+                        <option value="deleted">حذف‌شده</option>
+                    </select>
+                    <select id="ct-pastes-sort">
+                        <option value="newest">جدیدترین</option>
+                        <option value="oldest">قدیمی‌ترین</option>
+                        <option value="views">بیشترین بازدید</option>
+                    </select>
+                </div>
+                <div class="ct-bulkbar">
+                    <span id="ct-pastes-selected">۰ انتخاب</span>
+                    <button class="ct-btn" type="button" data-ct-bulk-pastes="activate">فعال‌سازی</button>
+                    <button class="ct-btn" type="button" data-ct-bulk-pastes="hide">مخفی</button>
+                    <button class="ct-btn ct-btn--danger" type="button" data-ct-bulk-pastes="delete">حذف</button>
+                </div>
+                <div id="ct-pastes-list" class="ct-paste-list"></div>
+                <div id="ct-pastes-pager" class="ct-pager"></div>
+            </section>
+        </section>
+    </main>
+
+    <script src="/assets/site/scripts/auth.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/content-tools.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/pwa.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/shell.js?v=20260812-phase3b"></script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#eef2f7">
+    <title>آفلاین | ورودی ۱۴۰۲ دندانپزشکی</title>
+    <link rel="manifest" href="/manifest.webmanifest?v=20260722-200509">
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png?v=20260722-200509">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png?v=20260722-200509">
+    <script src="/assets/site/scripts/theme.js?v=20260722-200509"></script>
+    <link rel="stylesheet" href="/assets/site/styles/core.css?v=20260722-200509">
+    <style>
+        body.offline-page main {
+            flex: 1;
+            width: min(720px, 100%);
+            margin: 0 auto;
+            padding: 2rem 5%;
+            display: flex;
+            align-items: center;
+        }
+
+        .offline-card {
+            width: 100%;
+            padding: 1.4rem;
+            border-radius: 28px;
+            border: 1px solid var(--border-color);
+            background: var(--surface);
+            box-shadow: var(--surface-shadow);
+            backdrop-filter: blur(14px);
+        }
+
+        .offline-card h2 {
+            margin: 0 0 0.75rem;
+            font-size: clamp(1.45rem, 3vw, 2rem);
+            font-weight: 900;
+            line-height: 1.6;
+        }
+
+        .offline-card p {
+            margin: 0;
+            color: var(--text-secondary);
+        }
+
+        .offline-actions {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.7rem;
+            flex-wrap: wrap;
+        }
+    </style>
+    <link rel="stylesheet" href="/assets/site/styles/theme.css?v=20260812-phase4b">
+</head>
+<body class="offline-page">
+    <div class="background-overlay" aria-hidden="true"></div>
+    <header class="site-header">
+        <div class="logo-area">
+            <div class="logo-circle">
+                <img src="/assets/images/logo.png?v=20260722-200509" alt="لوگوی ورودی ۱۴۰۲ دندانپزشکی">
+            </div>
+            <div class="site-info">
+                <h1>ورودی ۱۴۰۲ دندانپزشکی تهران</h1>
+                <p>خانه دانشجو</p>
+            </div>
+        </div>
+    </header>
+    <main>
+        <section class="offline-card">
+            <span class="app-pill">اتصال قطع شده</span>
+            <h2>الان اینترنت قطع است.</h2>
+            <p>وقتی اتصال برگردد، دوباره می‌توانی به اپلیکیشن برگردی.</p>
+            <div class="offline-actions">
+                <a class="shell-action-btn shell-action-btn-primary" href="/app/">بازگشت به خانه</a>
+                <button class="shell-action-btn" type="button" onclick="window.location.reload()">تلاش دوباره</button>
+            </div>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <p>ورودی ۱۴۰۲ دندانپزشکی تهران</p>
+    </footer>
+</body>
+</html>
+
+
+
+

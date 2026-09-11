@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>امور کلاس | ورودی ۱۴۰۲ دندانپزشکی</title>
+    <meta name="description" content="برنامه‌ها، تکالیف، امتحان‌ها، اطلاعیه‌ها و مدیریت امور کلاس ورودی ۱۴۰۲.">
+    <meta name="theme-color" content="#f4f7f6">
+    <meta name="robots" content="noindex,nofollow,noarchive">
+    <link rel="manifest" href="/manifest.webmanifest?v=20260722-200509">
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png?v=20260722-200509">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png?v=20260722-200509">
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/YekanBakh-VF.woff2" crossorigin>
+    <script src="/assets/site/scripts/theme.js?v=20260722-200509"></script>
+    <link rel="stylesheet" href="/assets/site/styles/core.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/app.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/hub.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/theme.css?v=20260812-phase4b">
+    <link rel="stylesheet" href="/assets/classops_ops/classops_ops.css?v=classops-surface-v1">
+    <link rel="stylesheet" href="/assets/classops_ops/classops_stage2.css?v=classops-stage2-v1">
+    <link rel="stylesheet" href="/assets/classops_ops/class_operations_product.css?v=class-operations-product-v1">
+</head>
+<body class="app-dashboard-page classops-page class-operations-page">
+    <div class="background-overlay" aria-hidden="true"></div>
+
+    <header class="site-header site-header--app">
+        <div class="logo-area">
+            <div class="site-info">
+                <h1>ورودی ۱۴۰۲ دندانپزشکی تهران</h1>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a class="header-link" href="/account/">حساب</a>
+            <a class="header-link" href="/app/">خانه</a>
+        </div>
+    </header>
+
+    <main class="class-operations-main" aria-labelledby="classops-page-title">
+        <section class="class-operations-head">
+            <div class="class-operations-head__copy">
+                <span class="class-operations-kicker">ورودی ۱۴۰۲</span>
+                <h2 id="classops-page-title">امور کلاس</h2>
+                <p>برنامه‌ها، تغییرات کلاس، تکالیف، امتحان‌ها و اطلاعیه‌های مهم را از یک جا ببین. ابزارهای مدیریتی فقط برای مالک نمایش داده می‌شوند.</p>
+            </div>
+            <button id="classops-refresh" type="button" class="classops-button classops-button--secondary">تازه‌سازی</button>
+        </section>
+
+        <p id="classops-access-state" class="classops-state" data-state="loading" role="status" aria-live="polite">در حال بررسی دسترسی…</p>
+
+        <section id="classops-student-center" class="class-operations-card" hidden aria-labelledby="classops-student-title">
+            <div class="class-operations-card__head">
+                <div>
+                    <h3 id="classops-student-title">کارهای کلاس من</h3>
+                    <p>فقط مواردی که برای حساب شما ثبت شده‌اند نمایش داده می‌شوند.</p>
+                </div>
+                <span class="class-operations-badge">دانشجو</span>
+            </div>
+            <p id="classops-student-state" class="classops-state" role="status" aria-live="polite">در حال آماده‌سازی…</p>
+            <div class="classops-action-row">
+                <button id="classops-student-tomorrow" type="button" class="classops-button classops-button--primary">🌤 فردا</button>
+                <button id="classops-student-weekly" type="button" class="classops-button classops-button--secondary">🗓 هفته پیش رو</button>
+            </div>
+            <pre id="classops-student-digest" class="classops-preview" hidden aria-live="polite"></pre>
+            <div id="classops-student-list" class="class-operations-student-list"></div>
+            <div id="classops-student-detail" class="class-operations-student-detail" hidden></div>
+        </section>
+
+        <section id="classops-owner-center" hidden>
+            <p id="classops-operation-state" class="classops-state classops-operation-state" data-state="ready" role="status" aria-live="polite">مدیریت امور کلاس آماده است.</p>
+
+            <div class="class-operations-grid class-operations-grid--two">
+                <article class="class-operations-card">
+                    <div class="class-operations-card__head">
+                        <div>
+                            <h3>ثبت مورد جدید</h3>
+                            <p>ابتدا پیش‌نمایش را ببین؛ بدون تأیید نهایی چیزی ثبت یا ارسال نمی‌شود.</p>
+                        </div>
+                        <span class="class-operations-badge">مدیریت</span>
+                    </div>
+                    <form id="classops-draft-form" class="classops-form">
+                        <label class="classops-form__full">نوع
+                            <select id="classops-type" name="type">
+                                <option value="announcement">اطلاعیه</option>
+                                <option value="event">رویداد</option>
+                                <option value="class_change">تغییر کلاس</option>
+                                <option value="deadline">مهلت</option>
+                                <option value="task">تکلیف</option>
+                                <option value="requirement">مورد الزامی</option>
+                                <option value="exam">امتحان</option>
+                                <option value="critical_notice">اطلاعیه مهم</option>
+                                <option value="service_reminder">یادآوری</option>
+                            </select>
+                        </label>
+                        <label>عنوان<input id="classops-title" name="title" required maxlength="160" autocomplete="off"></label>
+                        <label>درس<input id="classops-course-title" name="courseTitle" maxlength="180" placeholder="در صورت نیاز"></label>
+                        <label class="classops-form__full">توضیحات<textarea id="classops-description" name="description" maxlength="4000" rows="4"></textarea></label>
+                        <label>شروع<input id="classops-starts-at" type="datetime-local" name="startsAt"></label>
+                        <label>مهلت<input id="classops-due-at" type="datetime-local" name="dueAt"></label>
+                        <label>مکان<input id="classops-location" name="location" maxlength="300"></label>
+                        <label>اهمیت
+                            <select id="classops-importance" name="importance">
+                                <option value="normal">عادی</option>
+                                <option value="important">مهم</option>
+                                <option value="critical">خیلی مهم</option>
+                            </select>
+                        </label>
+                        <label class="classops-check classops-form__full">
+                            <input id="classops-require-ack" type="checkbox" disabled>
+                            <span>دریافت تأیید مشاهده از مخاطبان</span>
+                        </label>
+                        <p id="classops-saba-note" class="classops-note classops-form__full" hidden>این بخش فقط یادآوری است؛ هیچ نام کاربری، رمز یا نشست صبا در سایت ذخیره نمی‌شود.</p>
+
+                        <fieldset class="classops-fieldset classops-form__full">
+                            <legend>مخاطبان</legend>
+                            <div class="classops-form classops-form--nested">
+                                <label>انتخاب مخاطب
+                                    <select id="classops-audience-mode">
+                                        <option value="whole_cohort">کل ورودی</option>
+                                        <option value="students">دانشجوهای مشخص</option>
+                                        <option value="selector">گروه یا دسته</option>
+                                    </select>
+                                </label>
+                                <label id="classops-audience-students-wrap" hidden>شماره‌های دانشجویی
+                                    <textarea id="classops-audience-students" rows="3" placeholder="با فاصله یا ویرگول جدا کن"></textarea>
+                                </label>
+                                <div id="classops-audience-selector-wrap" class="classops-selector-row" hidden>
+                                    <label>نوع گروه‌بندی
+                                        <select id="classops-audience-selector-kind">
+                                            <option value="group">گروه</option>
+                                            <option value="category">دسته</option>
+                                            <option value="role">نقش</option>
+                                        </select>
+                                    </label>
+                                    <label>شناسه گروه<input id="classops-audience-selector-key" maxlength="120" autocomplete="off"></label>
+                                </div>
+                                <label>افزودن دانشجوی خاص<textarea id="classops-audience-include" rows="2" placeholder="شماره دانشجویی"></textarea></label>
+                                <label>حذف از مخاطبان<textarea id="classops-audience-exclude" rows="2" placeholder="شماره دانشجویی"></textarea></label>
+                            </div>
+                        </fieldset>
+
+                        <fieldset class="classops-fieldset classops-form__full">
+                            <legend>ارسال و نمایش</legend>
+                            <div class="classops-destination-options">
+                                <label class="classops-check"><input id="classops-dest-private_users" type="checkbox" checked><span>پیام خصوصی</span></label>
+                                <label class="classops-check"><input id="classops-dest-class_group" type="checkbox"><span>گروه کلاس</span></label>
+                                <label class="classops-check"><input id="classops-dest-information_channel" type="checkbox"><span>کانال اطلاع‌رسانی</span></label>
+                            </div>
+                            <p class="classops-note">اگر یک مسیر ارسال فعال نباشد، قبل از تأیید نهایی به شما اعلام می‌شود.</p>
+                        </fieldset>
+
+                        <label data-technical-only>شناسه ورودی<input id="classops-cohort" name="cohortKey" required maxlength="80" autocomplete="off" value="dentistry-1402"></label>
+                        <div class="classops-form__actions classops-form__full">
+                            <button type="submit" class="classops-button classops-button--primary">دیدن پیش‌نمایش</button>
+                        </div>
+                    </form>
+                </article>
+
+                <article class="class-operations-card">
+                    <div class="class-operations-card__head">
+                        <div>
+                            <h3>ساخت پیش‌نویس با هوش مصنوعی</h3>
+                            <p>متن را می‌خواند و فقط پیش‌نویس می‌سازد؛ بدون تأیید شما چیزی منتشر نمی‌شود.</p>
+                        </div>
+                        <span id="classops-ai-state" class="class-operations-badge">در حال بررسی…</span>
+                    </div>
+                    <form id="classops-ai-form" class="classops-form classops-form--stack">
+                        <label class="classops-form__full">متن موردنظر<textarea id="classops-ai-text" rows="5" maxlength="12000" placeholder="مثلاً: فردا کلاس ترمیمی ساعت ۸ به ۱۰ منتقل شد…"></textarea></label>
+                        <label class="classops-form__full">متن فورواردشده، در صورت وجود<textarea id="classops-ai-forwarded" rows="4" maxlength="24000" placeholder="متن پیام را اینجا قرار بده"></textarea></label>
+                        <label data-technical-only>شناسه ورودی<input id="classops-ai-cohort" value="dentistry-1402" maxlength="80"></label>
+                        <button id="classops-ai-submit" type="submit" class="classops-button classops-button--secondary">ساخت پیش‌نویس</button>
+                    </form>
+                    <pre id="classops-ai-preview" class="classops-preview" hidden aria-live="polite"></pre>
+                    <div id="classops-ai-edit-wrap" class="classops-ai-edit" hidden>
+                        <label>درخواست اصلاح<textarea id="classops-ai-edit-text" rows="3" maxlength="8000" placeholder="مثلاً: عنوان را کوتاه‌تر کن"></textarea></label>
+                        <div class="classops-action-row">
+                            <button id="classops-ai-edit" type="button" class="classops-button classops-button--secondary">اصلاح پیش‌نویس</button>
+                            <button id="classops-ai-apply" type="button" class="classops-button classops-button--primary">انتقال به فرم</button>
+                        </div>
+                    </div>
+                    <p class="classops-note">زمان، مخاطب و جزئیات نامشخص باید قبل از ثبت توسط شما بررسی شوند.</p>
+                </article>
+            </div>
+
+            <section id="classops-stage2-preview-panel" class="class-operations-card classops-preview-panel" hidden aria-labelledby="classops-preview-title">
+                <div class="class-operations-card__head">
+                    <div>
+                        <h3 id="classops-preview-title">پیش‌نمایش قبل از ثبت</h3>
+                        <p>مخاطبان، زمان و مسیرهای ارسال را بررسی کن.</p>
+                    </div>
+                </div>
+                <pre id="classops-stage2-preview" class="classops-preview"></pre>
+                <div class="classops-action-row">
+                    <button id="classops-stage2-dismiss" type="button" class="classops-button classops-button--secondary">انصراف</button>
+                    <button id="classops-stage2-confirm" type="button" class="classops-button classops-button--primary">تأیید و ثبت</button>
+                </div>
+            </section>
+
+            <section class="class-operations-card" aria-labelledby="classops-cap-title">
+                <div class="class-operations-card__head">
+                    <div>
+                        <h3 id="classops-cap-title">وضعیت ارسال و سرویس‌ها</h3>
+                        <p>مسیرهای غیرفعال قبل از انتشار مشخص می‌شوند.</p>
+                    </div>
+                </div>
+                <div id="classops-capabilities" class="classops-capability-grid" aria-live="polite"></div>
+            </section>
+
+            <div class="class-operations-grid class-operations-grid--two">
+                <article class="class-operations-card">
+                    <div class="class-operations-card__head">
+                        <div>
+                            <h3>موارد ثبت‌شده</h3>
+                            <p>اطلاعیه‌ها، تکالیف، امتحان‌ها و تغییرات برنامه.</p>
+                        </div>
+                        <span id="classops-item-state" class="class-operations-badge" aria-live="polite">—</span>
+                    </div>
+                    <div id="classops-conflict" class="classops-state" data-state="conflict" hidden role="alert"></div>
+                    <p id="classops-empty" class="classops-empty" hidden>موردی برای نمایش وجود ندارد.</p>
+                    <div id="classops-item-list" class="classops-item-list"></div>
+                </article>
+
+                <article id="classops-selected" class="class-operations-card" hidden>
+                    <div class="class-operations-card__head">
+                        <div>
+                            <h3 id="classops-selected-title">جزئیات</h3>
+                            <p id="classops-selected-meta"></p>
+                        </div>
+                    </div>
+                    <p id="classops-legacy-item-note" class="classops-state" data-state="loading" hidden>این مورد با نسخه قدیمی ثبت شده است و انتشار جدید آن بدون بازبینی انجام نمی‌شود.</p>
+                    <label class="classops-edit-label">توضیحات<textarea id="classops-edit-description" rows="5" maxlength="4000"></textarea></label>
+                    <div class="classops-action-row">
+                        <button id="classops-edit" class="classops-button classops-button--secondary" type="button">پیش‌نمایش ویرایش</button>
+                        <button id="classops-schedule" class="classops-button classops-button--secondary" type="button">زمان‌بندی</button>
+                        <button id="classops-activate" class="classops-button classops-button--secondary" type="button">فعال‌کردن</button>
+                        <button id="classops-complete" class="classops-button classops-button--secondary" type="button">انجام‌شده</button>
+                        <button id="classops-cancel" class="classops-button classops-button--danger" type="button">لغو</button>
+                        <button id="classops-archive" class="classops-button classops-button--danger" type="button">بایگانی</button>
+                    </div>
+                    <div id="classops-task-tools" class="classops-inline-tools" hidden>
+                        <label>شماره دانشجویی<input id="classops-task-student" inputmode="numeric" autocomplete="off"></label>
+                        <button id="classops-task-state" type="button" class="classops-button classops-button--secondary">مشاهده وضعیت تکلیف</button>
+                    </div>
+                    <button id="classops-ack-stats" type="button" class="classops-button classops-button--secondary" hidden>آمار تأیید مشاهده</button>
+                    <pre id="classops-selected-output" class="classops-preview" hidden></pre>
+                    <p class="classops-note">ویرایش‌ها ابتدا پیش‌نمایش می‌شوند؛ اگر اطلاعات در فاصله بازبینی تا ثبت تغییر کند، از شما خواسته می‌شود دوباره بررسی کنید.</p>
+                </article>
+            </div>
+
+            <section class="class-operations-card">
+                <div class="class-operations-card__head">
+                    <div>
+                        <h3>خلاصه‌های کلاس</h3>
+                        <p>نمای خواندنی برنامه و کارهای نزدیک.</p>
+                    </div>
+                </div>
+                <div class="classops-action-row">
+                    <button id="classops-digest-tomorrow" type="button" class="classops-button classops-button--primary">🌤 فردا</button>
+                    <button id="classops-digest-weekly" type="button" class="classops-button classops-button--secondary">🗓 هفته پیش رو</button>
+                </div>
+                <pre id="classops-digest-output" class="classops-preview" hidden></pre>
+            </section>
+        </section>
+    </main>
+
+    <dialog id="classops-confirm-dialog" class="classops-dialog" aria-labelledby="classops-confirm-title">
+        <h3 id="classops-confirm-title">تأیید نهایی</h3>
+        <pre id="classops-confirm-text"></pre>
+        <div class="classops-action-row">
+            <button id="classops-confirm-no" type="button" class="classops-button classops-button--secondary">انصراف</button>
+            <button id="classops-confirm-yes" type="button" class="classops-button classops-button--danger">تأیید</button>
+        </div>
+    </dialog>
+
+    <script src="/assets/site/scripts/pwa.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/auth.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/shell.js?v=20260813-three-nav1"></script>
+    <script src="/assets/classops_ops/classops_ops.js?v=classops-surface-v1"></script>
+    <script src="/assets/classops_ops/classops_ops_dom.js?v=classops-surface-v1"></script>
+    <script src="/assets/classops_ops/classops_stage2_dom.js?v=classops-stage2-v1"></script>
+    <script src="/assets/classops_ops/class_operations_product.js?v=class-operations-product-v1"></script>
+    <script>
+        window.addEventListener("DOMContentLoaded", function () {
+            if (window.ClassOpsOps && typeof window.ClassOpsOps.mountOperationsCenter === "function") {
+                window.ClassOpsOps.mountOperationsCenter();
+            }
+            if (window.ClassOperationsProduct && typeof window.ClassOperationsProduct.mount === "function") {
+                window.ClassOperationsProduct.mount();
+            }
+        });
+    </script>
+</body>
+</html>

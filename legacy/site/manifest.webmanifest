@@ -1,0 +1,70 @@
+{
+  "name": "ورودی ۱۴۰۲ دندانپزشکی تهران",
+  "short_name": "ورودی۱۴۰۲",
+  "description": "خانه دانشجویی ورودی ۱۴۰۲ دندانپزشکی تهران برای چت، آزمون‌ها، نمرات، جزوات و خدمات.",
+  "lang": "fa",
+  "dir": "rtl",
+  "id": "/app/",
+  "start_url": "/app/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f9fbfd",
+  "theme_color": "#f9fbfd",
+  "orientation": "portrait-primary",
+  "categories": [
+    "education",
+    "productivity",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "/assets/icons/icon-192.png?v=20260907-195131",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/icons/icon-512.png?v=20260907-195131",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/icons/icon-maskable-192.png?v=20260907-195131",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icons/icon-maskable-512.png?v=20260907-195131",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "چت",
+      "url": "/chat/",
+      "description": "ورود مستقیم به چت کلاس"
+    },
+    {
+      "name": "نمرات",
+      "url": "/grades/",
+      "description": "دیدن نمرات"
+    },
+    {
+      "name": "آزمون‌ها",
+      "url": "/exams/",
+      "description": "دیدن آزمون‌ها"
+    },
+    {
+      "name": "خرید گروهی",
+      "url": "/buy/",
+      "description": "کاتالوگ آیتم‌های مشخص خرید گروهی و ثبت‌نام"
+    },
+    {
+      "name": "جزوات",
+      "url": "/notes/",
+      "description": "دیدن جزوات"
+    }
+  ]
+}

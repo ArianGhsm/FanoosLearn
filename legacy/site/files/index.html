@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#0b111b">
+    <title>مرکز آپلود | ورودی ۱۴۰۲ دندانپزشکی تهران</title>
+    <meta name="description" content="مرکز آپلود شخصی مالک برای آپلود مستقیم روی هاست دانلود، مدیریت فولدری فایل‌ها و ساخت لینک عمومی امن.">
+    <link rel="manifest" href="/manifest.webmanifest?v=20260722-200509">
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png?v=20260722-200509">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png?v=20260722-200509">
+    <script src="/assets/site/scripts/theme.js?v=20260722-200509"></script>
+    <link rel="stylesheet" href="/assets/site/styles/core.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/content-tools.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/content-tools-files.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/theme.css?v=20260812-phase4b">
+</head>
+<body class="content-tools-page content-tools-page--owner content-tools-page--files-center" data-shell-reserve="self">
+    <div class="background-overlay" aria-hidden="true"></div>
+
+    <main class="ct-shell ct-shell--drive ctf-shell">
+        <section id="ct-auth-guard" class="ct-state-card" aria-live="polite"></section>
+
+        <section id="ct-owner-app" class="ctf-app" hidden>
+            <div id="ct-feedback" class="ct-feedback" aria-live="polite"></div>
+
+            <section class="ctf-hero" aria-labelledby="ctf-page-title">
+                <div class="ctf-hero-main">
+                    <div class="ctf-hero-copy">
+                        <span class="ct-kicker">Upload Center</span>
+                        <h1 id="ctf-page-title">مرکز آپلود روی هاست دانلود</h1>
+                        <p>آپلود زنده، فایل‌منیجر فولدری، لینک عمومی و آمار هاست را در یک شل فشرده و همگام با دیتای واقعی سایت مدیریت کنید.</p>
+                    </div>
+
+                    <div class="ctf-hero-visual" aria-hidden="true">
+                        <svg class="ctf-hero-icon" viewBox="0 0 180 180" fill="none">
+                            <defs>
+                                <linearGradient id="ctfUploadGlow" x1="18" y1="18" x2="154" y2="154" gradientUnits="userSpaceOnUse">
+                                    <stop stop-color="#76D7FF"></stop>
+                                    <stop offset="0.55" stop-color="#7FA8FF"></stop>
+                                    <stop offset="1" stop-color="#665CFF"></stop>
+                                </linearGradient>
+                            </defs>
+                            <rect x="38" y="88" width="104" height="42" rx="15" fill="rgba(127,176,255,0.12)" stroke="rgba(165,204,255,0.3)"></rect>
+                            <path d="M62 83C62 67.536 74.536 55 90 55C98.556 55 106.204 58.838 111.329 64.881C114.171 63.051 117.558 62 121.2 62C131.471 62 139.8 70.329 139.8 80.6C139.8 82.113 139.619 83.583 139.276 84.991C146.104 88.302 150.8 95.292 150.8 103.4C150.8 114.706 141.606 123.9 130.3 123.9H63.7C50.611 123.9 40 113.289 40 100.2C40 89.222 47.468 79.97 57.6 77.235C59.834 78.901 61.675 80.857 63 83Z" fill="rgba(127,176,255,0.15)" stroke="rgba(168,211,255,0.35)"></path>
+                            <path d="M90 111V66M90 66L72 84M90 66L108 84" stroke="url(#ctfUploadGlow)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"></path>
+                            <path d="M66 122H114" stroke="url(#ctfUploadGlow)" stroke-width="10" stroke-linecap="round"></path>
+                        </svg>
+                    </div>
+
+                    <div class="ctf-hero-actions">
+                        <a class="ct-btn ct-btn--primary" href="/notes/files/">مدیریت منابع</a>
+                        <a class="ct-btn ct-btn--ghost" href="/app/">خانه</a>
+                    </div>
+                </div>
+
+                <div id="ctf-summary-grid" class="ctf-summary-grid" aria-live="polite"></div>
+
+                <div class="ctf-path-bar">
+                    <div class="ctf-path-copy">
+                        <small>مسیر جاری برای browse و upload</small>
+                        <div class="ctf-path-badge" id="ctf-current-path">ریشه آپلودسنتر</div>
+                    </div>
+                    <small id="ctf-summary-notice">—</small>
+                </div>
+            </section>
+
+            <section class="ctf-board" aria-label="کارت‌های مدیریت آپلودسنتر">
+                <aside class="ctf-upload-card" aria-labelledby="ct-upload-title">
+                    <div class="ctf-upload-head">
+                        <span class="ct-kicker">Live Upload</span>
+                        <h2 id="ct-upload-title">آپلود زنده و صف انتقال</h2>
+                        <p>فایل‌ها را انتخاب کنید، مقصد را از Browser تعیین کنید و وضعیت واقعی انتقال را لحظه‌به‌لحظه ببینید.</p>
+                    </div>
+
+                    <form id="ct-upload-form" class="ct-upload-form" novalidate>
+                        <input id="ct-upload-input" type="file" multiple hidden>
+
+                        <div class="ctf-upload-stage">
+                            <div class="ctf-upload-stage-primary">
+                                <div id="ct-dropzone" class="ct-dropzone" tabindex="0" role="button" aria-label="انتخاب یا رها کردن فایل">
+                                    <div class="ct-dropzone__icon" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none">
+                                            <path d="M12 16V5M12 5L7.7 9.3M12 5L16.3 9.3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path>
+                                            <path d="M5 15.6V18A2 2 0 0 0 7 20H17A2 2 0 0 0 19 18V15.6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path>
+                                        </svg>
+                                    </div>
+                                    <strong>فایل‌ها را اینجا رها کنید</strong>
+                                    <span>یا برای انتخاب چندفایل و شروع صف آپلود کلیک کنید</span>
+                                </div>
+
+                                <div class="ct-form-actions">
+                                    <button id="ct-upload-submit" class="ct-btn ct-btn--primary" type="button">شروع آپلود</button>
+                                    <button id="ct-upload-clear" class="ct-btn ct-btn--ghost" type="button">پاک‌کردن صف</button>
+                                    <button id="ct-upload-pick" class="ct-btn" type="button">افزودن فایل</button>
+                                </div>
+                            </div>
+
+                            <div class="ctf-upload-stage-side">
+                                <div class="ctf-destination-wrap">
+                                    <span>مقصد فعلی آپلود</span>
+                                    <input id="ctf-upload-destination" class="ctf-destination" type="text" readonly value="/">
+                                </div>
+
+                                <div class="ctf-upload-kpis ctf-upload-kpis--stack">
+                                    <article>
+                                        <small>پوشه مقصد</small>
+                                        <strong id="ctf-current-folder">ریشه آپلودسنتر</strong>
+                                    </article>
+                                    <article>
+                                        <small>فایل‌های صف</small>
+                                        <strong id="ctf-queue-files">۰</strong>
+                                    </article>
+                                    <article>
+                                        <small>وضعیت انتقال</small>
+                                        <strong id="ctf-queue-active">آماده</strong>
+                                    </article>
+                                </div>
+
+                                <section class="ctf-upload-queue-shell" aria-label="صف فایل‌های در انتظار آپلود">
+                                    <div class="ctf-upload-queue-head">
+                                        <strong>فایل‌های صف</strong>
+                                        <small>وضعیت هر فایل، سرعت، زمان باقی‌مانده و لینک خروجی بعد از ثبت اینجا نمایش داده می‌شود.</small>
+                                    </div>
+                                    <div class="ctf-queue-scroll">
+                                        <div id="ct-upload-queue" class="ctf-queue-list" aria-live="polite"></div>
+                                    </div>
+                                </section>
+                            </div>
+                        </div>
+                    </form>
+                </aside>
+
+                <section class="ctf-browser-card" aria-labelledby="ctf-browser-title">
+                    <div class="ctf-browser-head">
+                        <div class="ctf-browser-copy">
+                            <span class="ct-kicker">Browser</span>
+                            <h2 id="ctf-browser-title">مرور و مدیریت فایل‌ها</h2>
+                            <p>پوشه بسازید، باز کنید، تغییر نام بدهید، حذف کنید و لینک مستقیم هر فایل را از همین کارت کنترل کنید.</p>
+                        </div>
+                        <div class="ctf-browser-actions">
+                            <button id="ctf-create-folder" class="ct-btn" type="button">پوشه جدید</button>
+                            <button id="ctf-browser-refresh" class="ct-btn" type="button">بازخوانی</button>
+                        </div>
+                    </div>
+
+                    <div class="ctf-browser-toolbar">
+                        <label class="ctf-browser-search" for="ctf-browser-query">
+                            <input id="ctf-browser-query" type="search" placeholder="جست‌وجو در نام فایل‌ها و پوشه‌ها">
+                        </label>
+                        <div class="ctf-toolbar-chip">
+                            <small>مسیر فعلی</small>
+                            <strong id="ctf-browser-current-path">/</strong>
+                        </div>
+                    </div>
+
+                    <div id="ctf-breadcrumbs" class="ctf-breadcrumbs" aria-label="مسیر پوشه‌ها"></div>
+
+                    <div class="ctf-browser-scroll">
+                        <div id="ctf-browser-empty" class="ct-empty ctf-browser-empty" hidden></div>
+                        <div id="ctf-browser-entries" class="ctf-entries"></div>
+                    </div>
+                </section>
+
+                <section class="ctf-links-card" aria-labelledby="ct-files-title">
+                    <div class="ctf-links-head">
+                        <span class="ct-kicker">Public Links</span>
+                        <h2 id="ct-files-title">لینک‌های عمومی و انتشار</h2>
+                        <p>فایل‌های ثبت‌شده، وضعیت انتشار، لینک مستقیم و عملیات گروهی را بدون خروج از صفحه مدیریت کنید.</p>
+                    </div>
+
+                    <div class="ct-toolbar">
+                        <input id="ct-files-query" type="search" placeholder="جست‌وجوی نام، عنوان، دسته یا برچسب">
+                        <select id="ct-files-status">
+                            <option value="available" selected>لینک‌های موجود</option>
+                            <option value="active">فعال</option>
+                            <option value="hidden">مخفی</option>
+                            <option value="expired">منقضی</option>
+                            <option value="deleted">حذف‌شده</option>
+                        </select>
+                        <select id="ct-files-type">
+                            <option value="all" selected>همه نوع‌ها</option>
+                            <option value="image">تصویر</option>
+                            <option value="pdf">PDF</option>
+                            <option value="text">متن و کد</option>
+                            <option value="audio">صوت</option>
+                            <option value="video">ویدیو</option>
+                            <option value="other">سایر</option>
+                        </select>
+                        <select id="ct-files-sort">
+                            <option value="newest">جدیدترین</option>
+                            <option value="oldest">قدیمی‌ترین</option>
+                            <option value="size">حجیم‌ترین</option>
+                            <option value="downloads">بیشترین دانلود</option>
+                        </select>
+                    </div>
+
+                    <div class="ct-bulkbar">
+                        <span id="ct-files-selected">۰ انتخاب</span>
+                        <button class="ct-btn" type="button" data-ct-bulk-files="activate">فعال‌سازی</button>
+                        <button class="ct-btn" type="button" data-ct-bulk-files="hide">مخفی</button>
+                        <button class="ct-btn ct-btn--danger" type="button" data-ct-bulk-files="delete">حذف لینک</button>
+                        <button class="ct-btn ct-btn--danger" type="button" data-ct-bulk-files="purge">حذف فایل اصلی</button>
+                        <button id="ct-files-refresh" class="ct-btn" type="button">بازخوانی</button>
+                    </div>
+
+                    <div class="ctf-links-scroll">
+                        <div id="ct-files-list" class="ct-file-list"></div>
+                    </div>
+                    <div id="ct-files-pager" class="ct-pager"></div>
+                </section>
+
+                <details class="ctf-settings-card" id="ctf-settings-card" aria-labelledby="ctf-settings-title">
+                    <summary class="ctf-settings-summary">
+                        <div class="ctf-settings-head">
+                            <div class="ctf-settings-copy">
+                                <span class="ct-kicker">Link Settings</span>
+                                <h2 id="ctf-settings-title">تنظیمات اختیاری لینک و نمایش</h2>
+                                <p>برای لینک‌های عمومی فایل‌های تازه‌بارگذاری‌شده اعمال می‌شود و هیچ‌کدام از گزینه‌های فعلی حذف نشده‌اند.</p>
+                            </div>
+                        </div>
+                    </summary>
+
+                    <div class="ctf-settings-scroll">
+                        <div class="ct-grid ct-grid--two">
+                            <label class="ct-field" for="ct-upload-title-input">
+                                <span>عنوان اختیاری</span>
+                                <input id="ct-upload-title-input" type="text" maxlength="180" placeholder="برای فایل یا دسته فایل‌ها">
+                            </label>
+                            <label class="ct-field" for="ct-upload-folder-input">
+                                <span>برچسب نمایشی</span>
+                                <input id="ct-upload-folder-input" type="text" maxlength="80" placeholder="اختیاری؛ مثلا رادیولوژی">
+                            </label>
+                        </div>
+
+                        <label class="ct-field" for="ct-upload-description-input">
+                            <span>توضیح کوتاه</span>
+                            <textarea id="ct-upload-description-input" rows="2" maxlength="1200" placeholder="در صفحه عمومی فایل نمایش داده می‌شود"></textarea>
+                        </label>
+
+                        <div class="ct-grid ct-grid--three">
+                            <label class="ct-field" for="ct-upload-tags-input">
+                                <span>برچسب‌ها</span>
+                                <input id="ct-upload-tags-input" type="text" maxlength="240" placeholder="با ویرگول جدا کنید">
+                            </label>
+                            <label class="ct-field" for="ct-upload-expire-input">
+                                <span>انقضا</span>
+                                <input id="ct-upload-expire-input" type="datetime-local" data-latin-digits="true">
+                            </label>
+                            <label class="ct-field" for="ct-upload-limit-input">
+                                <span>سقف دانلود</span>
+                                <input id="ct-upload-limit-input" type="number" min="0" max="1000000" inputmode="numeric" data-latin-digits="true" placeholder="۰ یعنی نامحدود">
+                            </label>
+                        </div>
+
+                        <div class="ct-grid ct-grid--two">
+                            <label class="ct-field" for="ct-upload-password-input">
+                                <span>رمز اختیاری لینک</span>
+                                <input id="ct-upload-password-input" type="password" autocomplete="new-password" placeholder="خالی یعنی بدون رمز">
+                            </label>
+                            <label class="ct-field" for="ct-upload-status-input">
+                                <span>وضعیت لینک</span>
+                                <select id="ct-upload-status-input">
+                                    <option value="active">فعال</option>
+                                    <option value="hidden">مخفی</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="ctf-upload-kpis ctf-upload-kpis--compact">
+                            <article>
+                                <small>حجم منتقل‌شده</small>
+                                <strong id="ctf-queue-transferred">۰ / ۰</strong>
+                            </article>
+                            <article>
+                                <small>روش ذخیره</small>
+                                <strong>هاست دانلود</strong>
+                            </article>
+                            <article>
+                                <small>نوع صف</small>
+                                <strong>زنده و مرحله‌ای</strong>
+                            </article>
+                        </div>
+                    </div>
+                </details>
+            </section>
+        </section>
+    </main>
+
+    <script src="/assets/site/scripts/auth.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/content-tools-files.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/pwa.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/shell.js?v=20260812-phase3b"></script>
+</body>
+</html>

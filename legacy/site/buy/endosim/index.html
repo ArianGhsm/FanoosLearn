@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>سفارش دندان آموزشی اندو (اندوسیم) | ورودی ۱۴۰۲ دندانپزشکی</title>
+    <meta name="description" content="سفارش آنلاین دندان‌های آموزشی اندودانتیکس اندوسیم؛ انتخاب تعداد هر مدل، جمع خودکار قیمت و پرداخت آنی از درگاه سایت.">
+    <meta name="theme-color" content="#eef2f7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="ورودی ۱۴۰۲">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+    <script src="/assets/site/scripts/theme.js?v=20260722-200509"></script>
+    <link rel="stylesheet" href="/assets/site/styles/core.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/endosim.css?v=20260812-sitewide-mature1">
+    <link rel="stylesheet" href="/assets/site/styles/theme.css?v=20260812-phase4b">
+</head>
+<body class="endosim-page">
+    <div class="background-overlay" aria-hidden="true"></div>
+
+    <header class="site-header">
+        <div class="logo-area">
+            <div class="logo-circle">
+                <img src="/assets/images/logo.png?v=20260722-200509" alt="لوگوی ورودی ۱۴۰۲ دندانپزشکی">
+            </div>
+            <div class="site-info">
+                <h1>دندان آموزشی اندو</h1>
+                <p>کاتالوگ اندوسیم؛ انتخاب و سفارش آنی</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a class="header-link" href="/buy/">فروشگاه</a>
+            <a class="header-link" href="/app/">خانه</a>
+        </div>
+    </header>
+
+    <main class="endosim-shell" id="endosim-root">
+        <section class="endosim-hero" aria-label="معرفی فروشگاه">
+            <div class="endosim-hero__text">
+                <span class="endosim-hero__kicker">اندوسیم • Endosim</span>
+                <h2 class="endosim-hero__title">دندان‌های آموزشی اندودانتیکس</h2>
+                <p class="endosim-hero__lead">
+                    مدل‌های شفاف کانال‌داری برای تمرین درمان ریشه. تعداد هر دندان موردنیازت را انتخاب کن،
+                    قیمت کل به‌صورت خودکار جمع می‌شود و پرداخت را همان لحظه از درگاه سایت انجام می‌دهی.
+                </p>
+                <ul class="endosim-hero__badges">
+                    <li>قیمت‌ها نهایی و شامل تخفیف است</li>
+                    <li>پرداخت امن از درگاه سایت</li>
+                    <li>تحویل حضوری دانشکده</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="endosim-toolbar" aria-label="جست‌وجو و فیلتر">
+            <div class="endosim-search">
+                <input type="search" id="endosim-search" inputmode="search" autocomplete="off"
+                    placeholder="جست‌وجو بر اساس نام، کد یا نوع دندان…" aria-label="جست‌وجوی محصول">
+            </div>
+            <div class="endosim-chips" id="endosim-filters" role="group" aria-label="فیلتر فک">
+                <button type="button" class="endosim-chip is-active" data-endosim-filter="all">همه</button>
+                <button type="button" class="endosim-chip" data-endosim-filter="ماگزیلا">فک بالا</button>
+                <button type="button" class="endosim-chip" data-endosim-filter="مندیبل">فک پایین</button>
+                <button type="button" class="endosim-chip" data-endosim-filter="شیری">شیری</button>
+            </div>
+        </section>
+
+        <section class="endosim-status" id="endosim-status" aria-live="polite">در حال بارگذاری محصولات…</section>
+
+        <section class="endosim-grid" id="endosim-grid" aria-label="فهرست محصولات"></section>
+    </main>
+
+    <!-- Sticky order summary bar -->
+    <div class="endosim-bar" id="endosim-bar" data-empty="true" hidden>
+        <div class="endosim-bar__info">
+            <span class="endosim-bar__count" id="endosim-bar-count">۰ قلم</span>
+            <strong class="endosim-bar__total" id="endosim-bar-total">۰ ریال</strong>
+        </div>
+        <button type="button" class="endosim-bar__cta" id="endosim-bar-cta" disabled>ادامه و پرداخت</button>
+    </div>
+
+    <!-- Checkout overlay -->
+    <div class="endosim-modal" id="endosim-checkout" hidden role="dialog" aria-modal="true" aria-labelledby="endosim-checkout-title">
+        <div class="endosim-modal__backdrop" data-endosim-close></div>
+        <div class="endosim-modal__panel" role="document">
+            <div class="endosim-modal__head">
+                <h3 id="endosim-checkout-title">نهایی‌سازی سفارش</h3>
+                <button type="button" class="endosim-modal__close" data-endosim-close aria-label="بستن">×</button>
+            </div>
+            <div class="endosim-modal__body">
+                <div class="endosim-summary" id="endosim-summary"></div>
+
+                <form class="endosim-form" id="endosim-form" novalidate>
+                    <p class="endosim-identity-note" id="endosim-identity-note">سفارش به نام حساب شما ثبت می‌شود.</p>
+
+                    <fieldset class="endosim-gateways" id="endosim-gateways">
+                        <legend>روش پرداخت</legend>
+                        <p class="endosim-gateways__empty" id="endosim-gateways-empty">در حال دریافت درگاه‌ها…</p>
+                    </fieldset>
+
+                    <p class="endosim-feedback" id="endosim-feedback" role="alert"></p>
+
+                    <button type="submit" class="endosim-pay" id="endosim-pay">پرداخت مبلغ کل</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="/assets/site/scripts/auth.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/endosim-shop.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/pwa.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/shell.js?v=20260812-phase3b"></script>
+</body>
+</html>

@@ -1,0 +1,2758 @@
+/*
+ * Mature flat system — phase 5
+ *
+ * Final anti-card contract for the shared educational shell. This layer turns
+ * legacy classes named "card" into sections/rows without changing their data
+ * or interaction contracts. Floating surfaces remain reserved for overlays.
+ * Font families are deliberately not declared here.
+ */
+
+:root {
+    --flat-layout-wide: 1240px;
+    --flat-layout-reading: 980px;
+    --flat-control-radius: 8px;
+    --flat-section-radius: 10px;
+    --flat-overlay-radius: 10px;
+    --flat-divider: color-mix(in srgb, var(--border-color) 78%, transparent);
+    --flat-soft: color-mix(in srgb, var(--surface-muted) 62%, transparent);
+    --flat-hover: color-mix(in srgb, var(--accent-color) 5%, transparent);
+    --flat-rule: color-mix(in srgb, var(--text-primary) 13%, transparent);
+    --flat-rule-strong: color-mix(in srgb, var(--text-primary) 20%, transparent);
+    --flat-motion-press: 90ms;
+    --flat-motion-fast: 140ms;
+    --flat-motion-base: 180ms;
+    --flat-motion-settle: 220ms;
+    --flat-ease-standard: cubic-bezier(.2, 0, .38, .9);
+    --flat-ease-enter: cubic-bezier(0, 0, .38, .9);
+}
+
+/* The approved home has its own tighter geometry. Sitewide refinement must not
+   make its header/actions drift while secondary product pages become softer. */
+body.app-dashboard-page {
+    --flat-control-radius: 4px;
+}
+
+/* The page is one canvas, not a stack of floating surfaces. Keep the canvas
+   visibly branded: earlier anti-card passes accidentally removed every
+   background layer and left mobile pages looking unfinished. */
+body:not(.chat-page) {
+    background-color: var(--bg-body) !important;
+    background-image: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--accent-color) 2.5%, var(--bg-body)) 0,
+        var(--bg-body) 18rem
+    ) !important;
+    background-size: auto !important;
+    background-attachment: scroll !important;
+}
+
+html[data-theme="dark"] body:not(.chat-page) {
+    --flat-rule: color-mix(in srgb, var(--text-primary) 16%, transparent);
+    --flat-rule-strong: color-mix(in srgb, var(--text-primary) 24%, transparent);
+    background-image: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--accent-color) 3%, var(--bg-body)) 0,
+        var(--bg-body) 18rem
+    ) !important;
+}
+
+/* Search is vertically centred with a translate in core.css. The generic
+   button reset below must not erase that positioning transform. */
+.shell-search-trigger {
+    transform: translateY(-50%) !important;
+    border-radius: 50% !important;
+}
+
+.site-header.site-header--searching > .shell-search-trigger {
+    transform: translateY(-50%) scale(.92) !important;
+}
+
+:is(
+    .app-home-main,
+    .hub-main,
+    .exams-main,
+    .account-shell,
+    .forms-shell,
+    .buy-shell,
+    .admin-main,
+    .ct-shell,
+    .hu-shell,
+    .navid-flow,
+    .grades-flow
+) {
+    width: min(100%, var(--flat-layout-wide)) !important;
+    max-width: var(--flat-layout-wide) !important;
+    margin-inline: auto !important;
+}
+
+/* Legacy content surfaces become semantic sections. */
+:is(
+    .home-wallet-card,
+    .home-services-panel,
+    .home-promo-card,
+    .portal-panel,
+    .hub-hero,
+    .hub-section,
+    .notes-term-card,
+    .notes-group-card,
+    .notes-unit-card,
+    .exams-card,
+    .exams-section,
+    .exams-course-card,
+    .exams-session-card,
+    .account-card,
+    .account-surface-panel,
+    .account-section,
+    .owner-block,
+    .owner-summary,
+    .owner-stats-section,
+    .forms-hero,
+    .forms-panel,
+    .forms-card,
+    .forms-state-card,
+    .forms-field-card,
+    .forms-submit-card,
+    .buy-hero,
+    .buy-card,
+    .buy-panel,
+    .buy-cart-card,
+    .buy-summary-card,
+    .buy-checkout-card,
+    .admin-appearance-hero,
+    .admin-status-card,
+    .admin-panel,
+    .admin-links-panel,
+    .ct-state-card,
+    .ct-side-panel,
+    .ct-upload-card,
+    .ct-manager-card,
+    .ct-public-card,
+    .ct-storage-box,
+    .ctf-hero,
+    .ctf-upload-card,
+    .ctf-browser-card,
+    .ctf-links-card,
+    .ctf-settings-card,
+    .ctf-summary-card,
+    .hu-card,
+    .dis-card,
+    .navid-hero,
+    .navid-hero__panel,
+    .navid-panel,
+    .navid-auth-card,
+    .grades-auth-card,
+    .grades-panel,
+    .grades-owner-panel,
+    .grades-summary-card,
+    .grades-owner-summary-card
+) {
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+}
+
+/* Major regions are separated by rhythm and one deliberate rule. */
+:is(
+    .home-services-panel,
+    .hub-section,
+    .exams-section,
+    .account-section,
+    .account-surface-panel,
+    .forms-panel,
+    .buy-panel,
+    .admin-panel,
+    .admin-links-panel,
+    .ct-manager-card,
+    .ct-public-card,
+    .ctf-browser-card,
+    .ctf-links-card,
+    .ctf-settings-card,
+    .navid-panel,
+    .grades-panel,
+    .grades-owner-panel
+) {
+    border-block-start: 1px solid var(--flat-divider) !important;
+    padding-block: clamp(1.1rem, 2.2vw, 1.8rem) !important;
+}
+
+/* Repeating records are rows, including legacy elements named card. */
+:is(
+    .home-service-card,
+    .action-card,
+    .catalog-simple-row,
+    .notes-resource-card,
+    .account-list-row,
+    .account-action-row,
+    .owner-user-row,
+    .forms-response-card,
+    .buy-item-card,
+    .buy-order-row,
+    .buy-manage-row,
+    .ct-file-row,
+    .ct-paste-row,
+    .ct-link-row,
+    .hu-owner-row,
+    .navid-status-card,
+    .navid-glance-card,
+    .navid-owner-card,
+    .grades-row,
+    .grades-subject-row,
+    .grades-user-row
+) {
+    border: 0 !important;
+    border-block-end: 1px solid var(--flat-divider) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+}
+
+/* Decorative rounded icon tiles were the strongest remaining card cue. */
+:is(
+    .home-service-card__icon,
+    .home-service-link__icon,
+    .home-shortcut__icon,
+    .catalog-simple-row__icon,
+    .notes-resource-card__icon,
+    .account-list-row__icon,
+    .account-action-icon,
+    .forms-card__icon,
+    .forms-field-card__icon,
+    .buy-category__icon,
+    .buy-card-icon,
+    .admin-link-icon,
+    .admin-status-icon,
+    .ct-card-icon,
+    .ctf-summary-icon,
+    .hu-card-icon,
+    .navid-glance-card__icon,
+    .grades-card-icon
+) {
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+.app-dashboard-page .home-service-link__icon {
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+}
+
+/* Tabs and filters are text navigation with an active baseline, not pills. */
+:is(
+    .notes-chip,
+    .forms-chip,
+    .forms-filter-chip,
+    .buy-filter-chip,
+    .buy-category,
+    .ct-filter-chip,
+    .hu-filter-chip,
+    .navid-filter-chip,
+    .grades-filter-chip,
+    .account-tab
+) {
+    min-height: 38px !important;
+    padding: .45rem .25rem !important;
+    border: 0 !important;
+    border-block-end: 2px solid transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+:is(
+    .notes-chip,
+    .forms-chip,
+    .forms-filter-chip,
+    .buy-filter-chip,
+    .buy-category,
+    .ct-filter-chip,
+    .hu-filter-chip,
+    .navid-filter-chip,
+    .grades-filter-chip,
+    .account-tab
+):is(.is-active, [aria-selected="true"], [aria-pressed="true"]) {
+    color: var(--accent-color) !important;
+    border-block-end-color: currentColor !important;
+}
+
+.buy-category-strip,
+.buy-filter-bar {
+    gap: clamp(.9rem, 2.4vw, 1.8rem) !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-block-end: 1px solid var(--flat-divider) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.buy-category {
+    grid-template-rows: auto !important;
+    min-width: max-content !important;
+}
+
+.buy-category__icon {
+    display: none !important;
+}
+
+.buy-search,
+.buy-trust-strip,
+.buy-owner-entry {
+    border: 0 !important;
+    border-block-end: 1px solid var(--flat-divider) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+.buy-search {
+    padding-inline: 0 !important;
+}
+
+.buy-search input {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+}
+
+.buy-page .buy-feed > .buy-item-card {
+    border: 0 !important;
+    border-block-end: 1px solid var(--flat-divider) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.buy-page .buy-search > input {
+    border-radius: 0 !important;
+}
+
+/* Form toggles are settings rows, not selectable mini-cards. */
+.forms-page .forms-toggle-grid {
+    gap: 0 !important;
+}
+
+.forms-page .forms-toggle,
+.content-tools-page .ct-toggle {
+    border: 0 !important;
+    border-block-end: 1px solid var(--flat-divider) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding-inline: 0 !important;
+}
+
+/* Operational summaries become a continuous metric rail. */
+.content-tools-page .ctf-summary-grid,
+.html-uploader-page .hu-summary-grid {
+    gap: 0 !important;
+}
+
+.content-tools-page .ctf-summary-card,
+.html-uploader-page .hu-summary-card {
+    border: 0 !important;
+    border-inline-end: 1px solid var(--flat-divider) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.content-tools-page .ctf-summary-card:first-child,
+.html-uploader-page .hu-summary-card:first-child {
+    border-inline-end: 0 !important;
+}
+
+.content-tools-page .ctf-path-badge,
+.content-tools-page .ctf-toolbar-chip,
+.html-uploader-page .hu-notes {
+    border: 0 !important;
+    border-block-end: 1px solid var(--flat-divider) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* A drop target needs a visible boundary, but not a floating card. */
+.content-tools-page .ct-dropzone,
+.html-uploader-page .hu-dropzone {
+    border: 1px dashed var(--border-color-strong) !important;
+    border-radius: var(--flat-control-radius) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.html-uploader-page .hu-dropzone__icon {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Navid records are editorial timeline rows, not article cards. */
+.navid-page .navid-owner-reconnect,
+.navid-page .navid-assignment,
+.navid-page .navid-update,
+.navid-page .navid-empty,
+.navid-page .navid-feedback--inline {
+    border: 0 !important;
+    border-block-end: 1px solid var(--flat-divider) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.navid-page .navid-assignment,
+.navid-page .navid-update {
+    border-inline-start: 3px solid color-mix(in srgb, var(--accent-color) 62%, transparent) !important;
+    padding-inline-start: 1rem !important;
+}
+
+.navid-page .navid-feedback--inline.error {
+    border-inline-start: 3px solid var(--danger-color) !important;
+}
+
+.admin-page .admin-appearance-form__footer {
+    border: 0 !important;
+    border-block-start: 1px solid var(--flat-divider) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Status remains identifiable, but loses the bubble/card treatment. */
+:is(
+    .status-badge,
+    .account-badge,
+    .forms-status,
+    .buy-status,
+    .buy-badge,
+    .navid-status,
+    .grades-status,
+    .hu-pill,
+    .navid-hero-pill
+) {
+    border: 0 !important;
+    border-radius: 3px !important;
+    box-shadow: none !important;
+    padding: .22rem .5rem !important;
+}
+
+/* Controls: compact geometry, no floating/shiny CTA blocks. */
+body:not(.chat-page) :is(
+    button,
+    .button,
+    .btn,
+    .primary-btn,
+    .secondary-btn,
+    .card-btn,
+    .forms-btn,
+    .account-primary-btn,
+    .account-secondary-btn,
+    .account-submit,
+    .buy-primary-btn,
+    .buy-secondary-btn,
+    .buy-card-link,
+    .buy-card-icon-btn,
+    .admin-save-button,
+    .ct-btn,
+    .hu-btn,
+    .dis-btn,
+    .navid-btn,
+    .shell-action-btn
+) {
+    border-radius: var(--flat-control-radius) !important;
+    box-shadow: none !important;
+    background-image: none !important;
+    transform: none;
+}
+
+body:not(.chat-page) :is(
+    .primary-btn,
+    .forms-btn--primary,
+    .account-primary-btn,
+    .account-submit,
+    .buy-primary-btn,
+    .admin-save-button,
+    .ct-btn--primary,
+    .hu-btn--primary,
+    .dis-btn--primary,
+    .navid-btn--primary,
+    .shell-action-btn-primary
+) {
+    border-color: var(--accent-color) !important;
+    background-color: var(--accent-color) !important;
+    color: var(--text-on-accent) !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+body:not(.chat-page) .login-method-switch {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    border-block-end: 1px solid var(--flat-rule) !important;
+}
+
+body:not(.chat-page) .login-method-btn {
+    min-height: 44px;
+    padding: .55rem .15rem !important;
+    border: 0 !important;
+    border-block-end: 2px solid transparent !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: var(--text-secondary) !important;
+    box-shadow: none !important;
+}
+
+body:not(.chat-page) .login-method-btn:is(.is-active, [aria-selected="true"]) {
+    border-block-end-color: var(--accent-color) !important;
+    color: var(--text-primary) !important;
+}
+
+body:not(.chat-page) :is(.endosim-bar__cta, .endosim-pay) {
+    border-color: var(--accent-color) !important;
+    border-radius: var(--flat-control-radius) !important;
+    background-color: var(--accent-color) !important;
+    color: var(--text-on-accent) !important;
+    box-shadow: none !important;
+}
+
+body:not(.chat-page) :is(input, textarea, select, [contenteditable="true"]) {
+    border-radius: var(--flat-control-radius) !important;
+    box-shadow: none !important;
+    background-image: none !important;
+}
+
+/* Feature heroes sit in the document flow instead of inside a banner card. */
+:is(
+    .home-wallet-card,
+    .hub-hero,
+    .catalog-simple-hero,
+    .account-card--identity,
+    .forms-hero,
+    .buy-hero,
+    .admin-appearance-hero,
+    .ctf-hero,
+    .navid-hero
+) {
+    padding: clamp(1.15rem, 3vw, 2.2rem) 0 !important;
+    border: 0 !important;
+    border-block-end: 1px solid var(--flat-divider) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Product media is media, not a decorative card. */
+.buy-item-card {
+    overflow: visible !important;
+    padding-block: 1.2rem !important;
+}
+
+.buy-item-card__hero,
+.buy-item-main-hero,
+.buy-gallery__item {
+    border-radius: 2px !important;
+    box-shadow: none !important;
+}
+
+.buy-item-card__actions {
+    border-block-start: 1px solid var(--flat-divider);
+    padding-block-start: .8rem;
+}
+
+.buy-card-link {
+    border: 0 !important;
+    border-block-end: 1px solid currentColor !important;
+    padding-inline: .15rem !important;
+    background: transparent !important;
+}
+
+.buy-card-icon-btn {
+    border: 0 !important;
+    background: transparent !important;
+}
+
+/* Active quiz content follows the same page/section/row hierarchy. */
+:is(.quiz-page .exam-stage, .quiz-page .exam-panel, .quiz-page .exam-question-card) {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.quiz-page .exam-option {
+    border: 0 !important;
+    border-block-end: 1px solid var(--flat-divider) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Bottom navigation is a single shared rail; inner links do not become cards. */
+.shell-bottom-nav {
+    border-block-start: 1px solid var(--flat-divider) !important;
+    box-shadow: none !important;
+}
+
+.shell-bottom-nav__inner {
+    width: min(100%, 680px) !important;
+    margin-inline: auto !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.shell-bottom-nav__link,
+.shell-bottom-nav__item {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Floating UI is intentionally the only elevated surface. */
+body:not(.chat-page) :is(
+    dialog,
+    .modal,
+    .exam-session-dialog,
+    .exam-media-viewer,
+    .endosim-modal__panel,
+    .site-account-menu,
+    .shell-search-panel,
+    .popover,
+    .dropdown-menu
+) {
+    border-radius: var(--flat-overlay-radius) !important;
+}
+
+@media (min-width: 900px) {
+    :is(
+        .app-home-main,
+        .hub-main,
+        .exams-main,
+        .account-shell,
+        .forms-shell,
+        .buy-shell,
+        .admin-main,
+        .ct-shell,
+        .hu-shell,
+        .navid-flow,
+        .grades-flow
+    ) {
+        padding-inline: clamp(1.75rem, 4vw, 3.5rem) !important;
+    }
+
+    :is(.account-shell, .forms-shell--fill, .buy-shell--cart, .buy-shell--result) {
+        max-width: var(--flat-layout-reading) !important;
+    }
+}
+
+@media (max-width: 760px) {
+    :is(
+        .app-home-main,
+        .hub-main,
+        .exams-main,
+        .account-shell,
+        .forms-shell,
+        .buy-shell,
+        .admin-main,
+        .ct-shell,
+        .hu-shell,
+        .navid-flow,
+        .grades-flow
+    ) {
+        width: 100% !important;
+        padding-inline: 1rem !important;
+    }
+
+    :is(
+        .home-services-grid,
+        .forms-grid,
+        .buy-grid,
+        .buy-items-grid,
+        .admin-grid,
+        .ct-grid,
+        .ctf-grid,
+        .navid-grid,
+        .grades-grid
+    ) {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 0 !important;
+    }
+
+    :is(
+        .home-service-card,
+        .catalog-simple-row,
+        .notes-resource-card,
+        .account-list-row,
+        .forms-response-card,
+        .buy-item-card,
+        .ct-file-row,
+        .ct-paste-row,
+        .hu-owner-row,
+        .navid-status-card,
+        .navid-glance-card,
+        .grades-row
+    ) {
+        min-width: 0 !important;
+        padding-inline: 0 !important;
+    }
+
+    .buy-category-strip,
+    .buy-filter-bar {
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .shell-bottom-nav__inner {
+        width: 100% !important;
+    }
+
+    .content-tools-page .ctf-summary-card,
+    .html-uploader-page .hu-summary-card {
+        border-inline-end: 0 !important;
+        border-block-end: 1px solid var(--flat-divider) !important;
+    }
+}
+
+/* -------------------------------------------------------------------------
+   Sitewide refinement: calm geometry, editorial labels and readable actions
+   ------------------------------------------------------------------------- */
+
+/* Decorative "eyebrow" and "kicker" copy is hierarchy, not status. Keeping
+   it inside pale capsules made unrelated pages look template-generated. */
+body:not(.chat-page):not(.app-dashboard-page) :is(
+    .greeting-pill,
+    [class$="__eyebrow"],
+    [class*="__eyebrow "],
+    [class$="-eyebrow"],
+    [class*="-eyebrow "],
+    [class$="__kicker"],
+    [class*="__kicker "],
+    [class$="-kicker"],
+    [class*="-kicker "],
+    .navid-hero-pill
+) {
+    width: max-content !important;
+    max-width: 100%;
+    min-height: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    color: var(--accent-strong) !important;
+    font-size: .72rem !important;
+    font-weight: 790 !important;
+    line-height: 1.55 !important;
+    white-space: normal !important;
+}
+
+body:not(.chat-page):not(.app-dashboard-page) :is(
+    .greeting-pill,
+    .catalog-simple-hero__eyebrow,
+    .catalog-simple-group__eyebrow,
+    .archive-term__kicker,
+    .navid-panel__kicker
+)::before {
+    content: "" !important;
+    display: inline-block !important;
+    width: 18px !important;
+    height: 2px !important;
+    flex: 0 0 18px;
+    margin-inline-end: .42rem;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: currentColor !important;
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+}
+
+/* Repeated row labels such as "مسیر ورود" and "ترم" add no information. */
+body:not(.chat-page) .catalog-simple-row__eyebrow {
+    display: none !important;
+}
+
+/* Semantic status remains visible, but as a compact rectangular marker rather
+   than the same decorative capsule used everywhere else. */
+body:not(.chat-page) :is(.catalog-simple-row__status, .exams-status-pill) {
+    min-height: 24px !important;
+    padding: .18rem .48rem !important;
+    border-radius: 5px !important;
+    font-size: .68rem !important;
+    line-height: 1.45 !important;
+}
+
+/* Selection surfaces shared by resources and exams. One quiet intro band is
+   allowed; repeating choices remain flat rows separated by rhythm and rules. */
+body:not(.chat-page) .catalog-simple-hero,
+body.notes-curriculum-page main > .hero-content {
+    width: 100% !important;
+    max-width: none !important;
+    margin-inline: 0 !important;
+    padding: clamp(1rem, 2.5vw, 1.45rem) clamp(1rem, 2.6vw, 1.35rem) !important;
+    border: 0 !important;
+    border-inline-start: 3px solid color-mix(in srgb, var(--accent-color) 72%, transparent) !important;
+    border-radius: var(--flat-section-radius) !important;
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 46%, transparent), transparent 64%),
+        color-mix(in srgb, var(--surface-solid) 82%, var(--bg-body)) !important;
+    box-shadow: none !important;
+    overflow: hidden;
+}
+
+body.notes-curriculum-page main > .hero-content {
+    display: grid;
+    justify-items: start;
+    gap: .5rem;
+    text-align: start !important;
+}
+
+body.notes-curriculum-page main > .hero-content :is(.hero-title, p) {
+    max-width: 46rem;
+    margin-inline: 0 !important;
+    text-align: start !important;
+}
+
+body.notes-curriculum-page main > .hero-content .hero-title,
+body:not(.chat-page) .catalog-simple-hero__title {
+    font-size: clamp(1.35rem, 2.1vw, 1.8rem) !important;
+    line-height: 1.42 !important;
+}
+
+body:not(.chat-page) .catalog-simple-hero {
+    display: grid;
+    gap: .5rem;
+    text-align: start;
+}
+
+body:not(.chat-page) .catalog-simple-hero__copy {
+    min-width: 0;
+    display: grid;
+    justify-items: start;
+    gap: .35rem;
+}
+
+body:not(.chat-page) .catalog-simple-hero__title,
+body:not(.chat-page) .catalog-simple-hero__meta {
+    max-width: 56rem;
+    text-align: start !important;
+}
+
+body:not(.chat-page) .catalog-simple-group {
+    padding-block: 1rem 0 !important;
+    border: 0 !important;
+    border-block-start: 1px solid var(--flat-rule) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+body:not(.chat-page) .catalog-simple-group__head {
+    gap: .28rem !important;
+    padding-block-end: .65rem;
+}
+
+body:not(.chat-page) .catalog-simple-stack {
+    gap: 0 !important;
+}
+
+body:not(.chat-page) .catalog-simple-row {
+    overflow: visible !important;
+    border: 0 !important;
+    border-block-end: 1px solid var(--flat-rule) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+body:not(.chat-page) :is(
+    .catalog-simple-row__link,
+    .catalog-simple-row__button,
+    .catalog-simple-row__static
+) {
+    width: 100%;
+    min-width: 0;
+    min-height: 76px;
+    grid-template-columns: minmax(0, 1fr) 40px auto !important;
+    gap: .68rem !important;
+    padding: .82rem .38rem !important;
+    border: 0 !important;
+    border-radius: var(--flat-control-radius) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-align: start !important;
+    overflow: visible !important;
+    transition:
+        color var(--flat-motion-fast) var(--flat-ease-standard),
+        background-color var(--flat-motion-fast) var(--flat-ease-standard),
+        transform var(--flat-motion-press) var(--flat-ease-standard) !important;
+}
+
+body:not(.chat-page) .catalog-simple-row__body {
+    min-width: 0 !important;
+    gap: .18rem !important;
+}
+
+body:not(.chat-page) :is(
+    .catalog-simple-row__title,
+    .catalog-simple-row__meta,
+    .catalog-simple-row__schedule,
+    .catalog-simple-row__extra,
+    .catalog-simple-row .exams-reference-source
+) {
+    max-width: 100% !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    -webkit-line-clamp: unset !important;
+}
+
+body:not(.chat-page) .catalog-simple-row__title {
+    font-size: .96rem !important;
+    line-height: 1.55 !important;
+}
+
+body:not(.chat-page) .catalog-simple-row__meta {
+    font-size: .77rem !important;
+    line-height: 1.72 !important;
+}
+
+body:not(.chat-page) .catalog-simple-row__visual {
+    width: 40px !important;
+    min-width: 40px !important;
+    height: 40px !important;
+    border: 0 !important;
+    border-radius: var(--flat-control-radius) !important;
+    background: color-mix(in srgb, var(--catalog-accent-soft) 56%, var(--surface-solid)) !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    overflow: hidden;
+}
+
+body:not(.chat-page) .catalog-simple-row__visual::before,
+body:not(.chat-page) .catalog-simple-row__visual::after {
+    content: none !important;
+    display: none !important;
+}
+
+body:not(.chat-page) .catalog-simple-row__visual strong {
+    font-size: .88rem !important;
+    line-height: 1 !important;
+}
+
+body:not(.chat-page) .catalog-simple-row__tail {
+    min-width: 0;
+    gap: .34rem !important;
+}
+
+body:not(.chat-page) .catalog-simple-row__action {
+    min-height: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: var(--catalog-accent-strong) !important;
+    font-size: .72rem !important;
+    font-weight: 790 !important;
+    line-height: 1.55 !important;
+    white-space: normal !important;
+}
+
+body:not(.chat-page) .catalog-simple-row__chevron {
+    color: color-mix(in srgb, var(--catalog-accent-strong) 74%, var(--text-tertiary)) !important;
+    transition: transform var(--flat-motion-fast) var(--flat-ease-standard) !important;
+}
+
+/* Action copy is allowed to wrap. Truncation is reserved for dense file/table
+   data, never for the label that tells a user what a control does. */
+body:not(.chat-page):not(.app-dashboard-page) main :is(
+    button,
+    .button,
+    .btn,
+    [role="button"],
+    .shell-action-btn,
+    .notes-link-btn,
+    .notes-resource-action,
+    .exam-btn,
+    .exam-payment-btn,
+    .exam-payment-secondary-btn
+) {
+    text-overflow: clip !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+}
+
+body:not(.chat-page):not(.app-dashboard-page) main :is(button, a, [role="button"]) :is(
+    [class$="__title"],
+    [class*="__title "],
+    [class$="__label"],
+    [class*="__label "],
+    strong,
+    small
+) {
+    max-width: 100%;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+}
+
+body:not(.chat-page):not(.app-dashboard-page) :is(
+    .forms-btn,
+    .navid-btn,
+    .navid-inline-toggle,
+    .navid-list-toggle,
+    .shell-action-btn,
+    .notes-link-btn,
+    .notes-resource-action,
+    .account-primary-btn,
+    .account-secondary-btn,
+    .account-submit,
+    .buy-primary-btn,
+    .buy-secondary-btn,
+    .admin-save-button,
+    .ct-btn,
+    .hu-btn,
+    .dis-btn,
+    .exam-btn,
+    .exam-payment-btn,
+    .exam-payment-secondary-btn,
+    .viewer-icon-btn,
+    .viewer-text-btn
+) {
+    border-radius: var(--flat-control-radius) !important;
+}
+
+/* Specificity bridge for feature sheets that previously forced 10px controls. */
+body.forms-page .forms-btn,
+body.notes-curriculum-page :is(.notes-link-btn, .notes-resource-action),
+body.navid-page :is(.navid-btn, .navid-inline-toggle, .navid-list-toggle, .shell-action-btn) {
+    border-radius: var(--flat-control-radius) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    body:not(.chat-page) :is(.catalog-simple-row__link, .catalog-simple-row__button):hover {
+        background-color: color-mix(in srgb, var(--catalog-accent-soft) 34%, transparent) !important;
+        transform: translateY(-1px) !important;
+    }
+
+    body:not(.chat-page) :is(.catalog-simple-row__link, .catalog-simple-row__button):hover .catalog-simple-row__chevron {
+        transform: translateX(-2px);
+    }
+}
+
+body:not(.chat-page) :is(.catalog-simple-row__link, .catalog-simple-row__button):active {
+    transform: scale(.99) !important;
+}
+
+@media (max-width: 620px) {
+    body:not(.chat-page) .catalog-simple-hero,
+    body.notes-curriculum-page main > .hero-content {
+        padding: 1rem !important;
+        border-radius: 8px !important;
+    }
+
+    body:not(.chat-page) :is(
+        .catalog-simple-row__link,
+        .catalog-simple-row__button,
+        .catalog-simple-row__static
+    ) {
+        min-height: 70px;
+        grid-template-columns: minmax(0, 1fr) 38px auto !important;
+        gap: .55rem !important;
+        padding: .76rem .2rem !important;
+    }
+
+    body:not(.chat-page) .catalog-simple-row__visual {
+        width: 38px !important;
+        min-width: 38px !important;
+        height: 38px !important;
+    }
+
+    body:not(.chat-page) .catalog-simple-row__action {
+        display: none !important;
+    }
+
+    body:not(.chat-page) .catalog-simple-row__meta {
+        font-size: .74rem !important;
+    }
+}
+
+/*
+ * Mature system — phase 5
+ *
+ * The approved home direction is extended to the rest of the product here:
+ * one quiet canvas, restrained rules, compact controls and productive motion.
+ * This remains a presentation-only layer; route, auth and feature state stay in
+ * their existing modules. Chat intentionally keeps its dedicated messenger UI.
+ */
+
+body:not(.chat-page)::before,
+body:not(.chat-page)::after,
+body:not(.chat-page) > .background-overlay {
+    content: none !important;
+    display: none !important;
+}
+
+body:not(.chat-page) .site-header {
+    border: 0 !important;
+    border-block-start: 3px solid transparent !important;
+    border-block-end: 1px solid var(--flat-rule) !important;
+    border-radius: 0 !important;
+    background:
+        linear-gradient(var(--surface-solid), var(--surface-solid)) padding-box,
+        linear-gradient(90deg, var(--accent-cyan), var(--accent-green), var(--accent-orange)) border-box !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    transition:
+        border-color var(--flat-motion-fast) var(--flat-ease-standard),
+        box-shadow var(--flat-motion-base) var(--flat-ease-standard) !important;
+}
+
+body:not(.chat-page).is-shell-scrolled .site-header {
+    border-block-end-color: var(--flat-rule-strong) !important;
+    box-shadow: 0 12px 28px -26px color-mix(in srgb, var(--text-primary) 38%, transparent) !important;
+}
+
+body:not(.chat-page) :is(
+    .site-header,
+    .site-header *,
+    .shell-bottom-nav,
+    .shell-bottom-nav *
+) {
+    -webkit-tap-highlight-color: transparent;
+}
+
+body:not(.chat-page):not(.quiz-page) main > :is(h1, h2):first-child,
+body:not(.chat-page):not(.quiz-page) main :is(.hero-title, .grades-title, .buy-title, .forms-title, .navid-title) {
+    max-width: 28ch;
+    margin-block: 0 .5rem !important;
+    color: var(--text-primary) !important;
+    font-size: clamp(1.45rem, 3.4vw, 2.15rem) !important;
+    line-height: 1.3 !important;
+    letter-spacing: -.015em;
+}
+
+body:not(.chat-page) :is(
+    .hero-desc,
+    .grades-desc,
+    .buy-description,
+    .forms-description,
+    .navid-description,
+    .admin-appearance-hero__copy p,
+    .ctf-hero__copy p
+) {
+    max-width: 64ch;
+    color: var(--text-secondary) !important;
+    font-size: clamp(.78rem, 1.2vw, .9rem) !important;
+    line-height: 1.85 !important;
+}
+
+body:not(.chat-page) :is(
+    .hub-hero,
+    .catalog-simple-hero,
+    .exams-home-hero,
+    .exams-course-hero,
+    .grades-intro,
+    .grades-dashboard__hero,
+    .forms-topbar,
+    .forms-hero,
+    .navid-hero,
+    .buy-hero,
+    .admin-appearance-hero,
+    .ct-drive-topbar,
+    .ctf-hero,
+    .hu-header,
+    .dis-hero
+) {
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding-block: clamp(1.25rem, 3vw, 2.25rem) !important;
+    padding-inline: 0 !important;
+    border: 0 !important;
+    border-block-end: 1px solid var(--flat-rule) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+}
+
+body:not(.chat-page) :is(
+    .hub-hero::before,
+    .hub-hero::after,
+    .catalog-simple-hero::before,
+    .catalog-simple-hero::after,
+    .exams-home-hero::before,
+    .exams-home-hero::after,
+    .grades-intro::before,
+    .grades-intro::after,
+    .forms-hero::before,
+    .forms-hero::after,
+    .navid-hero::before,
+    .navid-hero::after,
+    .buy-hero::before,
+    .buy-hero::after,
+    .admin-appearance-hero::before,
+    .admin-appearance-hero::after,
+    .ctf-hero::before,
+    .ctf-hero::after,
+    .dis-hero::before,
+    .dis-hero::after
+) {
+    content: none !important;
+    display: none !important;
+}
+
+body:not(.chat-page) :is(
+    .exams-reference-card,
+    .exam-payment-card,
+    .exam-payment-panel,
+    .forms-item,
+    .owner-summary-card,
+    .dis-stat-card,
+    .dis-state-card,
+    .dis-user-card,
+    .buy-empty,
+    .buy-info-grid > article,
+    .security-section,
+    .payments-item-card,
+    .payments-order-card,
+    .payments-note,
+    .owner-user,
+    .owner-user-admin-card,
+    .notes-resource-insights,
+    .notes-resource-pack,
+    .notes-resource-request,
+    .forms-fill-question,
+    .forms-receipt-pay-card
+) {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+}
+
+body:not(.chat-page) :is(
+    .exams-reference-card,
+    .forms-item,
+    .dis-user-card,
+    .payments-item-card,
+    .payments-order-card,
+    .payments-note,
+    .owner-user,
+    .notes-resource-mini-list > *,
+    .forms-results-list > *,
+    .buy-info-grid > article
+) {
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding-block: 1rem !important;
+    border-block-end: 1px solid var(--flat-rule) !important;
+    transition:
+        background-color var(--flat-motion-fast) var(--flat-ease-standard),
+        border-color var(--flat-motion-fast) var(--flat-ease-standard) !important;
+}
+
+body:not(.chat-page) :is(
+    .exams-reference-card,
+    .navid-assignment,
+    .navid-update,
+    .grades-status-banner,
+    .dis-state-card,
+    .account-feedback--inline,
+    .forms-state-card
+) {
+    border-inline-start: 3px solid color-mix(in srgb, var(--accent-color) 68%, transparent) !important;
+    padding-inline-start: 1rem !important;
+}
+
+body:not(.chat-page) :is(
+    .exams-reference-card *,
+    .forms-item *,
+    .dis-user-card *,
+    .owner-user *,
+    .payments-item-card *,
+    .payments-order-card *
+) {
+    min-width: 0;
+}
+
+body:not(.chat-page) :is(
+    .exams-reference-card,
+    .catalog-simple-row,
+    .notes-resource-card,
+    .forms-item,
+    .dis-user-card,
+    .owner-user,
+    .payments-item-card,
+    .payments-order-card
+) :is(strong, h3, h4, p, small, span) {
+    overflow-wrap: anywhere;
+}
+
+body:not(.chat-page) :is(
+    .notes-summary-grid,
+    .forms-summary,
+    .grades-summary-grid,
+    .grades-owner-summary,
+    .navid-status-grid,
+    .navid-owner-status-cards,
+    .admin-status-grid,
+    .dis-stats-grid,
+    .owner-summary,
+    .ctf-summary-grid,
+    .hu-summary-grid
+) {
+    gap: 0 !important;
+    padding: 0 !important;
+    overflow: hidden;
+    border-block: 1px solid var(--flat-rule) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+body:not(.chat-page) :is(
+    .notes-summary-stat,
+    .forms-metric,
+    .grades-summary-card,
+    .grades-owner-summary-card,
+    .navid-status-card,
+    .navid-owner-card,
+    .admin-status-card,
+    .dis-stat-card,
+    .owner-summary-card,
+    .ctf-summary-card,
+    .hu-summary-card
+) {
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: clamp(.8rem, 2vw, 1.15rem) !important;
+    border: 0 !important;
+    border-inline-start: 1px solid var(--flat-rule) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+body:not(.chat-page) :is(
+    .notes-summary-stat,
+    .forms-metric,
+    .grades-summary-card,
+    .grades-owner-summary-card,
+    .navid-status-card,
+    .navid-owner-card,
+    .admin-status-card,
+    .dis-stat-card,
+    .owner-summary-card,
+    .ctf-summary-card,
+    .hu-summary-card
+):first-child {
+    border-inline-start: 0 !important;
+}
+
+body:not(.chat-page) :is(
+    .forms-tabs,
+    .owner-tabs,
+    .buy-manage-nav,
+    .navid-view-switch,
+    .exams-filter-row,
+    .notes-inline-actions
+) {
+    display: flex !important;
+    align-items: stretch !important;
+    gap: clamp(.8rem, 2.4vw, 1.5rem) !important;
+    min-width: 0;
+    padding: 0 !important;
+    overflow-x: auto;
+    border: 0 !important;
+    border-block-end: 1px solid var(--flat-rule) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    scrollbar-width: none;
+}
+
+body:not(.chat-page) :is(
+    .forms-tabs button,
+    .owner-tab,
+    .buy-manage-nav a,
+    .buy-manage-nav button,
+    .navid-view-switch__btn,
+    .exams-filter-chip,
+    .notes-chip
+) {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: max-content !important;
+    min-height: 44px !important;
+    margin: 0 !important;
+    padding: .6rem .15rem !important;
+    border: 0 !important;
+    border-block-end: 2px solid transparent !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+body:not(.chat-page) :is(
+    .forms-tabs button,
+    .owner-tab,
+    .buy-manage-nav a,
+    .buy-manage-nav button,
+    .navid-view-switch__btn,
+    .exams-filter-chip,
+    .notes-chip
+):is(.is-active, [aria-current="page"], [aria-selected="true"], [aria-pressed="true"]) {
+    color: var(--accent-color) !important;
+    border-block-end-color: currentColor !important;
+}
+
+body:not(.chat-page) :is(
+    input,
+    textarea,
+    select,
+    [contenteditable="true"]
+):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]) {
+    min-width: 0;
+    min-height: 44px;
+    border: 1px solid var(--flat-rule-strong) !important;
+    border-radius: var(--flat-control-radius) !important;
+    background: color-mix(in srgb, var(--surface-solid) 72%, transparent) !important;
+    color: var(--text-primary) !important;
+    box-shadow: none !important;
+    transition:
+        border-color var(--flat-motion-fast) var(--flat-ease-standard),
+        background-color var(--flat-motion-fast) var(--flat-ease-standard) !important;
+}
+
+body:not(.chat-page) textarea {
+    min-height: 108px;
+    resize: vertical;
+}
+
+body:not(.chat-page) :is(
+    .forms-field,
+    .ct-field,
+    .dis-field,
+    .navid-owner-field,
+    .notes-manage-panel__field,
+    .account-form label,
+    .buy-field
+) {
+    gap: .45rem !important;
+}
+
+body:not(.chat-page) :is(
+    button,
+    a,
+    input,
+    textarea,
+    select,
+    [role="button"],
+    [tabindex]
+):focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--accent-color) 82%, var(--text-primary)) !important;
+    outline-offset: 2px !important;
+    box-shadow: none !important;
+}
+
+body:not(.chat-page) :is(
+    .button,
+    .btn,
+    .primary-btn,
+    .secondary-btn,
+    .card-btn,
+    .forms-btn,
+    .account-primary-btn,
+    .account-secondary-btn,
+    .account-submit,
+    .buy-primary-btn,
+    .buy-secondary-btn,
+    .admin-save-button,
+    .ct-btn,
+    .hu-btn,
+    .dis-btn,
+    .navid-btn,
+    .shell-action-btn,
+    .exam-payment-btn,
+    .exam-payment-secondary-btn
+) {
+    min-height: 44px !important;
+    transition:
+        color var(--flat-motion-fast) var(--flat-ease-standard),
+        border-color var(--flat-motion-fast) var(--flat-ease-standard),
+        background-color var(--flat-motion-fast) var(--flat-ease-standard),
+        opacity var(--flat-motion-fast) var(--flat-ease-standard),
+        transform var(--flat-motion-press) var(--flat-ease-standard) !important;
+}
+
+body:not(.chat-page) :is(button, .button, .btn, [role="button"]):active:not(:disabled) {
+    transform: scale(.98) !important;
+    transition-duration: var(--flat-motion-press) !important;
+}
+
+/* The shared search trigger uses translateY for layout, so its press feedback
+   must compose with that transform instead of replacing it. */
+body:not(.chat-page) .shell-search-trigger:active:not(:disabled) {
+    transform: translateY(-50%) scale(.98) !important;
+}
+
+body:not(.chat-page) .external-password-toggle {
+    transform: translateY(-50%) !important;
+}
+
+body:not(.chat-page) .external-password-toggle:active:not(:disabled) {
+    transform: translateY(-50%) scale(.98) !important;
+}
+
+body:not(.chat-page) :is(button, .button, .btn, [role="button"]):disabled,
+body:not(.chat-page) [aria-disabled="true"] {
+    cursor: not-allowed !important;
+    opacity: .52 !important;
+}
+
+body:not(.chat-page) :is(table, .owner-stats-table) {
+    width: 100%;
+    border-collapse: collapse !important;
+    border-spacing: 0 !important;
+    background: transparent !important;
+}
+
+body:not(.chat-page) :is(th, td) {
+    padding: .8rem .65rem !important;
+    border: 0 !important;
+    border-block-end: 1px solid var(--flat-rule) !important;
+    text-align: start;
+}
+
+body:not(.chat-page) :is(dialog, .modal, .exam-session-dialog, .exam-media-viewer, .endosim-modal__panel, .shell-modal, .shell-drawer, .shell-search-panel, .shell-account-panel) {
+    border: 1px solid var(--flat-rule-strong) !important;
+    border-radius: 12px !important;
+    background: var(--surface-solid) !important;
+    box-shadow: 0 24px 64px -40px color-mix(in srgb, var(--text-primary) 52%, transparent) !important;
+}
+
+body:not(.chat-page) .shell-bottom-nav {
+    padding: 0 !important;
+    border-block-start: 1px solid var(--flat-rule) !important;
+    background: color-mix(in srgb, var(--surface-solid) 95%, transparent) !important;
+    box-shadow: none !important;
+    backdrop-filter: saturate(115%) blur(12px) !important;
+}
+
+body:not(.chat-page) .shell-bottom-nav__inner {
+    width: min(100%, 560px) !important;
+    max-width: 100% !important;
+    min-height: calc(62px + env(safe-area-inset-bottom, 0px)) !important;
+    display: grid !important;
+    grid-auto-flow: column !important;
+    grid-auto-columns: minmax(0, 1fr) !important;
+    gap: 0 !important;
+    padding: .2rem .5rem env(safe-area-inset-bottom, 0px) !important;
+    border: 0 !important;
+    background: transparent !important;
+}
+
+body:not(.chat-page) .shell-bottom-nav__link,
+body:not(.chat-page) .shell-bottom-nav__link.is-active {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 54px !important;
+    padding: .3rem .35rem !important;
+    flex-direction: column !important;
+    gap: .14rem !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: var(--text-tertiary) !important;
+    box-shadow: none !important;
+    transition:
+        color var(--flat-motion-fast) var(--flat-ease-standard),
+        background-color var(--flat-motion-fast) var(--flat-ease-standard),
+        transform var(--flat-motion-press) var(--flat-ease-standard) !important;
+}
+
+body:not(.chat-page) .shell-bottom-nav__link.is-active {
+    color: var(--accent-color) !important;
+}
+
+body:not(.chat-page) .shell-bottom-nav__label,
+body:not(.chat-page) .shell-bottom-nav__link.is-active .shell-bottom-nav__label {
+    display: inline !important;
+    font-size: .65rem !important;
+    font-weight: 740 !important;
+    line-height: 1.15 !important;
+}
+
+html.site-bottom-nav-labels-off body:not(.chat-page) .shell-bottom-nav__label,
+html.site-bottom-nav-labels-off body:not(.chat-page) .shell-bottom-nav__link.is-active .shell-bottom-nav__label {
+    display: none !important;
+}
+
+body:not(.chat-page) .shell-bottom-nav__icon,
+body:not(.chat-page) .shell-bottom-nav__icon svg {
+    width: 22px !important;
+    height: 22px !important;
+}
+
+body:not(.chat-page) svg :is(path, circle, rect, line, polyline) {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+@keyframes flat-nav-icon-settle {
+    from {
+        opacity: .76;
+        transform: scale(.94);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes flat-nav-label-settle {
+    from {
+        opacity: 0;
+        transform: translateY(2px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (hover: hover) and (pointer: fine) {
+    body:not(.chat-page) :is(
+        .home-service-card,
+        .action-card,
+        .catalog-simple-row,
+        .notes-resource-card,
+        .account-list-row,
+        .account-action-row,
+        .forms-response-card,
+        .forms-item,
+        .buy-item-card,
+        .buy-order-row,
+        .ct-file-row,
+        .ct-paste-row,
+        .ct-link-row,
+        .hu-owner-row,
+        .navid-assignment,
+        .navid-update,
+        .grades-row,
+        .dis-user-card,
+        .owner-user,
+        .payments-item-card,
+        .payments-order-card
+    ):hover {
+        background: var(--flat-hover) !important;
+        box-shadow: none !important;
+    }
+
+    body:not(.chat-page) :is(
+        .primary-btn,
+        .forms-btn--primary,
+        .account-primary-btn,
+        .account-submit,
+        .buy-primary-btn,
+        .admin-save-button,
+        .ct-btn--primary,
+        .hu-btn--primary,
+        .dis-btn--primary,
+        .navid-btn--primary,
+        .shell-action-btn-primary,
+        .exam-payment-btn
+    ):hover:not(:disabled) {
+        filter: brightness(.96);
+    }
+
+    body:not(.chat-page) .shell-bottom-nav__link:not(.is-active):hover {
+        color: var(--text-primary) !important;
+        background: color-mix(in srgb, var(--accent-color) 5%, transparent) !important;
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    body:not(.chat-page) .shell-bottom-nav__link.is-active .shell-bottom-nav__icon {
+        animation: flat-nav-icon-settle var(--flat-motion-base) var(--flat-ease-enter) both !important;
+    }
+
+    body:not(.chat-page) .shell-bottom-nav__link.is-active .shell-bottom-nav__label {
+        animation: flat-nav-label-settle var(--flat-motion-fast) var(--flat-ease-enter) both !important;
+    }
+}
+
+@media (max-width: 760px) {
+    body:not(.chat-page):not(.quiz-page) main :is(.hero-title, .grades-title, .buy-title, .forms-title, .navid-title) {
+        font-size: clamp(1.3rem, 7vw, 1.75rem) !important;
+    }
+
+    body:not(.chat-page) :is(
+        .hub-hero,
+        .catalog-simple-hero,
+        .exams-home-hero,
+        .exams-course-hero,
+        .grades-intro,
+        .grades-dashboard__hero,
+        .forms-topbar,
+        .forms-hero,
+        .navid-hero,
+        .buy-hero,
+        .admin-appearance-hero,
+        .ct-drive-topbar,
+        .ctf-hero,
+        .hu-header,
+        .dis-hero
+    ) {
+        padding-block: 1.15rem !important;
+    }
+
+    body:not(.chat-page) :is(
+        .forms-summary,
+        .notes-summary-grid,
+        .grades-summary-grid,
+        .grades-owner-summary,
+        .navid-status-grid,
+        .admin-status-grid,
+        .dis-stats-grid,
+        .owner-summary,
+        .ctf-summary-grid,
+        .hu-summary-grid
+    ) {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    body.forms-page .forms-summary {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+
+    body.content-tools-page--files-center .ctf-app .ctf-summary-grid {
+        grid-template-columns: repeat(6, minmax(112px, 1fr)) !important;
+        overflow-x: auto !important;
+        scrollbar-width: none;
+    }
+
+    body.content-tools-page--files-center .ctf-app .ctf-summary-card {
+        min-height: 88px !important;
+        align-content: center;
+        gap: .3rem !important;
+    }
+
+    body.content-tools-page--files-center .ctf-app .ctf-summary-card small {
+        display: none !important;
+    }
+
+    body:not(.chat-page) :is(
+        .notes-summary-stat,
+        .forms-metric,
+        .grades-summary-card,
+        .grades-owner-summary-card,
+        .navid-status-card,
+        .navid-owner-card,
+        .admin-status-card,
+        .dis-stat-card,
+        .owner-summary-card,
+        .ctf-summary-card,
+        .hu-summary-card
+    ) {
+        border-block-end: 1px solid var(--flat-rule) !important;
+    }
+
+    body:not(.chat-page) :is(
+        .forms-tabs,
+        .owner-tabs,
+        .buy-manage-nav,
+        .navid-view-switch,
+        .exams-filter-row,
+        .notes-inline-actions
+    ) {
+        margin-inline: 0 !important;
+        overscroll-behavior-inline: contain;
+        scroll-snap-type: inline proximity;
+    }
+
+    body:not(.chat-page) :is(
+        .forms-tabs button,
+        .owner-tab,
+        .buy-manage-nav a,
+        .buy-manage-nav button,
+        .navid-view-switch__btn,
+        .exams-filter-chip,
+        .notes-chip
+    ) {
+        scroll-snap-align: start;
+    }
+
+    body:not(.chat-page) :is(.forms-actions, .notes-inline-actions, .buy-card-actions, .dis-inline-actions) {
+        align-items: stretch !important;
+        gap: .5rem !important;
+    }
+
+    body:not(.chat-page) :is(.owner-stats-table) {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0 !important;
+    }
+
+    body:not(.chat-page) :is(.owner-stats-table--scroll, .table-scroll) {
+        overflow-x: auto !important;
+        overscroll-behavior-inline: contain;
+    }
+
+    body:not(.chat-page) .owner-stats-table__row {
+        min-width: 640px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto !important;
+    }
+
+    body:not(.chat-page) *,
+    body:not(.chat-page) *::before,
+    body:not(.chat-page) *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+    }
+
+    body:not(.chat-page) :is(.shell-bottom-nav__icon, .shell-bottom-nav__label) {
+        transform: none !important;
+    }
+}
+
+html[data-performance-mode="lite"] body:not(.chat-page) *,
+html[data-performance-mode="lite"] body:not(.chat-page) *::before,
+html[data-performance-mode="lite"] body:not(.chat-page) *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+}
+
+html[data-performance-mode="lite"] body:not(.chat-page) :is(.site-header, .shell-bottom-nav) {
+    backdrop-filter: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body:not(.chat-page) :is(button, a, [role="button"]) {
+        transition-duration: .01ms !important;
+    }
+}
+
+/* Home mobile contract: keep the editorial hierarchy intact and prevent the
+   legacy card/grid passes from leaking decorative columns outside the page. */
+@media (max-width: 760px) {
+    body.app-dashboard-page main.app-home-main {
+        width: 100% !important;
+        max-width: none !important;
+        padding: 0 1rem calc(var(--shell-nav-content-reserve) + 1rem) !important;
+        gap: 0 !important;
+        overflow: clip;
+    }
+
+    .app-home-main > .home-wallet-card {
+        min-height: 0 !important;
+        display: block !important;
+        padding: 1.55rem 0 1.35rem !important;
+        overflow: hidden !important;
+        text-align: start !important;
+    }
+
+    .app-home-main > .home-wallet-card::before {
+        width: 176px !important;
+        height: 176px !important;
+        inset-inline-end: -108px !important;
+        top: -96px !important;
+        border-width: 24px !important;
+        opacity: .72;
+    }
+
+    .app-home-main > .home-wallet-card::after {
+        height: 3px !important;
+    }
+
+    .app-home-main .home-wallet-card__copy {
+        width: 100% !important;
+        display: grid !important;
+        justify-items: start !important;
+        gap: .42rem !important;
+        padding-inline: 0 !important;
+        text-align: start !important;
+    }
+
+    .app-home-main .home-wallet-card__copy::before,
+    .app-home-main .home-wallet-card__logo {
+        display: none !important;
+    }
+
+    .app-home-main .home-kicker {
+        font-size: .76rem !important;
+    }
+
+    .app-home-main .home-wallet-card h2 {
+        margin: .05rem 0 0 !important;
+        font-size: clamp(1.9rem, 10vw, 2.45rem) !important;
+        line-height: 1.18 !important;
+        text-align: start !important;
+    }
+
+    .app-home-main .home-wallet-card p {
+        width: 100% !important;
+        max-width: 34rem !important;
+        margin: .35rem 0 .12rem !important;
+        font-size: .9rem !important;
+        line-height: 1.9 !important;
+        text-align: start !important;
+    }
+
+    .app-home-main .home-wallet-card__links {
+        width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: .55rem 1rem !important;
+        flex-wrap: wrap !important;
+        margin-top: .28rem !important;
+    }
+
+    .app-home-main .home-wallet-card__link {
+        margin: 0 !important;
+        font-size: .78rem !important;
+        white-space: nowrap;
+    }
+
+    .app-home-main > .home-services-panel {
+        padding: 1.25rem 0 .45rem !important;
+        border-block-start: 0 !important;
+    }
+
+    .app-home-main .home-service-groups,
+    .app-home-main .home-service-strip {
+        gap: 0 !important;
+    }
+
+    .app-home-main .home-service-group {
+        width: 100% !important;
+        min-width: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        overflow: hidden;
+    }
+
+    .app-home-main .home-service-group + .home-service-group {
+        margin-top: 1.2rem !important;
+    }
+
+    .app-home-main .home-service-group__head {
+        min-height: 38px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        padding: 0 0 .55rem !important;
+        border-block-end: 1px solid var(--flat-divider) !important;
+        text-align: start !important;
+    }
+
+    .app-home-main .home-service-group__head::before {
+        inset-inline-start: 0 !important;
+        width: 46px !important;
+        height: 2px !important;
+    }
+
+    .app-home-main .home-service-group__head::after {
+        display: none !important;
+    }
+
+    .app-home-main .portal-section-title {
+        font-size: .78rem !important;
+        text-align: start !important;
+    }
+
+    .app-home-main .home-service-link {
+        width: 100% !important;
+        min-height: 72px !important;
+        display: grid !important;
+        grid-template-columns: 34px minmax(0, 1fr) !important;
+        align-items: center !important;
+        gap: .75rem !important;
+        padding: .82rem 0 !important;
+        border: 0 !important;
+        border-block-end: 1px solid var(--flat-divider) !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        transform: none !important;
+        overflow: hidden !important;
+    }
+
+    .app-home-main .home-service-link::before,
+    .app-home-main .home-service-link::after,
+    .app-home-main .home-service-link__icon::after,
+    .app-home-main .home-service-card__chevron {
+        display: none !important;
+        content: none !important;
+    }
+
+    .app-home-main .home-service-link__icon {
+        grid-column: 1 !important;
+        width: 34px !important;
+        min-width: 34px !important;
+        height: 34px !important;
+        color: var(--service-accent) !important;
+    }
+
+    .app-home-main .home-service-link__meta {
+        grid-column: 2 !important;
+        min-width: 0 !important;
+        justify-items: start !important;
+        text-align: start !important;
+    }
+
+    .app-home-main .home-service-link__meta strong {
+        font-size: .9rem !important;
+        line-height: 1.45 !important;
+    }
+
+    .app-home-main .home-service-link__meta small {
+        max-width: 100% !important;
+        font-size: .7rem !important;
+        line-height: 1.55 !important;
+        white-space: normal !important;
+    }
+
+    .shell-bottom-nav__inner {
+        min-height: calc(58px + env(safe-area-inset-bottom, 0px)) !important;
+        padding-block: .18rem env(safe-area-inset-bottom, 0px) !important;
+    }
+
+    .shell-bottom-nav__link,
+    .shell-bottom-nav__link.is-active {
+        min-height: 52px !important;
+        padding-block: .2rem !important;
+    }
+}
+
+/* Final cascade lock for the unified catalog language. Feature and legacy
+   phases above intentionally stay intact, so this small bridge must be last. */
+body:not(.chat-page) .catalog-simple-hero {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: clamp(1rem, 2.5vw, 1.45rem) clamp(1rem, 2.6vw, 1.35rem) !important;
+    border: 0 !important;
+    border-inline-start: 3px solid color-mix(in srgb, var(--accent-color) 72%, transparent) !important;
+    border-radius: var(--flat-section-radius) !important;
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 46%, transparent), transparent 64%),
+        color-mix(in srgb, var(--surface-solid) 82%, var(--bg-body)) !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+    text-align: start !important;
+}
+
+body:not(.chat-page) .catalog-simple-hero::before,
+body:not(.chat-page) .catalog-simple-hero::after {
+    content: none !important;
+    display: none !important;
+}
+
+body.notes-curriculum-page main > .hero-content .hero-title,
+body:not(.chat-page) .catalog-simple-hero__title {
+    font-size: clamp(1.35rem, 2.1vw, 1.8rem) !important;
+    line-height: 1.42 !important;
+}
+
+body:not(.chat-page) :is(.catalog-simple-hero__copy, .catalog-simple-group__head) {
+    min-width: 0;
+    justify-items: start !important;
+    text-align: start !important;
+}
+
+body:not(.chat-page) :is(.catalog-simple-hero__eyebrow, .catalog-simple-group__eyebrow) {
+    min-height: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+body:not(.chat-page) .catalog-simple-row {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-block-end: 1px solid var(--flat-rule) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+body:not(.chat-page) .catalog-simple-row__eyebrow {
+    display: none !important;
+}
+
+body:not(.chat-page) .catalog-simple-row__visual {
+    width: 40px !important;
+    min-width: 40px !important;
+    height: 40px !important;
+    border: 0 !important;
+    border-radius: var(--flat-control-radius) !important;
+    background: color-mix(in srgb, var(--catalog-accent-soft) 56%, var(--surface-solid)) !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+body:not(.chat-page) .catalog-simple-row__action {
+    min-height: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* The personal-resource summary was the tallest plain block above the actual
+   archive. It remains functional, but now reads as a compact information rail. */
+body.notes-curriculum-page .notes-resource-insights {
+    gap: .7rem !important;
+    padding-block: 1rem !important;
+}
+
+body.notes-curriculum-page .notes-resource-insights__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0 !important;
+    border-block: 1px solid var(--flat-rule) !important;
+}
+
+body.notes-curriculum-page .notes-resource-mini-list {
+    min-width: 0;
+    padding: .75rem !important;
+    border: 0 !important;
+    border-inline-start: 1px solid var(--flat-rule) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+body.notes-curriculum-page .notes-resource-mini-list:first-child {
+    border-inline-start: 0 !important;
+}
+
+body.notes-curriculum-page .notes-resource-mini-list__title {
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 0 .42rem !important;
+    line-height: 1.55 !important;
+}
+
+body.notes-curriculum-page .notes-resource-mini-list__items {
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+body.notes-curriculum-page .notes-resource-mini-list__empty {
+    margin: 0 !important;
+    padding: .2rem 0 !important;
+    line-height: 1.7 !important;
+}
+
+body.notes-curriculum-page .notes-resource-owner-line {
+    width: 100%;
+    min-height: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    flex-flow: row wrap !important;
+    gap: .45rem !important;
+    padding: 0 !important;
+}
+
+body.notes-curriculum-page .notes-inline-actions {
+    min-height: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    flex-flow: row wrap !important;
+    gap: .5rem !important;
+    padding: 0 !important;
+}
+
+body.notes-curriculum-page .notes-inline-actions .notes-link-btn {
+    flex: 0 1 auto !important;
+    width: auto !important;
+    max-width: 100%;
+    min-height: 44px !important;
+    height: auto !important;
+    padding: .58rem .78rem !important;
+    line-height: 1.5 !important;
+}
+
+body.notes-curriculum-page .notes-resource-owner-line .notes-chip {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 32px !important;
+    padding: .34rem .55rem !important;
+    border: 1px solid var(--flat-rule) !important;
+    border-radius: 6px !important;
+    background: color-mix(in srgb, var(--surface-muted) 62%, transparent) !important;
+    color: var(--text-secondary) !important;
+    font-size: .7rem !important;
+    white-space: normal !important;
+}
+
+body.notes-curriculum-page .notes-resource-inbox:empty {
+    display: none !important;
+}
+
+@media (max-width: 620px) {
+    body:not(.chat-page) .catalog-simple-hero {
+        padding: 1rem !important;
+        border-radius: 8px !important;
+    }
+
+    body:not(.chat-page) .catalog-simple-row__visual {
+        width: 38px !important;
+        min-width: 38px !important;
+        height: 38px !important;
+    }
+
+    body.notes-curriculum-page .notes-resource-insights__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    body.notes-curriculum-page .notes-resource-mini-list {
+        padding: .68rem .55rem !important;
+        border-block-end: 1px solid var(--flat-rule) !important;
+    }
+
+    body.notes-curriculum-page .notes-resource-mini-list:nth-child(odd) {
+        border-inline-start: 0 !important;
+    }
+
+    body.notes-curriculum-page .notes-resource-mini-list:last-child {
+        grid-column: 1 / -1;
+        border-inline-start: 0 !important;
+        border-block-end: 0 !important;
+    }
+}
+
+/* Authentication is a deliberately bounded surface. The generic anti-card
+   reset must not turn its alternate-login action transparent or force the
+   tighter dashboard geometry onto form controls. */
+body.account-page .account-stage--auth .account-card--auth {
+    border: 1px solid var(--flat-rule-strong) !important;
+    border-radius: 20px !important;
+    background: var(--surface-solid) !important;
+    box-shadow: 0 24px 56px -46px color-mix(in srgb, var(--text-primary) 38%, transparent) !important;
+}
+
+body.account-page .account-stage--auth :is(
+    .account-card--auth .account-card__head h3,
+    .otp-auth-panel__hero h4,
+    .otp-verify-head h4,
+    .account-form label
+) {
+    color: var(--text-primary) !important;
+}
+
+body.account-page .account-stage--auth :is(
+    .account-card--auth .account-card__head p,
+    .otp-auth-panel__hero p,
+    .otp-verify-head p,
+    .account-feedback,
+    .account-inline-meta,
+    .login-signup-prompt
+) {
+    color: var(--text-secondary) !important;
+}
+
+body.account-page .account-stage--auth .login-signup-prompt span {
+    color: var(--accent-strong) !important;
+}
+
+body.account-page .account-stage--auth .account-auth-theme-slot .theme-toggle-btn {
+    border: 1px solid var(--flat-rule-strong) !important;
+    border-radius: 11px !important;
+    background: color-mix(in srgb, var(--surface-muted) 72%, var(--surface-solid)) !important;
+    color: var(--text-primary) !important;
+}
+
+body.account-page .account-stage--auth .otp-phone-shell {
+    border: 1px solid var(--flat-rule-strong) !important;
+    border-radius: 13px !important;
+    background: color-mix(in srgb, var(--surface-muted) 54%, var(--surface-solid)) !important;
+    box-shadow: none !important;
+}
+
+body.account-page .account-stage--auth .otp-phone-shell:focus-within {
+    border-color: var(--accent-color) !important;
+    outline: 2px solid color-mix(in srgb, var(--accent-color) 22%, transparent) !important;
+    outline-offset: 2px !important;
+}
+
+body.account-page .account-stage--auth #login-phone-number {
+    border-radius: 9px !important;
+    background: transparent !important;
+    color: var(--text-primary) !important;
+    caret-color: var(--accent-color) !important;
+}
+
+body.account-page .account-stage--auth .otp-phone-shell__country {
+    border-radius: 9px !important;
+    background: color-mix(in srgb, var(--accent-color) 8%, var(--surface-solid)) !important;
+    color: var(--text-primary) !important;
+}
+
+body.account-page .account-stage--auth .login-method-switch {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: .5rem !important;
+    border-block-end: 0 !important;
+}
+
+body.account-page .account-stage--auth .login-method-btn {
+    width: 100%;
+    min-height: 46px !important;
+    padding: .58rem .85rem !important;
+    border: 1px solid var(--flat-rule-strong) !important;
+    border-radius: 11px !important;
+    background: color-mix(in srgb, var(--surface-muted) 58%, var(--surface-solid)) !important;
+    color: var(--text-primary) !important;
+    box-shadow: none !important;
+}
+
+body.account-page .account-stage--auth .account-login-home {
+    border: 1px solid color-mix(in srgb, var(--accent-color) 22%, var(--flat-rule)) !important;
+    border-radius: 11px !important;
+    background: color-mix(in srgb, var(--accent-color) 7%, var(--surface-solid)) !important;
+    color: var(--accent-strong) !important;
+}
+
+body.account-page #account-login.account-stage--auth :is(
+    .shell-action-btn-primary,
+    .account-submit
+) {
+    border-radius: 11px !important;
+    background-color: var(--accent-color) !important;
+    color: var(--text-on-accent) !important;
+}
+
+body.account-page #account-login.account-stage--auth :is(
+    .shell-action-btn-primary,
+    .account-submit
+):disabled {
+    opacity: 1 !important;
+    background-color: color-mix(in srgb, var(--accent-color) 55%, #14343d) !important;
+    color: var(--text-on-accent) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    body.account-page .account-stage--auth .login-method-btn:hover,
+    body.account-page .account-stage--auth .account-login-home:hover {
+        border-color: color-mix(in srgb, var(--accent-color) 48%, var(--flat-rule)) !important;
+        background: color-mix(in srgb, var(--accent-color) 9%, var(--surface-solid)) !important;
+    }
+}
+
+@media (max-width: 620px) {
+    body.account-page .account-stage--auth .account-card--auth {
+        border-radius: 18px !important;
+    }
+}
+
+/* Keep the exams chooser intro as one continuous surface. Older cached
+   catalog layers painted a pale pill over a decorative ring on mobile. */
+body.exams-page #exams-home-root > .catalog-simple-hero::before,
+body.exams-page #exams-home-root > .catalog-simple-hero::after {
+    content: none !important;
+    display: none !important;
+}
+
+body.exams-page #exams-home-root > .catalog-simple-hero .catalog-simple-hero__copy,
+body.exams-page #exams-home-root > .catalog-simple-hero .catalog-simple-hero__eyebrow {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+body.exams-page #exams-home-root > .catalog-simple-hero .catalog-simple-hero__eyebrow {
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+}
+
+/* Production mobile lock: these selectors must survive both stylesheet orders
+ * used by generated exam pages (theme-before-feature and feature-before-theme). */
+@media (max-width: 720px) {
+    body.exams-page #exams-course-root {
+        gap: .56rem !important;
+    }
+
+    body.exams-page #exams-course-root > .catalog-simple-hero {
+        padding: .68rem 0 .78rem !important;
+        border: 0 !important;
+        border-block-end: 1px solid var(--flat-divider, var(--border-color)) !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+    }
+
+    body.exams-page #exams-course-root .catalog-simple-hero__copy {
+        gap: .2rem !important;
+    }
+
+    body.exams-page #exams-course-root .catalog-simple-hero__title {
+        font-size: 1.16rem !important;
+        line-height: 1.42 !important;
+    }
+
+    body.exams-page #exams-course-root .catalog-simple-hero__meta {
+        display: -webkit-box !important;
+        overflow: hidden !important;
+        font-size: .75rem !important;
+        line-height: 1.7 !important;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+    body.exams-page #exams-course-root .catalog-simple-hero__secondary {
+        display: flex !important;
+        align-items: center !important;
+        gap: .45rem !important;
+        margin-top: .18rem !important;
+    }
+
+    body.exams-page #exams-course-root .catalog-simple-hero__secondary .exams-status-pill {
+        min-height: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    body.exams-page #exams-course-root .exams-toolbar-card {
+        padding: .36rem 0 .52rem !important;
+        border: 0 !important;
+        border-block-end: 1px solid var(--flat-divider, var(--border-color)) !important;
+    }
+
+    body.exams-page #exams-course-root .exams-toolbar-row {
+        grid-template-columns: minmax(0, 1fr) 44px !important;
+        gap: .48rem !important;
+    }
+
+    body.exams-page #exams-course-root .exams-search-field {
+        min-height: 44px !important;
+        gap: .5rem !important;
+        padding: .45rem .72rem !important;
+        border-radius: 10px !important;
+    }
+
+    body.exams-page #exams-course-root .exams-search-field__ghost {
+        display: none !important;
+    }
+
+    body.exams-page #exams-course-root .exams-search-field input {
+        order: 1 !important;
+        width: 100% !important;
+        min-height: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        font-size: 16px !important;
+    }
+
+    body.exams-page #exams-course-root .exams-search-field__icon {
+        order: 2 !important;
+        inline-size: 18px !important;
+        block-size: 18px !important;
+    }
+
+    body.exams-page #exams-course-root .exams-filter-launch {
+        inline-size: 44px !important;
+        min-height: 44px !important;
+        padding: 0 !important;
+        border-radius: 10px !important;
+    }
+
+    body.exams-page #exams-course-root .catalog-simple-row__link {
+        min-height: 58px !important;
+        grid-template-columns: minmax(0, 1fr) 34px !important;
+        gap: .58rem !important;
+        padding: .58rem .1rem !important;
+    }
+
+    body.exams-page #exams-course-root .catalog-simple-row__topline,
+    body.exams-page #exams-course-root .catalog-simple-row__meta,
+    body.exams-page #exams-course-root .catalog-simple-row__tail {
+        display: none !important;
+    }
+
+    body.exams-page #exams-course-root .catalog-simple-row__body {
+        gap: 0 !important;
+    }
+
+    body.exams-page #exams-course-root .catalog-simple-row__title {
+        display: -webkit-box !important;
+        overflow: hidden !important;
+        font-size: .88rem !important;
+        line-height: 1.55 !important;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+    body.exams-page #exams-course-root .catalog-simple-row__visual {
+        width: 34px !important;
+        min-width: 34px !important;
+        height: 34px !important;
+        border-radius: 9px !important;
+    }
+}
+
+@media (max-width: 680px) {
+    body.quiz-page .exam-main,
+    body.quiz-page.exam-focus-mode .exam-main {
+        padding-inline: max(.72rem, env(safe-area-inset-right, 0px)) max(.72rem, env(safe-area-inset-left, 0px)) !important;
+    }
+
+    body.quiz-page .exam-stage--launch {
+        gap: .46rem !important;
+        padding-block: .38rem !important;
+    }
+
+    body.quiz-page .exam-stage-head--launch,
+    body.quiz-page .exam-stage-head--launch .exam-stage-head__main {
+        gap: .4rem !important;
+    }
+
+    body.quiz-page .exam-stage-head--launch .exam-stage-head__topline {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto !important;
+        align-items: center !important;
+        gap: .48rem !important;
+    }
+
+    body.quiz-page .exam-stage-head--launch .exam-back-link {
+        min-width: 0 !important;
+        min-height: 40px !important;
+        padding: .22rem .24rem !important;
+        border: 0 !important;
+        border-radius: 9px !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    body.quiz-page .exam-stage-head--launch .exam-back-link__icon {
+        width: 2rem !important;
+        height: 2rem !important;
+        border-radius: 9px !important;
+    }
+
+    body.quiz-page .exam-stage-head--launch .exam-head-chips {
+        max-width: 48vw !important;
+        flex-wrap: nowrap !important;
+        justify-content: flex-end !important;
+        overflow-x: auto !important;
+        scrollbar-width: none;
+    }
+
+    body.quiz-page .exam-stage-head--launch .exam-head-chip,
+    body.quiz-page .exam-stage-head--launch .exam-meta-chip {
+        min-height: 30px !important;
+        flex: 0 0 auto !important;
+        padding: .28rem .5rem !important;
+        border-radius: 7px !important;
+        font-size: .67rem !important;
+    }
+
+    body.quiz-page .exam-launch-grid {
+        gap: .32rem !important;
+    }
+
+    body.quiz-page .exam-launch-copy {
+        gap: .24rem !important;
+        padding: .5rem 0 .66rem !important;
+        border-block-end: 1px solid var(--flat-rule, var(--exam-line)) !important;
+    }
+
+    body.quiz-page .exam-launch-copy .exam-kicker {
+        min-height: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        font-size: .7rem !important;
+    }
+
+    body.quiz-page .exam-launch-copy .exam-stage-title {
+        font-size: 1.2rem !important;
+        line-height: 1.42 !important;
+    }
+
+    body.quiz-page .exam-launch-copy .exam-stage-subtitle {
+        font-size: .78rem !important;
+        line-height: 1.68 !important;
+    }
+
+    body.quiz-page .exam-launch-panel {
+        gap: .56rem !important;
+        padding: .62rem 0 0 !important;
+        border-block-start: 0 !important;
+    }
+
+    body.quiz-page .exam-launch-panel__head {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: .46rem !important;
+    }
+
+    body.quiz-page .exam-launch-panel__title {
+        font-size: 1.04rem !important;
+        line-height: 1.48 !important;
+    }
+
+    body.quiz-page .exam-mode-pills,
+    body.quiz-page .exam-mode-pills--compact {
+        width: 100% !important;
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: .42rem !important;
+        overflow: visible !important;
+        border-block-end: 0 !important;
+    }
+
+    body.quiz-page .exam-mode-pill {
+        width: 100% !important;
+        min-width: 0 !important;
+        min-height: 44px !important;
+        padding: .5rem .62rem !important;
+        border: 1px solid var(--flat-rule-strong, var(--exam-line)) !important;
+        border-radius: 9px !important;
+        background: color-mix(in srgb, var(--exam-surface-soft) 72%, transparent) !important;
+    }
+
+    body.quiz-page .exam-mode-pill.is-active {
+        border-color: var(--exam-accent) !important;
+        background: color-mix(in srgb, var(--exam-accent-soft) 74%, var(--exam-surface)) !important;
+    }
+
+    body.quiz-page .exam-launch-panel__copy {
+        font-size: .78rem !important;
+        line-height: 1.72 !important;
+    }
+
+    body.quiz-page .exam-custom-builder {
+        margin-top: .18rem !important;
+        padding-block-start: .48rem !important;
+    }
+
+    body.quiz-page .exam-custom-builder > summary {
+        min-height: 46px !important;
+        padding: .42rem 0 !important;
+    }
+
+    body.quiz-page .exam-launch-actions {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: .42rem !important;
+    }
+
+    body.quiz-page .exam-launch-actions .exam-btn {
+        min-height: 44px !important;
+        padding: .58rem .7rem !important;
+        border-radius: 9px !important;
+        font-size: .8rem !important;
+    }
+
+    body.quiz-page .exam-launch-actions .exam-btn--primary:disabled {
+        opacity: 1 !important;
+        border-color: var(--flat-rule-strong, var(--exam-line)) !important;
+        background: color-mix(in srgb, var(--exam-surface-soft) 82%, var(--exam-surface)) !important;
+        color: var(--exam-text-muted) !important;
+    }
+}
+
+@media (max-width: 430px) {
+    body.quiz-page .exam-stage-head--launch .exam-back-link__meta {
+        display: none !important;
+    }
+
+    body.quiz-page .exam-stage-head--launch .exam-head-chips {
+        max-width: 54vw !important;
+    }
+}
+
+/* Global RTL safety gap for the colored catalog rail. Keep the rail visually
+   connected to its section without letting headings or descriptions touch it. */
+body:not(.chat-page) .catalog-simple-hero {
+    padding-inline-start: clamp(1.4rem, 2.8vw, 1.6rem) !important;
+}
+
+body:not(.chat-page) .catalog-simple-group {
+    padding-inline-start: 1.3rem !important;
+}
+
+body:not(.chat-page) :is(
+    .catalog-simple-row__link,
+    .catalog-simple-row__button,
+    .catalog-simple-row__static
+) {
+    padding-inline-start: 1.25rem !important;
+}
+
+@media (max-width: 620px) {
+    body:not(.chat-page) .catalog-simple-hero {
+        padding-inline-start: 1.25rem !important;
+    }
+
+    body:not(.chat-page) .catalog-simple-group {
+        padding-inline-start: 1.2rem !important;
+    }
+
+    body:not(.chat-page) :is(
+        .catalog-simple-row__link,
+        .catalog-simple-row__button,
+        .catalog-simple-row__static
+    ) {
+        padding-inline-start: 1.25rem !important;
+    }
+}
+
+@media (max-width: 720px) {
+    body.exams-page #exams-course-root :is(
+        .catalog-simple-row__link,
+        .catalog-simple-row__button,
+        .catalog-simple-row__static
+    ) {
+        padding-inline-start: 1.25rem !important;
+    }
+}
+
+

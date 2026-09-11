@@ -1,0 +1,121 @@
+@import url("/assets/site/styles/redesign-pilot.css?v=20260823-mobile-rail3");
+@import url("/assets/site/styles/mature-flat.css?v=20260823-mobile-rail3");
+
+/*
+ * Theme bridge stylesheet
+ * -----------------------
+ * The main contract lives in core.css semantic tokens.
+ * Keep this file intentionally small to avoid one-off dark-mode overrides
+ * that drift from the token system over time.
+ */
+
+html[data-theme="dark"] body {
+    background: var(--bg-body);
+    color: var(--text-primary);
+}
+
+/* Keep the desktop appearance control beside global search. The account stays
+ * on the opposite edge, and mobile users keep appearance inside its menu. */
+.site-header--minimal .shell-header-tools {
+    position: absolute;
+    inset-block-start: calc(50% + (env(safe-area-inset-top, 0px) / 2));
+    inset-inline-end: max(0.88rem, calc((100vw - 1180px) / 2 + 1rem));
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.12rem;
+    transition:
+        opacity var(--motion-fast) var(--motion-ease-standard),
+        transform var(--motion-fast) var(--motion-ease-standard);
+}
+
+.site-header--minimal .shell-header-tools .shell-search-trigger,
+.site-header--minimal .shell-header-tools .theme-toggle-btn {
+    position: static;
+    inset: auto;
+    transform: none !important;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-primary);
+}
+
+.site-header--minimal .shell-header-tools .shell-search-trigger:active:not(:disabled) {
+    transform: scale(0.96) !important;
+}
+
+.site-header--minimal .shell-header-tools .theme-toggle-btn:hover,
+.site-header--minimal .shell-header-tools .theme-toggle-btn:focus-visible {
+    transform: none;
+    border-color: transparent;
+    background: var(--surface-muted);
+    box-shadow: none;
+}
+
+.site-header.site-header--searching > .shell-header-tools {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(calc(-50% - 4px)) scale(0.98);
+}
+
+@media (max-width: 768px) {
+    .site-header--minimal .shell-header-tools {
+        inset-inline-end: max(0.66rem, 4vw);
+    }
+
+    .site-header--minimal .shell-header-tools .theme-toggle-btn {
+        display: none;
+    }
+}
+
+@media (max-width: 430px) {
+    .site-header--minimal .shell-header-tools {
+        inset-inline-end: max(0.58rem, 3.4vw);
+    }
+}
+
+/* Canonical rail-spacing bridge. theme.css is served by the current service
+ * worker even when legacy HTML carries an old query token, so this final layer
+ * also protects iOS PWAs from immutable cached imports. */
+body:not(.chat-page) .catalog-simple-hero {
+    padding-inline-start: clamp(1.4rem, 2.8vw, 1.6rem) !important;
+}
+
+body:not(.chat-page) .catalog-simple-group {
+    padding-inline-start: 1.3rem !important;
+}
+
+body:not(.chat-page) :is(
+    .catalog-simple-row__link,
+    .catalog-simple-row__button,
+    .catalog-simple-row__static
+),
+body:not(.chat-page) :is(.notes-resource-card, .exams-course-card) {
+    padding-inline-start: 1.25rem !important;
+}
+
+@media (max-width: 620px) {
+    body:not(.chat-page) .catalog-simple-hero {
+        padding-inline-start: 1.25rem !important;
+    }
+
+    body:not(.chat-page) .catalog-simple-group {
+        padding-inline-start: 1.2rem !important;
+    }
+}
+
+@media (max-width: 720px) {
+    body.exams-page #exams-course-root :is(
+        .catalog-simple-row__link,
+        .catalog-simple-row__button,
+        .catalog-simple-row__static
+    ) {
+        padding-inline-start: 1.25rem !important;
+    }
+}

@@ -12,3 +12,7 @@
 /مشخصات مهم.txt
 __pycache__/
 *.pyc
+
+# Legacy import: per-cohort exam content is not tracked
+legacy/**/exams_term6_reference_data/
+legacy/**/exams_bank.php

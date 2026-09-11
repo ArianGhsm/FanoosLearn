@@ -1,0 +1,147 @@
+.account-sessions-page {
+    background: var(--bg-body);
+}
+
+.account-sessions-shell {
+    width: min(920px, calc(100% - 2rem));
+    margin: 0 auto;
+    padding: clamp(1rem, 2vw, 1.8rem) 0 calc(var(--shell-nav-content-reserve, 80px) + 2rem);
+}
+
+.account-sessions-hero,
+.account-sessions-panel,
+.account-sessions-note {
+    border: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--surface-solid) 94%, transparent);
+}
+
+.account-sessions-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1rem;
+    align-items: center;
+    padding: clamp(1.2rem, 3vw, 2rem);
+    border-radius: 22px;
+}
+
+.account-sessions-hero h2 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: clamp(1.45rem, 4vw, 2.15rem);
+}
+
+.account-sessions-hero p {
+    max-width: 62ch;
+    margin: .55rem 0 0;
+    color: var(--text-secondary);
+    line-height: 1.9;
+}
+
+.account-sessions-count {
+    min-width: 96px;
+    display: grid;
+    place-items: center;
+    gap: .25rem;
+    padding: 1rem;
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--primary-color) 9%, transparent);
+    color: var(--primary-color);
+}
+
+.account-sessions-count strong { font-size: 1.8rem; }
+.account-sessions-count span { color: var(--text-secondary); font-size: .72rem; }
+
+.account-sessions-status {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    margin: .75rem 0;
+    color: var(--text-secondary);
+    font-size: .76rem;
+}
+
+.account-sessions-status.is-error { color: var(--danger-color); }
+
+.account-sessions-panel {
+    padding: clamp(1rem, 2.5vw, 1.55rem);
+    border-radius: 18px;
+}
+
+.account-sessions-panel__head {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.account-sessions-panel__head h3 { margin: 0; color: var(--text-primary); }
+.account-sessions-panel__head p { margin: .35rem 0 0; color: var(--text-secondary); font-size: .75rem; }
+
+.account-sessions-panel button,
+.account-session button {
+    min-height: 38px;
+    padding: .45rem .85rem;
+    border: 1px solid color-mix(in srgb, var(--danger-color) 35%, var(--border-color));
+    border-radius: 11px;
+    background: transparent;
+    color: var(--danger-color);
+    font: inherit;
+    font-size: .7rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.account-sessions-panel button:disabled,
+.account-session button:disabled { opacity: .45; cursor: default; }
+
+.account-session {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem .15rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.account-session.is-current {
+    margin-inline: -.55rem;
+    padding-inline: .7rem;
+    border-inline-start: 3px solid var(--primary-color);
+    background: color-mix(in srgb, var(--primary-color) 5%, transparent);
+}
+
+.account-session > div { display: grid; gap: .25rem; }
+.account-session strong { color: var(--text-primary); font-size: .86rem; }
+.account-session span { color: var(--text-secondary); font-size: .68rem; }
+.account-session small { width: max-content; color: var(--success-color); font-size: .62rem; }
+
+.account-sessions-empty {
+    display: grid;
+    gap: .4rem;
+    padding: 1.4rem 0;
+}
+
+.account-sessions-empty strong { color: var(--text-primary); }
+.account-sessions-empty span { color: var(--text-secondary); font-size: .72rem; }
+
+.account-sessions-note {
+    margin-top: 1rem;
+    padding: 1rem 1.15rem;
+    border-radius: 15px;
+    color: var(--text-secondary);
+    font-size: .74rem;
+    line-height: 1.8;
+}
+
+.account-sessions-note a { color: var(--danger-color); font-weight: 800; }
+
+@media (max-width: 600px) {
+    .account-sessions-shell { width: min(100% - 1.25rem, 920px); }
+    .account-sessions-hero { grid-template-columns: minmax(0, 1fr); }
+    .account-sessions-count { grid-template-columns: auto auto; justify-content: start; }
+    .account-sessions-panel__head { display: grid; }
+    .account-session { grid-template-columns: minmax(0, 1fr); }
+    .account-session button { width: max-content; justify-self: end; }
+}

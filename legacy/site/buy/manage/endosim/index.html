@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>ایمپورت کاتالوگ اندوسیم | مدیریت خرید</title>
+    <meta name="description" content="افزودن یا به‌روزرسانی یک‌کلیکی ۲۶ محصول دندان آموزشی اندوسیم در کاتالوگ فروشگاه.">
+    <meta name="theme-color" content="#eef2f7">
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png">
+    <script src="/assets/site/scripts/theme.js?v=20260722-200509"></script>
+    <link rel="stylesheet" href="/assets/site/styles/core.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/endosim.css?v=20260812-sitewide-mature1">
+    <link rel="stylesheet" href="/assets/site/styles/theme.css?v=20260812-phase4b">
+</head>
+<body class="endosim-page">
+    <div class="background-overlay" aria-hidden="true"></div>
+    <header class="site-header">
+        <div class="logo-area">
+            <div class="logo-circle"><img src="/assets/images/logo.png?v=20260722-200509" alt="لوگو"></div>
+            <div class="site-info">
+                <h1>ایمپورت کاتالوگ اندوسیم</h1>
+                <p>افزودن/به‌روزرسانی محصولات روی هاست</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a class="header-link" href="/buy/manage/">مدیریت خرید</a>
+            <a class="header-link" href="/buy/endosim/">صفحه سفارش</a>
+        </div>
+    </header>
+
+    <main class="endosim-shell" style="max-width:680px;padding-bottom:60px;">
+        <section class="endosim-hero">
+            <span class="endosim-hero__kicker">مالک</span>
+            <h2 class="endosim-hero__title">بارگذاری ۲۶ محصول اندوسیم</h2>
+            <p class="endosim-hero__lead">
+                با زدن دکمه زیر، هر ۲۶ دندان آموزشی با کد، تصویر، مشخصات و قیمت نهایی (ریال) به کاتالوگ
+                فروشگاه اضافه یا به‌روزرسانی می‌شود. این عملیات امن و idempotent است؛ سفارش‌های قبلی دست‌نخورده می‌مانند
+                و اجرای چندباره مشکلی ایجاد نمی‌کند.
+            </p>
+        </section>
+
+        <section class="endosim-summary" style="margin-top:20px;">
+            <button type="button" id="endosim-import-btn" class="endosim-pay" style="width:100%;">
+                افزودن / به‌روزرسانی کاتالوگ اندوسیم
+            </button>
+            <p class="endosim-feedback" id="endosim-import-feedback" role="alert" style="margin-top:14px;"></p>
+        </section>
+    </main>
+
+    <script src="/assets/site/scripts/auth.js?v=20260722-200509"></script>
+    <script>
+    (function () {
+        "use strict";
+        var btn = document.getElementById("endosim-import-btn");
+        var feedback = document.getElementById("endosim-import-feedback");
+        function setFeedback(message, kind) {
+            feedback.textContent = message || "";
+            feedback.className = "endosim-feedback" + (kind ? " " + kind : "");
+        }
+        btn.addEventListener("click", function () {
+            btn.disabled = true;
+            var original = btn.textContent;
+            btn.textContent = "در حال بارگذاری…";
+            setFeedback("در حال ارتباط با سرور…", "");
+            fetch("/api/payments_api.php", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                    "Accept": "application/json"
+                },
+                body: new URLSearchParams({ action: "ownerImportEndosim" })
+            }).then(function (response) {
+                return response.text().then(function (body) {
+                    var payload = null;
+                    try { payload = JSON.parse(body); } catch (_e) { payload = null; }
+                    if (!payload) payload = { success: false, error: "پاسخ نامعتبر از سرور." };
+                    payload.httpStatus = response.status;
+                    return payload;
+                });
+            }).then(function (payload) {
+                btn.disabled = false;
+                btn.textContent = original;
+                if (payload.httpStatus === 401 || payload.loggedOut) {
+                    setFeedback("برای این کار باید به‌عنوان مالک وارد شوید.", "is-error");
+                    return;
+                }
+                if (!payload.success) {
+                    setFeedback(payload.error || "بارگذاری انجام نشد.", "is-error");
+                    return;
+                }
+                setFeedback(payload.message || "کاتالوگ با موفقیت بارگذاری شد.", "is-success");
+            }).catch(function () {
+                btn.disabled = false;
+                btn.textContent = original;
+                setFeedback("ارتباط با سرور برقرار نشد.", "is-error");
+            });
+        });
+    })();
+    </script>
+</body>
+</html>

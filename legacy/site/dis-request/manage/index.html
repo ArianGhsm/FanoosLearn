@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#eef2f7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="مدیریت DIS">
+    <link rel="manifest" href="/manifest.webmanifest?v=20260722-200509">
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png?v=20260722-200509">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png?v=20260722-200509">
+    <title>مدیریت فرم DIS | ورودی ۱۴۰۲ دندانپزشکی تهران</title>
+    <script src="/assets/site/scripts/theme.js?v=20260722-200509"></script>
+    <link rel="stylesheet" href="/assets/site/styles/core.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/dis-request.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/theme.css?v=20260812-phase4b">
+</head>
+<body class="dis-request-page dis-request-page--manage">
+    <div class="background-overlay" aria-hidden="true"></div>
+
+    <header class="site-header">
+        <div class="logo-area">
+            <div class="logo-circle">
+                <img src="/assets/images/logo.png?v=20260722-200509" alt="لوگوی ورودی ۱۴۰۲ دندانپزشکی">
+            </div>
+            <div class="site-info">
+                <h1>مدیریت فرم درخواست ایجاد کاربری در DIS</h1>
+                <p>پنل اختصاصی مالک برای پایش، بررسی و خروجی‌ها</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a class="header-link" href="/account/">حساب</a>
+        </div>
+    </header>
+
+    <main class="dis-shell dis-shell--manage">
+        <section class="dis-hero">
+            <span class="dis-kicker">مالک</span>
+            <h2>پایش زنده تکمیل فرم، بررسی پاسخ‌ها و خروجی‌های Excel همین‌جا انجام می‌شود.</h2>
+            <p>این بخش عمومی نیست و فقط با دسترسی مالک سامانه نمایش داده می‌شود. لینک عمومی فرم از همین پنل قابل کپی و اشتراک است.</p>
+        </section>
+
+        <section id="dis-manage-boot" class="dis-state-card" aria-live="polite">
+            <h3>در حال آماده‌سازی پنل مدیریت</h3>
+            <p>وضعیت حساب و داده‌های فرم در حال بررسی است.</p>
+        </section>
+
+        <section id="dis-manage-login" class="dis-state-card site-login-guard" hidden data-auth-guard data-auth-guard-home="/app/">
+            <span class="site-login-guard__eyebrow">ورود لازم است</span>
+            <h3 class="site-login-guard__title">برای مشاهده این بخش باید وارد حساب شوید</h3>
+            <p class="site-login-guard__text">برای حفظ حقوق دانشجویان، برای مشاهده این بخش باید وارد حساب کاربری خود در سایت شوید. می توانید از سایر بخش های سایت که نیاز به ورود ندارند، استفاده کنید.</p>
+            <div class="site-login-guard__actions dis-inline-actions">
+                <a id="dis-manage-login-link" class="shell-action-btn shell-action-btn-primary" href="/account/?returnTo=%2Fdis-request%2Fmanage%2F">ورود به حساب کاربری</a>
+                <a class="shell-action-btn" data-auth-guard-back data-auth-guard-home="/app/" href="/app/">برگشت به خانه</a>
+            </div>
+        </section>
+
+        <section id="dis-manage-forbidden" class="dis-state-card" hidden>
+            <h3>این بخش فقط برای مالک سامانه فعال است</h3>
+            <p>اگر می‌خواهید فرم را تکمیل کنید، از نسخه عمومی فرم استفاده کنید.</p>
+            <div class="dis-inline-actions">
+                <a class="shell-action-btn shell-action-btn-primary" href="/dis-request/">باز کردن فرم عمومی</a>
+                <a class="shell-action-btn" href="/account/">بازگشت به حساب</a>
+            </div>
+        </section>
+
+        <section id="dis-manage-stage" class="dis-stage" hidden>
+            <section class="dis-card">
+                <div class="dis-section-head">
+                    <span class="dis-kicker dis-kicker--soft">وضعیت فرم</span>
+                    <div>
+                        <h3>باز یا بسته بودن فرم</h3>
+                        <p>وقتی فرم بسته باشد، کاربران نمی‌توانند درخواست جدید ثبت کنند.</p>
+                    </div>
+                </div>
+                <div class="dis-share-row">
+                    <span id="dis-form-open-label">در حال بررسی...</span>
+                    <button id="dis-toggle-form-open" class="shell-action-btn" type="button" disabled>در حال بارگذاری</button>
+                </div>
+            </section>
+
+            <section class="dis-card">
+                <div class="dis-section-head">
+                    <span class="dis-kicker dis-kicker--soft">لینک فرم</span>
+                    <div>
+                        <h3>لینک عمومی قابل اشتراک</h3>
+                        <p>کاربران با همین لینک وارد فرم می‌شوند، اما ثبت نهایی فقط بعد از ورود انجام می‌شود.</p>
+                    </div>
+                </div>
+                <div class="dis-share-row">
+                    <input id="dis-share-link" type="text" readonly>
+                    <button id="dis-copy-share-link" class="shell-action-btn" type="button">کپی لینک</button>
+                    <a id="dis-open-public-form" class="shell-action-btn shell-action-btn-primary" href="/dis-request/">باز کردن فرم</a>
+                </div>
+            </section>
+
+            <section class="dis-manage-stats" id="dis-manage-stats"></section>
+
+            <section class="dis-card">
+                <div class="dis-section-head">
+                    <span class="dis-kicker dis-kicker--soft">خروجی‌ها</span>
+                    <div>
+                        <h3>خروجی رسمی Excel</h3>
+                        <p>فایل نهایی با قالب رسمی فرم DIS و فرمت استاندارد <code>.xlsx</code> تولید می‌شود.</p>
+                    </div>
+                </div>
+                <div class="dis-export-grid">
+                    <a id="dis-export-official" class="shell-action-btn shell-action-btn-primary" href="#">دانلود خروجی رسمی فرم DIS (.xlsx)</a>
+                </div>
+            </section>
+
+            <section class="dis-manage-columns">
+                <section class="dis-card">
+                    <div class="dis-section-head">
+                        <span class="dis-kicker dis-kicker--soft">ارسال‌شده‌ها</span>
+                        <div>
+                            <h3 id="dis-submitted-title">کاربران ثبت‌کننده</h3>
+                            <p>برای بررسی جزئیات هر پاسخ، همان مورد را باز کنید.</p>
+                        </div>
+                    </div>
+                    <div id="dis-submitted-list" class="dis-user-list"></div>
+                </section>
+
+                <section class="dis-card">
+                    <div class="dis-section-head">
+                        <span class="dis-kicker dis-kicker--soft">تکمیل‌نشده‌ها</span>
+                        <div>
+                            <h3 id="dis-pending-title">کاربران بدون پاسخ</h3>
+                            <p>این فهرست بر اساس اعضای فعلی سامانه و پاسخ‌های ثبت‌شده ساخته می‌شود.</p>
+                        </div>
+                    </div>
+                    <div id="dis-pending-list" class="dis-user-list"></div>
+                </section>
+            </section>
+
+            <section class="dis-card">
+                <div class="dis-section-head">
+                    <span class="dis-kicker dis-kicker--soft">جزئیات پاسخ</span>
+                    <div>
+                        <h3 id="dis-detail-title">هنوز پاسخی انتخاب نشده است</h3>
+                        <p id="dis-detail-meta">با انتخاب یکی از ارسال‌کنندگان، جزئیات همین‌جا نمایش داده می‌شود.</p>
+                    </div>
+                </div>
+                <div id="dis-detail-empty" class="dis-detail-empty">برای شروع، یکی از پاسخ‌های ثبت‌شده را از ستون سمت راست باز کنید.</div>
+                <div id="dis-detail-body" class="dis-detail-body" hidden>
+                    <div id="dis-detail-identity" class="dis-readonly-grid"></div>
+                    <div id="dis-detail-sections" class="dis-readonly-sections"></div>
+                    <div id="dis-detail-approvals" class="dis-approval-list"></div>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <div id="dis-manage-toast" class="dis-toast" aria-live="polite"></div>
+
+    <script src="/assets/site/scripts/auth.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/shell.js?v=20260812-phase3b"></script>
+    <script src="/assets/site/scripts/dis-request-manage.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/pwa.js?v=20260722-200509"></script>
+</body>
+</html>

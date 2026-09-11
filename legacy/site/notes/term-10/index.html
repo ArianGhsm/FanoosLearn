@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>منابع ترم ۱۰ | آرشیو ۱۴۰۲</title>
+    <meta name="description" content="آرشیو منابع ترم ۱۰ ورودی ۱۴۰۲ دندانپزشکی تهران.">
+    <meta name="theme-color" content="#eef2f7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="ورودی ۱۴۰۲">
+    <link rel="manifest" href="/manifest.webmanifest?v=20260722-200509">
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png?v=20260722-200509">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png?v=20260722-200509">
+    <script src="/assets/site/scripts/theme.js?v=20260722-200509"></script>
+    <link rel="stylesheet" href="/assets/site/styles/core.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/hub.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/theme.css?v=20260812-phase4b">
+</head>
+<body class="hub-page notes-term-page" data-term-number="10">
+    <div class="background-overlay" aria-hidden="true"></div>
+
+    <header class="site-header">
+        <div class="logo-area">
+            <div class="logo-circle">
+                <img src="/assets/images/logo.png?v=20260722-200509" alt="لوگوی رسمی ورودی ۱۴۰۲">
+            </div>
+            <div class="site-info">
+                <h1>آرشیو منابع ورودی ۱۴۰۲</h1>
+                <p>صفحه مستقل ترم ۱۰</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="/notes/" class="header-link">بازگشت به انتخاب ترم</a>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero-content">
+            <span class="greeting-pill">ترم ۱۰</span>
+            <h2 class="hero-title" id="notes-term-title">آرشیو منابع ترم ۱۰</h2>
+            <p class="hero-desc" id="notes-term-description">در حال بارگذاری منابع این ترم...</p>
+        </section>
+
+        <section class="archive-term archive-term--single" id="notes-term-section">
+            <div class="archive-term__head">
+                <p>کارت‌های این ترم از سرور بارگذاری می‌شوند. افزودن و حذف کارت فقط برای حساب مالک فعال است.</p>
+            </div>
+
+            <div class="cards-container" id="notes-term-cards"></div>
+            <p class="archive-empty" id="notes-term-empty">در حال دریافت منابع این ترم...</p>
+        </section>
+
+        <section class="notes-manage-panel" id="notes-term-manage" hidden>
+            <div class="notes-manage-panel__head">
+                <h4>افزودن کارت برای ترم ۱۰</h4>
+                <p>مالک می‌تواند کارت جدید اضافه کند یا کارت‌های همین ترم را حذف کند.</p>
+            </div>
+
+            <form class="notes-manage-panel__form" id="notes-term-form" novalidate>
+                <div class="notes-manage-panel__fields">
+                    <label class="notes-manage-panel__field">
+                        <span>کادر کوچک</span>
+                        <input id="notes-term-badge" name="badge" type="text" maxlength="70" required placeholder="مثلاً جراحی">
+                    </label>
+
+                    <label class="notes-manage-panel__field">
+                        <span>عنوان</span>
+                        <input id="notes-term-card-title" name="title" type="text" maxlength="180" required placeholder="عنوان کارت منبع">
+                    </label>
+
+                    <label class="notes-manage-panel__field notes-manage-panel__field--full">
+                        <span>توضیحات</span>
+                        <textarea id="notes-term-card-description" name="description" maxlength="600" required placeholder="توضیح کوتاه درباره منبع"></textarea>
+                    </label>
+
+                    <label class="notes-manage-panel__field">
+                        <span>نام دکمه</span>
+                        <input id="notes-term-button-label" name="buttonLabel" type="text" maxlength="70" required placeholder="مثلاً دریافت">
+                    </label>
+
+                    <label class="notes-manage-panel__field">
+                        <span>لینک دکمه</span>
+                        <input id="notes-term-button-url" name="buttonUrl" type="url" maxlength="900" required placeholder="با انتخاب فایل یا آپلود خودکار پر می‌شود">
+                    </label>
+                </div>
+
+                <button class="card-btn notes-manage-panel__submit" id="notes-term-submit" type="submit">افزودن کارت</button>
+                <p class="notes-manage-feedback" id="notes-term-feedback" hidden></p>
+            </form>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p>ورودی ۱۴۰۲ دندانپزشکی تهران</p>
+    </footer>
+
+    <script src="/assets/site/scripts/pwa.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/auth.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/shell.js?v=20260812-phase3b"></script>
+    <script src="/assets/site/scripts/notes-host-picker.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/notes-term.js?v=20260722-200509"></script>
+</body>
+</html>

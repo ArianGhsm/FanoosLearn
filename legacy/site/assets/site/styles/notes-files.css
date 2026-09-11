@@ -1,0 +1,700 @@
+body.notes-files-page .ndh-main-shell {
+    width: min(1160px, 100%);
+    margin: 0 auto;
+    padding: 1rem max(0.84rem, 3.6vw) calc(var(--shell-nav-content-reserve) + 0.78rem);
+    display: grid;
+    gap: 1rem;
+}
+
+body.notes-files-page .ndh-hero {
+    max-width: 780px;
+}
+
+body.notes-files-page .ndh-layout {
+    display: grid;
+    grid-template-columns: minmax(290px, 340px) minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+}
+
+body.notes-files-page .ndh-sidebar,
+body.notes-files-page .ndh-explorer {
+    display: grid;
+    gap: 0.9rem;
+}
+
+body.notes-files-page .ndh-panel {
+    display: grid;
+    gap: 0.85rem;
+    padding: 1rem 1.05rem;
+    border-radius: 28px;
+    border: 1px solid var(--border-color);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--accent-color) 6%, transparent), transparent 60%),
+        var(--surface);
+    box-shadow: var(--surface-shadow);
+}
+
+body.notes-files-page .ndh-panel--brand {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--accent-color) 18%, transparent), transparent 48%),
+        linear-gradient(180deg, color-mix(in srgb, var(--accent-color) 8%, transparent), transparent 64%),
+        var(--surface);
+}
+
+body.notes-files-page .ndh-panel__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    justify-self: start;
+    min-height: 28px;
+    padding: 0 0.76rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent-color) 10%, var(--surface-solid));
+    color: var(--accent-strong);
+    font-size: 0.72rem;
+    font-weight: 860;
+}
+
+body.notes-files-page .ndh-panel h3,
+body.notes-files-page .ndh-panel p {
+    margin: 0;
+}
+
+body.notes-files-page .ndh-panel h3 {
+    font-size: 1rem;
+    font-weight: 900;
+}
+
+body.notes-files-page .ndh-panel p {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    line-height: 1.9;
+}
+
+body.notes-files-page .ndh-root-list {
+    display: grid;
+    gap: 0.62rem;
+}
+
+body.notes-files-page .ndh-root-btn {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.62rem;
+    align-items: center;
+    padding: 0.78rem 0.86rem;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    background: var(--surface-solid);
+    color: var(--text-primary);
+    text-align: right;
+    transition: border-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+body.notes-files-page .ndh-root-btn strong,
+body.notes-files-page .ndh-root-btn small {
+    display: block;
+}
+
+body.notes-files-page .ndh-root-btn strong {
+    font-size: 0.92rem;
+    font-weight: 860;
+}
+
+body.notes-files-page .ndh-root-btn small {
+    color: var(--text-secondary);
+    font-size: 0.74rem;
+}
+
+body.notes-files-page .ndh-root-btn::after {
+    content: "‹";
+    font-size: 1.35rem;
+    color: var(--text-tertiary);
+}
+
+body.notes-files-page .ndh-root-btn:hover,
+body.notes-files-page .ndh-root-btn:focus-visible,
+body.notes-files-page .ndh-root-btn.is-active {
+    border-color: color-mix(in srgb, var(--accent-color) 24%, var(--border-color));
+    box-shadow: var(--surface-shadow-strong);
+    transform: translateY(-1px);
+}
+
+body.notes-files-page .ndh-path-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.58rem;
+}
+
+body.notes-files-page .ndh-upload-queue {
+    display: grid;
+    gap: 0.54rem;
+}
+
+body.notes-files-page .ndh-upload-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.58rem;
+}
+
+body.notes-files-page .ndh-upload-stat {
+    display: grid;
+    gap: 0.18rem;
+    padding: 0.72rem 0.78rem;
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--accent-color) 14%, var(--border-color));
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--accent-color) 6%, transparent), transparent 70%),
+        var(--surface-solid);
+}
+
+body.notes-files-page .ndh-upload-stat strong,
+body.notes-files-page .ndh-upload-stat small {
+    display: block;
+}
+
+body.notes-files-page .ndh-upload-stat strong {
+    font-size: 0.9rem;
+    font-weight: 880;
+}
+
+body.notes-files-page .ndh-upload-stat small {
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+}
+
+body.notes-files-page .ndh-upload-item {
+    display: grid;
+    gap: 0.48rem;
+    padding: 0.74rem 0.8rem;
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--accent-color) 12%, var(--border-color));
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--accent-color) 5%, transparent), transparent 72%),
+        color-mix(in srgb, var(--accent-color) 4%, var(--surface-solid));
+}
+
+body.notes-files-page .ndh-upload-item[data-state="done"] {
+    border-color: color-mix(in srgb, var(--success-color) 24%, var(--border-color));
+}
+
+body.notes-files-page .ndh-upload-item[data-state="waiting"] {
+    border-color: color-mix(in srgb, var(--warning-color) 26%, var(--border-color));
+}
+
+body.notes-files-page .ndh-upload-item[data-state="error"] {
+    border-color: color-mix(in srgb, var(--danger-color) 26%, var(--border-color));
+}
+
+body.notes-files-page .ndh-upload-item strong,
+body.notes-files-page .ndh-upload-item small {
+    display: block;
+}
+
+body.notes-files-page .ndh-upload-item strong {
+    font-size: 0.85rem;
+}
+
+body.notes-files-page .ndh-upload-item small {
+    color: var(--text-secondary);
+    font-size: 0.74rem;
+}
+
+body.notes-files-page .ndh-upload-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.6rem;
+    align-items: center;
+}
+
+body.notes-files-page .ndh-upload-state {
+    min-height: 30px;
+    padding: 0.34rem 0.68rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent-color) 10%, var(--surface-solid));
+    color: var(--accent-strong);
+    font-size: 0.72rem;
+    font-weight: 860;
+    white-space: nowrap;
+}
+
+body.notes-files-page .ndh-upload-item[data-state="done"] .ndh-upload-state {
+    background: color-mix(in srgb, var(--success-color) 10%, var(--surface-solid));
+    color: color-mix(in srgb, var(--success-color) 86%, var(--text-primary));
+}
+
+body.notes-files-page .ndh-upload-item[data-state="waiting"] .ndh-upload-state {
+    background: color-mix(in srgb, var(--warning-color) 10%, var(--surface-solid));
+    color: color-mix(in srgb, var(--warning-color) 86%, var(--text-primary));
+}
+
+body.notes-files-page .ndh-upload-item[data-state="error"] .ndh-upload-state {
+    background: color-mix(in srgb, var(--danger-color) 10%, var(--surface-solid));
+    color: color-mix(in srgb, var(--danger-color) 86%, var(--text-primary));
+}
+
+body.notes-files-page .ndh-upload-progress {
+    overflow: hidden;
+    height: 8px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent-color) 10%, var(--surface-solid));
+}
+
+body.notes-files-page .ndh-upload-progress span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--accent-color), var(--success-color));
+    transition: width 0.18s ease;
+}
+
+body.notes-files-page .ndh-upload-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.34rem 0.62rem;
+    color: var(--text-secondary);
+    font-size: 0.73rem;
+}
+
+body.notes-files-page .ndh-upload-stats span {
+    min-width: 0;
+}
+
+body.notes-files-page .ndh-upload-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.42rem;
+}
+
+body.notes-files-page .ndh-upload-actions button,
+body.notes-files-page .ndh-upload-actions a {
+    min-height: 34px;
+    padding: 0.4rem 0.7rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background: var(--surface-solid);
+    color: var(--text-primary);
+    font-size: 0.74rem;
+    font-weight: 800;
+}
+
+body.notes-files-page .ndh-upload-actions .is-danger {
+    color: var(--danger-color);
+    border-color: color-mix(in srgb, var(--danger-color) 22%, var(--border-color));
+}
+
+body.notes-files-page .ndh-panel--toolbar {
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+    align-items: end;
+}
+
+body.notes-files-page .ndh-breadcrumbs-wrap {
+    display: grid;
+    gap: 0.54rem;
+}
+
+body.notes-files-page .ndh-breadcrumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.42rem;
+    align-items: center;
+}
+
+body.notes-files-page .ndh-breadcrumbs button {
+    min-height: 34px;
+    padding: 0.4rem 0.72rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
+    background: var(--surface-solid);
+    color: var(--text-primary);
+    font-size: 0.76rem;
+    font-weight: 800;
+}
+
+body.notes-files-page .ndh-breadcrumbs button.is-active {
+    background: color-mix(in srgb, var(--accent-color) 10%, var(--surface-solid));
+    color: var(--accent-strong);
+    border-color: color-mix(in srgb, var(--accent-color) 24%, var(--border-color));
+}
+
+body.notes-files-page .ndh-search {
+    display: grid;
+    gap: 0.32rem;
+}
+
+body.notes-files-page .ndh-search span {
+    font-size: 0.72rem;
+    font-weight: 860;
+    color: var(--text-secondary);
+}
+
+body.notes-files-page .ndh-search input {
+    width: 100%;
+    min-height: 42px;
+    padding: 0.58rem 0.8rem;
+    border-radius: 18px;
+    border: 1px solid var(--border-color-strong);
+    background: var(--surface-solid);
+}
+
+body.notes-files-page .ndh-search input:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 4px var(--focus-ring-soft);
+}
+
+body.notes-files-page .ndh-panel--feedback {
+    padding-top: 0.78rem;
+    padding-bottom: 0.78rem;
+}
+
+body.notes-files-page .ndh-panel--list {
+    gap: 0;
+    overflow: hidden;
+}
+
+body.notes-files-page .ndh-list-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.8rem;
+    padding: 0 0 0.9rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--border-color) 92%, transparent);
+}
+
+body.notes-files-page .ndh-list-head span,
+body.notes-files-page .ndh-list-head small {
+    display: block;
+}
+
+body.notes-files-page .ndh-list-head span {
+    font-size: 0.78rem;
+    font-weight: 860;
+}
+
+body.notes-files-page .ndh-list-head small {
+    margin-top: 0.18rem;
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+}
+
+body.notes-files-page .ndh-entries {
+    display: grid;
+}
+
+body.notes-files-page .ndh-entry {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.82rem;
+    align-items: center;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--border-color) 92%, transparent);
+}
+
+body.notes-files-page .ndh-entry:last-child {
+    border-bottom: 0;
+}
+
+body.notes-files-page .ndh-entry-main {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 0.72rem;
+    align-items: center;
+}
+
+body.notes-files-page .ndh-entry-icon {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--accent-color) 8%, var(--surface-solid));
+    color: var(--accent-strong);
+    font-size: 1rem;
+    font-weight: 900;
+}
+
+body.notes-files-page .ndh-entry[data-type="dir"] .ndh-entry-icon {
+    background: color-mix(in srgb, var(--warning-color) 11%, var(--surface-solid));
+    color: color-mix(in srgb, var(--warning-color) 84%, var(--text-primary));
+}
+
+body.notes-files-page .ndh-entry-copy {
+    min-width: 0;
+    display: grid;
+    gap: 0.18rem;
+}
+
+body.notes-files-page .ndh-entry-copy strong,
+body.notes-files-page .ndh-entry-copy small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.notes-files-page .ndh-entry-copy strong {
+    font-size: 0.9rem;
+    font-weight: 860;
+}
+
+body.notes-files-page .ndh-entry-copy small {
+    color: var(--text-secondary);
+    font-size: 0.74rem;
+}
+
+body.notes-files-page .ndh-entry-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.42rem;
+}
+
+body.notes-files-page .ndh-entry-actions button,
+body.notes-files-page .ndh-entry-actions a {
+    min-height: 34px;
+    padding: 0.4rem 0.7rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background: var(--surface-solid);
+    color: var(--text-primary);
+    font-size: 0.74rem;
+    font-weight: 800;
+}
+
+body.notes-files-page .ndh-entry-actions .is-danger {
+    color: var(--danger-color);
+    border-color: color-mix(in srgb, var(--danger-color) 22%, var(--border-color));
+}
+
+body.notes-files-page .ndh-entry-actions .is-open {
+    color: var(--accent-strong);
+    border-color: color-mix(in srgb, var(--accent-color) 22%, var(--border-color));
+}
+
+body.notes-files-page .ndh-entry-actions button:hover,
+body.notes-files-page .ndh-entry-actions button:focus-visible,
+body.notes-files-page .ndh-entry-actions a:hover,
+body.notes-files-page .ndh-entry-actions a:focus-visible {
+    box-shadow: var(--surface-shadow);
+}
+
+html[data-performance-mode="lite"] body.notes-files-page .ndh-panel,
+html[data-performance-mode="lite"] body.notes-files-page .ndh-upload-item,
+html[data-performance-mode="lite"] body.notes-files-page .ndh-upload-stat {
+    box-shadow: var(--surface-shadow);
+    backdrop-filter: none;
+}
+
+@media (max-width: 980px) {
+    body.notes-files-page .ndh-layout {
+        grid-template-columns: 1fr;
+    }
+
+    body.notes-files-page .ndh-panel--toolbar {
+        grid-template-columns: 1fr;
+    }
+
+    body.notes-files-page .ndh-upload-summary {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 720px) {
+    body.notes-files-page .ndh-main-shell {
+        padding-top: 0.95rem;
+    }
+
+    body.notes-files-page .ndh-entry,
+    body.notes-files-page .ndh-list-head {
+        grid-template-columns: 1fr;
+    }
+
+    body.notes-files-page .ndh-entry-actions,
+    body.notes-files-page .ndh-path-actions,
+    body.notes-files-page .ndh-upload-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(126px, 1fr));
+        width: 100%;
+    }
+
+    body.notes-files-page .ndh-entry-actions button,
+    body.notes-files-page .ndh-entry-actions a,
+    body.notes-files-page .ndh-path-actions > *,
+    body.notes-files-page .ndh-upload-actions button,
+    body.notes-files-page .ndh-upload-actions a {
+        width: 100%;
+        text-align: center;
+    }
+
+    body.notes-files-page .ndh-upload-top,
+    body.notes-files-page .ndh-upload-stats {
+        grid-template-columns: 1fr;
+    }
+
+    body.notes-files-page .ndh-upload-state,
+    body.notes-files-page .ndh-upload-actions button,
+    body.notes-files-page .ndh-upload-actions a {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+@media (hover: none), (pointer: coarse) {
+    body.notes-files-page .ndh-root-btn:hover,
+    body.notes-files-page .ndh-entry-actions button:hover,
+    body.notes-files-page .ndh-entry-actions a:hover {
+        transform: none;
+        box-shadow: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.notes-files-page .ndh-root-btn,
+    body.notes-files-page .ndh-upload-progress span,
+    body.notes-files-page .ndh-entry-actions button,
+    body.notes-files-page .ndh-entry-actions a {
+        transition: none;
+    }
+
+    body.notes-files-page .ndh-root-btn:hover,
+    body.notes-files-page .ndh-root-btn:focus-visible,
+    body.notes-files-page .ndh-entry-actions button:hover,
+    body.notes-files-page .ndh-entry-actions button:focus-visible,
+    body.notes-files-page .ndh-entry-actions a:hover,
+    body.notes-files-page .ndh-entry-actions a:focus-visible {
+        transform: none;
+        box-shadow: none;
+    }
+}
+
+/* Mature resource-manager pass: one operational canvas, not nested cards. */
+body.notes-files-page .ndh-main-shell {
+    gap: clamp(1rem, 2.4vw, 1.55rem);
+}
+
+body.notes-files-page :is(.ndh-panel, .ndh-panel--brand) {
+    padding: 1rem 0;
+    border: 0;
+    border-block-start: 1px solid var(--border-color);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+body.notes-files-page .ndh-guard {
+    padding: .85rem 0 !important;
+    border: 0 !important;
+    border-inline-start: 3px solid var(--danger-color) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+body.notes-files-page .ndh-panel:first-child {
+    border-block-start: 0;
+}
+
+body.notes-files-page .ndh-panel__eyebrow {
+    min-height: 24px;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+body.notes-files-page .ndh-root-list,
+body.notes-files-page .ndh-upload-queue,
+body.notes-files-page .ndh-entries {
+    gap: 0;
+}
+
+body.notes-files-page .ndh-root-btn,
+body.notes-files-page .ndh-upload-item {
+    padding: .85rem 0;
+    border: 0;
+    border-block-end: 1px solid var(--border-color);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    transform: none;
+}
+
+body.notes-files-page .ndh-root-btn:is(:focus-visible, .is-active) {
+    border-block-end-color: var(--accent-color);
+    background: color-mix(in srgb, var(--accent-color) 4%, transparent);
+    box-shadow: none;
+    transform: none;
+}
+
+body.notes-files-page .ndh-upload-summary {
+    gap: 0;
+    overflow: hidden;
+    border-block: 1px solid var(--border-color);
+}
+
+body.notes-files-page .ndh-upload-stat {
+    padding: .75rem;
+    border: 0;
+    border-inline-start: 1px solid var(--border-color);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+body.notes-files-page .ndh-upload-stat:first-child {
+    border-inline-start: 0;
+}
+
+body.notes-files-page .ndh-upload-state {
+    min-height: 24px;
+    padding: .18rem .45rem;
+    border-radius: 3px;
+}
+
+body.notes-files-page :is(.ndh-upload-actions, .ndh-entry-actions) :is(button, a),
+body.notes-files-page .ndh-breadcrumbs button {
+    min-height: 40px;
+    padding: .45rem .15rem;
+    border: 0;
+    border-block-end: 1px solid var(--border-color);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+body.notes-files-page .ndh-entry-icon {
+    width: 38px;
+    height: 38px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+body.notes-files-page .ndh-entry[data-type="dir"] .ndh-entry-icon {
+    background: transparent;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    body.notes-files-page .ndh-root-btn:hover,
+    body.notes-files-page :is(.ndh-upload-actions, .ndh-entry-actions) :is(button, a):hover {
+        background: color-mix(in srgb, var(--accent-color) 4%, transparent);
+        box-shadow: none;
+        transform: none;
+    }
+}
+
+@media (max-width: 980px) {
+    body.notes-files-page .ndh-upload-summary {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 720px) {
+    body.notes-files-page .ndh-main-shell {
+        padding-inline: max(.75rem, 3.8vw);
+    }
+
+    body.notes-files-page :is(.ndh-entry-actions, .ndh-path-actions, .ndh-upload-actions) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}

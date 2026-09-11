@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>مدیریت خرید | ورودی ۱۴۰۲ دندانپزشکی</title>
+    <meta name="description" content="داشبورد مستقل مدیریت خرید، آیتم‌ها، درگاه‌ها، سوابق و خریداران.">
+    <meta name="theme-color" content="#eef2f7">
+    <link rel="manifest" href="/manifest.webmanifest?v=20260722-200509">
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png?v=20260722-200509">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png?v=20260722-200509">
+    <script src="/assets/site/scripts/theme.js?v=20260722-200509"></script>
+    <link rel="stylesheet" href="/assets/site/styles/core.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/account.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/buy.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/theme.css?v=20260812-phase4b">
+</head>
+<body class="buy-page buy-manage-page" data-buy-page="manage" data-buy-manage-page="overview">
+    <div class="background-overlay" aria-hidden="true"></div>
+    <header class="site-header">
+        <div class="logo-area">
+            <div class="logo-circle"><img src="/assets/images/logo.png?v=20260722-200509" alt="لوگوی ورودی ۱۴۰۲ دندانپزشکی"></div>
+            <div class="site-info">
+                <h1>مدیریت خرید</h1>
+                <p>داشبورد عملیاتی آیتم‌ها، درگاه‌ها، سوابق و خریداران</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a class="header-link" href="/buy/manage/endosim/">ایمپورت اندوسیم</a>
+            <a class="header-link" href="/buy/">کاتالوگ</a>
+            <a class="header-link" href="/account/">حساب</a>
+        </div>
+    </header>
+    <main class="buy-shell buy-shell--manage">
+        <section id="payments-auth-guard" class="buy-manage-guard" aria-live="polite"></section>
+        <section id="payments-manage-app" class="buy-manage-app" hidden>
+            <nav class="buy-manage-nav" aria-label="بخش‌های مدیریت خرید">
+                <a href="/buy/manage/" data-manage-nav="overview">مرور</a>
+                <a href="/buy/manage/items/" data-manage-nav="items">آیتم‌ها</a>
+                <a href="/buy/manage/gateways/" data-manage-nav="gateways">درگاه‌ها</a>
+                <a href="/buy/manage/orders/" data-manage-nav="orders">سوابق</a>
+            </nav>
+            <header class="buy-manage-head">
+                <div>
+                    <span id="payments-manage-kicker" class="buy-kicker">داشبورد</span>
+                    <h2 id="payments-manage-title">مرور مدیریت خرید</h2>
+                    <p id="payments-manage-description">وضعیت فعلی فروش، پرداخت‌ها، آیتم‌ها و اعلان‌های مالی را کوتاه و قابل اقدام ببینید.</p>
+                </div>
+                <div id="payments-manage-actions" class="payments-inline-actions"></div>
+            </header>
+            <div id="payments-feedback" class="account-feedback account-feedback--inline" aria-live="polite"></div>
+            <div id="payments-manage-root" class="buy-manage-root" aria-live="polite"></div>
+        </section>
+    </main>
+    <script src="/assets/site/scripts/auth.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/account-payments.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/pwa.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/shell.js?v=20260812-phase3b"></script>
+</body>
+</html>
+
+

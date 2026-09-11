@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#eef2f7">
+    <meta name="robots" content="noindex,nofollow">
+    <title>HTML Uploader | ورودی ۱۴۰۲ دندانپزشکی تهران</title>
+    <meta name="description" content="آپلود فایل HTML تک‌فایلی و ساخت لینک موقت برای تست مستقیم روی سایت.">
+    <link rel="manifest" href="/manifest.webmanifest?v=20260722-200509">
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png?v=20260722-200509">
+    <script src="/assets/site/scripts/theme.js?v=20260722-200509"></script>
+    <link rel="stylesheet" href="/assets/site/styles/core.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/html-uploader.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/theme.css?v=20260812-phase4b">
+</head>
+<body class="html-uploader-page" data-shell-reserve="self">
+    <div class="background-overlay" aria-hidden="true"></div>
+
+    <main class="hu-shell">
+        <header class="hu-header">
+            <div class="hu-header__copy">
+                <span class="hu-kicker">Private Route</span>
+                <h1>HTML Uploader</h1>
+                <p>این صفحه از ظاهر عمومی سایت لینک نشده و فقط با داشتن آدرسش قابل استفاده است.</p>
+            </div>
+            <div class="hu-header__actions">
+                <span class="hu-theme-slot" data-theme-toggle-slot></span>
+            </div>
+        </header>
+
+        <section class="hu-grid">
+            <section class="hu-card hu-card--upload" aria-labelledby="hu-upload-title">
+                <div class="hu-section-head">
+                    <div>
+                        <span class="hu-kicker">Upload</span>
+                        <h2 id="hu-upload-title">آپلود فایل HTML و ساخت لینک موقت</h2>
+                        <p>فقط یک فایل HTML تک‌فایلی آپلود می‌شود. اگر فایل شما asset جداگانه دارد، باید آدرس‌هایش داخل خود HTML قابل‌دسترسی باشند.</p>
+                    </div>
+                </div>
+
+                <form id="hu-upload-form" class="hu-form" novalidate>
+                    <label class="hu-dropzone" for="hu-file-input">
+                        <input id="hu-file-input" name="file" type="file" accept=".html,.htm,text/html" hidden>
+                        <span class="hu-dropzone__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M12 16V5M12 5L7.7 9.3M12 5L16.3 9.3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M5 15.6V18A2 2 0 0 0 7 20H17A2 2 0 0 0 19 18V15.6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                        <strong id="hu-file-label">فایل HTML را انتخاب کن</strong>
+                        <small>حداکثر ۱ مگابایت • فقط `.html` یا `.htm`</small>
+                    </label>
+
+                    <div class="hu-grid-fields">
+                        <label class="hu-field" for="hu-title-input">
+                            <span>عنوان اختیاری</span>
+                            <input id="hu-title-input" name="title" type="text" maxlength="180" placeholder="برای لیست و لینک خروجی">
+                        </label>
+                        <label class="hu-field" for="hu-ttl-input">
+                            <span>مدت ماندگاری</span>
+                            <select id="hu-ttl-input" name="ttlHours" data-latin-digits="true">
+                                <option value="1">۱ ساعت</option>
+                                <option value="24" selected>۲۴ ساعت</option>
+                                <option value="72">۳ روز</option>
+                                <option value="168">۷ روز</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div class="hu-notes">
+                        <p>صفحه‌ی خروجی روی مسیر موقت جداگانه باز می‌شود و با sandbox/CSP ایزوله سرو می‌شود؛ بنابراین به session اصلی سایت دسترسی ندارد.</p>
+                        <p>برای جلوگیری از abuse، سقف روزانه و سقف حجم روی این uploader فعال است.</p>
+                    </div>
+
+                    <div class="hu-actions">
+                        <button id="hu-submit-btn" class="hu-btn hu-btn--primary" type="submit">ساخت لینک موقت</button>
+                        <button id="hu-reset-btn" class="hu-btn" type="button">پاک‌کردن فرم</button>
+                    </div>
+                </form>
+            </section>
+
+            <aside class="hu-side">
+                <section class="hu-card" aria-labelledby="hu-result-title">
+                    <div class="hu-section-head">
+                        <div>
+                            <span class="hu-kicker">Result</span>
+                            <h2 id="hu-result-title">آخرین لینک ساخته‌شده</h2>
+                        </div>
+                    </div>
+                    <div id="hu-feedback" class="hu-feedback" aria-live="polite"></div>
+                    <div id="hu-result-box" class="hu-result-box" hidden></div>
+                </section>
+
+                <section class="hu-card" aria-labelledby="hu-recent-title">
+                    <div class="hu-section-head">
+                        <div>
+                            <span class="hu-kicker">Device</span>
+                            <h2 id="hu-recent-title">لینک‌های اخیر همین دستگاه</h2>
+                        </div>
+                    </div>
+                    <div id="hu-recent-list" class="hu-recent-list"></div>
+                </section>
+            </aside>
+        </section>
+
+        <section id="hu-owner-panel" class="hu-card hu-owner-panel" hidden aria-labelledby="hu-owner-title">
+            <div class="hu-section-head">
+                <div>
+                    <span class="hu-kicker">Owner</span>
+                    <h2 id="hu-owner-title">مدیریت صفحات HTML</h2>
+                    <p>این بخش فقط برای مالک سایت نمایش داده می‌شود و همه‌ی لینک‌های ساخته‌شده را از همین صفحه مدیریت می‌کند.</p>
+                </div>
+                <button id="hu-owner-refresh" class="hu-btn" type="button">بازخوانی</button>
+            </div>
+
+            <div class="hu-owner-toolbar">
+                <input id="hu-owner-query" type="search" placeholder="جست‌وجو در عنوان، نام فایل یا توکن">
+                <select id="hu-owner-status">
+                    <option value="available" selected>همه لینک‌های موجود</option>
+                    <option value="active">فعال</option>
+                    <option value="hidden">مخفی</option>
+                    <option value="expired">منقضی</option>
+                    <option value="deleted">حذف‌شده</option>
+                    <option value="all">همه</option>
+                </select>
+                <select id="hu-owner-sort">
+                    <option value="newest" selected>جدیدترین</option>
+                    <option value="oldest">قدیمی‌ترین</option>
+                    <option value="views">بیشترین بازدید</option>
+                </select>
+            </div>
+
+            <div id="hu-owner-summary" class="hu-owner-summary"></div>
+            <div id="hu-owner-list" class="hu-owner-list"></div>
+        </section>
+    </main>
+
+    <script src="/assets/site/scripts/auth.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/html-uploader.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/pwa.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/shell.js?v=20260812-phase3b"></script>
+</body>
+</html>

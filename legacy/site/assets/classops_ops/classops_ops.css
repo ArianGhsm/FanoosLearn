@@ -1,0 +1,46 @@
+.classops-page { min-height: 100vh; }
+.classops-shell { width: min(1180px, calc(100% - 28px)); margin: 24px auto 72px; display: grid; gap: 18px; }
+.classops-hero, .classops-panel { border: 1px solid color-mix(in srgb, currentColor 12%, transparent); background: color-mix(in srgb, var(--surface, #fff) 92%, transparent); border-radius: 22px; box-shadow: 0 14px 38px rgba(17, 24, 39, .08); }
+.classops-hero { padding: 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.classops-hero h2, .classops-panel h3 { margin: 4px 0 8px; }
+.classops-hero p, .classops-note { margin: 0; line-height: 1.9; opacity: .78; }
+.classops-kicker { font-size: .78rem; letter-spacing: .04em; opacity: .64; }
+.classops-grid { display: grid; gap: 18px; }
+.classops-grid--wide { grid-template-columns: minmax(0, 1.25fr) minmax(300px, .75fr); }
+.classops-grid--items { grid-template-columns: minmax(300px, .85fr) minmax(0, 1.15fr); }
+.classops-panel { padding: 20px; }
+.classops-panel__head { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 16px; }
+.classops-panel__head > span { font-size: .82rem; opacity: .62; }
+.classops-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.classops-form--stack { grid-template-columns: 1fr; }
+.classops-form label, .classops-edit-label { display: grid; gap: 7px; font-size: .9rem; }
+.classops-form input, .classops-form textarea, .classops-form select, .classops-edit-label textarea { width: 100%; border: 1px solid color-mix(in srgb, currentColor 16%, transparent); border-radius: 14px; background: color-mix(in srgb, var(--surface, #fff) 96%, transparent); color: inherit; padding: 11px 12px; font: inherit; box-sizing: border-box; }
+.classops-form input:focus-visible, .classops-form textarea:focus-visible, .classops-form select:focus-visible, .classops-button:focus-visible, .classops-item-row:focus-visible { outline: 3px solid color-mix(in srgb, #2563eb 38%, transparent); outline-offset: 2px; }
+.classops-form__full, .classops-form__actions { grid-column: 1 / -1; }
+.classops-form__actions { display: flex; justify-content: flex-end; }
+.classops-button { border: 0; border-radius: 13px; padding: 10px 15px; font: inherit; cursor: pointer; transition: transform .15s ease, opacity .15s ease; }
+.classops-button:not(:disabled):active { transform: translateY(1px); }
+.classops-button:disabled { cursor: not-allowed; opacity: .44; }
+.classops-button--primary { background: #1d4ed8; color: #fff; }
+.classops-button--secondary { background: color-mix(in srgb, currentColor 8%, transparent); color: inherit; }
+.classops-button--danger { background: color-mix(in srgb, #dc2626 13%, transparent); color: #b91c1c; }
+.classops-state { border-radius: 14px; padding: 12px 14px; margin: 0; background: color-mix(in srgb, currentColor 7%, transparent); }
+.classops-state[data-state="loading"] { opacity: .72; }
+.classops-state[data-state="forbidden"], .classops-state[data-state="error"], .classops-state[data-state="conflict"] { background: color-mix(in srgb, #dc2626 10%, transparent); }
+.classops-capability-grid, .classops-disabled-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.classops-capability { display: grid; gap: 5px; border-radius: 14px; padding: 12px; border: 1px solid color-mix(in srgb, currentColor 10%, transparent); }
+.classops-capability span { font-size: .78rem; opacity: .62; }
+.classops-capability[data-enabled="false"] { opacity: .55; }
+.classops-disabled-grid button { border: 1px dashed color-mix(in srgb, currentColor 18%, transparent); border-radius: 13px; padding: 11px; background: transparent; color: inherit; opacity: .52; }
+.classops-item-list { display: grid; gap: 8px; }
+.classops-item-row { width: 100%; border: 1px solid color-mix(in srgb, currentColor 10%, transparent); background: color-mix(in srgb, currentColor 4%, transparent); color: inherit; border-radius: 14px; padding: 12px; text-align: right; display: grid; gap: 4px; cursor: pointer; }
+.classops-item-row span { font-size: .8rem; opacity: .62; }
+.classops-empty { opacity: .6; }
+.classops-preview { white-space: pre-wrap; overflow-wrap: anywhere; border-radius: 14px; padding: 12px; background: color-mix(in srgb, currentColor 6%, transparent); font: inherit; line-height: 1.8; }
+.classops-action-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.classops-dialog { width: min(560px, calc(100% - 30px)); border: 0; border-radius: 20px; padding: 22px; color: inherit; background: var(--surface, #fff); }
+.classops-dialog::backdrop { background: rgba(15, 23, 42, .55); }
+.classops-dialog pre { white-space: pre-wrap; direction: rtl; text-align: right; font: inherit; line-height: 1.8; }
+@media (prefers-reduced-motion: reduce) { .classops-button { transition: none; } }
+@media (max-width: 900px) { .classops-grid--wide, .classops-grid--items { grid-template-columns: 1fr; } .classops-capability-grid, .classops-disabled-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 620px) { .classops-shell { width: min(100% - 18px, 1180px); margin-top: 12px; } .classops-hero { align-items: stretch; flex-direction: column; padding: 18px; } .classops-panel { padding: 16px; } .classops-form { grid-template-columns: 1fr; } .classops-form__full, .classops-form__actions { grid-column: auto; } .classops-capability-grid, .classops-disabled-grid { grid-template-columns: 1fr; } .classops-panel__head { flex-direction: column; gap: 4px; } .classops-action-row .classops-button { flex: 1 1 140px; } }

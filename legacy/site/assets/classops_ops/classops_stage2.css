@@ -1,0 +1,28 @@
+.classops-operation-state { margin-bottom: 18px; }
+.classops-operation-state[data-state="ready"] { background: color-mix(in srgb, #059669 10%, transparent); }
+.classops-operation-state[data-state="loading"] { background: color-mix(in srgb, #2563eb 9%, transparent); }
+.classops-operation-state[data-state="error"] { background: color-mix(in srgb, #dc2626 11%, transparent); }
+
+.classops-fieldset { border: 1px solid color-mix(in srgb, currentColor 12%, transparent); border-radius: 16px; padding: 14px; min-width: 0; }
+.classops-fieldset legend { padding: 0 8px; font-weight: 700; }
+.classops-form--nested { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.classops-selector-row { display: grid; grid-template-columns: minmax(120px, .55fr) minmax(0, 1.45fr); gap: 12px; }
+.classops-destination-options { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
+.classops-check { display: flex !important; grid-template-columns: auto 1fr !important; align-items: center; gap: 8px !important; }
+.classops-check input { width: auto !important; min-width: 18px; height: 18px; margin: 0; }
+.classops-preview-panel { border-color: color-mix(in srgb, #2563eb 30%, transparent); }
+.classops-preview-panel .classops-preview { max-height: 360px; overflow: auto; }
+.classops-ai-edit { margin-top: 12px; display: grid; gap: 10px; }
+.classops-ai-edit label, .classops-inline-tools label { display: grid; gap: 7px; font-size: .9rem; }
+.classops-ai-edit textarea, .classops-inline-tools input { width: 100%; box-sizing: border-box; border: 1px solid color-mix(in srgb, currentColor 16%, transparent); border-radius: 14px; padding: 11px 12px; background: color-mix(in srgb, var(--surface, #fff) 96%, transparent); color: inherit; font: inherit; }
+.classops-inline-tools { margin-top: 16px; padding: 12px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: end; border-radius: 14px; background: color-mix(in srgb, currentColor 5%, transparent); }
+#classops-ack-stats { margin-top: 14px; }
+#classops-selected-output, #classops-digest-output { margin-top: 14px; max-height: 360px; overflow: auto; }
+.classops-capability[data-enabled="true"] { border-color: color-mix(in srgb, #059669 24%, transparent); }
+.classops-capability[data-enabled="false"] { border-color: color-mix(in srgb, #d97706 20%, transparent); }
+
+@media (max-width: 760px) {
+    .classops-form--nested, .classops-selector-row { grid-template-columns: 1fr; }
+    .classops-inline-tools { grid-template-columns: 1fr; }
+    .classops-destination-options { display: grid; grid-template-columns: 1fr; }
+}

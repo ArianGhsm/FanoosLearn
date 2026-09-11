@@ -1,0 +1,17 @@
+[Unit]
+Description=Flush queued Dentistry1402TUMS deployment notifications
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=dentops
+Group=dentops
+WorkingDirectory=/opt/integrated-dent/notifier/current
+EnvironmentFile=/etc/integrated-dent/deploy-notifier.env
+ExecStart=/usr/bin/python3 -m deploy_notifier.cli flush --limit 100
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/integrated-dent/deploy-notifier

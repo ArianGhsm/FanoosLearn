@@ -1,0 +1,113 @@
+:root {
+    color-scheme: light dark;
+}
+
+.bot-link-page {
+    margin: 0;
+    min-height: 100vh;
+    background: #f3f6fa;
+    color: #172033;
+    font-family: inherit;
+}
+
+.bot-link-shell {
+    width: min(100% - 32px, 560px);
+    margin: 0 auto;
+    padding: max(48px, env(safe-area-inset-top)) 0 48px;
+}
+
+.bot-link-header {
+    margin-bottom: 28px;
+}
+
+.bot-link-kicker {
+    color: #246b5f;
+    font-weight: 800;
+}
+
+.bot-link-header h1 {
+    margin: 8px 0 10px;
+    font-size: clamp(1.65rem, 5vw, 2.3rem);
+    letter-spacing: 0;
+}
+
+.bot-link-header p,
+.bot-link-state p,
+.bot-link-security {
+    color: #596579;
+    line-height: 1.9;
+}
+
+.bot-link-panel {
+    border: 1px solid #d9e0e9;
+    border-radius: 8px;
+    background: #fff;
+    padding: 24px;
+    box-shadow: 0 14px 38px rgba(22, 35, 55, 0.08);
+}
+
+.bot-link-state {
+    display: grid;
+    gap: 14px;
+}
+
+.bot-link-state[hidden] {
+    display: none;
+}
+
+.bot-link-primary,
+.bot-link-secondary {
+    min-height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    font: inherit;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.bot-link-primary {
+    border: 1px solid #176c5d;
+    background: #176c5d;
+    color: #fff;
+}
+
+.bot-link-primary:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
+
+.bot-link-secondary {
+    border: 1px solid #cbd4df;
+    background: transparent;
+    color: #344054;
+}
+
+.bot-link-security {
+    margin: 18px 2px 0;
+    font-size: 0.88rem;
+}
+
+@media (prefers-color-scheme: dark) {
+    .bot-link-page {
+        background: #101722;
+        color: #edf3fa;
+    }
+    .bot-link-panel {
+        border-color: #334155;
+        background: #182230;
+        box-shadow: none;
+    }
+    .bot-link-header p,
+    .bot-link-state p,
+    .bot-link-security {
+        color: #aeb9c8;
+    }
+    .bot-link-secondary {
+        border-color: #46546a;
+        color: #e3eaf4;
+    }
+}
+

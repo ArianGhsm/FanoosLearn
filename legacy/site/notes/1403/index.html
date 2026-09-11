@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>آرشیو منابع ۱۴۰۳ | انتخاب ترم</title>
+    <meta name="description" content="انتخاب ترم برای منابع ورودی ۱۴۰۳ دندانپزشکی تهران.">
+    <meta name="theme-color" content="#eef2f7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="ورودی ۱۴۰۳">
+    <link rel="manifest" href="/manifest.webmanifest?v=20260722-200509">
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png?v=20260722-200509">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png?v=20260722-200509">
+    <script src="/assets/site/scripts/theme.js?v=20260722-200509"></script>
+    <link rel="stylesheet" href="/assets/site/styles/core.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/hub.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/notes.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/theme.css?v=20260812-phase4b">
+</head>
+<body class="hub-page" data-notes-cohort="1403">
+    <div class="background-overlay" aria-hidden="true"></div>
+
+    <header class="site-header">
+        <div class="logo-area">
+            <div class="logo-circle">
+                <img src="/assets/images/logo.png?v=20260722-200509" alt="لوگوی رسمی ورودی ۱۴۰۳">
+            </div>
+            <div class="site-info">
+                <h1 id="notes-home-heading">آرشیو منابع ورودی ۱۴۰۳</h1>
+                <p id="notes-home-subheading">هر ترم در صفحه جداگانه</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="/app/" class="header-link" id="notes-home-back-link">بازگشت به خانه</a>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero-content">
+            <span class="greeting-pill" id="notes-home-kicker">آرشیو ۱۴۰۳</span>
+            <h2 class="hero-title" id="notes-home-title">ترم موردنظر را انتخاب کن.</h2>
+        </section>
+
+        <section class="archive-term">
+            <div class="archive-term__head">
+                <div>
+                    <span class="archive-term__kicker" id="notes-home-section-kicker">ترم‌ها</span>
+                    <h3 id="notes-home-section-title">صفحات مستقل ترمی ۱۴۰۳</h3>
+                </div>
+                <p id="notes-home-section-copy">هر کارت را باز کنی، مستقیم وارد صفحه همان ترم می‌شوی.</p>
+            </div>
+
+            <div class="cards-container archive-term-list" id="notes-home-list" data-layout="rows"></div>
+            <p class="archive-empty" id="notes-home-empty">در حال دریافت ترم‌ها...</p>
+        </section>
+
+        <section class="notes-manage-panel" id="notes-home-unit-manage" hidden>
+            <div class="notes-manage-panel__head">
+                <h4 id="notes-home-unit-manage-heading">افزودن منبع این واحد</h4>
+                <p id="notes-home-unit-manage-copy">مالک یا نماینده مجاز می‌تواند منبع همین واحد را از همین صفحه ثبت کند.</p>
+            </div>
+
+            <form class="notes-manage-panel__form" id="notes-home-unit-form" novalidate>
+                <div class="notes-manage-panel__fields">
+                    <label class="notes-manage-panel__field">
+                        <span>کادر کوچک</span>
+                        <input id="notes-home-unit-badge" name="badge" type="text" maxlength="70" required placeholder="مثلاً جزوه">
+                    </label>
+
+                    <label class="notes-manage-panel__field">
+                        <span>عنوان</span>
+                        <input id="notes-home-unit-title-input" name="title" type="text" maxlength="180" required placeholder="عنوان منبع این واحد">
+                    </label>
+
+                    <label class="notes-manage-panel__field notes-manage-panel__field--full">
+                        <span>توضیحات</span>
+                        <textarea id="notes-home-unit-description" name="description" maxlength="600" required placeholder="توضیح کوتاه درباره منبع"></textarea>
+                    </label>
+
+                    <label class="notes-manage-panel__field">
+                        <span>نام دکمه</span>
+                        <input id="notes-home-unit-button-label" name="buttonLabel" type="text" maxlength="70" required placeholder="مثلاً دریافت">
+                    </label>
+
+                    <label class="notes-manage-panel__field">
+                        <span>لینک دکمه</span>
+                        <input id="notes-home-unit-button-url" name="buttonUrl" type="url" maxlength="900" required placeholder="با انتخاب فایل یا آپلود خودکار پر می‌شود">
+                    </label>
+                </div>
+
+                <button class="card-btn notes-manage-panel__submit" id="notes-home-unit-submit" type="submit">افزودن منبع همین واحد</button>
+                <p class="notes-manage-feedback" id="notes-home-unit-feedback" hidden></p>
+            </form>
+        </section>
+
+        <section class="notes-manage-panel" id="notes-home-manage" hidden>
+            <div class="notes-manage-panel__head">
+                <h4>مدیریت ترم‌ها</h4>
+                <p>مالک یا نماینده می‌تواند ترم جدید اضافه کند یا متن و ترتیب نمایش ترم‌ها را ویرایش کند.</p>
+            </div>
+
+            <form class="notes-manage-panel__form" id="notes-home-form" novalidate>
+                <div class="notes-manage-panel__fields">
+                    <label class="notes-manage-panel__field">
+                        <span>عنوان ترم</span>
+                        <input id="notes-home-term-title" name="title" type="text" maxlength="160" required placeholder="مثلاً ترم ۳">
+                    </label>
+
+                    <label class="notes-manage-panel__field">
+                        <span>کادر کوچک</span>
+                        <input id="notes-home-term-kicker" name="kicker" type="text" maxlength="80" placeholder="مثلاً دندان ۱۴۰۳">
+                    </label>
+
+                    <label class="notes-manage-panel__field notes-manage-panel__field--full">
+                        <span>توضیحات</span>
+                        <textarea id="notes-home-term-description" name="description" maxlength="800" placeholder="توضیح کوتاه صفحه ترم"></textarea>
+                    </label>
+
+                    <label class="notes-manage-panel__field notes-manage-panel__field--full">
+                        <span>متن حالت خالی</span>
+                        <input id="notes-home-term-empty-message" name="emptyMessage" type="text" maxlength="400" placeholder="وقتی هنوز کارت منبعی ثبت نشده است">
+                    </label>
+                </div>
+
+                <button class="card-btn notes-manage-panel__submit" id="notes-home-submit" type="submit">افزودن ترم</button>
+                <p class="notes-manage-feedback" id="notes-home-feedback" hidden></p>
+            </form>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p id="notes-home-footer">ورودی ۱۴۰۳ دندانپزشکی تهران</p>
+    </footer>
+
+    <script src="/assets/site/scripts/pwa.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/auth.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/shell.js?v=20260812-phase3b"></script>
+    <script src="/assets/site/scripts/notes-host-picker.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/notes-home.js?v=20260813-refine1"></script>
+</body>
+</html>

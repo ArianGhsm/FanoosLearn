@@ -1,0 +1,12 @@
+[Unit]
+Description=Retry Dentistry1402TUMS deployment notifications every minute
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+AccuracySec=10s
+Persistent=true
+Unit=integrated-deploy-notifier-flush.service
+
+[Install]
+WantedBy=timers.target

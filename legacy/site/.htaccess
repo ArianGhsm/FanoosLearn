@@ -1,0 +1,101 @@
+<IfModule mod_mime.c>
+  AddDefaultCharset UTF-8
+  AddCharset UTF-8 .html .htm .css .js .mjs .json .webmanifest .txt .xml .svg
+
+  AddType font/woff2 .woff2
+  AddType font/woff  .woff
+  AddType application/vnd.ms-fontobject .eot
+  AddType font/ttf .ttf
+  AddType font/otf .otf
+  AddType application/manifest+json .webmanifest
+  AddType text/javascript .mjs
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml text/javascript
+  AddOutputFilterByType DEFLATE application/javascript application/json application/xml application/manifest+json image/svg+xml font/ttf font/otf
+</IfModule>
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.(woff2|woff|ttf|otf|eot)$">
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, OPTIONS"
+  </FilesMatch>
+
+  <FilesMatch "^(sw\.js|manifest\.webmanifest|app-version\.json)$">
+    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </FilesMatch>
+
+  <FilesMatch "^sw\.js$">
+    Header set Service-Worker-Allowed "/"
+  </FilesMatch>
+
+  <FilesMatch "^(chat_api\.php|grades_api\.php|content_tools_api\.php)$">
+    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+  </FilesMatch>
+
+  <FilesMatch "^(?!sw\.js$).*\.(css|js|mjs)$">
+    Header set Cache-Control "public, no-cache, max-age=0, must-revalidate"
+    Header set Cache-Control "public, max-age=31536000, immutable" "expr=%{QUERY_STRING} =~ m#(^|&)v=[^&]+#"
+  </FilesMatch>
+
+  # theme.css reaches almost every route and is linked with a few legacy query
+  # tokens. Keep its freshness window short without forcing a round-trip on
+  # every page transition. Its imported design layers use versioned URLs.
+  <FilesMatch "^theme\.css$">
+    Header set Cache-Control "public, max-age=300, stale-while-revalidate=86400"
+  </FilesMatch>
+
+  # Exam pages are catalog-generated in large batches. Revalidate their shared
+  # runtime assets so a UI release never requires rewriting hundreds of pages.
+  <FilesMatch "^(exam-(quiz|bootstrap)|exams(-course)?)\.(css|js)$">
+    Header set Cache-Control "public, no-cache, max-age=0, must-revalidate"
+  </FilesMatch>
+
+  # Shared visual/navigation/PWA assets must not require a hard refresh when
+  # older HTML still carries a legacy version query.
+  <FilesMatch "^(core|shell|pwa|auth|chat)\.(css|js)$">
+    Header set Cache-Control "public, no-cache, max-age=0, must-revalidate"
+  </FilesMatch>
+
+  <FilesMatch "^(?!sw\.js$).*\.(png|jpg|jpeg|gif|svg|webp|woff2|woff|ttf|otf|eot)$">
+    Header set Cache-Control "public, max-age=2592000, immutable"
+  </FilesMatch>
+</IfModule>
+
+<FilesMatch "^\.env(\..*)?$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Serve the app shell at the domain root without a second slow host request.
+  RewriteRule ^$ app/index.html [L]
+
+  RewriteCond %{QUERY_STRING} (^|&)v= [NC]
+  RewriteRule .* - [E=ASSET_VERSIONED:1]
+
+  RewriteRule ^dental-residency(?:/.*)?$ - [G,L]
+
+  RewriteRule ^booklets/?$ /notes/ [R=301,L,NE]
+  RewriteRule ^booklets/index\.html$ /notes/ [R=301,L,NE]
+  RewriteRule ^booklets1403/?$ /notes/1403/ [R=301,L,NE]
+  RewriteRule ^booklets1403/index\.html$ /notes/1403/ [R=301,L,NE]
+
+  RewriteRule ^prosthesis-1402(?:/index\.html)?/?$ /notes/?cohort=prosthesis-1402 [R=301,L,NE,QSA]
+  RewriteRule ^prosthesis-1402/chat(?:/index\.html)?/?$ /chat/?cohort=prosthesis-1402 [R=301,L,NE,QSA]
+  RewriteRule ^prosthesis-1402/forms/fill(?:/index\.html)?/?$ /forms/fill/?cohort=prosthesis-1402 [R=301,L,NE,QSA]
+  RewriteRule ^prosthesis-1402/forms(?:/index\.html)?/?$ /forms/?cohort=prosthesis-1402 [R=301,L,NE,QSA]
+  RewriteRule ^prosthesis-1402/grades(?:/index\.html)?/?$ /grades/?cohort=prosthesis-1402 [R=301,L,NE,QSA]
+  RewriteRule ^prosthesis-1402/exams(?:/index\.html)?/?$ /exams/?cohort=prosthesis-1402 [R=301,L,NE,QSA]
+  RewriteRule ^prosthesis-1402/term(?:/index\.html)?/?$ /notes/term/?cohort=prosthesis-1402 [R=301,L,NE,QSA]
+</IfModule>

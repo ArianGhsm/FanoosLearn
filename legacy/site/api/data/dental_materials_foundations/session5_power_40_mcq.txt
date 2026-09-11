@@ -1,0 +1,405 @@
+سؤال‌ها
+مبحث: مبانی پلیمر و پلیمریزاسیون
+
+۱. در مخلوط مایع یک رزین آکریلی پایه دست‌دندان، اگر هدف کاهش یا به‌تعویق‌انداختن پلیمریزاسیون ناخواسته پیش از فعال‌سازی باشد، کدام جزء باید نقش اصلی را داشته باشد؟
+الف) Ethyleneglycoldimethacrylate
+ب) Hydroquinone
+ج) Benzoyl peroxide
+د) N,N-dimethyl-p-toluidine
+
+۲. در ارزیابی Degree of conversion، کدام تغییر شیمیایی شاخص اصلی تبدیل در شبکه پلیمری است؟
+الف) تبدیل پیوند C=C به پیوند C-C
+ب) تبدیل پیوند واندروالس به پیوند هیدروژنی
+ج) تبدیل زنجیره cross-linked به زنجیره خطی
+د) تبدیل مونومر بزرگ به مونومر کوچک
+
+۳. دانشجویی فهرستی از کاربردهای پلیمرها در دندانپزشکی را می‌نویسد. کدام مورد مطابق منبع در این فهرست قرار می‌گیرد؟
+الف) Complete denture base
+ب) Noble dental alloy
+ج) Metallurgical microscope
+د) Galvanic cell
+
+۴. برای یک پلیمر با ۱۵۰ واحد تکرارشونده و جرم مولکولی مشخص برای هر واحد، کدام رابطه با تعریف Molecular weight در منبع سازگار است؟
+الف) تعداد انواع مونومرها ضربدر درصد filler
+ب) Degree of polymerisation ضربدر وزن مولکولی واحد تکرارشونده
+ج) مقدار shrinkage ضربدر Degree of cure
+د) مقدار inhibitor ضربدر وزن مولکولی monomer
+
+۵. یک پلیمر پس از ایجاد اتصال‌های بین زنجیره‌ای، در برابر حلال‌های آلی و cracking سطحی مقاوم‌تر شده و حالت سفت‌تری پیدا کرده است. این توصیف بیشتر با کدام ساختار سازگار است؟
+الف) Thermoplastic خطی
+ب) Copolymer بدون اتصال عرضی
+ج) Cross-linked polymer
+د) Monomer آزاد
+
+۶. در پلیمریزاسیون افزایشی، مرحله‌ای که طی آن گونه‌های فعال برای شروع واکنش ایجاد می‌شوند، در منبع با کدام اصطلاح توصیف شده است؟
+الف) Propagation
+ب) Activation
+ج) Termination
+د) Molecular weight distribution
+
+۷. علت اصلی shrinkage در vinyl polymerisation طبق منبع کدام است؟
+الف) جایگزینی یک پیوند واندروالس و یک پیوند دوگانه با دو پیوند کووالانسی منفرد
+ب) تبدیل پیوند C-C به پیوند C=C در حین curing
+ج) افزایش فاصله مولکول‌ها از فاصله کووالانسی به فاصله واندروالس
+د) کاهش تعداد زنجیره‌ها بدون تغییر نوع پیوندها
+
+۸. در ترکیب پودر رزین آکریلی پایه دست‌دندان، کدام جزء نقش initiator را دارد؟
+الف) Hydroquinone با غلظت حدود ۰/۵٪
+ب) Benzoyl peroxide با غلظت حدود ۰/۵٪
+ج) Methyl methacrylate با غلظت حدود ۱۰٪
+د) N,N-dimethyl-p-toluidine با غلظت حدود ۱۰٪
+
+۹. کدام مجموعه از مثال‌ها در منبع در گروه Thermoplastic آمده است؟
+الف) poly(methyl methacrylate)، polyvinylacrylate و polystyrene
+ب) cross-linked poly(methyl methacrylate)، Silicons و cis-polyisoprene
+ج) Benzoyl peroxide، Hydroquinone و Eugenol
+د) Bis-GMA، methyl methacrylate و Ethyleneglycoldimethacrylate
+
+۱۰. در یک پلیمر، افزودن dibutyl phthalate باعث کاهش Tg و کاهش Elastic modulus شده است. پیامد نزدیک‌تر به منبع کدام است؟
+الف) پلیمر سفت‌تر و شکننده‌تر می‌شود
+ب) پلیمر نرم‌تر و انعطاف‌پذیرتر می‌شود
+ج) پلیمر initiator بیشتری تولید می‌کند
+د) پلیمر به copolymer دو مونومری تبدیل می‌شود
+
+۱۱. ماده‌ای از دو یا چند monomer متفاوت ساخته شده است. در منبع، این نوع ماده با کدام عنوان معرفی می‌شود؟
+الف) Copolymer
+ب) Free radical
+ج) Initiator
+د) Plasticizer
+
+۱۲. کدام معادله، الگوی کلی Propagation را در پلیمریزاسیون افزایشی نشان می‌دهد؟
+الف) R-O-O-R → 2RO•
+ب) RO• + M → RO-M•
+ج) RO-M• + nM → RO-(M)n-M•
+د) RO-(M)n-M• + RO-(M)x-M• → RO-(M)n-M-M-(M)x-OR
+
+۱۳. در کنترل Polymerisation shrinkage، کدام مجموعه عامل‌ها طبق منبع با بزرگی shrinkage مرتبط است؟
+الف) filler loading، amount of monomer، type of monomer و degree of cure
+ب) point of application، magnitude، direction و area
+ج) hue، value، chroma و luminous reflectance
+د) tensile strength، compressive strength، shear strength و hardness
+
+۱۴. در زبان پایه پلیمرها، نسبت میان monomer و polymer چگونه تعریف می‌شود؟
+الف) monomer یعنی many units و polymer یعنی one unit
+ب) monomer یعنی one unit و polymer یعنی many units
+ج) monomer یعنی زنجیره cross-linked و polymer یعنی initiator
+د) monomer یعنی بازدارنده و polymer یعنی فعال‌کننده
+
+۱۵. در بخش مایع رزین آکریلی پایه دست‌دندان، جزء اصلی monomer کدام است؟
+الف) Polymethylmethacrylate beads
+ب) Methyl methacrylate
+ج) Benzoyl peroxide
+د) Dibutyl phthalate
+
+۱۶. کدام ویژگی، تعریف Free radical در منبع را دقیق‌تر بیان می‌کند؟
+الف) گونه‌ای با یک electron جفت‌نشده و واکنش‌پذیری زیاد
+ب) مولکولی با دو monomer متفاوت و بدون electron فعال
+ج) ترکیبی که Tg و Elastic modulus را کاهش می‌دهد
+د) پلیمر سفتی که در برابر حلال‌های آلی مقاوم‌تر است
+
+۱۷. در یک ماده رزینی، افزایش تبدیل پیوندهای دوگانه کربن به پیوندهای منفرد کربن، مستقیماً کدام شاخص را توصیف می‌کند؟
+الف) Molecular weight distribution
+ب) Degree of conversion
+ج) Plasticizer efficiency
+د) Thermoplastic classification
+
+۱۸. کدام حالت، مرحله Termination را در addition polymerisation بهتر نشان می‌دهد؟
+الف) شکستن Benzoyl peroxide و ایجاد دو radical مشابه
+ب) اتصال RO• به monomer و تشکیل RO-M•
+ج) رشد زنجیره با افزودن پیاپی monomerها
+د) ترکیب دو زنجیره فعال و تشکیل زنجیره بدون radical فعال انتهایی
+
+۱۹. اگر هدف پیش‌بینی خواص یک polymer باشد، کدام مجموعه طبق منبع باید در نظر گرفته شود؟
+الف) chemical composition، molecular weight، molecular weight distribution و spatial arrangement of mer unit
+ب) heat، chemical compound، light و benzoyl peroxide
+ج) hydroquinone، eugenol، oxygen و organic amine
+د) complete denture base، soft liners، artificial teeth و impression trays
+
+۲۰. کدام گزاره درباره Benzoyl peroxide مطابق منبع است؟
+الف) با کاهش Tg، پلیمر را نرم‌تر می‌کند
+ب) به دو free radical مشابه تقسیم می‌شود و می‌تواند polymerisation را آغاز کند
+ج) پیوندهای C-C را به C=C تبدیل می‌کند
+د) در مایع به‌عنوان cross-linking agent با غلظت حدود ۱۰٪ حضور دارد
+
+۲۱. در فهرست کاربردهای پلیمرها، کدام گزینه به کاربرد موقت در crown و bridge اشاره دارد؟
+الف) Soft liners
+ب) Artificial teeth
+ج) Temporary crown and bridge material
+د) Impression trays
+
+۲۲. در مایع رزین آکریلی پایه دست‌دندان، کدام ماده به‌عنوان cross-linking agent ذکر شده است؟
+الف) Ethyleneglycoldimethacrylate
+ب) Hydroquinone
+ج) N,N-dimethyl-p-toluidine
+د) Benzoyl peroxide
+
+۲۳. اگر نمونه‌ای از cross-linked poly(methyl methacrylate) در دسته‌بندی ساختاری قرار گیرد، طبق مثال‌های منبع در کدام گروه می‌آید؟
+الف) Thermoplastic
+ب) Thermosetting
+ج) Monomer
+د) Inhibitor
+
+۲۴. منبع علت کلی Polymerisation shrinkage را چگونه توضیح می‌دهد؟
+الف) بازآرایی مولکول‌ها به فضایی کمتر از فضای لازم در فاز مایع monomer
+ب) افزایش فاصله بین زنجیره‌ها تا حدی بیشتر از فاصله واندروالس
+ج) تبدیل پلیمر به مجموعه‌ای از monomerهای جدا از هم
+د) افزایش وزن مولکولی میانگین بدون تغییر آرایش مولکولی
+
+۲۵. کدام مجموعه در منبع به‌عنوان نمونه activator برای ایجاد free radical آمده است؟
+الف) Heat، chemical compound و light
+ب) Hydroquinone، eugenol و oxygen
+ج) PMMA beads، pigment و opacifier
+د) Bis-GMA، methyl methacrylate و polystyrene
+
+۲۶. در گزارش Molecular weight پلیمرها، منبع بر کدام شیوه گزارش تأکید دارد؟
+الف) گزارش آن به‌صورت average molecular weight
+ب) گزارش آن به‌صورت درصد elongation
+ج) گزارش آن به‌صورت coefficient of thermal expansion
+د) گزارش آن به‌صورت burnishing index
+
+۲۷. در یک سامانه پلیمری، کدام مجموعه می‌تواند پلیمریزاسیون را inhibit یا retard کند؟
+الف) Hydroquinone، Eugenol و large amount of oxygen
+ب) Benzoyl peroxide، heat و light
+ج) Ethyleneglycoldimethacrylate، methyl methacrylate و PMMA beads
+د) Bis-GMA، polystyrene و polyvinylacrylate
+
+۲۸. کدام معادله با مرحله Initiation در addition polymerisation هماهنگ است؟
+الف) R-O-O-R → 2RO•
+ب) RO• + M → RO-M•
+ج) RO-M• + nM → RO-(M)n-M•
+د) RO-(M)n-M• + RO-(M)x-M• → RO-(M)n-M-M-(M)x-OR
+
+۲۹. در یک فرمولاسیون آکریلی، ماده‌ای در liquid با غلظت حدود ۱٪ آمده و به‌عنوان activator یا accelerator از نوع organic amine معرفی شده است. کدام گزینه است؟
+الف) Hydroquinone
+ب) Ethyleneglycoldimethacrylate
+ج) N,N-dimethyl-p-toluidine
+د) Methyl methacrylate
+
+۳۰. کدام مورد از کاربردهای پلیمرها در منبع، مستقیماً به جایگزینی دندان‌ها مربوط است؟
+الف) Artificial teeth
+ب) Impression trays
+ج) Soft liners
+د) Partial denture base
+
+۳۱. ترتیب منطقی مراحل addition polymerisation بر اساس محتوای منبع کدام است؟
+الف) Initiation، Activation، Termination، Propagation
+ب) Activation، Initiation، Propagation، Termination
+ج) Propagation، Activation، Initiation، Termination
+د) Termination، Propagation، Initiation، Activation
+
+۳۲. در میان عامل‌های مؤثر بر خواص پلیمر، کدام مورد به آرایش فضایی واحدهای تکراری مربوط است؟
+الف) spatial arrangement of the mer unit
+ب) amount of monomer
+ج) filler loading
+د) large amount of oxygen
+
+۳۳. مقایسه Bis-GMA و methyl methacrylate در بحث shrinkage به کدام مفهوم نزدیک‌تر است؟
+الف) نقش اندازه/نوع monomer در Polymerisation shrinkage
+ب) نقش inhibitor در توقف کامل curing
+ج) نقش metallic filler در افزایش hardness
+د) نقش oxygen در افزایش molecular weight
+
+۳۴. در طبقه‌بندی اضافی پلیمرها، کدام جفت طبقه در منبع ذکر شده است؟
+الف) Thermoplastic و Thermosetting
+ب) Noble و Base metal
+ج) Elastic و Non-elastic
+د) Additive و Subtractive
+
+۳۵. وقتی Benzoyl peroxide توسط یک amine آلی فعال می‌شود، کدام جزء مایع رزین آکریلی با این نقش سازگارتر است؟
+الف) Hydroquinone
+ب) Methyl methacrylate
+ج) N,N-dimethyl-p-toluidine
+د) Ethyleneglycoldimethacrylate
+
+۳۶. اگر هدف توضیح تفاوت shrinkage بین دو رزین با monomerهای متفاوت باشد، کدام عامل از منبع مستقیماً به این تفاوت مربوط است؟
+الف) type of monomer
+ب) molecular weight distribution
+ج) point of application
+د) surface cracking resistance
+
+۳۷. کدام مجموعه از اجزای liquid رزین آکریلی پایه دست‌دندان با منبع سازگار است؟
+الف) Methyl methacrylate، Ethyleneglycoldimethacrylate، Hydroquinone و N,N-dimethyl-p-toluidine
+ب) Polymethylmethacrylate beads، Benzoyl peroxide، Hydroquinone و Eugenol
+ج) Bis-GMA، polystyrene، polyvinylacrylate و oxygen
+د) Dibutyl phthalate، PMMA beads، Benzoyl peroxide و light
+
+۳۸. کدام مجموعه از اجزای powder رزین آکریلی پایه دست‌دندان با منبع سازگار است؟
+الف) Polymethylmethacrylate beads و peroxide مانند Benzoyl peroxide
+ب) Methyl methacrylate و organic amine
+ج) Hydroquinone و Ethyleneglycoldimethacrylate
+د) Dibutyl phthalate و Eugenol
+
+۳۹. در cross-linked polymer، کدام تغییر در زنجیره‌ها مستقیماً توضیح‌دهنده افزایش مقاومت به organic solvents و surface cracking است؟
+الف) linked شدن polymer molecules
+ب) افزایش مقدار oxygen به‌عنوان retarder
+ج) کاهش Degree of conversion
+د) تبدیل polymer به copolymer دو مونومری
+
+۴۰. در یک ماده light-curing، اگر shrinkage در طول زمان بررسی شود، کدام مفهوم از منبع برای تفسیر این پدیده مناسب‌تر است؟
+الف) time-dependence of shrinkage در ماده light curing
+ب) average molecular weight در پودر PMMA
+ج) classification به Noble و Base metal
+د) Poisson’s ratio در بار کششی
+
+
+پاسخنامه تشریحی
+
+۱. پاسخ درست: ب
+دلیل: Hydroquinone در منبع به‌عنوان inhibitor در مایع رزین آکریلی پایه دست‌دندان آمده و در بخش مواد مهارکننده نیز در گروه موادی ذکر شده که polymerization را inhibit یا retard می‌کنند.
+رد گزینه‌ها: الف cross-linking agent مایع است، نه inhibitor. ج initiator پودر است و برای آغاز پلیمریزاسیون استفاده می‌شود. د activator/accelerator آلی است، نه بازدارنده.
+
+۲. پاسخ درست: الف
+دلیل: Degree of conversion یعنی درجه‌ای که پیوندهای دوگانه کربن-کربن به پیوندهای منفرد کربن-کربن تبدیل می‌شوند.
+رد گزینه‌ها: ب توضیح shrinkage در vinyl polymerisation را تحریف می‌کند و تعریف DC نیست. ج به ساختار cross-linked مربوط است. د در منبع به‌عنوان تعریف DC نیامده است.
+
+۳. پاسخ درست: الف
+دلیل: Complete denture base در فهرست کاربردهای Polymer and polymerisation ذکر شده است.
+رد گزینه‌ها: ب مربوط به آلیاژهای دندانی است، نه کاربرد پلیمر در این فایل. ج ابزار مشاهده متالوگرافی است و در این فایل پلیمر کاربرد ذکرشده نیست. د مفهوم الکتروشیمی است و جزو کاربردهای این فایل نیست.
+
+۴. پاسخ درست: ب
+دلیل: منبع Molecular weight پلیمر را برابر با تعداد واحدهای تکراری یا degree of polymerisation ضربدر وزن مولکولی واحد تکراری می‌داند.
+رد گزینه‌ها: الف ترکیبی از تعداد مونومر و filler است و در تعریف وزن مولکولی نیامده. ج عوامل shrinkage را با وزن مولکولی مخلوط کرده است. د inhibitor و monomer در تعریف Molecular weight نقشی به این شکل ندارند.
+
+۵. پاسخ درست: ج
+دلیل: در منبع برای Cross-linked polymer آمده که مولکول‌های پلیمر linked هستند، مقاومت بیشتری به organic solvents و surface cracking دارند و stiff هستند.
+رد گزینه‌ها: الف Thermoplastic خطی در مثال‌های جداگانه آمده و ویژگی اتصال عرضی را توضیح نمی‌دهد. ب Copolymer فقط از دو یا چند monomer متفاوت تشکیل شده و الزاماً cross-linked نیست. د Monomer واحد منفرد است و ویژگی‌های شبکه پلیمری را ندارد.
+
+۶. پاسخ درست: ب
+دلیل: Activation در منبع فرایند تولید free radical معرفی شده است.
+رد گزینه‌ها: الف Propagation مرحله رشد زنجیره است. ج Termination مرحله پایان زنجیره‌های فعال است. د Molecular weight distribution از عوامل خواص پلیمر است، نه مرحله تولید radical.
+
+۷. پاسخ درست: الف
+دلیل: منبع shrinkage در vinyl polymerisation را با جایگزینی یک پیوند واندروالس و یک پیوند دوگانه با دو پیوند کووالانسی منفرد توضیح می‌دهد.
+رد گزینه‌ها: ب جهت تبدیل پیوندها را برخلاف تعریف DC و curing بیان می‌کند. ج برعکس توضیح منبع است؛ مولکول‌ها از فاصله واندروالس به فاصله کووالانسی نزدیک می‌شوند. د در منبع علت shrinkage به این شکل بیان نشده است.
+
+۸. پاسخ درست: ب
+دلیل: در پودر رزین آکریلی پایه دست‌دندان، initiator یک peroxide مانند Benzoyl peroxide با حدود ۰/۵٪ ذکر شده است.
+رد گزینه‌ها: الف Hydroquinone inhibitor مایع است. ج Methyl methacrylate monomer مایع است و مقدار ۱۰٪ برای آن در منبع نیامده. د N,N-dimethyl-p-toluidine activator مایع با حدود ۱٪ است، نه initiator پودر.
+
+۹. پاسخ درست: الف
+دلیل: منبع poly(methyl methacrylate)، polyvinylacrylate و polystyrene را به‌عنوان مثال‌های Thermoplastic آورده است.
+رد گزینه‌ها: ب مثال‌های Thermosetting هستند. ج مجموعه‌ای از initiator/inhibitor/retarder است و طبقه thermoplastic نیست. د ترکیبی از monomer یا ترکیبات رزینی است و به‌عنوان مثال Thermoplastic در منبع نیامده است.
+
+۱۰. پاسخ درست: ب
+دلیل: Plasticizer مانند dibutyl phthalate در منبع باعث کاهش Tg، کاهش Elastic modulus و کاهش نیروهای جاذبه بین زنجیره‌ها می‌شود و نتیجه آن پلیمر flexibleتر و softer است.
+رد گزینه‌ها: الف برخلاف کاهش elastic modulus و نرم‌تر شدن است. ج تولید initiator در منبع برای plasticizer ذکر نشده است. د plasticizer ماده را به copolymer تبدیل نمی‌کند.
+
+۱۱. پاسخ درست: الف
+دلیل: Copolymer در منبع ماده‌ای است که از دو یا چند monomer متفاوت تشکیل شده باشد.
+رد گزینه‌ها: ب Free radical گونه‌ای با electron جفت‌نشده است. ج Initiator آغازگر واکنش است. د Plasticizer ماده‌ای برای کاهش Tg و elastic modulus است.
+
+۱۲. پاسخ درست: ج
+دلیل: منبع معادله کلی Propagation را به‌صورت RO-M• + nM → RO-(M)n-M• آورده است.
+رد گزینه‌ها: الف Activation و شکستن peroxide را نشان می‌دهد. ب Initiation را نشان می‌دهد. د Termination با ترکیب دو زنجیره فعال را نشان می‌دهد.
+
+۱۳. پاسخ درست: الف
+دلیل: بزرگی Polymerisation shrinkage در منبع با filler loading، amount of monomer، type of monomer و degree of cure مرتبط دانسته شده است.
+رد گزینه‌ها: ب ویژگی‌های تعریف Force در مباحث مکانیکی است و در این فایل برای shrinkage نیامده. ج پارامترهای رنگ است، نه shrinkage. د انواع خواص مکانیکی‌اند و مجموعه عوامل shrinkage در این فایل نیستند.
+
+۱۴. پاسخ درست: ب
+دلیل: منبع به‌صراحت می‌گوید monomer یعنی one unit و polymer یعنی many units.
+رد گزینه‌ها: الف تعریف‌ها را جابه‌جا کرده است. ج monomer و polymer را با cross-linking و initiator اشتباه گرفته است. د بازدارنده و فعال‌کننده اجزای واکنش‌اند، نه تعریف monomer و polymer.
+
+۱۵. پاسخ درست: ب
+دلیل: در liquid رزین آکریلی، جزء اصلی monomer همان Methyl methacrylate است.
+رد گزینه‌ها: الف جزء پودر و polymer beads است. ج initiator پودر است. د Plasticizer معرفی شده در بخش جداگانه است، نه monomer اصلی liquid.
+
+۱۶. پاسخ درست: الف
+دلیل: Free radical در منبع گونه بسیار واکنش‌پذیری معرفی شده که یک electron فرد یا جفت‌نشده دارد.
+رد گزینه‌ها: ب تعریف Copolymer را با radical مخلوط کرده است. ج مربوط به Plasticizer است. د مربوط به Cross-linked polymer است.
+
+۱۷. پاسخ درست: ب
+دلیل: تبدیل پیوندهای C=C به C-C همان معیار Degree of conversion است.
+رد گزینه‌ها: الف Molecular weight distribution از عوامل خواص پلیمر است. ج Plasticizer efficiency در منبع به‌عنوان شاخص این تبدیل نیامده است. د Thermoplastic classification به نوع ساختار و مثال‌ها مربوط است، نه تبدیل پیوند دوگانه.
+
+۱۸. پاسخ درست: د
+دلیل: در Termination، دو زنجیره فعال RO-(M)n-M• و RO-(M)x-M• با هم ترکیب شده و زنجیره نهایی بدون radical فعال انتهایی تشکیل می‌شود.
+رد گزینه‌ها: الف Activation را نشان می‌دهد. ب Initiation است. ج Propagation یا رشد زنجیره است.
+
+۱۹. پاسخ درست: الف
+دلیل: منبع خواص پلیمر را وابسته به chemical composition، molecular weight، molecular weight distribution و spatial arrangement of the mer unit می‌داند.
+رد گزینه‌ها: ب نمونه activatorها و initiator را مخلوط کرده است. ج مواد inhibit/retard و activator را با هم آورده و مجموعه عوامل خواص پلیمر نیست. د کاربردهای پلیمر در دندانپزشکی‌اند، نه عوامل تعیین‌کننده خواص پلیمر.
+
+۲۰. پاسخ درست: ب
+دلیل: منبع بیان می‌کند Benzoyl peroxide به‌آسانی به دو free radical یکسان تقسیم می‌شود که می‌توانند polymerisation را initiate کنند.
+رد گزینه‌ها: الف اثر plasticizer است. ج برخلاف تبدیل مورد انتظار در Degree of conversion است. د cross-linking agent مایع Ethyleneglycoldimethacrylate با حدود ۱۰٪ است، نه Benzoyl peroxide.
+
+۲۱. پاسخ درست: ج
+دلیل: Temporary crown and bridge material در فهرست کاربردهای Polymer and polymerisation ذکر شده است.
+رد گزینه‌ها: الف Soft liners کاربرد دیگری از پلیمر است، اما به crown و bridge موقت اشاره ندارد. ب Artificial teeth کاربرد جایگزینی دندان است، نه crown و bridge موقت. د Impression trays برای تری قالب‌گیری است.
+
+۲۲. پاسخ درست: الف
+دلیل: Ethyleneglycoldimethacrylate در liquid رزین آکریلی پایه دست‌دندان به‌عنوان cross-linking agent با حدود ۱۰٪ آمده است.
+رد گزینه‌ها: ب inhibitor است. ج activator/accelerator است. د initiator پودر است.
+
+۲۳. پاسخ درست: ب
+دلیل: cross-linked poly(methyl methacrylate) در منبع در مثال‌های Thermosetting آمده است.
+رد گزینه‌ها: الف Thermoplastic شامل PMMA غیر cross-linked، polyvinylacrylate و polystyrene ذکر شده است. ج Monomer واحد منفرد است. د Inhibitor ماده مهارکننده پلیمریزاسیون است.
+
+۲۴. پاسخ درست: الف
+دلیل: منبع shrinkage را عمدتاً ناشی از rearrangement مولکول‌ها به فضایی کمتر از فضای فاز مایع monomer می‌داند.
+رد گزینه‌ها: ب با توضیح منبع که نزدیک‌شدن مولکول‌ها به فاصله کووالانسی را بیان می‌کند سازگار نیست. ج تبدیل polymer به monomer در منبع به‌عنوان علت shrinkage نیامده است. د افزایش وزن مولکولی میانگین بدون تغییر آرایش، توضیح اصلی shrinkage نیست.
+
+۲۵. پاسخ درست: الف
+دلیل: منبع activatorها را شامل Heat، Chemical compound و Light می‌داند.
+رد گزینه‌ها: ب مواد inhibit/retard polymerization هستند. ج اجزای پودر یا افزودنی‌های مطرح در فایل آکریلیک دیگر را تداعی می‌کند و در این منبع به‌عنوان activator نیامده است. د مثال‌ها یا monomerهای مرتبط با بخش‌های دیگرند، نه نمونه activator.
+
+۲۶. پاسخ درست: الف
+دلیل: منبع می‌گوید وزن مولکولی پلیمر معمولاً به‌صورت average molecular weight گزارش می‌شود.
+رد گزینه‌ها: ب درصد elongation شاخص تغییر طول است و در این فایل برای گزارش Molecular weight نیامده. ج ضریب انبساط حرارتی مربوط به خواص حرارتی است. د Burnishing index در این منبع پلیمر مطرح نشده است.
+
+۲۷. پاسخ درست: الف
+دلیل: Hydroquinone، Eugenol و مقدار زیاد oxygen در منبع به‌عنوان موادی آمده‌اند که polymerization را inhibit یا retard می‌کنند.
+رد گزینه‌ها: ب Benzoyl peroxide و heat و light در زمینه initiation/activation هستند، نه مهار. ج اجزای liquid/powder هستند، اما مجموعه مهارکننده نیستند. د مثال‌های پلیمر/مونومرند و به‌عنوان inhibitor set ذکر نشده‌اند.
+
+۲۸. پاسخ درست: ب
+دلیل: در Initiation، radical یعنی RO• با monomer یعنی M واکنش داده و RO-M• تشکیل می‌شود.
+رد گزینه‌ها: الف Activation است. ج Propagation است. د Termination است.
+
+۲۹. پاسخ درست: ج
+دلیل: N,N-dimethyl-p-toluidine در liquid به‌عنوان Activator/accelerator از نوع organic amine با حدود ۱٪ ذکر شده است.
+رد گزینه‌ها: الف Hydroquinone inhibitor است. ب Ethyleneglycoldimethacrylate cross-linking agent است. د Methyl methacrylate monomer اصلی liquid است.
+
+۳۰. پاسخ درست: الف
+دلیل: Artificial teeth در فهرست کاربردهای Polymer and polymerisation آمده و مستقیماً به دندان‌های مصنوعی مربوط است.
+رد گزینه‌ها: ب تری قالب‌گیری است. ج آستر نرم یا soft liner است. د پایه پروتز پارسیل است و به خود دندان جایگزین اشاره مستقیم ندارد.
+
+۳۱. پاسخ درست: ب
+دلیل: منبع مراحل را با Activation برای تولید radical، سپس Initiation، Propagation و در پایان Termination توضیح می‌دهد.
+رد گزینه‌ها: الف Activation را پس از Initiation قرار داده و ترتیب شروع واکنش را برهم زده است. ج Propagation نمی‌تواند پیش از ایجاد radical و initiation بیاید. د Termination پایان واکنش است و نمی‌تواند آغاز ترتیب باشد.
+
+۳۲. پاسخ درست: الف
+دلیل: spatial arrangement of the mer unit یکی از عوامل تعیین‌کننده Polymer properties در منبع است و به آرایش فضایی mer unit مربوط می‌شود.
+رد گزینه‌ها: ب و ج عامل‌های مربوط به Polymerisation shrinkage هستند. د از مواد retard/inhibit polymerization است.
+
+۳۳. پاسخ درست: الف
+دلیل: منبع بزرگی shrinkage را به type of monomer مربوط می‌داند و اسلاید مقایسه small و large monomer based polymer با نمونه‌های Bis-GMA و methyl methacrylate همین محور را نشان می‌دهد.
+رد گزینه‌ها: ب inhibitor و توقف curing موضوع این مقایسه نیست. ج metallic filler و hardness در این فایل مطرح نشده‌اند. د oxygen در منبع به‌عنوان retarder آمده، نه عامل افزایش molecular weight در این مقایسه.
+
+۳۴. پاسخ درست: الف
+دلیل: در روش اضافی طبقه‌بندی پلیمرها، دو گروه Thermoplastic و Thermosetting ذکر شده‌اند.
+رد گزینه‌ها: ب طبقه‌بندی آلیاژها است، نه پلیمرها در این فایل. ج طبقه‌بندی مواد قالب‌گیری است. د در این منبع پلیمر به‌عنوان جفت طبقه‌بندی اصلی ذکر نشده است.
+
+۳۵. پاسخ درست: ج
+دلیل: N,N-dimethyl-p-toluidine در liquid به‌عنوان organic amine activator/accelerator آمده و با فعال‌سازی benzoyl peroxide توسط amine سازگار است.
+رد گزینه‌ها: الف Hydroquinone بازدارنده است. ب Methyl methacrylate monomer است. د Ethyleneglycoldimethacrylate cross-linking agent است.
+
+۳۶. پاسخ درست: الف
+دلیل: منبع بزرگی Polymerisation shrinkage را به type of monomer وابسته می‌داند؛ بنابراین تفاوت monomerها می‌تواند محور تفسیر تفاوت shrinkage باشد.
+رد گزینه‌ها: ب عامل خواص کلی پلیمر است، اما در فهرست مستقیم عوامل shrinkage نیامده است. ج مربوط به تعریف Force در فایل‌های مکانیکی است و در این منبع پلیمر نیست. د ویژگی cross-linked polymer است، نه عامل مستقیم shrinkage.
+
+۳۷. پاسخ درست: الف
+دلیل: liquid شامل Methyl methacrylate، cross-linking agent یعنی Ethyleneglycoldimethacrylate، inhibitor یعنی Hydroquinone و activator یعنی N,N-dimethyl-p-toluidine است.
+رد گزینه‌ها: ب PMMA beads و Benzoyl peroxide مربوط به powder هستند و Eugenol جزء liquid resin base در این جدول نیست. ج مجموعه‌ای از مثال‌ها و retarderهاست، نه ترکیب liquid. د Dibutyl phthalate در بخش plasticizer آمده و Benzoyl peroxide جزء powder است.
+
+۳۸. پاسخ درست: الف
+دلیل: powder شامل Polymer به شکل Polymethylmethacrylate beads و initiator یعنی peroxide مانند Benzoyl peroxide با حدود ۰/۵٪ است.
+رد گزینه‌ها: ب اجزای liquid شامل monomer و amine activator هستند. ج inhibitor و cross-linking agent مربوط به liquid هستند. د plasticizer و Eugenol در جدول powder acrylic denture base نیامده‌اند.
+
+۳۹. پاسخ درست: الف
+دلیل: در منبع Cross-linked polymer با linked شدن polymer molecules توضیح داده شده و سپس مقاومت بیشتر در برابر organic solvents و surface cracking ذکر شده است.
+رد گزینه‌ها: ب oxygen در مقدار زیاد polymerization را retard می‌کند، نه این اثر cross-linking را توضیح دهد. ج کاهش Degree of conversion در منبع علت این مقاومت معرفی نشده است. د Copolymer بودن به معنی وجود دو یا چند monomer متفاوت است و به‌تنهایی توضیح اتصال عرضی نیست.
+
+۴۰. پاسخ درست: الف
+دلیل: منبع به schematic representation of time-dependence of shrinkage for a light curing material اشاره دارد؛ بنابراین برای تفسیر shrinkage در طول زمان در ماده light-curing همین مفهوم مناسب است.
+رد گزینه‌ها: ب average molecular weight به وزن مولکولی پلیمر مربوط است، نه نمودار زمانی shrinkage. ج طبقه‌بندی آلیاژهاست و در این فایل پلیمر نیست. د Poisson’s ratio از مباحث مکانیکی است و در این منبع پلیمر برای shrinkage light curing نیامده است.

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>نمرات | ورودی ۱۴۰۲ دندانپزشکی تهران</title>
+    <meta name="theme-color" content="#eef2f7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="ورودی ۱۴۰۲">
+    <link rel="manifest" href="/manifest.webmanifest?v=20260722-200509">
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png?v=20260722-200509">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png?v=20260722-200509">
+    <script src="/assets/site/scripts/theme.js?v=20260722-200509"></script>
+    <link rel="stylesheet" href="/assets/site/styles/core.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/grades.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/theme.css?v=20260812-phase4b">
+</head>
+<body class="grades-page">
+    <div class="background-overlay" aria-hidden="true"></div>
+
+    <header class="site-header">
+        <div class="logo-area">
+            <div class="logo-circle">
+                <img src="/assets/images/logo.png?v=20260722-200509" alt="لوگوی ورودی ۱۴۰۲">
+            </div>
+            <div class="site-info">
+                <h1>ورودی ۱۴۰۲ دندانپزشکی تهران</h1>
+                <p>نمرات</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="/app/" class="header-link">خانه</a>
+        </div>
+    </header>
+
+    <main class="grades-flow" id="grades-flow" data-auth-state="restoring">
+        <section class="grades-intro">
+            <span class="grades-kicker">نمرات</span>
+            <h2 class="grades-title">کارنامه‌ات با همان حساب سراسری باز می‌شود.</h2>
+            <p class="grades-desc">این صفحه دیگر login مستقل ندارد. اگر یک‌بار وارد حساب شوی، کارنامه‌ات با همان نشست مشترک روی همین دستگاه بازیابی می‌شود.</p>
+        </section>
+
+        <section class="grades-auth-stage" id="auth-stage" aria-labelledby="grades-auth-title" hidden>
+            <div class="grades-auth-card site-login-guard" id="auth-card" data-auth-guard data-auth-guard-home="/app/">
+                <span class="site-login-guard__eyebrow">ورود لازم است</span>
+                <h3 id="grades-auth-title" class="site-login-guard__title">برای مشاهده این بخش باید وارد حساب شوید</h3>
+                <p class="site-login-guard__text">برای حفظ حقوق دانشجویان، برای مشاهده این بخش باید وارد حساب کاربری خود در سایت شوید. می توانید از سایر بخش های سایت که نیاز به ورود ندارند، استفاده کنید.</p>
+                <div class="site-login-guard__actions grades-auth-actions">
+                    <a id="account-entry-link" class="primary-btn" href="/account/">ورود به حساب کاربری</a>
+                    <a class="secondary-btn" data-auth-guard-back data-auth-guard-home="/app/" href="/app/">برگشت به خانه</a>
+                </div>
+                <div id="msg" class="feedback" aria-live="polite"></div>
+            </div>
+        </section>
+
+        <section class="grades-loading" id="grades-loading" aria-hidden="false">
+            <div class="grades-skeleton">
+                <div class="grades-skeleton__hero"></div>
+                <div class="grades-skeleton__summary">
+                    <span></span><span></span><span></span><span></span>
+                </div>
+                <div class="grades-skeleton__list">
+                    <span></span><span></span><span></span><span></span><span></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="grades-dashboard" id="grades-dashboard" hidden>
+            <div class="grades-dashboard__hero">
+                <div class="grades-profile">
+                    <div class="grades-profile__avatar">
+                        <img src="/assets/images/logo.png?v=20260722-200509" alt="لوگوی ورودی ۱۴۰۲">
+                    </div>
+                    <div class="grades-profile__copy">
+                        <span class="grades-profile__eyebrow">دانشجو</span>
+                        <h2 id="student-name">-</h2>
+                        <p id="student-meta">شماره دانشجویی: -</p>
+                    </div>
+                </div>
+
+                <div class="grades-dashboard__actions">
+                    <button id="refresh-grades-btn" type="button" class="secondary-btn">به‌روزرسانی</button>
+                    <a href="/account/" class="secondary-btn">حساب کاربری</a>
+                    <button id="reset-grades-btn" type="button" class="secondary-btn secondary-btn-danger">خروج</button>
+                </div>
+            </div>
+
+            <div id="dashboard-feedback" class="grades-status-banner" hidden></div>
+
+            <section id="grades-owner-panel" class="grades-owner-panel" aria-labelledby="grades-owner-title" hidden>
+                <div class="grades-owner-panel__head">
+                    <div>
+                        <span class="grades-owner-panel__eyebrow">مالک سایت</span>
+                        <h3 id="grades-owner-title">مدیریت گروهی کارنامه</h3>
+                        <p>Import نمرات، حذف کامل یک درس و ریست سراسری کارنامه از همین بخش نمرات انجام می‌شود.</p>
+                    </div>
+                    <button id="grades-owner-refresh" type="button" class="secondary-btn">تازه‌سازی مدیریت</button>
+                </div>
+
+                <div id="grades-owner-summary" class="grades-owner-summary"></div>
+
+                <div class="grades-owner-tools">
+                    <form id="grades-owner-import-form" class="grades-owner-tool grades-owner-import-form" novalidate>
+                        <div class="grades-owner-tool__head">
+                            <h4>Import دستی یا فایل</h4>
+                            <p>متن را با خط اول نام درس و سقف نمره وارد کن، یا فایل متنی/Excel بده.</p>
+                        </div>
+
+                        <label for="grades-owner-import-text">Import متنی</label>
+                        <textarea id="grades-owner-import-text" rows="7" placeholder="پروتز کامل نظری, 10&#10;40211272003, 6.5&#10;40211272004, 7.4"></textarea>
+
+                        <label for="grades-owner-import-file">فایل متنی یا Excel</label>
+                        <input id="grades-owner-import-file" type="file" accept=".txt,.csv,.xlsx,text/plain,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+
+                        <p class="grades-owner-hint">Excel: ردیف اول ستون اول نام درس، ستون سوم سقف نمره؛ از ردیف دوم ستون اول شماره دانشجویی و ستون دوم نمره.</p>
+
+                        <button id="grades-owner-import-submit" class="primary-btn" type="submit">Import نمرات</button>
+                    </form>
+
+                    <div class="grades-owner-tool grades-owner-danger-zone">
+                        <div class="grades-owner-tool__head">
+                            <h4>حذف و ریست سراسری</h4>
+                            <p>این عملیات روی کارنامه همه کاربران اعمال می‌شود و بعد از پایان، همینجا وضعیت جدید را می‌بینی.</p>
+                        </div>
+
+                        <label for="grades-owner-course-select">درس ثبت‌شده</label>
+                        <select id="grades-owner-course-select">
+                            <option value="">درسی ثبت نشده است</option>
+                        </select>
+
+                        <div class="grades-owner-danger-actions">
+                            <button id="grades-owner-delete-course" class="secondary-btn secondary-btn-danger" type="button">حذف کامل درس از همه کارنامه‌ها</button>
+                            <button id="grades-owner-reset-all" class="secondary-btn secondary-btn-danger" type="button">ریست کامل کارنامه</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="grades-owner-feedback" class="grades-status-banner" hidden aria-live="polite"></div>
+            </section>
+
+            <div class="grades-summary-grid" id="summary-grid"></div>
+
+            <section class="grades-panel">
+                <div class="grades-panel__head">
+                    <div>
+                        <h3>کارنامه</h3>
+                        <p id="grades-count-label">هنوز نمره‌ای ثبت نشده.</p>
+                    </div>
+                </div>
+                <div id="grades-list" class="grades-list"></div>
+            </section>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p>ورودی ۱۴۰۲ دندانپزشکی تهران</p>
+    </footer>
+
+    <script src="/assets/site/scripts/auth.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/grades.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/pwa.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/shell.js?v=20260812-phase3b"></script>
+</body>
+</html>
+
+

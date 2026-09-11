@@ -1,0 +1,25 @@
+[Unit]
+Description=Dent1402Bot Telegram application
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=dentbot
+Group=dentbot
+SupplementaryGroups=dentcommerce
+WorkingDirectory=/opt/integrated-dent/current
+EnvironmentFile=/etc/integrated-dent/dent-bot.env
+ExecStart=/opt/integrated-dent/telegram-venv/bin/python -m dent_bot.service
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=45s
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/integrated-dent/dent-bot /var/lib/integrated-dent/shared
+UMask=0007
+
+[Install]
+WantedBy=multi-user.target

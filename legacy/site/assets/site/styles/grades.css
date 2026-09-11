@@ -1,0 +1,1024 @@
+﻿body.grades-page main.grades-flow {
+    width: min(980px, 100%);
+    margin: 0 auto;
+    padding: 1.15rem 5% 0;
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+}
+
+.grades-intro {
+    max-width: 700px;
+    display: grid;
+    gap: 0.5rem;
+}
+
+.grades-kicker {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    min-height: 30px;
+    padding: 0.34rem 0.78rem;
+    border-radius: var(--radius-pill);
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    font-size: 0.76rem;
+    font-weight: 860;
+}
+
+.grades-title {
+    margin: 0;
+    font-size: clamp(1.72rem, 4vw, 2.4rem);
+    line-height: 1.38;
+    letter-spacing: -0.03em;
+    font-weight: 930;
+}
+
+.grades-desc {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    line-height: 1.9;
+}
+
+.grades-auth-stage,
+.grades-dashboard,
+.grades-loading {
+    display: grid;
+    gap: 1rem;
+}
+
+.grades-auth-stage {
+    grid-template-columns: minmax(0, 1.15fr) minmax(260px, 0.85fr);
+    align-items: start;
+}
+
+.grades-auth-card,
+.grades-auth-note,
+.grades-panel,
+.grades-owner-panel,
+.grades-summary-card,
+.grades-skeleton {
+    border-radius: 28px;
+    border: 1px solid var(--border-color);
+    background: var(--surface);
+    box-shadow: var(--surface-shadow);
+    backdrop-filter: blur(14px);
+}
+
+.grades-auth-card {
+    padding: 1rem;
+    transition: transform 0.28s ease, opacity 0.28s ease, filter 0.28s ease;
+}
+
+.grades-flow[data-auth-state="transitioning"] .grades-auth-card,
+.grades-flow[data-auth-state="loading"] .grades-auth-card {
+    transform: translateY(-10px) scale(0.97);
+    opacity: 0;
+    filter: blur(10px);
+}
+
+.grades-auth-card__brand {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.grades-auth-card__logo,
+.grades-profile__avatar {
+    width: 76px;
+    height: 76px;
+    padding: 0.22rem;
+    border-radius: 24px;
+    background: linear-gradient(180deg, var(--surface-solid), var(--surface-muted));
+    border: 1px solid var(--border-color);
+    box-shadow: var(--surface-shadow);
+}
+
+.grades-auth-card__logo img,
+.grades-profile__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 20px;
+}
+
+.grades-auth-card__eyebrow,
+.grades-profile__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    min-height: 26px;
+    padding: 0.22rem 0.68rem;
+    border-radius: var(--radius-pill);
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    font-size: 0.72rem;
+    font-weight: 840;
+}
+
+.grades-auth-card__copy h3,
+.grades-profile__copy h2 {
+    margin: 0.32rem 0 0;
+    font-size: 1.16rem;
+    line-height: 1.45;
+    font-weight: 900;
+}
+
+.grades-auth-card__copy p,
+.grades-profile__copy p,
+.grades-panel__head p,
+.grades-row__main p,
+.password-note {
+    margin: 0.18rem 0 0;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    line-height: 1.8;
+}
+
+.grades-auth-form label {
+    display: block;
+    margin: 0.78rem 0 0.34rem;
+    font-size: 0.8rem;
+    font-weight: 840;
+}
+
+.grades-auth-form--guard {
+    display: grid;
+    gap: 0.8rem;
+}
+
+.grades-auth-actions {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.grades-auth-note {
+    padding: 1rem;
+    align-content: start;
+}
+
+.grades-auth-note h3,
+.grades-panel__head h3 {
+    margin: 0;
+    font-size: 0.94rem;
+    font-weight: 880;
+}
+
+.grades-auth-note__list {
+    margin: 0.85rem 0 0;
+    display: grid;
+    gap: 0.55rem;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    line-height: 1.8;
+}
+
+.grades-auth-note__list li {
+    position: relative;
+    padding-inline-start: 1rem;
+}
+
+.grades-auth-note__list li::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0.72rem;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-color);
+}
+
+body.grades-page .input-group {
+    position: relative;
+}
+
+body.grades-page .input-group input {
+    width: 100%;
+    min-height: 48px;
+    padding: 0.74rem 0.95rem 0.74rem 2.8rem;
+    border-radius: 17px;
+    border: 1px solid var(--border-color-strong);
+    background: var(--surface-muted);
+    color: var(--text-primary);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+
+body.grades-page .input-group input::placeholder {
+    color: var(--text-tertiary);
+}
+
+body.grades-page .input-group input:focus {
+    border-color: var(--focus-ring);
+    background: var(--surface-solid);
+    box-shadow: 0 0 0 3px var(--focus-ring-soft);
+}
+
+body.grades-page .input-icon {
+    position: absolute;
+    inset-inline-start: 0.95rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-tertiary);
+    font-size: 0.92rem;
+    pointer-events: none;
+}
+
+body.grades-page .primary-btn,
+body.grades-page .password-btn,
+body.grades-page .secondary-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.68rem 1rem;
+    border-radius: 16px;
+    font-weight: 840;
+    transition: transform 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
+}
+
+body.grades-page .primary-btn,
+body.grades-page .password-btn {
+    border: 0;
+    background: var(--btn-gradient);
+    color: var(--text-on-accent);
+    box-shadow: var(--btn-shadow);
+}
+
+body.grades-page .secondary-btn {
+    border: 1px solid var(--border-color-strong);
+    background: var(--surface-muted);
+    color: var(--text-primary);
+}
+
+body.grades-page .secondary-btn-danger {
+    color: var(--danger-color);
+}
+
+body.grades-page .primary-btn:hover:not(:disabled),
+body.grades-page .password-btn:hover:not(:disabled),
+body.grades-page .secondary-btn:hover:not(:disabled),
+body.grades-page .primary-btn:focus-visible,
+body.grades-page .password-btn:focus-visible,
+body.grades-page .secondary-btn:focus-visible {
+    transform: translateY(-1px);
+}
+
+body.grades-page .primary-btn:disabled,
+body.grades-page .password-btn:disabled,
+body.grades-page .secondary-btn:disabled {
+    opacity: 0.58;
+    cursor: default;
+    box-shadow: none;
+}
+
+body.grades-page .primary-btn {
+    width: 100%;
+    margin-top: 0.9rem;
+}
+
+.grades-auth-actions .primary-btn,
+.grades-auth-actions .secondary-btn {
+    width: auto;
+    margin-top: 0;
+}
+
+body.grades-page .feedback {
+    min-height: 1.35rem;
+    margin-top: 0.74rem;
+    font-size: 0.82rem;
+    text-align: center;
+}
+
+body.grades-page .feedback.error {
+    color: var(--danger-color);
+}
+
+body.grades-page .feedback.success {
+    color: var(--success-color);
+}
+
+.grades-dashboard {
+    animation: grades-dashboard-in 0.34s ease;
+}
+
+.grades-dashboard__hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 28px;
+    border: 1px solid var(--border-color);
+    background: var(--surface);
+    box-shadow: var(--surface-shadow);
+}
+
+.grades-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    min-width: 0;
+}
+
+.grades-profile__copy {
+    min-width: 0;
+}
+
+.grades-dashboard__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+}
+
+.grades-status-banner {
+    padding: 0.72rem 0.9rem;
+    border-radius: 18px;
+    font-size: 0.82rem;
+    border: 1px solid var(--border-color);
+    background: var(--surface);
+    color: var(--text-secondary);
+}
+
+.grades-status-banner.success {
+    color: var(--success-color);
+    background: color-mix(in srgb, var(--success-color) 14%, transparent);
+    border-color: color-mix(in srgb, var(--success-color) 28%, transparent);
+}
+
+.grades-status-banner.error {
+    color: var(--danger-color);
+    background: color-mix(in srgb, var(--danger-color) 14%, transparent);
+    border-color: color-mix(in srgb, var(--danger-color) 28%, transparent);
+}
+
+.grades-owner-panel {
+    padding: 1rem;
+    display: grid;
+    gap: 0.9rem;
+}
+
+.grades-owner-panel__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.8rem;
+}
+
+.grades-owner-panel__head h3,
+.grades-owner-tool__head h4 {
+    margin: 0;
+    font-size: 0.96rem;
+    font-weight: 900;
+}
+
+.grades-owner-panel__head p,
+.grades-owner-tool__head p,
+.grades-owner-hint {
+    margin: 0.2rem 0 0;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    line-height: 1.85;
+}
+
+.grades-owner-panel__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    min-height: 26px;
+    width: fit-content;
+    margin-bottom: 0.34rem;
+    padding: 0.22rem 0.68rem;
+    border-radius: var(--radius-pill);
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    font-size: 0.72rem;
+    font-weight: 840;
+}
+
+.grades-owner-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.65rem;
+}
+
+.grades-owner-summary-card,
+.grades-owner-tool {
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    background: var(--surface-muted);
+}
+
+.grades-owner-summary-card {
+    min-width: 0;
+    padding: 0.78rem 0.85rem;
+    display: grid;
+    gap: 0.14rem;
+}
+
+.grades-owner-summary-card span {
+    color: var(--text-tertiary);
+    font-size: 0.72rem;
+    font-weight: 820;
+}
+
+.grades-owner-summary-card strong {
+    color: var(--text-primary);
+    font-size: 1.02rem;
+    line-height: 1.55;
+    font-weight: 930;
+}
+
+.grades-owner-summary-card small {
+    color: var(--text-secondary);
+    font-size: 0.74rem;
+    line-height: 1.7;
+}
+
+.grades-owner-summary-card.is-ok strong {
+    color: var(--success-color);
+}
+
+.grades-owner-summary-card.is-warn strong {
+    color: var(--warning-color);
+}
+
+.grades-owner-tools {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+    gap: 0.75rem;
+    align-items: start;
+}
+
+.grades-owner-tool {
+    padding: 0.88rem;
+    display: grid;
+    gap: 0.68rem;
+}
+
+.grades-owner-tool label {
+    display: block;
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 0.78rem;
+    font-weight: 840;
+}
+
+.grades-owner-tool textarea,
+.grades-owner-tool input,
+.grades-owner-tool select {
+    width: 100%;
+    min-height: 48px;
+    border: 1px solid var(--border-color-strong);
+    border-radius: 16px;
+    background: var(--surface-solid);
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.grades-owner-tool textarea {
+    min-height: 150px;
+    padding: 0.82rem 0.9rem;
+    direction: ltr;
+    text-align: left;
+    resize: vertical;
+    font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+    line-height: 1.7;
+}
+
+.grades-owner-tool input,
+.grades-owner-tool select {
+    padding: 0.68rem 0.82rem;
+}
+
+.grades-owner-tool textarea:focus,
+.grades-owner-tool input:focus,
+.grades-owner-tool select:focus {
+    border-color: var(--focus-ring);
+    box-shadow: 0 0 0 3px var(--focus-ring-soft);
+}
+
+.grades-owner-hint {
+    padding: 0.62rem 0.72rem;
+    border: 1px dashed var(--border-color-strong);
+    border-radius: 16px;
+    background: var(--surface-solid);
+}
+
+.grades-owner-import-form .primary-btn {
+    width: fit-content;
+    min-width: 180px;
+    margin-top: 0;
+}
+
+.grades-owner-danger-zone {
+    border-color: color-mix(in srgb, var(--danger-color) 24%, var(--border-color));
+}
+
+.grades-owner-danger-actions {
+    display: grid;
+    gap: 0.56rem;
+}
+
+.grades-owner-danger-actions .secondary-btn {
+    width: 100%;
+}
+
+.grades-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.grades-summary-card {
+    padding: 0.9rem;
+    display: grid;
+    gap: 0.2rem;
+}
+
+.grades-summary-card__label {
+    color: var(--text-tertiary);
+    font-size: 0.74rem;
+    font-weight: 820;
+}
+
+.grades-summary-card__value {
+    font-size: 1.18rem;
+    font-weight: 930;
+    line-height: 1.45;
+}
+
+.grades-summary-card__meta {
+    color: var(--text-secondary);
+    font-size: 0.76rem;
+    line-height: 1.75;
+}
+
+.grades-panel {
+    padding: 1rem;
+    display: grid;
+    gap: 0.85rem;
+}
+
+.grades-panel__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.grades-list {
+    display: grid;
+    gap: 0.6rem;
+}
+
+.grades-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.82rem 0.9rem;
+    border-radius: 18px;
+    border: 1px solid var(--border-color);
+    background: var(--surface-muted);
+    transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.grades-row:hover,
+.grades-row:focus-within {
+    transform: translateY(-1px);
+    border-color: var(--focus-ring);
+    background: var(--surface-solid);
+}
+
+.grades-row h4 {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 860;
+}
+
+.grades-row__value {
+    min-width: 72px;
+    text-align: center;
+    padding: 0.42rem 0.78rem;
+    border-radius: var(--radius-pill);
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    font-size: 0.92rem;
+    font-weight: 900;
+}
+
+.grades-row--empty .grades-row__value {
+    background: var(--surface-strong);
+    color: var(--text-tertiary);
+}
+
+.grades-empty-state {
+    padding: 1rem;
+    border-radius: 20px;
+    border: 1px dashed var(--border-color-strong);
+    background: var(--surface-muted);
+    display: grid;
+    gap: 0.24rem;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.grades-empty-state strong {
+    color: var(--text-primary);
+    font-size: 0.94rem;
+}
+
+.grades-panel--password .password-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+}
+
+.grades-loading {
+    animation: grades-dashboard-in 0.28s ease;
+}
+
+.grades-skeleton {
+    padding: 1rem;
+}
+
+.grades-skeleton__hero,
+.grades-skeleton__summary span,
+.grades-skeleton__list span {
+    display: block;
+    border-radius: 18px;
+    background: linear-gradient(90deg, rgba(127, 145, 165, 0.12), rgba(127, 145, 165, 0.22), rgba(127, 145, 165, 0.12));
+    background-size: 180% 100%;
+    animation: grades-shimmer 1.4s linear infinite;
+}
+
+.grades-skeleton__hero {
+    height: 104px;
+    margin-bottom: 0.9rem;
+}
+
+.grades-skeleton__summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.7rem;
+    margin-bottom: 0.9rem;
+}
+
+.grades-skeleton__summary span {
+    height: 110px;
+}
+
+.grades-skeleton__list {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.grades-skeleton__list span {
+    height: 74px;
+}
+
+@keyframes grades-dashboard-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes grades-shimmer {
+    from {
+        background-position: 180% 0;
+    }
+
+    to {
+        background-position: -10% 0;
+    }
+}
+
+@media (max-width: 900px) {
+    .grades-auth-stage {
+        grid-template-columns: 1fr;
+    }
+
+    .grades-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grades-owner-tools {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 720px) {
+    body.grades-page main.grades-flow {
+        padding-top: 0.95rem;
+    }
+
+    .grades-dashboard__hero,
+    .grades-auth-card__brand,
+    .grades-profile {
+        align-items: flex-start;
+    }
+
+    .grades-dashboard__hero {
+        flex-direction: column;
+    }
+
+    .grades-dashboard__actions {
+        width: 100%;
+    }
+
+    .grades-owner-panel__head {
+        display: grid;
+    }
+
+    .grades-owner-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .grades-dashboard__actions .secondary-btn,
+    .grades-owner-panel__head .secondary-btn,
+    .grades-owner-import-form .primary-btn,
+    .grades-auth-actions .primary-btn,
+    .grades-auth-actions .secondary-btn,
+    .grades-panel--password .password-btn {
+        width: 100%;
+    }
+
+    .grades-panel--password .password-row,
+    .grades-skeleton__summary,
+    .grades-summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .grades-row {
+        grid-template-columns: 1fr;
+        align-items: start;
+    }
+
+    .grades-row__value {
+        justify-self: flex-start;
+    }
+}
+
+/* Mature educational pass: grades are a ledger, not a dashboard of cards. */
+body.grades-page main.grades-flow {
+    gap: clamp(0.9rem, 2vw, 1.25rem);
+    padding-block-start: clamp(0.85rem, 2vw, 1.2rem);
+}
+
+body.grades-page .grades-title {
+    font-size: clamp(1.4rem, 3.2vw, 1.95rem);
+}
+
+body.grades-page :is(
+    .grades-auth-card,
+    .grades-auth-note,
+    .grades-panel,
+    .grades-owner-panel,
+    .grades-summary-card,
+    .grades-owner-summary-card,
+    .grades-owner-tool,
+    .grades-skeleton,
+    .grades-dashboard__hero
+) {
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+body.grades-page :is(.grades-auth-card, .grades-auth-note, .grades-panel, .grades-owner-panel, .grades-dashboard__hero) {
+    border: 0 !important;
+    border-block-start: 1px solid var(--flat-divider, var(--border-color)) !important;
+    padding: clamp(0.92rem, 2.2vw, 1.3rem) 0 !important;
+}
+
+body.grades-page .grades-dashboard__hero {
+    border-block-start: 0 !important;
+    border-block-end: 1px solid var(--flat-divider, var(--border-color)) !important;
+}
+
+body.grades-page .grades-profile__avatar,
+body.grades-page .grades-auth-card__logo {
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    border-radius: 50%;
+    box-shadow: none;
+}
+
+body.grades-page :is(.grades-summary-grid, .grades-owner-summary) {
+    gap: 0;
+    border-block: 1px solid var(--flat-divider, var(--border-color));
+}
+
+body.grades-page :is(.grades-summary-card, .grades-owner-summary-card) {
+    min-height: 78px;
+    align-content: center;
+    border: 0 !important;
+    padding: 0.62rem clamp(0.55rem, 1.6vw, 0.9rem);
+}
+
+body.grades-page :is(.grades-summary-card, .grades-owner-summary-card) + :is(.grades-summary-card, .grades-owner-summary-card) {
+    border-inline-start: 1px solid var(--flat-divider, var(--border-color)) !important;
+}
+
+body.grades-page .grades-owner-tools {
+    gap: clamp(0.9rem, 2vw, 1.3rem);
+}
+
+body.grades-page .grades-owner-tool {
+    border: 0;
+    border-block-start: 1px solid var(--flat-divider, var(--border-color));
+    padding: 0.9rem 0;
+}
+
+body.grades-page .grades-owner-hint {
+    border-radius: 8px;
+    background: transparent;
+}
+
+body.grades-page .grades-list {
+    gap: 0;
+}
+
+body.grades-page .grades-row {
+    min-height: 58px;
+    padding: 0.74rem 0;
+    border: 0 !important;
+    border-block-end: 1px solid var(--flat-divider, var(--border-color)) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    transition:
+        background 140ms cubic-bezier(.2, 0, .38, .9),
+        border-color 140ms cubic-bezier(.2, 0, .38, .9);
+}
+
+body.grades-page .grades-row__value {
+    min-width: 62px;
+    padding: 0.3rem 0.6rem;
+    border-inline-start: 2px solid var(--accent-color);
+    border-radius: 0;
+    background: transparent;
+}
+
+body.grades-page .grades-row--empty .grades-row__value {
+    border-inline-start-color: var(--border-color-strong);
+    background: transparent;
+}
+
+body.grades-page .grades-status-banner,
+body.grades-page .grades-empty-state {
+    border: 0;
+    border-inline-start: 3px solid var(--border-color-strong);
+    border-radius: 0;
+    background: transparent;
+    text-align: start;
+}
+
+body.grades-page .grades-status-banner.success {
+    border-inline-start-color: var(--success-color);
+}
+
+body.grades-page .grades-status-banner.error {
+    border-inline-start-color: var(--danger-color);
+}
+
+body.grades-page :is(.grades-kicker, .grades-owner-panel__eyebrow) {
+    min-height: 28px;
+    padding: 0.24rem 0.5rem;
+    border-radius: 4px;
+    background: transparent;
+}
+
+body.grades-page :is(.primary-btn, .password-btn, .secondary-btn) {
+    min-height: 42px;
+    border-radius: 10px !important;
+    box-shadow: none !important;
+    background-image: none !important;
+    transition:
+        color 140ms cubic-bezier(.2, 0, .38, .9),
+        border-color 140ms cubic-bezier(.2, 0, .38, .9),
+        background 140ms cubic-bezier(.2, 0, .38, .9),
+        transform 90ms cubic-bezier(.2, 0, .38, .9);
+}
+
+body.grades-page :is(.primary-btn, .password-btn) {
+    color: var(--text-on-accent);
+    background: var(--accent-color) !important;
+}
+
+body.grades-page :is(.input-group input, .grades-owner-tool textarea, .grades-owner-tool input, .grades-owner-tool select) {
+    min-height: 46px;
+    border-radius: 10px !important;
+    background: color-mix(in srgb, var(--surface-solid) 74%, transparent) !important;
+    box-shadow: none;
+    outline: none;
+    transition: border-color 140ms cubic-bezier(.2, 0, .38, .9), box-shadow 140ms cubic-bezier(.2, 0, .38, .9);
+}
+
+body.grades-page :is(
+    .primary-btn,
+    .password-btn,
+    .secondary-btn,
+    .input-group input,
+    .grades-owner-tool textarea,
+    .grades-owner-tool input,
+    .grades-owner-tool select
+):focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+    box-shadow: none;
+    transform: none;
+}
+
+body.grades-page :is(.grades-skeleton__hero, .grades-skeleton__summary span, .grades-skeleton__list span) {
+    border-radius: 4px;
+}
+
+body.grades-page .grades-dashboard,
+body.grades-page .grades-loading {
+    animation-duration: 180ms;
+    animation-timing-function: cubic-bezier(0, 0, .38, .9);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    body.grades-page .grades-row:hover {
+        border-color: var(--flat-divider, var(--border-color));
+        background: var(--flat-hover, color-mix(in srgb, var(--accent-color) 5%, transparent)) !important;
+        transform: none;
+    }
+
+    body.grades-page :is(.primary-btn, .password-btn, .secondary-btn):hover:not(:disabled) {
+        filter: brightness(.97);
+        transform: none;
+    }
+}
+
+body.grades-page :is(.primary-btn, .password-btn, .secondary-btn):active:not(:disabled) {
+    transform: scale(.98);
+}
+
+@media (max-width: 720px) {
+    body.grades-page :is(.grades-summary-grid, .grades-owner-summary) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    body.grades-page :is(.grades-summary-card, .grades-owner-summary-card):nth-child(odd) {
+        border-inline-start: 0 !important;
+    }
+
+    body.grades-page :is(.grades-summary-card, .grades-owner-summary-card):nth-child(n + 3) {
+        border-block-start: 1px solid var(--flat-divider, var(--border-color)) !important;
+    }
+
+    body.grades-page .grades-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    body.grades-page .grades-row__value {
+        justify-self: end;
+    }
+}
+
+@media (max-width: 430px) {
+    body.grades-page .grades-dashboard__hero,
+    body.grades-page .grades-auth-card__brand,
+    body.grades-page .grades-profile {
+        gap: 0.65rem;
+    }
+
+    body.grades-page .grades-profile__avatar,
+    body.grades-page .grades-auth-card__logo {
+        width: 48px;
+        height: 48px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.grades-page .grades-dashboard,
+    body.grades-page .grades-loading,
+    body.grades-page .grades-skeleton__hero,
+    body.grades-page .grades-skeleton__summary span,
+    body.grades-page .grades-skeleton__list span {
+        animation: none !important;
+    }
+
+    body.grades-page :is(.grades-row, .primary-btn, .password-btn, .secondary-btn, input, textarea, select) {
+        transition-duration: .01ms !important;
+    }
+}

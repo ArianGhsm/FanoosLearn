@@ -1,0 +1,4 @@
+# Optional, admin-only image/screenshot/scan analysis. Not installed in the
+# production delivery venv because it is intentionally outside the hot path.
+numpy==2.5.2
+opencv-python-headless==5.0.0.93

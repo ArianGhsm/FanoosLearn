@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>فایل‌منیجر منابع | هاست دانلود</title>
+    <meta name="description" content="مدیریت پوشه‌ای فایل‌های منابع روی هاست دانلود Dentistry1402TUMS.">
+    <meta name="theme-color" content="#eef2f7">
+    <link rel="manifest" href="/manifest.webmanifest?v=20260722-200509">
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png?v=20260722-200509">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png?v=20260722-200509">
+    <script src="/assets/site/scripts/theme.js?v=20260722-200509"></script>
+    <link rel="stylesheet" href="/assets/site/styles/core.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/hub.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/notes-files.css?v=20260812-sitewide-mature1">
+    <link rel="stylesheet" href="/assets/site/styles/theme.css?v=20260812-phase4b">
+</head>
+<body class="hub-page notes-files-page" data-shell-header="off" data-shell-reserve="self">
+    <div class="background-overlay" aria-hidden="true"></div>
+
+    <header class="site-header">
+        <div class="logo-area">
+            <div class="logo-circle">
+                <img src="/assets/images/logo.png?v=20260722-200509" alt="لوگوی رسمی سایت">
+            </div>
+            <div class="site-info">
+                <h1>فایل‌منیجر منابع</h1>
+                <p>مدیریت پوشه‌ای هاست دانلود منابع</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="/app/#resources" class="header-link">بازگشت به منابع</a>
+        </div>
+    </header>
+
+    <main class="ndh-main-shell">
+        <section class="hero-content ndh-hero">
+            <span class="greeting-pill">Download Host</span>
+            <h2 class="hero-title">فایل‌ها، پوشه‌ها و لینک‌های مستقیم منابع را از یک‌جا مدیریت کن.</h2>
+            <p class="hero-desc">چینش این صفحه عمداً شبیه یک upload center پوشه‌ای نگه داشته شده تا افزودن، مرور، تغییر نام، حذف و کپی لینک‌ها سریع بماند.</p>
+        </section>
+
+        <section id="ndh-guard" class="notes-manage-panel ndh-guard" aria-live="polite">
+            <div class="notes-manage-panel__head">
+                <h4>در حال آماده‌سازی فایل‌منیجر</h4>
+                <p>وضعیت ورود و دسترسی شما در حال بررسی است.</p>
+            </div>
+        </section>
+
+        <section id="ndh-app" class="ndh-layout" hidden>
+            <aside class="ndh-sidebar">
+                <section class="ndh-panel ndh-panel--brand">
+                    <span class="ndh-panel__eyebrow">Storage</span>
+                    <h3>ریشه‌های منابع</h3>
+                    <p>برای جلوگیری از بهم‌ریختن فایل‌های غیرمنبع، این فایل‌منیجر فقط ریشه‌های مجاز منابع را نمایش می‌دهد.</p>
+                    <div id="ndh-root-list" class="ndh-root-list" aria-label="ریشه‌های منابع"></div>
+                </section>
+
+                <section class="ndh-panel">
+                    <span class="ndh-panel__eyebrow">Path</span>
+                    <h3>پوشه جاری</h3>
+                    <p id="ndh-current-path-label">ریشه منابع</p>
+                    <div class="ndh-path-actions">
+                        <button id="ndh-create-folder" class="card-btn" type="button">پوشه جدید</button>
+                        <button id="ndh-refresh" class="notes-card-edit" type="button">بازخوانی</button>
+                    </div>
+                </section>
+
+                <section class="ndh-panel">
+                    <span class="ndh-panel__eyebrow">Upload</span>
+                    <h3>آپلود سریع</h3>
+                    <p>فایل‌ها مستقیم روی هاست دانلود ثبت می‌شوند و فقط در صورت نیاز به fallback، مسیر relay فعال می‌شود.</p>
+                    <input id="ndh-upload-input" type="file" multiple hidden>
+                    <button id="ndh-pick-files" class="card-btn" type="button">انتخاب فایل</button>
+                    <div id="ndh-upload-queue" class="ndh-upload-queue"></div>
+                    <button id="ndh-upload-submit" class="notes-card-edit" type="button">شروع آپلود</button>
+                </section>
+            </aside>
+
+            <section class="ndh-explorer">
+                <section class="ndh-panel ndh-panel--toolbar">
+                    <div class="ndh-breadcrumbs-wrap">
+                        <span class="ndh-panel__eyebrow">Explorer</span>
+                        <nav id="ndh-breadcrumbs" class="ndh-breadcrumbs" aria-label="مسیر پوشه"></nav>
+                    </div>
+                    <label class="ndh-search" for="ndh-search-input">
+                        <span>جست‌وجو</span>
+                        <input id="ndh-search-input" type="search" placeholder="نام فایل یا پوشه">
+                    </label>
+                </section>
+
+                <section class="ndh-panel ndh-panel--feedback">
+                    <p id="ndh-feedback" class="notes-manage-feedback" hidden></p>
+                </section>
+
+                <section class="ndh-panel ndh-panel--list">
+                    <div class="ndh-list-head">
+                        <div>
+                            <span>نام</span>
+                            <small>نوع، حجم و زمان آخرین تغییر</small>
+                        </div>
+                        <div>
+                            <span>اقدام‌ها</span>
+                            <small>بازکردن، کپی لینک، rename و حذف</small>
+                        </div>
+                    </div>
+                    <div id="ndh-entries" class="ndh-entries"></div>
+                    <p id="ndh-empty" class="archive-empty">در حال دریافت فایل‌ها...</p>
+                </section>
+            </section>
+        </section>
+    </main>
+
+    <script src="/assets/site/scripts/auth.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/pwa.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/shell.js?v=20260812-phase3b"></script>
+    <script src="/assets/site/scripts/notes-files.js?v=20260722-200509"></script>
+</body>
+</html>

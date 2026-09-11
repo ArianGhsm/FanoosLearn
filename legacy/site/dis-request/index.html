@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#eef2f7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="درخواست DIS">
+    <link rel="manifest" href="/manifest.webmanifest?v=20260722-200509">
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png?v=20260722-200509">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png?v=20260722-200509">
+    <title>فرم درخواست ایجاد کاربری در DIS | ورودی ۱۴۰۲ دندانپزشکی تهران</title>
+    <script src="/assets/site/scripts/theme.js?v=20260722-200509"></script>
+    <link rel="stylesheet" href="/assets/site/styles/core.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/dis-request.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/theme.css?v=20260812-phase4b">
+</head>
+<body class="dis-request-page">
+    <div class="background-overlay" aria-hidden="true"></div>
+
+    <header class="site-header">
+        <div class="logo-area">
+            <div class="logo-circle">
+                <img src="/assets/images/logo.png?v=20260722-200509" alt="لوگوی ورودی ۱۴۰۲ دندانپزشکی">
+            </div>
+            <div class="site-info">
+                <h1>فرم درخواست ایجاد کاربری در DIS</h1>
+                <p>فرم اختصاصی و احراز هویت‌شده برای ثبت درخواست</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a class="header-link" href="/account/">حساب</a>
+        </div>
+    </header>
+
+    <main class="dis-shell">
+        <section class="dis-hero">
+            <span class="dis-kicker">DIS</span>
+            <h2>لینک فرم قابل اشتراک است، اما ثبت نهایی فقط با حساب واقعی سایت انجام می‌شود.</h2>
+            <p>هر کاربر فقط یک‌بار می‌تواند این فرم را ارسال کند. پس از ثبت، پاسخ شما برای بازبینی مدیر سامانه نگهداری می‌شود و ارسال مجدد برای همان حساب غیرفعال خواهد بود.</p>
+        </section>
+
+        <section id="dis-boot" class="dis-state-card" aria-live="polite">
+            <h3>در حال آماده‌سازی فرم</h3>
+            <p>چند لحظه صبر کنید تا وضعیت حساب و فرم بررسی شود.</p>
+        </section>
+
+        <section id="dis-login" class="dis-state-card site-login-guard" hidden data-auth-guard data-auth-guard-home="/app/">
+            <span class="site-login-guard__eyebrow">ورود لازم است</span>
+            <h3 class="site-login-guard__title">برای مشاهده این بخش باید وارد حساب شوید</h3>
+            <p class="site-login-guard__text">برای حفظ حقوق دانشجویان، برای مشاهده این بخش باید وارد حساب کاربری خود در سایت شوید. می توانید از سایر بخش های سایت که نیاز به ورود ندارند، استفاده کنید.</p>
+            <div class="site-login-guard__actions dis-inline-actions">
+                <a id="dis-login-link" class="shell-action-btn shell-action-btn-primary" href="/account/?returnTo=%2Fdis-request%2F">ورود به حساب کاربری</a>
+                <a class="shell-action-btn" data-auth-guard-back data-auth-guard-home="/app/" href="/app/">برگشت به خانه</a>
+            </div>
+        </section>
+
+        <section id="dis-stage" class="dis-stage" hidden>
+            <section class="dis-card dis-card--summary">
+                <div class="dis-summary-head">
+                    <div>
+                        <span id="dis-status-kicker" class="dis-kicker dis-kicker--soft">وضعیت فرم</span>
+                        <h3 id="dis-status-title">در حال بررسی فرم</h3>
+                        <p id="dis-status-text">پس از تکمیل، امکان ارسال دوباره برای همین حساب وجود نخواهد داشت.</p>
+                    </div>
+                    <div class="dis-summary-meta">
+                        <strong id="dis-submitted-at">—</strong>
+                        <span>زمان ثبت</span>
+                    </div>
+                </div>
+                <div class="dis-inline-actions">
+                    <a id="dis-manage-link" class="shell-action-btn" href="/dis-request/manage/" hidden>پنل مدیریت مالک</a>
+                </div>
+            </section>
+
+            <form id="dis-form" class="dis-form" novalidate>
+                <section class="dis-card">
+                    <div class="dis-section-head">
+                        <span class="dis-kicker dis-kicker--soft">۱</span>
+                        <div>
+                            <h3>مشخصات فردی</h3>
+                            <p>همه فیلدهای هویتی این بخش به‌جز شماره نظام پزشکی الزامی هستند.</p>
+                        </div>
+                    </div>
+                    <div class="dis-grid dis-grid--two">
+                        <label class="dis-field" for="dis-first-name">
+                            <span>نام</span>
+                            <input id="dis-first-name" name="firstName" type="text" maxlength="60" autocomplete="given-name" required>
+                        </label>
+                        <label class="dis-field" for="dis-last-name">
+                            <span>نام خانوادگی</span>
+                            <input id="dis-last-name" name="lastName" type="text" maxlength="80" autocomplete="family-name" required>
+                        </label>
+                        <label class="dis-field" for="dis-national-code">
+                            <span>کد ملی</span>
+                            <input id="dis-national-code" name="nationalCode" type="text" inputmode="numeric" maxlength="10" dir="ltr" required>
+                        </label>
+                        <label class="dis-field" for="dis-phone-number">
+                            <span>شماره تلفن</span>
+                            <input id="dis-phone-number" name="phoneNumber" type="tel" inputmode="numeric" maxlength="14" dir="ltr" required>
+                        </label>
+                        <label class="dis-field" for="dis-medical-number">
+                            <span>شماره نظام پزشکی (وارد کردن این فیلد اجباری نمی‌باشد)</span>
+                            <input id="dis-medical-number" name="medicalNumber" type="text" inputmode="numeric" maxlength="20" dir="ltr">
+                        </label>
+                        <label class="dis-field" for="dis-personnel-number">
+                            <span>شماره پرسنلی / شماره دانشجویی</span>
+                            <input id="dis-personnel-number" name="personnelOrStudentNumber" type="text" inputmode="numeric" maxlength="20" dir="ltr" required>
+                        </label>
+                    </div>
+                </section>
+
+                <section class="dis-card">
+                    <div class="dis-section-head">
+                        <span class="dis-kicker dis-kicker--soft">۲</span>
+                        <div>
+                            <h3>سمت</h3>
+                            <p>فقط یک مورد باید انتخاب شود.</p>
+                        </div>
+                    </div>
+                    <div class="dis-check-grid" id="dis-positions-group">
+                        <label class="dis-check"><input type="radio" name="positions" value="هیئت علمی"><span>هیئت علمی</span></label>
+                        <label class="dis-check"><input type="radio" name="positions" value="دندانپزشک"><span>دندانپزشک</span></label>
+                        <label class="dis-check"><input type="radio" name="positions" value="دانشجو"><span>دانشجو</span></label>
+                        <label class="dis-check"><input type="radio" name="positions" value="کارمند"><span>کارمند</span></label>
+                        <label class="dis-check"><input type="radio" name="positions" value="رسمی"><span>رسمی</span></label>
+                        <label class="dis-check"><input type="radio" name="positions" value="قراردادی"><span>قراردادی</span></label>
+                        <label class="dis-check"><input type="radio" name="positions" value="شرکتی"><span>شرکتی</span></label>
+                    </div>
+                </section>
+
+                <section class="dis-card">
+                    <div class="dis-section-head">
+                        <span class="dis-kicker dis-kicker--soft">۳</span>
+                        <div>
+                            <h3>نرم افزار</h3>
+                            <p>فقط یک نرم افزار باید مشخص شود.</p>
+                        </div>
+                    </div>
+                    <div class="dis-check-grid" id="dis-software-group">
+                        <label class="dis-check"><input type="radio" name="software" value="رادیولوژی"><span>رادیولوژی</span></label>
+                        <label class="dis-check"><input type="radio" name="software" value="DIS"><span>DIS</span></label>
+                        <label class="dis-check"><input type="radio" name="software" value="پاتولوژی"><span>پاتولوژی</span></label>
+                        <label class="dis-check"><input type="radio" name="software" value="داروخانه"><span>داروخانه</span></label>
+                    </div>
+                </section>
+
+                <section class="dis-card">
+                    <div class="dis-section-head">
+                        <span class="dis-kicker dis-kicker--soft">۴</span>
+                        <div>
+                            <h3>سمت و سطح دسترسی</h3>
+                            <p>حداقل یک سطح دسترسی الزامی است.</p>
+                        </div>
+                    </div>
+                    <div class="dis-check-grid" id="dis-access-group">
+                        <label class="dis-check"><input type="checkbox" name="accessLevels[]" value="مدیر سیستم"><span>مدیر سیستم</span></label>
+                        <label class="dis-check"><input type="checkbox" name="accessLevels[]" value="مدیریت درمان"><span>مدیریت درمان</span></label>
+                        <label class="dis-check"><input type="checkbox" name="accessLevels[]" value="مدیریت کلینیک"><span>مدیریت کلینیک</span></label>
+                        <label class="dis-check"><input type="checkbox" name="accessLevels[]" value="دندانپزشکان"><span>دندانپزشکان</span></label>
+                        <label class="dis-check"><input type="checkbox" name="accessLevels[]" value="مددکاری"><span>مددکاری</span></label>
+                        <label class="dis-check"><input type="checkbox" name="accessLevels[]" value="انبار داروخانه"><span>انبار داروخانه</span></label>
+                        <label class="dis-check"><input type="checkbox" name="accessLevels[]" value="صندوق"><span>صندوق</span></label>
+                        <label class="dis-check"><input type="checkbox" name="accessLevels[]" value="پذیرش"><span>پذیرش</span></label>
+                        <label class="dis-check"><input type="checkbox" name="accessLevels[]" value="جهادگر"><span>جهادگر</span></label>
+                        <label class="dis-check"><input type="checkbox" name="accessLevels[]" value="رزیدنت"><span>رزیدنت</span></label>
+                        <label class="dis-check"><input type="checkbox" name="accessLevels[]" value="دانشجو"><span>دانشجو</span></label>
+                        <label class="dis-check"><input type="checkbox" name="accessLevels[]" value="حسابداری"><span>حسابداری</span></label>
+                        <label class="dis-check"><input type="checkbox" name="accessLevels[]" value="آموزش"><span>آموزش</span></label>
+                        <label class="dis-check"><input type="checkbox" name="accessLevels[]" value="درآمد"><span>درآمد</span></label>
+                        <label class="dis-check"><input type="checkbox" name="accessLevels[]" value="کارشناس DIS"><span>کارشناس DIS</span></label>
+                        <label class="dis-check"><input id="dis-access-other-toggle" type="checkbox" name="accessLevels[]" value="سایر"><span>سایر</span></label>
+                    </div>
+                    <label class="dis-field" for="dis-access-other-detail">
+                        <span>توضیح کوتاه برای «سایر»</span>
+                        <input id="dis-access-other-detail" name="otherAccessDetail" type="text" maxlength="120" placeholder="در صورت انتخاب سایر، اینجا توضیح بده">
+                    </label>
+                </section>
+
+                <section class="dis-card">
+                    <div class="dis-section-head">
+                        <span class="dis-kicker dis-kicker--soft">۵</span>
+                        <div>
+                            <h3>توضیحات</h3>
+                            <p>در صورت نیاز توضیح تکمیلی کوتاه ثبت کنید.</p>
+                        </div>
+                    </div>
+                    <label class="dis-field" for="dis-notes">
+                        <span>توضیحات</span>
+                        <textarea id="dis-notes" name="notes" rows="5" maxlength="1000" placeholder="توضیحات تکمیلی"></textarea>
+                    </label>
+                </section>
+
+                <section class="dis-card dis-card--submit">
+                    <div class="dis-submit-row">
+                        <div>
+                            <strong>ارسال نهایی فرم</strong>
+                            <p>بعد از ثبت موفق، برای همین حساب امکان ارسال مجدد فعال نخواهد بود.</p>
+                        </div>
+                        <button id="dis-submit" class="shell-action-btn shell-action-btn-primary" type="submit">ثبت درخواست</button>
+                    </div>
+                    <div id="dis-feedback" class="dis-feedback" aria-live="polite"></div>
+                </section>
+            </form>
+        </section>
+    </main>
+
+    <div id="dis-toast" class="dis-toast" aria-live="polite"></div>
+
+    <script src="/assets/site/scripts/auth.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/shell.js?v=20260812-phase3b"></script>
+    <script src="/assets/site/scripts/dis-request.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/pwa.js?v=20260722-200509"></script>
+</body>
+</html>

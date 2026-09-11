@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#eef2f7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="فرم‌ها">
+    <link rel="manifest" href="/manifest.webmanifest?v=20260722-200509">
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png?v=20260722-200509">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png?v=20260722-200509">
+    <title>فرم‌ها و نظرسنجی‌ها | ورودی ۱۴۰۲ دندانپزشکی تهران</title>
+    <script src="/assets/site/scripts/theme.js?v=20260722-200509"></script>
+    <link rel="stylesheet" href="/assets/site/styles/core.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/forms.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/theme.css?v=20260812-phase4b">
+</head>
+<body class="forms-page">
+    <div class="background-overlay" aria-hidden="true"></div>
+
+    <main class="forms-shell">
+        <header class="forms-topbar">
+            <a class="forms-icon-btn" href="/account/" aria-label="بازگشت به حساب">‹</a>
+            <div class="forms-topbar__copy">
+                <h1>فرم‌ها و نظرسنجی‌ها</h1>
+                <p id="forms-viewer-copy">در حال آماده‌سازی...</p>
+            </div>
+            <a class="forms-icon-btn forms-icon-btn--text" href="/app/">خانه</a>
+        </header>
+
+        <section id="forms-boot" class="forms-card forms-state-card">
+            <h2>در حال آماده‌سازی</h2>
+            <p>وضعیت حساب و ماژول بررسی می‌شود.</p>
+        </section>
+
+        <section id="forms-login" class="forms-card forms-state-card site-login-guard" hidden data-auth-guard data-auth-guard-home="/app/">
+            <span class="site-login-guard__eyebrow">ورود لازم است</span>
+            <h2 class="site-login-guard__title">برای مشاهده این بخش باید وارد حساب شوید</h2>
+            <p class="site-login-guard__text">برای حفظ حقوق دانشجویان، برای مشاهده این بخش باید وارد حساب کاربری خود در سایت شوید. می توانید از سایر بخش های سایت که نیاز به ورود ندارند، استفاده کنید.</p>
+            <div class="site-login-guard__actions forms-actions">
+                <a id="forms-login-link" class="forms-btn forms-btn--primary" href="/account/?returnTo=%2Fforms%2F">ورود به حساب کاربری</a>
+                <a class="forms-btn" data-auth-guard-back data-auth-guard-home="/app/" href="/app/">برگشت به خانه</a>
+            </div>
+        </section>
+
+        <section id="forms-app" class="forms-app" hidden>
+            <section class="forms-summary">
+                <article class="forms-metric">
+                    <span>فرم‌ها</span>
+                    <strong id="forms-count">۰</strong>
+                </article>
+                <article class="forms-metric">
+                    <span>فعال</span>
+                    <strong id="forms-open-count">۰</strong>
+                </article>
+                <article class="forms-metric">
+                    <span>پاسخ‌ها</span>
+                    <strong id="forms-response-count">۰</strong>
+                </article>
+            </section>
+
+            <nav class="forms-tabs" aria-label="نمای ماژول فرم">
+                <button class="is-active" type="button" data-forms-tab="builder">ساخت</button>
+                <button type="button" data-forms-tab="list">لیست</button>
+                <button type="button" data-forms-tab="responses">پاسخ‌ها</button>
+            </nav>
+
+            <section id="forms-builder-panel" class="forms-panel">
+                <form id="forms-builder" class="forms-builder" novalidate>
+                    <section class="forms-card forms-card--accent">
+                        <div class="forms-card-head">
+                            <div>
+                                <span class="forms-chip">طراحی</span>
+                                <h2 id="forms-builder-title">ساخت فرم جدید</h2>
+                            </div>
+                            <button id="forms-reset-builder" class="forms-btn" type="button">فرم جدید</button>
+                        </div>
+                        <div class="forms-grid forms-grid--two">
+                            <label class="forms-field" for="forms-kind">
+                                <span>نوع</span>
+                                <select id="forms-kind">
+                                    <option value="form">فرم</option>
+                                    <option value="survey">پرسشنامه</option>
+                                    <option value="poll">نظرسنجی</option>
+                                </select>
+                            </label>
+                            <label class="forms-field" for="forms-template">
+                                <span>قالب</span>
+                                <select id="forms-template">
+                                    <option value="blank">خالی</option>
+                                    <option value="poll">نظرسنجی سریع</option>
+                                    <option value="dis">قالب درخواست DIS</option>
+                                </select>
+                            </label>
+                        </div>
+                        <label class="forms-field" for="forms-title-input">
+                            <span>عنوان</span>
+                            <input id="forms-title-input" type="text" maxlength="160" required placeholder="مثلا: فرم ثبت‌نام کارگاه">
+                        </label>
+                        <label class="forms-field" for="forms-description-input">
+                            <span>توضیح کوتاه</span>
+                            <textarea id="forms-description-input" rows="3" maxlength="1400" placeholder="توضیحی که در لینک عمومی نمایش داده می‌شود"></textarea>
+                        </label>
+                    </section>
+
+                    <section class="forms-card">
+                        <div class="forms-card-head">
+                            <div>
+                                <span class="forms-chip forms-chip--soft">دسترسی</span>
+                                <h2>دسترسی و شرکت‌کنندگان</h2>
+                            </div>
+                            <select id="forms-status">
+                                <option value="open">فعال</option>
+                                <option value="draft">پیش‌نویس</option>
+                                <option value="closed">بسته</option>
+                            </select>
+                        </div>
+                        <div class="forms-grid forms-grid--two">
+                            <label class="forms-field" for="forms-audience">
+                                <span>شرکت‌کنندگان مجاز</span>
+                                <select id="forms-audience">
+                                    <option value="all-users">همه کاربران سایت</option>
+                                    <option value="link">هر کسی که لینک را دارد</option>
+                                    <option value="custom">فهرست سفارشی</option>
+                                </select>
+                            </label>
+                            <label class="forms-field" for="forms-result-visibility">
+                                <span>نمایش نتیجه نظرسنجی</span>
+                                <select id="forms-result-visibility">
+                                    <option value="after-submit">بعد از ثبت رأی</option>
+                                    <option value="live">زنده برای همه</option>
+                                    <option value="after-close">بعد از بسته‌شدن</option>
+                                    <option value="manager-only">فقط مدیر</option>
+                                </select>
+                            </label>
+                            <label class="forms-field" for="forms-start-at">
+                                <span>شروع</span>
+                                <input id="forms-start-at" type="datetime-local" data-latin-digits="true">
+                            </label>
+                            <label class="forms-field" for="forms-end-at">
+                                <span>پایان</span>
+                                <input id="forms-end-at" type="datetime-local" data-latin-digits="true">
+                            </label>
+                        </div>
+                        <label class="forms-field" for="forms-allowed-students">
+                            <span>شماره دانشجویی‌های مجاز</span>
+                            <textarea id="forms-allowed-students" rows="3" dir="ltr" data-latin-digits="true" placeholder="برای حالت سفارشی، هر شماره در یک خط"></textarea>
+                        </label>
+                        <label class="forms-field" for="forms-manager-students">
+                            <span>نماینده‌ها/مدیران مجاز برای این فرم</span>
+                            <textarea id="forms-manager-students" rows="3" dir="ltr" data-latin-digits="true" placeholder="شماره دانشجویی نماینده‌هایی که اجازه مدیریت همین فرم را دارند"></textarea>
+                        </label>
+                        <div class="forms-toggle-grid">
+                            <label class="forms-toggle">
+                                <input id="forms-allow-representative-manage" type="checkbox">
+                                <span>همه نماینده‌ها بتوانند همین فرم را مدیریت کنند</span>
+                            </label>
+                            <label class="forms-toggle">
+                                <input id="forms-allow-guest" type="checkbox">
+                                <span>افراد بدون عضویت هم بتوانند شرکت کنند</span>
+                            </label>
+                            <label class="forms-toggle">
+                                <input id="forms-collect-guest-name" type="checkbox" checked>
+                                <span>نام مهمان گرفته شود</span>
+                            </label>
+                            <label class="forms-toggle">
+                                <input id="forms-collect-guest-phone" type="checkbox">
+                                <span>شماره تماس مهمان گرفته شود</span>
+                            </label>
+                            <label class="forms-toggle">
+                                <input id="forms-limit-one" type="checkbox" checked>
+                                <span>هر شرکت‌کننده فقط یک پاسخ ثبت کند</span>
+                            </label>
+                            <label class="forms-toggle">
+                                <input id="forms-allow-edit-response" type="checkbox">
+                                <span>شرکت‌کننده بتواند پاسخ قبلی را ویرایش کند</span>
+                            </label>
+                            <label class="forms-toggle">
+                                <input id="forms-allow-creator-submit" type="checkbox" checked>
+                                <span>مالک/مدیر هم بتواند شرکت کند</span>
+                            </label>
+                            <label class="forms-toggle">
+                                <input id="forms-anonymous-responses" type="checkbox">
+                                <span>نتایج عمومی بدون نمایش هویت شرکت‌کننده باشد</span>
+                            </label>
+                        </div>
+                    </section>
+
+                    <section class="forms-card">
+                        <div class="forms-card-head">
+                            <div>
+                                <span class="forms-chip forms-chip--soft">پرسش‌ها</span>
+                                <h2>پرسش‌ها</h2>
+                            </div>
+                            <button id="forms-add-field" class="forms-btn" type="button">افزودن پرسش</button>
+                        </div>
+                        <div id="forms-fields-editor" class="forms-fields-editor"></div>
+                    </section>
+
+                    <section class="forms-card">
+                        <div class="forms-card-head">
+                            <div>
+                                <span class="forms-chip forms-chip--soft">خروجی</span>
+                                <h2>خروجی Excel</h2>
+                            </div>
+                        </div>
+                        <div class="forms-toggle-grid" id="forms-export-columns">
+                            <label class="forms-toggle"><input type="checkbox" value="index" checked><span>ردیف</span></label>
+                            <label class="forms-toggle"><input type="checkbox" value="responseId" checked><span>شناسه پاسخ</span></label>
+                            <label class="forms-toggle"><input type="checkbox" value="submittedAt" checked><span>زمان ثبت</span></label>
+                            <label class="forms-toggle"><input type="checkbox" value="participantKind" checked><span>نوع شرکت‌کننده</span></label>
+                            <label class="forms-toggle"><input type="checkbox" value="name" checked><span>نام</span></label>
+                            <label class="forms-toggle"><input type="checkbox" value="studentNumber" checked><span>شماره دانشجویی</span></label>
+                            <label class="forms-toggle"><input type="checkbox" value="roleLabel" checked><span>نقش</span></label>
+                            <label class="forms-toggle"><input type="checkbox" value="phone" checked><span>تلفن</span></label>
+                        </div>
+                        <label class="forms-toggle">
+                            <input id="forms-export-all-fields" type="checkbox" checked>
+                            <span>همه پرسش‌ها در خروجی باشند</span>
+                        </label>
+                        <label class="forms-field" for="forms-export-field-ids">
+                            <span>شناسه پرسش‌های خروجی</span>
+                            <textarea id="forms-export-field-ids" rows="3" dir="ltr" data-latin-digits="true" placeholder="اگر همه پرسش‌ها غیرفعال است، شناسه پرسش‌ها را هرکدام در یک خط بنویسید"></textarea>
+                        </label>
+                    </section>
+
+                    <section class="forms-card forms-submit-card">
+                        <div>
+                            <strong id="forms-submit-title">ذخیره فرم</strong>
+                            <p id="forms-feedback" class="forms-feedback" aria-live="polite"></p>
+                        </div>
+                        <button id="forms-save" class="forms-btn forms-btn--primary" type="submit">ذخیره</button>
+                    </section>
+                </form>
+            </section>
+
+            <section id="forms-list-panel" class="forms-panel" hidden>
+                <section class="forms-card">
+                    <div class="forms-card-head">
+                        <div>
+                            <span class="forms-chip forms-chip--soft">فعلی</span>
+                            <h2>فرم DIS فعلی</h2>
+                        </div>
+                        <div class="forms-actions">
+                            <a class="forms-btn" href="/dis-request/">فرم عمومی</a>
+                            <a class="forms-btn forms-btn--primary" href="/dis-request/manage/">مدیریت DIS</a>
+                        </div>
+                    </div>
+                    <p class="forms-muted">داده‌ها و خروجی‌های قبلی DIS در مسیر قبلی باقی مانده‌اند.</p>
+                </section>
+
+                <section id="forms-endosim-card" class="forms-card" hidden>
+                    <div class="forms-card-head">
+                        <div>
+                            <span class="forms-chip">فروشگاه</span>
+                            <h2>سفارش دندان آموزشی اندو (اندوسیم)</h2>
+                        </div>
+                        <div class="forms-actions">
+                            <a class="forms-btn" href="/buy/endosim/">صفحه فروش</a>
+                            <a class="forms-btn" href="/buy/manage/endosim/">کاتالوگ و ایمپورت</a>
+                            <a class="forms-btn forms-btn--primary" href="/buy/manage/orders/">سفارش‌ها و تحویل</a>
+                        </div>
+                    </div>
+                    <p class="forms-muted">مدیریت محصولات، مشاهده مشخصات سفارش‌دهنده‌ها و فهرست تحویل از این بخش انجام می‌شود.</p>
+                </section>
+
+                <section class="forms-card">
+                    <div class="forms-card-head">
+                        <div>
+                            <span class="forms-chip">فعال</span>
+                            <h2>فرم‌ها و نظرسنجی‌های ماژول</h2>
+                        </div>
+                        <button id="forms-reload" class="forms-btn" type="button">بازخوانی</button>
+                    </div>
+                    <div id="forms-empty" class="forms-empty">هنوز موردی ساخته نشده است.</div>
+                    <div id="forms-list" class="forms-list"></div>
+                </section>
+            </section>
+
+            <section id="forms-responses-panel" class="forms-panel" hidden>
+                <section class="forms-card">
+                    <div class="forms-card-head">
+                        <div>
+                            <span class="forms-chip forms-chip--soft">Responses</span>
+                            <h2 id="forms-responses-title">پاسخ‌ها</h2>
+                        </div>
+                        <div class="forms-actions">
+                            <a id="forms-export-link" class="forms-btn forms-btn--primary" href="#" hidden>Excel</a>
+                            <button id="forms-close-responses" class="forms-btn" type="button">بستن</button>
+                        </div>
+                    </div>
+                    <div id="forms-responses-empty" class="forms-empty">از لیست، یک فرم را برای مشاهده پاسخ‌ها باز کنید.</div>
+                    <div id="forms-responses-list" class="forms-responses-list"></div>
+                </section>
+            </section>
+        </section>
+    </main>
+
+    <div id="forms-toast" class="forms-toast" aria-live="polite"></div>
+
+    <script src="/assets/site/scripts/auth.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/shell.js?v=20260812-phase3b"></script>
+    <script src="/assets/site/scripts/forms.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/pwa.js?v=20260722-200509"></script>
+</body>
+</html>

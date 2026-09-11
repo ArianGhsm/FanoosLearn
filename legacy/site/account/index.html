@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
+    <title>حساب کاربری | ورودی ۱۴۰۲ دندانپزشکی</title>
+    <meta name="description" content="ورود، مدیریت حساب، پروایل و ابزارهای مالک/ادمین ورودی ۱۴۰۲ دندانپزشکی تهران.">
+    <meta name="theme-color" content="#eef2f7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="ورودی ۱۴۰۲">
+    <link rel="manifest" href="/manifest.webmanifest?v=20260722-200509">
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png?v=20260722-200509">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png?v=20260722-200509">
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/YekanBakh-VF.woff2" crossorigin>
+    <script src="/assets/site/scripts/theme.js?v=20260722-200509"></script>
+    <link rel="stylesheet" href="/assets/site/styles/core.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/account.css?v=20260827-bot-connections1">
+    <link rel="stylesheet" href="/assets/site/styles/theme.css?v=20260813-login-refine4">
+</head>
+<body class="account-page">
+    <div class="background-overlay" aria-hidden="true"></div>
+
+    <header class="site-header">
+        <div class="logo-area">
+            <div class="logo-circle">
+                <img src="/assets/images/logo.png?v=20260722-200509" alt="لوگوی ورودی ۱۴۰۲ دندانپزشکی">
+            </div>
+            <div class="site-info">
+                <h1>حساب کاربری</h1>
+                <p>مرکز هویت، امنیت و تنظیمات پیام‌رسان</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a class="header-link" href="/app/">خانه</a>
+        </div>
+    </header>
+
+    <main class="account-shell">
+        <section class="account-hero">
+            <span class="account-kicker">حساب</span>
+            <h2 class="account-title">مرکز حساب کوتاه، موبایل‌محور و قابل اسکن</h2>
+            <p class="account-desc">در صحه اصلی حساب قط خلاصه و ورودی‌ها دیده می‌شوند. هر بخش مهم در سطح جداگانه باز می‌شود تا حساب کاربری شبیه یک هاب واقعی باشد، نه رم بلند و شلوغ.</p>
+        </section>
+
+        <section id="account-boot" class="account-stage account-stage--boot" aria-live="polite">
+            <div class="account-card account-card--boot">
+                <div class="loader">
+                    <span class="loader-dot"></span>
+                    <span class="loader-dot"></span>
+                    <span class="loader-dot"></span>
+                    <span id="account-boot-text">در حال بازیابی نشست...</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="account-login" class="account-stage account-stage--auth" hidden>
+            <div class="account-grid account-grid--login account-grid--auth">
+                <section class="account-card account-card--auth">
+                    <div class="account-auth-tools" aria-label="تنظیمات نمایش">
+                        <div class="account-auth-theme-slot" data-theme-toggle-slot></div>
+                    </div>
+                    <div class="auth-brand" aria-hidden="true">
+                        <img src="/assets/images/logo.png?v=20260722-200509" alt="">
+                        <strong id="account-auth-brand">ورودی ۱۴۰۲</strong>
+                    </div>
+                    <div class="account-card__head">
+                        <h3>ورود/ثبت‌نام</h3>
+                        <p id="account-login-copy">شماره موبایل خود را وارد کنید.</p>
+                    </div>
+
+                    <form id="login-form" class="account-form" novalidate data-login-panel="password">
+                        <label for="login-student-number">شماره دانشجویی</label>
+                        <input id="login-student-number" name="studentNumber" type="text" inputmode="numeric" autocomplete="username" placeholder="مثلاً 40211272003" disabled>
+
+                        <label for="login-password">رمز عبور</label>
+                        <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="رمز عبور" disabled>
+
+                        <button id="login-submit" class="shell-action-btn shell-action-btn-primary account-submit" type="submit" disabled>ورود به حساب</button>
+                        <div id="login-feedback" class="account-feedback" aria-live="polite"></div>
+                    </form>
+                    <button id="login-password-reset" class="login-signup-prompt login-reset-prompt" type="button">رمز عبور خود را راموش کرده‌اید؟ <span>بازیابی با کد تایید</span></button>
+
+                    <form id="login-otp-form" class="account-form otp-auth-panel" novalidate data-login-panel="otp" hidden>
+                        <div class="otp-auth-panel__hero">
+                            <p>کد تایید برایت پیامک می‌شود.</p>
+                        </div>
+
+                        <div class="settings-row auth-field otp-login-step otp-login-step--phone">
+                            <label for="login-phone-number">شماره موبایل</label>
+                            <div class="otp-phone-shell" dir="ltr">
+                                <span class="otp-phone-shell__country" aria-hidden="true">
+                                    <span class="otp-phone-shell__flag">🇮🇷</span>
+                                    <span class="otp-phone-shell__prefix">+۹۸</span>
+                                </span>
+                                <input id="login-phone-number" name="tel" type="tel" inputmode="numeric" autocomplete="tel-national" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="next" maxlength="14" pattern="(09[0-9۰-۹]{9}|9[0-9۰-۹]{9}|\+989[0-9۰-۹]{9})" aria-label="شماره موبایل" aria-describedby="login-phone-error login-otp-feedback" dir="ltr" data-phone-input="iran" data-display-digits="persian" placeholder="">
+                            </div>
+                            <p id="login-phone-error" class="auth-field-error" aria-live="polite"></p>
+                        </div>
+
+                        <div class="account-inline-actions otp-auth-panel__actions otp-auth-panel__actions--request">
+                            <button id="login-otp-request" class="shell-action-btn shell-action-btn-primary" type="button">ارسال کد</button>
+                            <span id="login-otp-meta" class="account-inline-meta"></span>
+                        </div>
+
+                        <div id="login-otp-verify-group" hidden>
+                            <div class="otp-verify-head">
+                                <h4>ورود</h4>
+                                <p id="login-otp-summary">کد تایید ارسال‌شده را وارد کن.</p>
+                                <strong id="login-otp-phone-display" class="otp-verify-phone" dir="ltr"></strong>
+                            </div>
+                            <div class="settings-row">
+                                <label for="login-otp-code">کد تایید</label>
+                                <div id="login-otp-field" class="otp-slot-field" data-otp-field="login">
+                                    <input id="login-otp-code" name="one-time-code" type="text" inputmode="numeric" autocomplete="one-time-code" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" pattern="[0-9]*" maxlength="6" aria-label="کد تایید ورود" aria-describedby="login-otp-summary login-otp-code-error login-otp-feedback" dir="ltr" data-latin-digits="true" placeholder="کد ۶ رقمی">
+                                    <div id="login-otp-slots" class="otp-slot-field__slots" dir="ltr" aria-hidden="true">
+                                        <span class="otp-slot"></span>
+                                        <span class="otp-slot"></span>
+                                        <span class="otp-slot"></span>
+                                        <span class="otp-slot"></span>
+                                        <span class="otp-slot"></span>
+                                        <span class="otp-slot"></span>
+                                    </div>
+                                </div>
+                                <p id="login-otp-code-error" class="auth-field-error" aria-live="polite"></p>
+                            </div>
+
+                            <button id="login-otp-submit" class="shell-action-btn shell-action-btn-primary account-submit" type="submit" disabled>ورود به پنل کاربری</button>
+                            <button id="login-otp-edit-phone" class="otp-edit-phone-btn" type="button">ویرایش شماره موبایل</button>
+                        </div>
+                        <div id="login-otp-feedback" class="account-feedback" aria-live="polite"></div>
+                    </form>
+
+                    <button id="login-method-signup" class="login-signup-prompt" type="button">حساب کاربری ندارید؟ <span>ثبت نام کنید.</span></button>
+                    <div class="login-method-switch" id="login-method-switch" role="tablist" aria-label="روش ورود">
+                        <button id="login-method-password" class="login-method-btn is-active" type="button" data-login-method="password" role="tab" aria-selected="true">ورود با رمز عبور</button>
+                        <button id="login-method-otp" class="login-method-btn" type="button" data-login-method="otp" role="tab" aria-selected="false">ورود با موبایل</button>
+                    </div>
+                    <a class="account-login-home" href="/app/">برگشت به خانه</a>
+                </section>
+
+                <aside class="account-card account-card--info account-card--auth-info">
+                    <div class="account-card__head">
+                        <span class="account-section-kicker">بعد از ورود</span>
+                        <h3>چه چیزهایی یکپارچه می‌شود؟</h3>
+                    </div>
+                    <ul class="account-checklist">
+                        <li>وضعیت ورود در پیام‌رسان، نمرات و حساب کاربری یکی است.</li>
+                        <li>هویت پیام‌رسان از همین پروایل حساب می‌آید.</li>
+                        <li>امنیت حساب و خروج قط از همین مرکز کنترل می‌شود.</li>
+                    </ul>
+                </aside>
+            </div>
+        </section>
+
+        <section id="account-panel" class="account-stage account-stage--panel" hidden>
+            <section id="account-hub-panel" class="account-hub">
+                <section class="account-card account-card--identity account-card--messenger">
+                    <div class="account-identity">
+                        <div class="account-identity__avatar" id="account-avatar" data-has-avatar="0">
+                            <img id="account-avatar-image" alt="" hidden>
+                            <span id="account-avatar-fallback" class="account-avatar-fallback">--</span>
+                        </div>
+                        <div class="account-identity__copy">
+                            <span class="account-section-kicker" id="account-role-eyebrow">دانشجو</span>
+                            <h3 id="account-name">-</h3>
+                            <p id="account-student-number">شماره دانشجویی: -</p>
+                            <p id="account-rotation" class="account-rotation-text" hidden></p>
+                            <p id="account-dis-number" class="account-rotation-text" data-latin-digits="true" hidden></p>
+                        </div>
+                    </div>
+
+                    <div class="account-status-row">
+                        <span id="account-role-badge" class="account-role-badge">دانشجو</span>
+                        <span id="account-session-badge" class="account-session-badge">نشست عال</span>
+                    </div>
+
+                    <div class="account-messenger-hero">
+                        <strong>هویت پیام‌رسان</strong>
+                        <p>پروایل این حساب در چت کلاس، پیام خصوصی و گروه‌ها نمایش داده می‌شود.</p>
+                    </div>
+                </section>
+                <section id="account-phone-nudge" class="account-card account-phone-nudge" hidden>
+                    <strong>ورود با موبایل را عال کن</strong>
+                    <p>برای اینکه بعدا بتوانی با شماره موبایل و کد تایید وارد شوی، شماره‌ات را ثبت و تایید کن.</p>
+                    <div class="account-inline-actions">
+                        <button id="account-phone-nudge-open" class="shell-action-btn shell-action-btn-primary" type="button" data-open-surface="phone">ثبت شماره موبایل</button>
+                        <button id="account-phone-nudge-dismiss" class="shell-action-btn" type="button">بعدا</button>
+                    </div>
+                </section>
+                <section class="account-list-group account-list-group--primary" aria-label="تنظیمات حساب">
+                    <h3 class="account-list-group__title">تنظیمات حساب</h3>
+                    <p class="account-list-group__hint">تنظیمات اصلی هویت، اطلاعات حساب و امنیت</p>
+                    <button class="account-list-row account-list-row--profile" type="button" data-open-surface="profile">
+                        <span class="account-list-row__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"></circle><path d="M5.2 18.1c1.6-2.9 4.1-4.3 6.8-4.3s5.2 1.4 6.8 4.3"></path><rect x="3.5" y="3.5" width="17" height="17" rx="5.2"></rect></svg>
+                        </span>
+                        <span class="account-list-row__copy">
+                            <strong>پروایل پیام‌رسان / هویت</strong>
+                            <small id="account-row-profile-meta">ویرایش آواتار، بیو و مسیر ارتباطی نمایش‌داده‌شده در پیام‌رسان</small>
+                        </span>
+                        <span class="account-list-row__chevron" aria-hidden="true">‹</span>
+                    </button>
+                    <button class="account-list-row account-list-row--info" type="button" data-open-surface="info">
+                        <span class="account-list-row__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="4.5"></rect><path d="M8 9.2h8"></path><path d="M8 13h5"></path><circle cx="16.7" cy="14.4" r="1.2"></circle></svg>
+                        </span>
+                        <span class="account-list-row__copy">
+                            <strong>اطلاعات حساب</strong>
+                            <small id="account-row-info-meta" data-latin-digits="true">نام، شماره دانشجویی و سطح دسترسی قط‌خواندنی</small>
+                        </span>
+                        <span class="account-list-row__chevron" aria-hidden="true">‹</span>
+                    </button>
+                    <button class="account-list-row account-list-row--security" type="button" data-open-surface="security">
+                        <span class="account-list-row__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M12 3.8 5.6 6.4v4.8c0 4.2 2.4 7 6.4 8.8 4-1.8 6.4-4.6 6.4-8.8V6.4z"></path><rect x="9.1" y="10.2" width="5.8" height="4.8" rx="1.3"></rect><path d="M10.2 10.2v-1a1.8 1.8 0 1 1 3.6 0v1"></path></svg>
+                        </span>
+                        <span class="account-list-row__copy">
+                            <strong>امنیت</strong>
+                            <small>تغییر رمز عبور و کنترل اقدامات امنیتی نشست حساب</small>
+                        </span>
+                        <span class="account-list-row__chevron" aria-hidden="true">‹</span>
+                    </button>
+                    <a class="account-list-row account-list-row--link account-list-row--security" href="/account/devices/">
+                        <span class="account-list-row__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="11.5" rx="3.2"></rect><path d="M9 19h6"></path><path d="M12 16.5V19"></path><path d="M8.2 9.2h7.6"></path><path d="M8.2 12.4h4.8"></path></svg>
+                        </span>
+                        <span class="account-list-row__copy">
+                            <strong>نشست‌ها و دستگاه‌های فعال</strong>
+                            <small>مشاهده مرورگرهای واردشده و خروج امن از نشست‌های ناشناس</small>
+                        </span>
+                        <span class="account-list-row__chevron" aria-hidden="true">‹</span>
+                    </a>
+                    <button class="account-list-row account-list-row--phone" type="button" data-open-surface="phone">
+                        <span class="account-list-row__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M7.5 3.8h9a2 2 0 0 1 2 2v12.4a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2V5.8a2 2 0 0 1 2-2z"></path><path d="M9.2 7.5h5.6"></path><path d="M11.2 16.8h1.6"></path><path d="M9.7 12.1h4.6"></path></svg>
+                        </span>
+                        <span class="account-list-row__copy">
+                            <strong>ورود با موبایل و کد تایید</strong>
+                            <small id="account-row-phone-meta">ثبت شماره موبایل، تایید با OTP و عال‌سازی مسیر دوم ورود</small>
+                        </span>
+                        <span class="account-list-row__chevron" aria-hidden="true">‹</span>
+                    </button>
+                    <button class="account-list-row account-list-row--bots" type="button" data-open-surface="bots">
+                        <span class="account-list-row__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M8.2 8.5 5.7 6a2.3 2.3 0 0 0-3.2 3.2l3.4 3.4a2.3 2.3 0 0 0 3.2 0l2-2"></path><path d="m15.8 15.5 2.5 2.5a2.3 2.3 0 0 0 3.2-3.2l-3.4-3.4a2.3 2.3 0 0 0-3.2 0l-2 2"></path><path d="m8.8 15.2 6.4-6.4"></path></svg>
+                        </span>
+                        <span class="account-list-row__copy">
+                            <strong>اتصال به ربات‌ها</strong>
+                            <small id="account-row-bots-meta">بررسی اتصال تلگرام و بله و مدیریت هر اتصال</small>
+                        </span>
+                        <span class="account-list-row__chevron" aria-hidden="true">‹</span>
+                    </button>
+                </section>
+
+                <section id="account-owner-section" class="account-list-group account-list-group--admin" aria-label="ابزارهای مدیریت" hidden>
+                    <h3 class="account-list-group__title">ابزارهای مدیریت ورودی</h3>
+                    <p class="account-list-group__hint">برای مالک و نماینده‌های مجاز هر ورودی، قط در محدوده همان ورودی</p>
+                    <a id="account-owner-appearance-shortcut" class="account-list-row account-list-row--link account-list-row--admin-tools" href="/admin/#appearance" hidden>
+                        <span class="account-list-row__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M4.8 13.8c3.8-6.2 10.6-6.2 14.4 0"></path><path d="M8.5 15.2a3.8 3.8 0 0 0 7 0"></path><path d="M12 10.8v1.8"></path><path d="M5.4 5.7l2.2 2.2"></path><path d="M18.6 5.7l-2.2 2.2"></path><path d="M12 3.8v3"></path><path d="M7.6 20.2h8.8"></path></svg>
+                        </span>
+                        <span class="account-list-row__copy">
+                            <strong>مدیریت ظاهر سایت</strong>
+                            <small>روشن/خاموش کردن سوایپ نوار پایینی و گزینه‌های نمایشی کل سایت</small>
+                        </span>
+                        <span class="account-list-row__chevron" aria-hidden="true">‹</span>
+                    </a>
+                    <button class="account-list-row account-list-row--admin-tools" type="button" data-open-surface="owner" data-owner-tab-target="users">
+                        <span class="account-list-row__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><circle cx="8" cy="9" r="2.6"></circle><circle cx="16.4" cy="8.2" r="2.1"></circle><path d="M4.5 17.8c1.1-2.2 2.8-3.4 4.9-3.4s3.8 1.2 4.9 3.4"></path><path d="M13.8 17.2c.7-1.5 1.9-2.3 3.4-2.3"></path><path d="m18.2 15.2 1.2.8-1.2.8.1 1.4-1.3-.5-1.1.7-.1-1.5-1.2-.8 1.2-.7.1-1.5 1.1.8 1.4-.4z"></path></svg>
+                        </span>
+                        <span class="account-list-row__copy">
+                            <strong>مدیریت کاربران و محیط هر ورودی</strong>
+                            <small id="account-row-owner-meta">نمایش کاربران، تعیین نماینده، ایجاد ورودی و ورود گروهی</small>
+                        </span>
+                        <span class="account-list-row__chevron" aria-hidden="true">‹</span>
+                    </button>
+                    <button id="account-owner-stats-shortcut" class="account-list-row account-list-row--admin-tools" type="button" data-open-surface="owner" data-owner-tab-target="stats" hidden>
+                        <span class="account-list-row__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M5 18.5h14"></path><path d="M7.4 16.2V10"></path><path d="M12 16.2V6.8"></path><path d="M16.6 16.2v-4.9"></path></svg>
+                        </span>
+                        <span class="account-list-row__copy">
+                            <strong>داشبورد آمار سایت</strong>
+                            <small id="account-row-owner-stats-meta">بازدیدها، ورودها، دانلودها و نمودارهای مدیریتی کل سایت</small>
+                        </span>
+                        <span class="account-list-row__chevron" aria-hidden="true">‹</span>
+                    </button>
+                    <a class="account-list-row account-list-row--link" href="/buy/manage/">
+                        <span class="account-list-row__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M5.2 8.2h13.6l-1.1 10.1a2 2 0 0 1-2 1.7H8.3a2 2 0 0 1-2-1.7z"></path><path d="M8.8 8.2a3.2 3.2 0 0 1 6.4 0"></path><path d="M9.2 12.2h5.6"></path><path d="M9.2 15.2h3.6"></path></svg>
+                        </span>
+                        <span class="account-list-row__copy">
+                            <strong>مدیریت خرید و پرداخت</strong>
+                            <small>آیتم‌ها، درگاه‌ها، سارش‌ها و لینک‌های جمع‌آوری هزینه را یک‌جا مدیریت کن</small>
+                        </span>
+                        <span class="account-list-row__chevron" aria-hidden="true">‹</span>
+                    </a>
+                </section>
+
+                <section class="account-list-group account-list-group--notifications" aria-label="اعلان‌ها و پیام‌ها">
+                    <h3 class="account-list-group__title">اعلان‌ها و پیام‌ها</h3>
+                    <p class="account-list-group__hint">اعلان‌های مهم، تکلی‌های نوید و اطلاعیه‌های تازه را از همین‌جا ببین.</p>
+                    <article id="account-navid-alert-card" class="account-notice-card" hidden>
+                        <div class="account-notice-card__head">
+                            <span id="account-notification-alert-kind" class="account-notice-card__eyebrow">اعلان جدید</span>
+                            <span id="account-navid-alert-time" class="account-notice-card__time">—</span>
+                        </div>
+                        <strong id="account-navid-alert-title">اعلان جدیدی ثبت شده است</strong>
+                        <p id="account-navid-alert-body">برای دیدن جزئیات، اعلان را باز کن.</p>
+                        <div class="account-notice-card__actions">
+                            <a id="account-navid-alert-link" class="shell-action-btn shell-action-btn-primary" href="/account/#notifications">مشاهده اعلان</a>
+                            <button id="account-navid-alert-mark-read" class="shell-action-btn" type="button" hidden>علامت زده به عنوان خوانده شده</button>
+                        </div>
+                    </article>
+                    <button class="account-list-row account-list-row--notifications" type="button" data-open-surface="notifications">
+                        <span class="account-list-row__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M12 4.5a4.6 4.6 0 0 0-4.6 4.6v2.2c0 .8-.2 1.5-.6 2.2l-1.1 2a1 1 0 0 0 .9 1.5h10.8a1 1 0 0 0 .9-1.5l-1.1-2c-.4-.7-.6-1.4-.6-2.2V9.1A4.6 4.6 0 0 0 12 4.5Z"></path><path d="M9.8 18.5a2.2 2.2 0 0 0 4.4 0"></path></svg>
+                        </span>
+                        <span class="account-list-row__copy">
+                            <strong>اعلان‌ها</strong>
+                            <small id="account-row-notifications-meta">آخرین اعلان‌ها و وضعیت خواندنشان در همین بخش جمع می‌شود.</small>
+                        </span>
+                        <span class="account-list-row__chevron" aria-hidden="true">‹</span>
+                    </button>
+                </section>
+
+                <section class="account-list-group account-list-group--session" aria-label="نشست">
+                    <h3 class="account-list-group__title">نشست حساب</h3>
+                    <p class="account-list-group__hint">کنترل وضعیت ورود روی این دستگاه</p>
+                    <button id="logout-submit" class="account-list-row account-list-row--danger" type="button">
+                        <span class="account-list-row__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M10.2 5.2H6.7A2.7 2.7 0 0 0 4 7.9v8.2a2.7 2.7 0 0 0 2.7 2.7h3.5"></path><path d="M14.4 8.1 18.8 12l-4.4 3.9"></path><path d="M9.6 12h9.1"></path></svg>
+                        </span>
+                        <span class="account-list-row__copy">
+                            <strong>خروج از حساب</strong>
+                            <small>پایان نشست این حساب روی همین دستگاه</small>
+                        </span>
+                        <span class="account-list-row__chevron" aria-hidden="true">‹</span>
+                    </button>
+                </section>
+            </section>
+
+            <section id="account-surface-layout" class="account-surface-layout" hidden>
+                <article class="account-card account-surface-panel" data-surface="profile" hidden>
+                    <header class="account-surface-head">
+                        <button class="shell-action-btn account-surface-back" type="button" data-surface-back>بازگشت</button>
+                        <div class="account-surface-head__copy">
+                            <span class="account-section-kicker">پروایل پیام‌رسان</span>
+                            <h3>هویت قابل ویرایش</h3>
+                            <p>آواتار، بیو، حوزه تمرکز و راه ارتباطی را همین‌جا مدیریت کن.</p>
+                        </div>
+                    </header>
+
+                    <form id="profile-form" class="account-form" novalidate>
+                        <div class="settings-section">
+                            <div class="profile-avatar-editor">
+                                <div class="account-field-head">
+                                    <label for="profile-avatar-file">عکس پروایل</label>
+                                    <span class="account-field-rule">قابل ویرایش</span>
+                                </div>
+                                <div class="profile-avatar-editor__row">
+                                    <div class="profile-avatar-preview" id="profile-avatar-preview" data-has-avatar="0">
+                                        <img id="profile-avatar-image" alt="" hidden>
+                                        <span id="profile-avatar-fallback" class="account-avatar-fallback">--</span>
+                                    </div>
+                                    <div class="profile-avatar-editor__controls">
+                                        <input id="profile-avatar-file" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+                                        <label for="profile-avatar-file" class="shell-action-btn profile-avatar-picker">انتخاب عکس</label>
+                                        <button id="profile-avatar-clear" class="shell-action-btn" type="button">حذ عکس</button>
+                                        <p class="profile-avatar-editor__hint">رمت مجاز: JPG/PNG/WEBP. عکس قبل از ذخیره نهایی بهینه می‌شود.</p>
+                                    </div>
+                                </div>
+                                <div id="profile-avatar-feedback" class="account-feedback account-feedback--inline" aria-live="polite"></div>
+                            </div>
+
+                            <div class="settings-row">
+                                <label for="profile-about">بیو / درباره</label>
+                                <textarea id="profile-about" name="about" rows="4" placeholder="یک معری کوتاه برای حساب خودت بنویس."></textarea>
+                            </div>
+                            <div class="settings-row">
+                                <label for="profile-focus-area">حوزه تمرکز</label>
+                                <input id="profile-focus-area" name="focusArea" type="text" placeholder="مثلاً پروتز یا جزوه‌ها">
+                            </div>
+                            <div class="settings-row">
+                                <label for="profile-contact-handle">راه ارتباطی / آیدی</label>
+                                <input id="profile-contact-handle" name="contactHandle" type="text" placeholder="مثلاً telegram: @username">
+                            </div>
+                        </div>
+
+                        <button id="profile-submit" class="shell-action-btn shell-action-btn-primary account-submit" type="submit">ذخیره تغییرات</button>
+                        <div id="profile-feedback" class="account-feedback" aria-live="polite"></div>
+                    </form>
+                </article>
+
+                <article class="account-card account-surface-panel" data-surface="info" hidden>
+                    <header class="account-surface-head">
+                        <button class="shell-action-btn account-surface-back" type="button" data-surface-back>بازگشت</button>
+                        <div class="account-surface-head__copy">
+                            <span class="account-section-kicker">اطلاعات حساب</span>
+                            <h3>اطلاعات سیستم و دسترسی</h3>
+                            <p>این داده‌ها از سیستم احراز هویت مشترک می‌آیند و قط خواندنی هستند.</p>
+                        </div>
+                    </header>
+
+                    <div class="settings-section">
+                        <div class="settings-row">
+                            <div class="account-field-head">
+                                <label for="profile-name">نام</label>
+                                <span class="account-field-rule">قط خواندنی</span>
+                            </div>
+                            <input id="profile-name" type="text" readonly aria-readonly="true">
+                        </div>
+                        <div class="settings-row">
+                            <div class="account-field-head">
+                                <label for="profile-student-number">شماره دانشجویی</label>
+                                <span class="account-field-rule">قط خواندنی</span>
+                            </div>
+                            <input id="profile-student-number" type="text" readonly aria-readonly="true">
+                        </div>
+                        <div class="settings-row">
+                            <label>نوع حساب</label>
+                            <div id="account-info-role" class="account-readonly-value">—</div>
+                        </div>
+                        <div class="settings-row">
+                            <label>وضعیت نشست</label>
+                            <div id="account-info-session" class="account-readonly-value">—</div>
+                        </div>
+                        <div class="settings-row">
+                            <label>روتیشن/گروه</label>
+                            <div id="account-info-rotation" class="account-readonly-value">—</div>
+                        </div>
+                        <div class="settings-row">
+                            <label>شماره DIS</label>
+                            <div id="account-info-dis-number" class="account-readonly-value" data-latin-digits="true">—</div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="account-card account-surface-panel" data-surface="security" hidden>
+                    <header class="account-surface-head">
+                        <button class="shell-action-btn account-surface-back" type="button" data-surface-back>بازگشت</button>
+                        <div class="account-surface-head__copy">
+                            <span class="account-section-kicker">امنیت</span>
+                            <h3>تغییر رمز عبور</h3>
+                            <p>رمز جدید روی همین حساب ذخیره می‌شود و ورودهای بعدی با آن انجام می‌شود.</p>
+                        </div>
+                    </header>
+
+                    <form id="security-form" class="account-form account-form--security" novalidate>
+                        <label for="security-current-password">رمز علی</label>
+                        <input id="security-current-password" name="currentPassword" type="password" autocomplete="current-password" placeholder="رمز علی">
+
+                        <label for="security-new-password">رمز جدید</label>
+                        <input id="security-new-password" name="newPassword" type="password" autocomplete="new-password" placeholder="رمز جدید">
+
+                        <label for="security-confirm-password">تکرار رمز جدید</label>
+                        <input id="security-confirm-password" name="confirmPassword" type="password" autocomplete="new-password" placeholder="تکرار رمز جدید">
+
+                        <button id="security-submit" class="shell-action-btn shell-action-btn-primary account-submit" type="submit">ثبت رمز جدید</button>
+                        <div id="security-feedback" class="account-feedback" aria-live="polite"></div>
+                    </form>
+                </article>
+                <article class="account-card account-surface-panel" data-surface="bots" hidden>
+                    <header class="account-surface-head">
+                        <button class="shell-action-btn account-surface-back" type="button" data-surface-back>بازگشت</button>
+                        <div class="account-surface-head__copy">
+                            <span class="account-section-kicker">پیام‌رسان‌ها</span>
+                            <h3>اتصال به ربات‌ها</h3>
+                            <p>وضعیت اتصال حساب سایت به تلگرام و بله را ببین یا اتصال هر پیام‌رسان را جداگانه قطع کن.</p>
+                        </div>
+                    </header>
+
+                    <div class="bot-connections-intro">
+                        <span aria-hidden="true">🔐</span>
+                        <p>شناسه و نام حساب فقط برای خودت نمایش داده می‌شود. با قطع اتصال، دسترسی همان ربات به حساب سایت فوراً بسته و پیام زمان قطع برای همان حساب ارسال می‌شود.</p>
+                    </div>
+                    <div id="bot-connections-feedback" class="account-feedback account-feedback--inline" aria-live="polite"></div>
+                    <div id="bot-connections-list" class="bot-connections-grid" aria-live="polite">
+                        <div class="bot-connection-skeleton" aria-label="در حال دریافت وضعیت اتصال"></div>
+                        <div class="bot-connection-skeleton" aria-hidden="true"></div>
+                    </div>
+                    <div class="account-inline-actions bot-connections-actions">
+                        <button id="bot-connections-refresh" class="shell-action-btn" type="button">↻ تازه‌سازی وضعیت</button>
+                    </div>
+                </article>
+                <article class="account-card account-surface-panel" data-surface="phone" hidden>
+                    <header class="account-surface-head">
+                        <button class="shell-action-btn account-surface-back" type="button" data-surface-back>بازگشت</button>
+                        <div class="account-surface-head__copy">
+                            <span class="account-section-kicker">موبایل + OTP</span>
+                            <h3>امنیت شماره موبایل و ورود با کد تایید</h3>
+                            <p>شماره موبایل از همین حساب مشترک خوانده می‌شود و قط بعد از تایید پیامکی می‌تواند برای ورود استاده شود.</p>
+                        </div>
+                    </header>
+
+                    <div class="phone-security-grid">
+                        <section class="phone-status-card" aria-label="وضعیت موبایل">
+                            <div class="phone-status-card__head">
+                                <span id="phone-status-badge" class="phone-status-badge">در حال بررسی</span>
+                                <strong>وضعیت علی شماره</strong>
+                            </div>
+                            <p id="phone-status-summary">—</p>
+                            <div class="phone-status-pills" aria-label="جزئیات وضعیت موبایل">
+                                <span id="phone-number-state" class="phone-status-pill">شماره نامشخص</span>
+                                <span id="phone-verify-state" class="phone-status-pill">تایید نامشخص</span>
+                                <span id="phone-login-state" class="phone-status-pill">ورود پیامکی نامشخص</span>
+                            </div>
+                            <div class="phone-current-box">
+                                <span>شماره علی</span>
+                                <strong id="phone-current-number" class="phone-number-ltr">—</strong>
+                                <small id="phone-current-caption">برای تغییر شماره، شماره جدید را وارد کن و دوباره تایید بگیر.</small>
+                            </div>
+                            <div class="phone-manage-row">
+                                <button id="phone-number-edit" class="shell-action-btn" type="button">تغییر شماره</button>
+                                <button id="phone-number-remove" class="shell-action-btn shell-action-btn-danger" type="button">حذ شماره</button>
+                            </div>
+                            <div id="phone-manage-feedback" class="account-feedback" aria-live="polite"></div>
+                        </section>
+
+                        <section class="phone-flow-card" aria-label="ثبت و تایید شماره موبایل">
+                            <div class="phone-flow-card__head">
+                                <span class="account-section-kicker">مرحله ۱</span>
+                                <div>
+                                    <h4>ثبت یا تغییر شماره موبایل</h4>
+                                    <p>شماره را با ارقام انگلیسی یا ارسی وارد کن. کد قط برای همین شماره ارسال می‌شود.</p>
+                                </div>
+                            </div>
+
+                            <div class="settings-row">
+                                <label for="phone-enroll-number">شماره موبایل</label>
+                                <div class="otp-phone-shell" dir="ltr">
+                                    <input id="phone-enroll-number" name="phoneNumber" type="tel" inputmode="tel" autocomplete="tel" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" maxlength="14" aria-label="شماره موبایل" dir="ltr" data-latin-digits="true" data-phone-input="iran" placeholder="09xxxxxxxxx یا +989xxxxxxxxx" aria-describedby="phone-enroll-meta">
+                                </div>
+                            </div>
+
+                            <div class="phone-action-row">
+                                <button id="phone-enroll-request" class="shell-action-btn" type="button">ارسال کد تایید</button>
+                                <span id="phone-enroll-meta" class="account-inline-meta">بعد از ارسال، امکان ارسال دوباره با زمان‌سنج عال می‌شود.</span>
+                            </div>
+
+                            <div class="phone-code-row">
+                                <div class="settings-row">
+                                    <label for="phone-enroll-code">کد تایید</label>
+                                    <div id="phone-enroll-otp-field" class="otp-slot-field" data-otp-field="enroll">
+                                        <input id="phone-enroll-code" name="otpCode" type="text" inputmode="numeric" autocomplete="one-time-code" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" pattern="[0-9۰-۹٠-٩]*" maxlength="6" aria-label="کد تایید پیامکی" dir="ltr" data-latin-digits="true" placeholder="کد ۶ رقمی">
+                                        <div id="phone-enroll-otp-slots" class="otp-slot-field__slots" dir="ltr" aria-hidden="true">
+                                            <span class="otp-slot"></span>
+                                            <span class="otp-slot"></span>
+                                            <span class="otp-slot"></span>
+                                            <span class="otp-slot"></span>
+                                            <span class="otp-slot"></span>
+                                            <span class="otp-slot"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button id="phone-enroll-submit" class="shell-action-btn shell-action-btn-primary" type="button">تایید شماره</button>
+                            </div>
+
+                            <div id="phone-enroll-feedback" class="account-feedback" aria-live="polite"></div>
+                        </section>
+
+                        <section class="phone-flow-card phone-flow-card--toggle" aria-label="عال‌سازی ورود پیامکی">
+                            <div class="phone-flow-card__head">
+                                <span class="account-section-kicker">مرحله ۲</span>
+                                <div>
+                                    <h4>ورود با کد تایید</h4>
+                                    <p>این گزینه قط برای شماره تاییدشده عال می‌شود. ورود با شماره دانشجویی و رمز همچنان برقرار می‌ماند.</p>
+                                </div>
+                            </div>
+
+                            <label class="phone-toggle-row" for="phone-login-enabled">
+                                <span>
+                                    <strong>عال بودن ورود پیامکی</strong>
+                                    <small id="phone-login-toggle-hint">برای عال‌سازی، ابتدا شماره را تایید کن.</small>
+                                </span>
+                                <input id="phone-login-enabled" type="checkbox">
+                            </label>
+
+                            <div class="phone-action-row">
+                                <button id="phone-login-save" class="shell-action-btn" type="button">ذخیره وضعیت ورود</button>
+                            </div>
+                            <div id="phone-toggle-feedback" class="account-feedback" aria-live="polite"></div>
+                        </section>
+                    </div>
+                </article>
+                <article class="account-card account-surface-panel" data-surface="notifications" hidden>
+                    <header class="account-surface-head">
+                        <button class="shell-action-btn account-surface-back" type="button" data-surface-back>بازگشت</button>
+                        <div class="account-surface-head__copy">
+                            <span class="account-section-kicker">اعلان‌ها</span>
+                            <h3>پیگیری اطلاعیه‌ها و تکالی جدید</h3>
+                            <p>همه اعلان‌ها، تکلی‌های نوید و پیام‌های مدیریتی در یک ید جمع‌وجور همین‌جا دیده می‌شوند.</p>
+                        </div>
+                    </header>
+
+                    <div class="account-notifications-shell">
+                        <div id="notifications-summary" class="account-notifications-overview"></div>
+
+                        <details id="notifications-prefs-card" class="account-notifications-disclosure" hidden>
+                            <summary class="account-notifications-disclosure__summary">
+                                <strong>تنظیمات نوید</strong>
+                                <span>نمایش یا عدم نمایش اعلان تکلی‌های نوید برای همین حساب</span>
+                            </summary>
+                            <div class="account-notifications-disclosure__body">
+                                <div class="account-notifications-pref-grid">
+                                    <label id="notifications-navid-row" class="phone-toggle-row account-notifications-toggle" for="notifications-navid-alerts">
+                                        <span>
+                                            <strong>اعلان تکلی جدید نوید</strong>
+                                            <small id="notifications-prefs-hint">وقتی تکلی جدیدی در نوید بیاید، در حساب کاربری به شما اطلاع داده می‌شود.</small>
+                                        </span>
+                                        <input id="notifications-navid-alerts" type="checkbox">
+                                    </label>
+                                    <label class="phone-toggle-row account-notifications-toggle" for="notifications-form-reminders">
+                                        <span>
+                                            <strong>یادآور رم‌ها</strong>
+                                            <small>رم‌های مهم و رم‌های نزدیک به مهلت را در همین ید دنبال کن.</small>
+                                        </span>
+                                        <input id="notifications-form-reminders" type="checkbox">
+                                    </label>
+                                    <label class="phone-toggle-row account-notifications-toggle" for="notifications-payment-reminders">
+                                        <span>
+                                            <strong>یادآور پرداخت‌ها</strong>
+                                            <small>وضعیت سارش‌ها و پرداخت‌های معطل را قبل از سررسید از دست نده.</small>
+                                        </span>
+                                        <input id="notifications-payment-reminders" type="checkbox">
+                                    </label>
+                                    <label class="phone-toggle-row account-notifications-toggle" for="notifications-digest-enabled">
+                                        <span>
+                                            <strong>خلاصه روزانه</strong>
+                                            <small>اگر اعلان مهمی خوانده‌نشده بماند، یک جمع‌بندی روزانه در این ید ثبت شود.</small>
+                                        </span>
+                                        <input id="notifications-digest-enabled" type="checkbox">
+                                    </label>
+                                </div>
+                                <label class="account-notifications-digest-field" for="notifications-digest-hour">
+                                    <span>
+                                        <strong>ساعت خلاصه روزانه</strong>
+                                        <small>ساعت را بین ۰ تا ۲۳ وارد کن. خلاصه بر اساس زمان تهران ساخته می‌شود.</small>
+                                    </span>
+                                    <input id="notifications-digest-hour" type="number" min="0" max="23" step="1" inputmode="numeric" dir="ltr" data-latin-digits="true" data-digit-locale="latin">
+                                </label>
+                                <div class="phone-action-row">
+                                    <button id="notifications-prefs-save" class="shell-action-btn" type="button">ذخیره تنظیمات</button>
+                                </div>
+                            </div>
+                        </details>
+
+                        <details id="notifications-push-card" class="account-notifications-disclosure" hidden>
+                            <summary class="account-notifications-disclosure__summary">
+                                <strong>اعلان‌های مرورگر</strong>
+                                <span>اعلان‌های سایت را روی این دستگاه، حتی وقتی سایت باز نیست، دریات کن.</span>
+                            </summary>
+                            <div class="account-notifications-disclosure__body">
+                                <label class="phone-toggle-row account-notifications-toggle" for="notifications-push-toggle">
+                                    <span>
+                                        <strong>اعلان وری روی این دستگاه</strong>
+                                        <small id="notifications-push-hint">برای عال‌سازی، اجازه نمایش اعلان را در مرورگر تایید کنید.</small>
+                                    </span>
+                                    <input id="notifications-push-toggle" type="checkbox">
+                                </label>
+                                <p id="notifications-push-status" class="account-notifications-push-status" aria-live="polite" hidden></p>
+                            </div>
+                        </details>
+
+                        <details id="notifications-manager-card" class="account-notifications-disclosure" hidden>
+                            <summary class="account-notifications-disclosure__summary">
+                                <strong>ارسال اعلان</strong>
+                                <span>اعلان سریع، زمان‌بندی و SMS قط وقتی لازم باشد باز می‌شوند.</span>
+                            </summary>
+                            <div class="account-notifications-disclosure__body">
+                                <form id="notifications-broadcast-form" class="account-form account-notifications-form" novalidate>
+                                <div class="account-notifications-form-grid">
+                                    <div class="account-notifications-form-field">
+                                        <label for="notifications-target">مقصد اعلان</label>
+                                        <select id="notifications-target"></select>
+                                    </div>
+                                    <div class="account-notifications-form-field">
+                                        <label for="notifications-schedule-at">زمان انتشار</label>
+                                        <input id="notifications-schedule-at" type="datetime-local" dir="ltr" data-latin-digits="true">
+                                        <small class="account-field-hint">اگر خالی بماند، اعلان بلااصله ثبت می‌شود. اعلان زمان‌بندی‌شده تا زمان انتشار قط برای مدیران همان اعلان نمایش مدیریتی دارد.</small>
+                                    </div>
+                                </div>
+
+                                <label for="notifications-title">عنوان اعلان</label>
+                                <input id="notifications-title" type="text" maxlength="180" placeholder="مثلاً اطلاعیه کلاس یا یادآوری مهم">
+
+                                <label for="notifications-body">متن اعلان</label>
+                                <textarea id="notifications-body" rows="5" maxlength="4000" placeholder="پیام یا توضیح مورد نظر را برای همه کاربران مقصد بنویس."></textarea>
+
+                                <div class="account-notifications-form-grid">
+                                    <div class="account-notifications-form-field">
+                                        <label for="notifications-cta-label">متن دکمه مشاهده</label>
+                                        <input id="notifications-cta-label" type="text" maxlength="80" placeholder="مثلاً مشاهده رم یا رتن به منابع">
+                                    </div>
+                                    <div class="account-notifications-form-field">
+                                        <label for="notifications-cta-href">مسیر دکمه مشاهده</label>
+                                        <input id="notifications-cta-href" type="text" maxlength="220" dir="ltr" data-latin-digits="true" placeholder="/forms/ یا /notes/term/?term=5">
+                                    </div>
+                                </div>
+
+                                <label class="phone-toggle-row account-notifications-toggle" for="notifications-send-sms">
+                                    <span>
+                                        <strong>ارسال پیامک همزمان</strong>
+                                        <small>متن کوتاه اعلان برای کاربرانی که شماره تاییدشده دارند هم ارسال می‌شود.</small>
+                                    </span>
+                                    <input id="notifications-send-sms" type="checkbox">
+                                </label>
+
+                                <div class="account-notifications-form-actions">
+                                    <button id="notifications-broadcast-submit" class="shell-action-btn shell-action-btn-primary" type="submit">ارسال اعلان</button>
+                                    <div id="notifications-manager-feedback" class="account-feedback" aria-live="polite"></div>
+                                </div>
+                                </form>
+                            </div>
+                        </details>
+
+                        <section class="account-notifications-card account-notifications-card--feed" aria-label="هرست اعلان‌ها">
+                            <div class="owner-block__head">
+                                <h4>ید اعلان‌ها</h4>
+                                <p>هر مورد به‌صورت یک ردی کوتاه نمایش داده می‌شود و جزئیات قط موقع نیاز باز می‌شوند.</p>
+                            </div>
+                            <div class="account-inline-actions">
+                                <button id="notifications-refresh" class="shell-action-btn" type="button">بروزرسانی</button>
+                                <button id="notifications-mark-all" class="shell-action-btn" type="button">خواندن همه</button>
+                            </div>
+                            <div id="notifications-filters" class="account-notifications-filters" hidden></div>
+                            <div id="notifications-feedback" class="account-feedback account-feedback--inline" aria-live="polite"></div>
+                            <div id="notifications-empty" class="account-empty-state" hidden>اعلانی برای این حساب پیدا نشد.</div>
+                            <div id="notifications-list" class="account-notifications-list"></div>
+                        </section>
+                    </div>
+                </article>
+                <article id="owner-panel" class="account-card account-surface-panel" data-surface="owner" hidden>
+                    <header class="account-surface-head">
+                        <button class="shell-action-btn account-surface-back" type="button" data-surface-back>بازگشت</button>
+                        <div class="account-surface-head__copy">
+                            <span class="account-section-kicker">مدیریت ورودی‌محور</span>
+                            <h3>کاربران، نماینده‌ها و محیط ایزوله هر ورودی</h3>
+                            <p>ابتدا ورودی عال را انتخاب کن، سپس قط همان کاربران، نماینده‌ها، رم‌ها و کارنامه‌های همان ورودی را مدیریت کن.</p>
+                        </div>
+                    </header>
+
+                    <div class="owner-summary" id="owner-summary"></div>
+                    <section class="owner-block owner-block--cohort-shell">
+                        <div class="owner-block__head">
+                            <h4>ورودی عال</h4>
+                            <p>هر تب قط داده‌های همان ورودی را نشان می‌دهد. مالک همه ورودی‌ها را می‌بیند و نماینده قط ورودی خودش را.</p>
+                        </div>
+                        <div id="owner-cohort-summary" class="owner-summary owner-summary--compact"></div>
+                        <div id="owner-cohort-grid" class="owner-cohort-grid"></div>
+                        <label class="owner-search owner-search--cohort">
+                            <span>انتخاب سریع ورودی</span>
+                            <select id="owner-cohort-select"></select>
+                        </label>
+                        <div id="owner-cohort-feedback" class="account-feedback account-feedback--inline" aria-live="polite"></div>
+                    </section>
+
+                    <nav class="owner-tabs" id="owner-tabs" aria-label="بخش‌های مدیریت مالک">
+                        <button class="owner-tab is-active" type="button" data-owner-tab="users" aria-selected="true">کاربران</button>
+                        <button class="owner-tab" type="button" data-owner-tab="representatives" aria-selected="false">نماینده‌ها</button>
+                        <button class="owner-tab" type="button" data-owner-tab="create" aria-selected="false">ازودن</button>
+                        <button class="owner-tab" type="button" data-owner-tab="stats" aria-selected="false">آمار</button>
+                        <button class="owner-tab" type="button" data-owner-tab="services" aria-selected="false">سرویس‌ها</button>
+                    </nav>
+
+                    <section class="owner-block owner-block--grades-manager owner-tab-panel is-active" data-owner-tab-panel="users">
+                        <div class="owner-block__head">
+                            <h4>کارنامه ورودی عال</h4>
+                            <p>ورود، حذ درس و ریست کامل قط روی کارنامه‌های همین ورودی اعمال می‌شود.</p>
+                        </div>
+                        <div id="owner-grades-courses-summary" class="owner-summary owner-summary--compact"></div>
+                        <form id="owner-grades-import-form" class="account-form owner-grades-import-form" novalidate>
+                            <label for="owner-grades-import-text">ورودی متنی نمرات</label>
+                            <textarea id="owner-grades-import-text" class="owner-grade-import-textarea" placeholder="StudentID,Name,درس ۱,درس ۲&#10;40211272003,دانشجو نمونه,18,17.25"></textarea>
+
+                            <label for="owner-grades-import-file">یا ایل CSV / XLSX</label>
+                            <input id="owner-grades-import-file" type="file" accept=".csv,.txt,.xlsx">
+
+                            <div class="owner-grade-import-hint">برای ورودی‌های جدید، اگر ایل کارنامه هنوز ساخته نشده باشد با اولین import یا اولین ویرایش ساخته می‌شود.</div>
+
+                            <div class="owner-grade-course-tools">
+                                <label>
+                                    <span>درس موجود</span>
+                                    <select id="owner-grades-course-select"></select>
+                                </label>
+                                <div class="owner-user__actions">
+                                    <button id="owner-grades-import-submit" class="shell-action-btn shell-action-btn-primary" type="submit">Import نمرات</button>
+                                    <button id="owner-grades-delete-course" class="shell-action-btn" type="button">حذ کامل درس</button>
+                                    <button id="owner-grades-reset-all" class="shell-action-btn" type="button">ریست کامل کارنامه</button>
+                                </div>
+                            </div>
+                            <div id="owner-grades-feedback" class="account-feedback account-feedback--inline" aria-live="polite"></div>
+                        </form>
+                    </section>
+
+                    <section class="owner-block owner-block--sms owner-tab-panel" data-owner-tab-panel="services">
+                        <div class="owner-block__head">
+                            <h4>وضعیت سرویس پیامک / OTP</h4>
+                            <p>تنظیمات FarazSMS قط در این سطح مالک مدیریت می‌شود. کلید API در سرور ذخیره می‌شود و در خروجی نمایش داده نمی‌شود.</p>
+                        </div>
+                        <div id="owner-sms-status" class="owner-summary owner-summary--compact"></div>
+                        <form id="owner-sms-form" class="account-form navid-config-form" novalidate>
+                            <div class="settings-row settings-row--checkbox">
+                                <label for="owner-sms-enabled">عال بودن سرویس پیامکی</label>
+                                <input id="owner-sms-enabled" type="checkbox">
+                            </div>
+                            <label for="owner-sms-pattern-code">Pattern Code</label>
+                            <input id="owner-sms-pattern-code" type="text" maxlength="80" placeholder="MLpPQDwCY2">
+
+                            <label for="owner-sms-api-key">API Key (اختیاری برای تغییر)</label>
+                            <input id="owner-sms-api-key" type="password" autocomplete="off" placeholder="اگر خالی بماند مقدار قبلی حظ می‌شود">
+
+                            <div class="settings-row settings-row--checkbox">
+                                <label for="owner-sms-clear-api">حذ API Key ذخیره‌شده</label>
+                                <input id="owner-sms-clear-api" type="checkbox">
+                            </div>
+
+                            <label for="owner-sms-sender-line">شماره/لاین سرویس پیامک (الزامی)</label>
+                            <input id="owner-sms-sender-line" type="text" maxlength="40" placeholder="مثلا +9830000505">
+
+                            <label for="owner-sms-domain">دامنه سرویس</label>
+                            <input id="owner-sms-domain" type="text" maxlength="120" placeholder="dentistry1402tums.ir">
+
+                            <label for="owner-sms-code-param">نام پارامتر کد OTP</label>
+                            <input id="owner-sms-code-param" type="text" maxlength="40" placeholder="code">
+
+                            <label for="owner-sms-test-phone">شماره تست سلامت (اختیاری)</label>
+                            <input id="owner-sms-test-phone" type="tel" inputmode="numeric" dir="ltr" placeholder="09xxxxxxxxx">
+
+                            <div class="owner-user__actions navid-config-actions">
+                                <button id="owner-sms-save" class="shell-action-btn shell-action-btn-primary" type="submit">ذخیره تنظیمات پیامک</button>
+                                <button id="owner-sms-health" class="shell-action-btn" type="button">بررسی سلامت / تست ارسال</button>
+                            </div>
+                            <div id="owner-sms-feedback" class="account-feedback account-feedback--inline" aria-live="polite"></div>
+                        </form>
+                    </section>
+
+                    <section class="owner-block owner-block--media-status owner-tab-panel" data-owner-tab-panel="services">
+                        <div class="owner-block__head">
+                            <h4>پایش ضای رسانه پیام‌رسان</h4>
+                            <p>وضعیت ضای مدیریت‌شده ایل‌های پیام‌رسان و پاکسازی خودکار ایل‌های قدیمی.</p>
+                        </div>
+                        <div id="owner-media-status" class="owner-summary owner-summary--compact"></div>
+                        <div class="owner-user__actions navid-config-actions">
+                            <button id="owner-media-refresh" class="shell-action-btn" type="button">به‌روزرسانی وضعیت</button>
+                            <button id="owner-media-cleanup" class="shell-action-btn" type="button">اجرای پاکسازی وری</button>
+                        </div>
+                        <div id="owner-media-feedback" class="account-feedback account-feedback--inline" aria-live="polite"></div>
+                    </section>
+                    <div class="owner-toolbar owner-tab-panel is-active" data-owner-tab-panel="users">
+                        <div class="owner-toolbar__meta">
+                            <strong id="owner-toolbar-title">کاربران ورودی عال</strong>
+                            <span id="owner-toolbar-meta">قط کاربران همین ورودی در این لیست و جست‌وجو دیده می‌شوند.</span>
+                        </div>
+                        <label class="owner-search">
+                            <span>جست‌وجوی کاربر</span>
+                            <input id="owner-search" type="search" placeholder="نام یا شماره دانشجویی">
+                        </label>
+                        <div id="owner-feedback" class="account-feedback account-feedback--inline" aria-live="polite"></div>
+                    </div>
+
+                    <section class="owner-block owner-tab-panel" data-owner-tab-panel="representatives">
+                        <div class="owner-block__head">
+                            <h4>نماینده‌های ورودی عال</h4>
+                            <p>این کاربران قط در محدوده همان ورودی دسترسی مدیریتی دارند.</p>
+                        </div>
+                        <div id="representative-list" class="owner-representatives"></div>
+                    </section>
+
+                    <section id="owner-create-cohort-section" class="owner-block owner-tab-panel" data-owner-tab-panel="create" hidden>
+                        <div class="owner-block__head">
+                            <h4>ساخت ورودی جدید</h4>
+                            <p>مالک می‌تواند ورودی جدید دندانپزشکی یا پروتز را بدون کدنویسی بسازد تا کاربر، چت، رم و منابعش ایزوله بماند.</p>
+                        </div>
+                        <form id="owner-create-cohort-form" class="account-form owner-create-student-form" novalidate>
+                            <label for="owner-cohort-title">عنوان کامل</label>
+                            <input id="owner-cohort-title" type="text" maxlength="80" placeholder="مثلاً دندانپزشکی ۱۴۰۵">
+
+                            <label for="owner-cohort-short-title">عنوان کوتاه</label>
+                            <input id="owner-cohort-short-title" type="text" maxlength="40" placeholder="۱۴۰۵ دندان">
+
+                            <label for="owner-cohort-year">سال ورودی</label>
+                            <input id="owner-cohort-year" type="text" inputmode="numeric" maxlength="4" placeholder="1405">
+
+                            <label for="owner-cohort-product-type">نوع ورودی</label>
+                            <select id="owner-cohort-product-type">
+                                <option value="dentistry">دندانپزشکی</option>
+                                <option value="prosthesis">پروتز</option>
+                                <option value="site-users">کاربران عمومی سایت</option>
+                            </select>
+
+                            <label for="owner-cohort-notes-mode">حالت منابع</label>
+                            <select id="owner-cohort-notes-mode">
+                                <option value="archive">آرشیو</option>
+                                <option value="terms">ترمی</option>
+                                <option value="none">بدون منابع</option>
+                            </select>
+
+                            <div class="owner-cohort-feature-grid" aria-label="کارت‌های خانه">
+                                <label class="phone-toggle-row" for="owner-cohort-service-notes">
+                                    <span>
+                                        <strong>کارت منابع</strong>
+                                        <small>نمایش ورودی این cohort در بخش منابع خانه</small>
+                                    </span>
+                                    <input id="owner-cohort-service-notes" type="checkbox" checked>
+                                </label>
+
+                                <label class="phone-toggle-row" for="owner-cohort-service-forms">
+                                    <span>
+                                        <strong>کارت رم‌ها</strong>
+                                        <small>نمایش مسیر رم‌های همین cohort در خانه</small>
+                                    </span>
+                                    <input id="owner-cohort-service-forms" type="checkbox" checked>
+                                </label>
+
+                                <label class="phone-toggle-row" for="owner-cohort-service-grades">
+                                    <span>
+                                        <strong>کارت نمرات</strong>
+                                        <small>نمایش مسیر نمرات همین cohort در خانه</small>
+                                    </span>
+                                    <input id="owner-cohort-service-grades" type="checkbox" checked>
+                                </label>
+
+                                <label class="phone-toggle-row" for="owner-cohort-service-navid">
+                                    <span>
+                                        <strong>کارت نوید</strong>
+                                        <small>نمایش میان‌بر تکالی نوید برای این cohort</small>
+                                    </span>
+                                    <input id="owner-cohort-service-navid" type="checkbox" checked>
+                                </label>
+
+                                <label class="phone-toggle-row" for="owner-cohort-service-buy">
+                                    <span>
+                                        <strong>کارت خرید</strong>
+                                        <small>برای cohortهای عمومی یا پرداخت‌محور</small>
+                                    </span>
+                                    <input id="owner-cohort-service-buy" type="checkbox">
+                                </label>
+                            </div>
+
+                            <label class="phone-toggle-row" for="owner-cohort-allow-representative">
+                                <span>
+                                    <strong>دسترسی نماینده برای مدیریت ورودی</strong>
+                                    <small>اگر عال باشد، نماینده این ورودی بیشتر ابزارهای مدیریت همان ورودی را خواهد داشت.</small>
+                                </span>
+                                <input id="owner-cohort-allow-representative" type="checkbox" checked>
+                            </label>
+
+                            <button id="owner-create-cohort-submit" class="shell-action-btn shell-action-btn-primary" type="submit">ساخت ورودی</button>
+                            <div id="owner-create-cohort-feedback" class="account-feedback account-feedback--inline" aria-live="polite"></div>
+                        </form>
+                    </section>
+
+                    <section class="owner-block owner-block--create-student owner-tab-panel" data-owner-tab-panel="create">
+                        <div class="owner-block__head">
+                            <h4>ایجاد دستی کاربر</h4>
+                            <p>حساب جدید مستقیماً داخل ورودی عال ساخته می‌شود و از همان ابتدا از سایر ورودی‌ها ایزوله است.</p>
+                        </div>
+                        <form id="owner-create-student-form" class="account-form owner-create-student-form" novalidate>
+                            <label for="owner-student-first-name">نام</label>
+                            <input id="owner-student-first-name" type="text" maxlength="60" autocomplete="off" placeholder="مثلاً آرین">
+
+                            <label for="owner-student-last-name">نام خانوادگی</label>
+                            <input id="owner-student-last-name" type="text" maxlength="60" autocomplete="off" placeholder="مثلاً قاسم‌پور">
+
+                            <label for="owner-student-number">شماره دانشجویی</label>
+                            <input id="owner-student-number" type="text" inputmode="numeric" maxlength="20" autocomplete="off" placeholder="مثلاً 40211272093">
+
+                            <label for="owner-student-password">رمز عبور اولیه</label>
+                            <input id="owner-student-password" type="password" minlength="6" autocomplete="new-password" placeholder="حداقل ۶ کاراکتر">
+
+                            <label for="owner-student-role">نوع حساب</label>
+                            <select id="owner-student-role">
+                                <option value="student">دانشجوی دندانپزشکی</option>
+                                <option value="representative">نماینده دندانپزشکی</option>
+                                <option value="prosthesis_student">دانشجوی روزانه پروتزهای دندانی</option>
+                                <option value="prosthesis_representative">نماینده پروتزهای دندانی</option>
+                            </select>
+
+                            <label for="owner-student-rotation-mode">نوع تخصیص آموزشی</label>
+                            <select id="owner-student-rotation-mode">
+                                <option value="none">بدون تخصیص (بعدا تعیین می‌شود)</option>
+                                <option value="manual">روتیشن/گروه مشخص</option>
+                                <option value="campus">دانشجوی پردیس</option>
+                            </select>
+
+                            <label for="owner-student-rotation-id">روتیشن</label>
+                            <select id="owner-student-rotation-id">
+                                <option value="">انتخاب روتیشن</option>
+                                <option value="1">روتیشن ۱</option>
+                                <option value="2">روتیشن ۲</option>
+                            </select>
+
+                            <label for="owner-student-group-number">گروه</label>
+                            <select id="owner-student-group-number">
+                                <option value="">ابتدا روتیشن را انتخاب کنید</option>
+                            </select>
+
+                            <button id="owner-create-student-submit" class="shell-action-btn shell-action-btn-primary" type="submit">ایجاد حساب در ورودی عال</button>
+                            <button id="owner-mark-campus-students" class="shell-action-btn" type="button">تعیین خودکار دانشجوی پردیس (اقد گروه/روتیشن)</button>
+                            <div id="owner-create-student-feedback" class="account-feedback account-feedback--inline" aria-live="polite"></div>
+                        </form>
+                    </section>
+
+                    <section class="owner-block owner-block--import-users owner-tab-panel" data-owner-tab-panel="create">
+                        <div class="owner-block__head">
+                            <h4>ورود گروهی کاربران</h4>
+                            <p>برای ورودی عال، کاربران را با متن ساده وارد کن. مالک بعداً می‌تواند ایل خام اکسل را هم از همین flow اضاه کند.</p>
+                        </div>
+                        <form id="owner-import-users-form" class="account-form owner-grades-import-form" novalidate>
+                            <label for="owner-import-users-default-password">رمز پیش‌رض کاربران جدید</label>
+                            <input id="owner-import-users-default-password" type="text" minlength="6" maxlength="40" value="12345678" autocomplete="off">
+
+                            <label for="owner-import-users-text">ورودی متنی</label>
+                            <textarea id="owner-import-users-text" class="owner-grade-import-textarea" placeholder="نام، نام خانوادگی، شماره دانشجویی، نقش&#10;امیرمحمد، قمصری، 40311272003، نماینده&#10;امیررضا، آئین، 40311272004، دانشجو"></textarea>
+
+                            <label for="owner-import-users-file">ایل کاربران</label>
+                            <input id="owner-import-users-file" type="file" accept=".txt,.csv,.xlsx,text/plain,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+
+                            <button id="owner-import-users-submit" class="shell-action-btn shell-action-btn-primary" type="submit">ایجاد گروهی کاربران</button>
+                            <div id="owner-import-users-feedback" class="account-feedback account-feedback--inline" aria-live="polite"></div>
+                        </form>
+                    </section>
+
+                    <section class="owner-block owner-block--stats owner-tab-panel" data-owner-tab-panel="stats">
+                        <div class="owner-block__head">
+                            <span class="account-section-kicker">داشبورد مالک</span>
+                            <h4>آمار زنده سایت</h4>
+                            <p>این بخش در سطح کل سایت کار می‌کند و قط به ورودی عال محدود نیست؛ بازدیدها، ورودها، دانلودها و پربازدیدترین صحه‌ها را یک‌جا نشان می‌دهد.</p>
+                        </div>
+
+                        <div class="owner-stats-head">
+                            <div class="owner-stats-head__meta">
+                                <strong>نمای کلی ۱۴ روز و ۳۰ روز اخیر</strong>
+                                <span id="owner-stats-meta" class="owner-stats-pill">آخرین snapshot هنوز بارگذاری نشده است.</span>
+                            </div>
+                            <div class="owner-stats-head__actions">
+                                <button id="owner-stats-refresh" class="shell-action-btn" type="button">به‌روزرسانی آمار</button>
+                            </div>
+                        </div>
+
+                        <div id="owner-stats-feedback" class="account-feedback account-feedback--inline" aria-live="polite"></div>
+                        <div id="owner-stats-overview" class="owner-summary owner-summary--stats"></div>
+
+                        <div class="owner-stats-accordion">
+                            <details class="owner-stats-section" open>
+                                <summary>
+                                    <span class="owner-stats-section__title">روند روزانه</span>
+                                    <span class="owner-stats-section__hint">بازدید، ورود و دانلود در ۱۴ روز اخیر</span>
+                                </summary>
+                                <div class="owner-stats-section__body">
+                                    <div class="owner-stats-trends">
+                                        <div class="owner-stats-trend">
+                                            <h5>بازدید روزانه</h5>
+                                            <div id="owner-stats-chart-visits" class="owner-stats-chart"></div>
+                                        </div>
+                                        <div class="owner-stats-trend">
+                                            <h5>ورود روزانه</h5>
+                                            <div id="owner-stats-chart-logins" class="owner-stats-chart"></div>
+                                        </div>
+                                        <div class="owner-stats-trend">
+                                            <h5>دانلود روزانه</h5>
+                                            <div id="owner-stats-chart-downloads" class="owner-stats-chart"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <details class="owner-stats-section">
+                                <summary>
+                                    <span class="owner-stats-section__title">ورودی‌ها و کاربران</span>
+                                    <span class="owner-stats-section__hint">تعداد کاربر و نماینده در هر ورودی، به‌همراه activity اخیر</span>
+                                </summary>
+                                <div class="owner-stats-section__body">
+                                    <div id="owner-stats-cohorts" class="owner-stats-table owner-stats-table--scroll"></div>
+                                </div>
+                            </details>
+
+                            <details class="owner-stats-section">
+                                <summary>
+                                    <span class="owner-stats-section__title">بازگشت کاربران و قی خرید</span>
+                                    <span class="owner-stats-section__hint">نرخ بازگشت کاربران واقعی در ۳۰ روز و مسیر بازدید خرید تا پرداخت موق</span>
+                                </summary>
+                                <div class="owner-stats-section__body">
+                                    <div class="owner-stats-columns">
+                                        <div class="owner-stats-column">
+                                            <h5>بازگشت کاربران (۳۰ روز)</h5>
+                                            <div id="owner-stats-retention" class="owner-summary owner-summary--compact"></div>
+                                        </div>
+                                        <div class="owner-stats-column">
+                                            <h5>قی خرید (۳۰ روز)</h5>
+                                            <div id="owner-stats-funnel" class="owner-summary owner-summary--compact"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <details class="owner-stats-section">
+                                <summary>
+                                    <span class="owner-stats-section__title">آخرین ورودها</span>
+                                    <span class="owner-stats-section__hint">آخرین کاربرانی که وارد سایت شده‌اند، به‌همراه نام، شماره دانشجویی و ورودی</span>
+                                </summary>
+                                <div class="owner-stats-section__body">
+                                    <div id="owner-stats-recent-logins" class="owner-stats-table owner-stats-table--scroll"></div>
+                                </div>
+                            </details>
+
+                            <details class="owner-stats-section">
+                                <summary>
+                                    <span class="owner-stats-section__title">صحه‌ها و بخش‌های پربازدید</span>
+                                    <span class="owner-stats-section__hint">توزیع بازدید بر اساس بخش، به‌همراه پربازدیدترین صحه‌ها</span>
+                                </summary>
+                                <div class="owner-stats-section__body">
+                                    <div class="owner-stats-columns">
+                                        <div class="owner-stats-column">
+                                            <h5>پربازدیدترین بخش‌ها</h5>
+                                            <div id="owner-stats-families" class="owner-stats-bars"></div>
+                                        </div>
+                                        <div class="owner-stats-column owner-stats-column--wide">
+                                            <h5>پربازدیدترین صحه‌ها</h5>
+                                            <div id="owner-stats-pages" class="owner-stats-table owner-stats-table--scroll"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <details class="owner-stats-section">
+                                <summary>
+                                    <span class="owner-stats-section__title">ورود و دانلودها</span>
+                                    <span class="owner-stats-section__hint">سهم هر روش ورود و پرتکرارترین دانلودها/منبع‌ها</span>
+                                </summary>
+                                <div class="owner-stats-section__body">
+                                    <div class="owner-stats-columns">
+                                        <div class="owner-stats-column">
+                                            <h5>روش‌های ورود</h5>
+                                            <div id="owner-stats-methods" class="owner-stats-bars"></div>
+                                        </div>
+                                        <div class="owner-stats-column owner-stats-column--wide">
+                                            <h5>پرتکرارترین دانلودها / منبع‌ها</h5>
+                                            <div id="owner-stats-downloads" class="owner-stats-table owner-stats-table--scroll"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <details class="owner-stats-section">
+                                <summary>
+                                    <span class="owner-stats-section__title">عملکرد آزمون‌ها</span>
+                                    <span class="owner-stats-section__hint">خرید، شروع، سوال‌ها، هزینه، بازدید و میانگین درصد آزمون‌های سایت</span>
+                                </summary>
+                                <div class="owner-stats-section__body">
+                                    <div id="owner-stats-exams" class="owner-summary owner-summary--compact"></div>
+                                </div>
+                            </details>
+
+                            <details class="owner-stats-section">
+                                <summary>
+                                    <span class="owner-stats-section__title">سلامت ماژول‌های محتوا</span>
+                                    <span class="owner-stats-section__hint">ترکیب آمار shared از ایل‌سنتر، paste و HTML uploader</span>
+                                </summary>
+                                <div class="owner-stats-section__body">
+                                    <div id="owner-stats-references" class="owner-summary owner-summary--compact"></div>
+                                </div>
+                            </details>
+
+                            <details class="owner-stats-section">
+                                <summary>
+                                    <span class="owner-stats-section__title">خطاهای سرور</span>
+                                    <span id="owner-stats-errors-meta" class="owner-stats-section__hint">آخرین خطاهای ثبت‌شده سرور برای عیب‌یابی production</span>
+                                </summary>
+                                <div class="owner-stats-section__body">
+                                    <div id="owner-stats-errors" class="owner-stats-table owner-stats-table--scroll"></div>
+                                </div>
+                            </details>
+                        </div>
+                    </section>
+
+                    <section class="owner-block owner-tab-panel is-active" data-owner-tab-panel="users">
+                        <div class="owner-block__head">
+                            <h4>کاربران ورودی عال</h4>
+                            <p>قط کاربران همین ورودی را می‌بینی و پنل اختصاصی هر کدام را جداگانه باز می‌کنی.</p>
+                        </div>
+                        <div id="owner-user-list" class="owner-user-list"></div>
+                        <div id="owner-user-pager" class="owner-user-pager" aria-label="صحه‌بندی کاربران"></div>
+                    </section>
+                </article>
+
+                <article id="owner-user-panel" class="account-card account-surface-panel" data-surface="owner-user" hidden>
+                    <header class="account-surface-head">
+                        <button id="owner-user-panel-back" class="shell-action-btn account-surface-back" type="button">بازگشت</button>
+                        <div class="account-surface-head__copy">
+                            <span class="account-section-kicker">پنل کاربر</span>
+                            <h3 id="owner-user-panel-title">مدیریت کاربر</h3>
+                            <p id="owner-user-panel-subtitle">برای مدیریت، یک کاربر را از هرست انتخاب کن.</p>
+                        </div>
+                    </header>
+
+                    <div id="owner-user-panel-summary" class="owner-summary owner-summary--compact"></div>
+                    <div id="owner-user-panel-feedback" class="account-feedback account-feedback--inline" aria-live="polite"></div>
+                    <div id="owner-user-panel-body" class="owner-user-panel-body">
+                        <div class="owner-empty">برای باز کردن پنل اختصاصی، از هرست کاربران روی «پنل کاربر» بزن.</div>
+                    </div>
+                </article>
+
+            </section>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p id="account-footer-brand">ورودی ۱۴۰۲ دندانپزشکی تهران</p>
+    </footer>
+
+    <script src="/assets/site/scripts/auth.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/push.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/account.js?v=20260827-bot-connections1"></script>
+    <script src="/assets/site/scripts/pwa.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/shell.js?v=20260812-phase3b"></script>
+</body>
+</html>

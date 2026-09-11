@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>مدیریت ظاهر سایت | Dentistry1402TUMS</title>
+    <meta name="description" content="پنل مالک برای تنظیم ظاهر سایت، نوار پایین، سوایپ بین بخش‌های اصلی و حالت سبک افکت‌ها.">
+    <meta name="theme-color" content="#eef2f7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="ظاهر سایت">
+    <link rel="manifest" href="/manifest.webmanifest?v=20260722-200509">
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png?v=20260722-200509">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png?v=20260722-200509">
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/YekanBakh-VF.woff2" crossorigin>
+    <script src="/assets/site/scripts/theme.js?v=20260722-200509"></script>
+    <link rel="stylesheet" href="/assets/site/styles/core.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/hub.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/admin.css?v=20260722-200509">
+    <link rel="stylesheet" href="/assets/site/styles/theme.css?v=20260812-phase4b">
+</head>
+<body class="hub-page admin-page admin-page--appearance">
+    <div class="background-overlay" aria-hidden="true"></div>
+
+    <header class="site-header">
+        <div class="logo-area">
+            <div class="logo-circle">
+                <img src="/assets/images/logo.png?v=20260722-200509" alt="لوگوی رسمی سایت">
+            </div>
+            <div class="site-info">
+                <h1>مدیریت ظاهر سایت</h1>
+                <p>تنظیم رفتار و حس بصری مشترک سایت</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a class="header-link" href="/account/">حساب</a>
+            <a class="header-link" href="/app/">خانه</a>
+            <button id="admin-refresh" class="header-link admin-header-button" type="button">بازیابی تنظیمات</button>
+        </div>
+    </header>
+
+    <main class="admin-main admin-main--appearance">
+        <p id="admin-feedback" class="admin-feedback" hidden></p>
+
+        <section class="admin-appearance-layout" aria-label="مدیریت ظاهر سایت">
+            <article class="admin-appearance-hero">
+                <span class="admin-kicker">Appearance</span>
+                <h2>ظاهر سایت را از یک جا کنترل کن</h2>
+                <p>این تنظیمات روی shell مشترک سایت اعمال می‌شوند؛ یعنی خانه، آزمون‌ها، منابع، حساب و مسیرهای اصلی همان رفتار را می‌گیرند.</p>
+                <div class="admin-appearance-hero__chips" aria-label="محدوده اثر">
+                    <span>کل سایت</span>
+                    <span>موبایل‌محور</span>
+                    <span>قابل بازگشت</span>
+                </div>
+            </article>
+
+            <article id="appearance" class="admin-panel admin-panel--appearance" aria-labelledby="admin-appearance-title">
+                <div class="admin-panel__head admin-panel__head--appearance">
+                    <div>
+                        <span class="admin-kicker">Site UI</span>
+                        <h2 id="admin-appearance-title">تنظیمات فعال ظاهر</h2>
+                        <p>گزینه‌ها را تغییر بده و ذخیره کن. بعد از ذخیره، مقدار جدید برای همه کاربران از config مشترک خوانده می‌شود.</p>
+                    </div>
+                </div>
+
+                <form id="admin-appearance-form" class="admin-appearance-form">
+                    <label class="admin-toggle-row admin-toggle-row--primary" for="admin-bottom-nav-swipe">
+                        <span class="admin-toggle-row__copy">
+                            <strong>سوایپ بین بخش‌های نوار پایینی</strong>
+                            <small>وقتی روشن باشد، کاربر با کشیدن افقی صفحه بین سه بخش اصلی نوار پایین جابه‌جا می‌شود. پیش‌فرض فعلی خاموش است.</small>
+                        </span>
+                        <span class="admin-toggle-row__control">
+                            <input id="admin-bottom-nav-swipe" type="checkbox" name="bottomNavSwipeEnabled" value="1">
+                            <span aria-hidden="true"></span>
+                        </span>
+                    </label>
+
+                    <div class="admin-appearance-options">
+                        <label class="admin-toggle-row" for="admin-bottom-nav-labels">
+                            <span class="admin-toggle-row__copy">
+                                <strong>نمایش متن کنار آیکن فعال</strong>
+                                <small>خاموش کردنش نوار پایین را فشرده‌تر و آیکن‌محور می‌کند.</small>
+                            </span>
+                            <span class="admin-toggle-row__control">
+                                <input id="admin-bottom-nav-labels" type="checkbox" name="bottomNavLabelsEnabled" value="1">
+                                <span aria-hidden="true"></span>
+                            </span>
+                        </label>
+
+                        <label class="admin-toggle-row" for="admin-bottom-nav-glass">
+                            <span class="admin-toggle-row__copy">
+                                <strong>ظاهر شیشه‌ای نوار پایین</strong>
+                                <small>اگر خاموش شود، نوار پایین پس‌زمینه ساده‌تر و blur کمتری دارد.</small>
+                            </span>
+                            <span class="admin-toggle-row__control">
+                                <input id="admin-bottom-nav-glass" type="checkbox" name="bottomNavGlassEnabled" value="1">
+                                <span aria-hidden="true"></span>
+                            </span>
+                        </label>
+
+                        <label class="admin-toggle-row" for="admin-visual-effects-lite">
+                            <span class="admin-toggle-row__copy">
+                                <strong>کاهش افکت‌ها و حرکت‌ها</strong>
+                                <small>برای دستگاه‌های ضعیف‌تر، blur و انیمیشن‌های تزئینی سایت سبک‌تر می‌شوند.</small>
+                            </span>
+                            <span class="admin-toggle-row__control">
+                                <input id="admin-visual-effects-lite" type="checkbox" name="visualEffectsLiteEnabled" value="1">
+                                <span aria-hidden="true"></span>
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="admin-appearance-form__footer">
+                        <p id="admin-appearance-status" class="admin-inline-status" aria-live="polite">در حال خواندن تنظیمات...</p>
+                        <button id="admin-appearance-save" class="admin-save-button" type="submit">ذخیره ظاهر سایت</button>
+                    </div>
+                </form>
+            </article>
+        </section>
+    </main>
+
+    <script src="/assets/site/scripts/pwa.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/auth.js?v=20260722-200509"></script>
+    <script src="/assets/site/scripts/shell.js?v=20260812-phase3b"></script>
+    <script src="/assets/site/scripts/admin.js?v=20260722-200509"></script>
+</body>
+</html>
