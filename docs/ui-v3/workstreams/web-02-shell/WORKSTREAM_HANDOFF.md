@@ -59,7 +59,7 @@ The branch is source-only. Shared entrypoints, backend/API contracts, V2 assets,
 5. Mobile/compact secondary navigation sheet for assessments, grades, announcements, forms, purchase/access, account and capability-gated management.
 6. Global workspace switcher with selected state, pending state, safe error state and explicit server-confirmed switching.
 7. Explicit choose-workspace destination when memberships exist but canonical `selected_workspace_id` is absent/invalid. The client does **not** silently promote the first membership to active workspace.
-8. Structured zero-workspace destination that preserves account, product map and start/help guidance instead of collapsing the product to one generic empty card.
+8. Structured zero-workspace destination that preserves account, product map and start/help guidance instead of collapsing the product to one generic empty card. Workspace-bound navigation remains usable and routes into this truthful gate rather than becoming disabled dead ends.
 9. Account destination with profile summary, membership/workspace summary, selected workspace state and logout. No raw IDs and no fabricated editable profile fields.
 10. More destination with secondary product routes, workspace context, account and capability-gated management.
 11. Breadcrumb/context strip and external route outlet integration for the domain workstreams.
@@ -281,7 +281,7 @@ Presentation was rebuilt: hierarchy, shell layout, auth composition, navigation,
 
 ## INTEGRATION_GAPS
 
-1. **Linked Telegram/Bale account state:** current public account projection does not expose canonical linked-channel status. Internal messaging endpoints are service-only. Therefore Account intentionally renders no linked-channel status/management area. If product scope later requires it, add a public subject-scoped projection before UI.
+1. **Linked Telegram/Bale account state:** current public account projection does not expose canonical linked-channel status. Internal messaging endpoints are service-only. Account renders a channel-status section only when a future public subject-scoped projection supplies bounded channel data; it does not claim a status today. If product scope later requires connection management, add the public contract before UI controls.
 2. **Password/account profile editing and recovery:** no current public projection/command inspected in this workstream justifies editable profile fields, password recovery or account-edit controls. They are intentionally absent rather than faked.
 3. **Durable personal notification inbox:** still a documented backend/UI gap. Shell does not create an Inbox destination from delivery receipts or announcements.
 4. **Final external route registry ownership:** expected route IDs are frozen above for merge compatibility, but web-03…web-08 definitions are parallel branches. Merge worker must verify their exported IDs and resolve naming centrally without adding aliases that duplicate product truth.

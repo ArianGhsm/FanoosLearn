@@ -46,6 +46,26 @@ function failureStatus(error) { return Number(error?.status) || 0; }
 function userName(account) { return cleanText(account?.user?.display_name, 'حساب کاربری'); }
 function pathLine(workspace) { return workspacePath(workspace) || 'فضای آموزشی فانوس'; }
 
+function accountChannelLinks(account) {
+  const source = account?.channel_links ?? account?.messaging_links ?? account?.channels;
+  if (Array.isArray(source)) return source.filter((link) => link && typeof link === 'object');
+  if (!source || typeof source !== 'object') return null;
+  return Object.entries(source).map(([platform, link]) => ({
+    ...(link && typeof link === 'object' ? link : {}),
+    platform: link?.platform || platform,
+  }));
+}
+
+function channelLabel(value) {
+  const key = cleanText(value).toLowerCase();
+  return { telegram: 'تلگرام', bale: 'بله' }[key] || 'پیام‌رسان';
+}
+
+function channelStatusLabel(value) {
+  const key = cleanText(value).toLowerCase();
+  return { active: 'متصل', linked: 'متصل', pending: 'در انتظار تأیید', revoked: 'اتصال لغو شده' }[key] || 'وضعیت دریافت شد';
+}
+
 class ShellController {
   constructor(ctx) {
     this.ctx = ctx;
@@ -126,6 +146,14 @@ class ShellController {
   currentWorkspace() {
     const id = this.state.selectedWorkspaceId;
     return this.state.account?.workspaces?.find((workspace) => String(workspace.id) === String(id)) || null;
+  }
+
+  accountState() {
+    const account = this.state.account;
+    if (!account?.user || typeof account.user !== 'object' || !cleanText(account.user.id)) return 'uninitialized';
+    if (!Array.isArray(account.workspaces) || !account.workspaces.length) return 'zero-memberships';
+    if (!this.state.selectedWorkspaceId) return 'memberships-no-selection';
+    return 'active-workspace';
   }
 
   async refreshManagement({ quiet = false } = {}) {
@@ -399,10 +427,9 @@ class ShellController {
     const item = this.registry.get(id);
     if (!item) return element('span');
     const active = route?.id === id;
-    const locked = item.workspaceRequired && !this.state.selectedWorkspaceId;
     return element('button', {
       className: `f3-shell-nav-item${options.secondary ? ' f3-shell-nav-item--secondary' : ''}${active ? ' is-active' : ''}`,
-      attrs: { type: 'button', disabled: locked || null, 'aria-current': active ? 'page' : null, 'aria-describedby': locked ? 'f3-shell-workspace-required-hint' : null },
+      attrs: { type: 'button', 'aria-current': active ? 'page' : null },
       on: { click: () => this.router.navigate(id) },
     }, icon(item.icon || 'more'), element('span', { text: item.longLabel || item.label }));
   }
@@ -412,10 +439,9 @@ class ShellController {
     MOBILE_IDS.forEach((id) => {
       const item = this.registry.get(id);
       const active = route?.id === id;
-      const locked = item.workspaceRequired && !this.state.selectedWorkspaceId;
       nav.append(element('button', {
         className: `f3-shell-mobile-nav__item${active ? ' is-active' : ''}`,
-        attrs: { type: 'button', disabled: locked || null, 'aria-current': active ? 'page' : null }, on: { click: () => this.router.navigate(id) },
+        attrs: { type: 'button', 'aria-current': active ? 'page' : null }, on: { click: () => this.router.navigate(id) },
       }, icon(item.icon), element('span', { text: item.label })));
     });
     nav.append(element('button', {
@@ -490,9 +516,8 @@ class ShellController {
     ids.forEach((id) => {
       const item = this.registry.get(id);
       if (!item) return;
-      const locked = item.workspaceRequired && !this.state.selectedWorkspaceId;
       group.append(element('button', {
-        className: 'f3-shell-more-link', attrs: { type: 'button', disabled: locked || null }, on: { click: () => this.router.navigate(id) },
+        className: 'f3-shell-more-link', attrs: { type: 'button' }, on: { click: () => this.router.navigate(id) },
       }, icon(item.icon || 'more'), element('span', { text: item.longLabel || item.label }), icon('chevron')));
     });
     return group;
@@ -531,7 +556,27 @@ class ShellController {
 
   renderWorkspaceGate() {
     const workspaces = this.state.account?.workspaces || [];
+    if (this.accountState() === 'uninitialized') return this.renderUninitializedAccountDestination();
     return workspaces.length ? this.renderWorkspaceSelectionDestination(workspaces) : this.renderZeroWorkspaceDestination();
+  }
+
+  renderUninitializedAccountDestination() {
+    return element('section', { className: 'f3-shell-zero-workspace', attrs: { 'aria-labelledby': 'f3-shell-uninitialized-title' } },
+      element('div', { className: 'f3-shell-page-heading f3-shell-page-heading--wide' },
+        element('span', { className: 'f3-shell-page-heading__icon' }, icon('account')),
+        element('p', { className: 'f3-shell-eyebrow', text: 'شروع حساب' }),
+        element('h1', { id: 'f3-shell-uninitialized-title', text: 'حساب شما در حال آماده‌سازی است' }),
+        element('p', { text: 'ورود انجام شده، اما نمای عمومی حساب هنوز از سرور کامل دریافت نشده است. برای جلوگیری از نمایش اطلاعات ناقص، این صفحه فعلاً دادهٔ آموزشی را نشان نمی‌دهد.' }),
+        element('div', { className: 'f3-shell-inline-actions' },
+          button('تازه‌سازی حساب', { variant: 'primary', icon: 'retry', onClick: () => this.refreshAccountFromServer() }),
+          button('خروج از حساب', { variant: 'quiet', icon: 'logout', onClick: (event) => this.handleLogout(event.currentTarget) }),
+        ),
+      ),
+      element('section', { className: 'f3-shell-account-section f3-shell-account-section--quiet' },
+        element('span', { className: 'f3-shell-account-section__icon' }, icon('help')),
+        element('div', {}, element('h2', { text: 'راهنمای شروع' }), element('p', { text: 'اگر این پیام باقی ماند، نشست را ببندید و دوباره وارد شوید یا با پشتیبانی فانوس تماس بگیرید.' })),
+      ),
+    );
   }
 
   renderWorkspaceSelectionDestination(workspaces) {
@@ -576,8 +621,10 @@ class ShellController {
 
   renderAccountDestination() {
     const account = this.state.account;
+    if (this.accountState() === 'uninitialized') return this.renderUninitializedAccountDestination();
     const workspaces = account?.workspaces || [];
     const current = this.currentWorkspace();
+    const channelLinks = accountChannelLinks(account);
     const membershipList = element('div', { className: 'f3-shell-membership-list' });
     if (!workspaces.length) {
       membershipList.append(element('div', { className: 'f3-shell-membership-empty' }, icon('workspace'), element('p', { text: 'هنوز عضویت فعال در فضای آموزشی ثبت نشده است.' })));
@@ -613,6 +660,18 @@ class ShellController {
         ),
         membershipList,
       ),
+      channelLinks ? element('section', { className: 'f3-shell-account-section' },
+        element('div', { className: 'f3-shell-section-heading' },
+          element('div', {}, element('h2', { text: 'اتصال پیام‌رسان' }), element('p', { text: 'وضعیت اتصال‌های ثبت‌شده در نمای عمومی حساب.' })),
+        ),
+        element('div', { className: 'f3-shell-membership-list' },
+          channelLinks.length ? channelLinks.map((link) => element('div', { className: 'f3-shell-membership-row' },
+            element('span', { className: 'f3-shell-membership-row__icon' }, icon('announcement')),
+            element('div', { className: 'f3-shell-membership-row__copy' }, element('strong', { text: channelLabel(link.platform || link.channel) }), element('span', { text: cleanText(link.label || link.username || 'اتصال ثبت‌شده') })),
+            statusBadge(channelStatusLabel(link.status), link.status === 'active' || link.status === 'linked' ? 'success' : 'neutral'),
+          )) : element('div', { className: 'f3-shell-membership-empty' }, icon('announcement'), element('p', { text: 'اتصال پیام‌رسانی ثبت نشده است.' })),
+        ),
+      ) : null,
       element('section', { className: 'f3-shell-account-section f3-shell-account-section--quiet' },
         element('span', { className: 'f3-shell-account-section__icon' }, icon('info')),
         element('div', {}, element('h2', { text: 'درباره اطلاعات حساب' }), element('p', { text: 'فانوس فقط اطلاعاتی را اینجا نشان می‌دهد که در نمای عمومی حساب وجود دارد. شناسه‌های فنی و اطلاعات داخلی نمایش داده نمی‌شوند.' })),
