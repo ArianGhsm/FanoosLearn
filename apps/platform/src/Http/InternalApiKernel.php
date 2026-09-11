@@ -17,6 +17,8 @@ use Fanoos\Platform\Integration\ServicePrincipal;
 use Fanoos\Platform\Messaging\MessagingLinkService;
 use Fanoos\Platform\Messaging\MessagingUnlinkService;
 use Fanoos\Platform\Notifications\NotificationDeliveryService;
+use Fanoos\Platform\Onboarding\DirectoryReadService;
+use Fanoos\Platform\Onboarding\OnboardingPhoneVerificationService;
 use Fanoos\Platform\Operations\DeploymentControlService;
 use Fanoos\Platform\Operations\OwnerControlPlaneService;
 use Fanoos\Platform\Support\PlatformException;
@@ -39,6 +41,8 @@ final class InternalApiKernel
         private readonly DeploymentControlService $deployments,
         private readonly OwnerControlPlaneService $ownerControl,
         private readonly ClassProvisioningService $classes,
+        private readonly DirectoryReadService $directory,
+        private readonly OnboardingPhoneVerificationService $onboardingPhones,
         private readonly bool $paymentsEnabled,
     ) {
     }
@@ -286,6 +290,66 @@ final class InternalApiKernel
             }
             $link = $this->linked($principal, $request->body);
             return $this->deployments->status($link['user_id'], (string) ($request->body['request_id'] ?? ''));
+        }
+        if ($path === '/api/internal/v1/onboarding/directory/provinces') {
+            $this->assertKeys($request->body, ['platform', 'limit', 'cursor']);
+            $principal = $this->serviceAuth->authenticate($request, 'onboarding.directory.read');
+            $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
+            return $this->directory->provinces((int) ($request->body['limit'] ?? 10), $this->nullableString($request->body['cursor'] ?? null));
+        }
+        if ($path === '/api/internal/v1/onboarding/directory/institutions') {
+            $this->assertKeys($request->body, ['platform', 'province_id', 'limit', 'cursor']);
+            $principal = $this->serviceAuth->authenticate($request, 'onboarding.directory.read');
+            $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
+            return $this->directory->institutionsByProvince(
+                (string) ($request->body['province_id'] ?? ''),
+                (int) ($request->body['limit'] ?? 10), $this->nullableString($request->body['cursor'] ?? null),
+            );
+        }
+        if ($path === '/api/internal/v1/onboarding/directory/faculties') {
+            $this->assertKeys($request->body, ['platform', 'institution_id', 'limit', 'cursor']);
+            $principal = $this->serviceAuth->authenticate($request, 'onboarding.directory.read');
+            $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
+            return $this->directory->facultiesByInstitution(
+                (string) ($request->body['institution_id'] ?? ''),
+                (int) ($request->body['limit'] ?? 10), $this->nullableString($request->body['cursor'] ?? null),
+            );
+        }
+        if ($path === '/api/internal/v1/onboarding/directory/programs') {
+            $this->assertKeys($request->body, ['platform', 'faculty_id', 'limit', 'cursor']);
+            $principal = $this->serviceAuth->authenticate($request, 'onboarding.directory.read');
+            $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
+            return $this->directory->programsByFaculty(
+                (string) ($request->body['faculty_id'] ?? ''),
+                (int) ($request->body['limit'] ?? 10), $this->nullableString($request->body['cursor'] ?? null),
+            );
+        }
+        if ($path === '/api/internal/v1/onboarding/otp/request') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'phone_number']);
+            $principal = $this->serviceAuth->authenticate($request, 'onboarding.otp.request');
+            $platform = $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
+            return $this->onboardingPhones->requestOtp($platform, (string) ($request->body['subject'] ?? ''), (string) ($request->body['phone_number'] ?? ''));
+        }
+        if ($path === '/api/internal/v1/onboarding/otp/resend') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'challenge_token']);
+            $principal = $this->serviceAuth->authenticate($request, 'onboarding.otp.resend');
+            $platform = $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
+            return $this->onboardingPhones->resendOtp($platform, (string) ($request->body['subject'] ?? ''), (string) ($request->body['challenge_token'] ?? ''));
+        }
+        if ($path === '/api/internal/v1/onboarding/otp/verify') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'challenge_token', 'code']);
+            $principal = $this->serviceAuth->authenticate($request, 'onboarding.otp.verify');
+            $platform = $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
+            return $this->onboardingPhones->verifyOtp(
+                $platform, (string) ($request->body['subject'] ?? ''),
+                (string) ($request->body['challenge_token'] ?? ''), (string) ($request->body['code'] ?? ''),
+            );
+        }
+        if ($path === '/api/internal/v1/onboarding/otp/status') {
+            $this->assertKeys($request->body, ['platform', 'subject']);
+            $principal = $this->serviceAuth->authenticate($request, 'onboarding.otp.status');
+            $platform = $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
+            return $this->onboardingPhones->status($platform, (string) ($request->body['subject'] ?? ''));
         }
         if ($path === '/api/internal/v1/classes') {
             $this->assertKeys($request->body, [
