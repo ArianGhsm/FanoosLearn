@@ -353,6 +353,22 @@ class BotApplication:
                     + management_row
                     + self._nav_rows()
                 )
+                if can_manage:
+                    return ActionResult(
+                        semantic_screen(
+                            "🏫 فضای آموزشی",
+                            "management_without_workspace",
+                            severity="info",
+                            intro="برای استفاده از بخش‌های فضای آموزشی، یک فضای آموزشی فعال انتخاب کنید.",
+                            sections=(
+                                SemanticSection(
+                                    title="⚙️ مدیریت",
+                                    body="مدیریت به فضای آموزشی نیاز ندارد و از همین‌جا در دسترس است.",
+                                ),
+                            ),
+                            rows=rows,
+                        )
+                    )
                 return ActionResult(
                     warning_screen(
                         "ابتدا یک فضای آموزشی فعال انتخاب کنید.",

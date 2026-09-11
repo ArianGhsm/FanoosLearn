@@ -50,6 +50,14 @@ def _runtime_button_labels(screen) -> list[str]:
     return [button.text for row in screen.rows for button in row]
 
 
+def _core_action_label(screen, intent_name: str) -> str | None:
+    for row in screen.action_rows:
+        for action in row.actions:
+            if action.intent is not None and action.intent.name == intent_name:
+                return action.label
+    return None
+
+
 class NoWorkspaceManagementRouteTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -76,9 +84,25 @@ class NoWorkspaceManagementRouteTest(unittest.TestCase):
         self.backend.subjects_that_can_manage.add("owner")
         onboarding = self.app.home("owner")
         self.assertTrue(_has_more_action(onboarding.screen))
+        self.assertEqual(_core_action_label(onboarding.screen, "more"), "➕ بیشتر")
 
         more_result = dispatch_v3_intent(self.app, "owner", True, "more", {})
         self.assertIn("⚙️ مدیریت", _runtime_button_labels(more_result.screen))
+
+    def test_workspaceless_owner_screen_does_not_read_as_a_hard_stop(self):
+        self.backend.subjects_that_can_manage.add("owner")
+        more_result = dispatch_v3_intent(self.app, "owner", True, "more", {})
+        presentation = more_result.screen.presentation
+        self.assertEqual(presentation.semantic_kind, "management_without_workspace")
+        self.assertNotIn("ابتدا یک فضای آموزشی فعال انتخاب کنید.", more_result.screen.text)
+        self.assertIn("⚙️ مدیریت", _runtime_button_labels(more_result.screen))
+
+    def test_workspaceless_non_owner_more_screen_unchanged(self):
+        more_result = dispatch_v3_intent(self.app, "student", True, "more", {})
+        presentation = more_result.screen.presentation
+        self.assertEqual(presentation.semantic_kind, "workspace_required")
+        self.assertIn("ابتدا یک فضای آموزشی فعال انتخاب کنید.", more_result.screen.text)
+        self.assertNotIn("⚙️ مدیریت", _runtime_button_labels(more_result.screen))
 
     def test_workspaceless_non_owner_sees_onboarding_screen_unchanged(self):
         result = self.app.home("student")
@@ -94,6 +118,7 @@ class NoWorkspaceManagementRouteTest(unittest.TestCase):
         home = self.app.home("owner")
         self.assertEqual(home.screen.identifier, "home.active")
         self.assertTrue(_has_more_action(home.screen))
+        self.assertEqual(_core_action_label(home.screen, "more"), "➕ بیشتر")
 
         more_result = dispatch_v3_intent(self.app, "owner", True, "more", {})
         self.assertIn("⚙️ مدیریت", _runtime_button_labels(more_result.screen))
