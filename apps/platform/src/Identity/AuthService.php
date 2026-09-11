@@ -185,7 +185,10 @@ SQL);
         }
 
         $workspaces = $this->database->prepare(<<<'SQL'
-SELECT workspace.id, workspace.slug, workspace.name, workspace.timezone_name, membership.status,
+SELECT membership.id AS membership_id, workspace.id, workspace.slug, workspace.name, workspace.timezone_name,
+       membership.status, membership.joined_at, membership.ended_at,
+       cohort.id AS cohort_id, program.id AS program_id, faculty.id AS faculty_id,
+       institution.id AS institution_id,
        institution.name AS institution_name, faculty.name AS faculty_name,
        program.name AS program_name, cohort.label AS cohort_label
 FROM tenant_workspace_memberships membership
@@ -196,13 +199,30 @@ JOIN directory_faculties faculty ON faculty.id = program.faculty_id
 JOIN directory_institutions institution ON institution.id = faculty.institution_id
 WHERE membership.user_id = :user_id
   AND membership.status = 'active'
+  AND (membership.ended_at IS NULL OR membership.ended_at > UTC_TIMESTAMP(6))
   AND workspace.status = 'active'
   AND workspace.archived_at IS NULL
 ORDER BY workspace.name, workspace.id
 SQL);
         $workspaces->execute(['user_id' => $session->userId]);
 
-        return ['user' => $account, 'selected_workspace_id' => $session->selectedWorkspaceId, 'workspaces' => $workspaces->fetchAll()];
+        $workspaceRows = $workspaces->fetchAll();
+        $selectedWorkspaceId = $session->selectedWorkspaceId;
+        if ($selectedWorkspaceId !== null && !array_filter(
+            $workspaceRows,
+            static fn (array $workspace): bool => (string) $workspace['id'] === $selectedWorkspaceId,
+        )) {
+            $selectedWorkspaceId = null;
+        }
+        foreach ($workspaceRows as &$workspace) {
+            $context = $this->workspaceRoleContext($session->userId, (string) $workspace['id']);
+            $workspace['role_keys'] = $context['role_keys'];
+            $workspace['permission_keys'] = $context['permission_keys'];
+            $workspace['is_selected'] = $selectedWorkspaceId === (string) $workspace['id'];
+        }
+        unset($workspace);
+
+        return ['user' => $account, 'selected_workspace_id' => $selectedWorkspaceId, 'workspaces' => $workspaceRows];
     }
 
     public function selectWorkspace(AuthenticatedSession $session, string $workspaceId): void
@@ -211,7 +231,9 @@ SQL);
 SELECT 1 FROM tenant_workspace_memberships membership
 JOIN tenant_workspaces workspace ON workspace.id = membership.workspace_id
 WHERE membership.user_id = :user AND membership.workspace_id = :workspace
-  AND membership.status = 'active' AND workspace.status = 'active'
+  AND membership.status = 'active'
+  AND (membership.ended_at IS NULL OR membership.ended_at > UTC_TIMESTAMP(6))
+  AND workspace.status = 'active'
   AND workspace.archived_at IS NULL
 LIMIT 1
 SQL);
@@ -221,6 +243,56 @@ SQL);
         }
         $update = $this->database->prepare('UPDATE iam_sessions SET selected_workspace_id = :workspace WHERE id = :session AND user_id = :user AND revoked_at IS NULL');
         $update->execute(['workspace' => $workspaceId, 'session' => $session->sessionId, 'user' => $session->userId]);
+    }
+
+    /** @return array{role_keys:list<string>,permission_keys:list<string>} */
+    private function workspaceRoleContext(string $userId, string $workspaceId): array
+    {
+        $query = $this->database->prepare(<<<'SQL'
+SELECT DISTINCT role.role_key, permission.permission_key
+FROM rbac_role_assignments assignment
+JOIN rbac_role_templates role ON role.id = assignment.role_template_id
+JOIN rbac_role_permissions role_permission ON role_permission.role_template_id = role.id
+JOIN rbac_permissions permission ON permission.id = role_permission.permission_id
+JOIN rbac_scopes assigned_scope ON assigned_scope.id = assignment.scope_id
+JOIN tenant_workspaces workspace ON workspace.id = :workspace
+JOIN directory_cohorts cohort ON cohort.id = workspace.cohort_id
+JOIN directory_programs program ON program.id = cohort.program_id
+JOIN directory_faculties faculty ON faculty.id = program.faculty_id
+JOIN directory_institutions institution ON institution.id = faculty.institution_id
+WHERE assignment.user_id = :user_id
+  AND role.status = 'active'
+  AND assignment.revoked_at IS NULL
+  AND assignment.valid_from <= UTC_TIMESTAMP(6)
+  AND (assignment.valid_until IS NULL OR assignment.valid_until > UTC_TIMESTAMP(6))
+  AND assigned_scope.archived_at IS NULL
+  AND JSON_CONTAINS(role.allowed_scope_types, JSON_QUOTE(assigned_scope.scope_type))
+  AND (
+      (assigned_scope.scope_type = 'platform' AND assigned_scope.entity_id = '00000000-0000-7000-8000-000000000001')
+      OR (assigned_scope.scope_type = 'institution' AND assigned_scope.entity_id = institution.id)
+      OR (assigned_scope.scope_type = 'faculty' AND assigned_scope.entity_id = faculty.id)
+      OR (assigned_scope.scope_type = 'program' AND assigned_scope.entity_id = program.id)
+      OR (assigned_scope.scope_type = 'cohort' AND assigned_scope.entity_id = cohort.id)
+      OR (assigned_scope.scope_type = 'workspace' AND assigned_scope.entity_id = workspace.id AND assigned_scope.workspace_id = workspace.id)
+  )
+ORDER BY role.role_key, permission.permission_key
+SQL);
+        $query->execute(['user_id' => $userId, 'workspace' => $workspaceId]);
+
+        $roles = [];
+        $permissions = [];
+        while (($row = $query->fetch()) !== false) {
+            $role = (string) $row['role_key'];
+            $permission = (string) $row['permission_key'];
+            if (!in_array($role, $roles, true)) {
+                $roles[] = $role;
+            }
+            if (!in_array($permission, $permissions, true)) {
+                $permissions[] = $permission;
+            }
+        }
+
+        return ['role_keys' => $roles, 'permission_keys' => $permissions];
     }
 
     /** @return array{0:string,1:string} */
