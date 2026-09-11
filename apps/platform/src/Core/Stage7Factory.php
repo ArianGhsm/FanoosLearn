@@ -107,6 +107,7 @@ final class Stage7Factory
             $mediaTransfers,
             new DeploymentControlService($database, $access, $audit),
             new OwnerControlPlaneService($database, $access, $snapshots),
+            new ClassProvisioningService($database, $access, $audit),
             $paymentsEnabled,
         );
     }

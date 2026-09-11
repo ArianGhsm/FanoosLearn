@@ -209,6 +209,17 @@ paths:
       x-required-service-action: deployment.status
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/DeploymentStatus' } } } }
       responses: { '200': { $ref: '#/components/responses/Success' } }
+  /classes:
+    post:
+      operationId: createClass
+      x-required-service-action: workspace.provision
+      description: >-
+        Platform-owner-only. Resolves or creates the directory chain (country, province, city, institution,
+        faculty, optional department, program, cohort) the identity names and finds or creates the
+        tenant_workspaces row at its leaf. Transactional and idempotent: the same identity submitted twice
+        returns the same workspace and never duplicates a directory row at any level.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ClassProvision' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '409': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } }
 components:
   securitySchemes:
     serviceKey:
@@ -366,6 +377,63 @@ components:
       type: object
       required: [platform, subject, request_id]
       properties: { platform: { const: telegram }, subject: { type: string }, request_id: { $ref: '#/components/schemas/Uuid' } }
+      additionalProperties: false
+    DirectoryCode:
+      type: string
+      minLength: 1
+      maxLength: 120
+      pattern: '^[A-Za-z0-9._-]{1,120}$'
+    ClassProvision:
+      type: object
+      required: [platform, subject, country, province, city, institution, faculty, program, cohort, workspace]
+      properties:
+        platform: { $ref: '#/components/schemas/Platform' }
+        subject: { type: string, minLength: 1, maxLength: 160 }
+        country:
+          type: object
+          required: [code, name]
+          properties: { code: { type: string, pattern: '^[A-Za-z]{2}$' }, name: { type: string, minLength: 1, maxLength: 160 } }
+          additionalProperties: false
+        province:
+          type: object
+          required: [name]
+          properties: { code: { $ref: '#/components/schemas/DirectoryCode' }, name: { type: string, minLength: 1, maxLength: 160 } }
+          additionalProperties: false
+        city:
+          type: object
+          required: [name]
+          properties: { code: { $ref: '#/components/schemas/DirectoryCode' }, name: { type: string, minLength: 1, maxLength: 160 } }
+          additionalProperties: false
+        institution:
+          type: object
+          required: [name]
+          properties: { slug: { $ref: '#/components/schemas/DirectoryCode' }, name: { type: string, minLength: 1, maxLength: 200 }, institution_type: { type: string, minLength: 1, maxLength: 32 } }
+          additionalProperties: false
+        faculty:
+          type: object
+          required: [name]
+          properties: { code: { $ref: '#/components/schemas/DirectoryCode' }, name: { type: string, minLength: 1, maxLength: 200 } }
+          additionalProperties: false
+        department:
+          type: [object, 'null']
+          required: [name]
+          properties: { code: { $ref: '#/components/schemas/DirectoryCode' }, name: { type: string, minLength: 1, maxLength: 200 } }
+          additionalProperties: false
+        program:
+          type: object
+          required: [name, degree_level]
+          properties: { code: { $ref: '#/components/schemas/DirectoryCode' }, name: { type: string, minLength: 1, maxLength: 200 }, degree_level: { type: string, minLength: 1, maxLength: 48 } }
+          additionalProperties: false
+        cohort:
+          type: object
+          required: [entry_year, label]
+          properties: { entry_year: { type: integer, minimum: 1000, maximum: 9999 }, label: { type: string, minLength: 1, maxLength: 160 } }
+          additionalProperties: false
+        workspace:
+          type: object
+          required: [name]
+          properties: { name: { type: string, minLength: 1, maxLength: 200 } }
+          additionalProperties: false
       additionalProperties: false
     SuccessEnvelope:
       type: object

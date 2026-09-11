@@ -11,6 +11,7 @@ use Fanoos\Platform\Content\ProtectedMediaJobService;
 use Fanoos\Platform\Content\ProtectedMediaTransferService;
 use Fanoos\Platform\Content\SecureDeliveryService;
 use Fanoos\Platform\Core\BotReadProjectionService;
+use Fanoos\Platform\Core\ClassProvisioningService;
 use Fanoos\Platform\Integration\ServiceAuthenticator;
 use Fanoos\Platform\Integration\ServicePrincipal;
 use Fanoos\Platform\Messaging\MessagingLinkService;
@@ -37,6 +38,7 @@ final class InternalApiKernel
         private readonly ProtectedMediaTransferService $mediaTransfers,
         private readonly DeploymentControlService $deployments,
         private readonly OwnerControlPlaneService $ownerControl,
+        private readonly ClassProvisioningService $classes,
         private readonly bool $paymentsEnabled,
     ) {
     }
@@ -284,6 +286,15 @@ final class InternalApiKernel
             }
             $link = $this->linked($principal, $request->body);
             return $this->deployments->status($link['user_id'], (string) ($request->body['request_id'] ?? ''));
+        }
+        if ($path === '/api/internal/v1/classes') {
+            $this->assertKeys($request->body, [
+                'platform', 'subject', 'country', 'province', 'city',
+                'institution', 'faculty', 'department', 'program', 'cohort', 'workspace',
+            ]);
+            $principal = $this->serviceAuth->authenticate($request, 'workspace.provision');
+            $link = $this->linked($principal, $request->body);
+            return $this->classes->createClass($link['user_id'], $request->body);
         }
 
         throw new PlatformException('route_not_found', 'Internal API route was not found.', 404);
