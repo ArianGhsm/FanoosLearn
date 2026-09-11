@@ -39,6 +39,7 @@ INTENT_REGISTRY: dict[str, str] = {
     "resources": "resources",
     "assessments": "assessments",
     "ws.list": "workspaces",
+    "ws.page": "workspaces_page",
     "ws.select": "workspace_select",
     "account": "account",
     "acct.unlink.ask": "unlink_ask",
@@ -317,6 +318,7 @@ def dispatch_v3_intent(app: Any, subject: str, private: bool, name: str, params:
     course = str(params.get("course_id") or params.get("course") or "")
     resource = str(params.get("resource") or "")
     workspace = str(params.get("w") or params.get("workspace_id") or "")
+    page = str(params.get("p") or params.get("page") or "")
     job = str(params.get("job") or "")
 
     if target == "home": return app.home(subject)
@@ -329,6 +331,12 @@ def dispatch_v3_intent(app: Any, subject: str, private: bool, name: str, params:
     if target == "resources": return app.resources(subject)
     if target == "assessments": return app.assessments(subject)
     if target == "workspaces": return app.workspaces(subject)
+    if target == "workspaces_page":
+        try:
+            parsed_page = int(page)
+        except (TypeError, ValueError):
+            return app._expired_route()
+        return app.workspaces(subject, parsed_page)
     if target == "workspace_select": return app.select_workspace(subject, workspace) if workspace else app._expired_route()
     if target == "account": return app.account(subject)
     if target == "unlink_ask": return app.unlink_confirm(subject)

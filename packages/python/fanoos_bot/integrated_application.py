@@ -4,26 +4,21 @@ from dataclasses import replace
 from typing import Any
 
 from .application import ApplicationConfig, BotApplication as BaseBotApplication
+from .api import FanoosApiError
 from .callbacks import CallbackCodec
 from .formatting import format_human_number, format_time, is_uuid, truncate_text
 from .localization import platform_label
 from .models import ActionResult, Screen as RuntimeScreen
 from .ui_v3.academic import course_detail_screen, course_list_screen, course_unavailable_screen
 from .ui_v3.core import (
-    Action,
-    ActionRow,
-    CallbackIntent,
-    ListItem,
     Pagination,
     Screen as CoreScreen,
-    Section,
-    Severity,
 )
 from .ui_v3.core.account import linked_account_screen, unlink_confirmation_screen, unlink_success_screen
-from .ui_v3.core.actions import account_action, help_action, home_action, workspace_action
+from .ui_v3.core.actions import workspace_page_action
 from .ui_v3.core.home import HomeSlot, SlotState, active_home_screen
-from .ui_v3.core.onboarding import linked_no_workspace_screen
-from .ui_v3.core.workspace import WorkspaceOption, workspace_list_screen
+from .ui_v3.core.onboarding import linked_no_workspace_screen, unlinked_account_screen
+from .ui_v3.core.workspace import WorkspaceOption, no_workspace_screen, workspace_list_screen
 from .ui_v3.learning import assessment_hub_screen, commerce_hub_screen, order_access_detail_screen, resource_detail_screen
 from .ui_v3.wiring import core_to_runtime, decode_v3_intent, dispatch_v3_intent
 
@@ -68,19 +63,44 @@ class BotApplication(BaseBotApplication):
         return tuple(options)
 
     def _no_workspace_screen(self) -> CoreScreen:
-        if self.config.web_base_url:
-            return linked_no_workspace_screen(self.config.web_base_url)
-        return CoreScreen(
-            identifier="onboarding.linked_no_workspace",
-            title="🏠 فانوس",
-            intro="حساب شما متصل است ✅\nهنوز فضای آموزشی فعالی برای این حساب ندارید.",
-            severity=Severity.INFO,
-            sections=(Section(body="عضویت فضای آموزشی فقط از دادهٔ رسمی فانوس خوانده می‌شود."),),
-            action_rows=(
-                ActionRow((workspace_action(),)),
-                ActionRow((account_action(), help_action())),
-                ActionRow((home_action(),)),
-            ),
+        return linked_no_workspace_screen(self.config.web_base_url)
+
+    def _unlinked_screen(self) -> CoreScreen:
+        return unlinked_account_screen(self.config.web_base_url)
+
+    def _onboarding_error(self, exc: Exception):
+        if isinstance(exc, FanoosApiError) and exc.code in {
+            "messaging_link_required",
+            "messaging_link_not_found",
+        }:
+            return self._v3_result(self._unlinked_screen())
+        return self._error(exc)
+
+    def _workspace_screen(self, projection: dict, page: int = 0) -> CoreScreen:
+        if isinstance(page, bool) or not isinstance(page, int) or page < 0:
+            raise ValueError("workspace page must be non-negative")
+        workspaces = [
+            item
+            for item in projection.get("workspaces") or []
+            if isinstance(item, dict) and is_uuid(item.get("id"))
+        ]
+        if not workspaces:
+            return no_workspace_screen(self.config.web_base_url)
+        total_pages = (len(workspaces) + WORKSPACE_PAGE_SIZE - 1) // WORKSPACE_PAGE_SIZE
+        if page >= total_pages:
+            raise IndexError("workspace page out of range")
+        pagination = Pagination(
+            page=page + 1,
+            total_pages=total_pages,
+            previous=(workspace_page_action(page - 1, next_page=False) if page > 0 else None),
+            next=(workspace_page_action(page + 1, next_page=True) if page + 1 < total_pages else None),
+            label="فهرست فضاهای آموزشی",
+        )
+        visible_projection = dict(projection)
+        visible_projection["workspaces"] = workspaces
+        return workspace_list_screen(
+            self._workspace_options(visible_projection, page),
+            pagination=pagination if total_pages > 1 else None,
         )
 
     def _home_schedule_slot(self, subject: str, workspace_id: str) -> HomeSlot:
@@ -144,10 +164,7 @@ class BotApplication(BaseBotApplication):
             if not selected:
                 # Membership exists but selection does not: selection remains an
                 # explicit user action and no first-workspace authority is invented.
-                options = self._workspace_options(projection)
-                if options:
-                    return self._v3_result(workspace_list_screen(options))
-                return self._v3_result(self._no_workspace_screen())
+                return self._v3_result(self._workspace_screen(projection))
 
             screen = active_home_screen(
                 self._selected_workspace_label(projection, selected),
@@ -158,20 +175,18 @@ class BotApplication(BaseBotApplication):
                 screen = replace(screen, footer=f"✅ {truncate_text(notice, 180)}")
             return self._v3_result(screen)
         except Exception as exc:
-            return self._error(exc)
+            return self._onboarding_error(exc)
 
-    def workspaces(self, subject: str):
+    def workspaces(self, subject: str, page: int = 0):
         try:
+            if isinstance(page, bool) or not isinstance(page, int) or page < 0:
+                return self._expired_route()
             projection = self._workspace_projection(subject)
-            workspaces = [item for item in projection.get("workspaces") or [] if isinstance(item, dict)]
-            if not workspaces:
-                return self._v3_result(self._no_workspace_screen())
-            options = self._workspace_options(projection)
-            if not options:
-                return super().workspaces(subject)
-            return self._v3_result(workspace_list_screen(options))
+            return self._v3_result(self._workspace_screen(projection, page))
         except Exception as exc:
-            return self._error(exc)
+            if isinstance(exc, IndexError):
+                return self._expired_route()
+            return self._onboarding_error(exc)
 
     def select_workspace(self, subject: str, workspace_id: str):
         if not is_uuid(workspace_id):
@@ -184,11 +199,9 @@ class BotApplication(BaseBotApplication):
             result = self.home(subject, f"فضای آموزشی «{label}» فعال شد.")
             return result
         except Exception as exc:
-            return self._error(exc)
+            return self._onboarding_error(exc)
 
     def account(self, subject: str):
-        if not self.config.web_base_url:
-            return super().account(subject)
         try:
             projection, selected = self._selected(subject)
             return self._v3_result(
@@ -200,14 +213,12 @@ class BotApplication(BaseBotApplication):
                 )
             )
         except Exception as exc:
-            return self._error(exc)
+            return self._onboarding_error(exc)
 
     def unlink_confirm(self, subject: str):
         return self._v3_result(unlink_confirmation_screen(platform_label=platform_label(self.platform)))
 
     def unlink(self, subject: str):
-        if not self.config.web_base_url:
-            return super().unlink(subject)
         try:
             self.backend.unlink(self.platform, subject)
             return self._v3_result(unlink_success_screen(self.config.web_base_url))
