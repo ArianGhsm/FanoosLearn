@@ -1,0 +1,114 @@
+from __future__ import annotations
+
+import tempfile
+import unittest
+from pathlib import Path
+
+from fanoos_bot.integrated_application import ApplicationConfig, BotApplication
+from fanoos_bot.state import LocalState
+from fanoos_bot.ui_v3.wiring import dispatch_v3_intent
+
+WORKSPACE = "11111111-1111-4111-8111-111111111111"
+
+
+class RouteBackend:
+    """Workspace membership and management authority vary independently, matching
+    a platform owner who by design holds no workspace membership."""
+
+    def __init__(self):
+        self.subjects_with_workspace: set[str] = set()
+        self.subjects_that_can_manage: set[str] = set()
+        self.raise_on_overview = False
+
+    def workspaces(self, platform, subject):
+        if subject in self.subjects_with_workspace:
+            return {
+                "workspaces": [{"id": WORKSPACE, "name": "فضای نمونه"}],
+                "selected_workspace_id": WORKSPACE,
+            }
+        return {"workspaces": [], "selected_workspace_id": None}
+
+    def deployment_overview(self, subject, target):
+        if self.raise_on_overview:
+            raise RuntimeError("egress proxy unreachable")
+        return {"can_manage_deployments": subject in self.subjects_that_can_manage}
+
+
+def _core_action_labels(screen) -> list[str]:
+    return [action.label for row in screen.action_rows for action in row.actions]
+
+
+def _has_more_action(screen) -> bool:
+    return any(
+        action.intent is not None and action.intent.name == "more"
+        for row in screen.action_rows
+        for action in row.actions
+    )
+
+
+def _runtime_button_labels(screen) -> list[str]:
+    return [button.text for row in screen.rows for button in row]
+
+
+class NoWorkspaceManagementRouteTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.state = LocalState(Path(self.tmp.name) / "state.sqlite3")
+        self.backend = RouteBackend()
+        self.app = BotApplication(
+            self.backend,
+            self.state,
+            "telegram",
+            ApplicationConfig("https://fanoos.test/", "platform-primary"),
+        )
+
+    def tearDown(self):
+        self.state.close()
+        self.tmp.cleanup()
+
+    def test_workspaceless_owner_onboarding_screen_offers_more_route(self):
+        self.backend.subjects_that_can_manage.add("owner")
+        result = self.app.home("owner")
+        self.assertEqual(result.screen.identifier, "onboarding.linked_no_workspace")
+        self.assertTrue(_has_more_action(result.screen))
+
+    def test_workspaceless_owner_route_actually_reaches_management_entry_point(self):
+        self.backend.subjects_that_can_manage.add("owner")
+        onboarding = self.app.home("owner")
+        self.assertTrue(_has_more_action(onboarding.screen))
+
+        more_result = dispatch_v3_intent(self.app, "owner", True, "more", {})
+        self.assertIn("⚙️ مدیریت", _runtime_button_labels(more_result.screen))
+
+    def test_workspaceless_non_owner_sees_onboarding_screen_unchanged(self):
+        result = self.app.home("student")
+        self.assertEqual(result.screen.identifier, "onboarding.linked_no_workspace")
+        self.assertFalse(_has_more_action(result.screen))
+        labels = _core_action_labels(result.screen)
+        self.assertTrue(any("فضای آموزشی" in label for label in labels))
+        self.assertTrue(any("حساب" in label for label in labels))
+
+    def test_owner_with_selected_workspace_still_reaches_management_via_active_home(self):
+        self.backend.subjects_that_can_manage.add("owner")
+        self.backend.subjects_with_workspace.add("owner")
+        home = self.app.home("owner")
+        self.assertEqual(home.screen.identifier, "home.active")
+        self.assertTrue(_has_more_action(home.screen))
+
+        more_result = dispatch_v3_intent(self.app, "owner", True, "more", {})
+        self.assertIn("⚙️ مدیریت", _runtime_button_labels(more_result.screen))
+
+    def test_deployment_overview_failure_falls_back_without_crash_and_is_logged(self):
+        self.backend.subjects_that_can_manage.add("owner")
+        self.backend.raise_on_overview = True
+        with self.assertLogs(level="WARNING") as captured:
+            result = self.app.home("owner")
+        self.assertEqual(result.screen.identifier, "onboarding.linked_no_workspace")
+        self.assertFalse(_has_more_action(result.screen))
+        self.assertTrue(
+            any("deployment_overview" in message for message in captured.output)
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()

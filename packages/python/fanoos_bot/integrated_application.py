@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import replace
 from datetime import timedelta
 from typing import Any
@@ -94,8 +95,21 @@ class BotApplication(BaseBotApplication):
             )
         return tuple(options)
 
-    def _no_workspace_screen(self) -> CoreScreen:
-        return linked_no_workspace_screen(self.config.web_base_url)
+    def _no_workspace_screen(self, subject: str) -> CoreScreen:
+        can_manage = False
+        if self.platform == "telegram" and self.config.deployment_target_key:
+            try:
+                overview = self.backend.deployment_overview(
+                    subject, self.config.deployment_target_key
+                )
+                can_manage = overview.get("can_manage_deployments") is True
+            except Exception as exc:
+                logging.warning(
+                    "no-workspace screen deployment_overview failed type=%s message=%s",
+                    type(exc).__name__,
+                    exc,
+                )
+        return linked_no_workspace_screen(self.config.web_base_url, show_more=can_manage)
 
     def _unlinked_screen(self) -> CoreScreen:
         return unlinked_account_screen(self.config.web_base_url)
@@ -192,7 +206,7 @@ class BotApplication(BaseBotApplication):
             projection, selected = self._selected(subject)
             workspaces = [item for item in projection.get("workspaces") or [] if isinstance(item, dict)]
             if not workspaces:
-                return self._v3_result(self._no_workspace_screen())
+                return self._v3_result(self._no_workspace_screen(subject))
             if not selected:
                 # Membership exists but selection does not: selection remains an
                 # explicit user action and no first-workspace authority is invented.
