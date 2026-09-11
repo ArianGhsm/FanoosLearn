@@ -167,3 +167,38 @@ Two things follow.
 **Creating a class means walking this chain, not inserting one row.** The owner must not be made to create nine rows by hand. The service should find-or-create along the chain from the identity the owner supplies (province, institution, faculty, program, entry year), and the bot should present it as the same narrowing wizard the legacy bot already proved — each choice filtering the next, back and cancel at every step.
 
 Seeding the directory with real Iranian geography and universities is a separate, later concern. For milestone 1, rows are created as the owner goes.
+
+---
+
+## 9. Product decisions (answered by the owner)
+
+Section 7's open questions are settled. These are product law now; build to them.
+
+**Membership is proven by phone verification plus the representative's act.**
+Not phone alone — someone who merely knows a class's details must not be able to walk in.
+
+**A student whose class does not exist yet raises a creation request to the owners.**
+Not a silent dead end and not a passive waiting list: Arian and Hossein are told that someone wants a class that does not exist, and can act on it. This adds a capability the original four did not cover — a durable class-creation request, visible to owners. Treat it as capability 5.
+
+**Invite codes are single-use, issued per student.**
+The representative generates one code for one person. A leaked code costs one seat, once.
+
+**A person may belong to several classes at the same time.**
+Guest students, transfers, dual programs. The schema already permits it, and — importantly — the platform already has the machinery: `selected_workspace_id`, the `/workspaces/select` route, and the bot's workspace switcher all exist and are live. Multi-class was already built for; this decision just confirms it should stay.
+
+### One consequence worth stating plainly
+
+The first and third decisions describe **one mechanism, not two gates**. The representative issuing a single-use code *is* the approval. A student should not have to redeem a code and then wait in a queue for the same person to approve them again.
+
+So the join flow is:
+
+```
+representative issues a single-use code for a named student
+  → student runs the wizard and enters the code
+  → student verifies their phone
+  → membership is created
+```
+
+The representative's decision happens once, up front, when they choose to issue the code. Do not build a second pending-approval queue behind it.
+
+If a student arrives with no code at all, that is the "class does not exist / I am not invited" path, which ends in a request to the owners — not in a self-service membership.
