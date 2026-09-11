@@ -29,14 +29,15 @@ Codex should, on the target host:
 6. provision NEW FANOOS DB/storage access without reusing legacy runtime state;
 7. inject FANOOS secrets outside Git;
 8. register Stage 7 service identities/keys and deployment target using tracked tooling;
-9. install the fixed updater service/timer from tracked templates;
-10. scope the private-repository deploy credential to the updater service and FANOOS repository;
-11. configure fixed restart/health/smoke hooks for services actually present;
-12. configure production backups and run independent backup verification;
-13. perform an isolated restore rehearsal;
-14. run the initial migration/preflight/test suite;
-15. perform the first supervised control-plane exact-SHA activation and application-pointer rollback rehearsal;
-16. return a redacted runtime inventory and evidence report.
+9. bootstrap the first owner (user, platform-scoped role, protected messaging link) with `scripts/ops/bootstrap-owner.php`, since nothing else can grant the initial `deployment.manage` permission;
+10. install the fixed updater service/timer from tracked templates;
+11. scope the private-repository deploy credential to the updater service and FANOOS repository;
+12. configure fixed restart/health/smoke hooks for services actually present;
+13. configure production backups and run independent backup verification;
+14. perform an isolated restore rehearsal;
+15. run the initial migration/preflight/test suite;
+16. perform the first supervised control-plane exact-SHA activation and application-pointer rollback rehearsal;
+17. return a redacted runtime inventory and evidence report.
 
 Any required NEW FANOOS server/domain/database/storage/service credentials are provided by the user only at runtime and remain outside Git.
 

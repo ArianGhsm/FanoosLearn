@@ -14,6 +14,7 @@ use Fanoos\Tests\Integration\BotPlatformHandoffTest;
 use Fanoos\Tests\Integration\Stage8FinalClosureTest;
 use Fanoos\Tests\Operations\BackupContractTest;
 use Fanoos\Tests\Operations\GitHubCiVerifierContractTest;
+use Fanoos\Tests\Operations\OwnerBootstrapTest;
 use Fanoos\Tests\Schema\SchemaContractTest;
 use Fanoos\Tests\Storage\StorageSecurityTest;
 
@@ -69,6 +70,8 @@ try {
         echo "PASS Stage 7 service authentication and messaging link scenarios\n";
         $assertions += (new DeploymentControlTest($database))->run();
         echo "PASS Stage 7 deployment control-plane scenarios\n";
+        $assertions += (new OwnerBootstrapTest($database, $root))->run();
+        echo "PASS first-owner bootstrap tool scenarios\n";
         $assertions += (new BotPlatformHandoffTest($database))->run();
         echo "PASS Stage 7 bot/platform handoff scenarios\n";
         $assertions += (new Stage8FinalClosureTest($database, $hmacKey))->run();
