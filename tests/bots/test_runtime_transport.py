@@ -25,6 +25,14 @@ class App:
     def help(self):return ActionResult(Screen('help'))
     def notification_receipt(self,*args):self.receipt=args
 
+class WizardApp:
+    def __init__(self):
+        self.backend = self
+        self.received = None
+    def class_wizard_text(self,subject,text,private):
+        self.received=(subject,text,private);return ActionResult(Screen('wizard-step'))
+    def home(self,*args):return ActionResult(Screen('home'))
+
 class Backend:
     def __init__(self):self.claimed=False;self.receipts=[]
     def claim_notification(self,platform):
@@ -62,6 +70,18 @@ class RuntimeTest(unittest.TestCase):
     def test_callback_ack_precedes_send(self):
         transport=RecordingTransport();app=App();temp=tempfile.TemporaryDirectory();state=LocalState(Path(temp.name)/'s');runtime=BotRuntime('telegram',transport,app,state)
         runtime.handle_callback(UpdateContext('1','1',True,1,'cb','9'),'home');self.assertEqual(transport.events[0],('ack','cb'));state.close();temp.cleanup()
+    def test_free_text_message_reaches_wizard_hook_unsplit(self):
+        transport=RecordingTransport();app=WizardApp();temp=tempfile.TemporaryDirectory();state=LocalState(Path(temp.name)/'s');runtime=BotRuntime('telegram',transport,app,state)
+        runtime.handle_message(UpdateContext('1','1',True,1,None,'u1'),'دانشگاه علوم پزشکی تهران')
+        self.assertEqual(app.received,('1','دانشگاه علوم پزشکی تهران',True));state.close();temp.cleanup()
+    def test_slash_command_bypasses_wizard_hook(self):
+        transport=RecordingTransport();app=WizardApp();temp=tempfile.TemporaryDirectory();state=LocalState(Path(temp.name)/'s');runtime=BotRuntime('telegram',transport,app,state)
+        runtime.handle_message(UpdateContext('1','1',True,1,None,'u2'),'/home')
+        self.assertIsNone(app.received);state.close();temp.cleanup()
+    def test_app_without_wizard_hook_still_handles_free_text(self):
+        transport=RecordingTransport();app=App();temp=tempfile.TemporaryDirectory();state=LocalState(Path(temp.name)/'s');runtime=BotRuntime('telegram',transport,app,state)
+        runtime.handle_message(UpdateContext('1','1',True,1,None,'u3'),'hello world')
+        self.assertEqual(transport.events[-1][0],'send');state.close();temp.cleanup()
     def test_notification_restart_dedupe_receipt(self):
         temp=tempfile.TemporaryDirectory();state=LocalState(Path(temp.name)/'s');backend=Backend();transport=RecordingTransport();pump=NotificationPump('telegram',backend,transport,state);self.assertTrue(pump.run_once());self.assertEqual(len(backend.receipts),1);state.close();temp.cleanup()
     def test_protected_send_is_not_repeated_when_backend_receipt_fails(self):

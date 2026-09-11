@@ -64,6 +64,10 @@ _OWNER_ALLOWED_KINDS = {
     "deployment_status",
     "deployment_cancelled",
     "deployment_empty",
+    "class_wizard_step",
+    "class_wizard_review",
+    "class_wizard_cancelled",
+    "class_wizard_created",
 }
 
 

@@ -15,9 +15,11 @@ from .formatting import (
     format_money,
     format_score,
     format_time,
+    from_persian_digits,
     humanize_slug,
     is_uuid,
     short_sha,
+    to_persian_digits,
     truncate_text,
 )
 from .localization import (
@@ -38,6 +40,72 @@ UUID_RE = re.compile(r"^[0-9a-f-]{36}$", re.I)
 START_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 SAFE_IDEM = re.compile(r"^[A-Za-z0-9._:-]{1,160}$")
 CURSOR_RE = re.compile(r"^[A-Za-z0-9_-]{1,32}$")
+COUNTRY_CODE_RE = re.compile(r"^[A-Za-z]{2}$")
+
+# Class-identity wizard (owner-only "create a class" flow). Each step collects
+# one free-text field of the identity ClassProvisioningService already
+# accepts (contracts/openapi/internal-v1.yaml POST /classes); nothing here
+# invents domain truth, it only prompts for what the backend requires.
+_CLASS_STEP_PROMPTS: dict[str, tuple[str, str]] = {
+    "country_name": ("نام کشور", "نام کشور دانشگاه را بنویسید."),
+    "country_code": ("کد کشور", "کد دو حرفی کشور را بنویسید؛ برای مثال ایران: IR"),
+    "province": ("استان", "نام استان دانشگاه را بنویسید."),
+    "city": ("شهر", "نام شهر دانشگاه را بنویسید."),
+    "institution": (
+        "دانشگاه یا مؤسسه",
+        "نام دانشگاه یا مؤسسه را بنویسید. اگر قبلاً ثبت شده باشد، همان استفاده می‌شود.",
+    ),
+    "faculty": ("دانشکده", "نام دانشکده را بنویسید."),
+    "program": ("رشته تحصیلی", "نام رشته تحصیلی را بنویسید."),
+    "degree_level": (
+        "مقطع تحصیلی",
+        "مقطع تحصیلی را بنویسید؛ مثلاً کارشناسی، کارشناسی‌ارشد یا دکترای حرفه‌ای.",
+    ),
+    "entry_year": ("سال ورود", "سال ورود را بنویسید؛ مثلاً ۱۴۰۲."),
+    "class_name": (
+        "نام نمایشی کلاس",
+        "یک نام نمایشی برای این کلاس بنویسید؛ همین نام برای اعضا نمایش داده می‌شود.",
+    ),
+}
+_CLASS_STEP_ORDER: tuple[str, ...] = (
+    "country_name", "country_code", "province", "city", "institution",
+    "faculty", "program", "degree_level", "entry_year", "class_name",
+)
+_CLASS_TEXT_LIMITS: dict[str, tuple[int, int]] = {
+    "country_name": (1, 160), "province": (1, 160), "city": (1, 160),
+    "institution": (1, 200), "faculty": (1, 200), "program": (1, 200),
+    "degree_level": (1, 48), "class_name": (1, 200),
+}
+
+
+def _validate_class_text(value: str, min_len: int, max_len: int) -> tuple[str | None, str | None]:
+    text = " ".join((value or "").strip().split())
+    if len(text) < min_len or len(text) > max_len:
+        return None, f"متن باید بین {to_persian_digits(min_len)} تا {to_persian_digits(max_len)} نویسه باشد."
+    return text, None
+
+
+def _validate_country_code(value: str) -> tuple[str | None, str | None]:
+    code = (value or "").strip().upper()
+    if not COUNTRY_CODE_RE.fullmatch(code):
+        return None, "کد کشور باید دقیقاً دو حرف انگلیسی باشد؛ مثلاً IR."
+    return code, None
+
+
+def _validate_entry_year(value: str) -> tuple[str | None, str | None]:
+    normalized = from_persian_digits(value or "").strip()
+    if not normalized.isdigit() or not (1000 <= int(normalized) <= 9999):
+        return None, "سال ورود را فقط با رقم و در بازه‌ای معتبر بنویسید؛ مثلاً ۱۴۰۲."
+    return str(int(normalized)), None
+
+
+def _class_field_validator(key: str):
+    if key == "country_code":
+        return _validate_country_code
+    if key == "entry_year":
+        return _validate_entry_year
+    min_len, max_len = _CLASS_TEXT_LIMITS[key]
+    return lambda value: _validate_class_text(value, min_len, max_len)
 
 
 @dataclass(frozen=True)
@@ -45,6 +113,8 @@ class ApplicationConfig:
     web_base_url: str = ""
     deployment_target_key: str = ""
     protected_renderer_version: str = "fanoos-raster-v1"
+    default_country_code: str = ""
+    default_country_name: str = ""
 
 
 class BotApplication:
@@ -1575,7 +1645,10 @@ class BotApplication:
                         rows=self._nav_rows(back_action="more", back_label="‹ بیشتر"),
                     )
                 )
-            rows = ((Button("🔄 به‌روزرسانی سرور", self._cb("update")),),)
+            rows = (
+                (Button("🔄 به‌روزرسانی سرور", self._cb("update")),),
+                (Button("➕ ساخت کلاس", self._cb("clsnew")),),
+            )
             if self.state.latest_deployment(subject):
                 rows += ((Button("وضعیت آخرین به‌روزرسانی", self._cb("updlast")),),)
             rows += self._nav_rows(back_action="more", back_label="‹ بیشتر")
@@ -1793,6 +1866,253 @@ class BotApplication:
             )
         )
 
+    def _class_wizard_steps(self) -> tuple[str, ...]:
+        if self.config.default_country_code and self.config.default_country_name:
+            return tuple(key for key in _CLASS_STEP_ORDER if key not in ("country_name", "country_code"))
+        return _CLASS_STEP_ORDER
+
+    def _class_wizard_step_screen(
+        self,
+        steps: tuple[str, ...],
+        index: int,
+        answers: dict,
+        *,
+        error: str | None = None,
+    ):
+        key = steps[index]
+        label, prompt = _CLASS_STEP_PROMPTS[key]
+        counter = f"مرحله {to_persian_digits(index + 1)} از {to_persian_digits(len(steps) + 1)}"
+        nav: list[Button] = []
+        if index > 0:
+            nav.append(Button("↩️ مرحله قبل", self._cb("clsback")))
+        nav.append(Button("❌ لغو", self._cb("clscancel")))
+        facts: list[tuple[str, str]] = []
+        existing = answers.get(key)
+        if existing:
+            value = to_persian_digits(existing) if key == "entry_year" else str(existing)
+            facts.append(("مقدار قبلی", value))
+        return semantic_screen(
+            f"➕ ساخت کلاس · {label}",
+            "class_wizard_step",
+            severity="warning" if error else "info",
+            breadcrumb="بیشتر › مدیریت › ساخت کلاس",
+            intro=(f"⚠️ {error}\n\n{prompt}" if error else prompt),
+            facts=facts,
+            pagination=counter,
+            rows=(tuple(nav),),
+        )
+
+    def _class_wizard_review_screen(self, steps: tuple[str, ...], answers: dict):
+        facts: list[tuple[str, str]] = []
+        if self.config.default_country_code and self.config.default_country_name:
+            facts.append(("کشور", self.config.default_country_name))
+        for key in steps:
+            label, _ = _CLASS_STEP_PROMPTS[key]
+            value = answers.get(key, "")
+            facts.append((label, to_persian_digits(value) if key == "entry_year" else str(value)))
+        rows = (
+            (Button("✅ ساخت کلاس", self._cb("clsconfirm")),),
+            (Button("↩️ مرحله قبل", self._cb("clsback")), Button("❌ لغو", self._cb("clscancel"))),
+        )
+        return semantic_screen(
+            "➕ ساخت کلاس · بازبینی",
+            "class_wizard_review",
+            breadcrumb="بیشتر › مدیریت › ساخت کلاس › بازبینی",
+            intro="پیش از ساخت کلاس، اطلاعات را بررسی کنید.",
+            facts=facts,
+            rows=rows,
+        )
+
+    def _class_wizard_expired(self):
+        return ActionResult(
+            warning_screen(
+                "این فرآیند ساخت کلاس منقضی شده یا برای این حساب نیست. دوباره از بخش مدیریت شروع کنید.",
+                title="➕ ساخت کلاس",
+                kind="class_wizard_expired",
+                rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+            )
+        )
+
+    def _class_wizard_identity(self, answers: dict) -> dict:
+        country_code = answers.get("country_code") or self.config.default_country_code
+        country_name = answers.get("country_name") or self.config.default_country_name
+        entry_year = int(from_persian_digits(str(answers.get("entry_year") or "0")) or 0)
+        return {
+            "country": {"code": country_code, "name": country_name},
+            "province": {"name": answers.get("province", "")},
+            "city": {"name": answers.get("city", "")},
+            "institution": {"name": answers.get("institution", "")},
+            "faculty": {"name": answers.get("faculty", "")},
+            "department": None,
+            "program": {
+                "name": answers.get("program", ""),
+                "degree_level": answers.get("degree_level", ""),
+            },
+            "cohort": {"entry_year": entry_year, "label": f"ورودی {to_persian_digits(entry_year)}"},
+            "workspace": {"name": answers.get("class_name", "")},
+        }
+
+    def class_wizard_begin(self, subject: str, private: bool):
+        if self.platform != "telegram" or not private:
+            return ActionResult(
+                warning_screen(
+                    "ساخت کلاس فقط در گفت‌وگوی خصوصی تلگرام و پس از مجوز canonical فعال است.",
+                    title="➕ ساخت کلاس",
+                    kind="class_wizard_unavailable",
+                    rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+                )
+            )
+        if not self.config.deployment_target_key:
+            return ActionResult(
+                warning_screen(
+                    "بررسی مجوز ساخت کلاس برای این محیط تنظیم نشده است.",
+                    title="➕ ساخت کلاس",
+                    kind="class_wizard_unavailable",
+                    rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+                )
+            )
+        try:
+            # workspace.provision has no cheap standalone read yet; every owner
+            # action on this screen already independently re-verifies through
+            # deployment_overview rather than trusting screen-reachability
+            # (see update_begin). The canonical authority is still the
+            # backend's own workspace.provision check on the create call in
+            # class_wizard_confirm; this call only decides what to show.
+            overview = self.backend.deployment_overview(subject, self.config.deployment_target_key)
+        except Exception as exc:
+            logging.warning(
+                "class wizard begin deployment_overview failed type=%s message=%s",
+                type(exc).__name__,
+                exc,
+            )
+            return self._error(exc)
+        if not overview.get("can_manage_deployments"):
+            return ActionResult(
+                error_screen(
+                    "اجازه ساخت کلاس را ندارید.",
+                    title="➕ ساخت کلاس",
+                    kind="class_wizard_denied",
+                    rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+                )
+            )
+        self.state.start_class_wizard(self.platform, subject)
+        steps = self._class_wizard_steps()
+        return ActionResult(self._class_wizard_step_screen(steps, 0, {}))
+
+    def class_wizard_text(self, subject: str, text: str, private: bool = True):
+        """Advance an in-progress class wizard with free text, or return None.
+
+        None means "no active wizard for this subject": the caller (bot
+        runtime) should fall through to normal command dispatch instead of
+        treating the message as a wizard answer.
+        """
+        if not private:
+            return None
+        wizard = self.state.class_wizard(self.platform, subject)
+        if wizard is None:
+            return None
+        steps = self._class_wizard_steps()
+        index = wizard["step_index"]
+        answers = wizard["answers"]
+        if index >= len(steps):
+            return ActionResult(self._class_wizard_review_screen(steps, answers))
+        key = steps[index]
+        value, error = _class_field_validator(key)(text)
+        if error:
+            return ActionResult(self._class_wizard_step_screen(steps, index, answers, error=error))
+        next_answers = dict(answers)
+        next_answers[key] = value
+        next_index = index + 1
+        self.state.advance_class_wizard(self.platform, subject, next_index, next_answers)
+        if next_index >= len(steps):
+            return ActionResult(self._class_wizard_review_screen(steps, next_answers))
+        return ActionResult(self._class_wizard_step_screen(steps, next_index, next_answers))
+
+    def class_wizard_back(self, subject: str):
+        wizard = self.state.class_wizard(self.platform, subject)
+        if wizard is None:
+            return self._class_wizard_expired()
+        steps = self._class_wizard_steps()
+        index = max(0, wizard["step_index"] - 1)
+        self.state.advance_class_wizard(self.platform, subject, index, wizard["answers"])
+        return ActionResult(self._class_wizard_step_screen(steps, index, wizard["answers"]))
+
+    def class_wizard_cancel(self, subject: str):
+        self.state.cancel_class_wizard(self.platform, subject)
+        return ActionResult(
+            semantic_screen(
+                "➕ ساخت کلاس",
+                "class_wizard_cancelled",
+                intro="ساخت کلاس لغو شد. اطلاعات واردشده ذخیره نشد.",
+                rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+            )
+        )
+
+    def class_wizard_confirm(self, subject: str, private: bool):
+        if self.platform != "telegram" or not private:
+            return self._class_wizard_expired()
+        wizard = self.state.class_wizard(self.platform, subject)
+        if wizard is None:
+            return self._class_wizard_expired()
+        steps = self._class_wizard_steps()
+        if wizard["step_index"] < len(steps):
+            return ActionResult(
+                self._class_wizard_step_screen(steps, wizard["step_index"], wizard["answers"])
+            )
+        identity = self._class_wizard_identity(wizard["answers"])
+        try:
+            result = self.backend.create_class(self.platform, subject, identity)
+        except Exception as exc:
+            # A mid-wizard backend failure must reach the owner, not be
+            # swallowed: the wizard state is kept so a retry does not force
+            # retyping everything.
+            logging.error(
+                "class wizard create_class failed type=%s message=%s",
+                type(exc).__name__,
+                exc,
+            )
+            message = (
+                error_message(exc.code, exc.status)
+                if isinstance(exc, FanoosApiError)
+                else "ساخت کلاس ناموفق بود. دوباره امتحان کنید."
+            )
+            return ActionResult(
+                error_screen(
+                    message,
+                    title="➕ ساخت کلاس",
+                    kind="class_wizard_failed",
+                    rows=(
+                        (Button("🔁 تلاش دوباره", self._cb("clsconfirm")),),
+                    )
+                    + self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+                )
+            )
+        self.state.cancel_class_wizard(self.platform, subject)
+        workspace_created = result.get("workspace_created") is True
+        facts = [
+            ("نام کلاس", str(result.get("workspace_slug") or wizard["answers"].get("class_name") or "")),
+            ("وضعیت", "ساخته شد" if workspace_created else "کلاس از قبل وجود داشت و استفاده شد"),
+        ]
+        return ActionResult(
+            semantic_screen(
+                "✅ کلاس آماده است",
+                "class_wizard_created",
+                severity="success",
+                breadcrumb="بیشتر › مدیریت › ساخت کلاس",
+                intro=(
+                    "کلاس جدید ساخته شد."
+                    if workspace_created
+                    else "این هویت با کلاس موجود مطابقت داشت؛ کلاس تکراری ساخته نشد و همان استفاده شد."
+                ),
+                facts=facts,
+                footer=(
+                    "استان، دانشگاه، دانشکده و رشته در صورت نبودن ساخته و در غیر این صورت از ردیف موجود "
+                    "استفاده شدند."
+                ),
+                rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+            )
+        )
+
     def callback(self, subject: str, private: bool, value: str):
         try:
             action, ref = CallbackCodec.decode(value)
@@ -1911,6 +2231,14 @@ class BotApplication:
 
         if action == "manage":
             return self.management(subject, private)
+        if action == "clsnew":
+            return self.class_wizard_begin(subject, private)
+        if action == "clsback":
+            return self.class_wizard_back(subject)
+        if action == "clscancel":
+            return self.class_wizard_cancel(subject)
+        if action == "clsconfirm":
+            return self.class_wizard_confirm(subject, private)
         if action == "update":
             return self.update_begin(subject, private)
         if action == "updlast":

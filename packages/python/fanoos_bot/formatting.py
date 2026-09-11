@@ -7,6 +7,7 @@ from decimal import Decimal, InvalidOperation
 from zoneinfo import ZoneInfo
 
 _PERSIAN_DIGITS = str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹")
+_TO_LATIN_DIGITS = str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩", "01234567890123456789")
 _LRI = chr(0x2066)
 _PDI = chr(0x2069)
 _SHA_RE = re.compile(r"^[0-9a-f]{40}$", re.I)
@@ -20,6 +21,10 @@ def to_persian_digits(value: object) -> str:
     if _SHA_RE.fullmatch(raw) or _UUID_RE.fullmatch(raw):
         return raw
     return raw.translate(_PERSIAN_DIGITS)
+
+
+def from_persian_digits(value: object) -> str:
+    return str(value).translate(_TO_LATIN_DIGITS)
 
 
 def format_human_number(value: object) -> str:

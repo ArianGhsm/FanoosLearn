@@ -59,6 +59,8 @@ def build():
             os.getenv("FANOOS_WEB_BASE_URL", "").strip(),
             os.getenv("FANOOS_DEPLOYMENT_TARGET_KEY", "").strip(),
             os.getenv("FANOOS_PROTECTED_RENDERER_VERSION", "fanoos-raster-v1"),
+            os.getenv("FANOOS_DEFAULT_COUNTRY_CODE", "").strip(),
+            os.getenv("FANOOS_DEFAULT_COUNTRY_NAME", "").strip(),
         ),
     )
     transport = TelegramTransport(required("FANOOS_TELEGRAM_BOT_TOKEN"))
