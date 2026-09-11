@@ -106,6 +106,11 @@ class BotCoreUxContractTest(unittest.TestCase):
             self.assertEqual(second.screen.pagination.page, 2)
             self.assertIn("فضای 6", second.screen.plain_text())
             self.assertNotIn(WORKSPACE_IDS[0], first.screen.plain_text())
+            for navigation_action in first.screen.action_rows[-1].actions:
+                callback = navigation_action.intent.compact()
+                self.assertIsNotNone(callback)
+                self.assertLessEqual(len(callback.encode("utf-8")), 64)
+                self.assertEqual(app.callback("student", True, callback).screen.identifier, "workspace.list")
         finally:
             state.close()
             temp.cleanup()
