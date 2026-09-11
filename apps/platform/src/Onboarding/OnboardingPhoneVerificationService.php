@@ -208,7 +208,12 @@ SQL);
         $tokenDigest = hash('sha256', $challengeToken, true);
         $normalizedCode = $this->normalizeDigits($code);
 
-        return Transaction::run($this->database, function () use ($platform, $subjectDigest, $tokenDigest, $normalizedCode, $now): array {
+        // The wrong-code branch below must not throw from inside this transaction:
+        // throwing here would roll back the very attempts increment it just wrote
+        // (the same class of bug fixed in requestOtp/resendOtp for send failures).
+        // So the transaction only ever returns a verdict, and the exception -- if
+        // any -- is thrown afterwards, once that verdict has committed.
+        $outcome = Transaction::run($this->database, function () use ($platform, $subjectDigest, $tokenDigest, $normalizedCode, $now): array {
             $row = $this->lockChallengeByToken($tokenDigest, $subjectDigest, $platform);
             if ($row['consumed_at'] !== null) {
                 throw new PlatformException('onboarding_challenge_used', 'Onboarding challenge was already used.', 409);
@@ -230,10 +235,7 @@ SQL);
                 $attempts++;
                 $this->database->prepare('UPDATE onboarding_phone_challenges SET attempts = :attempts, updated_at = UTC_TIMESTAMP(6) WHERE id = :id')
                     ->execute(['attempts' => $attempts, 'id' => (string) $row['id']]);
-                if ($attempts >= $maxAttempts) {
-                    throw new PlatformException('onboarding_otp_attempts_exceeded', 'Too many wrong attempts; request a new code.', 429);
-                }
-                throw new PlatformException('onboarding_otp_code_invalid', 'Verification code is incorrect.', 422);
+                return ['matched' => false, 'attempts' => $attempts, 'max_attempts' => $maxAttempts];
             }
 
             $consume = $this->database->prepare('UPDATE onboarding_phone_challenges SET consumed_at = UTC_TIMESTAMP(6), updated_at = UTC_TIMESTAMP(6) WHERE id = :id AND consumed_at IS NULL');
@@ -255,13 +257,22 @@ SQL);
             $upsert->bindValue(':phone_ciphertext', (string) $row['phone_ciphertext'], PDO::PARAM_LOB);
             $upsert->execute();
 
-            $this->audit->record(null, null, 'onboarding.otp.verify', 'onboarding_phone_challenge', (string) $row['id'], 'success', [
-                'platform' => $platform,
-                'phone_masked' => $this->mask($phone),
-            ]);
-
-            return ['verified' => true, 'phone_masked' => $this->mask($phone)];
+            return ['matched' => true, 'id' => (string) $row['id'], 'phone_masked' => $this->mask($phone)];
         });
+
+        if ($outcome['matched'] === false) {
+            if ($outcome['attempts'] >= $outcome['max_attempts']) {
+                throw new PlatformException('onboarding_otp_attempts_exceeded', 'Too many wrong attempts; request a new code.', 429);
+            }
+            throw new PlatformException('onboarding_otp_code_invalid', 'Verification code is incorrect.', 422);
+        }
+
+        $this->audit->record(null, null, 'onboarding.otp.verify', 'onboarding_phone_challenge', $outcome['id'], 'success', [
+            'platform' => $platform,
+            'phone_masked' => $outcome['phone_masked'],
+        ]);
+
+        return ['verified' => true, 'phone_masked' => $outcome['phone_masked']];
     }
 
     /** @return array{verified:bool,phone_masked:?string,verified_at:?string} */
