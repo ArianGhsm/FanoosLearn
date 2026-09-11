@@ -1,5 +1,7 @@
 # Workflow Migration 0 — Checkpoint
 
+> Historical reference. The local-first workflow in `docs/REBUILD_LOCAL_WORKFLOW.md` is now canonical for ordinary work. This checkpoint is retained only to explain the earlier GitHub-first governance and must not be treated as a current prerequisite.
+
 ## Goal
 
 Prepare FANOOS for GitHub-first development where ChatGPT performs primary source development/review/integration and Codex remains the runtime/deployment operator. No product feature is implemented by this migration.

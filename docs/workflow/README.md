@@ -1,13 +1,12 @@
-# Workflow Governance
+# Workflow references
 
-Use these files together:
+Use these files in this order:
 
-- `AGENTS.md` — repository-wide agent rules.
-- `docs/DEVELOPMENT_WORKFLOW.md` — GitHub-first ChatGPT development/integration model.
-- `docs/CODEX_RUNTIME_HANDOFF.md` — Codex runtime/deployment role and escalation boundary.
-- `contracts/REGISTRY.md` — shared contract ownership/freeze.
-- `docs/workflow/INTEGRATION_ONLY_PATHS.md` — central shared hotspots.
-- `docs/workflow/WORKER_MANIFEST_TEMPLATE.md` — template for each parallel worker.
-- `docs/workflow/WORKFLOW_MIGRATION_0.md` — migration checkpoint and baseline-freeze rule.
+- `AGENTS.md` — repository-wide safety, ownership and agent rules.
+- `docs/REBUILD_LOCAL_WORKFLOW.md` — concise local authoring → commit/push → later deployment hand-off.
+- `docs/DEVELOPMENT_WORKFLOW.md` — canonical workflow and release gates.
+- `docs/CODEX_RUNTIME_HANDOFF.md` — runtime/deployment role and escalation boundary.
+- `contracts/REGISTRY.md` — shared contract ownership and compatibility.
+- `docs/workflow/INTEGRATION_ONLY_PATHS.md` — central hotspots when a task really is coordinated.
 
-The final `PARALLEL_BASE_SHA` is the reviewed, CI-green merged `main` commit after Workflow Migration 0, not an arbitrary worker or migration-branch commit.
+`WORKER_MANIFEST_TEMPLATE.md` and `WORKFLOW_MIGRATION_0.md` are historical references for explicitly parallel work. They do not impose a `PARALLEL_BASE_SHA` or integration-chat ceremony on ordinary local tasks.

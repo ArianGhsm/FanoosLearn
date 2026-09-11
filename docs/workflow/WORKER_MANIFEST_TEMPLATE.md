@@ -1,5 +1,7 @@
 # Parallel Worker Manifest Template
 
+> Historical/optional template. Use only when a task explicitly requires coordinated parallel branches. Ordinary work follows `docs/REBUILD_LOCAL_WORKFLOW.md` and does not require a manifest or `PARALLEL_BASE_SHA`.
+
 Copy this template for each parallel workstream. Keep it short and concrete.
 
 ```text

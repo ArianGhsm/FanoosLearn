@@ -19,13 +19,13 @@ These rules apply to every coding/review agent working on this repository.
 
 ## 3. Development roles
 
-Primary development is performed through ChatGPT/GitHub branches:
+Primary development is performed in a local working copy and synchronized to the canonical GitHub repository:
 - architecture and implementation;
 - feature/refactor work;
-- code review;
-- contract work;
-- deterministic tests/CI;
-- integration.
+- contract work and deterministic tests/CI;
+- review and integration through normal protected branches.
+
+GitHub is the canonical coordination/release point, not a requirement to author ordinary work in the browser. Use the concise local loop in `docs/REBUILD_LOCAL_WORKFLOW.md`.
 
 Codex is primarily the runtime/deployment operator after integration:
 - exact-SHA checkout;
@@ -45,15 +45,14 @@ Codex may make only small, obvious, environment-specific fixes. Architectural, c
 Before any write, verify repository full name and current target ref.
 
 For normal single-task work:
-1. read current `main`/upstream state;
-2. branch from the intended immutable base SHA;
-3. make scoped changes;
-4. run/obtain applicable deterministic validation;
-5. commit and push;
-6. open/review a PR;
-7. merge only after required CI/review.
+1. verify the canonical repository, remote and clean target ref;
+2. fetch and fast-forward the intended base when the checkout is clean;
+3. create a short-lived `codex/...` or task branch and make scoped changes;
+4. run applicable deterministic validation and review the diff for secrets/runtime state;
+5. commit and push to the canonical remote;
+6. use normal review/branch protection before merging.
 
-For parallel work:
+For explicitly coordinated parallel work:
 - all worker branches start from the same `PARALLEL_BASE_SHA`;
 - workers never write directly to `main`;
 - workers do not merge or deploy;
