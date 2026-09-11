@@ -503,10 +503,12 @@ SQL);
             'notification.broadcast', 'audit.view',
         ];
         $managementAvailable = false;
+        $capabilities = [];
         foreach ($managementPermissions as $permission) {
-            if ($this->access->workspace($actorUserId, $workspaceId, $permission)->allowed) {
+            $allowed = $this->access->workspace($actorUserId, $workspaceId, $permission)->allowed;
+            $capabilities[$permission] = $allowed;
+            if ($allowed) {
                 $managementAvailable = true;
-                break;
             }
         }
 
@@ -522,6 +524,7 @@ SQL);
         return [
             'workspace_id' => $workspaceId,
             'management_available' => $managementAvailable,
+            'capabilities' => $capabilities,
             'sections' => $sections,
             'generated_at' => gmdate(DATE_ATOM),
         ];

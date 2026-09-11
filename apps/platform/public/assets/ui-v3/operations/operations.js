@@ -58,6 +58,28 @@ const FORM_TYPES = Object.freeze([
   ['boolean', 'بله / خیر'],
 ]);
 
+const CONTENT_TYPES = Object.freeze([
+  ['lecture_note', 'جزوه / یادداشت کامل'],
+  ['discipline_note', 'یادداشت ساختاریافته'],
+  ['summary', 'خلاصه'],
+  ['question_bank', 'بانک سؤال'],
+  ['past_exam', 'آزمون گذشته'],
+  ['flashcards', 'فلش‌کارت'],
+  ['audio', 'صوت / متن پیاده‌سازی‌شده'],
+  ['transcript', 'متن پیاده‌سازی‌شده'],
+  ['slide_reference', 'اسلاید / مرجع'],
+]);
+
+const CONTENT_STATUS_LABELS = Object.freeze({
+  draft: 'پیش‌نویس',
+  review: 'در انتظار بررسی',
+  approved: 'تأییدشده',
+  rejected: 'نیازمند اصلاح',
+  published: 'منتشرشده',
+  archived: 'بایگانی‌شده',
+  deleted: 'حذف‌شده',
+});
+
 function text(value, fallback = '') {
   if (value === null || value === undefined) return fallback;
   return String(value).normalize('NFKC').replace(/[\u202A-\u202E\u2066-\u2069]/g, '').trim();
@@ -143,7 +165,10 @@ function workspaceTimezone(ctx) {
   return text(ctx?.state?.workspace?.timezone_name || ctx?.state?.workspaceTimezone, 'UTC');
 }
 
-function hasCapability(ctx, permission) {
+function hasCapability(ctx, permission, projection = null) {
+  if (projection && typeof projection === 'object' && projection.capabilities && typeof projection.capabilities === 'object') {
+    return projection.capabilities[permission] === true;
+  }
   const capabilities = ctx?.capabilities;
   if (!capabilities) return false;
   if (typeof capabilities.has === 'function') return capabilities.has(permission) === true;
@@ -900,7 +925,7 @@ function formCreator(ctx, controller) {
   return form;
 }
 
-function memberTable(ctx, result, controller) {
+function memberTable(ctx, result, controller, dashboard = null) {
   if (!result?.ok) {
     return stateBlock('فهرست اعضا در دسترس نیست', result?.error?.status === 403 ? 'مجوز مشاهده اعضا برای این حساب وجود ندارد.' : 'دریافت اعضای فضای آموزشی انجام نشد.', { tone: 'warning' });
   }
@@ -914,7 +939,7 @@ function memberTable(ctx, result, controller) {
     element('span', { attrs: { role: 'columnheader' }, text: 'عملیات' }),
   ));
   rows.forEach((row) => {
-    const action = hasCapability(ctx, 'membership.manage')
+    const action = hasCapability(ctx, 'membership.manage', dashboard)
       ? button('نماینده شود', { variant: 'quiet', onClick: async (event) => {
         const control = event.currentTarget;
         control.disabled = true;
@@ -936,6 +961,174 @@ function memberTable(ctx, result, controller) {
     ));
   });
   return table;
+}
+
+function contentTypeLabel(value) {
+  const key = text(value).toLowerCase();
+  return CONTENT_TYPES.find(([candidate]) => candidate === key)?.[1] || 'منبع آموزشی';
+}
+
+function contentStatusLabel(value) {
+  return CONTENT_STATUS_LABELS[text(value).toLowerCase()] || 'وضعیت ثبت‌شده';
+}
+
+function academicCourses(result) {
+  const source = result?.ok ? result.data?.courses : null;
+  if (!Array.isArray(source)) return [];
+  const seen = new Set();
+  return source.map((row) => ({
+    id: text(row?.id || row?.course_id),
+    title: text(row?.title || row?.course_title, 'درس'),
+    code: text(row?.course_code || row?.code),
+  })).filter((row) => {
+    if (!row.id || seen.has(row.id)) return false;
+    seen.add(row.id);
+    return true;
+  });
+}
+
+function contentVersionId(row) {
+  return text(row?.latest_version_id || row?.current_version_id);
+}
+
+function contentVersionStatus(row) {
+  return text(row?.latest_version_status || row?.current_version_status || row?.lifecycle_status).toLowerCase();
+}
+
+function contentVersionHistory(ctx, result) {
+  if (!result?.ok) return stateBlock('نسخه‌ها دریافت نشدند', 'تاریخچه نسخهٔ این منبع فعلاً در دسترس نیست.', { tone: 'warning' });
+  const rows = rowsOf(result);
+  if (!rows.length) return stateBlock('نسخه‌ای ثبت نشده است', 'برای این منبع هنوز نسخهٔ قابل نمایش ثبت نشده است.');
+  const list = element('ol', { className: 'f3-ops-content-versions', attrs: { 'aria-label': 'تاریخچه نسخه‌های منبع' } });
+  rows.forEach((row) => {
+    const status = text(row.status).toLowerCase();
+    const content = text(row.content_preview, row.content_available === true ? 'محتوای ساختاریافته ثبت شده است.' : 'نسخهٔ فایل‌محور');
+    list.append(element('li', { className: 'f3-ops-content-version' },
+      element('div', { className: 'f3-ops-content-version__meta' },
+        element('strong', { text: `نسخه ${formatNumber(ctx, row.version_no)}` }),
+        statusChip(status, contentStatusLabel(status)),
+      ),
+      element('p', { text: `${content}${row.created_at ? ` · ایجاد ${formatDate(ctx, row.created_at, true)}` : ''}` }),
+    ));
+  });
+  return list;
+}
+
+function contentMutationButton(label, variant, onClick) {
+  return button(label, { variant, onClick });
+}
+
+function contentRowActions(ctx, row, dashboard, controller) {
+  const status = contentVersionStatus(row);
+  const versionId = contentVersionId(row);
+  const resourceId = text(row?.id || row?.resource_id);
+  const actions = element('div', { className: 'f3-ops-content-row__actions' });
+  const mutate = (label, variant, path, body = {}) => actions.append(contentMutationButton(label, variant, async (event) => {
+    const control = event.currentTarget;
+    control.disabled = true;
+    try {
+      await apiRequest(ctx, pathFor(ctx, path), { method: 'POST', body, signal: controller.signal });
+      notify(ctx, `${label} انجام شد.`, 'success');
+      await controller.render(ROUTES.management);
+    } catch (_error) {
+      control.disabled = false;
+      notify(ctx, `${label} انجام نشد.`, 'danger');
+    }
+  }));
+
+  if (versionId && resourceId && ['draft', 'rejected'].includes(status) && hasCapability(ctx, 'resource.create', dashboard)) {
+    mutate('ارسال برای بررسی', 'secondary', `/resources/${encodeURIComponent(resourceId)}/versions/${encodeURIComponent(versionId)}/review-request`);
+  }
+  if (versionId && resourceId && status === 'review' && hasCapability(ctx, 'resource.review', dashboard)) {
+    mutate('تأیید نسخه', 'primary', `/resources/${encodeURIComponent(resourceId)}/versions/${encodeURIComponent(versionId)}/review`, { decision: 'approved' });
+    mutate('بازگشت برای اصلاح', 'quiet', `/resources/${encodeURIComponent(resourceId)}/versions/${encodeURIComponent(versionId)}/review`, { decision: 'rejected', note: 'نیازمند اصلاح محتوایی' });
+  }
+  if (versionId && resourceId && status === 'approved' && hasCapability(ctx, 'resource.publish', dashboard)) {
+    mutate('انتشار نسخه', 'primary', `/resources/${encodeURIComponent(resourceId)}/versions/${encodeURIComponent(versionId)}/publish`);
+  }
+  if (!actions.childElementCount) actions.append(element('span', { className: 'f3-ops-muted', text: status === 'published' ? 'نسخهٔ فعلی منتشر شده است' : 'در انتظار گام بعدی' }));
+  return actions;
+}
+
+function contentQueue(ctx, result, dashboard, controller) {
+  if (!result?.ok) {
+    return stateBlock(result?.error?.status === 403 ? 'صف محتوا برای این حساب فعال نیست' : 'صف محتوا دریافت نشد', 'فهرست تولید و بررسی محتوا در دسترس نیست.', { tone: result?.error?.status === 403 ? 'warning' : 'danger' });
+  }
+  const rows = rowsOf(result);
+  if (!rows.length) return stateBlock('صف محتوا خالی است', 'پس از ساخت یک منبع، نسخه‌های آن در اینجا برای ارسال، بررسی و انتشار نمایش داده می‌شود.');
+  const list = element('div', { className: 'f3-ops-content-queue' });
+  rows.forEach((row) => {
+    const status = contentVersionStatus(row);
+    const title = text(row.title, 'منبع آموزشی');
+    const version = text(row.latest_version_no || row.current_version_no);
+    const versionPanel = element('div', { className: 'f3-ops-content-row__versions' });
+    const versionsButton = button('تاریخچه نسخه‌ها', { variant: 'quiet', onClick: async (event) => {
+      const control = event.currentTarget;
+      control.disabled = true;
+      versionPanel.replaceChildren(element('p', { className: 'f3-ops-inline-note', text: 'در حال دریافت تاریخچه…' }));
+      const history = await safeRead(ctx, pathFor(ctx, `/resources/${encodeURIComponent(text(row.id || row.resource_id))}/versions`), controller.signal);
+      if (!controller.signal.aborted) versionPanel.replaceChildren(contentVersionHistory(ctx, history));
+      control.disabled = false;
+    } });
+    list.append(element('article', { className: 'f3-ops-content-row' },
+      element('div', { className: 'f3-ops-content-row__main' },
+        element('div', { className: 'f3-ops-content-row__titleline' }, element('h3', { text: title }), statusChip(status, contentStatusLabel(status))),
+        element('p', { className: 'f3-ops-content-row__meta', text: `${contentTypeLabel(row.type_key)}${row.topic ? ` · ${text(row.topic)}` : ''}${version ? ` · نسخه ${formatNumber(ctx, version)}` : ''}` }),
+      ),
+      contentRowActions(ctx, row, dashboard, controller),
+      element('div', { className: 'f3-ops-content-row__history' }, versionsButton, versionPanel),
+    ));
+  });
+  return list;
+}
+
+function resourceComposer(ctx, coursesResult, controller) {
+  const form = element('form', { className: 'f3-ops-compact-form f3-ops-content-composer' });
+  const title = element('input', { attrs: { id: 'f3-ops-content-title', type: 'text', maxlength: '255', required: true } });
+  const type = element('select', { attrs: { id: 'f3-ops-content-type' } });
+  CONTENT_TYPES.forEach(([value, label]) => type.append(element('option', { text: label, attrs: { value } })));
+  const course = element('select', { attrs: { id: 'f3-ops-content-course' } });
+  course.append(element('option', { text: 'بدون اتصال به درس', attrs: { value: '' } }));
+  academicCourses(coursesResult).forEach((row) => course.append(element('option', { text: row.code ? `${row.title} · ${row.code}` : row.title, attrs: { value: row.id } })));
+  const topic = element('input', { attrs: { id: 'f3-ops-content-topic', type: 'text', maxlength: '200' } });
+  const body = element('textarea', { attrs: { id: 'f3-ops-content-body', rows: '8', maxlength: '50000', required: true } });
+  const submit = button('ساخت پیش‌نویس', { variant: 'primary', type: 'submit' });
+  const feedback = element('p', { className: 'f3-ops-form-feedback', attrs: { role: 'status', 'aria-live': 'polite' } });
+  form.append(
+    element('div', { className: 'f3-ops-field' }, element('label', { attrs: { for: 'f3-ops-content-title' }, text: 'عنوان منبع' }), title),
+    element('div', { className: 'f3-ops-content-form-grid' },
+      element('div', { className: 'f3-ops-field' }, element('label', { attrs: { for: 'f3-ops-content-type' }, text: 'نوع خروجی' }), type),
+      element('div', { className: 'f3-ops-field' }, element('label', { attrs: { for: 'f3-ops-content-course' }, text: 'درس' }), course),
+    ),
+    element('div', { className: 'f3-ops-field' }, element('label', { attrs: { for: 'f3-ops-content-topic' }, text: 'موضوع (اختیاری)' }), topic),
+    element('div', { className: 'f3-ops-field' }, element('label', { attrs: { for: 'f3-ops-content-body' }, text: 'متن ساختاریافته' }), body),
+    element('p', { className: 'f3-ops-inline-note', text: 'این فرم فقط پیش‌نویس ساختاریافته می‌سازد. ارسال برای بررسی و انتشار در صف پایین و با capability جداگانه انجام می‌شود.' }),
+    element('div', { className: 'f3-ops-form__footer' }, submit, feedback),
+  );
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!form.reportValidity()) return;
+    submit.disabled = true;
+    feedback.textContent = 'در حال ساخت پیش‌نویس…';
+    const metadata = { format_key: 'standard', access_level: 'workspace' };
+    if (course.value) metadata.course_id = course.value;
+    if (topic.value.trim()) metadata.topic = topic.value.trim();
+    try {
+      await apiRequest(ctx, pathFor(ctx, '/resources'), { method: 'POST', body: {
+        title: title.value.trim(), type: type.value,
+        content: { blocks: [{ kind: 'paragraph', text: body.value.trim() }] }, metadata,
+      }, signal: controller.signal });
+      form.reset();
+      feedback.textContent = 'پیش‌نویس ساخته شد و در صف محتوا قرار گرفت.';
+      notify(ctx, 'پیش‌نویس محتوا ساخته شد.', 'success');
+      await controller.render(ROUTES.management);
+    } catch (_error) {
+      feedback.textContent = 'ساخت پیش‌نویس انجام نشد.';
+    } finally {
+      submit.disabled = false;
+    }
+  });
+  return form;
 }
 
 function managementCount(ctx, dashboard, key) {
@@ -960,23 +1153,35 @@ async function renderManagement(ctx, dashboardResult, controller) {
     return;
   }
   const grid = element('div', { className: 'f3-ops-management-grid' });
-  if (hasCapability(ctx, 'notification.broadcast')) {
+  if (hasCapability(ctx, 'notification.broadcast', dashboard)) {
     grid.append(capabilityCard('announcement', 'انتشار اطلاعیه', 'انتشار مستقیم پیام رسمی برای اعضای فضای آموزشی', announcementComposer(ctx, controller)));
   }
-  if (hasCapability(ctx, 'form.manage')) {
+  if (hasCapability(ctx, 'form.manage', dashboard)) {
     grid.append(capabilityCard('form', 'ساخت فرم', `${managementCount(ctx, dashboard, 'forms') ? `${managementCount(ctx, dashboard, 'forms')} فرم ثبت‌شده · ` : ''}ساخت فرم با فیلدهای پشتیبانی‌شده`, formCreator(ctx, controller)));
   }
   const memberSectionAvailable = Object.prototype.hasOwnProperty.call(dashboard.sections || {}, 'members');
-  if (memberSectionAvailable || hasCapability(ctx, 'membership.manage')) {
+  if (memberSectionAvailable || hasCapability(ctx, 'membership.manage', dashboard)) {
     const members = await safeRead(ctx, pathFor(ctx, '/admin/members'), controller.signal);
     if (controller.signal.aborted) return;
-    grid.append(capabilityCard('users', 'اعضای فضای آموزشی', managementCount(ctx, dashboard, 'members') ? `${managementCount(ctx, dashboard, 'members')} عضو در دادهٔ مدیریتی` : 'مشاهده اعضا و عملیات مجاز نقش‌ها', memberTable(ctx, members, controller)));
+    grid.append(capabilityCard('users', 'اعضای فضای آموزشی', managementCount(ctx, dashboard, 'members') ? `${managementCount(ctx, dashboard, 'members')} عضو در دادهٔ مدیریتی` : 'مشاهده اعضا و عملیات مجاز نقش‌ها', memberTable(ctx, members, controller, dashboard)));
   }
-  if (hasCapability(ctx, 'resource.review') || hasCapability(ctx, 'resource.publish')) {
-    grid.append(capabilityCard('content', 'بررسی و انتشار محتوا', 'عملیات بررسی و انتشار در قرارداد سرور وجود دارد، اما فهرست فعلی شناسهٔ نسخهٔ در انتظار را ارائه نمی‌کند.',
-      stateBlock('صف بررسی به دادهٔ کامل‌تری نیاز دارد', 'تا وقتی سرور نسخهٔ هدف را به‌صورت مجاز و مشخص ارائه نکند، دکمهٔ تأیید یا انتشار ساخته نمی‌شود.', { tone: 'warning' })));
+  const contentCreate = hasCapability(ctx, 'resource.create', dashboard);
+  const contentReview = hasCapability(ctx, 'resource.review', dashboard);
+  const contentPublish = hasCapability(ctx, 'resource.publish', dashboard);
+  if (contentCreate || contentReview || contentPublish) {
+    const courses = contentCreate ? await safeRead(ctx, pathFor(ctx, '/academics'), controller.signal) : { ok: false };
+    const resources = await safeRead(ctx, pathFor(ctx, '/resources?sort=newest'), controller.signal);
+    if (controller.signal.aborted) return;
+    const queueDescription = contentReview || contentPublish
+      ? 'تولید، بازبینی مستقل و انتشار نسخه‌ها با وضعیت و capability سرور'
+      : 'ساخت پیش‌نویس و ارسال آن برای بررسی مستقل';
+    const queue = contentQueue(ctx, resources, dashboard, controller);
+    const contentBody = element('div', { className: 'f3-ops-content-workflow' });
+    if (contentCreate) contentBody.append(resourceComposer(ctx, courses, controller));
+    contentBody.append(queue);
+    grid.append(capabilityCard('content', 'تولید و چرخهٔ محتوای آموزشی', queueDescription, contentBody));
   }
-  if (hasCapability(ctx, 'payment.reconcile') || hasCapability(ctx, 'commerce.manage_catalog') || hasCapability(ctx, 'entitlement.grant')) {
+  if (hasCapability(ctx, 'payment.reconcile', dashboard) || hasCapability(ctx, 'commerce.manage_catalog', dashboard) || hasCapability(ctx, 'entitlement.grant', dashboard)) {
     grid.append(capabilityCard('wallet', 'تجارت و دسترسی', managementCount(ctx, dashboard, 'orders') ? `${managementCount(ctx, dashboard, 'orders')} سفارش در فضای آموزشی` : 'عملیات مالی و دسترسی',
       stateBlock('مدیریت مالی به دادهٔ عملیاتی مشخص نیاز دارد', 'فهرست سفارش‌های دانشجو، شناسهٔ لازم برای پیگیری پرداخت یا فهرست دسترسی‌های مدیریتی را برنمی‌گرداند؛ ورودی شناسهٔ فنی دستی نمایش داده نمی‌شود.', { tone: 'neutral' })));
   }

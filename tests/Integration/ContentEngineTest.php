@@ -58,6 +58,11 @@ final class ContentEngineTest
         self::assert($resourceA['resource_id'] !== $resourceB['resource_id'], 'Same-name resources collided across tenants.');
         self::assert(count($content->library($fixture['manager'], $fixture['workspace_a'], ['q' => 'منبع مشترک'])) === 1, 'Workspace A library did not isolate the same-name resource.');
         self::assert(count($content->library($fixture['manager'], $fixture['workspace_b'], ['q' => 'منبع مشترک'])) === 1, 'Workspace B library did not isolate the same-name resource.');
+        $libraryRow = $content->library($fixture['manager'], $fixture['workspace_a'], ['q' => 'منبع مشترک'])[0] ?? [];
+        self::assert(($libraryRow['latest_version_id'] ?? '') === $resourceA['version_id'] && ($libraryRow['latest_version_status'] ?? '') === 'draft', 'Producer library did not expose the current version workflow state.');
+        $versions = $content->versions($fixture['manager'], $fixture['workspace_a'], $resourceA['resource_id']);
+        self::assert(count($versions) === 1 && ($versions[0]['content_preview'] ?? '') !== '' && !array_key_exists('storage_key', $versions[0]), 'Scoped version history exposed the wrong projection.');
+        $this->expectPlatformException('forbidden', fn () => $content->versions($fixture['outsider'], $fixture['workspace_a'], $resourceA['resource_id']));
 
         $content->submitForReview($fixture['manager'], $fixture['workspace_a'], $resourceA['resource_id'], $resourceA['version_id']);
         $this->expectPlatformException('self_review_forbidden', fn () => $content->reviewVersion($fixture['manager'], $fixture['workspace_a'], $resourceA['resource_id'], $resourceA['version_id'], 'approved'));

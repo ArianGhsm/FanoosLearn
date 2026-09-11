@@ -198,7 +198,7 @@ function createFormatters() {
     try { return new Intl.DateTimeFormat('fa-IR-u-ca-persian', { ...options, timeZone: zone }).format(date); } catch (_error) { return ''; }
   };
   const statusMap = { scheduled: 'برنامه‌ریزی‌شده', completed: 'تکمیل‌شده', cancelled: 'لغوشده', active: 'فعال', published: 'منتشرشده', pending: 'در انتظار', paid: 'پرداخت تأیید شده', failed: 'ناموفق', expired: 'منقضی‌شده', revoked: 'لغوشده' };
-  const resourceMap = { lecture_note: 'جزوه', discipline_note: 'یادداشت درسی', summary: 'خلاصه', cheat_sheet: 'مرور سریع', flashcards: 'فلش‌کارت', question_bank: 'بانک سؤال', past_exam: 'آزمون گذشته', audio: 'صوت', other: 'منبع آموزشی' };
+  const resourceMap = { lecture_note: 'جزوه', discipline_note: 'یادداشت درسی', summary: 'خلاصه', cheat_sheet: 'مرور سریع', flashcards: 'فلش‌کارت', question_bank: 'بانک سؤال', past_exam: 'آزمون گذشته', audio: 'صوت', transcript: 'متن پیاده‌سازی‌شده', slide_reference: 'اسلاید / مرجع', other: 'منبع آموزشی' };
   const assessmentMap = { practice: 'تمرین', mock_exam: 'آزمون آزمایشی', past_exam: 'آزمون گذشته', quiz: 'آزمون کوتاه', exam: 'آزمون' };
   return Object.freeze({
     text: (value) => clean(value),

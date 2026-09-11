@@ -9,6 +9,8 @@ export const RESOURCE_TYPE_FILTERS = Object.freeze([
   ['past_exam', 'آزمون گذشته'],
   ['flashcards', 'فلش‌کارت'],
   ['audio', 'صوت'],
+  ['transcript', 'متن پیاده‌سازی‌شده'],
+  ['slide_reference', 'اسلاید / مرجع'],
   ['other', 'سایر منابع'],
 ]);
 
@@ -20,6 +22,7 @@ const RESOURCE_TYPE_LABELS = new Map([
   ['past_exam', 'آزمون گذشته'], ['past-exam', 'آزمون گذشته'], ['past_questions', 'آزمون گذشته'],
   ['flashcard', 'فلش‌کارت'], ['flashcards', 'فلش‌کارت'],
   ['audio', 'صوت'], ['podcast', 'صوت'],
+  ['transcript', 'متن پیاده‌سازی‌شده'], ['slide_reference', 'اسلاید / مرجع'], ['slides', 'اسلاید / مرجع'],
   ['video', 'ویدئو'],
   ['other', 'منبع'], ['file', 'منبع'], ['document', 'منبع'],
 ]);

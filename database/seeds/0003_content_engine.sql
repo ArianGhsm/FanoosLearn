@@ -25,7 +25,9 @@ INSERT INTO content_resource_types (id, type_key, name, status, created_at, upda
     (UUID(), 'discipline_note', 'Discipline note', 'active', NOW(6), NOW(6)),
     (UUID(), 'cheat_sheet', 'Cheat sheet', 'active', NOW(6), NOW(6)),
     (UUID(), 'flashcards', 'Flashcards', 'active', NOW(6), NOW(6)),
-    (UUID(), 'audio', 'Audio', 'active', NOW(6), NOW(6))
+    (UUID(), 'audio', 'Audio', 'active', NOW(6), NOW(6)),
+    (UUID(), 'transcript', 'Transcript', 'active', NOW(6), NOW(6)),
+    (UUID(), 'slide_reference', 'Slides and reference', 'active', NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     name = VALUES(name),
     status = VALUES(status),

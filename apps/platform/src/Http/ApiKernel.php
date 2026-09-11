@@ -220,12 +220,32 @@ final class ApiKernel
                 (string) ($request->body['title'] ?? ''), $payload, $metadata,
             )];
         }
+        if ($request->method === 'PATCH' && preg_match('#^/resources/([0-9a-f-]+)$#', $suffix, $match)) {
+            $metadata = is_array($request->body['metadata'] ?? null) ? $request->body['metadata'] : [];
+            $this->requireContent()->updateMetadata(
+                $session->userId, $workspaceId, $match[1], (string) ($request->body['title'] ?? ''), $metadata,
+            );
+            return ['status' => 200, 'data' => ['updated' => true]];
+        }
         if ($request->method === 'GET' && preg_match('#^/resources/([0-9a-f-]+)$#', $suffix, $match)) {
             return ['status' => 200, 'data' => $this->requireContent()->view($session->userId, $workspaceId, $match[1])];
+        }
+        if ($request->method === 'GET' && preg_match('#^/resources/([0-9a-f-]+)/versions$#', $suffix, $match)) {
+            return ['status' => 200, 'data' => $this->requireContent()->versions($session->userId, $workspaceId, $match[1])];
         }
         if ($request->method === 'POST' && preg_match('#^/resources/([0-9a-f-]+)/versions$#', $suffix, $match)) {
             $payload = is_array($request->body['content'] ?? null) ? $request->body['content'] : [];
             return ['status' => 201, 'data' => $this->requireContent()->addStructuredVersion($session->userId, $workspaceId, $match[1], $payload)];
+        }
+        if ($request->method === 'POST' && preg_match('#^/resources/([0-9a-f-]+)/versions/([0-9a-f-]+)/derive$#', $suffix, $match)) {
+            $payload = is_array($request->body['content'] ?? null) ? $request->body['content'] : [];
+            $metadata = is_array($request->body['metadata'] ?? null) ? $request->body['metadata'] : [];
+            return ['status' => 201, 'data' => $this->requireContent()->deriveResource(
+                $session->userId, $workspaceId, $match[1], $match[2],
+                (string) ($request->body['type'] ?? ''), (string) ($request->body['title'] ?? ''),
+                (string) ($request->body['transformation'] ?? ''), $payload, $metadata,
+                (string) ($request->body['producer'] ?? 'operator'),
+            )];
         }
         if ($request->method === 'POST' && preg_match('#^/resources/([0-9a-f-]+)/versions/([0-9a-f-]+)/review-request$#', $suffix, $match)) {
             $this->requireContent()->submitForReview($session->userId, $workspaceId, $match[1], $match[2]);

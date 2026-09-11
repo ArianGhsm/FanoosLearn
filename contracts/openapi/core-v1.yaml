@@ -104,14 +104,22 @@ paths:
   /workspaces/{workspaceId}/entitlements/check:
     get: { operationId: checkEntitlement, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: scope_id, in: query, required: true, schema: { $ref: '#/components/schemas/Uuid' } }], responses: { '200': { $ref: '#/components/responses/Success' } } }
   /workspaces/{workspaceId}/resources:
-    get: { operationId: listResourceLibrary, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+    get:
+      operationId: listResourceLibrary
+      description: Returns a workspace-scoped catalog. Producer/reviewer projections include safe version status and opaque version identifiers only; storage keys and private object paths are never returned.
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: q, in: query, schema: { type: string, minLength: 2, maxLength: 120 } }, { name: type, in: query, schema: { type: string, maxLength: 64 } }, { name: course_id, in: query, schema: { $ref: '#/components/schemas/Uuid' } }, { name: status, in: query, schema: { type: string, enum: [draft, review, published, archived, deleted] } }]
+      responses: { '200': { $ref: '#/components/responses/Success' } }
     post: { operationId: createStructuredResource, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' } } }
   /workspaces/{workspaceId}/resources/{resourceId}:
+    patch: { operationId: updateResourceMetadata, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/ResourceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } } }
     get: { operationId: viewAuthorizedResource, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/ResourceId' }], responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } } }
   /workspaces/{workspaceId}/resources/{resourceId}/authorize:
     get: { operationId: authorizeProtectedResource, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/ResourceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
   /workspaces/{workspaceId}/resources/{resourceId}/versions:
+    get: { operationId: listResourceVersions, description: Returns only version metadata and structured content for scoped producer/reviewer access; object storage addresses are excluded., parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/ResourceId' }], responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } } }
     post: { operationId: createResourceVersion, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/ResourceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/resources/{resourceId}/versions/{versionId}/derive:
+    post: { operationId: deriveResourceOutput, description: Creates a generated draft from an approved source version and records source/version/transformation lineage., parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/ResourceId' }, { $ref: '#/components/parameters/VersionId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '409': { $ref: '#/components/responses/Error' } } }
   /workspaces/{workspaceId}/resources/{resourceId}/versions/{versionId}/review-request:
     post: { operationId: requestResourceReview, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/ResourceId' }, { $ref: '#/components/parameters/VersionId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
   /workspaces/{workspaceId}/resources/{resourceId}/versions/{versionId}/review:
