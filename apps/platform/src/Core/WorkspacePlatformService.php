@@ -45,7 +45,7 @@ SQL);
             throw new PlatformException('workspace_not_found', 'Workspace was not found.', 404);
         }
 
-        $terms = $this->database->prepare("SELECT id, term_key, name, starts_on, ends_on, status FROM academic_terms WHERE workspace_id = :workspace AND archived_at IS NULL ORDER BY starts_on DESC");
+        $terms = $this->database->prepare("SELECT id, term_key, name, starts_on, ends_on, status FROM academic_terms WHERE workspace_id = :workspace AND status <> 'archived' AND archived_at IS NULL ORDER BY starts_on DESC");
         $terms->execute(['workspace' => $workspaceId]);
         $courses = $this->database->prepare(<<<'SQL'
 SELECT course.id, course.course_code, course.title, course.credit_value,
@@ -55,11 +55,12 @@ SELECT course.id, course.course_code, course.title, course.credit_value,
        session.starts_at, session.ends_at, session.status AS session_status
 FROM academic_courses course
 LEFT JOIN academic_course_offerings offering ON offering.course_id = course.id
- AND offering.workspace_id = course.workspace_id AND offering.archived_at IS NULL
+ AND offering.workspace_id = course.workspace_id AND offering.status <> 'archived' AND offering.archived_at IS NULL
 LEFT JOIN academic_terms term ON term.id = offering.term_id AND term.workspace_id = offering.workspace_id
+ AND term.status <> 'archived' AND term.archived_at IS NULL
 LEFT JOIN academic_course_sessions session ON session.offering_id = offering.id
- AND session.workspace_id = offering.workspace_id AND session.archived_at IS NULL
-WHERE course.workspace_id = :workspace AND course.archived_at IS NULL
+ AND session.workspace_id = offering.workspace_id AND session.status <> 'archived' AND session.archived_at IS NULL
+WHERE course.workspace_id = :workspace AND course.status = 'active' AND course.archived_at IS NULL
 ORDER BY course.title, offering.section_key, session.sequence_no
 SQL);
         $courses->execute(['workspace' => $workspaceId]);
@@ -82,9 +83,12 @@ SELECT event.id, event.event_type, event.title, event.starts_at, event.ends_at,
        course.course_code, course.title AS course_title
 FROM schedule_events event
 LEFT JOIN academic_course_offerings offering ON offering.id = event.offering_id AND offering.workspace_id = event.workspace_id
+ AND offering.status <> 'archived' AND offering.archived_at IS NULL
 LEFT JOIN academic_courses course ON course.id = offering.course_id AND course.workspace_id = offering.workspace_id
+ AND course.status = 'active' AND course.archived_at IS NULL
 WHERE event.workspace_id = :workspace
   AND event.starts_at >= :starts_at AND event.starts_at < :ends_at
+  AND (event.offering_id IS NULL OR offering.id IS NOT NULL)
   AND event.status <> 'cancelled'
 ORDER BY event.starts_at, event.id
 SQL);

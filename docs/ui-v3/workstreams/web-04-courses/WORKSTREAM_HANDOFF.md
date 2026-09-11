@@ -190,5 +190,6 @@ If a slot is not integrated, the course shell renders a truthful fallback and li
 - Public browser API remains the source for Website reads; internal HMAC service endpoints are not used by this module.
 - Course UUID and offering/session UUIDs stay presentation-internal and are never exposed as user labels or bookmark keys.
 - Backend remains authority for workspace isolation, `academic.view`, resource/exam/grade permissions, scoring and publication state.
+- Academic navigation and schedule projections exclude courses, offerings, terms and sessions whose canonical status is `archived`, even when legacy data has a missing `archived_at`; course availability remains workspace-scoped.
 - The V3 foundation keeps the Design Lock token names or compatible CSS variables. This module supplies Design Lock fallback values but defines no global/raw-element styles.
 - The shell must avoid rendering a second H1 around the mounted Course destination, or adapt the module page heading during integration so each route retains one semantic H1.

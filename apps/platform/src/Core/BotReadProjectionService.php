@@ -33,9 +33,10 @@ SELECT course.id AS course_id, course.course_code, course.title AS course_title,
        term.id AS term_id, term.term_key, term.name AS term_name
 FROM academic_courses course
 LEFT JOIN academic_course_offerings offering ON offering.course_id = course.id
- AND offering.workspace_id = course.workspace_id AND offering.archived_at IS NULL
+ AND offering.workspace_id = course.workspace_id AND offering.status <> 'archived' AND offering.archived_at IS NULL
 LEFT JOIN academic_terms term ON term.id = offering.term_id AND term.workspace_id = offering.workspace_id
-WHERE course.workspace_id = :workspace AND course.archived_at IS NULL
+ AND term.status <> 'archived' AND term.archived_at IS NULL
+WHERE course.workspace_id = :workspace AND course.status = 'active' AND course.archived_at IS NULL
 ORDER BY course.title, course.id, offering.section_key
 LIMIT :limit OFFSET :offset
 SQL);
@@ -70,9 +71,12 @@ SELECT event.id, event.event_type, event.title, event.starts_at, event.ends_at,
        course.id AS course_id, course.course_code, course.title AS course_title
 FROM schedule_events event
 LEFT JOIN academic_course_offerings offering ON offering.id = event.offering_id AND offering.workspace_id = event.workspace_id
+ AND offering.status <> 'archived' AND offering.archived_at IS NULL
 LEFT JOIN academic_courses course ON course.id = offering.course_id AND course.workspace_id = offering.workspace_id
+ AND course.status = 'active' AND course.archived_at IS NULL
 WHERE event.workspace_id = :workspace
   AND event.starts_at >= :starts_at AND event.starts_at < :ends_at
+  AND (event.offering_id IS NULL OR offering.id IS NOT NULL)
   AND event.status <> 'cancelled'
 ORDER BY event.starts_at, event.id
 LIMIT :limit OFFSET :offset
