@@ -107,6 +107,7 @@ class ProtectedDeliveryState(str, Enum):
     READY = "ready"
     EXPIRED = "expired"
     DENIED = "denied"
+    UNAVAILABLE = "unavailable"
     UNSUPPORTED_CHANNEL = "unsupported_channel"
     TEMPORARY_FAILURE = "temporary_failure"
 
@@ -168,6 +169,16 @@ def _resource_type(item: Mapping[str, Any]) -> str:
         or ""
     ).strip().lower()
     return _RESOURCE_TYPES.get(key, _clean(key.replace("_", " "), 40) or "منبع آموزشی")
+
+
+def _access_state_key(item: Mapping[str, Any]) -> str:
+    explicit = item.get("access_state") or item.get("entitlement_status")
+    if explicit:
+        return str(explicit).strip().lower()
+    granted = item.get("access_granted", True)
+    if isinstance(granted, str):
+        granted = granted.strip().lower() in {"1", "true", "yes", "active", "granted"}
+    return "active" if granted else "denied"
 
 
 def _params(payload: Mapping[str, Any] | None) -> tuple[tuple[str, str], ...]:
@@ -313,6 +324,9 @@ def resource_hub_screen(
     recent: bool = False,
     canonical_courses: Sequence[Mapping[str, Any]] = (),
     canonical_types: Sequence[str] = (),
+    previous_history: Sequence[str] = (),
+    next_history: Sequence[str] = (),
+    filter_payload: Mapping[str, Any] | None = None,
 ) -> Screen:
     """Build a bounded resource library from the authorized bot catalog."""
     raw_items = [item for item in projection.get("items", ()) if isinstance(item, Mapping)][:8]
@@ -323,13 +337,16 @@ def resource_hub_screen(
         title = _clean(entry.get("title") or "منبع آموزشی", 105)
         course = _clean(entry.get("course_title"), 70)
         kind = _resource_type(entry)
-        status = "قابل دریافت" if entry.get("delivery_supported") else "اطلاعات منبع"
+        access_key = _access_state_key(entry)
+        marker = "⛔" if access_key in {"denied", "none", "revoked", "expired"} else (
+            "🔒" if entry.get("delivery_supported") else "📄"
+        )
         display.append(
             _item(
                 title,
                 description=" · ".join(value for value in (course, kind) if value),
                 meta="نسخهٔ جاری مجاز" if entry.get("resource_version_id") else "",
-                marker="🔒" if entry.get("delivery_supported") else "📄",
+                marker=marker,
             )
         )
         if resource_id and len(open_actions) < 6:
@@ -353,7 +370,12 @@ def resource_hub_screen(
         filter_actions.append(_action("نوع", LearningIntent.RESOURCES_FILTER_TYPE))
     if filter_actions:
         rows.append(_row(*filter_actions[:2]))
-    rows.append(_row(_action("تازه‌ها", LearningIntent.RESOURCES_RECENT)))
+    recent_payload = dict(filter_payload or {})
+    if recent:
+        recent_payload["recent"] = "0"
+    else:
+        recent_payload["recent"] = "1"
+    rows.append(_row(_action("تازه‌ها", LearningIntent.RESOURCES_RECENT, payload=recent_payload)))
     rows.extend(_pair_rows(open_actions))
     rows.extend(_back_home_rows(LearningIntent.BACK))
 
@@ -368,8 +390,24 @@ def resource_hub_screen(
     )
     pager = _pagination(
         page=page,
-        previous_payload={"cursor": previous_cursor or ""} if previous_cursor is not None else None,
-        next_payload={"cursor": next_cursor} if next_cursor else None,
+        previous_payload=(
+            {
+                "cursor": previous_cursor or "",
+                "history": ",".join(str(value) or "~" for value in previous_history),
+                **dict(filter_payload or {}),
+            }
+            if previous_cursor is not None
+            else None
+        ),
+        next_payload=(
+            {
+                "cursor": next_cursor,
+                "history": ",".join(str(value) or "~" for value in next_history),
+                **dict(filter_payload or {}),
+            }
+            if next_cursor
+            else None
+        ),
         previous_intent=LearningIntent.RESOURCES_PAGE_PREVIOUS,
         next_intent=LearningIntent.RESOURCES_PAGE_NEXT,
     )
@@ -388,6 +426,7 @@ def resource_detail_screen(
     resource: Mapping[str, Any],
     *,
     canonical_protected_state: str | None = None,
+    access_state: str | None = None,
     web_url: str | None = None,
 ) -> Screen:
     """Resource detail; raw IDs remain callback correlation only."""
@@ -395,10 +434,16 @@ def resource_detail_screen(
     resource_id = str(resource.get("resource_id") or "")
     version_id = str(resource.get("resource_version_id") or "")
     course = _clean(resource.get("course_title"), 80)
+    raw_access = (
+        str(access_state).strip().lower()
+        if access_state
+        else _access_state_key(resource)
+    )
+    access_label = _ACCESS_STATES.get(raw_access, "وضعیت نامشخص")
     facts = [
         _fact("نوع", _resource_type(resource)),
         _fact("نسخه", "نسخهٔ جاری مجاز" if version_id else "اطلاعات نسخه در دسترس نیست"),
-        _fact("دسترسی", "فعال برای این حساب"),
+        _fact("دسترسی", access_label),
     ]
     if course:
         facts.insert(0, _fact("درس", course))
@@ -422,7 +467,14 @@ def resource_detail_screen(
         details.append(_fact("فرمت", format_key.upper() if format_key.isascii() else format_key))
 
     rows: list[ActionRow] = []
-    if bool(resource.get("delivery_supported")) and resource_id:
+    has_access_state = any(
+        resource.get(key) is not None
+        for key in ("access_state", "entitlement_status", "access_granted")
+    )
+    can_deliver = bool(resource.get("delivery_supported")) and (
+        not has_access_state or raw_access in {"active", "granted"}
+    )
+    if can_deliver and resource_id:
         rows.append(
             _row(
                 _action(
@@ -449,7 +501,7 @@ def resource_detail_screen(
         rows=rows,
         footer=(
             "برای این منبع تحویل مستقیم در پیام‌رسان ارائه نشده است."
-            if not resource.get("delivery_supported")
+            if not can_deliver
             else "مجوز دریافت هنگام اقدام دوباره در backend بررسی می‌شود."
         ),
     )
@@ -524,6 +576,12 @@ def protected_delivery_screen(
         severity = Severity.WARNING
         if safe_web:
             rows.append(_row(_action("🌐 دریافت امن در فانوس", LearningIntent.PROTECTED_OPEN_RESOURCE, url=safe_web)))
+    elif resolved is ProtectedDeliveryState.UNAVAILABLE:
+        title = "⚠️ محتوا در دسترس نیست"
+        intro = f"نسخهٔ قابل تحویل «{resource_title}» فعلاً در دسترس نیست."
+        body = "دادهٔ محلی یا نسخهٔ بدون حفاظت جایگزین نمی‌شود؛ بعداً دوباره بررسی کنید."
+        severity = Severity.WARNING
+        rows.append(_row(_action("🔄 تلاش دوباره", LearningIntent.PROTECTED_RETRY, payload=payload)))
     else:
         title = "❌ دریافت موقتاً انجام نشد"
         intro = "سرویس دریافت امن موقتاً پاسخ قابل اتکا نداد."

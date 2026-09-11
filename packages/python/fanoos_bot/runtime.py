@@ -80,10 +80,10 @@ class BotRuntime:
         if command == "/forms": return self.app.forms(ctx.subject)
         if command == "/resources": return self.app.resources(ctx.subject)
         if command == "/buy":
-            return self.app.create_order(
-                ctx.subject, arg,
-                f"bot-order:{self.platform}:{ctx.event_id}" if ctx.event_id else None,
-            )
+            # Product IDs are an implementation detail. Purchase starts from
+            # the canonical catalog/website handoff; order creation remains a
+            # backend-owned technical method for already-integrated callers.
+            return self.app.payments(ctx.subject)
         if command == "/order": return self.app.order_status(ctx.subject, arg)
         if command == "/resource": return self.app.protected_resource(ctx.subject, arg)
         if command == "/update_server": return self.app.update_begin(ctx.subject, ctx.private)

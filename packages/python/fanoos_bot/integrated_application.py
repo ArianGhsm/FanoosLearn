@@ -8,7 +8,7 @@ from .application import ApplicationConfig, BotApplication as BaseBotApplication
 from .api import FanoosApiError
 from .callbacks import CallbackCodec
 from .formatting import format_human_number, format_time, is_uuid, truncate_text
-from .localization import platform_label
+from .localization import platform_label, resource_type_label
 from .models import ActionResult, Screen as RuntimeScreen
 from .ui_v3.academic import (
     ANNOUNCEMENT_PAGE_SIZE,
@@ -36,17 +36,25 @@ from .ui_v3.core.home import HomeSlot, SlotState, active_home_screen
 from .ui_v3.core.onboarding import linked_no_workspace_screen, unlinked_account_screen
 from .ui_v3.core.workspace import WorkspaceOption, no_workspace_screen, workspace_list_screen
 from .ui_v3.learning import (
+    assessment_course_filter_screen,
+    assessment_detail_screen,
     assessment_hub_screen,
+    assessment_state_filter_screen,
     commerce_hub_screen,
+    domain_state_screen,
     form_detail_screen,
     forms_hub_screen,
     order_access_detail_screen,
+    resource_course_filter_screen,
     resource_detail_screen,
+    resource_hub_screen,
+    resource_type_filter_screen,
 )
 from .ui_v3.wiring import core_to_runtime, decode_v3_intent, dispatch_v3_intent
 
 COURSE_PAGE_SIZE = 8
 WORKSPACE_PAGE_SIZE = 5
+RESOURCE_PAGE_SIZE = 12
 _EMPTY_HISTORY_CURSOR = "~"
 _OWNER_ALLOWED_KINDS = {
     "management",
@@ -841,18 +849,205 @@ class BotApplication(BaseBotApplication):
                 return blocked
             item = self._find_resource(subject, workspace_id, resource_id)
             if not item:
-                return super().resource_detail(subject, resource_id)
+                return self._v3_result(
+                    domain_state_screen(
+                        "resources",
+                        state="unavailable",
+                        web_url=self.config.web_base_url or None,
+                    )
+                )
             return self._v3_result(
-                resource_detail_screen(item, web_url=self.config.web_base_url or None)
+                resource_detail_screen(
+                    item,
+                    access_state=(
+                        str(item.get("access_state") or item.get("entitlement_status"))
+                        if item.get("access_state") or item.get("entitlement_status")
+                        else None
+                    ),
+                    web_url=self.config.web_base_url or None,
+                )
             )
         except Exception as exc:
             return self._error(exc)
 
-    def assessments(self, subject: str):
+    @staticmethod
+    def _projection_items(projection: Any) -> list[dict]:
+        values = projection.get("items") if isinstance(projection, dict) else projection
+        return [item for item in (values or ()) if isinstance(item, dict)]
+
+    @staticmethod
+    def _safe_filter_key(value: object) -> str | None:
+        raw = str(value or "").strip().lower()
+        if not raw or len(raw) > 48 or any(char not in "abcdefghijklmnopqrstuvwxyz0123456789_-" for char in raw):
+            return None
+        return raw
+
+    def _resource_type_key(self, item: dict) -> str:
+        return str(
+            item.get("type_key")
+            or item.get("resource_type")
+            or item.get("type")
+            or item.get("kind")
+            or ""
+        ).strip().lower()
+
+    def _resource_options(self, subject: str, workspace_id: str, items: list[dict]):
+        """Return only labels/options observed in authorized canonical data."""
         try:
-            _, _, blocked = self._workspace_or_result(subject)
+            courses = self._courses(subject, workspace_id)
+        except Exception:
+            courses = []
+        if not courses:
+            courses = [
+                {
+                    "course_id": item.get("course_id"),
+                    "course_title": item.get("course_title") or item.get("course"),
+                    "course_code": item.get("course_code"),
+                }
+                for item in items
+                if is_uuid(item.get("course_id")) and (item.get("course_title") or item.get("course"))
+            ]
+        types: list[str] = []
+        for item in items:
+            key = self._resource_type_key(item)
+            if key and key not in types:
+                types.append(key)
+        return courses, types
+
+    def resources(
+        self,
+        subject: str,
+        cursor: str | None = None,
+        history: list[str] | str | None = None,
+        *,
+        course_id: str | None = None,
+        type_key: str | None = None,
+        recent: bool = False,
+    ):
+        """Render the authorized resource projection with provider-neutral filters."""
+        try:
+            projection, workspace_id, blocked = self._workspace_or_result(subject)
             if blocked:
                 return blocked
+            if cursor is not None and self._clean_cursor(cursor) is None:
+                return self._expired_route()
+            if course_id and not is_uuid(course_id):
+                return self._expired_route()
+            normalized_type = self._safe_filter_key(type_key) if type_key else None
+            if type_key and normalized_type is None:
+                return self._expired_route()
+
+            response = self.backend.resources(
+                self.platform, subject, workspace_id, RESOURCE_PAGE_SIZE, cursor
+            )
+            items = self._projection_items(response)
+            if course_id:
+                items = [item for item in items if str(item.get("course_id") or "") == course_id]
+            if normalized_type:
+                items = [item for item in items if self._resource_type_key(item) == normalized_type]
+            if recent:
+                # Ordering is presentation-only; membership and publication remain backend-owned.
+                items.sort(
+                    key=lambda item: str(
+                        item.get("published_at") or item.get("created_at") or item.get("updated_at") or ""
+                    ),
+                    reverse=True,
+                )
+
+            courses, types = self._resource_options(subject, workspace_id, self._projection_items(response))
+            course_label = ""
+            if course_id:
+                course = next((value for value in courses if str(value.get("course_id") or "") == course_id), None)
+                course_label = str((course or {}).get("course_title") or (course or {}).get("title") or "درس")
+            type_label = resource_type_label(normalized_type) if normalized_type else ""
+            history_values = self._route_history(history)
+            previous_cursor = history_values[-1] if history_values else None
+            next_cursor = self._clean_cursor(response.get("next_cursor")) if isinstance(response, dict) else None
+            next_history = history_values + [cursor or ""]
+            filter_payload = {
+                key: value
+                for key, value in {
+                    "course": course_id,
+                    "type": normalized_type,
+                    "recent": "1" if recent else None,
+                }.items()
+                if value
+            }
+            return self._v3_result(
+                resource_hub_screen(
+                    {"items": items},
+                    page=len(history_values) + 1,
+                    previous_cursor=previous_cursor,
+                    next_cursor=next_cursor,
+                    course_label=course_label,
+                    type_label=type_label,
+                    recent=recent,
+                    canonical_courses=courses,
+                    canonical_types=types,
+                    previous_history=history_values[:-1],
+                    next_history=next_history,
+                    filter_payload=filter_payload,
+                )
+            )
+        except Exception as exc:
+            return self._error(exc)
+
+    def _optional_projection(self, subject: str, workspace_id: str, names: tuple[str, ...]):
+        """Read a future bot-safe projection without inventing a fallback authority."""
+        for name in names:
+            method = getattr(self.backend, name, None)
+            if not callable(method):
+                continue
+            for args in (
+                (self.platform, subject, workspace_id, 100, None),
+                (self.platform, subject, workspace_id),
+                (subject, workspace_id),
+            ):
+                try:
+                    return method(*args)
+                except TypeError:
+                    continue
+        return None
+
+    def assessments(
+        self,
+        subject: str,
+        *,
+        course_id: str | None = None,
+        state: str | None = None,
+    ):
+        try:
+            _, workspace_id, blocked = self._workspace_or_result(subject)
+            if blocked:
+                return blocked
+            if course_id and not is_uuid(course_id):
+                return self._expired_route()
+            state_key = self._safe_filter_key(state) if state else None
+            if state and state_key is None:
+                return self._expired_route()
+            projection = self._optional_projection(
+                subject, workspace_id, ("assessments", "assessment_catalog", "exam_assessments")
+            )
+            if projection is not None:
+                items = self._projection_items(projection)
+                if course_id:
+                    items = [item for item in items if str(item.get("course_id") or "") == course_id]
+                if state_key:
+                    items = [
+                        item
+                        for item in items
+                        if str(item.get("state") or item.get("status") or "").strip().lower() == state_key
+                    ]
+                course_label = ""
+                if course_id:
+                    course_label = str(next((item.get("course_title") for item in items if item.get("course_title")), "درس"))
+                return self._v3_result(
+                    assessment_hub_screen(
+                        items,
+                        course_label=course_label,
+                        web_url=self.config.web_base_url or None,
+                    )
+                )
             return self._v3_result(
                 assessment_hub_screen(None, web_url=self.config.web_base_url or None)
             )
@@ -864,6 +1059,27 @@ class BotApplication(BaseBotApplication):
             _, selected = self._selected(subject)
             if not selected:
                 return super().payments(subject)
+            projection = self._optional_projection(
+                subject,
+                selected,
+                ("commerce_projection", "commerce", "commerce_catalog", "catalog"),
+            )
+            if isinstance(projection, dict):
+                order_summary = projection.get("orders") or projection.get("order_summary")
+                access_summary = (
+                    projection.get("access")
+                    or projection.get("access_summary")
+                    or projection.get("entitlements")
+                )
+                catalog = projection.get("catalog") or projection.get("products")
+                return self._v3_result(
+                    commerce_hub_screen(
+                        order_summary=order_summary if isinstance(order_summary, (list, tuple)) else None,
+                        access_summary=access_summary if isinstance(access_summary, (list, tuple)) else None,
+                        catalog=catalog if isinstance(catalog, (list, tuple)) else None,
+                        web_url=self.config.web_base_url or None,
+                    )
+                )
             return self._v3_result(
                 commerce_hub_screen(
                     order_summary=None,
@@ -876,6 +1092,8 @@ class BotApplication(BaseBotApplication):
             return self._error(exc)
 
     def order_status(self, subject: str, order_id: str):
+        if not is_uuid(order_id):
+            return self._expired_route()
         try:
             _, workspace_id = self._selected(subject)
             if not workspace_id:
@@ -890,6 +1108,35 @@ class BotApplication(BaseBotApplication):
                     payment_url=order.get("payment_url"),
                     web_url=self.config.web_base_url or None,
                 )
+            )
+        except Exception as exc:
+            return self._error(exc)
+
+    def assessment_detail(self, subject: str, assessment_id: str):
+        if not is_uuid(assessment_id):
+            return self._expired_route()
+        try:
+            _, workspace_id, blocked = self._workspace_or_result(subject)
+            if blocked:
+                return blocked
+            projection = self._optional_projection(
+                subject, workspace_id, ("assessments", "assessment_catalog", "exam_assessments")
+            )
+            items = self._projection_items(projection) if projection is not None else []
+            item = next(
+                (
+                    value
+                    for value in items
+                    if str(value.get("assessment_id") or value.get("id") or "") == assessment_id
+                ),
+                None,
+            )
+            if item is None:
+                return self._v3_result(
+                    assessment_hub_screen(None, web_url=self.config.web_base_url or None)
+                )
+            return self._v3_result(
+                assessment_detail_screen(item, web_url=self.config.web_base_url or None)
             )
         except Exception as exc:
             return self._error(exc)
@@ -934,6 +1181,86 @@ class BotApplication(BaseBotApplication):
                     params.get("announcement_id", ""),
                     params.get("course_id") or None,
                 )
+            if name == "learning.resources.filter.course":
+                try:
+                    _, workspace_id, blocked = self._workspace_or_result(subject)
+                    if blocked:
+                        return blocked
+                    projection = self.backend.resources(
+                        self.platform, subject, workspace_id, RESOURCE_PAGE_SIZE, None
+                    )
+                    courses, _ = self._resource_options(
+                        subject, workspace_id, self._projection_items(projection)
+                    )
+                    return self._v3_result(resource_course_filter_screen(courses))
+                except Exception as exc:
+                    return self._error(exc)
+            if name == "learning.resources.filter.type":
+                try:
+                    _, workspace_id, blocked = self._workspace_or_result(subject)
+                    if blocked:
+                        return blocked
+                    projection = self.backend.resources(
+                        self.platform, subject, workspace_id, RESOURCE_PAGE_SIZE, None
+                    )
+                    _, types = self._resource_options(
+                        subject, workspace_id, self._projection_items(projection)
+                    )
+                    return self._v3_result(resource_type_filter_screen(types))
+                except Exception as exc:
+                    return self._error(exc)
+            if name in {"learning.resources.apply.course", "learning.resources.apply.type"}:
+                return self.resources(
+                    subject,
+                    course_id=params.get("course") if name.endswith("course") else None,
+                    type_key=params.get("type") if name.endswith("type") else None,
+                )
+            if name == "learning.resources.recent":
+                recent_value = params.get("recent")
+                recent = recent_value != "0"
+                return self.resources(
+                    subject,
+                    course_id=params.get("course") or None,
+                    type_key=params.get("type") or None,
+                    recent=recent,
+                )
+            if name in {"learning.resources.page.previous", "learning.resources.page.next"}:
+                return self.resources(
+                    subject,
+                    self._clean_cursor(params.get("cursor")),
+                    params.get("history", ""),
+                    course_id=params.get("course") or None,
+                    type_key=params.get("type") or None,
+                    recent=params.get("recent") == "1",
+                )
+            if name == "learning.assessments.filter.course":
+                try:
+                    _, workspace_id, blocked = self._workspace_or_result(subject)
+                    if blocked:
+                        return blocked
+                    return self._v3_result(assessment_course_filter_screen(self._courses(subject, workspace_id)))
+                except Exception as exc:
+                    return self._error(exc)
+            if name == "learning.assessments.filter.state":
+                return self._v3_result(
+                    assessment_state_filter_screen(
+                        (
+                            {"value": "active", "label": "فعال"},
+                            {"value": "upcoming", "label": "پیش‌رو"},
+                            {"value": "practice", "label": "تمرینی"},
+                            {"value": "completed", "label": "تکمیل‌شده"},
+                        )
+                    )
+                )
+            if name == "learning.assessments.apply.course":
+                return self.assessments(subject, course_id=params.get("course") or None)
+            if name == "learning.assessments.apply.state":
+                return self.assessments(subject, state=params.get("state") or None)
+            if name == "learning.assessment.open":
+                return self.assessment_detail(subject, params.get("assessment") or "")
+            if name in {"learning.order.open", "learning.order.refresh"}:
+                order_id = params.get("order") or ""
+                return self.order_status(subject, order_id) if order_id else self.payments(subject)
             return dispatch_v3_intent(self, subject, private, name, params)
 
         try:
