@@ -4,11 +4,28 @@ from datetime import datetime, timedelta, timezone
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from fanoos_bot.integrated_application import ApplicationConfig, BotApplication
 from fanoos_bot.state import LocalState
 from fanoos_bot.ui_v3.core import Screen as CoreScreen
 from fanoos_bot.ui_v3.wiring import core_to_runtime
+
+
+# Fixed reference instant for the today/tomorrow schedule test below, so it does
+# not depend on the real system clock. The bot computes "today" in the
+# workspace's local timezone (Asia/Tehran, UTC+03:30), not UTC; near the last
+# ~3.5 hours of any UTC calendar day, Tehran has already rolled over to the
+# next date, so a fixture built from real datetime.now(timezone.utc).date()
+# drifted out of sync with the bot's own local-date computation and made this
+# test fail depending on what time of day it happened to run.
+FROZEN_NOW = datetime(2027, 3, 1, 9, 0, 0, tzinfo=timezone.utc)
+
+
+class _FrozenDateTime(datetime):
+    @classmethod
+    def now(cls, tz=None):
+        return FROZEN_NOW.astimezone(tz) if tz is not None else FROZEN_NOW.replace(tzinfo=None)
 
 
 WORKSPACE = "11111111-1111-4111-8111-111111111111"
@@ -227,25 +244,27 @@ class AcademicJourneysTest(unittest.TestCase):
         self.assertEqual(identifier(foreign.screen), "academic.course.unavailable")
 
     def test_schedule_today_tomorrow_course_filter_and_event_detail(self):
-        today = self.telegram.day_schedule("student", 0)
-        tomorrow = self.telegram.day_schedule("student", 1)
-        self.assertIn("کلاس زیست", text(today.screen))
-        self.assertNotIn("کارگاه فردا", text(today.screen))
-        self.assertIn("کارگاه فردا", text(tomorrow.screen))
-        self.assertIn("منطقه زمانی فضای آموزشی", text(today.screen))
-        course_schedule = self.telegram.course_schedule("student", COURSE)
-        self.assertIn("برنامه درس", text(course_schedule.screen))
-        self.assertIn("کلاس زیست", text(course_schedule.screen))
-        event_action = next(
-            action
-            for row in course_schedule.screen.action_rows
-            for action in row.actions
-            if action.identifier == "academic.schedule.event.open"
-        )
-        detail = self.telegram.callback("student", True, callback(event_action))
-        self.assertEqual(identifier(detail.screen), "academic.schedule.event.detail")
-        self.assertIn("ساختمان فانوس", text(detail.screen))
-        self.assertNotIn(EVENT, text(detail.screen))
+        with mock.patch("fanoos_bot.application.datetime", _FrozenDateTime), \
+                mock.patch(f"{__name__}.datetime", _FrozenDateTime):
+            today = self.telegram.day_schedule("student", 0)
+            tomorrow = self.telegram.day_schedule("student", 1)
+            self.assertIn("کلاس زیست", text(today.screen))
+            self.assertNotIn("کارگاه فردا", text(today.screen))
+            self.assertIn("کارگاه فردا", text(tomorrow.screen))
+            self.assertIn("منطقه زمانی فضای آموزشی", text(today.screen))
+            course_schedule = self.telegram.course_schedule("student", COURSE)
+            self.assertIn("برنامه درس", text(course_schedule.screen))
+            self.assertIn("کلاس زیست", text(course_schedule.screen))
+            event_action = next(
+                action
+                for row in course_schedule.screen.action_rows
+                for action in row.actions
+                if action.identifier == "academic.schedule.event.open"
+            )
+            detail = self.telegram.callback("student", True, callback(event_action))
+            self.assertEqual(identifier(detail.screen), "academic.schedule.event.detail")
+            self.assertIn("ساختمان فانوس", text(detail.screen))
+            self.assertNotIn(EVENT, text(detail.screen))
 
     def test_grades_group_published_only_and_pagination(self):
         first = self.telegram.grades("student")

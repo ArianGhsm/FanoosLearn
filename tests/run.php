@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use Fanoos\Platform\Support\DatabaseConnection;
 use Fanoos\Tests\Core\ClassProvisioningTest;
+use Fanoos\Tests\Core\OnboardingDirectoryTest;
+use Fanoos\Tests\Core\OnboardingPhoneVerificationTest;
 use Fanoos\Tests\Integration\TenantIsolationTest;
 use Fanoos\Tests\Integration\MigrationSafetyTest;
 use Fanoos\Tests\Integration\CorePlatformTest;
@@ -73,6 +75,10 @@ try {
         echo "PASS Stage 7 deployment control-plane scenarios\n";
         $assertions += (new ClassProvisioningTest($database))->run();
         echo "PASS owner class provisioning scenarios\n";
+        $assertions += (new OnboardingDirectoryTest($database, $root))->run();
+        echo "PASS onboarding directory catalog and read scenarios\n";
+        $assertions += (new OnboardingPhoneVerificationTest($database))->run();
+        echo "PASS onboarding phone verification scenarios\n";
         $assertions += (new OwnerBootstrapTest($database, $root))->run();
         echo "PASS first-owner bootstrap tool scenarios\n";
         $assertions += (new BotPlatformHandoffTest($database))->run();

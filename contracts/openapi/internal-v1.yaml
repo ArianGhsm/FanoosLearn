@@ -209,6 +209,59 @@ paths:
       x-required-service-action: deployment.status
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/DeploymentStatus' } } } }
       responses: { '200': { $ref: '#/components/responses/Success' } }
+  /onboarding/directory/provinces:
+    post:
+      operationId: listOnboardingProvinces
+      x-required-service-action: onboarding.directory.read
+      description: Open catalog read (no linked account required). Returns only country/province identity; never workspace, cohort or membership data.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/DirectoryProvincesRead' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+  /onboarding/directory/institutions:
+    post:
+      operationId: listOnboardingInstitutions
+      x-required-service-action: onboarding.directory.read
+      description: Institutions narrowed by a province already returned from /onboarding/directory/provinces, paginated.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/DirectoryInstitutionsRead' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' } }
+  /onboarding/directory/faculties:
+    post:
+      operationId: listOnboardingFaculties
+      x-required-service-action: onboarding.directory.read
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/DirectoryFacultiesRead' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' } }
+  /onboarding/directory/programs:
+    post:
+      operationId: listOnboardingPrograms
+      x-required-service-action: onboarding.directory.read
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/DirectoryProgramsRead' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' } }
+  /onboarding/otp/request:
+    post:
+      operationId: requestOnboardingOtp
+      x-required-service-action: onboarding.otp.request
+      description: Pre-workspace phone verification. No canonical account or workspace membership exists yet for the caller; identity is scoped to the calling bot platform + subject only, and verifying a phone grants no membership on its own.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/OnboardingOtpRequest' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '422': { $ref: '#/components/responses/Error' }, '429': { $ref: '#/components/responses/Error' }, '502': { $ref: '#/components/responses/Error' } }
+  /onboarding/otp/resend:
+    post:
+      operationId: resendOnboardingOtp
+      x-required-service-action: onboarding.otp.resend
+      description: Reuses the challenge_token from /onboarding/otp/request; issues a new code without extending the outer 10-minute session.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/OnboardingOtpResend' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' }, '409': { $ref: '#/components/responses/Error' }, '410': { $ref: '#/components/responses/Error' }, '429': { $ref: '#/components/responses/Error' } }
+  /onboarding/otp/verify:
+    post:
+      operationId: verifyOnboardingOtp
+      x-required-service-action: onboarding.otp.verify
+      description: Single-use; a correct code marks the calling platform subject's phone verified but grants no workspace membership on its own.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/OnboardingOtpVerify' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' }, '409': { $ref: '#/components/responses/Error' }, '410': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' }, '429': { $ref: '#/components/responses/Error' } }
+  /onboarding/otp/status:
+    post:
+      operationId: getOnboardingOtpStatus
+      x-required-service-action: onboarding.otp.status
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LinkedSubject' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' } }
   /classes:
     post:
       operationId: createClass
@@ -434,6 +487,41 @@ components:
           required: [name]
           properties: { name: { type: string, minLength: 1, maxLength: 200 } }
           additionalProperties: false
+      additionalProperties: false
+    DirectoryProvincesRead:
+      type: object
+      required: [platform]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, limit: { type: integer, minimum: 1, maximum: 50 }, cursor: { $ref: '#/components/schemas/Cursor' } }
+      additionalProperties: false
+    DirectoryInstitutionsRead:
+      type: object
+      required: [platform, province_id]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, province_id: { $ref: '#/components/schemas/Uuid' }, limit: { type: integer, minimum: 1, maximum: 50 }, cursor: { $ref: '#/components/schemas/Cursor' } }
+      additionalProperties: false
+    DirectoryFacultiesRead:
+      type: object
+      required: [platform, institution_id]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, institution_id: { $ref: '#/components/schemas/Uuid' }, limit: { type: integer, minimum: 1, maximum: 50 }, cursor: { $ref: '#/components/schemas/Cursor' } }
+      additionalProperties: false
+    DirectoryProgramsRead:
+      type: object
+      required: [platform, faculty_id]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, faculty_id: { $ref: '#/components/schemas/Uuid' }, limit: { type: integer, minimum: 1, maximum: 50 }, cursor: { $ref: '#/components/schemas/Cursor' } }
+      additionalProperties: false
+    OnboardingOtpRequest:
+      type: object
+      required: [platform, subject, phone_number]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, subject: { type: string, minLength: 1, maxLength: 160 }, phone_number: { type: string, minLength: 8, maxLength: 20 } }
+      additionalProperties: false
+    OnboardingOtpResend:
+      type: object
+      required: [platform, subject, challenge_token]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, subject: { type: string, minLength: 1, maxLength: 160 }, challenge_token: { type: string, minLength: 1, maxLength: 128 } }
+      additionalProperties: false
+    OnboardingOtpVerify:
+      type: object
+      required: [platform, subject, challenge_token, code]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, subject: { type: string, minLength: 1, maxLength: 160 }, challenge_token: { type: string, minLength: 1, maxLength: 128 }, code: { type: string, minLength: 1, maxLength: 12 } }
       additionalProperties: false
     SuccessEnvelope:
       type: object

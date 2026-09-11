@@ -29,6 +29,9 @@ use Fanoos\Platform\Messaging\ChannelSubjectProtector;
 use Fanoos\Platform\Messaging\MessagingLinkService;
 use Fanoos\Platform\Messaging\MessagingUnlinkService;
 use Fanoos\Platform\Notifications\NotificationDeliveryService;
+use Fanoos\Platform\Onboarding\DirectoryReadService;
+use Fanoos\Platform\Onboarding\OnboardingPhoneVerificationService;
+use Fanoos\Platform\Onboarding\UnconfiguredSmsGateway;
 use Fanoos\Platform\Operations\DeploymentControlService;
 use Fanoos\Platform\Operations\DeploymentSnapshotStore;
 use Fanoos\Platform\Operations\OwnerControlPlaneService;
@@ -108,6 +111,8 @@ final class Stage7Factory
             new DeploymentControlService($database, $access, $audit),
             new OwnerControlPlaneService($database, $access, $snapshots),
             new ClassProvisioningService($database, $access, $audit),
+            new DirectoryReadService($database),
+            new OnboardingPhoneVerificationService($database, $audit, $subjectProtector, new UnconfiguredSmsGateway()),
             $paymentsEnabled,
         );
     }
