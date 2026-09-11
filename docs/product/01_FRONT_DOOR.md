@@ -186,19 +186,51 @@ The representative generates one code for one person. A leaked code costs one se
 **A person may belong to several classes at the same time.**
 Guest students, transfers, dual programs. The schema already permits it, and — importantly — the platform already has the machinery: `selected_workspace_id`, the `/workspaces/select` route, and the bot's workspace switcher all exist and are live. Multi-class was already built for; this decision just confirms it should stay.
 
-### One consequence worth stating plainly
+### Correction — what the single-use code actually is
 
-The first and third decisions describe **one mechanism, not two gates**. The representative issuing a single-use code *is* the approval. A student should not have to redeem a code and then wait in a queue for the same person to approve them again.
+An earlier draft of this section read the single-use code as an invite issued by the
+representative, and concluded that a separate approval step would be redundant. The owner
+corrected it: **the single-use code is the phone OTP**, sent to the student during the
+wizard. It proves the phone, and it leaves the platform holding a verified number for that
+student. It is not an invitation and it is not the representative's decision.
+
+The representative's approval is a **separate, real step** that happens after verification.
 
 So the join flow is:
 
 ```
-representative issues a single-use code for a named student
-  → student runs the wizard and enters the code
-  → student verifies their phone
-  → membership is created
+student runs the wizard and selects their own class
+   (province -> institution -> faculty/program -> entry year)
+  -> student submits a phone number
+  -> single-use code is sent and verified        <- the platform now holds a verified phone
+  -> a confirmation request is raised to that class's representative
+     (reachable from either the bot or the website)
+  -> the representative approves
+  -> membership is created and the student enters the class
 ```
 
-The representative's decision happens once, up front, when they choose to issue the code. Do not build a second pending-approval queue behind it.
+Two consequences to build to:
 
-If a student arrives with no code at all, that is the "class does not exist / I am not invited" path, which ends in a request to the owners — not in a self-service membership.
+- The class a student joins is **already determined** by the directory identity they picked;
+  the representative is approving a person, not choosing a class.
+- Because a representative exists per class, the approval request must route to the
+  representative **of that specific class** — not to the owners, and not to every representative.
+
+A student who selects a class that does not exist on FANOOS yet never reaches the approval
+step at all; that is the capability-5 path, a creation request raised to the owners.
+
+## 10. Representatives are operators of their own class
+
+Appointing a representative is not a label. Once appointed for a class, the representative
+must be able to run it themselves — approving members is the first such power, and the
+day-to-day class operations ported from the legacy bot (`class_operations.py`, `classops_*`)
+are the rest. The owner's words: when you appoint a representative for a class, "خودش باید
+بتونه اینها رو انجام بده".
+
+The owners (Arian, Hossein) stay the only authority for creating classes and appointing
+representatives. Everything inside a class belongs to its representative.
+
+This is a scoping rule for every capability from here on: ask whether the action is
+*about* a class (owner) or *inside* a class (representative), and put the permission on the
+matching side of that line. The RBAC model already separates platform scope from workspace
+scope, so this needs no new machinery — only the discipline to use the right one.
