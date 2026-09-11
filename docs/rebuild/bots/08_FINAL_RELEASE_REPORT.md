@@ -3,11 +3,13 @@
 ## Release boundary
 
 This report records the final synchronized source handoff for the website,
-Telegram, Bale and background workers. The exact release SHA is the immutable
-commit selected from canonical `ArianGhsm/FanoosLearn` `main` by the updater;
-it is reported in the deployment handoff and is intentionally not duplicated
-inside a self-hashing document. No secrets, provider payloads, personal data,
-runtime SQLite state or production object contents are included here.
+Telegram, Bale and background workers. The deployed immutable release observed
+by the updater is
+`112a7af90e35c4d1ef3c143b7ad37adb4fe66c41` from canonical
+`ArianGhsm/FanoosLearn` `main`. A later documentation-only commit, if any, is
+not part of that active runtime release; this avoids a self-hashing report.
+No secrets, provider payloads, personal data, runtime SQLite state or
+production object contents are included here.
 
 The release keeps one PHP platform authority, one tenant/RBAC model, one
 payment/entitlement decision path and one content/protected-delivery path.
@@ -50,27 +52,36 @@ notification receipts and protected-delivery policy remain shared.
   Linux engine was stopped; the production updater performs its own guarded
   database preflight, backup, migration and health gates.
 
-## Runtime/deployment evidence boundary
+## Observed runtime/deployment evidence
 
-The server-side deployment must report, without secrets:
-
-1. canonical repository identity and exact main SHA;
-2. verified SQL/object backup and independent manifest check;
-3. pending migration result and schema ledger;
-4. immutable release pointer plus website, Telegram, Bale, notification and
-   protected-media service health;
-5. HTTPS, provider identity/send/callback, notification receipt/retry and
-   protected-delivery smoke observations;
-6. active release SHA matching the accepted source SHA.
+- The updater request completed `SUCCEEDED`; current, candidate and active
+  pointer all resolve to `112a7af90e35c4d1ef3c143b7ad37adb4fe66c41`, with the
+  previous release retained as rollback target.
+- The latest SQL/object backup
+  `20260911T091851Z-0abe696a` passed independent manifest verification.
+- All 12 canonical migrations are applied; no legacy import batch was run.
+- Platform readiness and HTTPS `/health` both returned `ok` with the exact
+  active release; the public RTL home returned HTTP 200. Browser DOM smoke
+  found no console errors.
+- PHP-FPM, Nginx, MySQL, Telegram egress, Telegram, Bale, notification
+  projector and protected-media services are active with no Fanoos restart
+  loop. Telegram `getMe` plus plain, rich/edit, fallback and protected fixture
+  smoke all passed. Bale identity/configuration health passed, but no live Bale
+  send was attempted because no active Bale link/test destination exists.
+- Production notification messages and protected-media jobs were empty at the
+  observation point, so no real delivery/derivative fixture was fabricated.
+- Payment initiation remains disabled by policy; no financial transaction was
+  attempted.
 
 No live provider message or production data migration is inferred from a
-repository test. If any runtime gate fails, the release status is `PARTIAL` or
-`BLOCKED` and the previous immutable release remains the rollback target.
+repository test. The observed gaps above keep the final release status
+`PARTIAL`; the previous immutable release remains the rollback target.
 
 ## Final status
 
-`PARTIAL — repository release candidate ready; runtime cutover evidence is
-required from the guarded server updater.`
+`PARTIAL — synchronized release is deployed and healthy; Bale delivery,
+notification/protected-media fixtures, payment provider validation and legacy
+snapshot reconciliation remain intentionally unexecuted.`
 
 Payment initiation remains disabled unless a real provider is configured and
 verified. Legacy normalized import remains a supervised, snapshot-based step;

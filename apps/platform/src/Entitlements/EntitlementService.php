@@ -73,6 +73,13 @@ SQL);
 SELECT grant_record.id AS grant_id, grant_record.target_scope_id,
        grant_record.source_type, grant_record.valid_from, grant_record.valid_until,
        grant_record.revoked_at, grant_record.created_at, scope.scope_type,
+       CASE
+           WHEN grant_record.revoked_at IS NOT NULL THEN 'revoked'
+           WHEN grant_record.valid_from > UTC_TIMESTAMP(6) THEN 'pending'
+           WHEN grant_record.valid_until IS NOT NULL
+            AND grant_record.valid_until <= UTC_TIMESTAMP(6) THEN 'expired'
+           ELSE 'active'
+       END AS grant_status,
        resource.title AS resource_title,
        resource_type.type_key AS resource_type,
        course.title AS course_title
@@ -95,7 +102,7 @@ SQL);
         $query->execute(['workspace' => $workspaceId, 'user' => $actorUserId]);
         $rows = [];
         foreach ($query->fetchAll() as $row) {
-            $status = $this->rowStatus($row);
+            $status = (string) $row['grant_status'];
             $scopeType = (string) $row['scope_type'];
             $rows[] = [
                 'grant_id' => (string) $row['grant_id'],
@@ -193,22 +200,6 @@ SQL);
         $insert->execute();
         $this->audit->record($workspaceId, $actorUserId, 'entitlement.grant', 'entitlement_grant', $id, 'success', ['source_type' => $sourceType, 'reason' => $reason]);
         return $id;
-    }
-
-    /** @param array<string, mixed> $row */
-    private function rowStatus(array $row): string
-    {
-        if ($row['revoked_at'] !== null) {
-            return 'revoked';
-        }
-        if ($row['valid_from'] > gmdate('Y-m-d H:i:s.u')) {
-            return 'pending';
-        }
-        if ($row['valid_until'] !== null && $row['valid_until'] <= gmdate('Y-m-d H:i:s.u')) {
-            return 'expired';
-        }
-
-        return 'active';
     }
 
     private function scopeLabel(string $scopeType): string
