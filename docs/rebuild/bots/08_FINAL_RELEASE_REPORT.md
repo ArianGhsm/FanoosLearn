@@ -5,7 +5,7 @@
 This report records the final synchronized source handoff for the website,
 Telegram, Bale and background workers. The deployed immutable release observed
 by the updater is
-`2143323fe0ea1a90425120a5fbb70e494323adb8` from canonical
+`46eedd4033e636fc2755d29d64d0c2b08bfd9bcb` from canonical
 `ArianGhsm/FanoosLearn` `main`. A later documentation-only commit, if any, is
 not part of that active runtime release; this avoids a self-hashing report.
 No secrets, provider payloads, personal data, runtime SQLite state or
@@ -57,12 +57,12 @@ notification receipts and protected-delivery policy remain shared.
 ## Observed runtime/deployment evidence
 
 - The updater request completed `SUCCEEDED`; current, candidate and active
-  pointer all resolve to `2143323fe0ea1a90425120a5fbb70e494323adb8`, with the
-  previous `112a7af90e35c4d1ef3c143b7ad37adb4fe66c41` release retained as the
+  pointer all resolve to `46eedd4033e636fc2755d29d64d0c2b08bfd9bcb`, with the
+  previous `2143323fe0ea1a90425120a5fbb70e494323adb8` release retained as the
   rollback target. The updater checkout and `origin/main` also resolve to the
   exact active SHA.
 - The latest SQL/object backup
-  `20260911T093230Z-872adbb1` passed independent manifest verification.
+  `20260911T094858Z-0f0b10d6` passed independent manifest verification.
 - All 12 canonical migrations are applied; no legacy import batch was run.
 - Platform readiness and HTTPS `/health` both returned `ok` with the exact
   active release; the public RTL home returned HTTP 200. Browser DOM smoke
