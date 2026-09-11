@@ -58,7 +58,24 @@ assert.ok(exam.includes("round(($correct / $questionCount) * 10000)"), 'server o
 assert.ok(exam.includes("offering.status <> 'archived'"), 'exam catalog must hide archived offerings');
 assert.ok(exam.includes("term.status <> 'archived'"), 'exam catalog must hide archived terms');
 assert.ok(exam.includes("course.status = 'active'"), 'exam catalog must hide inactive courses');
+assert.ok(exam.includes('active_attempt_id'), 'exam catalog must expose resumable attempt state');
+assert.ok(exam.includes('metadata.source_resource_id'), 'assessment catalog must retain source-resource linkage');
+assert.ok(exam.includes("attempt.status = 'in_progress'"), 'attempt resume must be scoped to open attempts');
+assert.ok(exam.includes("'resumed' => true"), 'starting an existing attempt must be idempotent/resumable');
+for (const field of ['question_topic_invalid', 'question_tags_invalid', 'question_difficulty_invalid', 'question_provenance_invalid']) {
+  assert.ok(exam.includes(field), `question model validation missing ${field}`);
+}
 assert.ok(api.includes("$suffix === '/assessments'"), 'public assessment catalog route missing');
+assert.ok(progress.includes("type: 'past_exam'"), 'assessment page must load structured past-exam resources');
+assert.ok(progress.includes('resourceQuery'), 'assessment page must expose resource browsing/filter state');
+assert.ok(progressUi.includes('آزمون‌های گذشته'), 'assessment UI must render a past-exam shelf');
+assert.ok(progressUi.includes('ادامه تلاش'), 'assessment UI must render resume action');
+assert.ok(progressUi.includes('پاسخ صحیح پیش از ثبت نهایی'), 'assessment UI must preserve hidden-answer authority notice');
+assert.ok(progressUi.includes('نتیجه از سرور دریافت شده است'), 'assessment result UI must identify server-owned result');
+assert.ok(progressUi.includes('منبع ساختاریافتهٔ متصل'), 'assessment detail must show source linkage without exposing an internal id');
+assert.ok(exam.includes("'quiz'"), 'quiz assessment kind must be server-supported');
+assert.ok(schema.includes("assessment_kind IN ('practice', 'mock_exam', 'past_exam')"), 'baseline assessment kind constraint must remain documented');
+assert.ok(read('database/migrations/0012_stage8_assessment_variants.sql').includes('assessment_variant'), 'quiz assessment variant migration is missing');
 
 // Announcements support validated course scope while preserving workspace/user recipient isolation.
 assert.ok(api.includes("$request->query['course_id'] ?? null"), 'announcement course filter missing');

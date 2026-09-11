@@ -38,10 +38,15 @@ final class ExamService
     ): array {
         $this->access->requireWorkspace($actorUserId, $workspaceId, 'exam.manage');
         $title = $this->text($title, 200, 'assessment_title_invalid');
-        $kind = (string) ($metadata['assessment_kind'] ?? 'practice');
-        if (!in_array($kind, ['practice', 'mock_exam', 'past_exam'], true)) {
+        $requestedKind = (string) ($metadata['assessment_kind'] ?? 'practice');
+        if (!in_array($requestedKind, ['practice', 'quiz', 'mock_exam', 'past_exam'], true)) {
             throw new PlatformException('assessment_kind_invalid', 'Assessment kind is invalid.', 422);
         }
+        // Keep the original CHECK-compatible kind for older databases while
+        // exposing quiz as a first-class catalog variant through the additive
+        // assessment_variant column.
+        $kind = $requestedKind === 'quiz' ? 'practice' : $requestedKind;
+        $variant = $requestedKind === 'quiz' ? 'quiz' : null;
         $definitionJson = $this->definition($definition);
         $academic = $this->academic($workspaceId, $metadata);
         $scopeId = $this->targetScope($workspaceId, $metadata['target_scope_id'] ?? null);
@@ -54,7 +59,7 @@ final class ExamService
         $assessmentScopeId = Uuid::v7();
 
         Transaction::run($this->database, function () use (
-            $actorUserId, $workspaceId, $title, $kind, $definitionJson, $academic,
+            $actorUserId, $workspaceId, $title, $kind, $variant, $definitionJson, $academic,
             $scopeId, $maxAttempts, $assessmentId, $versionId, $assessmentScopeId, $metadata,
         ): void {
             $this->execute(<<<'SQL'
@@ -65,10 +70,10 @@ SQL, ['id' => $assessmentId, 'workspace' => $workspaceId, 'offering' => $academi
             $this->insertVersion($workspaceId, $assessmentId, $versionId, 1, $actorUserId, $definitionJson);
             $this->execute(<<<'SQL'
 INSERT INTO exam_assessment_metadata (
-    workspace_id, assessment_id, assessment_kind, course_id, source_resource_id, created_at, updated_at
-) VALUES (:workspace, :assessment, :kind, :course, :source, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))
+    workspace_id, assessment_id, assessment_kind, assessment_variant, course_id, source_resource_id, created_at, updated_at
+) VALUES (:workspace, :assessment, :kind, :variant, :course, :source, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))
 SQL, [
-                'workspace' => $workspaceId, 'assessment' => $assessmentId, 'kind' => $kind,
+                'workspace' => $workspaceId, 'assessment' => $assessmentId, 'kind' => $kind, 'variant' => $variant,
                 'course' => $academic['course_id'], 'source' => $academic['source_resource_id'],
             ]);
             $this->execute(<<<'SQL'
@@ -85,7 +90,7 @@ SQL, [
 INSERT INTO rbac_scopes (id, scope_type, entity_id, workspace_id, parent_scope_id, created_at)
 VALUES (:id, 'assessment', :assessment, :workspace, :parent, UTC_TIMESTAMP(6))
 SQL, ['id' => $assessmentScopeId, 'assessment' => $assessmentId, 'workspace' => $workspaceId, 'parent' => $workspaceScope]);
-            $this->audit->record($workspaceId, $actorUserId, 'exam.assessment.created', 'exam_assessment', $assessmentId, 'success', ['kind' => $kind, 'version_no' => 1]);
+            $this->audit->record($workspaceId, $actorUserId, 'exam.assessment.created', 'exam_assessment', $assessmentId, 'success', ['kind' => $variant ?? $kind, 'version_no' => 1]);
         });
 
         return ['assessment_id' => $assessmentId, 'version_id' => $versionId, 'version_no' => 1, 'status' => 'draft'];
@@ -204,14 +209,43 @@ SQL, ['version_no' => $state['version_no'], 'assessment' => $assessmentId, 'work
             $parameters['course'] = $courseId;
         }
         if ($kind !== null && $kind !== '') {
-            $where[] = 'metadata.assessment_kind = :kind';
+            $where[] = 'COALESCE(metadata.assessment_variant, metadata.assessment_kind) = :kind';
             $parameters['kind'] = $kind;
         }
         $query = $this->database->prepare(sprintf(<<<'SQL'
 SELECT assessment.id, assessment.title, assessment.current_version_no,
-       metadata.assessment_kind, metadata.course_id, course.course_code, course.title AS course_title,
+       COALESCE(metadata.assessment_variant, metadata.assessment_kind) AS assessment_kind,
+       metadata.assessment_kind AS storage_assessment_kind, metadata.assessment_variant,
+       metadata.course_id, metadata.source_resource_id,
+       course.course_code, course.title AS course_title,
        term.id AS term_id, term.term_key, term.name AS term_name,
-       policy.requires_entitlement, policy.max_attempts
+       policy.requires_entitlement, policy.max_attempts,
+       (SELECT COUNT(*) FROM exam_attempts attempt_count
+        WHERE attempt_count.workspace_id = assessment.workspace_id
+          AND attempt_count.assessment_id = assessment.id
+          AND attempt_count.user_id = :catalog_user_count
+          AND attempt_count.status IN ('submitted', 'scored')) AS attempts_used,
+       (SELECT active_attempt.id FROM exam_attempts active_attempt
+        WHERE active_attempt.workspace_id = assessment.workspace_id
+          AND active_attempt.assessment_id = assessment.id
+          AND active_attempt.user_id = :catalog_user_active
+          AND active_attempt.status = 'in_progress'
+        ORDER BY active_attempt.started_at DESC
+        LIMIT 1) AS active_attempt_id,
+       (SELECT active_attempt.revision FROM exam_attempts active_attempt
+        WHERE active_attempt.workspace_id = assessment.workspace_id
+          AND active_attempt.assessment_id = assessment.id
+          AND active_attempt.user_id = :catalog_user_revision
+          AND active_attempt.status = 'in_progress'
+        ORDER BY active_attempt.started_at DESC
+        LIMIT 1) AS active_attempt_revision,
+       (SELECT active_attempt.status FROM exam_attempts active_attempt
+        WHERE active_attempt.workspace_id = assessment.workspace_id
+          AND active_attempt.assessment_id = assessment.id
+          AND active_attempt.user_id = :catalog_user_status
+          AND active_attempt.status = 'in_progress'
+        ORDER BY active_attempt.started_at DESC
+        LIMIT 1) AS active_attempt_status
 FROM exam_assessments assessment
 JOIN exam_assessment_metadata metadata ON metadata.assessment_id = assessment.id AND metadata.workspace_id = assessment.workspace_id
 JOIN exam_access_policies policy ON policy.assessment_id = assessment.id AND policy.workspace_id = assessment.workspace_id
@@ -225,6 +259,10 @@ WHERE %s
 ORDER BY assessment.updated_at DESC
 LIMIT 100
 SQL, implode(' AND ', $where)));
+        $parameters['catalog_user_count'] = $actorUserId;
+        $parameters['catalog_user_active'] = $actorUserId;
+        $parameters['catalog_user_revision'] = $actorUserId;
+        $parameters['catalog_user_status'] = $actorUserId;
         $query->execute($parameters);
 
         return $query->fetchAll();
@@ -240,6 +278,40 @@ SQL, implode(' AND ', $where)));
         }
         if ((bool) $assessment['requires_entitlement'] && !$this->entitlements->has($userId, $workspaceId, (string) $assessment['target_scope_id'])) {
             throw new PlatformException('entitlement_required', 'An active entitlement is required for this assessment.', 403);
+        }
+        return Transaction::run($this->database, function () use ($userId, $workspaceId, $assessmentId, $assessment): array {
+        // Serialize starts per assessment so two concurrent clicks cannot create
+        // two open attempts for the same published version.
+        $lock = $this->database->prepare('SELECT id FROM exam_assessments WHERE id = :assessment AND workspace_id = :workspace FOR UPDATE');
+        $lock->execute(['assessment' => $assessmentId, 'workspace' => $workspaceId]);
+        if ($lock->fetchColumn() === false) {
+            throw new PlatformException('assessment_not_found', 'Published assessment was not found.', 404);
+        }
+        $existing = $this->database->prepare(<<<'SQL'
+SELECT attempt.id, attempt.revision, attempt.status, attempt.answers_json,
+       version.definition_json
+FROM exam_attempts attempt
+JOIN exam_assessment_versions version ON version.id = attempt.assessment_version_id
+ AND version.assessment_id = attempt.assessment_id AND version.workspace_id = attempt.workspace_id
+WHERE attempt.workspace_id = :workspace AND attempt.assessment_id = :assessment
+  AND attempt.assessment_version_id = :version AND attempt.user_id = :user
+  AND attempt.status = 'in_progress'
+ORDER BY attempt.started_at DESC
+LIMIT 1
+SQL);
+        $existing->execute([
+            'workspace' => $workspaceId, 'assessment' => $assessmentId,
+            'version' => $assessment['version_id'], 'user' => $userId,
+        ]);
+        $existingAttempt = $existing->fetch();
+        if ($existingAttempt !== false) {
+            $definition = json_decode((string) $existingAttempt['definition_json'], true, 64, JSON_THROW_ON_ERROR);
+            return [
+                'attempt_id' => (string) $existingAttempt['id'], 'revision' => (int) $existingAttempt['revision'],
+                'status' => 'in_progress', 'assessment_id' => $assessmentId, 'title' => (string) $assessment['title'],
+                'answers' => json_decode((string) ($existingAttempt['answers_json'] ?? '{}'), true, 64, JSON_THROW_ON_ERROR),
+                'resumed' => true, 'questions' => $this->safeQuestions($definition),
+            ];
         }
         $attempts = $this->database->prepare("SELECT COUNT(*) FROM exam_attempts WHERE workspace_id = :workspace AND assessment_id = :assessment AND user_id = :user AND status IN ('submitted', 'scored')");
         $attempts->execute(['workspace' => $workspaceId, 'assessment' => $assessmentId, 'user' => $userId]);
@@ -265,8 +337,10 @@ SQL, [
         return [
             'attempt_id' => $attemptId, 'revision' => 1, 'status' => 'in_progress',
             'assessment_id' => $assessmentId, 'title' => (string) $assessment['title'],
+            'answers' => [], 'resumed' => false,
             'questions' => $this->safeQuestions($definition),
         ];
+        });
     }
 
     /** @param array<string, mixed> $answers @return array{attempt_id:string,revision:int,status:string} */
@@ -515,7 +589,10 @@ SQL, ['workspace' => $workspaceId, 'assessment' => $assessmentId, 'version' => $
                 throw new PlatformException('question_id_invalid', 'Question identifiers must be unique stable keys.', 422);
             }
             $ids[$id] = true;
-            $questions[$index]['prompt'] = $this->text((string) ($question['prompt'] ?? ''), 4000, 'question_prompt_invalid');
+            $normalized = [
+                'id' => $id,
+                'prompt' => $this->text((string) ($question['prompt'] ?? ''), 4000, 'question_prompt_invalid'),
+            ];
             $choices = $question['choices'] ?? null;
             if (!is_array($choices) || !array_is_list($choices) || count($choices) < 2 || count($choices) > 10) {
                 throw new PlatformException('question_choices_invalid', 'Each question must contain between 2 and 10 choices.', 422);
@@ -524,18 +601,55 @@ SQL, ['workspace' => $workspaceId, 'assessment' => $assessmentId, 'version' => $
                 if (!is_string($choice)) {
                     throw new PlatformException('question_choice_invalid', 'Question choices must be text.', 422);
                 }
-                $questions[$index]['choices'][$choiceIndex] = $this->text($choice, 1000, 'question_choice_invalid');
+                $normalized['choices'][$choiceIndex] = $this->text($choice, 1000, 'question_choice_invalid');
             }
             $answer = filter_var($question['answer'] ?? null, FILTER_VALIDATE_INT);
             if ($answer === false || $answer < 0 || $answer >= count($choices)) {
                 throw new PlatformException('question_answer_invalid', 'Correct choice index is invalid.', 422);
             }
-            $questions[$index]['answer'] = $answer;
+            $normalized['answer'] = $answer;
             if (isset($question['explanation']) && $question['explanation'] !== null && $question['explanation'] !== '') {
-                $questions[$index]['explanation'] = $this->text((string) $question['explanation'], 4000, 'question_explanation_invalid');
+                $normalized['explanation'] = $this->text((string) $question['explanation'], 4000, 'question_explanation_invalid');
             } else {
-                $questions[$index]['explanation'] = null;
+                $normalized['explanation'] = null;
             }
+            if (array_key_exists('topic', $question) && $question['topic'] !== null && $question['topic'] !== '') {
+                $normalized['topic'] = $this->text((string) $question['topic'], 200, 'question_topic_invalid');
+            }
+            if (array_key_exists('difficulty', $question) && $question['difficulty'] !== null && $question['difficulty'] !== '') {
+                $difficulty = strtolower($this->text((string) $question['difficulty'], 32, 'question_difficulty_invalid'));
+                if (!in_array($difficulty, ['easy', 'medium', 'hard'], true)) {
+                    throw new PlatformException('question_difficulty_invalid', 'Question difficulty is invalid.', 422);
+                }
+                $normalized['difficulty'] = $difficulty;
+            }
+            if (array_key_exists('tags', $question) && $question['tags'] !== null) {
+                if (!is_array($question['tags']) || !array_is_list($question['tags']) || count($question['tags']) > 12) {
+                    throw new PlatformException('question_tags_invalid', 'Question tags are invalid.', 422);
+                }
+                $tags = [];
+                foreach ($question['tags'] as $tag) {
+                    if (!is_string($tag) || trim($tag) === '') {
+                        throw new PlatformException('question_tags_invalid', 'Question tags are invalid.', 422);
+                    }
+                    $cleanTag = $this->text($tag, 64, 'question_tags_invalid');
+                    if (!in_array($cleanTag, $tags, true)) $tags[] = $cleanTag;
+                }
+                $normalized['tags'] = $tags;
+            }
+            if (array_key_exists('provenance', $question) && $question['provenance'] !== null) {
+                if (!is_array($question['provenance'])) {
+                    throw new PlatformException('question_provenance_invalid', 'Question provenance is invalid.', 422);
+                }
+                $provenance = [];
+                foreach (['source_question_id' => 128, 'source_locator' => 240, 'note' => 500] as $key => $limit) {
+                    if (array_key_exists($key, $question['provenance']) && $question['provenance'][$key] !== null && $question['provenance'][$key] !== '') {
+                        $provenance[$key] = $this->text((string) $question['provenance'][$key], $limit, 'question_provenance_invalid');
+                    }
+                }
+                if ($provenance !== []) $normalized['provenance'] = $provenance;
+            }
+            $questions[$index] = $normalized;
         }
         $definition['questions'] = $questions;
 
@@ -547,7 +661,11 @@ SQL, ['workspace' => $workspaceId, 'assessment' => $assessmentId, 'version' => $
     {
         $safe = [];
         foreach ($definition['questions'] as $question) {
-            $safe[] = ['id' => $question['id'], 'prompt' => $question['prompt'], 'choices' => $question['choices']];
+            $item = ['id' => $question['id'], 'prompt' => $question['prompt'], 'choices' => $question['choices']];
+            foreach (['topic', 'tags', 'difficulty', 'provenance'] as $key) {
+                if (array_key_exists($key, $question)) $item[$key] = $question[$key];
+            }
+            $safe[] = $item;
         }
 
         return $safe;

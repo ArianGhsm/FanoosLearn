@@ -4,9 +4,9 @@ const FALLBACK_DATE_TIME = new Intl.DateTimeFormat('fa-IR', { year: 'numeric', m
 
 const KIND_LABELS = Object.freeze({
   practice: 'تمرین',
+  quiz: 'کوییز',
   mock_exam: 'آزمون آزمایشی',
   past_exam: 'آزمون گذشته',
-  quiz: 'آزمون کوتاه',
   exam: 'آزمون',
 });
 
@@ -158,7 +158,7 @@ function assessmentCard(ctx, item, actions) {
       assessmentMeta(ctx, row, course),
     ),
     node('div', { className: 'f3-progress-assessment-card__action' },
-      button(row?.presentation_state === 'in_progress' ? 'ادامه' : 'مشاهده', { variant: 'quiet', onClick: () => actions.openAssessment(row) }),
+      button(row?.active_attempt_id || row?.presentation_state === 'in_progress' ? 'ادامه' : 'مشاهده', { variant: 'quiet', onClick: () => actions.openAssessment(row) }),
     ),
   );
   return article;
@@ -171,17 +171,17 @@ function sectionHeading(title, description = '', trailing = null) {
   );
 }
 
-function questionBankShelf(ctx, rows, courses, actions) {
-  const section = node('section', { className: 'f3-progress-section', attrs: { 'aria-labelledby': 'progress-question-bank-heading' } },
-    sectionHeading('بانک سؤال', 'منابعی که در کتابخانه با نوع «بانک سؤال» منتشر شده‌اند.', actions.openQuestionBankLibrary ? button('همه بانک سؤال‌ها', { variant: 'quiet', onClick: actions.openQuestionBankLibrary }) : null),
+function resourceShelf(ctx, rows, courses, actions, config) {
+  const section = node('section', { className: 'f3-progress-section', attrs: { 'aria-labelledby': config.headingId } },
+    sectionHeading(config.title, config.description, config.openLibrary ? button(config.libraryLabel, { variant: 'quiet', onClick: config.openLibrary }) : null),
   );
-  section.querySelector('h2')?.setAttribute('id', 'progress-question-bank-heading');
+  section.querySelector('h2')?.setAttribute('id', config.headingId);
   if (!Array.isArray(rows)) {
-    section.append(statePanel('partial', 'بانک سؤال دریافت نشد', 'آزمون‌ها همچنان در دسترس‌اند؛ بخش منابع را می‌توانید جداگانه بررسی کنید.', actions.retryQuestionBanks ? { label: 'تلاش دوباره', onClick: actions.retryQuestionBanks } : null));
+    section.append(statePanel('partial', config.failureTitle, config.failureBody, config.retry ? { label: 'تلاش دوباره', onClick: config.retry } : null));
     return section;
   }
   if (!rows.length) {
-    section.append(node('div', { className: 'f3-progress-inline-empty' }, node('p', { text: 'بانک سؤال منتشرشده‌ای با این فیلتر پیدا نشد.' })));
+    section.append(node('div', { className: 'f3-progress-inline-empty' }, node('p', { text: config.emptyText })));
     return section;
   }
   const list = node('div', { className: 'f3-progress-question-bank-list' });
@@ -189,22 +189,44 @@ function questionBankShelf(ctx, rows, courses, actions) {
     const course = courses.find((item) => String(item.id) === String(row.course_id));
     list.append(node('article', { className: 'f3-progress-question-bank-row' },
       node('div', {},
-        node('span', { className: 'f3-progress-type', text: 'بانک سؤال' }),
-        node('h3', { text: safeText(row.title, 'بانک سؤال') }),
+        node('span', { className: 'f3-progress-type', text: config.typeLabel }),
+        node('h3', { text: safeText(row.title, config.typeLabel) }),
         courseLabel(course) ? node('p', { text: courseLabel(course) }) : null,
+        row.topic ? node('p', { className: 'f3-progress-resource-topic', text: `موضوع: ${safeText(row.topic)}` }) : null,
       ),
-      actions.openQuestionBankResource ? button('باز کردن در منابع', { variant: 'quiet', onClick: () => actions.openQuestionBankResource(row, course) }) : null,
+      config.openResource ? button('باز کردن در منابع', { variant: 'quiet', onClick: () => config.openResource(row, course) }) : null,
     ));
   });
   section.append(list);
   return section;
 }
 
+function questionBankShelf(ctx, rows, courses, actions) {
+  return resourceShelf(ctx, rows, courses, actions, {
+    title: 'بانک سؤال', description: 'منابعی که در کتابخانه با نوع «بانک سؤال» منتشر شده‌اند.', headingId: 'progress-question-bank-heading',
+    typeLabel: 'بانک سؤال', libraryLabel: 'همه بانک سؤال‌ها', openLibrary: actions.openQuestionBankLibrary,
+    openResource: actions.openQuestionBankResource, retry: actions.retryQuestionBanks,
+    failureTitle: 'بانک سؤال دریافت نشد', failureBody: 'آزمون‌ها همچنان در دسترس‌اند؛ بخش منابع را می‌توانید جداگانه بررسی کنید.',
+    emptyText: 'بانک سؤال منتشرشده‌ای با این فیلتر پیدا نشد.',
+  });
+}
+
+function pastExamShelf(ctx, rows, courses, actions) {
+  return resourceShelf(ctx, rows, courses, actions, {
+    title: 'آزمون‌های گذشته', description: 'آزمون‌های گذشته به‌صورت منبع ساختاریافته و متصل به درس.', headingId: 'progress-past-exam-heading',
+    typeLabel: 'آزمون گذشته', libraryLabel: 'همه آزمون‌های گذشته', openLibrary: actions.openPastExamLibrary,
+    openResource: actions.openPastExamResource, retry: actions.retryPastExams,
+    failureTitle: 'آزمون‌های گذشته دریافت نشد', failureBody: 'فهرست آزمون‌ها برقرار است؛ منابع آزمون گذشته موقتاً در دسترس نیستند.',
+    emptyText: 'آزمون گذشتهٔ منتشرشده‌ای با این فیلتر پیدا نشد.',
+  });
+}
+
 export function renderAssessmentLanding(root, model, actions) {
-  const { ctx, assessments, questionBanks, courses, filters } = model;
+  const { ctx, assessments, questionBanks, pastExams, courses, filters } = model;
   const kindOptions = [
     ['', 'همه'],
     ['practice', 'تمرین'],
+    ['quiz', 'کوییز'],
     ['mock_exam', 'آزمون آزمایشی'],
     ['past_exam', 'آزمون گذشته'],
   ];
@@ -214,6 +236,11 @@ export function renderAssessmentLanding(root, model, actions) {
       ...kindOptions.map(([key, label]) => filterButton(label, filters.kind === key, () => actions.setKind(key))),
     ),
   );
+  const searchLabel = node('label', { className: 'f3-progress-resource-search' },
+    node('span', { text: 'جست‌وجوی بانک سؤال و آزمون گذشته' }),
+    node('input', { attrs: { type: 'search', value: filters.resourceQuery || '', placeholder: 'عنوان، موضوع یا توضیحات…', 'aria-label': 'جست‌وجوی منابع ارزیابی' }, on: { change: (event) => actions.setResourceQuery?.(event.target.value) } }),
+  );
+  controls.append(searchLabel);
 
   if (courses.length) {
     const label = node('label', { className: 'f3-progress-course-filter' }, node('span', { text: 'درس' }));
@@ -240,7 +267,7 @@ export function renderAssessmentLanding(root, model, actions) {
     node('p', { text: 'مهلت، تعداد تلاش مصرف‌شده یا نتیجه‌های قبلی فقط وقتی نمایش داده می‌شوند که projection رسمی آن‌ها را برگرداند؛ این صفحه چیزی را حدس نمی‌زند.' }),
   );
 
-  root.replaceChildren(header, controls, availableSection, questionBankShelf(ctx, questionBanks, courses, actions), lifecycleNotice);
+  root.replaceChildren(header, controls, availableSection, questionBankShelf(ctx, questionBanks, courses, actions), pastExamShelf(ctx, pastExams, courses, actions), lifecycleNotice);
   root.setAttribute('aria-busy', 'false');
 }
 
@@ -257,6 +284,8 @@ export function renderAssessmentDetail(root, model, actions) {
     node('section', { className: 'f3-progress-detail__facts' },
       node('div', {}, node('span', { text: 'وضعیت' }), node('strong', { text: assessmentStatusLabel(row) })),
       row?.max_attempts !== null && row?.max_attempts !== undefined ? node('div', {}, node('span', { text: 'سقف تلاش' }), node('strong', { text: `${formatNumber(ctx, row.max_attempts)} بار` })) : null,
+      row?.active_attempt_id ? node('div', {}, node('span', { text: 'تلاش ذخیره‌شده' }), node('strong', { text: 'قابل ادامه' })) : null,
+      row?.source_resource_id ? node('div', {}, node('span', { text: 'منبع سؤال' }), node('strong', { text: 'منبع ساختاریافتهٔ متصل' })) : null,
       row?.requires_entitlement ? node('div', {}, node('span', { text: 'دسترسی' }), node('strong', { text: 'نیازمند دسترسی معتبر' })) : node('div', {}, node('span', { text: 'دسترسی' }), node('strong', { text: 'طبق مجوز حساب' })),
     ),
     node('div', { className: 'f3-progress-authority-note' },
@@ -264,7 +293,7 @@ export function renderAssessmentDetail(root, model, actions) {
       node('p', { text: 'پاسخ صحیح پیش از ثبت نهایی به مرورگر ارسال نمی‌شود. ذخیره، ثبت نهایی و نتیجه فقط از مسیر canonical آزمون انجام می‌شود.' }),
     ),
     node('div', { className: 'f3-progress-detail__actions' },
-      button('شروع تلاش', { variant: 'primary', onClick: actions.start, attrs: actions.startDisabled ? { disabled: true, 'aria-disabled': 'true' } : {} }),
+      button(row?.active_attempt_id ? 'ادامه تلاش' : 'شروع تلاش', { variant: 'primary', onClick: actions.start, attrs: actions.startDisabled ? { disabled: true, 'aria-disabled': 'true' } : {} }),
     ),
   );
   root.replaceChildren(main);

@@ -153,7 +153,13 @@ paths:
         '403': { $ref: '#/components/responses/Error' }
         '404': { $ref: '#/components/responses/Error' }
   /workspaces/{workspaceId}/assessments:
-    get: { operationId: listPublishedAssessments, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+    get:
+      operationId: listPublishedAssessments
+      parameters:
+        - { $ref: '#/components/parameters/WorkspaceId' }
+        - { name: course_id, in: query, required: false, schema: { $ref: '#/components/schemas/Uuid' } }
+        - { name: kind, in: query, required: false, schema: { type: string, enum: [practice, quiz, mock_exam, past_exam] } }
+      responses: { '200': { $ref: '#/components/responses/Success' } }
     post: { operationId: createAssessmentDraft, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' } } }
   /workspaces/{workspaceId}/assessments/{assessmentId}/versions/{versionId}/review-request:
     post: { operationId: requestAssessmentReview, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AssessmentId' }, { $ref: '#/components/parameters/VersionId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' } } }

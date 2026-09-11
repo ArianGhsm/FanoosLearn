@@ -109,7 +109,7 @@ function academicCourses(payload) {
 }
 
 function explicitPresentationState(row) {
-  const attemptState = clean(row?.attempt_status || row?.attempt_state || row?.user_attempt_status).toLowerCase();
+  const attemptState = clean(row?.active_attempt_status || row?.attempt_status || row?.attempt_state || row?.user_attempt_status).toLowerCase();
   if (['scored', 'completed', 'submitted'].includes(attemptState)) return 'completed';
   if (attemptState === 'in_progress') return 'in_progress';
   const opensAt = row?.opens_at || row?.starts_at || null;
@@ -134,7 +134,9 @@ function decorateAssessments(raw, courses, filters) {
 function filterQuestionBanks(raw, courses, filters) {
   if (raw === null) return null;
   const selectedCourse = courses.find((course) => course.presentationKey === filters.courseKey);
-  return rows(raw).filter((row) => !selectedCourse || clean(row?.course_id) === selectedCourse.id);
+  const query = clean(filters.resourceQuery).toLocaleLowerCase('fa');
+  return rows(raw).filter((row) => !selectedCourse || clean(row?.course_id) === selectedCourse.id)
+    .filter((row) => !query || [row?.title, row?.description, row?.topic].map(clean).join(' ').toLocaleLowerCase('fa').includes(query));
 }
 
 function routeTo(ctx, path, query = {}) {
@@ -154,10 +156,12 @@ class ProgressController {
     this.root = ctx.root;
     this.route = currentRoute(ctx);
     const query = currentQuery(ctx);
-    this.filters = { kind: clean(query.kind), courseKey: '' };
+    this.filters = { kind: clean(query.kind), courseKey: '', resourceQuery: clean(query.q) };
     this.catalog = null;
     this.questionBanks = null;
     this.questionBankFailed = false;
+    this.pastExams = null;
+    this.pastExamFailed = false;
     this.courses = [];
     this.selectedAssessment = null;
     this.attempt = null;
@@ -195,10 +199,11 @@ class ProgressController {
       return;
     }
     renderLoading(this.root, 'assessments');
-    const [catalogResult, academicsResult, bankResult] = await Promise.allSettled([
+    const [catalogResult, academicsResult, bankResult, pastExamResult] = await Promise.allSettled([
       apiRequest(this.ctx, apiPath(workspace, '/assessments'), { signal: this.abort.signal }),
       apiRequest(this.ctx, apiPath(workspace, '/academics'), { signal: this.abort.signal }),
       apiRequest(this.ctx, apiPath(workspace, `/resources${queryString({ type: 'question_bank', sort: 'newest' })}`), { signal: this.abort.signal }),
+      apiRequest(this.ctx, apiPath(workspace, `/resources${queryString({ type: 'past_exam', sort: 'newest' })}`), { signal: this.abort.signal }),
     ]);
     if (this.destroyed) return;
     if (catalogResult.status === 'rejected') {
@@ -210,6 +215,8 @@ class ProgressController {
     this.courses = academicsResult.status === 'fulfilled' ? academicCourses(academicsResult.value) : [];
     this.questionBanks = bankResult.status === 'fulfilled' ? bankResult.value : null;
     this.questionBankFailed = bankResult.status === 'rejected';
+    this.pastExams = pastExamResult.status === 'fulfilled' ? pastExamResult.value : null;
+    this.pastExamFailed = pastExamResult.status === 'rejected';
     this.renderAssessmentLanding();
     if (academicsResult.status === 'rejected') {
       renderPartialNotice(this.root, 'فیلتر درس در دسترس نیست', 'آزمون‌ها از منبع canonical نمایش داده شده‌اند، اما اطلاعات درس‌ها کامل دریافت نشد.', () => this.loadAssessmentLanding());
@@ -219,10 +226,12 @@ class ProgressController {
   renderAssessmentLanding() {
     const assessmentItems = decorateAssessments(this.catalog, this.courses, this.filters);
     const questionBanks = filterQuestionBanks(this.questionBanks, this.courses, this.filters);
+    const pastExams = filterQuestionBanks(this.pastExams, this.courses, this.filters);
     renderAssessmentLanding(this.root, {
       ctx: this.ctx,
       assessments: assessmentItems,
       questionBanks,
+      pastExams,
       courses: this.courses,
       filters: this.filters,
     }, {
@@ -230,20 +239,35 @@ class ProgressController {
       setCourse: (key) => { this.filters.courseKey = clean(key); this.renderAssessmentLanding(); },
       openAssessment: (row) => this.openAssessment(row),
       retryQuestionBanks: this.questionBankFailed ? () => this.loadAssessmentLanding() : null,
+      retryPastExams: this.pastExamFailed ? () => this.loadAssessmentLanding() : null,
+      setResourceQuery: (value) => { this.filters.resourceQuery = clean(value); this.renderAssessmentLanding(); },
       openQuestionBankLibrary: () => this.openQuestionBankLibrary(),
       openQuestionBankResource: (row, course) => this.openQuestionBankResource(row, course),
+      openPastExamLibrary: () => this.openPastExamLibrary(),
+      openPastExamResource: (row, course) => this.openPastExamResource(row, course),
     });
   }
 
   openQuestionBankLibrary() {
     const resourcePath = clean(this.ctx?.capabilities?.routes?.resources || this.ctx?.capabilities?.progress?.resourcesRoute) || '/resources';
     const selected = this.courses.find((course) => course.presentationKey === this.filters.courseKey);
-    routeTo(this.ctx, resourcePath, { type: 'question_bank', ...(selected?.code ? { course: selected.code } : {}) });
+    routeTo(this.ctx, resourcePath, { type: 'question_bank', ...(selected?.code ? { course: selected.code } : {}), ...(this.filters.resourceQuery ? { q: this.filters.resourceQuery } : {}) });
   }
 
   openQuestionBankResource(_row, course) {
     const resourcePath = clean(this.ctx?.capabilities?.routes?.resources || this.ctx?.capabilities?.progress?.resourcesRoute) || '/resources';
-    routeTo(this.ctx, resourcePath, { type: 'question_bank', ...(course?.code ? { course: course.code } : {}) });
+    routeTo(this.ctx, resourcePath, { type: 'question_bank', ...(course?.code ? { course: course.code } : {}), ...(this.filters.resourceQuery ? { q: this.filters.resourceQuery } : {}) });
+  }
+
+  openPastExamLibrary() {
+    const resourcePath = clean(this.ctx?.capabilities?.routes?.resources || this.ctx?.capabilities?.progress?.resourcesRoute) || '/resources';
+    const selected = this.courses.find((course) => course.presentationKey === this.filters.courseKey);
+    routeTo(this.ctx, resourcePath, { type: 'past_exam', ...(selected?.code ? { course: selected.code } : {}), ...(this.filters.resourceQuery ? { q: this.filters.resourceQuery } : {}) });
+  }
+
+  openPastExamResource(_row, course) {
+    const resourcePath = clean(this.ctx?.capabilities?.routes?.resources || this.ctx?.capabilities?.progress?.resourcesRoute) || '/resources';
+    routeTo(this.ctx, resourcePath, { type: 'past_exam', ...(course?.code ? { course: course.code } : {}), ...(this.filters.resourceQuery ? { q: this.filters.resourceQuery } : {}) });
   }
 
   openAssessment(row) {
@@ -275,7 +299,7 @@ class ProgressController {
       const attempt = await apiRequest(this.ctx, apiPath(workspace, `/assessments/${encodeURIComponent(this.selectedAssessment.id)}/attempts`), { method: 'POST', body: {}, signal: this.abort.signal });
       if (this.destroyed) return;
       this.attempt = attempt;
-      this.answers = {};
+      this.answers = attempt && attempt.answers && typeof attempt.answers === 'object' ? { ...attempt.answers } : {};
       this.activeQuestion = 0;
       this.result = null;
       this.mutation = { pending: false, saveState: 'idle' };
