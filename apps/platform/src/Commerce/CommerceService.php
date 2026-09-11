@@ -216,16 +216,91 @@ SQL);
     {
         $this->access->requireWorkspace($actorUserId, $workspaceId, 'commerce.purchase');
         $query = $this->database->prepare(<<<'SQL'
-SELECT orders.id, orders.status, orders.total_minor, orders.currency, orders.created_at, orders.paid_at,
-       line.product_name_snapshot, attempt.provider_key, attempt.provider_reference
+SELECT orders.id, orders.status AS order_status, orders.total_minor, orders.currency, orders.created_at, orders.paid_at,
+       line.product_name_snapshot, product.target_scope_id, scope.scope_type,
+       resource.title AS resource_title, resource_type.type_key AS resource_type,
+       attempt.status AS payment_status, attempt.provider_key, attempt.provider_reference
 FROM commerce_orders orders
 JOIN commerce_order_lines line ON line.order_id = orders.id AND line.workspace_id = orders.workspace_id
-LEFT JOIN commerce_payment_attempts attempt ON attempt.order_id = orders.id AND attempt.workspace_id = orders.workspace_id
+JOIN commerce_products product ON product.id = line.product_id AND product.workspace_id = line.workspace_id
+LEFT JOIN rbac_scopes scope ON scope.id = product.target_scope_id AND scope.workspace_id = product.workspace_id
+LEFT JOIN content_resources resource ON scope.scope_type = 'resource' AND resource.id = scope.entity_id
+ AND resource.workspace_id = scope.workspace_id AND resource.deleted_at IS NULL
+LEFT JOIN content_resource_types resource_type ON resource_type.id = resource.resource_type_id
+LEFT JOIN commerce_payment_attempts attempt ON attempt.id = (
+    SELECT latest.id FROM commerce_payment_attempts latest
+    WHERE latest.order_id = orders.id AND latest.workspace_id = orders.workspace_id
+    ORDER BY latest.created_at DESC, latest.id DESC LIMIT 1
+)
 WHERE orders.workspace_id = :workspace AND orders.buyer_user_id = :user
 ORDER BY orders.created_at DESC
 SQL);
         $query->execute(['workspace' => $workspaceId, 'user' => $actorUserId]);
-        return $query->fetchAll();
+        $rows = [];
+        foreach ($query->fetchAll() as $row) {
+            $scopeId = $row['target_scope_id'] === null ? null : (string) $row['target_scope_id'];
+            $rows[] = [
+                'id' => (string) $row['id'],
+                'status' => (string) $row['order_status'],
+                'order_status' => (string) $row['order_status'],
+                'payment_status' => $row['payment_status'] === null ? 'not_started' : (string) $row['payment_status'],
+                'total_minor' => (int) $row['total_minor'],
+                'currency' => (string) $row['currency'],
+                'created_at' => (string) $row['created_at'],
+                'paid_at' => $row['paid_at'] === null ? null : (string) $row['paid_at'],
+                'product_name_snapshot' => (string) $row['product_name_snapshot'],
+                'resource_title' => $row['resource_title'] === null ? null : (string) $row['resource_title'],
+                'resource_type_label' => $this->resourceTypeLabel($row['resource_type'] === null ? null : (string) $row['resource_type']),
+                'scope_label' => $row['scope_type'] === null ? 'دسترسی آموزشی' : $this->scopeLabel((string) $row['scope_type']),
+                'entitlement_status' => $scopeId === null ? 'none' : $this->entitlements->status($actorUserId, $workspaceId, $scopeId),
+            ];
+        }
+
+        return $rows;
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function catalog(string $actorUserId, string $workspaceId): array
+    {
+        $this->access->requireWorkspace($actorUserId, $workspaceId, 'commerce.purchase');
+        $query = $this->database->prepare(<<<'SQL'
+SELECT product.id, product.name, product.target_scope_id, scope.scope_type,
+       resource.title AS resource_title, resource_type.type_key AS resource_type,
+       price.amount_minor, price.currency
+FROM commerce_products product
+JOIN commerce_price_versions price ON price.product_id = product.id AND price.workspace_id = product.workspace_id
+JOIN rbac_scopes scope ON scope.id = product.target_scope_id
+ AND scope.workspace_id = product.workspace_id AND scope.archived_at IS NULL
+LEFT JOIN content_resources resource ON scope.scope_type = 'resource' AND resource.id = scope.entity_id
+ AND resource.workspace_id = scope.workspace_id AND resource.deleted_at IS NULL AND resource.archived_at IS NULL
+LEFT JOIN content_resource_types resource_type ON resource_type.id = resource.resource_type_id
+WHERE product.workspace_id = :workspace AND product.status = 'active' AND product.archived_at IS NULL
+  AND price.valid_from <= UTC_TIMESTAMP(6) AND (price.valid_until IS NULL OR price.valid_until > UTC_TIMESTAMP(6))
+  AND price.valid_from = (
+      SELECT MAX(current_price.valid_from) FROM commerce_price_versions current_price
+      WHERE current_price.product_id = product.id AND current_price.workspace_id = product.workspace_id
+        AND current_price.valid_from <= UTC_TIMESTAMP(6)
+        AND (current_price.valid_until IS NULL OR current_price.valid_until > UTC_TIMESTAMP(6))
+  )
+ORDER BY product.created_at DESC, product.id DESC
+SQL);
+        $query->execute(['workspace' => $workspaceId]);
+        $rows = [];
+        foreach ($query->fetchAll() as $row) {
+            $scopeType = (string) $row['scope_type'];
+            $rows[] = [
+                'id' => (string) $row['id'],
+                'name' => (string) $row['name'],
+                'amount_minor' => (int) $row['amount_minor'],
+                'currency' => (string) $row['currency'],
+                'scope_label' => $this->scopeLabel($scopeType),
+                'resource_title' => $row['resource_title'] === null ? null : (string) $row['resource_title'],
+                'resource_type_label' => $this->resourceTypeLabel($row['resource_type'] === null ? null : (string) $row['resource_type']),
+                'entitlement_status' => $this->entitlements->status($actorUserId, $workspaceId, (string) $row['target_scope_id']),
+            ];
+        }
+
+        return $rows;
     }
 
     /** @return array<string, mixed> */
@@ -313,5 +388,30 @@ SQL);
     private function callbackToken(string $orderId): string
     {
         return rtrim(strtr(base64_encode(hash_hmac('sha256', $orderId, $this->callbackTokenKey, true)), '+/', '-_'), '=');
+    }
+
+    private function scopeLabel(string $scopeType): string
+    {
+        return match ($scopeType) {
+            'resource' => 'محتوای آموزشی',
+            'course_offering' => 'درس',
+            'assessment' => 'آزمون',
+            'workspace' => 'فضای آموزشی',
+            default => 'دسترسی آموزشی',
+        };
+    }
+
+    private function resourceTypeLabel(?string $type): ?string
+    {
+        if ($type === null || $type === '') {
+            return null;
+        }
+
+        return [
+            'lecture_note' => 'جزوه / یادداشت کامل', 'discipline_note' => 'یادداشت ساختاریافته',
+            'summary' => 'خلاصه', 'question_bank' => 'بانک سؤال', 'past_exam' => 'آزمون گذشته',
+            'flashcards' => 'فلش‌کارت', 'audio' => 'صوت', 'transcript' => 'متن پیاده‌سازی‌شده',
+            'slide_reference' => 'اسلاید / مرجع',
+        ][$type] ?? 'محتوای آموزشی';
     }
 }

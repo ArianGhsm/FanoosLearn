@@ -6,6 +6,7 @@ const DEFAULT_ROUTE_REFERENCES = Object.freeze([
   { id: 'assessments', path: '/assessments', label: 'آزمون‌ها', eyebrow: 'ارزیابی', slot: 'primary', owner: 'web-07-progress-assessments-grades', icon: 'assessment', workspaceRequired: true },
   { id: 'grades', path: '/grades', label: 'نمرات', eyebrow: 'عملکرد', slot: 'primary', owner: 'web-07-progress-assessments-grades', icon: 'grades', workspaceRequired: true },
   { id: 'announcements', path: '/announcements', label: 'اطلاعیه‌ها', eyebrow: 'ارتباطات', slot: 'primary', owner: 'web-08-operations-communication-commerce', icon: 'announcement', workspaceRequired: true },
+  { id: 'search', path: '/search', label: 'جست‌وجو', eyebrow: 'پیدا کردن', slot: 'secondary', owner: 'web-08-operations-communication-commerce', icon: 'search', workspaceRequired: true },
   { id: 'forms', path: '/forms', label: 'فرم‌ها', eyebrow: 'فعالیت‌ها', slot: 'secondary', owner: 'web-08-operations-communication-commerce', icon: 'forms', workspaceRequired: true },
   { id: 'orders', path: '/orders', label: 'خرید و دسترسی', eyebrow: 'دسترسی', slot: 'secondary', owner: 'web-08-operations-communication-commerce', icon: 'commerce', workspaceRequired: true },
   { id: 'account', path: '/account', label: 'حساب', longLabel: 'حساب و فضاهای آموزشی', eyebrow: 'حساب', slot: 'account', owner: 'web-02-shell', icon: 'account', workspaceRequired: false },

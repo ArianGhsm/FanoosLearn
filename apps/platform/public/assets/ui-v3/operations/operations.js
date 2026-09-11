@@ -1,6 +1,7 @@
 const ROUTES = Object.freeze({
   announcements: 'announcements',
   notifications: 'notifications',
+  search: 'search',
   forms: 'forms',
   orders: 'orders',
   management: 'management',
@@ -19,6 +20,7 @@ const STATUS_LABELS = Object.freeze({
   redirected: 'در انتظار تکمیل پرداخت',
   verifying: 'در حال بررسی پرداخت',
   refunded: 'بازپرداخت‌شده',
+  not_started: 'شروع نشده',
   active: 'دسترسی فعال',
   expired: 'منقضی‌شده',
   revoked: 'دسترسی لغوشده',
@@ -57,6 +59,28 @@ const FORM_TYPES = Object.freeze([
   ['date', 'تاریخ'],
   ['boolean', 'بله / خیر'],
 ]);
+
+const CONTENT_TYPES = Object.freeze([
+  ['lecture_note', 'جزوه / یادداشت کامل'],
+  ['discipline_note', 'یادداشت ساختاریافته'],
+  ['summary', 'خلاصه'],
+  ['question_bank', 'بانک سؤال'],
+  ['past_exam', 'آزمون گذشته'],
+  ['flashcards', 'فلش‌کارت'],
+  ['audio', 'صوت / متن پیاده‌سازی‌شده'],
+  ['transcript', 'متن پیاده‌سازی‌شده'],
+  ['slide_reference', 'اسلاید / مرجع'],
+]);
+
+const CONTENT_STATUS_LABELS = Object.freeze({
+  draft: 'پیش‌نویس',
+  review: 'در انتظار بررسی',
+  approved: 'تأییدشده',
+  rejected: 'نیازمند اصلاح',
+  published: 'منتشرشده',
+  archived: 'بایگانی‌شده',
+  deleted: 'حذف‌شده',
+});
 
 function text(value, fallback = '') {
   if (value === null || value === undefined) return fallback;
@@ -114,6 +138,7 @@ function icon(name) {
     content: ['M5 4h14v16H5z', 'M8 8h8', 'M8 12h8', 'M8 16h5'],
     plus: ['M12 5v14', 'M5 12h14'],
     close: ['m7 7 10 10', 'm17 7-10 10'],
+    search: ['m21 21-4.35-4.35', 'M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z'],
   };
   (paths[name] || paths.arrow).forEach((d) => {
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -143,7 +168,10 @@ function workspaceTimezone(ctx) {
   return text(ctx?.state?.workspace?.timezone_name || ctx?.state?.workspaceTimezone, 'UTC');
 }
 
-function hasCapability(ctx, permission) {
+function hasCapability(ctx, permission, projection = null) {
+  if (projection && typeof projection === 'object' && projection.capabilities && typeof projection.capabilities === 'object') {
+    return projection.capabilities[permission] === true;
+  }
   const capabilities = ctx?.capabilities;
   if (!capabilities) return false;
   if (typeof capabilities.has === 'function') return capabilities.has(permission) === true;
@@ -171,6 +199,7 @@ async function apiRequest(ctx, path, { method = 'GET', body, signal } = {}) {
   if (typeof api.request === 'function') return normalizeApiResult(await api.request(path, { method: verb, body, signal }));
   if (verb === 'GET' && typeof api.get === 'function') return normalizeApiResult(await api.get(path, { signal }));
   if (verb === 'POST' && typeof api.post === 'function') return normalizeApiResult(await api.post(path, body || {}, { signal }));
+  if (verb === 'PATCH' && typeof api.patch === 'function') return normalizeApiResult(await api.patch(path, body || {}, { signal }));
   throw new Error('ops_api_adapter_missing');
 }
 
@@ -342,16 +371,27 @@ function orderPaymentState(row) {
 
 function explicitAccessState(row) {
   const raw = text(row?.entitlement_status || row?.access_status || row?.entitlement?.status).toLowerCase();
-  if (['active', 'expired', 'revoked'].includes(raw)) return raw;
+  if (['active', 'expired', 'revoked', 'pending'].includes(raw)) return raw;
   if (row?.entitlement?.granted === true) return 'active';
   return 'unknown';
+}
+
+function safeInternalLink(value) {
+  const url = safeLink(value);
+  return url && url.origin === window.location.origin ? url : null;
 }
 
 function accessLabel(value) {
   if (value === 'active') return 'دسترسی فعال';
   if (value === 'expired') return 'دسترسی منقضی‌شده';
   if (value === 'revoked') return 'دسترسی لغوشده';
+  if (value === 'pending') return 'دسترسی هنوز فعال نشده است';
   return 'وضعیت دسترسی ارائه نشده است';
+}
+
+function orderState(row) {
+  const raw = text(row?.order_status || row?.status).toLowerCase();
+  return raw || 'unknown';
 }
 
 function routeName(ctx, requested) {
@@ -456,20 +496,128 @@ function renderAnnouncementDetail(ctx, row, controller) {
   root.append(article);
 }
 
-function renderNotifications(ctx, controller) {
-  const root = controller.root;
-  const openAnnouncements = button('رفتن به اطلاعیه‌ها', { variant: 'secondary', onClick: () => controller.navigate(ROUTES.announcements) });
-  root.replaceChildren(
-    pageHeader('ارتباطات', 'اعلان‌های شخصی', 'اعلان با اطلاعیه رسمی یکی نیست.'),
-    element('section', { className: 'f3-ops-notification-gap' },
-      element('div', { className: 'f3-ops-feature-icon' }, icon('bell')),
-      element('div', {},
-        element('h2', { text: 'تاریخچهٔ شخصی اعلان‌ها هنوز در وب ارائه نمی‌شود' }),
-        element('p', { text: 'برای جلوگیری از نمایش سابقهٔ ناقص، رسیدهای ارسال پیام در تلگرام یا بله به‌جای صندوق اعلان استفاده نمی‌شوند. اطلاعیه‌های رسمی همچنان از بخش اطلاعیه‌ها در دسترس‌اند.' }),
-        openAnnouncements,
+export async function renderCourseAnnouncementsSlot(ctx, { root, courseId, courseTitle } = {}) {
+  if (!(root instanceof Element) || !text(courseId)) return;
+  const heading = element('h2', { className: 'f3-ops-slot-title', text: 'اطلاعیه‌های درس' });
+  root.replaceChildren(heading, stateBlock('در حال دریافت اطلاعیه‌های درس…', 'فقط اطلاعیه‌های دارای ارتباط canonical با این درس نمایش داده می‌شوند.'));
+  try {
+    const result = await apiRequest(ctx, pathFor(ctx, `/announcements?course_id=${encodeURIComponent(text(courseId))}`), { signal: ctx?.signal });
+    const items = rowsOf(result);
+    if (!items.length) {
+      root.replaceChildren(heading, stateBlock('اطلاعیه‌ای برای این درس منتشر نشده است', courseTitle ? `برای «${bounded(courseTitle, 120)}» اطلاعیهٔ مرتبطی پیدا نشد.` : 'اطلاعیهٔ مرتبطی پیدا نشد.'));
+      return;
+    }
+    const list = element('div', { className: 'f3-ops-list', attrs: { 'aria-label': 'اطلاعیه‌های درس' } });
+    items.forEach((row) => list.append(element('article', { className: 'f3-ops-list-row' },
+      element('div', { className: 'f3-ops-list-row__body' },
+        element('h3', { className: 'f3-ops-list-row__title', text: text(row.title, 'اطلاعیه') }),
+        element('p', { className: 'f3-ops-list-row__preview', text: bounded(row.body, 180) || 'بدون متن پیش‌نمایش' }),
+        metaRow([{ icon: 'clock', value: formatDate(ctx, row.published_at, true) }, { value: row.scope_course_title || courseTitle || 'درس' }]),
       ),
-    ),
+      row.status !== 'read' && !row.read_at
+        ? button('خواندم', { variant: 'quiet', onClick: async (event) => {
+          const control = event.currentTarget;
+          control.disabled = true;
+          try {
+            await apiRequest(ctx, pathFor(ctx, `/announcements/${encodeURIComponent(row.id)}/read`), { method: 'POST', body: {}, signal: ctx?.signal });
+            row.status = 'read';
+            row.read_at = new Date().toISOString();
+            control.replaceWith(statusChip('read', 'خوانده‌شده'));
+          } catch (_error) {
+            control.disabled = false;
+          }
+        } })
+        : statusChip('read', 'خوانده‌شده'),
+    )));
+    root.replaceChildren(heading, list);
+  } catch (_error) {
+    root.replaceChildren(heading, stateBlock('اطلاعیه‌های درس دریافت نشدند', 'ارتباط با اطلاعیه‌های مرتبط برقرار نشد.', { tone: 'warning' }));
+  }
+}
+
+function preferenceCheckbox(id, label, checked) {
+  return element('label', { className: 'f3-ops-switch-row', attrs: { for: id } },
+    element('input', { attrs: { id, type: 'checkbox', checked: checked ? true : null } }),
+    element('span', { text: label }),
   );
+}
+
+function renderNotificationPreferences(ctx, result, controller) {
+  if (!result.ok || !result.data || typeof result.data !== 'object') return null;
+  const preferences = result.data;
+  const inApp = preferenceCheckbox('f3-ops-pref-in-app', 'نمایش اعلان‌های داخل فانوس', preferences.in_app_enabled === true);
+  const email = preferenceCheckbox('f3-ops-pref-email', 'ارسال ایمیل (در صورت فعال‌شدن کانال)', preferences.email_enabled === true);
+  const push = preferenceCheckbox('f3-ops-pref-push', 'اعلان دستگاه (در صورت فعال‌شدن کانال)', preferences.push_enabled === true);
+  const snooze = element('input', { attrs: { id: 'f3-ops-pref-snooze', type: 'datetime-local', value: text(preferences.snoozed_until).replace(' ', 'T').slice(0, 16) } });
+  const form = element('form', { className: 'f3-ops-preferences', attrs: { 'aria-labelledby': 'f3-ops-preferences-title' } },
+    element('div', { className: 'f3-ops-preferences__heading' }, element('h2', { id: 'f3-ops-preferences-title', text: 'تنظیمات اعلان' }), element('p', { text: 'تنظیمات فقط روی همین فضای آموزشی و حساب شما اثر می‌گذارد.' })),
+    inApp, email, push,
+    element('label', { className: 'f3-ops-field', attrs: { for: 'f3-ops-pref-snooze' } }, element('span', { text: 'توقف موقت تا (اختیاری)' }), snooze),
+    element('div', { className: 'f3-ops-form__footer' }, button('ذخیره تنظیمات', { variant: 'secondary', type: 'submit' })),
+  );
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const submit = form.querySelector('button[type="submit"]');
+    if (submit) submit.disabled = true;
+    try {
+      await apiRequest(ctx, pathFor(ctx, '/notification-preferences'), { method: 'PATCH', body: {
+        in_app_enabled: inApp.querySelector('input')?.checked === true,
+        email_enabled: email.querySelector('input')?.checked === true,
+        push_enabled: push.querySelector('input')?.checked === true,
+        snoozed_until: snooze.value ? snooze.value : null,
+      }, signal: controller.signal });
+      notify(ctx, 'تنظیمات اعلان ذخیره شد.', 'success');
+    } catch (error) {
+      notify(ctx, error?.status === 403 ? 'تنظیمات اعلان برای این عضویت در دسترس نیست.' : 'ذخیرهٔ تنظیمات اعلان انجام نشد.', 'warning');
+    } finally {
+      if (submit) submit.disabled = false;
+    }
+  });
+  return form;
+}
+
+async function renderNotifications(ctx, controller) {
+  const root = controller.root;
+  const [result, preferences] = await Promise.all([
+    safeRead(ctx, pathFor(ctx, '/notifications?limit=30'), controller.signal),
+    safeRead(ctx, pathFor(ctx, '/notification-preferences'), controller.signal),
+  ]);
+  if (controller.signal.aborted) return;
+  const openAnnouncements = button('رفتن به اطلاعیه‌ها', { variant: 'secondary', onClick: () => controller.navigate(ROUTES.announcements) });
+  const heading = pageHeader('ارتباطات', 'اعلان‌های شخصی', 'پیام‌هایی که به‌صورت پایدار برای همین حساب در فضای آموزشی ثبت شده‌اند.', openAnnouncements);
+  if (!result.ok) {
+    const denied = result.error?.status === 403;
+    root.replaceChildren(heading, stateBlock(denied ? 'اعلان‌ها برای این عضویت فعال نیستند' : 'اعلان‌ها دریافت نشدند', denied ? 'دسترسی اعلان برای این فضای آموزشی به حساب شما داده نشده است.' : 'ارتباط با صندوق اعلان برقرار نشد. دوباره تلاش کنید.', { tone: denied ? 'warning' : 'danger', actionLabel: denied ? null : 'تلاش دوباره', onAction: denied ? null : () => controller.render(ROUTES.notifications) }));
+    return;
+  }
+  const rows = rowsOf(result);
+  const content = [];
+  if (!rows.length) content.push(stateBlock('اعلان جدیدی ندارید', 'وقتی پیامی برای حساب شما ثبت شود، در اینجا نمایش داده می‌شود.'));
+  else {
+    const list = element('section', { className: 'f3-ops-list', attrs: { 'aria-label': 'اعلان‌های شخصی' } });
+    rows.forEach((row) => {
+      const unread = text(row.status).toLowerCase() !== 'read' && !row.read_at;
+      const read = button(unread ? 'خواندم' : 'خوانده‌شده', { variant: unread ? 'quiet' : 'quiet', disabled: !unread, onClick: async (event) => {
+        event.currentTarget.disabled = true;
+        try {
+          await apiRequest(ctx, pathFor(ctx, `/notifications/${encodeURIComponent(row.id)}/read`), { method: 'POST', body: {}, signal: controller.signal });
+          row.status = 'read'; row.read_at = new Date().toISOString(); event.currentTarget.replaceWith(statusChip('read', 'خوانده‌شده'));
+        } catch (_error) { event.currentTarget.disabled = false; notify(ctx, 'وضعیت خوانده‌شدن ذخیره نشد.', 'warning'); }
+      } });
+      list.append(element('article', { className: `f3-ops-list-row${unread ? ' f3-ops-list-row--unread' : ''}` },
+        element('div', { className: 'f3-ops-list-row__body' },
+          element('div', { className: 'f3-ops-list-row__titleline' }, element('h2', { className: 'f3-ops-list-row__title', text: text(row.title, 'اعلان') }), unread ? element('span', { className: 'f3-ops-unread', text: 'خوانده‌نشده' }) : null),
+          element('p', { className: 'f3-ops-list-row__preview', text: bounded(row.body, 220) || 'بدون متن پیش‌نمایش' }),
+          metaRow([{ icon: 'clock', value: formatDate(ctx, row.published_at, true) }, { value: announcementScope(ctx, row) }]),
+        ),
+        element('div', { className: 'f3-ops-list-row__action' }, read),
+      ));
+    });
+    content.push(list);
+  }
+  const preferencesForm = renderNotificationPreferences(ctx, preferences, controller);
+  if (preferencesForm) content.push(preferencesForm);
+  root.replaceChildren(heading, ...content);
 }
 
 function parseFormSchema(row) {
@@ -489,7 +637,9 @@ function schemaFields(row) {
   return Array.isArray(schema?.fields) ? schema.fields.filter((field) => field && typeof field === 'object' && text(field.id)) : [];
 }
 
-function formAvailability() {
+function formAvailability(row) {
+  const submitted = text(row?.submission_status).toLowerCase() === 'submitted';
+  if (submitted) return { key: 'submitted', label: 'پاسخ ثبت شده' };
   return { key: 'open', label: 'باز' };
 }
 
@@ -512,7 +662,10 @@ function renderForms(ctx, result, controller) {
   }
   const list = element('section', { className: 'f3-ops-card-list', attrs: { 'aria-label': 'فرم‌های فعال' } });
   rows.forEach((row) => {
-    const availability = formAvailability();
+    const availability = formAvailability(row);
+    const submitted = availability.key === 'submitted';
+    const allowMultiple = row.allow_multiple === true || row.allow_multiple === 1 || row.allow_multiple === '1';
+    const singleSubmission = !allowMultiple;
     list.append(element('article', { className: 'f3-ops-form-card' },
       element('div', { className: 'f3-ops-form-card__top' },
         element('div', { className: 'f3-ops-feature-icon f3-ops-feature-icon--small' }, icon('form')),
@@ -524,9 +677,13 @@ function renderForms(ctx, result, controller) {
       ),
       metaRow([
         { value: row.closes_at ? `مهلت: ${formatDate(ctx, row.closes_at, true)}` : 'بدون مهلت اعلام‌شده' },
-        { value: row.allow_multiple ? 'امکان ثبت چند پاسخ' : 'یک پاسخ برای هر عضو' },
+        { value: allowMultiple ? 'امکان ثبت چند پاسخ' : 'یک پاسخ برای هر عضو' },
+        { value: row.submitted_at ? `آخرین ثبت: ${formatDate(ctx, row.submitted_at, true)}` : '' },
       ]),
-      element('div', { className: 'f3-ops-form-card__action' }, button('باز کردن فرم', { variant: 'secondary', onClick: () => renderFormDetail(ctx, row, controller) })),
+      element('div', { className: 'f3-ops-form-card__action' }, button(submitted && singleSubmission ? 'پاسخ ثبت شده' : 'باز کردن فرم', {
+        variant: 'secondary', disabled: submitted && singleSubmission,
+        onClick: () => renderFormDetail(ctx, row, controller),
+      })),
     ));
   });
   root.append(list);
@@ -612,6 +769,11 @@ function renderFormDetail(ctx, row, controller) {
   const back = button('بازگشت به فرم‌ها', { variant: 'quiet', onClick: () => controller.render(ROUTES.forms) });
   root.replaceChildren(pageHeader('فرم', text(row.title, 'فرم'), row.closes_at ? `مهلت ثبت: ${formatDate(ctx, row.closes_at, true)}` : 'فرم فعال', back));
   if (row.description) root.append(element('p', { className: 'f3-ops-detail-lead', text: text(row.description) }));
+  const allowMultiple = row.allow_multiple === true || row.allow_multiple === 1 || row.allow_multiple === '1';
+  if (text(row.submission_status).toLowerCase() === 'submitted' && !allowMultiple) {
+    root.append(stateBlock('پاسخ این فرم قبلاً ثبت شده است', row.submitted_at ? `آخرین ثبت: ${formatDate(ctx, row.submitted_at, true)}` : 'برای این فرم یک پاسخ برای هر عضو مجاز است.', { tone: 'success' }));
+    return;
+  }
   if (!fields.length) {
     root.append(stateBlock('ساختار این فرم قابل نمایش نیست', 'فیلدهای قابل‌استفاده از سمت سرور ارائه نشده‌اند. دادهٔ خام فرم نمایش داده نمی‌شود.', { tone: 'warning' }));
     return;
@@ -646,40 +808,121 @@ function renderFormDetail(ctx, row, controller) {
   root.append(form);
 }
 
-function renderOrders(ctx, result, controller) {
+function renderCatalog(ctx, result, controller) {
+  const section = element('section', { className: 'f3-ops-commerce-section', attrs: { 'aria-labelledby': 'f3-ops-catalog-title' } });
+  section.append(element('div', { className: 'f3-ops-commerce-section__header' },
+    element('div', {}, element('h2', { attrs: { id: 'f3-ops-catalog-title' }, text: 'محصولات قابل خرید' }), element('p', { text: 'قیمت و واحد پول فقط از برآورد نهایی سرور خوانده می‌شود.' })),
+  ));
+  if (!result?.ok) {
+    const denied = result?.error?.status === 403;
+    section.append(stateBlock(denied ? 'خرید برای این عضویت فعال نیست' : 'کاتالوگ دریافت نشد', denied ? 'برای مشاهدهٔ محصولات، دسترسی خرید فضای آموزشی لازم است.' : 'فهرست محصولات فعلاً در دسترس نیست.', { tone: denied ? 'warning' : 'danger', actionLabel: denied ? null : 'تلاش دوباره', onAction: denied ? null : () => controller.render(ROUTES.orders) }));
+    return section;
+  }
+  const products = rowsOf(result);
+  if (!products.length) {
+    section.append(stateBlock('محصول قابل خریدی نیست', 'هنوز محصول فعالی برای این فضای آموزشی منتشر نشده است.'));
+    return section;
+  }
+  const grid = element('div', { className: 'f3-ops-commerce-grid' });
+  products.forEach((product) => {
+    const access = explicitAccessState(product);
+    const feedback = element('p', { className: 'f3-ops-commerce-feedback', attrs: { role: 'status', 'aria-live': 'polite' } });
+    const action = access === 'active'
+      ? statusChip('active', 'دسترسی فعال')
+      : button('ادامهٔ خرید', { variant: 'primary', onClick: async () => {
+        action.disabled = true;
+        feedback.textContent = 'در حال ایجاد سفارش امن…';
+        try {
+          const order = await beginPurchase(ctx, product, { signal: controller.signal });
+          feedback.textContent = order?.redirect_url ? 'به درگاه پرداخت منتقل می‌شوید…' : 'سفارش ایجاد شد؛ وضعیت پرداخت از سرور پیگیری می‌شود.';
+        } catch (error) {
+          const safe = safeError(error);
+          feedback.textContent = safe.code === 'payment_provider_not_configured'
+            ? 'درگاه پرداخت هنوز برای این محیط فعال نشده است.'
+            : 'شروع خرید انجام نشد. وضعیت سفارش‌ها را دوباره بررسی کنید.';
+          action.disabled = false;
+        }
+      } });
+    grid.append(element('article', { className: 'f3-ops-product-card' },
+      element('div', { className: 'f3-ops-product-card__top' },
+        element('div', { className: 'f3-ops-feature-icon f3-ops-feature-icon--small' }, icon('wallet')),
+        element('span', { className: 'f3-ops-product-card__scope', text: text(product.scope_label, 'دسترسی آموزشی') }),
+      ),
+      element('h3', { text: text(product.name, 'محصول آموزشی') }),
+      product.resource_title ? element('p', { className: 'f3-ops-product-card__resource', text: bounded(product.resource_title) }) : null,
+      element('strong', { className: 'f3-ops-product-card__price', text: formatMoney(ctx, product.amount_minor, product.currency) }),
+      element('div', { className: 'f3-ops-product-card__action' }, action),
+      feedback,
+    ));
+  });
+  section.append(grid);
+  return section;
+}
+
+function renderAccessLibrary(ctx, result) {
+  const section = element('section', { className: 'f3-ops-commerce-section', attrs: { 'aria-labelledby': 'f3-ops-library-title' } });
+  section.append(element('div', { className: 'f3-ops-commerce-section__header' },
+    element('div', {}, element('h2', { attrs: { id: 'f3-ops-library-title' }, text: 'کتابخانهٔ دسترسی' }), element('p', { text: 'این فهرست وضعیت مجوز دسترسی را جدا از نتیجهٔ پرداخت نشان می‌دهد.' })),
+  ));
+  if (!result?.ok) {
+    section.append(stateBlock('کتابخانهٔ دسترسی دریافت نشد', 'وضعیت مجوزها فعلاً قابل دریافت نیست.', { tone: result?.error?.status === 403 ? 'warning' : 'danger' }));
+    return section;
+  }
+  const rows = rowsOf(result);
+  if (!rows.length) {
+    section.append(stateBlock('هنوز دسترسی‌ای ثبت نشده است', 'پس از تأیید خرید یا اعطای دسترسی، محتوای شما اینجا دیده می‌شود.'));
+    return section;
+  }
+  const list = element('div', { className: 'f3-ops-access-list' });
+  rows.forEach((row) => list.append(element('article', { className: 'f3-ops-access-row' },
+    element('div', { className: 'f3-ops-access-row__copy' },
+      element('h3', { text: text(row.resource_title || row.course_title || row.scope_label, 'دسترسی آموزشی') }),
+      metaRow([{ value: text(row.resource_type_label || row.scope_label) }, { value: text(row.source_label, 'منبع دسترسی') }, { value: row.valid_until ? `تا ${formatDate(ctx, row.valid_until, true)}` : 'بدون تاریخ پایان' }]),
+    ),
+    statusChip(row.status, accessLabel(row.status)),
+  )));
+  section.append(list);
+  return section;
+}
+
+function renderOrders(ctx, result, controller, catalogResult, accessResult) {
   const root = controller.root;
   root.replaceChildren(pageHeader('خرید و دسترسی', 'خرید و دسترسی', 'سفارش، پرداخت و دسترسی سه وضعیت جداگانه‌اند.'));
   root.append(element('section', { className: 'f3-ops-callout' },
     element('div', { className: 'f3-ops-feature-icon' }, icon('wallet')),
     element('div', {},
-      element('strong', { text: 'فهرست محصولات قابل خرید هنوز از سمت سرور ارائه نشده است' }),
-      element('p', { text: 'به همین دلیل این صفحه از شما شناسهٔ فنی محصول نمی‌خواهد. در حال حاضر فقط سفارش‌های موجود نمایش داده می‌شوند.' }),
+      element('strong', { text: 'پرداخت امن و دسترسی قابل‌پیگیری' }),
+      element('p', { text: 'مبلغ، تأیید پرداخت و مجوز دسترسی در سمت سرور مستقل نگه داشته می‌شوند؛ پرداخت موفق به‌تنهایی مجوز محتوا نیست.' }),
     ),
   ));
-  if (!result.ok) {
-    const denied = result.error?.status === 403;
-    root.append(stateBlock(
-      denied ? 'دسترسی به سفارش‌ها ندارید' : 'سفارش‌ها دریافت نشدند',
-      denied ? 'خرید و دسترسی برای عضویت فعلی شما فعال نیست.' : 'وضعیت سفارش‌ها فعلاً قابل دریافت نیست.',
-      denied ? { tone: 'warning' } : { tone: 'danger', actionLabel: 'تلاش دوباره', onAction: () => controller.render(ROUTES.orders) },
-    ));
+  root.append(renderCatalog(ctx, catalogResult || { ok: false, error: { status: 0 } }, controller));
+  root.append(renderAccessLibrary(ctx, accessResult || { ok: false, error: { status: 0 } }));
+  const history = element('section', { className: 'f3-ops-commerce-section', attrs: { 'aria-labelledby': 'f3-ops-orders-title' } });
+  history.append(element('div', { className: 'f3-ops-commerce-section__header' }, element('div', {}, element('h2', { attrs: { id: 'f3-ops-orders-title' }, text: 'سابقهٔ سفارش‌ها' }), element('p', { text: 'وضعیت سفارش، پرداخت و دسترسی هرکدام جداگانه نمایش داده می‌شود.' }))));
+  if (!result?.ok) {
+    const denied = result?.error?.status === 403;
+    history.append(stateBlock(denied ? 'دسترسی به سفارش‌ها ندارید' : 'سفارش‌ها دریافت نشدند', denied ? 'خرید و دسترسی برای عضویت فعلی شما فعال نیست.' : 'وضعیت سفارش‌ها فعلاً قابل دریافت نیست.', { tone: denied ? 'warning' : 'danger', actionLabel: denied ? null : 'تلاش دوباره', onAction: denied ? null : () => controller.render(ROUTES.orders) }));
+    root.append(history);
     return;
   }
   const rows = dedupeOrders(rowsOf(result));
   if (!rows.length) {
-    root.append(stateBlock('هنوز سفارشی ثبت نشده است', 'پس از فراهم‌شدن فهرست خرید و ثبت سفارش معتبر، سابقهٔ سفارش‌ها اینجا نمایش داده می‌شود.'));
+    history.append(stateBlock('هنوز سفارشی ثبت نشده است', 'پس از ثبت سفارش معتبر، سابقهٔ خرید اینجا نمایش داده می‌شود.'));
+    root.append(history);
     return;
   }
   const list = element('section', { className: 'f3-ops-order-list', attrs: { 'aria-label': 'سفارش‌های من' } });
   rows.forEach((row) => {
     const payment = orderPaymentState(row);
     const access = explicitAccessState(row);
+    const order = orderState(row);
     list.append(element('article', { className: 'f3-ops-order-row' },
       element('div', { className: 'f3-ops-order-row__main' },
         element('h2', { text: text(row.product_name_snapshot || row.title, 'سفارش') }),
         metaRow([{ value: formatDate(ctx, row.created_at, true) }]),
       ),
       element('div', { className: 'f3-ops-order-row__states' },
+        element('div', {}, element('small', { text: 'وضعیت سفارش' }), statusChip(order)),
         element('div', {}, element('small', { text: 'وضعیت پرداخت' }), statusChip(payment)),
         element('div', {}, element('small', { text: 'دسترسی' }), access === 'unknown' ? statusChip('unknown', accessLabel(access)) : statusChip(access, accessLabel(access))),
       ),
@@ -689,7 +932,8 @@ function renderOrders(ctx, result, controller) {
       ),
     ));
   });
-  root.append(list);
+  history.append(list);
+  root.append(history);
 }
 
 function timelineItem(title, description, state = 'neutral') {
@@ -701,12 +945,13 @@ function timelineItem(title, description, state = 'neutral') {
 
 function renderOrderDetail(ctx, row, controller) {
   const root = controller.root;
+  const order = orderState(row);
   const payment = orderPaymentState(row);
   const access = explicitAccessState(row);
   const back = button('بازگشت به سفارش‌ها', { variant: 'quiet', onClick: () => controller.render(ROUTES.orders) });
   root.replaceChildren(pageHeader('جزئیات سفارش', text(row.product_name_snapshot || row.title, 'سفارش'), formatMoney(ctx, row.total_minor ?? row.amount_minor, row.currency), back));
   const timeline = element('ol', { className: 'f3-ops-timeline', attrs: { 'aria-label': 'روند سفارش' } });
-  timeline.append(timelineItem('سفارش ثبت شد', formatDate(ctx, row.created_at, true), 'complete'));
+  timeline.append(timelineItem('وضعیت سفارش', statusLabel(order), order === 'failed' || order === 'cancelled' ? 'danger' : 'complete'));
   if (payment === 'paid') {
     timeline.append(timelineItem('پرداخت تأیید شد', row.paid_at ? formatDate(ctx, row.paid_at, true) : 'تأیید پرداخت از سمت سرور ثبت شده است.', 'complete'));
   } else if (['failed', 'canceled', 'cancelled'].includes(payment)) {
@@ -717,10 +962,12 @@ function renderOrderDetail(ctx, row, controller) {
   if (access === 'active') timeline.append(timelineItem('دسترسی فعال است', 'وضعیت دسترسی به‌صورت مستقل تأیید شده است.', 'complete'));
   else if (access === 'expired') timeline.append(timelineItem('دسترسی منقضی شده است', 'پرداخت قبلی به‌تنهایی به معنی دسترسی فعال نیست.', 'warning'));
   else if (access === 'revoked') timeline.append(timelineItem('دسترسی لغو شده است', 'این وضعیت مستقل از نتیجهٔ پرداخت نمایش داده می‌شود.', 'danger'));
-  else timeline.append(timelineItem('وضعیت دسترسی جداگانه ارائه نشده است', 'فهرست عمومی سفارش‌ها در حال حاضر وضعیت دسترسی را برنمی‌گرداند؛ از روی پرداخت حدس زده نمی‌شود.', 'neutral'));
+  else if (access === 'pending') timeline.append(timelineItem('دسترسی هنوز فعال نشده است', 'پس از تأیید مستقل سمت سرور، وضعیت این مجوز به‌روزرسانی می‌شود.', 'current'));
+  else timeline.append(timelineItem('وضعیت دسترسی جداگانه ارائه نشده است', 'فهرست عمومی سفارش‌ها وضعیت دسترسی را برنمی‌گرداند؛ از روی پرداخت حدس زده نمی‌شود.', 'neutral'));
   root.append(element('section', { className: 'f3-ops-order-detail' },
     element('div', { className: 'f3-ops-order-summary' },
       element('div', {}, element('span', { text: 'مبلغ' }), element('strong', { text: formatMoney(ctx, row.total_minor ?? row.amount_minor, row.currency) })),
+      element('div', {}, element('span', { text: 'سفارش' }), statusChip(order)),
       element('div', {}, element('span', { text: 'پرداخت' }), statusChip(payment)),
       element('div', {}, element('span', { text: 'دسترسی' }), access === 'unknown' ? statusChip('unknown', accessLabel(access)) : statusChip(access, accessLabel(access))),
     ),
@@ -847,7 +1094,7 @@ function formCreator(ctx, controller) {
   return form;
 }
 
-function memberTable(ctx, result, controller) {
+function memberTable(ctx, result, controller, dashboard = null) {
   if (!result?.ok) {
     return stateBlock('فهرست اعضا در دسترس نیست', result?.error?.status === 403 ? 'مجوز مشاهده اعضا برای این حساب وجود ندارد.' : 'دریافت اعضای فضای آموزشی انجام نشد.', { tone: 'warning' });
   }
@@ -861,7 +1108,7 @@ function memberTable(ctx, result, controller) {
     element('span', { attrs: { role: 'columnheader' }, text: 'عملیات' }),
   ));
   rows.forEach((row) => {
-    const action = hasCapability(ctx, 'membership.manage')
+    const action = hasCapability(ctx, 'membership.manage', dashboard)
       ? button('نماینده شود', { variant: 'quiet', onClick: async (event) => {
         const control = event.currentTarget;
         control.disabled = true;
@@ -883,6 +1130,174 @@ function memberTable(ctx, result, controller) {
     ));
   });
   return table;
+}
+
+function contentTypeLabel(value) {
+  const key = text(value).toLowerCase();
+  return CONTENT_TYPES.find(([candidate]) => candidate === key)?.[1] || 'منبع آموزشی';
+}
+
+function contentStatusLabel(value) {
+  return CONTENT_STATUS_LABELS[text(value).toLowerCase()] || 'وضعیت ثبت‌شده';
+}
+
+function academicCourses(result) {
+  const source = result?.ok ? result.data?.courses : null;
+  if (!Array.isArray(source)) return [];
+  const seen = new Set();
+  return source.map((row) => ({
+    id: text(row?.id || row?.course_id),
+    title: text(row?.title || row?.course_title, 'درس'),
+    code: text(row?.course_code || row?.code),
+  })).filter((row) => {
+    if (!row.id || seen.has(row.id)) return false;
+    seen.add(row.id);
+    return true;
+  });
+}
+
+function contentVersionId(row) {
+  return text(row?.latest_version_id || row?.current_version_id);
+}
+
+function contentVersionStatus(row) {
+  return text(row?.latest_version_status || row?.current_version_status || row?.lifecycle_status).toLowerCase();
+}
+
+function contentVersionHistory(ctx, result) {
+  if (!result?.ok) return stateBlock('نسخه‌ها دریافت نشدند', 'تاریخچه نسخهٔ این منبع فعلاً در دسترس نیست.', { tone: 'warning' });
+  const rows = rowsOf(result);
+  if (!rows.length) return stateBlock('نسخه‌ای ثبت نشده است', 'برای این منبع هنوز نسخهٔ قابل نمایش ثبت نشده است.');
+  const list = element('ol', { className: 'f3-ops-content-versions', attrs: { 'aria-label': 'تاریخچه نسخه‌های منبع' } });
+  rows.forEach((row) => {
+    const status = text(row.status).toLowerCase();
+    const content = text(row.content_preview, row.content_available === true ? 'محتوای ساختاریافته ثبت شده است.' : 'نسخهٔ فایل‌محور');
+    list.append(element('li', { className: 'f3-ops-content-version' },
+      element('div', { className: 'f3-ops-content-version__meta' },
+        element('strong', { text: `نسخه ${formatNumber(ctx, row.version_no)}` }),
+        statusChip(status, contentStatusLabel(status)),
+      ),
+      element('p', { text: `${content}${row.created_at ? ` · ایجاد ${formatDate(ctx, row.created_at, true)}` : ''}` }),
+    ));
+  });
+  return list;
+}
+
+function contentMutationButton(label, variant, onClick) {
+  return button(label, { variant, onClick });
+}
+
+function contentRowActions(ctx, row, dashboard, controller) {
+  const status = contentVersionStatus(row);
+  const versionId = contentVersionId(row);
+  const resourceId = text(row?.id || row?.resource_id);
+  const actions = element('div', { className: 'f3-ops-content-row__actions' });
+  const mutate = (label, variant, path, body = {}) => actions.append(contentMutationButton(label, variant, async (event) => {
+    const control = event.currentTarget;
+    control.disabled = true;
+    try {
+      await apiRequest(ctx, pathFor(ctx, path), { method: 'POST', body, signal: controller.signal });
+      notify(ctx, `${label} انجام شد.`, 'success');
+      await controller.render(ROUTES.management);
+    } catch (_error) {
+      control.disabled = false;
+      notify(ctx, `${label} انجام نشد.`, 'danger');
+    }
+  }));
+
+  if (versionId && resourceId && ['draft', 'rejected'].includes(status) && hasCapability(ctx, 'resource.create', dashboard)) {
+    mutate('ارسال برای بررسی', 'secondary', `/resources/${encodeURIComponent(resourceId)}/versions/${encodeURIComponent(versionId)}/review-request`);
+  }
+  if (versionId && resourceId && status === 'review' && hasCapability(ctx, 'resource.review', dashboard)) {
+    mutate('تأیید نسخه', 'primary', `/resources/${encodeURIComponent(resourceId)}/versions/${encodeURIComponent(versionId)}/review`, { decision: 'approved' });
+    mutate('بازگشت برای اصلاح', 'quiet', `/resources/${encodeURIComponent(resourceId)}/versions/${encodeURIComponent(versionId)}/review`, { decision: 'rejected', note: 'نیازمند اصلاح محتوایی' });
+  }
+  if (versionId && resourceId && status === 'approved' && hasCapability(ctx, 'resource.publish', dashboard)) {
+    mutate('انتشار نسخه', 'primary', `/resources/${encodeURIComponent(resourceId)}/versions/${encodeURIComponent(versionId)}/publish`);
+  }
+  if (!actions.childElementCount) actions.append(element('span', { className: 'f3-ops-muted', text: status === 'published' ? 'نسخهٔ فعلی منتشر شده است' : 'در انتظار گام بعدی' }));
+  return actions;
+}
+
+function contentQueue(ctx, result, dashboard, controller) {
+  if (!result?.ok) {
+    return stateBlock(result?.error?.status === 403 ? 'صف محتوا برای این حساب فعال نیست' : 'صف محتوا دریافت نشد', 'فهرست تولید و بررسی محتوا در دسترس نیست.', { tone: result?.error?.status === 403 ? 'warning' : 'danger' });
+  }
+  const rows = rowsOf(result);
+  if (!rows.length) return stateBlock('صف محتوا خالی است', 'پس از ساخت یک منبع، نسخه‌های آن در اینجا برای ارسال، بررسی و انتشار نمایش داده می‌شود.');
+  const list = element('div', { className: 'f3-ops-content-queue' });
+  rows.forEach((row) => {
+    const status = contentVersionStatus(row);
+    const title = text(row.title, 'منبع آموزشی');
+    const version = text(row.latest_version_no || row.current_version_no);
+    const versionPanel = element('div', { className: 'f3-ops-content-row__versions' });
+    const versionsButton = button('تاریخچه نسخه‌ها', { variant: 'quiet', onClick: async (event) => {
+      const control = event.currentTarget;
+      control.disabled = true;
+      versionPanel.replaceChildren(element('p', { className: 'f3-ops-inline-note', text: 'در حال دریافت تاریخچه…' }));
+      const history = await safeRead(ctx, pathFor(ctx, `/resources/${encodeURIComponent(text(row.id || row.resource_id))}/versions`), controller.signal);
+      if (!controller.signal.aborted) versionPanel.replaceChildren(contentVersionHistory(ctx, history));
+      control.disabled = false;
+    } });
+    list.append(element('article', { className: 'f3-ops-content-row' },
+      element('div', { className: 'f3-ops-content-row__main' },
+        element('div', { className: 'f3-ops-content-row__titleline' }, element('h3', { text: title }), statusChip(status, contentStatusLabel(status))),
+        element('p', { className: 'f3-ops-content-row__meta', text: `${contentTypeLabel(row.type_key)}${row.topic ? ` · ${text(row.topic)}` : ''}${version ? ` · نسخه ${formatNumber(ctx, version)}` : ''}` }),
+      ),
+      contentRowActions(ctx, row, dashboard, controller),
+      element('div', { className: 'f3-ops-content-row__history' }, versionsButton, versionPanel),
+    ));
+  });
+  return list;
+}
+
+function resourceComposer(ctx, coursesResult, controller) {
+  const form = element('form', { className: 'f3-ops-compact-form f3-ops-content-composer' });
+  const title = element('input', { attrs: { id: 'f3-ops-content-title', type: 'text', maxlength: '255', required: true } });
+  const type = element('select', { attrs: { id: 'f3-ops-content-type' } });
+  CONTENT_TYPES.forEach(([value, label]) => type.append(element('option', { text: label, attrs: { value } })));
+  const course = element('select', { attrs: { id: 'f3-ops-content-course' } });
+  course.append(element('option', { text: 'بدون اتصال به درس', attrs: { value: '' } }));
+  academicCourses(coursesResult).forEach((row) => course.append(element('option', { text: row.code ? `${row.title} · ${row.code}` : row.title, attrs: { value: row.id } })));
+  const topic = element('input', { attrs: { id: 'f3-ops-content-topic', type: 'text', maxlength: '200' } });
+  const body = element('textarea', { attrs: { id: 'f3-ops-content-body', rows: '8', maxlength: '50000', required: true } });
+  const submit = button('ساخت پیش‌نویس', { variant: 'primary', type: 'submit' });
+  const feedback = element('p', { className: 'f3-ops-form-feedback', attrs: { role: 'status', 'aria-live': 'polite' } });
+  form.append(
+    element('div', { className: 'f3-ops-field' }, element('label', { attrs: { for: 'f3-ops-content-title' }, text: 'عنوان منبع' }), title),
+    element('div', { className: 'f3-ops-content-form-grid' },
+      element('div', { className: 'f3-ops-field' }, element('label', { attrs: { for: 'f3-ops-content-type' }, text: 'نوع خروجی' }), type),
+      element('div', { className: 'f3-ops-field' }, element('label', { attrs: { for: 'f3-ops-content-course' }, text: 'درس' }), course),
+    ),
+    element('div', { className: 'f3-ops-field' }, element('label', { attrs: { for: 'f3-ops-content-topic' }, text: 'موضوع (اختیاری)' }), topic),
+    element('div', { className: 'f3-ops-field' }, element('label', { attrs: { for: 'f3-ops-content-body' }, text: 'متن ساختاریافته' }), body),
+    element('p', { className: 'f3-ops-inline-note', text: 'این فرم فقط پیش‌نویس ساختاریافته می‌سازد. ارسال برای بررسی و انتشار در صف پایین و با capability جداگانه انجام می‌شود.' }),
+    element('div', { className: 'f3-ops-form__footer' }, submit, feedback),
+  );
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!form.reportValidity()) return;
+    submit.disabled = true;
+    feedback.textContent = 'در حال ساخت پیش‌نویس…';
+    const metadata = { format_key: 'standard', access_level: 'workspace' };
+    if (course.value) metadata.course_id = course.value;
+    if (topic.value.trim()) metadata.topic = topic.value.trim();
+    try {
+      await apiRequest(ctx, pathFor(ctx, '/resources'), { method: 'POST', body: {
+        title: title.value.trim(), type: type.value,
+        content: { blocks: [{ kind: 'paragraph', text: body.value.trim() }] }, metadata,
+      }, signal: controller.signal });
+      form.reset();
+      feedback.textContent = 'پیش‌نویس ساخته شد و در صف محتوا قرار گرفت.';
+      notify(ctx, 'پیش‌نویس محتوا ساخته شد.', 'success');
+      await controller.render(ROUTES.management);
+    } catch (_error) {
+      feedback.textContent = 'ساخت پیش‌نویس انجام نشد.';
+    } finally {
+      submit.disabled = false;
+    }
+  });
+  return form;
 }
 
 function managementCount(ctx, dashboard, key) {
@@ -907,23 +1322,35 @@ async function renderManagement(ctx, dashboardResult, controller) {
     return;
   }
   const grid = element('div', { className: 'f3-ops-management-grid' });
-  if (hasCapability(ctx, 'notification.broadcast')) {
+  if (hasCapability(ctx, 'notification.broadcast', dashboard)) {
     grid.append(capabilityCard('announcement', 'انتشار اطلاعیه', 'انتشار مستقیم پیام رسمی برای اعضای فضای آموزشی', announcementComposer(ctx, controller)));
   }
-  if (hasCapability(ctx, 'form.manage')) {
+  if (hasCapability(ctx, 'form.manage', dashboard)) {
     grid.append(capabilityCard('form', 'ساخت فرم', `${managementCount(ctx, dashboard, 'forms') ? `${managementCount(ctx, dashboard, 'forms')} فرم ثبت‌شده · ` : ''}ساخت فرم با فیلدهای پشتیبانی‌شده`, formCreator(ctx, controller)));
   }
   const memberSectionAvailable = Object.prototype.hasOwnProperty.call(dashboard.sections || {}, 'members');
-  if (memberSectionAvailable || hasCapability(ctx, 'membership.manage')) {
+  if (memberSectionAvailable || hasCapability(ctx, 'membership.manage', dashboard)) {
     const members = await safeRead(ctx, pathFor(ctx, '/admin/members'), controller.signal);
     if (controller.signal.aborted) return;
-    grid.append(capabilityCard('users', 'اعضای فضای آموزشی', managementCount(ctx, dashboard, 'members') ? `${managementCount(ctx, dashboard, 'members')} عضو در دادهٔ مدیریتی` : 'مشاهده اعضا و عملیات مجاز نقش‌ها', memberTable(ctx, members, controller)));
+    grid.append(capabilityCard('users', 'اعضای فضای آموزشی', managementCount(ctx, dashboard, 'members') ? `${managementCount(ctx, dashboard, 'members')} عضو در دادهٔ مدیریتی` : 'مشاهده اعضا و عملیات مجاز نقش‌ها', memberTable(ctx, members, controller, dashboard)));
   }
-  if (hasCapability(ctx, 'resource.review') || hasCapability(ctx, 'resource.publish')) {
-    grid.append(capabilityCard('content', 'بررسی و انتشار محتوا', 'عملیات بررسی و انتشار در قرارداد سرور وجود دارد، اما فهرست فعلی شناسهٔ نسخهٔ در انتظار را ارائه نمی‌کند.',
-      stateBlock('صف بررسی به دادهٔ کامل‌تری نیاز دارد', 'تا وقتی سرور نسخهٔ هدف را به‌صورت مجاز و مشخص ارائه نکند، دکمهٔ تأیید یا انتشار ساخته نمی‌شود.', { tone: 'warning' })));
+  const contentCreate = hasCapability(ctx, 'resource.create', dashboard);
+  const contentReview = hasCapability(ctx, 'resource.review', dashboard);
+  const contentPublish = hasCapability(ctx, 'resource.publish', dashboard);
+  if (contentCreate || contentReview || contentPublish) {
+    const courses = contentCreate ? await safeRead(ctx, pathFor(ctx, '/academics'), controller.signal) : { ok: false };
+    const resources = await safeRead(ctx, pathFor(ctx, '/resources?sort=newest'), controller.signal);
+    if (controller.signal.aborted) return;
+    const queueDescription = contentReview || contentPublish
+      ? 'تولید، بازبینی مستقل و انتشار نسخه‌ها با وضعیت و capability سرور'
+      : 'ساخت پیش‌نویس و ارسال آن برای بررسی مستقل';
+    const queue = contentQueue(ctx, resources, dashboard, controller);
+    const contentBody = element('div', { className: 'f3-ops-content-workflow' });
+    if (contentCreate) contentBody.append(resourceComposer(ctx, courses, controller));
+    contentBody.append(queue);
+    grid.append(capabilityCard('content', 'تولید و چرخهٔ محتوای آموزشی', queueDescription, contentBody));
   }
-  if (hasCapability(ctx, 'payment.reconcile') || hasCapability(ctx, 'commerce.manage_catalog') || hasCapability(ctx, 'entitlement.grant')) {
+  if (hasCapability(ctx, 'payment.reconcile', dashboard) || hasCapability(ctx, 'commerce.manage_catalog', dashboard) || hasCapability(ctx, 'entitlement.grant', dashboard)) {
     grid.append(capabilityCard('wallet', 'تجارت و دسترسی', managementCount(ctx, dashboard, 'orders') ? `${managementCount(ctx, dashboard, 'orders')} سفارش در فضای آموزشی` : 'عملیات مالی و دسترسی',
       stateBlock('مدیریت مالی به دادهٔ عملیاتی مشخص نیاز دارد', 'فهرست سفارش‌های دانشجو، شناسهٔ لازم برای پیگیری پرداخت یا فهرست دسترسی‌های مدیریتی را برنمی‌گرداند؛ ورودی شناسهٔ فنی دستی نمایش داده نمی‌شود.', { tone: 'neutral' })));
   }
@@ -931,6 +1358,63 @@ async function renderManagement(ctx, dashboardResult, controller) {
     grid.append(stateBlock('عملیات مدیریتی قابل نمایش نیست', 'مجوز کلی مدیریت تأیید شده است، اما قابلیت قابل‌اتکایی برای این ماژول از زیرساخت مشترک مجوزها ارائه نشده است.'));
   }
   root.append(grid);
+}
+
+function searchQuery(ctx) {
+  const query = ctx?.state?.route?.query;
+  const value = query && typeof query === 'object' ? query.q : '';
+  return text(Array.isArray(value) ? value[0] : value);
+}
+
+async function renderSearch(ctx, controller) {
+  const query = searchQuery(ctx);
+  const input = element('input', { attrs: { id: 'f3-ops-search-input', type: 'search', name: 'q', value: query, placeholder: 'نام درس، جلسه، فرم یا منبع آموزشی', autocomplete: 'off' } });
+  const form = element('form', { className: 'f3-ops-search-form', attrs: { role: 'search' } },
+    element('label', { attrs: { for: 'f3-ops-search-input' }, text: 'جست‌وجو در فضای آموزشی' }),
+    element('div', { className: 'f3-ops-search-form__row' }, input, button('جست‌وجو', { variant: 'primary', type: 'submit', iconName: 'search' })),
+  );
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const value = text(input.value);
+    if (value.length < 2) {
+      notify(ctx, 'برای جست‌وجو حداقل دو نویسه وارد کنید.', 'warning');
+      input.focus();
+      return;
+    }
+    controller.navigate(ROUTES.search, { q: value });
+  });
+  const root = controller.root;
+  const heading = pageHeader('پیدا کردن', 'جست‌وجوی فضای آموزشی', 'نتایج فقط از محتوایی می‌آیند که حساب شما در همین فضای آموزشی مجاز به دیدن آن است.');
+  if (query.length < 2) {
+    root.replaceChildren(heading, form, stateBlock('عبارت جست‌وجو را وارد کنید', 'عنوان درس، جلسه، برنامه، اطلاعیه، فرم یا منبع آموزشی را جست‌وجو کنید.'));
+    return;
+  }
+  const result = await safeRead(ctx, pathFor(ctx, `/search?q=${encodeURIComponent(query)}`), controller.signal);
+  if (controller.signal.aborted) return;
+  if (!result.ok) {
+    const denied = result.error?.status === 403;
+    root.replaceChildren(heading, form, stateBlock(denied ? 'جست‌وجو برای این عضویت فعال نیست' : 'جست‌وجو انجام نشد', result.error?.status === 422 ? 'عبارت جست‌وجو باید بین دو تا ۱۲۰ نویسه باشد.' : 'ارتباط با جست‌وجوی فضای آموزشی برقرار نشد.', { tone: denied ? 'warning' : 'danger', actionLabel: denied ? null : 'تلاش دوباره', onAction: denied ? null : () => controller.render(ROUTES.search) }));
+    return;
+  }
+  const rows = rowsOf(result);
+  if (!rows.length) {
+    root.replaceChildren(heading, form, stateBlock('نتیجه‌ای پیدا نشد', 'عبارت دیگری را امتحان کنید؛ نتیجه‌ای خارج از دسترسی حساب شما نمایش داده نمی‌شود.'));
+    return;
+  }
+  const list = element('section', { className: 'f3-ops-search-results', attrs: { 'aria-label': 'نتایج جست‌وجو' } });
+  rows.forEach((row) => {
+    const target = safeInternalLink(row.route || row.safe_url);
+    const open = target ? button('باز کردن', { variant: 'quiet', iconName: 'arrow', onClick: () => window.location.assign(target.href) }) : null;
+    list.append(element('article', { className: 'f3-ops-search-result' },
+      element('div', { className: 'f3-ops-search-result__body' },
+        element('span', { className: 'f3-ops-eyebrow', text: text(row.source_label, 'محتوا') }),
+        element('h2', { className: 'f3-ops-list-row__title', text: text(row.title, 'نتیجهٔ جست‌وجو') }),
+        metaRow([{ icon: 'clock', value: formatDate(ctx, row.updated_at, true) }]),
+      ),
+      open ? element('div', { className: 'f3-ops-list-row__action' }, open) : null,
+    ));
+  });
+  root.replaceChildren(heading, form, list);
 }
 
 async function renderRoute(ctx, requestedRoute, controller) {
@@ -945,7 +1429,11 @@ async function renderRoute(ctx, requestedRoute, controller) {
     return;
   }
   if (route === ROUTES.notifications) {
-    renderNotifications(ctx, controller);
+    await renderNotifications(ctx, controller);
+    return;
+  }
+  if (route === ROUTES.search) {
+    await renderSearch(ctx, controller);
     return;
   }
   if (route === ROUTES.announcements) {
@@ -959,8 +1447,12 @@ async function renderRoute(ctx, requestedRoute, controller) {
     return;
   }
   if (route === ROUTES.orders) {
-    const result = await safeRead(ctx, pathFor(ctx, '/orders'), controller.signal);
-    if (!controller.signal.aborted) renderOrders(ctx, result, controller);
+    const [catalogResult, ordersResult, accessResult] = await Promise.all([
+      safeRead(ctx, pathFor(ctx, '/catalog'), controller.signal),
+      safeRead(ctx, pathFor(ctx, '/orders'), controller.signal),
+      safeRead(ctx, pathFor(ctx, '/entitlements'), controller.signal),
+    ]);
+    if (!controller.signal.aborted) renderOrders(ctx, ordersResult, controller, catalogResult, accessResult);
     return;
   }
   if (route === ROUTES.management) {
@@ -969,9 +1461,9 @@ async function renderRoute(ctx, requestedRoute, controller) {
   }
 }
 
-function navigate(ctx, route, controller) {
+function navigate(ctx, route, query = {}, controller) {
   if (typeof ctx?.navigate === 'function') {
-    ctx.navigate(route);
+    ctx.navigate(route, query);
     return;
   }
   controller.render(route);
@@ -988,8 +1480,8 @@ function createController(ctx) {
     abort() {
       if (this.abortController) this.abortController.abort();
     },
-    navigate(route) {
-      navigate(ctx, route, this);
+    navigate(route, query = {}) {
+      navigate(ctx, route, query, this);
     },
     render(route) {
       return renderRoute(ctx, route, this);
@@ -1039,10 +1531,11 @@ export const operationsCapabilityMap = Object.freeze({
 
 export const moduleDefinition = Object.freeze({
   id: 'operations',
-  routes: [ROUTES.announcements, ROUTES.notifications, ROUTES.forms, ROUTES.orders, ROUTES.management],
+  routes: [ROUTES.announcements, ROUTES.notifications, ROUTES.search, ROUTES.forms, ROUTES.orders, ROUTES.management],
   navItems: [
     { id: ROUTES.announcements, label: 'اطلاعیه‌ها', group: 'more', icon: 'announcement' },
     { id: ROUTES.notifications, label: 'اعلان‌ها', group: 'more', icon: 'bell' },
+    { id: ROUTES.search, label: 'جست‌وجو', group: 'more', icon: 'search' },
     { id: ROUTES.forms, label: 'فرم‌ها', group: 'more', icon: 'form' },
     { id: ROUTES.orders, label: 'خرید و دسترسی', group: 'more', icon: 'wallet' },
     { id: ROUTES.management, label: 'مدیریت', group: 'conditional', icon: 'manage', conditional: true },

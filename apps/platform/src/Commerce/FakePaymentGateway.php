@@ -27,9 +27,15 @@ final class FakePaymentGateway implements PaymentGateway
 
     public function verify(string $authority, int $amountMinor, string $currency, array $payload): array
     {
+        $payloadAmount = $payload['amount_minor'] ?? null;
+        $payloadCurrency = $payload['currency'] ?? null;
+        $amountMatches = $payloadAmount === null || (is_int($payloadAmount) || is_numeric($payloadAmount)) && (int) $payloadAmount === $amountMinor;
+        $currencyMatches = $payloadCurrency === null || is_string($payloadCurrency) && hash_equals(strtoupper($currency), strtoupper($payloadCurrency));
         $verified = ($payload['status'] ?? '') === 'success'
             && str_starts_with($authority, 'fake-')
-            && $amountMinor > 0;
+            && $amountMinor > 0
+            && $amountMatches
+            && $currencyMatches;
         return [
             'verified' => $verified,
             'reference' => $verified ? 'fake-ref-' . substr(hash('sha256', $authority), 0, 24) : null,

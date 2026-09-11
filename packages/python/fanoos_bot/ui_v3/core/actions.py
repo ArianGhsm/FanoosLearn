@@ -16,8 +16,10 @@ ACTION_GRADES = "core.grades"
 ACTION_NOTIFICATIONS = "core.notifications"
 ACTION_RESOURCES = "core.resources"
 ACTION_ASSESSMENTS = "core.assessments"
+ACTION_PAYMENTS = "core.payments"
 ACTION_WORKSPACE = "core.workspace"
 ACTION_WORKSPACE_SELECT = "core.workspace.select"
+ACTION_WORKSPACE_PAGE = "core.workspace.page"
 ACTION_ACCOUNT = "core.account"
 ACTION_ACCOUNT_UNLINK_REQUEST = "core.account.unlink.request"
 ACTION_ACCOUNT_UNLINK_CONFIRM = "core.account.unlink.confirm"
@@ -79,6 +81,10 @@ def assessments_action() -> Action:
     return _callback(ACTION_ASSESSMENTS, "📝 آزمون‌ها", "assessments")
 
 
+def payments_action() -> Action:
+    return _callback(ACTION_PAYMENTS, "💳 خرید و دسترسی", "payments")
+
+
 def workspace_action() -> Action:
     return _callback(ACTION_WORKSPACE, "🏫 فضای آموزشی", "ws.list")
 
@@ -92,6 +98,17 @@ def workspace_select_action(workspace_id: str, label: str) -> Action:
         f"انتخاب {compact_label}",
         "ws.select",
         params=(("w", workspace_id),),
+    )
+
+
+def workspace_page_action(page: int, *, next_page: bool) -> Action:
+    if isinstance(page, bool) or int(page) < 0:
+        raise ValueError("workspace page must be non-negative")
+    return _callback(
+        ACTION_WORKSPACE_PAGE,
+        "بعدی ›" if next_page else "‹ قبلی",
+        "ws.page",
+        params=(("p", str(int(page))),),
     )
 
 

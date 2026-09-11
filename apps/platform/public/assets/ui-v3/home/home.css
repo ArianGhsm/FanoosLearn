@@ -23,7 +23,7 @@
   box-sizing: border-box;
   color: var(--home-text);
   direction: rtl;
-  font-family: "Vazirmatn", "IRANSansX", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, Arial, sans-serif;
+  font-family: var(--f3-font-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, Arial, sans-serif);
   min-width: 0;
   overflow-wrap: anywhere;
   width: 100%;

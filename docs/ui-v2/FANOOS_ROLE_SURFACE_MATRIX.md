@@ -2,7 +2,7 @@
 
 Authorization comes from canonical RBAC (`rbac_role_templates` + scoped assignments + permission checks). Hiding a control is presentation hygiene, never authorization.
 
-Repository role templates currently include: `student`, `cohort-representative`, `workspace-admin`, `institution-admin`, `faculty-admin`, `program-admin`, `content-manager`, `content-reviewer`, `finance-manager`, `platform-super-admin`, and `platform-deployment-operator`.
+Repository role templates currently include: `student`, `cohort-representative`, `workspace-admin`, `institution-admin`, `faculty-admin`, `program-admin`, `content-author`, `content-manager`, `content-reviewer`, `finance-manager`, `platform-super-admin`, and `platform-deployment-operator`.
 
 | Role | Website surface | Telegram surface | Bale surface | Permission source / backend action | Explicitly prohibited / absent |
 | --- | --- | --- | --- | --- | --- |

@@ -68,11 +68,9 @@ def no_workspace_screen(website_url: str) -> Screen:
                 body="فانوس فقط عضویت‌های ثبت‌شده در backend را نمایش می‌دهد و ربات فضای آموزشی جدیدی ایجاد نمی‌کند."
             ),
         ),
-        action_rows=(
-            ActionRow((account_action(), help_action())),
-            ActionRow((website_action(website_url),)),
-            ActionRow((home_action(),)),
-        ),
+        action_rows=(ActionRow((account_action(), help_action())),)
+        + ((ActionRow((website_action(website_url),)),) if website_url else ())
+        + (ActionRow((home_action(),)),),
     )
 
 

@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace Fanoos\Tests\Integration;
 
 use Fanoos\Platform\Authorization\ScopeAuthorizer;
+use Fanoos\Platform\Audit\AuditLogger;
+use Fanoos\Platform\Identity\AuthenticatedSession;
+use Fanoos\Platform\Identity\AuthService;
+use Fanoos\Platform\Identity\PasswordHasher;
 use Fanoos\Platform\Migration\LegacyIdMap;
 use Fanoos\Platform\Migration\MigrationRunner;
 use Fanoos\Platform\Migration\SeedRunner;
@@ -51,10 +55,31 @@ final class TenantIsolationTest
         self::assert($authorizer->decide($fixture['global_admin'], 'payment.reconcile', 'workspace', $fixture['scope_a'], $fixture['workspace_a'])->allowed, 'Platform administrator was denied in workspace A.');
         self::assert($authorizer->decide($fixture['global_admin'], 'payment.reconcile', 'workspace', $fixture['scope_b'], $fixture['workspace_b'])->allowed, 'Platform administrator was denied in workspace B.');
 
+        $this->assertAccountWorkspaceProjection($fixture);
         $this->assertDatabaseIsolation($fixture);
         $this->assertLegacyMapping($fixture);
 
         return 16;
+    }
+
+    /** @param array<string, string> $fixture */
+    private function assertAccountWorkspaceProjection(array $fixture): void
+    {
+        $auth = new AuthService($this->database, new PasswordHasher(), new AuditLogger($this->database));
+        $account = $auth->account(new AuthenticatedSession(
+            Uuid::v7(),
+            $fixture['multi_member'],
+            'test-session-token',
+            'test-csrf-token',
+            $fixture['workspace_b'],
+            gmdate('Y-m-d H:i:s.u', time() + 3600),
+        ));
+        self::assert(count($account['workspaces']) === 2, 'Account projection did not preserve multi-workspace membership.');
+        foreach ($account['workspaces'] as $workspace) {
+            self::assert(in_array('student', $workspace['role_keys'], true), 'Workspace projection omitted the effective student role.');
+            self::assert(in_array('workspace.view', $workspace['permission_keys'], true), 'Workspace projection omitted the effective permission context.');
+            self::assert((bool) $workspace['is_selected'] === ((string) $workspace['id'] === $fixture['workspace_b']), 'Selected workspace marker is inconsistent with the session.');
+        }
     }
 
     /** @return array<string, int> */

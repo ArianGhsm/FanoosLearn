@@ -33,9 +33,10 @@ SELECT course.id AS course_id, course.course_code, course.title AS course_title,
        term.id AS term_id, term.term_key, term.name AS term_name
 FROM academic_courses course
 LEFT JOIN academic_course_offerings offering ON offering.course_id = course.id
- AND offering.workspace_id = course.workspace_id AND offering.archived_at IS NULL
+ AND offering.workspace_id = course.workspace_id AND offering.status <> 'archived' AND offering.archived_at IS NULL
 LEFT JOIN academic_terms term ON term.id = offering.term_id AND term.workspace_id = offering.workspace_id
-WHERE course.workspace_id = :workspace AND course.archived_at IS NULL
+ AND term.status <> 'archived' AND term.archived_at IS NULL
+WHERE course.workspace_id = :workspace AND course.status = 'active' AND course.archived_at IS NULL
 ORDER BY course.title, course.id, offering.section_key
 LIMIT :limit OFFSET :offset
 SQL);
@@ -70,9 +71,14 @@ SELECT event.id, event.event_type, event.title, event.starts_at, event.ends_at,
        course.id AS course_id, course.course_code, course.title AS course_title
 FROM schedule_events event
 LEFT JOIN academic_course_offerings offering ON offering.id = event.offering_id AND offering.workspace_id = event.workspace_id
+ AND offering.status <> 'archived' AND offering.archived_at IS NULL
 LEFT JOIN academic_courses course ON course.id = offering.course_id AND course.workspace_id = offering.workspace_id
+ AND course.status = 'active' AND course.archived_at IS NULL
+LEFT JOIN academic_terms term ON term.id = offering.term_id AND term.workspace_id = offering.workspace_id
+ AND term.status <> 'archived' AND term.archived_at IS NULL
 WHERE event.workspace_id = :workspace
   AND event.starts_at >= :starts_at AND event.starts_at < :ends_at
+  AND (event.offering_id IS NULL OR (offering.id IS NOT NULL AND term.id IS NOT NULL))
   AND event.status <> 'cancelled'
 ORDER BY event.starts_at, event.id
 LIMIT :limit OFFSET :offset
@@ -111,14 +117,19 @@ SQL);
         $limit = max(1, min(100, $limit));
         $query = $this->database->prepare(<<<'SQL'
 SELECT result.id AS result_id, course.id AS course_id, course.course_code,
-       course.title AS course_title, gradebook.id AS gradebook_id,
+       course.title AS course_title, term.id AS term_id, term.term_key, term.name AS term_name,
+       offering.id AS offering_id, gradebook.id AS gradebook_id,
        gradebook.title AS gradebook_title, item.id AS item_id, item.item_key,
-       item.title AS item_title, item.max_score, result.score, result.updated_at
+       item.title AS item_title, item.max_score, result.score, result.status AS result_status, result.updated_at
 FROM tenant_workspace_memberships membership
 JOIN academic_enrollments enrollment ON enrollment.membership_id = membership.id
  AND enrollment.workspace_id = membership.workspace_id AND enrollment.status IN ('active', 'completed')
 JOIN academic_course_offerings offering ON offering.id = enrollment.offering_id AND offering.workspace_id = enrollment.workspace_id
+ AND offering.status <> 'archived' AND offering.archived_at IS NULL
+JOIN academic_terms term ON term.id = offering.term_id AND term.workspace_id = offering.workspace_id
+ AND term.status <> 'archived' AND term.archived_at IS NULL
 JOIN academic_courses course ON course.id = offering.course_id AND course.workspace_id = offering.workspace_id
+ AND course.status = 'active' AND course.archived_at IS NULL
 JOIN grade_gradebooks gradebook ON gradebook.offering_id = offering.id
  AND gradebook.workspace_id = offering.workspace_id AND gradebook.status = 'published'
 JOIN grade_items item ON item.gradebook_id = gradebook.id AND item.workspace_id = gradebook.workspace_id
@@ -143,23 +154,35 @@ SQL);
     }
 
     /** @return array<string,mixed> */
-    public function announcements(string $userId, string $workspaceId, int $limit = 20, ?string $cursor = null): array
+    public function announcements(string $userId, string $workspaceId, int $limit = 20, ?string $cursor = null, ?string $courseId = null): array
     {
         $this->access->requireWorkspace($userId, $workspaceId, 'notification.receive');
         $offset = $this->decodeCursor($cursor);
         $limit = max(1, min(100, $limit));
-        $query = $this->database->prepare(<<<'SQL'
+        $courseFilter = '';
+        if ($courseId !== null && trim($courseId) !== '') {
+            $courseFilter = ' AND scope_course.id = :course';
+        }
+        $sql = <<<'SQL'
 SELECT message.id, message.title, message.body, message.published_at,
+       scope_course.course_code AS scope_course_code,
+       scope_course.title AS scope_course_title,
+       JSON_UNQUOTE(JSON_EXTRACT(message.data_json, '$.scope_label')) AS scope_label,
        recipient.status, recipient.read_at
 FROM notification_recipients recipient
 JOIN notification_messages message ON message.id = recipient.notification_id AND message.workspace_id = recipient.workspace_id
+LEFT JOIN academic_courses scope_course ON scope_course.id = JSON_UNQUOTE(JSON_EXTRACT(message.data_json, '$.course_id'))
+ AND scope_course.workspace_id = message.workspace_id AND scope_course.status = 'active' AND scope_course.archived_at IS NULL
 WHERE recipient.workspace_id = :workspace AND recipient.user_id = :user
   AND recipient.channel = 'web' AND message.status = 'published' AND message.archived_at IS NULL
-ORDER BY message.published_at DESC, message.id DESC
-LIMIT :limit OFFSET :offset
-SQL);
+SQL;
+        $sql .= $courseFilter . "\nORDER BY message.published_at DESC, message.id DESC\nLIMIT :limit OFFSET :offset";
+        $query = $this->database->prepare($sql);
         $query->bindValue(':workspace', $workspaceId);
         $query->bindValue(':user', $userId);
+        if ($courseFilter !== '') {
+            $query->bindValue(':course', trim($courseId));
+        }
         $query->bindValue(':limit', $limit + 1, PDO::PARAM_INT);
         $query->bindValue(':offset', $offset, PDO::PARAM_INT);
         $query->execute();

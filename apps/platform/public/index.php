@@ -1,6 +1,25 @@
 <?php
 
 declare(strict_types=1);
+
+/**
+ * Version static assets from their deployed release or their local file state.
+ * The release environment may set FANOOS_ASSET_VERSION to the exact commit SHA;
+ * the local fallback still changes when an individual asset changes.
+ */
+function fanoosAsset(string $path): string
+{
+    static $versions = [];
+    if (isset($versions[$path])) return $versions[$path];
+    $release = getenv('FANOOS_ASSET_VERSION');
+    if (!is_string($release) || !preg_match('/^[A-Za-z0-9._-]{1,80}$/', $release)) {
+        $file = __DIR__ . str_replace('/', DIRECTORY_SEPARATOR, $path);
+        $mtime = is_file($file) ? (int) filemtime($file) : 0;
+        $size = is_file($file) ? (int) filesize($file) : 0;
+        $release = $mtime . '-' . $size;
+    }
+    return $versions[$path] = $path . '?v=' . rawurlencode($release);
+}
 ?><!doctype html>
 <html lang="fa" dir="rtl">
 <head>
@@ -10,20 +29,20 @@ declare(strict_types=1);
     <meta name="theme-color" content="#F7F4EC">
     <meta name="description" content="فانوس؛ فضای آموزشی دانشجو برای درس‌ها، برنامه، منابع، آزمون‌ها و نمرات.">
     <title>فانوس | دانشگاهت، مرتب‌تر از همیشه</title>
-    <link rel="stylesheet" href="/assets/fonts/yekanbakh/fonts.css">
-    <link rel="stylesheet" href="/assets/ui-v3/foundation/tokens.css">
-    <link rel="stylesheet" href="/assets/ui-v3/foundation/base.css">
-    <link rel="stylesheet" href="/assets/ui-v3/foundation/components.css">
-    <link rel="stylesheet" href="/assets/ui-v3/shell/shell.css">
-    <link rel="stylesheet" href="/assets/ui-v3/home/home.css">
-    <link rel="stylesheet" href="/assets/ui-v3/courses/courses.css">
-    <link rel="stylesheet" href="/assets/ui-v3/schedule/schedule.css" data-f3-schedule-style="/assets/ui-v3/schedule/schedule.css">
-    <link rel="stylesheet" href="/assets/ui-v3/learning/learning.css">
-    <link rel="stylesheet" href="/assets/ui-v3/progress/progress.css">
-    <link rel="stylesheet" href="/assets/ui-v3/operations/operations.css">
-    <link rel="stylesheet" href="/assets/ui-v3/app/integration.css">
-    <link rel="stylesheet" href="/assets/ui-v3/app/web-schoolhouse-r1.css">
-    <link rel="stylesheet" href="/assets/ui-v3/app/web-mobile-r1.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars(fanoosAsset('/assets/fonts/yekanbakh/fonts.css'), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars(fanoosAsset('/assets/ui-v3/foundation/tokens.css'), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars(fanoosAsset('/assets/ui-v3/foundation/base.css'), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars(fanoosAsset('/assets/ui-v3/foundation/components.css'), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars(fanoosAsset('/assets/ui-v3/shell/shell.css'), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars(fanoosAsset('/assets/ui-v3/home/home.css'), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars(fanoosAsset('/assets/ui-v3/courses/courses.css'), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars(fanoosAsset('/assets/ui-v3/schedule/schedule.css'), ENT_QUOTES, 'UTF-8') ?>" data-f3-schedule-style="/assets/ui-v3/schedule/schedule.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars(fanoosAsset('/assets/ui-v3/learning/learning.css'), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars(fanoosAsset('/assets/ui-v3/progress/progress.css'), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars(fanoosAsset('/assets/ui-v3/operations/operations.css'), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars(fanoosAsset('/assets/ui-v3/app/integration.css'), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars(fanoosAsset('/assets/ui-v3/app/web-schoolhouse-r1.css'), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars(fanoosAsset('/assets/ui-v3/app/web-mobile-r1.css'), ENT_QUOTES, 'UTF-8') ?>">
 </head>
 <body>
 <a class="f3-public-skip" href="#main-content">رفتن به محتوای اصلی</a>
@@ -177,6 +196,6 @@ declare(strict_types=1);
 </section>
 
 <noscript><main class="f3-noscript"><h1>فانوس</h1><p>برای ورود و استفاده از فضای آموزشی فانوس، اجرای JavaScript لازم است.</p></main></noscript>
-<script type="module" src="/assets/ui-v3/app/bootstrap.js"></script>
+<script type="module" src="<?= htmlspecialchars(fanoosAsset('/assets/ui-v3/app/bootstrap.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 </body>
 </html>

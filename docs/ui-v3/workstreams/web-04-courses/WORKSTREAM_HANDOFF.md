@@ -169,14 +169,14 @@ These slot names are the merge contract for other V3 website workers:
 | `course.resources` | web-06 Learning Resources | internal course id, human code/title, term refs |
 | `course.assessments` | web-07 Progress / Assessments / Grades | internal course id, human code/title |
 | `course.grades` | web-07 Progress / Assessments / Grades | internal course id, human code/title |
-| `course.announcements` | web-08 Communication | only when a canonical course relation exists |
+| `course.announcements` | web-08 Communication | validated course-scoped announcement projection |
 | `course.overview.announcement` | web-08 Communication | optional overview-only latest course announcement |
 
 If a slot is not integrated, the course shell renders a truthful fallback and links to the corresponding global destination; it does not duplicate another worker’s full domain UI.
 
 ## INTEGRATION_GAPS
 
-1. **Course-scoped announcements:** current public announcement rows have no trustworthy `course_id` / `offering_id` relation. `courseAnnouncements` therefore defaults off, and both announcement surfaces remain hidden unless integration provides a canonical binding.
+1. **Course-scoped announcements:** the public announcement projection now accepts an optional validated `course_id` scope in `data_json`, joins it back to an active course in the same workspace, and supports `GET /announcements?course_id=…`. Older workspace-wide announcements remain workspace-scoped and do not appear in a course slot.
 2. **Instructor metadata:** the audited academic projection does not expose canonical course/offering instructor fields. Resource `professor_name` is not equivalent. Instructor is omitted unless an additive canonical academic field later arrives.
 3. **Authoritative grade summary:** published self-grade rows do not define GPA, weighting, term completeness or authoritative course average. V3 shows an individual published item only.
 4. **Assessment progress:** current catalog does not expose a user attempt/progress summary suitable for a course overview percentage. V3 shows available assessment metadata only and never fabricates progress.
@@ -190,5 +190,6 @@ If a slot is not integrated, the course shell renders a truthful fallback and li
 - Public browser API remains the source for Website reads; internal HMAC service endpoints are not used by this module.
 - Course UUID and offering/session UUIDs stay presentation-internal and are never exposed as user labels or bookmark keys.
 - Backend remains authority for workspace isolation, `academic.view`, resource/exam/grade permissions, scoring and publication state.
+- Academic navigation and schedule projections exclude courses, offerings, terms and sessions whose canonical status is `archived`, even when legacy data has a missing `archived_at`; course availability remains workspace-scoped.
 - The V3 foundation keeps the Design Lock token names or compatible CSS variables. This module supplies Design Lock fallback values but defines no global/raw-element styles.
 - The shell must avoid rendering a second H1 around the mounted Course destination, or adapt the module page heading during integration so each route retains one semantic H1.

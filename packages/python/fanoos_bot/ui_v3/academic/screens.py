@@ -285,6 +285,7 @@ def course_detail_screen(
     course: Mapping[str, object],
     *,
     supported_actions: Iterable[str] = ("schedule", "resources", "grades"),
+    workspace_label: str = "",
 ) -> Screen:
     course_id = str(course.get("course_id") or "")
     if not is_uuid(course_id):
@@ -315,6 +316,7 @@ def course_detail_screen(
     return Screen(
         identifier="academic.course.detail",
         title=f"📚 {title}",
+        context=_course_list_context(workspace_label, term),
         breadcrumb=_breadcrumbs("درس‌ها", title),
         intro="بخش موردنظر این درس را انتخاب کنید.",
         sections=(Section(facts=facts),) if facts else (),
@@ -464,6 +466,17 @@ def _grade_value(item: Mapping[str, object]) -> str:
     return f"{score} از {format_score(maximum)}" if maximum is not None else score
 
 
+def _grade_is_published(item: Mapping[str, object]) -> bool:
+    # The canonical projection already filters these rows. Keep the UI
+    # fail-closed when a test/fallback backend includes an explicit state.
+    raw = item.get("result_status")
+    if raw is None:
+        raw = item.get("status")
+    if raw is None:
+        return True
+    return str(raw).strip().lower() in {"published", "public", "released"}
+
+
 def grade_list_screen(
     items: Iterable[Mapping[str, object]],
     *,
@@ -471,7 +484,11 @@ def grade_list_screen(
     previous_ref: str | None = None,
     next_ref: str | None = None,
 ) -> Screen:
-    visible = tuple(item for item in items if isinstance(item, Mapping))[:GRADE_PAGE_SIZE]
+    visible = tuple(
+        item
+        for item in items
+        if isinstance(item, Mapping) and _grade_is_published(item)
+    )[:GRADE_PAGE_SIZE]
     grouped: OrderedDict[tuple[str, str], list[Mapping[str, object]]] = OrderedDict()
     for item in visible:
         key = (
@@ -519,7 +536,9 @@ def course_grade_detail_screen(
         return course_unavailable_screen()
     title = _course_title(course)
     visible = tuple(
-        item for item in items if str(item.get("course_id") or "") == course_id
+        item
+        for item in items
+        if str(item.get("course_id") or "") == course_id and _grade_is_published(item)
     )[:GRADE_PAGE_SIZE]
     grade_items = tuple(
         ListItem(
@@ -557,6 +576,7 @@ def announcement_list_screen(
     previous_ref: str | None = None,
     next_ref: str | None = None,
     detail_route_refs: Mapping[str, str] | None = None,
+    course: Mapping[str, object] | None = None,
 ) -> Screen:
     visible = tuple(item for item in items if isinstance(item, Mapping))[:ANNOUNCEMENT_PAGE_SIZE]
     detail_route_refs = detail_route_refs or {}
@@ -568,7 +588,13 @@ def announcement_list_screen(
         read_label = "خوانده‌شده" if item.get("read_at") else ""
         meta = " · ".join(value for value in (published, read_label) if value)
         title = _text(item.get("title"), 100) or "اطلاعیه"
-        list_items.append(ListItem(title=title, meta=meta))
+        list_items.append(
+            ListItem(
+                title=title,
+                description=_text(item.get("body"), 180),
+                meta=meta,
+            )
+        )
         if not is_uuid(announcement_id):
             continue
         route_ref = str(detail_route_refs.get(announcement_id) or "")
@@ -584,13 +610,24 @@ def announcement_list_screen(
                 payload,
             )
         )
+    course_id = str((course or {}).get("course_id") or "")
+    course_title = _course_title(course or {}) if course else ""
+    course_payload = {"course_id": course_id} if is_uuid(course_id) else None
+    back_id = actions.COURSE_OPEN if course_payload else None
+    back_label = "‹ بازگشت به درس" if course_payload else "‹ بازگشت"
     return Screen(
         identifier="academic.announcements.list",
-        title="📢 اطلاعیه‌ها",
-        breadcrumb=_breadcrumbs("اطلاعیه‌ها"),
-        intro="" if list_items else "اطلاعیه منتشرشده‌ای برای این فضای آموزشی پیدا نشد.",
+        title="📢 اطلاعیه‌ها" if not course_title else f"📢 اطلاعیه‌ها · {course_title}",
+        context=Context("درس", course_title) if course_title else None,
+        breadcrumb=_breadcrumbs("درس‌ها", course_title, "اطلاعیه‌ها") if course_title else _breadcrumbs("اطلاعیه‌ها"),
+        intro=(
+            "" if list_items
+            else "اطلاعیه منتشرشده‌ای برای این درس پیدا نشد."
+            if course_title
+            else "اطلاعیه منتشرشده‌ای برای این فضای آموزشی پیدا نشد."
+        ),
         sections=(Section(items=tuple(list_items)),) if list_items else (),
-        action_rows=_pack_actions(detail_actions) + _nav_rows(),
+        action_rows=_pack_actions(detail_actions) + _nav_rows(back_id, back_label, course_payload),
         pagination=_page(
             page=page,
             previous_ref=previous_ref,
@@ -605,6 +642,9 @@ def announcement_detail_screen(
     item: Mapping[str, object],
     *,
     safe_link_ref: str | None = None,
+    course_title: str = "",
+    back_action: str | None = None,
+    back_payload: Mapping[str, object] | None = None,
 ) -> Screen:
     title = _text(item.get("title"), 120) or "اطلاعیه"
     body = truncate_text(str(item.get("body") or "").strip(), 2200)
@@ -619,11 +659,16 @@ def announcement_detail_screen(
         rows += _pack_actions(
             ((actions.ANNOUNCEMENT_LINK_OPEN, "🔗 باز کردن پیوند", {"link_ref": safe_link_ref}),)
         )
-    rows += _nav_rows(actions.ANNOUNCEMENTS, "‹ اطلاعیه‌ها")
+    rows += _nav_rows(
+        back_action or actions.ANNOUNCEMENTS,
+        "‹ بازگشت به درس" if back_action == actions.COURSE_OPEN else "‹ اطلاعیه‌ها",
+        back_payload,
+    )
     return Screen(
         identifier="academic.announcement.detail",
         title=f"📢 {title}",
-        breadcrumb=_breadcrumbs("اطلاعیه‌ها", title),
+        context=Context("درس", course_title) if course_title else None,
+        breadcrumb=_breadcrumbs("درس‌ها", course_title, "اطلاعیه‌ها", title) if course_title else _breadcrumbs("اطلاعیه‌ها", title),
         intro=body or "متنی برای این اطلاعیه ثبت نشده است.",
         sections=(Section(facts=tuple(facts)),) if facts else (),
         action_rows=rows,

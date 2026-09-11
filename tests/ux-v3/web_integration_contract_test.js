@@ -30,7 +30,7 @@ assert.equal((index.match(/id="fanoos-v3-root"/g) || []).length, 1, 'one V3 appl
 assert.ok(index.includes('class="f3-root"'));
 assert.ok(index.includes('FANOOS-UX-2026.09-R1'));
 assert.equal((index.match(/\/assets\/ui-v3\/app\/bootstrap\.js/g) || []).length, 1, 'bootstrap must load once');
-assert.match(index, /<script type="module" src="\/assets\/ui-v3\/app\/bootstrap\.js"><\/script>/);
+assert.ok(index.includes("fanoosAsset('/assets/ui-v3/app/bootstrap.js')"), 'bootstrap must use the cache-busting asset helper');
 assert.equal(index.includes('/assets/ui-v2/'), false, 'V2 must not be part of the primary entrypoint');
 assert.equal(index.includes('/assets/app.js'), false, 'legacy app.js must not boot from the primary entrypoint');
 assert.equal(index.includes('/assets/domain-ux.js'), false, 'legacy domain UX must not boot from the primary entrypoint');
@@ -41,9 +41,9 @@ const cssAssets = [
   'progress/progress.css', 'operations/operations.css', 'app/integration.css',
 ];
 for (const asset of cssAssets) {
-  const needle = `/assets/ui-v3/${asset}`;
-  const literal = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  assert.equal((index.match(new RegExp(`href="${literal}"`, 'g')) || []).length, 1, `${asset} must load exactly once as a stylesheet`);
+  const pathLiteral = asset.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`fanoosAsset\\('/assets/ui-v3/${pathLiteral}'\\)`, 'g');
+  assert.equal((index.match(pattern) || []).length, 1, `${asset} must load exactly once as a stylesheet`);
 }
 assert.ok(index.indexOf('/foundation/tokens.css') < index.indexOf('/foundation/base.css'));
 assert.ok(index.indexOf('/foundation/base.css') < index.indexOf('/foundation/components.css'));
@@ -59,6 +59,8 @@ assert.ok(notificationNav.includes(".f3-shell-more-page__groups .f3-shell-more-g
 assert.ok(notificationNav.includes("aria-current"), 'injected notification destinations must expose active-route state');
 assert.ok(bootstrap.includes("notifications: operationsDefinition"), 'personal notification route must map to the operations gap state');
 assert.ok(bootstrap.includes("routes: [{ id: 'notifications', path: '/notifications'"), 'notification route registration missing');
+assert.ok(bootstrap.includes("search: operationsDefinition"), 'workspace search route must map to the operations module');
+assert.ok(router.includes("id: 'search'"), 'workspace search route registration missing');
 assert.ok(bootstrap.includes("raw === '/learning' || raw === 'learning'"), '/learning compatibility alias must normalize to /resources');
 assert.equal((bootstrap.match(/addEventListener\('hashchange'/g) || []).length, 0, 'integration layer must not create a second hash router');
 assert.equal((notificationNav.match(/addEventListener\('hashchange'/g) || []).length, 0, 'notification integration must not create a second hash router');
@@ -87,7 +89,8 @@ assert.ok(read('apps/platform/public/assets/ui-v3/home/home.js').includes('parti
 
 assert.ok(courses.includes("pattern: '/courses/:courseCode'"), 'human course detail route missing');
 for (const slot of ['course.schedule', 'course.resources', 'course.assessments', 'course.grades', 'course.announcements']) assert.ok(courseView.includes(slot), `course slot missing: ${slot}`);
-assert.ok(bootstrap.includes("courseAnnouncements: false"), 'course announcement association must remain disabled without canonical binding');
+assert.ok(bootstrap.includes('courseAnnouncements: true'), 'course announcement slot must be enabled only after canonical binding support');
+assert.ok(bootstrap.includes("'course.announcements'"), 'course announcement slot must be registered');
 assert.ok(bootstrap.includes('createCourseLearningEmbed'));
 assert.ok(bootstrap.includes('renderCourseGradesSlot'));
 assert.ok(bootstrap.includes("slotName === 'course.schedule'"));
@@ -124,10 +127,20 @@ assert.equal(/\bGPA\b|میانگین کل|average/i.test(gradeUi), false, 'grade
 
 assert.ok(operations.includes('function orderPaymentState'));
 assert.ok(operations.includes('function explicitAccessState'));
+assert.ok(operations.includes("pathFor(ctx, '/catalog')"), 'Purchase UI must read the server catalog projection');
+assert.ok(operations.includes("pathFor(ctx, '/entitlements')"), 'Access library must read canonical entitlements');
+assert.ok(operations.includes('function orderState'), 'Order state must remain distinct from payment state');
+assert.ok(operations.includes('function renderAccessLibrary'), 'Access library UI missing');
+assert.ok(operations.includes('function renderCatalog'), 'Purchase catalog UI missing');
 assert.ok(operations.includes("row?.entitlement?.granted === true"));
 assert.ok(operations.includes("return 'unknown'"), 'paid must not imply entitlement');
-assert.ok(operations.includes("hasCapability(ctx, 'notification.broadcast')"));
-assert.ok(operations.includes("hasCapability(ctx, 'form.manage')"));
+assert.ok(operations.includes('پرداخت موفق به‌تنهایی مجوز محتوا نیست'), 'UI must not imply impossible DRM or payment authority');
+assert.ok(operations.includes("hasCapability(ctx, 'notification.broadcast', dashboard)"));
+assert.ok(operations.includes("hasCapability(ctx, 'form.manage', dashboard)"));
+assert.ok(operations.includes("pathFor(ctx, '/notifications?limit=30')"), 'notification inbox must read the persisted web projection');
+assert.ok(operations.includes("pathFor(ctx, '/notification-preferences')"), 'notification preferences endpoint missing');
+assert.ok(operations.includes("pathFor(ctx, `/search?q=${encodeURIComponent(query)}`)"), 'workspace search endpoint missing');
+assert.ok(operations.includes('source_label'), 'search results must use a human source label');
 assert.ok(bootstrap.includes('has: () => false'), 'granular management mutations must fail closed until canonical capabilities are projected');
 assert.equal(operations.includes('Update Server'), false);
 assert.equal(operations.includes('به‌روزرسانی سرور'), false);

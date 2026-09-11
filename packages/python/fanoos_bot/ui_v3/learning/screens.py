@@ -29,6 +29,7 @@ from ..core import (
     Section,
     Severity,
 )
+from ...formatting import format_datetime
 from .intents import LearningIntent
 
 
@@ -89,6 +90,15 @@ _ASSESSMENT_STATES = {
     "practice": "تمرینی",
     "past_exam": "آزمون گذشته",
 }
+_FORM_STATES = {
+    "open": "باز",
+    "active": "باز",
+    "closed": "بسته‌شده",
+    "archived": "بایگانی‌شده",
+    "draft": "پیش‌نویس",
+    "submitted": "پاسخ ثبت‌شده",
+    "pending": "در انتظار بررسی",
+}
 
 
 class ProtectedDeliveryState(str, Enum):
@@ -97,6 +107,7 @@ class ProtectedDeliveryState(str, Enum):
     READY = "ready"
     EXPIRED = "expired"
     DENIED = "denied"
+    UNAVAILABLE = "unavailable"
     UNSUPPORTED_CHANNEL = "unsupported_channel"
     TEMPORARY_FAILURE = "temporary_failure"
 
@@ -113,6 +124,20 @@ def _clean(value: Any, limit: int = 120) -> str:
 
 def _digits(value: Any) -> str:
     return str(value).translate(_PERSIAN_DIGITS)
+
+
+def _form_status_label(value: Any, *, submitted: Any = None) -> str:
+    submitted_raw = str(submitted or "").strip().lower()
+    if submitted in {True, 1, "1"} or submitted_raw in {"true", "submitted", "completed", "complete"}:
+        return "پاسخ ثبت‌شده"
+    raw = str(value or "").strip().lower()
+    return _FORM_STATES.get(raw, "وضعیت مشخص نشده") if raw else "باز"
+
+
+def _form_bool(value: Any) -> bool:
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "on"}
+    return bool(value)
 
 
 def _https(url: Any) -> str | None:
@@ -144,6 +169,16 @@ def _resource_type(item: Mapping[str, Any]) -> str:
         or ""
     ).strip().lower()
     return _RESOURCE_TYPES.get(key, _clean(key.replace("_", " "), 40) or "منبع آموزشی")
+
+
+def _access_state_key(item: Mapping[str, Any]) -> str:
+    explicit = item.get("access_state") or item.get("entitlement_status")
+    if explicit:
+        return str(explicit).strip().lower()
+    granted = item.get("access_granted", True)
+    if isinstance(granted, str):
+        granted = granted.strip().lower() in {"1", "true", "yes", "active", "granted"}
+    return "active" if granted else "denied"
 
 
 def _params(payload: Mapping[str, Any] | None) -> tuple[tuple[str, str], ...]:
@@ -289,6 +324,9 @@ def resource_hub_screen(
     recent: bool = False,
     canonical_courses: Sequence[Mapping[str, Any]] = (),
     canonical_types: Sequence[str] = (),
+    previous_history: Sequence[str] = (),
+    next_history: Sequence[str] = (),
+    filter_payload: Mapping[str, Any] | None = None,
 ) -> Screen:
     """Build a bounded resource library from the authorized bot catalog."""
     raw_items = [item for item in projection.get("items", ()) if isinstance(item, Mapping)][:8]
@@ -299,13 +337,16 @@ def resource_hub_screen(
         title = _clean(entry.get("title") or "منبع آموزشی", 105)
         course = _clean(entry.get("course_title"), 70)
         kind = _resource_type(entry)
-        status = "قابل دریافت" if entry.get("delivery_supported") else "اطلاعات منبع"
+        access_key = _access_state_key(entry)
+        marker = "⛔" if access_key in {"denied", "none", "revoked", "expired"} else (
+            "🔒" if entry.get("delivery_supported") else "📄"
+        )
         display.append(
             _item(
                 title,
                 description=" · ".join(value for value in (course, kind) if value),
                 meta="نسخهٔ جاری مجاز" if entry.get("resource_version_id") else "",
-                marker="🔒" if entry.get("delivery_supported") else "📄",
+                marker=marker,
             )
         )
         if resource_id and len(open_actions) < 6:
@@ -329,7 +370,12 @@ def resource_hub_screen(
         filter_actions.append(_action("نوع", LearningIntent.RESOURCES_FILTER_TYPE))
     if filter_actions:
         rows.append(_row(*filter_actions[:2]))
-    rows.append(_row(_action("تازه‌ها", LearningIntent.RESOURCES_RECENT)))
+    recent_payload = dict(filter_payload or {})
+    if recent:
+        recent_payload["recent"] = "0"
+    else:
+        recent_payload["recent"] = "1"
+    rows.append(_row(_action("تازه‌ها", LearningIntent.RESOURCES_RECENT, payload=recent_payload)))
     rows.extend(_pair_rows(open_actions))
     rows.extend(_back_home_rows(LearningIntent.BACK))
 
@@ -344,8 +390,24 @@ def resource_hub_screen(
     )
     pager = _pagination(
         page=page,
-        previous_payload={"cursor": previous_cursor or ""} if previous_cursor is not None else None,
-        next_payload={"cursor": next_cursor} if next_cursor else None,
+        previous_payload=(
+            {
+                "cursor": previous_cursor or "",
+                "history": ",".join(str(value) or "~" for value in previous_history),
+                **dict(filter_payload or {}),
+            }
+            if previous_cursor is not None
+            else None
+        ),
+        next_payload=(
+            {
+                "cursor": next_cursor,
+                "history": ",".join(str(value) or "~" for value in next_history),
+                **dict(filter_payload or {}),
+            }
+            if next_cursor
+            else None
+        ),
         previous_intent=LearningIntent.RESOURCES_PAGE_PREVIOUS,
         next_intent=LearningIntent.RESOURCES_PAGE_NEXT,
     )
@@ -364,6 +426,7 @@ def resource_detail_screen(
     resource: Mapping[str, Any],
     *,
     canonical_protected_state: str | None = None,
+    access_state: str | None = None,
     web_url: str | None = None,
 ) -> Screen:
     """Resource detail; raw IDs remain callback correlation only."""
@@ -371,10 +434,16 @@ def resource_detail_screen(
     resource_id = str(resource.get("resource_id") or "")
     version_id = str(resource.get("resource_version_id") or "")
     course = _clean(resource.get("course_title"), 80)
+    raw_access = (
+        str(access_state).strip().lower()
+        if access_state
+        else _access_state_key(resource)
+    )
+    access_label = _ACCESS_STATES.get(raw_access, "وضعیت نامشخص")
     facts = [
         _fact("نوع", _resource_type(resource)),
         _fact("نسخه", "نسخهٔ جاری مجاز" if version_id else "اطلاعات نسخه در دسترس نیست"),
-        _fact("دسترسی", "فعال برای این حساب"),
+        _fact("دسترسی", access_label),
     ]
     if course:
         facts.insert(0, _fact("درس", course))
@@ -398,7 +467,14 @@ def resource_detail_screen(
         details.append(_fact("فرمت", format_key.upper() if format_key.isascii() else format_key))
 
     rows: list[ActionRow] = []
-    if bool(resource.get("delivery_supported")) and resource_id:
+    has_access_state = any(
+        resource.get(key) is not None
+        for key in ("access_state", "entitlement_status", "access_granted")
+    )
+    can_deliver = bool(resource.get("delivery_supported")) and (
+        not has_access_state or raw_access in {"active", "granted"}
+    )
+    if can_deliver and resource_id:
         rows.append(
             _row(
                 _action(
@@ -425,7 +501,7 @@ def resource_detail_screen(
         rows=rows,
         footer=(
             "برای این منبع تحویل مستقیم در پیام‌رسان ارائه نشده است."
-            if not resource.get("delivery_supported")
+            if not can_deliver
             else "مجوز دریافت هنگام اقدام دوباره در backend بررسی می‌شود."
         ),
     )
@@ -500,6 +576,12 @@ def protected_delivery_screen(
         severity = Severity.WARNING
         if safe_web:
             rows.append(_row(_action("🌐 دریافت امن در فانوس", LearningIntent.PROTECTED_OPEN_RESOURCE, url=safe_web)))
+    elif resolved is ProtectedDeliveryState.UNAVAILABLE:
+        title = "⚠️ محتوا در دسترس نیست"
+        intro = f"نسخهٔ قابل تحویل «{resource_title}» فعلاً در دسترس نیست."
+        body = "دادهٔ محلی یا نسخهٔ بدون حفاظت جایگزین نمی‌شود؛ بعداً دوباره بررسی کنید."
+        severity = Severity.WARNING
+        rows.append(_row(_action("🔄 تلاش دوباره", LearningIntent.PROTECTED_RETRY, payload=payload)))
     else:
         title = "❌ دریافت موقتاً انجام نشد"
         intro = "سرویس دریافت امن موقتاً پاسخ قابل اتکا نداد."
@@ -801,11 +883,15 @@ def forms_hub_screen(
         for form in forms[:8]:
             form_id = str(form.get("form_id") or form.get("id") or "")
             title = _clean(form.get("title") or "فرم", 100)
+            status_label = _form_status_label(
+                form.get("state") or form.get("status") or "open",
+                submitted=form.get("submission_status") or form.get("submitted_at"),
+            )
             items.append(
                 _item(
                     title,
                     description=_clean(form.get("description"), 90),
-                    marker=_clean(form.get("state") or form.get("status"), 40),
+                    marker=status_label,
                 )
             )
             if form_id and len(form_actions) < 6:
@@ -830,15 +916,28 @@ def form_detail_screen(
     form: Mapping[str, Any],
     *,
     web_url: str | None = None,
+    timezone_name: str | None = None,
 ) -> Screen:
     safe_web = _https(web_url)
     facts = []
-    status = _clean(form.get("state") or form.get("status"), 50)
-    if status:
-        facts.append(_fact("وضعیت", status))
-    deadline = _clean(form.get("deadline") or form.get("closes_at"), 80)
+    status = _form_status_label(
+        form.get("state") or form.get("status") or "open",
+        submitted=form.get("submission_status") or form.get("submitted_at"),
+    )
+    facts.append(_fact("وضعیت", status))
+    deadline_value = form.get("deadline") or form.get("closes_at")
+    deadline = format_datetime(deadline_value, timezone_name) if deadline_value else ""
     if deadline:
         facts.append(_fact("مهلت", deadline))
+    if form.get("allow_multiple") is not None:
+        facts.append(
+            _fact(
+                "ارسال پاسخ",
+                "امکان ارسال چند پاسخ وجود دارد."
+                if _form_bool(form.get("allow_multiple"))
+                else "هر عضو یک پاسخ می‌تواند ثبت کند.",
+            )
+        )
     rows: list[ActionRow] = []
     if safe_web:
         rows.append(_row(_action("🌐 تکمیل در فانوس", LearningIntent.FORM_OPEN_WEB, url=safe_web)))
@@ -850,7 +949,7 @@ def form_detail_screen(
         intro=_clean(form.get("description"), 450),
         sections=(_section("جزئیات", facts=facts) if facts else _section("جزئیات", body="اطلاعات تکمیلی ثبت نشده است."),),
         rows=rows,
-        footer="ارسال داخل ربات فقط پس از قرارداد bot-safe صریح فعال می‌شود.",
+        footer="برای تکمیل پاسخ، از مسیر امن فانوس استفاده کنید؛ وضعیت ثبت‌شده از backend خوانده می‌شود.",
     )
 
 

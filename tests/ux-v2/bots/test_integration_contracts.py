@@ -85,7 +85,9 @@ class IntegrationContractTest(unittest.TestCase):
         self.assertIn("projection.get(\"courses\")", integrated)
         self.assertIn("course_list_screen(", integrated)
         self.assertIn('"academic.courses.page"', integrated)
-        self.assertNotIn("self._schedule_window(", integrated)
+        # Stage 5 academic journeys intentionally reuse the base canonical
+        # schedule projection helper; it does not create a bot-side data store.
+        self.assertIn("self._schedule_window(", integrated)
         self.assertNotIn("self._grade_items(", integrated)
         self.assertNotIn("self._resource_items(", integrated)
         self.assertIn('action == "coursep"', integrated)

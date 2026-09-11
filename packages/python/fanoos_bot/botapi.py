@@ -144,6 +144,14 @@ class JsonBotApiTransport:
     def _ensure_keyboard_supported(self, keyboard: tuple[tuple[dict[str, str], ...], ...]) -> None:
         if keyboard and not self.capabilities.supports_inline_callback:
             raise BotApiError("inline_keyboard_unsupported")
+        for row in keyboard:
+            for item in row:
+                callback = item.get("callback_data")
+                if callback is None:
+                    continue
+                callback_bytes = len(str(callback).encode("utf-8"))
+                if not 1 <= callback_bytes <= self.capabilities.max_callback_bytes:
+                    raise BotApiError("callback_too_large")
 
     def _apply_reply(self, payload: dict[str, Any], reply_to: int | None) -> None:
         if reply_to is None: return

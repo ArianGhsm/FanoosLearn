@@ -384,18 +384,120 @@ SQL, [
         $statement = $this->database->prepare(sprintf(<<<'SQL'
 SELECT resource.id, resource.title, resource.description, resource.visibility,
        resource.lifecycle_status, resource.current_version_no, resource.updated_at,
+       latest_version.id AS latest_version_id, latest_version.version_no AS latest_version_no,
+       latest_version.status AS latest_version_status,
+       current_version.id AS current_version_id, current_version.status AS current_version_status,
        type.type_key, metadata.term_id, metadata.course_id, metadata.session_id,
        metadata.topic, metadata.professor_name, metadata.format_key, metadata.access_level
 FROM content_resources resource
 JOIN content_resource_types type ON type.id = resource.resource_type_id
 JOIN content_resource_metadata metadata ON metadata.resource_id = resource.id AND metadata.workspace_id = resource.workspace_id
+LEFT JOIN content_resource_versions latest_version
+  ON latest_version.resource_id = resource.id AND latest_version.workspace_id = resource.workspace_id
+ AND latest_version.version_no = (
+     SELECT MAX(version.version_no) FROM content_resource_versions version
+     WHERE version.resource_id = resource.id AND version.workspace_id = resource.workspace_id
+   )
+LEFT JOIN content_resource_versions current_version
+  ON current_version.resource_id = resource.id AND current_version.workspace_id = resource.workspace_id
+ AND current_version.version_no = resource.current_version_no
 WHERE %s
 ORDER BY %s
 LIMIT 100
 SQL, implode(' AND ', $where), $order));
         $statement->execute($parameters);
 
-        return $statement->fetchAll();
+        $rows = $statement->fetchAll();
+        if (!$canManage) {
+            foreach ($rows as &$row) {
+                unset($row['latest_version_id'], $row['latest_version_no'], $row['latest_version_status'], $row['current_version_id'], $row['current_version_status']);
+            }
+            unset($row);
+        }
+
+        return $rows;
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function versions(string $actorUserId, string $workspaceId, string $resourceId): array
+    {
+        $canCreate = $this->access->workspace($actorUserId, $workspaceId, 'resource.create')->allowed;
+        $canReview = $this->access->workspace($actorUserId, $workspaceId, 'resource.review')->allowed;
+        if (!$canCreate && !$canReview) {
+            throw new PlatformException('forbidden', 'The scoped permission was not granted.', 403);
+        }
+        $resource = $this->database->prepare(<<<'SQL'
+SELECT id, title, lifecycle_status
+FROM content_resources
+WHERE id = :resource AND workspace_id = :workspace
+  AND deleted_at IS NULL AND archived_at IS NULL
+SQL);
+        $resource->execute(['resource' => $resourceId, 'workspace' => $workspaceId]);
+        if ($resource->fetch() === false) {
+            throw new PlatformException('resource_not_found', 'Resource was not found.', 404);
+        }
+
+        $statement = $this->database->prepare(<<<'SQL'
+SELECT version.id, version.version_no, version.source_kind,
+       version.status, version.created_at, version.reviewed_at,
+       version.content_json
+FROM content_resource_versions version
+WHERE version.resource_id = :resource AND version.workspace_id = :workspace
+ORDER BY version.version_no DESC
+LIMIT 100
+SQL);
+        $statement->execute(['resource' => $resourceId, 'workspace' => $workspaceId]);
+        $rows = [];
+        foreach ($statement->fetchAll() as $row) {
+            $decoded = $row['content_json'] === null
+                ? null
+                : json_decode((string) $row['content_json'], true, 64, JSON_THROW_ON_ERROR);
+            $row['content_available'] = is_array($decoded);
+            $row['content_preview'] = $this->contentPreview($decoded);
+            unset($row['content_json']);
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
+    private function contentPreview(mixed $content): ?string
+    {
+        if (!is_array($content)) {
+            return null;
+        }
+        $values = [];
+        $collect = static function (mixed $value, int $depth = 0) use (&$collect, &$values): void {
+            if ($depth > 5 || count($values) >= 16) {
+                return;
+            }
+            if (is_string($value)) {
+                $value = trim($value);
+                if ($value !== '') {
+                    $values[] = $value;
+                }
+                return;
+            }
+            if (!is_array($value)) {
+                return;
+            }
+            foreach ($value as $key => $item) {
+                if (is_string($key) && !in_array(strtolower($key), ['title', 'heading', 'body', 'text', 'summary', 'prompt', 'question', 'explanation'], true)) {
+                    if (is_array($item)) {
+                        $collect($item, $depth + 1);
+                    }
+                    continue;
+                }
+                $collect($item, $depth + 1);
+            }
+        };
+        $collect($content);
+        $preview = trim(implode(' · ', $values));
+        if ($preview === '') {
+            return null;
+        }
+
+        return mb_strlen($preview) > 1200 ? mb_substr($preview, 0, 1199) . '…' : $preview;
     }
 
     /** @return array<string, mixed> */

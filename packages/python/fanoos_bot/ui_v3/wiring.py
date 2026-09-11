@@ -38,7 +38,9 @@ INTENT_REGISTRY: dict[str, str] = {
     "notifications": "notifications",
     "resources": "resources",
     "assessments": "assessments",
+    "payments": "payments",
     "ws.list": "workspaces",
+    "ws.page": "workspaces_page",
     "ws.select": "workspace_select",
     "account": "account",
     "acct.unlink.ask": "unlink_ask",
@@ -56,7 +58,7 @@ INTENT_REGISTRY: dict[str, str] = {
     "academic.schedule.tomorrow": "schedule_tomorrow",
     "academic.schedule.upcoming": "schedule_upcoming",
     "academic.schedule.page": "schedule_page",
-    "academic.schedule.event.open": "schedule",
+    "academic.schedule.event.open": "schedule_event_open",
     "academic.grades.page": "grades_page",
     "academic.grades.course.open": "course_grades",
     "academic.announcements": "announcements",
@@ -91,8 +93,8 @@ INTENT_REGISTRY: dict[str, str] = {
     "learning.order.refresh": "payments",
     "learning.payment.open_web": "payments",
     "learning.payment.retry_web": "payments",
-    "learning.forms.open": "home",
-    "learning.form.open": "home",
+    "learning.forms.open": "forms",
+    "learning.form.open": "form_open",
     "learning.form.open_web": "home",
 }
 
@@ -317,6 +319,7 @@ def dispatch_v3_intent(app: Any, subject: str, private: bool, name: str, params:
     course = str(params.get("course_id") or params.get("course") or "")
     resource = str(params.get("resource") or "")
     workspace = str(params.get("w") or params.get("workspace_id") or "")
+    page = str(params.get("p") or params.get("page") or "")
     job = str(params.get("job") or "")
 
     if target == "home": return app.home(subject)
@@ -329,6 +332,12 @@ def dispatch_v3_intent(app: Any, subject: str, private: bool, name: str, params:
     if target == "resources": return app.resources(subject)
     if target == "assessments": return app.assessments(subject)
     if target == "workspaces": return app.workspaces(subject)
+    if target == "workspaces_page":
+        try:
+            parsed_page = int(page)
+        except (TypeError, ValueError):
+            return app._expired_route()
+        return app.workspaces(subject, parsed_page)
     if target == "workspace_select": return app.select_workspace(subject, workspace) if workspace else app._expired_route()
     if target == "account": return app.account(subject)
     if target == "unlink_ask": return app.unlink_confirm(subject)
@@ -339,10 +348,13 @@ def dispatch_v3_intent(app: Any, subject: str, private: bool, name: str, params:
     if target == "course_assessments": return app.course_assessments(subject, course) if course else app._expired_route()
     if target == "course_grades": return app.course_grades(subject, course) if course else app._expired_route()
     if target == "course_announcements": return app.course_announcements(subject, course) if course else app._expired_route()
+    if target == "schedule_event_open": return app.schedule_event(subject, str(params.get("event_id") or ""))
     if target == "schedule_today": return app.day_schedule(subject, 0)
     if target == "schedule_tomorrow": return app.day_schedule(subject, 1)
     if target == "schedule_upcoming": return app.week_schedule(subject)
     if target == "announcements": return app.announcements(subject)
+    if target == "forms": return app.forms(subject)
+    if target == "form_open": return app.form_detail(subject, str(params.get("form") or ""))
     if target == "resource_open": return app.resource_detail(subject, resource) if resource else app.resources(subject)
     if target == "resource_deliver": return app.protected_resource(subject, resource) if resource else app._expired_route()
     if target == "protected":

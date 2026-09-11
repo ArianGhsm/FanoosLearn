@@ -12,6 +12,10 @@ from .actions import (
 from .contracts import ActionRow, Context, EditPolicy, Fact, Screen, Section, Severity
 
 
+def _website_row(website_url: str) -> tuple[ActionRow, ...]:
+    return (ActionRow((website_action(website_url),)),) if website_url else ()
+
+
 def linked_account_screen(
     *,
     platform_label: str,
@@ -26,6 +30,9 @@ def linked_account_screen(
         facts.append(Fact("فضای فعال", active_workspace_label))
     else:
         facts.append(Fact("فضای فعال", "انتخاب نشده"))
+    workspace_actions = (workspace_action(),)
+    if website_url:
+        workspace_actions = (workspace_action(), website_action(website_url))
     return Screen(
         identifier="account.linked",
         title="👤 حساب",
@@ -33,7 +40,7 @@ def linked_account_screen(
         context=Context("حساب", "متصل"),
         sections=(Section(facts=tuple(facts)),),
         action_rows=(
-            ActionRow((workspace_action(), website_action(website_url))),
+            ActionRow(workspace_actions),
             ActionRow((unlink_request_action(),)),
             ActionRow((back_action(), home_action())),
         ),
@@ -66,9 +73,6 @@ def unlink_success_screen(website_url: str) -> Screen:
         title="✅ اتصال قطع شد",
         intro="این پیام‌رسان دیگر به حساب فانوس متصل نیست. حساب اصلی فانوس شما تغییری نکرده است.",
         severity=Severity.SUCCESS,
-        action_rows=(
-            ActionRow((website_action(website_url),)),
-            ActionRow((home_action(),)),
-        ),
+        action_rows=_website_row(website_url) + (ActionRow((home_action(),)),),
         edit_policy=EditPolicy.SEND_NEW,
     )

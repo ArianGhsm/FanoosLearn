@@ -60,13 +60,48 @@ paths:
   /workspaces/{workspaceId}/grades/me:
     get: { operationId: listMyPublishedGrades, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
   /workspaces/{workspaceId}/announcements:
-    get: { operationId: listAnnouncements, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+    get: { operationId: listAnnouncements, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: course_id, in: query, required: false, description: Optional active course scope; interpreted only within the selected workspace., schema: { $ref: '#/components/schemas/Uuid' } }], responses: { '200': { $ref: '#/components/responses/Success' } } }
     post: { operationId: publishAnnouncement, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' } } }
   /workspaces/{workspaceId}/announcements/{announcementId}/read:
     post:
       operationId: markAnnouncementRead
       parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: announcementId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }, { $ref: '#/components/parameters/Csrf' }]
       responses: { '200': { $ref: '#/components/responses/Success' } }
+  /workspaces/{workspaceId}/notifications:
+    get:
+      operationId: listPersonalNotifications
+      description: Returns the authenticated member's persisted web notification projection for the selected workspace. Results are tenant- and recipient-scoped and may be paginated with an opaque cursor.
+      parameters:
+        - { $ref: '#/components/parameters/WorkspaceId' }
+        - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 50, default: 20 } }
+        - { name: cursor, in: query, required: false, schema: { type: string } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/notifications/{notificationId}/read:
+    post:
+      operationId: markNotificationRead
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: notificationId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }, { $ref: '#/components/parameters/Csrf' }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/notification-preferences:
+    get:
+      operationId: getNotificationPreferences
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+    patch:
+      operationId: updateNotificationPreferences
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                in_app_enabled: { type: boolean }
+                email_enabled: { type: boolean }
+                push_enabled: { type: boolean }
+                snoozed_until: { type: [string, 'null'], format: date-time }
+              additionalProperties: false
+      responses: { '200': { $ref: '#/components/responses/Success' }, '422': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/forms:
     get: { operationId: listOpenForms, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
     post: { operationId: createForm, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' } } }
@@ -89,12 +124,23 @@ paths:
   /workspaces/{workspaceId}/orders:
     get: { operationId: listMyOrders, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
     post: { operationId: createOrder, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' }, '503': { $ref: '#/components/responses/Error' } } }
+  /workspaces/{workspaceId}/catalog:
+    get:
+      operationId: listPurchasableCatalog
+      description: Returns active server-priced products bound to a workspace, course, assessment or resource scope. The client must treat amount, currency and access status as read-only projections; private object addresses and payment proof are never returned.
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/payments/{attemptId}/reconcile:
     post:
       operationId: reconcilePayment
       parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: attemptId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }, { $ref: '#/components/parameters/Csrf' }]
       responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/entitlements:
+    get:
+      operationId: listMyEntitlements
+      description: Returns the authenticated member's access library with independent active, expired, revoked or pending states. Payment success is not treated as access.
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
     post: { operationId: grantEntitlement, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } } }
   /workspaces/{workspaceId}/entitlements/{grantId}/revoke:
     post:
@@ -104,14 +150,22 @@ paths:
   /workspaces/{workspaceId}/entitlements/check:
     get: { operationId: checkEntitlement, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: scope_id, in: query, required: true, schema: { $ref: '#/components/schemas/Uuid' } }], responses: { '200': { $ref: '#/components/responses/Success' } } }
   /workspaces/{workspaceId}/resources:
-    get: { operationId: listResourceLibrary, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+    get:
+      operationId: listResourceLibrary
+      description: Returns a workspace-scoped catalog. Producer/reviewer projections include safe version status and opaque version identifiers only; storage keys and private object paths are never returned.
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: q, in: query, schema: { type: string, minLength: 2, maxLength: 120 } }, { name: type, in: query, schema: { type: string, maxLength: 64 } }, { name: course_id, in: query, schema: { $ref: '#/components/schemas/Uuid' } }, { name: status, in: query, schema: { type: string, enum: [draft, review, published, archived, deleted] } }]
+      responses: { '200': { $ref: '#/components/responses/Success' } }
     post: { operationId: createStructuredResource, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' } } }
   /workspaces/{workspaceId}/resources/{resourceId}:
+    patch: { operationId: updateResourceMetadata, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/ResourceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } } }
     get: { operationId: viewAuthorizedResource, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/ResourceId' }], responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } } }
   /workspaces/{workspaceId}/resources/{resourceId}/authorize:
     get: { operationId: authorizeProtectedResource, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/ResourceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
   /workspaces/{workspaceId}/resources/{resourceId}/versions:
+    get: { operationId: listResourceVersions, description: Returns only version metadata and structured content for scoped producer/reviewer access; object storage addresses are excluded., parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/ResourceId' }], responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } } }
     post: { operationId: createResourceVersion, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/ResourceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/resources/{resourceId}/versions/{versionId}/derive:
+    post: { operationId: deriveResourceOutput, description: Creates a generated draft from an approved source version and records source/version/transformation lineage., parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/ResourceId' }, { $ref: '#/components/parameters/VersionId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '409': { $ref: '#/components/responses/Error' } } }
   /workspaces/{workspaceId}/resources/{resourceId}/versions/{versionId}/review-request:
     post: { operationId: requestResourceReview, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/ResourceId' }, { $ref: '#/components/parameters/VersionId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
   /workspaces/{workspaceId}/resources/{resourceId}/versions/{versionId}/review:
@@ -145,7 +199,13 @@ paths:
         '403': { $ref: '#/components/responses/Error' }
         '404': { $ref: '#/components/responses/Error' }
   /workspaces/{workspaceId}/assessments:
-    get: { operationId: listPublishedAssessments, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+    get:
+      operationId: listPublishedAssessments
+      parameters:
+        - { $ref: '#/components/parameters/WorkspaceId' }
+        - { name: course_id, in: query, required: false, schema: { $ref: '#/components/schemas/Uuid' } }
+        - { name: kind, in: query, required: false, schema: { type: string, enum: [practice, quiz, mock_exam, past_exam] } }
+      responses: { '200': { $ref: '#/components/responses/Success' } }
     post: { operationId: createAssessmentDraft, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' } } }
   /workspaces/{workspaceId}/assessments/{assessmentId}/versions/{versionId}/review-request:
     post: { operationId: requestAssessmentReview, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AssessmentId' }, { $ref: '#/components/parameters/VersionId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' } } }

@@ -55,7 +55,7 @@ paths:
     post:
       operationId: listBotAnnouncements
       x-required-service-action: announcement.read
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PagedWorkspaceRead' } } } }
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AnnouncementRead' } } } }
       responses: { '200': { $ref: '#/components/responses/Success' } }
   /content/resources/list:
     post:
@@ -244,6 +244,17 @@ components:
         workspace_id: { $ref: '#/components/schemas/Uuid' }
         limit: { type: integer, minimum: 1, maximum: 100 }
         cursor: { $ref: '#/components/schemas/Cursor' }
+      additionalProperties: false
+    AnnouncementRead:
+      type: object
+      required: [platform, subject, workspace_id]
+      properties:
+        platform: { $ref: '#/components/schemas/Platform' }
+        subject: { type: string, minLength: 1, maxLength: 160 }
+        workspace_id: { $ref: '#/components/schemas/Uuid' }
+        limit: { type: integer, minimum: 1, maximum: 100 }
+        cursor: { $ref: '#/components/schemas/Cursor' }
+        course_id: { $ref: '#/components/schemas/Uuid' }
       additionalProperties: false
     ScheduleRead:
       type: object

@@ -12,6 +12,7 @@ from .actions import (
     home_action,
     more_action,
     notifications_action,
+    payments_action,
     resources_action,
     schedule_action,
     website_action,
@@ -68,19 +69,21 @@ def active_home_screen(
             ActionRow((courses_action(), schedule_action())),
             ActionRow((grades_action(), notifications_action())),
             ActionRow((resources_action(), assessments_action())),
-            ActionRow((account_action(), more_action())),
+            ActionRow((payments_action(), account_action())),
+            ActionRow((more_action(),)),
         ),
     )
 
 
 def more_menu_screen(website_url: str) -> Screen:
+    secondary_actions = (help_action(), website_action(website_url)) if website_url else (help_action(),)
     return Screen(
         identifier="core.more",
         title="بیشتر",
         intro="تنظیمات و مسیرهای تکمیلی فانوس.",
         action_rows=(
             ActionRow((workspace_action(), account_action())),
-            ActionRow((help_action(), website_action(website_url))),
+            ActionRow(secondary_actions),
             ActionRow((home_action(),)),
         ),
     )

@@ -51,11 +51,14 @@ An ancestor assignment is considered only when the role template explicitly allo
 | `workspace-admin` | workspace | Yes | Settings, memberships, academics/content for one workspace |
 | `cohort-representative` | workspace | Yes | Limited representative actions in the assigned workspace only |
 | `content-manager` | workspace, course offering | Yes | Create, review, and publish content |
+| `content-author` | workspace, course offering, resource | Yes | Create and revise content; publication remains a reviewer/manager decision |
 | `content-reviewer` | workspace, course offering, resource | Yes | View and review content without publishing |
 | `student` | workspace, course offering | Yes | Normal learning actions and own data |
 | `finance-manager` | workspace | Yes | Catalog, reconciliation, and explicit entitlement administration |
 
 Commercial roles exist because commerce/payment/entitlement foundations are part of the approved target architecture. They grant nothing until assigned at a scope.
+
+`content-author` uses the normal content bundle (`workspace.view`, `academic.view`, `resource.view`, `resource.create`, `notification.receive`) and is intentionally excluded from review/publish permissions.
 
 ## Permission bundles
 

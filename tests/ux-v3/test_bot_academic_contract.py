@@ -71,7 +71,7 @@ class AcademicContractTest(unittest.TestCase):
                 self.assertIn("academic.course.resources", identifiers)
                 self.assertIn("academic.course.grades", identifiers)
                 self.assertNotIn("academic.course.assessments", identifiers)
-                self.assertNotIn("academic.course.announcements", identifiers)
+                self.assertIn("academic.course.announcements", identifiers)
             finally:
                 state.close()
 

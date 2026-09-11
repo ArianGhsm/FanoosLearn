@@ -153,6 +153,7 @@ Current student projection fields used:
 - `description` if present;
 - `allow_multiple`;
 - `opens_at` / `closes_at`;
+- `submission_status` / `submitted_at` for the current member when a response already exists;
 - current schema via `schema_json` parsed into controls, never shown as raw JSON.
 
 Supported canonical field types are rendered:
@@ -348,11 +349,11 @@ The existing `/admin/dashboard` provides `management_available` and capability-f
 
 **Current UI:** no fake “continue payment” or reconcile action on historical orders.
 
-### GAP-OPS-05 — durable form submission/completion status
+### GAP-OPS-05 — full form submission history/export
 
-**Missing:** self submission history/status projection. `GET /forms` returns currently open forms but not whether this user has already submitted.
+**Missing:** a full self-submission history and manager submission/export projection. The open-form projection now includes the current user's latest submitted state so one-response forms are visibly completed and cannot be re-entered from the Website.
 
-**Current UI:** does not label a form completed before canonical confirmation. After a successful mutation, only that immediate success is shown. A canonical `duplicate_submission` response is presented safely when returned.
+**Current UI:** shows `پاسخ ثبت شده` and the canonical submitted timestamp; multi-response forms remain open. Export/analytics is not invented because no authorized public endpoint exists.
 
 ### GAP-OPS-06 — full form management lifecycle
 
@@ -360,11 +361,11 @@ The existing `/admin/dashboard` provides `management_available` and capability-f
 
 **Current management:** creates a form with the existing `{title, schema, open}` contract only. Deadline/description controls are not invented.
 
-### GAP-OPS-07 — announcement scope/course metadata and lifecycle
+### GAP-OPS-07 — announcement lifecycle beyond validated course scope
 
-**Missing:** current announcement projection/publish contract has no canonical course/scope label, draft lifecycle, edit or delete operation.
+**Missing:** draft lifecycle, edit or delete operation, and a manager course picker. The public projection now supports validated course-scoped announcements through `data_json.course_id` and `GET /announcements?course_id=…`.
 
-**Current UI:** uses the active workspace label as context and supports future explicit presentation-ready course/scope labels. Publishing is described as immediate.
+**Current UI:** course detail renders the scoped projection when a canonical course binding exists; workspace publishing remains immediate and the current management composer does not guess a course scope.
 
 ### GAP-OPS-08 — content review queue target-version projection
 

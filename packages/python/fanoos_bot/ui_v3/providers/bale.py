@@ -73,6 +73,22 @@ def _bale_text(screen: ProviderScreen) -> str:
     return "\n\n".join(group.strip() for group in groups if group.strip()).strip()
 
 
+def _safe_bale_text(screen: ProviderScreen) -> str:
+    """Keep malformed presentation metadata from becoming a user-visible error."""
+
+    try:
+        text = _bale_text(screen)
+    except (AttributeError, TypeError, ValueError):
+        text = ""
+    if text:
+        return text
+    try:
+        text = compose_plain_text(screen)
+    except (AttributeError, TypeError, ValueError):
+        text = ""
+    return text or str(screen.plain_text or screen.title or "فانوس").strip()
+
+
 def _owner_unavailable(screen: ProviderScreen) -> ProviderScreen:
     return ProviderScreen(
         title="⚙️ مدیریت",
@@ -116,7 +132,7 @@ class BaleV3Renderer:
                 actions=actions_for_provider(screen, context, "bale"),
             )
             rows = pack_actions(screen.actions, self.capabilities)
-            text = _bale_text(screen)
+            text = _safe_bale_text(screen)
             validate_message_text(text, self.capabilities)
             return BaleRenderPlan(
                 text=text,
@@ -136,7 +152,7 @@ class BaleV3Renderer:
                 actions=actions_for_provider(fail_screen, context, "bale"),
             )
             rows = pack_actions(fail_screen.actions, self.capabilities)
-            text = _bale_text(fail_screen)
+            text = _safe_bale_text(fail_screen)
             validate_message_text(text, self.capabilities)
             return BaleRenderPlan(
                 text=text,
@@ -153,7 +169,7 @@ class BaleV3Renderer:
             actions=actions_for_provider(screen, context, "bale"),
         )
         rows = pack_actions(screen.actions, self.capabilities)
-        text = _bale_text(screen) or compose_plain_text(screen)
+        text = _safe_bale_text(screen)
         validate_message_text(text, self.capabilities)
         delivery = resolve_delivery_intent(screen, context, self.capabilities)
         return BaleRenderPlan(

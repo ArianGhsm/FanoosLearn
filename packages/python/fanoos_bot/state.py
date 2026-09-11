@@ -316,17 +316,9 @@ class LocalState:
                 ),
             )
             if outcome == "delivered" and event_id:
-                self.db.execute(
-                    """
-                    INSERT INTO processed_updates(platform,event_id,provider_ref,created_at)
-                    VALUES(?,?,?,?)
-                    ON CONFLICT(platform,event_id) DO UPDATE SET
-                      provider_ref=excluded.provider_ref,
-                      created_at=excluded.created_at
-                    """,
-                    (platform, str(event_id), provider_ref or "sent", now),
+                self._record_processed_update_in_transaction(
+                    platform, str(event_id), provider_ref or "sent", now
                 )
-                self._bound_processed_updates(now)
 
     def pending_delivery_receipt(self, idempotency_key: str):
         row = self.db.execute(
@@ -358,6 +350,47 @@ class LocalState:
             (platform, str(event_id)),
         ).fetchone()
         return row["provider_ref"] if row else None
+
+    def record_processed_update(
+        self,
+        platform: str,
+        event_id: str | None,
+        provider_ref: str = "processed",
+    ) -> None:
+        """Persist update consumption even when presentation later fails.
+
+        The event id is transport correlation, not domain authority. Recording
+        it after application logic has run prevents a retry from replaying a
+        mutation merely because the provider renderer/network failed. Receipt
+        bearing deliveries continue to use ``record_delivery_outcome`` which
+        records the same key atomically with the canonical receipt outbox.
+        """
+        if not event_id:
+            return
+        now = int(time.time())
+        with self.db:
+            self._record_processed_update_in_transaction(
+                platform, str(event_id), str(provider_ref or "processed"), now
+            )
+
+    def _record_processed_update_in_transaction(
+        self,
+        platform: str,
+        event_id: str,
+        provider_ref: str,
+        now: int,
+    ) -> None:
+        self.db.execute(
+            """
+            INSERT INTO processed_updates(platform,event_id,provider_ref,created_at)
+            VALUES(?,?,?,?)
+            ON CONFLICT(platform,event_id) DO UPDATE SET
+              provider_ref=excluded.provider_ref,
+              created_at=excluded.created_at
+            """,
+            (platform, event_id, provider_ref, now),
+        )
+        self._bound_processed_updates(now)
 
     def _bound_processed_updates(self, now: int) -> None:
         self.db.execute("DELETE FROM processed_updates WHERE created_at<?", (now - 7 * 86400,))

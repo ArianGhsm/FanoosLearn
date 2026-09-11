@@ -39,7 +39,6 @@ final class CorePlatformTest
         $passwords = new PasswordHasher();
         $auth = new AuthService($this->database, $passwords, $audit, 3600, 3, 60);
         $entitlements = new EntitlementService($this->database, $access, $audit);
-        $core = new WorkspacePlatformService($this->database, $access, $audit);
         $commerce = new CommerceService(
             $this->database,
             $access,
@@ -49,6 +48,7 @@ final class CorePlatformTest
             'test-only-callback-key-not-for-production-0001',
         );
         $resources = new ProtectedResourceAuthorizer($this->database, $authorizer, $entitlements);
+        $core = new WorkspacePlatformService($this->database, $access, $audit, $resources);
 
         $this->seedAuthenticator($fixture['student'], 'student-' . substr($fixture['student'], -8), 'correct horse battery staple');
         $this->assertLoginAndWorkspaceSelection($auth, $fixture);
@@ -65,6 +65,11 @@ final class CorePlatformTest
         self::assert(count($core->announcements($fixture['student'], $fixture['workspace_b'])) === 0, 'Announcement leaked into another workspace.');
         $core->markAnnouncementRead($fixture['student'], $fixture['workspace_a'], $announcementA);
         self::assert($core->announcements($fixture['student'], $fixture['workspace_a'])[0]['status'] === 'read', 'Announcement read state was not persisted.');
+        $inbox = $core->notifications($fixture['student'], $fixture['workspace_a']);
+        self::assert(count($inbox['items']) === 1 && $inbox['items'][0]['id'] === $announcementA, 'Personal notification projection did not preserve the recipient-scoped read item.');
+        self::assert($core->notificationPreferences($fixture['student'], $fixture['workspace_a'])['in_app_enabled'] === true, 'Notification preferences did not return canonical defaults.');
+        $updatedPreferences = $core->updateNotificationPreferences($fixture['student'], $fixture['workspace_a'], ['in_app_enabled' => false, 'snoozed_until' => null]);
+        self::assert($updatedPreferences['in_app_enabled'] === false && $core->notificationPreferences($fixture['student'], $fixture['workspace_b'])['in_app_enabled'] === true, 'Notification preferences escaped the selected workspace.');
 
         $formId = $core->createForm($fixture['representative'], $fixture['workspace_a'], 'بازخورد کلاس', [
             'fields' => [['id' => 'message', 'type' => 'textarea', 'label' => 'نظر شما', 'required' => true]],
@@ -75,6 +80,7 @@ final class CorePlatformTest
         $this->expectPlatformException('duplicate_submission', fn () => $core->submitForm($fixture['student'], $fixture['workspace_a'], $formId, ['message' => 'دوباره'], 'submit-2'));
 
         $core->upsertSearchDocument($fixture['representative'], $fixture['workspace_a'], 'announcement', $announcementA, 'آزمون میان‌ترم', 'زمان آزمون', '/announcements/' . $announcementA);
+        $core->upsertSearchDocument($fixture['representative'], $fixture['workspace_a'], 'course', $fixture['course_b'], 'آزمون فضای دیگر', 'نباید در فضای اول دیده شود', '/courses/' . $fixture['course_b']);
         $core->upsertSearchDocument($fixture['global_admin'], $fixture['workspace_b'], 'course', $fixture['course_b'], 'آزمون فضای دوم', 'نباید در فضای اول دیده شود', '/courses/' . $fixture['course_b']);
         self::assert(count($core->search($fixture['student'], $fixture['workspace_a'], 'آزمون')) === 1, 'Workspace search missed an authorized document.');
         self::assert(count($core->search($fixture['student'], $fixture['workspace_b'], 'آزمون')) === 1, 'Workspace search did not find the second tenant document.');
@@ -97,7 +103,7 @@ final class CorePlatformTest
         $this->assertCommerceAndEntitlements($commerce, $entitlements, $resources, $fixture, $domain);
         $this->assertApiContract($auth, $core, $commerce, $entitlements, $resources, $fixture);
 
-        $auditCount = $this->database->prepare("SELECT COUNT(*) FROM audit_events WHERE workspace_id = :workspace AND action IN ('payment.verify', 'entitlement.grant', 'form.submit', 'announcement.publish')");
+        $auditCount = $this->database->prepare("SELECT COUNT(*) FROM audit_events WHERE workspace_id = :workspace AND action IN ('payment.verify', 'entitlement.grant', 'form.submit', 'announcement.publish', 'notification.read', 'notification.preferences.update')");
         $auditCount->execute(['workspace' => $fixture['workspace_a']]);
         self::assert((int) $auditCount->fetchColumn() >= 4, 'Sensitive operations did not create audit events.');
 

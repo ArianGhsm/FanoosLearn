@@ -11,6 +11,10 @@ from .actions import (
 from .contracts import ActionRow, Context, EditPolicy, Fact, ListItem, Screen, Section, Severity
 
 
+def _website_row(website_url: str) -> tuple[ActionRow, ...]:
+    return (ActionRow((website_action(website_url),)),) if website_url else ()
+
+
 def unlinked_account_screen(website_url: str) -> Screen:
     return Screen(
         identifier="onboarding.unlinked",
@@ -28,10 +32,7 @@ def unlinked_account_screen(website_url: str) -> Screen:
                 ),
             ),
         ),
-        action_rows=(
-            ActionRow((website_action(website_url),)),
-            ActionRow((help_action(), home_action())),
-        ),
+        action_rows=_website_row(website_url) + (ActionRow((help_action(), home_action())),),
         edit_policy=EditPolicy.SEND_NEW,
     )
 
@@ -53,9 +54,7 @@ def linked_no_workspace_screen(website_url: str) -> Screen:
         action_rows=(
             ActionRow((workspace_action(),)),
             ActionRow((account_action(), help_action())),
-            ActionRow((website_action(website_url),)),
-            ActionRow((home_action(),)),
-        ),
+        ) + _website_row(website_url) + (ActionRow((home_action(),)),),
     )
 
 
@@ -75,11 +74,7 @@ def linked_one_workspace_screen(
         severity=Severity.SUCCESS if selected else Severity.INFO,
         context=Context("فضای آموزشی", workspace_label),
         sections=(Section(facts=(Fact("وضعیت", status),)),),
-        action_rows=(
-            ActionRow((primary,)),
-            ActionRow((account_action(), help_action())),
-            ActionRow((website_action(website_url),)),
-        ),
+        action_rows=(ActionRow((primary,)), ActionRow((account_action(), help_action()))) + _website_row(website_url),
     )
 
 
@@ -93,9 +88,7 @@ def linked_multiple_workspaces_screen(website_url: str) -> Screen:
         action_rows=(
             ActionRow((workspace_action(),)),
             ActionRow((account_action(), help_action())),
-            ActionRow((website_action(website_url),)),
-            ActionRow((home_action(),)),
-        ),
+        ) + _website_row(website_url) + (ActionRow((home_action(),)),),
     )
 
 
@@ -105,10 +98,7 @@ def link_challenge_expired_screen(website_url: str) -> Screen:
         title="⌛ درخواست اتصال منقضی شده",
         intro="این درخواست دیگر قابل استفاده نیست. از فانوس یک درخواست اتصال تازه بگیرید.",
         severity=Severity.WARNING,
-        action_rows=(
-            ActionRow((website_action(website_url),)),
-            ActionRow((help_action(), home_action())),
-        ),
+        action_rows=_website_row(website_url) + (ActionRow((help_action(), home_action())),),
         edit_policy=EditPolicy.SEND_NEW,
     )
 
@@ -122,11 +112,7 @@ def onboarding_service_unavailable_screen(website_url: str) -> Screen:
         intro="در حال حاضر وضعیت حساب را نمی‌توان با اطمینان بررسی کرد.",
         severity=Severity.WARNING,
         sections=(Section(body="هیچ وضعیت قبلی به‌عنوان اطلاعات تازه نمایش داده نمی‌شود."),),
-        action_rows=(
-            ActionRow((retry_action(),)),
-            ActionRow((website_action(website_url),)),
-            ActionRow((help_action(), home_action())),
-        ),
+        action_rows=(ActionRow((retry_action(),)),) + _website_row(website_url) + (ActionRow((help_action(), home_action())),),
         edit_policy=EditPolicy.SEND_NEW,
     )
 
@@ -146,9 +132,5 @@ def getting_started_screen(website_url: str) -> Screen:
                 ),
             ),
         ),
-        action_rows=(
-            ActionRow((workspace_action(), account_action())),
-            ActionRow((website_action(website_url),)),
-            ActionRow((home_action(),)),
-        ),
+        action_rows=(ActionRow((workspace_action(), account_action())),) + _website_row(website_url) + (ActionRow((home_action(),)),),
     )

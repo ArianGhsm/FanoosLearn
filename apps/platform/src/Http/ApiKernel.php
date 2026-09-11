@@ -128,16 +128,39 @@ final class ApiKernel
             return ['status' => 200, 'data' => $this->platform->myGrades($session->userId, $workspaceId)];
         }
         if ($request->method === 'GET' && $suffix === '/announcements') {
-            return ['status' => 200, 'data' => $this->platform->announcements($session->userId, $workspaceId)];
+            return ['status' => 200, 'data' => $this->platform->announcements($session->userId, $workspaceId, $request->query['course_id'] ?? null)];
+        }
+        if ($request->method === 'GET' && $suffix === '/notifications') {
+            return ['status' => 200, 'data' => $this->platform->notifications(
+                $session->userId,
+                $workspaceId,
+                (int) ($request->query['limit'] ?? 20),
+                isset($request->query['cursor']) ? (string) $request->query['cursor'] : null,
+            )];
+        }
+        if ($request->method === 'GET' && $suffix === '/notification-preferences') {
+            return ['status' => 200, 'data' => $this->platform->notificationPreferences($session->userId, $workspaceId)];
+        }
+        if ($request->method === 'PATCH' && $suffix === '/notification-preferences') {
+            return ['status' => 200, 'data' => $this->platform->updateNotificationPreferences(
+                $session->userId,
+                $workspaceId,
+                $request->body,
+            )];
         }
         if ($request->method === 'POST' && $suffix === '/announcements') {
             return ['status' => 201, 'data' => ['id' => $this->platform->publishAnnouncement(
                 $session->userId, $workspaceId,
                 (string) ($request->body['title'] ?? ''), (string) ($request->body['body'] ?? ''),
+                isset($request->body['course_id']) ? (string) $request->body['course_id'] : null,
             )]];
         }
         if ($request->method === 'POST' && preg_match('#^/announcements/([0-9a-f-]+)/read$#', $suffix, $match)) {
             $this->platform->markAnnouncementRead($session->userId, $workspaceId, $match[1]);
+            return ['status' => 200, 'data' => ['read' => true]];
+        }
+        if ($request->method === 'POST' && preg_match('#^/notifications/([0-9a-f-]+)/read$#', $suffix, $match)) {
+            $this->platform->markNotificationRead($session->userId, $workspaceId, $match[1]);
             return ['status' => 200, 'data' => ['read' => true]];
         }
         if ($request->method === 'GET' && $suffix === '/forms') {
@@ -179,6 +202,9 @@ final class ApiKernel
                 (string) ($request->body['idempotency_key'] ?? ''),
             )];
         }
+        if ($request->method === 'GET' && $suffix === '/catalog') {
+            return ['status' => 200, 'data' => $this->commerce->catalog($session->userId, $workspaceId)];
+        }
         if ($request->method === 'GET' && $suffix === '/orders') {
             return ['status' => 200, 'data' => $this->commerce->history($session->userId, $workspaceId)];
         }
@@ -201,6 +227,9 @@ final class ApiKernel
         if ($request->method === 'GET' && $suffix === '/entitlements/check') {
             return ['status' => 200, 'data' => ['allowed' => $this->entitlements->has($session->userId, $workspaceId, $request->query['scope_id'] ?? '')]];
         }
+        if ($request->method === 'GET' && $suffix === '/entitlements') {
+            return ['status' => 200, 'data' => $this->entitlements->library($session->userId, $workspaceId)];
+        }
         if ($request->method === 'GET' && preg_match('#^/resources/([0-9a-f-]+)/authorize$#', $suffix, $match)) {
             return ['status' => 200, 'data' => $this->resources->decide($session->userId, $workspaceId, $match[1])];
         }
@@ -219,12 +248,32 @@ final class ApiKernel
                 (string) ($request->body['title'] ?? ''), $payload, $metadata,
             )];
         }
+        if ($request->method === 'PATCH' && preg_match('#^/resources/([0-9a-f-]+)$#', $suffix, $match)) {
+            $metadata = is_array($request->body['metadata'] ?? null) ? $request->body['metadata'] : [];
+            $this->requireContent()->updateMetadata(
+                $session->userId, $workspaceId, $match[1], (string) ($request->body['title'] ?? ''), $metadata,
+            );
+            return ['status' => 200, 'data' => ['updated' => true]];
+        }
         if ($request->method === 'GET' && preg_match('#^/resources/([0-9a-f-]+)$#', $suffix, $match)) {
             return ['status' => 200, 'data' => $this->requireContent()->view($session->userId, $workspaceId, $match[1])];
+        }
+        if ($request->method === 'GET' && preg_match('#^/resources/([0-9a-f-]+)/versions$#', $suffix, $match)) {
+            return ['status' => 200, 'data' => $this->requireContent()->versions($session->userId, $workspaceId, $match[1])];
         }
         if ($request->method === 'POST' && preg_match('#^/resources/([0-9a-f-]+)/versions$#', $suffix, $match)) {
             $payload = is_array($request->body['content'] ?? null) ? $request->body['content'] : [];
             return ['status' => 201, 'data' => $this->requireContent()->addStructuredVersion($session->userId, $workspaceId, $match[1], $payload)];
+        }
+        if ($request->method === 'POST' && preg_match('#^/resources/([0-9a-f-]+)/versions/([0-9a-f-]+)/derive$#', $suffix, $match)) {
+            $payload = is_array($request->body['content'] ?? null) ? $request->body['content'] : [];
+            $metadata = is_array($request->body['metadata'] ?? null) ? $request->body['metadata'] : [];
+            return ['status' => 201, 'data' => $this->requireContent()->deriveResource(
+                $session->userId, $workspaceId, $match[1], $match[2],
+                (string) ($request->body['type'] ?? ''), (string) ($request->body['title'] ?? ''),
+                (string) ($request->body['transformation'] ?? ''), $payload, $metadata,
+                (string) ($request->body['producer'] ?? 'operator'),
+            )];
         }
         if ($request->method === 'POST' && preg_match('#^/resources/([0-9a-f-]+)/versions/([0-9a-f-]+)/review-request$#', $suffix, $match)) {
             $this->requireContent()->submitForReview($session->userId, $workspaceId, $match[1], $match[2]);

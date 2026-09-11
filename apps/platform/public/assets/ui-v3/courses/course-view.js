@@ -73,7 +73,7 @@ function dateOnly(ctx, value) {
 function resourceType(value) {
   const labels = {
     lecture_note: 'جزوه', discipline_note: 'یادداشت درسی', summary: 'خلاصه', cheat_sheet: 'مرور سریع',
-    flashcards: 'فلش‌کارت', question_bank: 'بانک سؤال', past_exam: 'آزمون گذشته', audio: 'صوت', other: 'منبع آموزشی',
+    flashcards: 'فلش‌کارت', question_bank: 'بانک سؤال', past_exam: 'آزمون گذشته', audio: 'صوت', transcript: 'متن پیاده‌سازی‌شده', slide_reference: 'اسلاید / مرجع', other: 'منبع آموزشی',
   };
   return labels[cleanText(value).toLowerCase()] || 'منبع آموزشی';
 }

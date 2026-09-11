@@ -58,6 +58,11 @@ final class ContentEngineTest
         self::assert($resourceA['resource_id'] !== $resourceB['resource_id'], 'Same-name resources collided across tenants.');
         self::assert(count($content->library($fixture['manager'], $fixture['workspace_a'], ['q' => 'منبع مشترک'])) === 1, 'Workspace A library did not isolate the same-name resource.');
         self::assert(count($content->library($fixture['manager'], $fixture['workspace_b'], ['q' => 'منبع مشترک'])) === 1, 'Workspace B library did not isolate the same-name resource.');
+        $libraryRow = $content->library($fixture['manager'], $fixture['workspace_a'], ['q' => 'منبع مشترک'])[0] ?? [];
+        self::assert(($libraryRow['latest_version_id'] ?? '') === $resourceA['version_id'] && ($libraryRow['latest_version_status'] ?? '') === 'draft', 'Producer library did not expose the current version workflow state.');
+        $versions = $content->versions($fixture['manager'], $fixture['workspace_a'], $resourceA['resource_id']);
+        self::assert(count($versions) === 1 && ($versions[0]['content_preview'] ?? '') !== '' && !array_key_exists('storage_key', $versions[0]), 'Scoped version history exposed the wrong projection.');
+        $this->expectPlatformException('forbidden', fn () => $content->versions($fixture['outsider'], $fixture['workspace_a'], $resourceA['resource_id']));
 
         $content->submitForReview($fixture['manager'], $fixture['workspace_a'], $resourceA['resource_id'], $resourceA['version_id']);
         $this->expectPlatformException('self_review_forbidden', fn () => $content->reviewVersion($fixture['manager'], $fixture['workspace_a'], $resourceA['resource_id'], $resourceA['version_id'], 'approved'));
@@ -144,7 +149,7 @@ final class ContentEngineTest
         self::assert((int) $events->fetchColumn() === 2, 'Delivery issuance/access events were not retained.');
 
         $definition = ['questions' => [
-            ['id' => 'q1', 'prompt' => 'دو بعلاوه دو؟', 'choices' => ['سه', 'چهار'], 'answer' => 1, 'explanation' => 'پاسخ چهار است.'],
+            ['id' => 'q1', 'prompt' => 'دو بعلاوه دو؟', 'choices' => ['سه', 'چهار'], 'answer' => 1, 'explanation' => 'پاسخ چهار است.', 'topic' => 'حساب پایه', 'tags' => ['جمع', 'مقدماتی'], 'difficulty' => 'easy', 'provenance' => ['source_question_id' => 'source-q1', 'source_locator' => 'جزوه فصل اول']],
             ['id' => 'q2', 'prompt' => 'اولین گزینه را انتخاب کن.', 'choices' => ['اول', 'دوم'], 'answer' => 0],
         ]];
         $assessment = $exams->createAssessment(
@@ -160,6 +165,12 @@ final class ContentEngineTest
         $saved = $exams->saveProgress($fixture['student'], $fixture['workspace_a'], $attempt['attempt_id'], 1, ['q1' => 1]);
         self::assert($saved['revision'] === 2, 'Attempt progress revision did not advance.');
         $this->expectPlatformException('attempt_revision_conflict', fn () => $exams->saveProgress($fixture['student'], $fixture['workspace_a'], $attempt['attempt_id'], 1, ['q1' => 0]));
+        $resumed = $exams->startAttempt($fixture['student'], $fixture['workspace_a'], $assessment['assessment_id']);
+        self::assert($resumed['attempt_id'] === $attempt['attempt_id'] && $resumed['resumed'] === true, 'Starting an existing attempt must be resumable and idempotent.');
+        self::assert(($attempt['questions'][0]['topic'] ?? '') === 'حساب پایه' && ($attempt['questions'][0]['difficulty'] ?? '') === 'easy', 'Question study metadata was not projected without the answer key.');
+        $activeCatalog = $exams->catalog($fixture['student'], $fixture['workspace_a'], $courses['a'], 'mock_exam')[0] ?? [];
+        self::assert(($activeCatalog['active_attempt_id'] ?? '') === $attempt['attempt_id'] && ($activeCatalog['active_attempt_status'] ?? '') === 'in_progress', 'Assessment catalog did not expose the resumable attempt state.');
+        self::assert(($activeCatalog['source_resource_id'] ?? '') === $questionBank['resource_id'], 'Assessment catalog lost source-resource provenance.');
         $scored = $exams->submitAttempt($fixture['student'], $fixture['workspace_a'], $attempt['attempt_id'], 2, ['q1' => 1, 'q2' => 0]);
         self::assert($scored['status'] === 'scored' && $scored['score_basis_points'] === 10000, 'Server-side assessment scoring failed.');
         self::assert(count($exams->attemptReview($fixture['student'], $fixture['workspace_a'], $attempt['attempt_id'])['review']) === 2, 'Attempt review result is incomplete.');
