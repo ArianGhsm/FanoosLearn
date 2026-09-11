@@ -79,6 +79,16 @@ class LocalState:
               created_at INTEGER NOT NULL,
               PRIMARY KEY(platform, event_id)
             );
+            CREATE TABLE IF NOT EXISTS class_wizards(
+              platform TEXT NOT NULL,
+              subject TEXT NOT NULL,
+              step_index INTEGER NOT NULL,
+              answers_json TEXT NOT NULL,
+              created_at INTEGER NOT NULL,
+              updated_at INTEGER NOT NULL,
+              expires_at INTEGER NOT NULL,
+              PRIMARY KEY(platform, subject)
+            );
             CREATE TABLE IF NOT EXISTS presentation_routes(
               ref TEXT PRIMARY KEY,
               platform TEXT NOT NULL,
@@ -222,6 +232,57 @@ class LocalState:
         self.db.execute(
             "UPDATE confirmations SET used_at=? WHERE ref=? AND subject=? AND used_at IS NULL",
             (int(time.time()), ref, str(subject)),
+        )
+        self.db.commit()
+
+    CLASS_WIZARD_TTL = 30 * 60
+
+    def start_class_wizard(self, platform: str, subject: str, *, now: int | None = None) -> None:
+        now = int(now or time.time())
+        self.db.execute(
+            """
+            INSERT INTO class_wizards(platform,subject,step_index,answers_json,created_at,updated_at,expires_at)
+            VALUES(?,?,0,'{}',?,?,?)
+            ON CONFLICT(platform,subject) DO UPDATE SET
+              step_index=0, answers_json='{}', updated_at=excluded.updated_at, expires_at=excluded.expires_at
+            """,
+            (platform, str(subject), now, now, now + self.CLASS_WIZARD_TTL),
+        )
+        self.db.commit()
+
+    def class_wizard(self, platform: str, subject: str, now: int | None = None) -> dict | None:
+        now = int(now or time.time())
+        row = self.db.execute(
+            "SELECT step_index,answers_json,expires_at FROM class_wizards WHERE platform=? AND subject=?",
+            (platform, str(subject)),
+        ).fetchone()
+        if not row or int(row["expires_at"]) < now:
+            return None
+        try:
+            answers = json.loads(str(row["answers_json"]))
+        except (TypeError, ValueError, json.JSONDecodeError):
+            answers = {}
+        if not isinstance(answers, dict):
+            answers = {}
+        return {"step_index": int(row["step_index"]), "answers": answers}
+
+    def advance_class_wizard(
+        self, platform: str, subject: str, step_index: int, answers: dict, *, now: int | None = None
+    ) -> None:
+        now = int(now or time.time())
+        encoded = json.dumps(answers, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        self.db.execute(
+            """
+            UPDATE class_wizards SET step_index=?, answers_json=?, updated_at=?, expires_at=?
+            WHERE platform=? AND subject=?
+            """,
+            (int(step_index), encoded, now, now + self.CLASS_WIZARD_TTL, platform, str(subject)),
+        )
+        self.db.commit()
+
+    def cancel_class_wizard(self, platform: str, subject: str) -> None:
+        self.db.execute(
+            "DELETE FROM class_wizards WHERE platform=? AND subject=?", (platform, str(subject))
         )
         self.db.commit()
 
@@ -415,3 +476,4 @@ class LocalState:
             self.db.execute("DELETE FROM file_cache WHERE updated_at<?", (cutoff,))
             self.db.execute("DELETE FROM processed_updates WHERE created_at<?", (cutoff,))
             self.db.execute("DELETE FROM presentation_routes WHERE expires_at<?", (now,))
+            self.db.execute("DELETE FROM class_wizards WHERE expires_at<?", (now,))

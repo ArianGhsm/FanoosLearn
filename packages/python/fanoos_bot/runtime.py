@@ -130,14 +130,20 @@ class BotRuntime:
         return self.transport.edit_screen(ctx.chat_id, ctx.message_id, screen)
 
     def handle_message(self, ctx: UpdateContext, text: str):
-        command, *rest = (text or "").strip().split(maxsplit=1)
-        arg = rest[0] if rest else ""
+        raw_text = (text or "").strip()
         if ctx.event_id:
             prior = self.state.processed_update(self.platform, ctx.event_id)
             if prior is not None:
                 return prior
         with self.activity.operation(ctx.chat_id, private=ctx.private):
-            result = self._message_result(ctx, command, arg)
+            result = None
+            wizard_handler = getattr(self.app, "class_wizard_text", None)
+            if callable(wizard_handler) and not raw_text.startswith("/"):
+                result = wizard_handler(ctx.subject, raw_text, ctx.private)
+            if result is None:
+                command, *rest = raw_text.split(maxsplit=1)
+                arg = rest[0] if rest else ""
+                result = self._message_result(ctx, command, arg)
             try:
                 result = self._prepare_result(ctx, result)
             except Exception as exc:
