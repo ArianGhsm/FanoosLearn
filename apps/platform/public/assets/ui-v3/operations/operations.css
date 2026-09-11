@@ -69,6 +69,7 @@
 .f3-ops-button:focus-visible,
 .f3-ops-list-row button:focus-visible,
 .f3-ops-field input:focus-visible,
+.f3-ops-search-form input:focus-visible,
 .f3-ops-field textarea:focus-visible,
 .f3-ops-field select:focus-visible,
 .f3-ops-builder-row input:focus-visible,
@@ -730,6 +731,78 @@
   line-height: 1.75;
 }
 
+.f3-ops-preferences,
+.f3-ops-search-form,
+.f3-ops-search-result {
+  display: grid;
+  gap: var(--f3-space-4, 16px);
+  padding: var(--f3-space-6, 24px);
+  border: 1px solid var(--f3-border, #dfe6e2);
+  border-radius: var(--f3-radius-card, 16px);
+  background: var(--f3-surface, #fff);
+}
+
+.f3-ops-preferences {
+  max-width: 780px;
+  margin-block-start: var(--f3-space-6, 24px);
+}
+
+.f3-ops-preferences__heading h2 {
+  margin: 0;
+  color: var(--f3-text, #13201c);
+  font-size: 1.08rem;
+}
+
+.f3-ops-preferences__heading p {
+  margin: var(--f3-space-2, 8px) 0 0;
+  color: var(--f3-text-secondary, #50615b);
+  line-height: 1.8;
+}
+
+.f3-ops-preferences .f3-ops-switch-row {
+  margin: 0;
+}
+
+.f3-ops-search-form {
+  margin-block-end: var(--f3-space-6, 24px);
+}
+
+.f3-ops-search-form > label {
+  color: var(--f3-text, #13201c);
+  font-weight: 700;
+}
+
+.f3-ops-search-form__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--f3-space-3, 12px);
+}
+
+.f3-ops-search-form input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--f3-border, #dfe6e2);
+  border-radius: var(--f3-radius-control, 12px);
+  background: var(--f3-bg, #f6f8f7);
+  color: var(--f3-text, #13201c);
+  font: inherit;
+}
+
+.f3-ops-search-results {
+  display: grid;
+  gap: var(--f3-space-3, 12px);
+}
+
+.f3-ops-search-result {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.f3-ops-search-result__body {
+  min-width: 0;
+}
+
 .f3-ops-content-workflow {
   display: grid;
   gap: var(--f3-space-6, 24px);
@@ -1020,7 +1093,12 @@
   .f3-ops-form-card__top,
   .f3-ops-notification-gap,
   .f3-ops-callout,
-  .f3-ops-management-card__header {
+  .f3-ops-management-card__header,
+  .f3-ops-search-result {
+    grid-template-columns: 1fr;
+  }
+
+  .f3-ops-search-form__row {
     grid-template-columns: 1fr;
   }
 
@@ -1113,7 +1191,10 @@
   .f3-ops-order-detail,
   .f3-ops-state,
   .f3-ops-notification-gap,
-  .f3-ops-callout {
+  .f3-ops-callout,
+  .f3-ops-preferences,
+  .f3-ops-search-form,
+  .f3-ops-search-result {
     padding: var(--f3-space-4, 16px);
   }
 

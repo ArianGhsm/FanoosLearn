@@ -59,6 +59,8 @@ assert.ok(notificationNav.includes(".f3-shell-more-page__groups .f3-shell-more-g
 assert.ok(notificationNav.includes("aria-current"), 'injected notification destinations must expose active-route state');
 assert.ok(bootstrap.includes("notifications: operationsDefinition"), 'personal notification route must map to the operations gap state');
 assert.ok(bootstrap.includes("routes: [{ id: 'notifications', path: '/notifications'"), 'notification route registration missing');
+assert.ok(bootstrap.includes("search: operationsDefinition"), 'workspace search route must map to the operations module');
+assert.ok(router.includes("id: 'search'"), 'workspace search route registration missing');
 assert.ok(bootstrap.includes("raw === '/learning' || raw === 'learning'"), '/learning compatibility alias must normalize to /resources');
 assert.equal((bootstrap.match(/addEventListener\('hashchange'/g) || []).length, 0, 'integration layer must not create a second hash router');
 assert.equal((notificationNav.match(/addEventListener\('hashchange'/g) || []).length, 0, 'notification integration must not create a second hash router');
@@ -135,6 +137,10 @@ assert.ok(operations.includes("return 'unknown'"), 'paid must not imply entitlem
 assert.ok(operations.includes('پرداخت موفق به‌تنهایی مجوز محتوا نیست'), 'UI must not imply impossible DRM or payment authority');
 assert.ok(operations.includes("hasCapability(ctx, 'notification.broadcast', dashboard)"));
 assert.ok(operations.includes("hasCapability(ctx, 'form.manage', dashboard)"));
+assert.ok(operations.includes("pathFor(ctx, '/notifications?limit=30')"), 'notification inbox must read the persisted web projection');
+assert.ok(operations.includes("pathFor(ctx, '/notification-preferences')"), 'notification preferences endpoint missing');
+assert.ok(operations.includes("pathFor(ctx, `/search?q=${encodeURIComponent(query)}`)"), 'workspace search endpoint missing');
+assert.ok(operations.includes('source_label'), 'search results must use a human source label');
 assert.ok(bootstrap.includes('has: () => false'), 'granular management mutations must fail closed until canonical capabilities are projected');
 assert.equal(operations.includes('Update Server'), false);
 assert.equal(operations.includes('به‌روزرسانی سرور'), false);

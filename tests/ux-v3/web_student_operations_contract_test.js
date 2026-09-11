@@ -83,6 +83,10 @@ assert.ok(api.includes("$request->body['course_id']"), 'announcement scoped publ
 assert.ok(platform.includes("JSON_EXTRACT(message.data_json, '$.course_id')"), 'announcement course binding must come from canonical stored metadata');
 assert.ok(platform.includes("scope_course.status = 'active'"), 'announcement course join must be lifecycle scoped');
 assert.ok(platform.includes("notification.broadcast"), 'announcement publish must remain capability protected');
+assert.ok(platform.includes('public function notifications('), 'personal notification projection missing');
+assert.ok(platform.includes('public function markNotificationRead('), 'notification read mutation missing');
+assert.ok(platform.includes('public function notificationPreferences('), 'notification preference projection missing');
+assert.ok(platform.includes('notification.preferences.update'), 'notification preference mutation must be audited');
 assert.ok(operations.includes('renderCourseAnnouncementsSlot'), 'course announcement slot missing');
 assert.ok(operations.includes('/announcements?course_id='), 'course announcement slot must use public scoped endpoint');
 assert.ok(bootstrap.includes("courseAnnouncements: true"), 'course announcement capability must be enabled after backend support');
@@ -97,6 +101,9 @@ assert.ok(operations.includes('submission_status'), 'forms UI must render canoni
 assert.ok(operations.includes('پاسخ این فرم قبلاً ثبت شده است'), 'single-submit forms must fail closed in the UI');
 assert.ok(operations.includes('closes_at'), 'forms UI must render canonical deadline when supplied');
 assert.ok(!/schema_json\s*\}\)|JSON\.stringify\(row/.test(operations), 'forms UI must not dump raw schema JSON');
+assert.ok(platform.includes('searchDocumentVisible'), 'search must re-check source visibility instead of filtering only by coarse RBAC');
+assert.ok(platform.includes('source_label'), 'search projection must provide human-readable source labels');
+assert.ok(platform.includes('notification_not_found'), 'notification read must reject another user or workspace inbox');
 
 for (const source of [scheduleUi, progressUi, operations]) {
   assert.equal(/\.innerHTML\s*=/.test(source), false, 'student operations UI must not render through innerHTML');

@@ -60,7 +60,7 @@ final class PlatformFactory
 
         return new ApiKernel(
             new AuthService($database, new PasswordHasher(), $audit),
-            new WorkspacePlatformService($database, $access, $audit),
+            new WorkspacePlatformService($database, $access, $audit, $resources),
             new CommerceService($database, $access, $entitlements, $audit, new FakePaymentGateway(), $callbackKey),
             $entitlements,
             $resources,

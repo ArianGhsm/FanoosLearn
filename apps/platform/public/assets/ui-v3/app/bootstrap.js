@@ -23,6 +23,7 @@ const DOMAIN_MODULES = Object.freeze({
   grades: progressDefinition,
   announcements: operationsDefinition,
   notifications: operationsDefinition,
+  search: operationsDefinition,
   forms: operationsDefinition,
   orders: operationsDefinition,
   management: operationsDefinition,

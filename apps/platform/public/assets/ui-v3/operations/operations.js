@@ -1,6 +1,7 @@
 const ROUTES = Object.freeze({
   announcements: 'announcements',
   notifications: 'notifications',
+  search: 'search',
   forms: 'forms',
   orders: 'orders',
   management: 'management',
@@ -137,6 +138,7 @@ function icon(name) {
     content: ['M5 4h14v16H5z', 'M8 8h8', 'M8 12h8', 'M8 16h5'],
     plus: ['M12 5v14', 'M5 12h14'],
     close: ['m7 7 10 10', 'm17 7-10 10'],
+    search: ['m21 21-4.35-4.35', 'M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z'],
   };
   (paths[name] || paths.arrow).forEach((d) => {
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -197,6 +199,7 @@ async function apiRequest(ctx, path, { method = 'GET', body, signal } = {}) {
   if (typeof api.request === 'function') return normalizeApiResult(await api.request(path, { method: verb, body, signal }));
   if (verb === 'GET' && typeof api.get === 'function') return normalizeApiResult(await api.get(path, { signal }));
   if (verb === 'POST' && typeof api.post === 'function') return normalizeApiResult(await api.post(path, body || {}, { signal }));
+  if (verb === 'PATCH' && typeof api.patch === 'function') return normalizeApiResult(await api.patch(path, body || {}, { signal }));
   throw new Error('ops_api_adapter_missing');
 }
 
@@ -373,6 +376,11 @@ function explicitAccessState(row) {
   return 'unknown';
 }
 
+function safeInternalLink(value) {
+  const url = safeLink(value);
+  return url && url.origin === window.location.origin ? url : null;
+}
+
 function accessLabel(value) {
   if (value === 'active') return 'دسترسی فعال';
   if (value === 'expired') return 'دسترسی منقضی‌شده';
@@ -527,20 +535,89 @@ export async function renderCourseAnnouncementsSlot(ctx, { root, courseId, cours
   }
 }
 
-function renderNotifications(ctx, controller) {
-  const root = controller.root;
-  const openAnnouncements = button('رفتن به اطلاعیه‌ها', { variant: 'secondary', onClick: () => controller.navigate(ROUTES.announcements) });
-  root.replaceChildren(
-    pageHeader('ارتباطات', 'اعلان‌های شخصی', 'اعلان با اطلاعیه رسمی یکی نیست.'),
-    element('section', { className: 'f3-ops-notification-gap' },
-      element('div', { className: 'f3-ops-feature-icon' }, icon('bell')),
-      element('div', {},
-        element('h2', { text: 'تاریخچهٔ شخصی اعلان‌ها هنوز در وب ارائه نمی‌شود' }),
-        element('p', { text: 'برای جلوگیری از نمایش سابقهٔ ناقص، رسیدهای ارسال پیام در تلگرام یا بله به‌جای صندوق اعلان استفاده نمی‌شوند. اطلاعیه‌های رسمی همچنان از بخش اطلاعیه‌ها در دسترس‌اند.' }),
-        openAnnouncements,
-      ),
-    ),
+function preferenceCheckbox(id, label, checked) {
+  return element('label', { className: 'f3-ops-switch-row', attrs: { for: id } },
+    element('input', { attrs: { id, type: 'checkbox', checked: checked ? true : null } }),
+    element('span', { text: label }),
   );
+}
+
+function renderNotificationPreferences(ctx, result, controller) {
+  if (!result.ok || !result.data || typeof result.data !== 'object') return null;
+  const preferences = result.data;
+  const inApp = preferenceCheckbox('f3-ops-pref-in-app', 'نمایش اعلان‌های داخل فانوس', preferences.in_app_enabled === true);
+  const email = preferenceCheckbox('f3-ops-pref-email', 'ارسال ایمیل (در صورت فعال‌شدن کانال)', preferences.email_enabled === true);
+  const push = preferenceCheckbox('f3-ops-pref-push', 'اعلان دستگاه (در صورت فعال‌شدن کانال)', preferences.push_enabled === true);
+  const snooze = element('input', { attrs: { id: 'f3-ops-pref-snooze', type: 'datetime-local', value: text(preferences.snoozed_until).replace(' ', 'T').slice(0, 16) } });
+  const form = element('form', { className: 'f3-ops-preferences', attrs: { 'aria-labelledby': 'f3-ops-preferences-title' } },
+    element('div', { className: 'f3-ops-preferences__heading' }, element('h2', { id: 'f3-ops-preferences-title', text: 'تنظیمات اعلان' }), element('p', { text: 'تنظیمات فقط روی همین فضای آموزشی و حساب شما اثر می‌گذارد.' })),
+    inApp, email, push,
+    element('label', { className: 'f3-ops-field', attrs: { for: 'f3-ops-pref-snooze' } }, element('span', { text: 'توقف موقت تا (اختیاری)' }), snooze),
+    element('div', { className: 'f3-ops-form__footer' }, button('ذخیره تنظیمات', { variant: 'secondary', type: 'submit' })),
+  );
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const submit = form.querySelector('button[type="submit"]');
+    if (submit) submit.disabled = true;
+    try {
+      await apiRequest(ctx, pathFor(ctx, '/notification-preferences'), { method: 'PATCH', body: {
+        in_app_enabled: inApp.querySelector('input')?.checked === true,
+        email_enabled: email.querySelector('input')?.checked === true,
+        push_enabled: push.querySelector('input')?.checked === true,
+        snoozed_until: snooze.value ? snooze.value : null,
+      }, signal: controller.signal });
+      notify(ctx, 'تنظیمات اعلان ذخیره شد.', 'success');
+    } catch (error) {
+      notify(ctx, error?.status === 403 ? 'تنظیمات اعلان برای این عضویت در دسترس نیست.' : 'ذخیرهٔ تنظیمات اعلان انجام نشد.', 'warning');
+    } finally {
+      if (submit) submit.disabled = false;
+    }
+  });
+  return form;
+}
+
+async function renderNotifications(ctx, controller) {
+  const root = controller.root;
+  const [result, preferences] = await Promise.all([
+    safeRead(ctx, pathFor(ctx, '/notifications?limit=30'), controller.signal),
+    safeRead(ctx, pathFor(ctx, '/notification-preferences'), controller.signal),
+  ]);
+  if (controller.signal.aborted) return;
+  const openAnnouncements = button('رفتن به اطلاعیه‌ها', { variant: 'secondary', onClick: () => controller.navigate(ROUTES.announcements) });
+  const heading = pageHeader('ارتباطات', 'اعلان‌های شخصی', 'پیام‌هایی که به‌صورت پایدار برای همین حساب در فضای آموزشی ثبت شده‌اند.', openAnnouncements);
+  if (!result.ok) {
+    const denied = result.error?.status === 403;
+    root.replaceChildren(heading, stateBlock(denied ? 'اعلان‌ها برای این عضویت فعال نیستند' : 'اعلان‌ها دریافت نشدند', denied ? 'دسترسی اعلان برای این فضای آموزشی به حساب شما داده نشده است.' : 'ارتباط با صندوق اعلان برقرار نشد. دوباره تلاش کنید.', { tone: denied ? 'warning' : 'danger', actionLabel: denied ? null : 'تلاش دوباره', onAction: denied ? null : () => controller.render(ROUTES.notifications) }));
+    return;
+  }
+  const rows = rowsOf(result);
+  const content = [];
+  if (!rows.length) content.push(stateBlock('اعلان جدیدی ندارید', 'وقتی پیامی برای حساب شما ثبت شود، در اینجا نمایش داده می‌شود.'));
+  else {
+    const list = element('section', { className: 'f3-ops-list', attrs: { 'aria-label': 'اعلان‌های شخصی' } });
+    rows.forEach((row) => {
+      const unread = text(row.status).toLowerCase() !== 'read' && !row.read_at;
+      const read = button(unread ? 'خواندم' : 'خوانده‌شده', { variant: unread ? 'quiet' : 'quiet', disabled: !unread, onClick: async (event) => {
+        event.currentTarget.disabled = true;
+        try {
+          await apiRequest(ctx, pathFor(ctx, `/notifications/${encodeURIComponent(row.id)}/read`), { method: 'POST', body: {}, signal: controller.signal });
+          row.status = 'read'; row.read_at = new Date().toISOString(); event.currentTarget.replaceWith(statusChip('read', 'خوانده‌شده'));
+        } catch (_error) { event.currentTarget.disabled = false; notify(ctx, 'وضعیت خوانده‌شدن ذخیره نشد.', 'warning'); }
+      } });
+      list.append(element('article', { className: `f3-ops-list-row${unread ? ' f3-ops-list-row--unread' : ''}` },
+        element('div', { className: 'f3-ops-list-row__body' },
+          element('div', { className: 'f3-ops-list-row__titleline' }, element('h2', { className: 'f3-ops-list-row__title', text: text(row.title, 'اعلان') }), unread ? element('span', { className: 'f3-ops-unread', text: 'خوانده‌نشده' }) : null),
+          element('p', { className: 'f3-ops-list-row__preview', text: bounded(row.body, 220) || 'بدون متن پیش‌نمایش' }),
+          metaRow([{ icon: 'clock', value: formatDate(ctx, row.published_at, true) }, { value: announcementScope(ctx, row) }]),
+        ),
+        element('div', { className: 'f3-ops-list-row__action' }, read),
+      ));
+    });
+    content.push(list);
+  }
+  const preferencesForm = renderNotificationPreferences(ctx, preferences, controller);
+  if (preferencesForm) content.push(preferencesForm);
+  root.replaceChildren(heading, ...content);
 }
 
 function parseFormSchema(row) {
@@ -1283,6 +1360,63 @@ async function renderManagement(ctx, dashboardResult, controller) {
   root.append(grid);
 }
 
+function searchQuery(ctx) {
+  const query = ctx?.state?.route?.query;
+  const value = query && typeof query === 'object' ? query.q : '';
+  return text(Array.isArray(value) ? value[0] : value);
+}
+
+async function renderSearch(ctx, controller) {
+  const query = searchQuery(ctx);
+  const input = element('input', { attrs: { id: 'f3-ops-search-input', type: 'search', name: 'q', value: query, placeholder: 'نام درس، جلسه، فرم یا منبع آموزشی', autocomplete: 'off' } });
+  const form = element('form', { className: 'f3-ops-search-form', attrs: { role: 'search' } },
+    element('label', { attrs: { for: 'f3-ops-search-input' }, text: 'جست‌وجو در فضای آموزشی' }),
+    element('div', { className: 'f3-ops-search-form__row' }, input, button('جست‌وجو', { variant: 'primary', type: 'submit', iconName: 'search' })),
+  );
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const value = text(input.value);
+    if (value.length < 2) {
+      notify(ctx, 'برای جست‌وجو حداقل دو نویسه وارد کنید.', 'warning');
+      input.focus();
+      return;
+    }
+    controller.navigate(ROUTES.search, { q: value });
+  });
+  const root = controller.root;
+  const heading = pageHeader('پیدا کردن', 'جست‌وجوی فضای آموزشی', 'نتایج فقط از محتوایی می‌آیند که حساب شما در همین فضای آموزشی مجاز به دیدن آن است.');
+  if (query.length < 2) {
+    root.replaceChildren(heading, form, stateBlock('عبارت جست‌وجو را وارد کنید', 'عنوان درس، جلسه، برنامه، اطلاعیه، فرم یا منبع آموزشی را جست‌وجو کنید.'));
+    return;
+  }
+  const result = await safeRead(ctx, pathFor(ctx, `/search?q=${encodeURIComponent(query)}`), controller.signal);
+  if (controller.signal.aborted) return;
+  if (!result.ok) {
+    const denied = result.error?.status === 403;
+    root.replaceChildren(heading, form, stateBlock(denied ? 'جست‌وجو برای این عضویت فعال نیست' : 'جست‌وجو انجام نشد', result.error?.status === 422 ? 'عبارت جست‌وجو باید بین دو تا ۱۲۰ نویسه باشد.' : 'ارتباط با جست‌وجوی فضای آموزشی برقرار نشد.', { tone: denied ? 'warning' : 'danger', actionLabel: denied ? null : 'تلاش دوباره', onAction: denied ? null : () => controller.render(ROUTES.search) }));
+    return;
+  }
+  const rows = rowsOf(result);
+  if (!rows.length) {
+    root.replaceChildren(heading, form, stateBlock('نتیجه‌ای پیدا نشد', 'عبارت دیگری را امتحان کنید؛ نتیجه‌ای خارج از دسترسی حساب شما نمایش داده نمی‌شود.'));
+    return;
+  }
+  const list = element('section', { className: 'f3-ops-search-results', attrs: { 'aria-label': 'نتایج جست‌وجو' } });
+  rows.forEach((row) => {
+    const target = safeInternalLink(row.route || row.safe_url);
+    const open = target ? button('باز کردن', { variant: 'quiet', iconName: 'arrow', onClick: () => window.location.assign(target.href) }) : null;
+    list.append(element('article', { className: 'f3-ops-search-result' },
+      element('div', { className: 'f3-ops-search-result__body' },
+        element('span', { className: 'f3-ops-eyebrow', text: text(row.source_label, 'محتوا') }),
+        element('h2', { className: 'f3-ops-list-row__title', text: text(row.title, 'نتیجهٔ جست‌وجو') }),
+        metaRow([{ icon: 'clock', value: formatDate(ctx, row.updated_at, true) }]),
+      ),
+      open ? element('div', { className: 'f3-ops-list-row__action' }, open) : null,
+    ));
+  });
+  root.replaceChildren(heading, form, list);
+}
+
 async function renderRoute(ctx, requestedRoute, controller) {
   controller.abort();
   controller.abortController = new AbortController();
@@ -1295,7 +1429,11 @@ async function renderRoute(ctx, requestedRoute, controller) {
     return;
   }
   if (route === ROUTES.notifications) {
-    renderNotifications(ctx, controller);
+    await renderNotifications(ctx, controller);
+    return;
+  }
+  if (route === ROUTES.search) {
+    await renderSearch(ctx, controller);
     return;
   }
   if (route === ROUTES.announcements) {
@@ -1323,9 +1461,9 @@ async function renderRoute(ctx, requestedRoute, controller) {
   }
 }
 
-function navigate(ctx, route, controller) {
+function navigate(ctx, route, query = {}, controller) {
   if (typeof ctx?.navigate === 'function') {
-    ctx.navigate(route);
+    ctx.navigate(route, query);
     return;
   }
   controller.render(route);
@@ -1342,8 +1480,8 @@ function createController(ctx) {
     abort() {
       if (this.abortController) this.abortController.abort();
     },
-    navigate(route) {
-      navigate(ctx, route, this);
+    navigate(route, query = {}) {
+      navigate(ctx, route, query, this);
     },
     render(route) {
       return renderRoute(ctx, route, this);
@@ -1393,10 +1531,11 @@ export const operationsCapabilityMap = Object.freeze({
 
 export const moduleDefinition = Object.freeze({
   id: 'operations',
-  routes: [ROUTES.announcements, ROUTES.notifications, ROUTES.forms, ROUTES.orders, ROUTES.management],
+  routes: [ROUTES.announcements, ROUTES.notifications, ROUTES.search, ROUTES.forms, ROUTES.orders, ROUTES.management],
   navItems: [
     { id: ROUTES.announcements, label: 'اطلاعیه‌ها', group: 'more', icon: 'announcement' },
     { id: ROUTES.notifications, label: 'اعلان‌ها', group: 'more', icon: 'bell' },
+    { id: ROUTES.search, label: 'جست‌وجو', group: 'more', icon: 'search' },
     { id: ROUTES.forms, label: 'فرم‌ها', group: 'more', icon: 'form' },
     { id: ROUTES.orders, label: 'خرید و دسترسی', group: 'more', icon: 'wallet' },
     { id: ROUTES.management, label: 'مدیریت', group: 'conditional', icon: 'manage', conditional: true },

@@ -130,6 +130,24 @@ final class ApiKernel
         if ($request->method === 'GET' && $suffix === '/announcements') {
             return ['status' => 200, 'data' => $this->platform->announcements($session->userId, $workspaceId, $request->query['course_id'] ?? null)];
         }
+        if ($request->method === 'GET' && $suffix === '/notifications') {
+            return ['status' => 200, 'data' => $this->platform->notifications(
+                $session->userId,
+                $workspaceId,
+                (int) ($request->query['limit'] ?? 20),
+                isset($request->query['cursor']) ? (string) $request->query['cursor'] : null,
+            )];
+        }
+        if ($request->method === 'GET' && $suffix === '/notification-preferences') {
+            return ['status' => 200, 'data' => $this->platform->notificationPreferences($session->userId, $workspaceId)];
+        }
+        if ($request->method === 'PATCH' && $suffix === '/notification-preferences') {
+            return ['status' => 200, 'data' => $this->platform->updateNotificationPreferences(
+                $session->userId,
+                $workspaceId,
+                $request->body,
+            )];
+        }
         if ($request->method === 'POST' && $suffix === '/announcements') {
             return ['status' => 201, 'data' => ['id' => $this->platform->publishAnnouncement(
                 $session->userId, $workspaceId,
@@ -139,6 +157,10 @@ final class ApiKernel
         }
         if ($request->method === 'POST' && preg_match('#^/announcements/([0-9a-f-]+)/read$#', $suffix, $match)) {
             $this->platform->markAnnouncementRead($session->userId, $workspaceId, $match[1]);
+            return ['status' => 200, 'data' => ['read' => true]];
+        }
+        if ($request->method === 'POST' && preg_match('#^/notifications/([0-9a-f-]+)/read$#', $suffix, $match)) {
+            $this->platform->markNotificationRead($session->userId, $workspaceId, $match[1]);
             return ['status' => 200, 'data' => ['read' => true]];
         }
         if ($request->method === 'GET' && $suffix === '/forms') {

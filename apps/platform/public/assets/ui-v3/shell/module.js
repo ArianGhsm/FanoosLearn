@@ -17,7 +17,7 @@ import {
 } from './ui.js';
 
 const PRIMARY_IDS = Object.freeze(['home', 'courses', 'schedule', 'resources', 'assessments', 'grades', 'announcements']);
-const SECONDARY_IDS = Object.freeze(['forms', 'orders']);
+const SECONDARY_IDS = Object.freeze(['search', 'forms', 'orders']);
 const MOBILE_IDS = Object.freeze(['home', 'courses', 'schedule', 'resources']);
 
 const SHELL_ROUTES = Object.freeze([
