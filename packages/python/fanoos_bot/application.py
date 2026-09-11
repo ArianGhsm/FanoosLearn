@@ -1702,6 +1702,8 @@ class BotApplication:
                     rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
                 )
             )
+        if not is_uuid(request_id):
+            return self._expired_route()
         try:
             return self._deployment_screen(
                 self.backend.deployment_status(subject, request_id)

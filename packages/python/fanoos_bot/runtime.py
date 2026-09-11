@@ -64,6 +64,11 @@ class BotRuntime:
         self.activity = activity or ActivityController(transport)
         self.delivery_receipts = DeliveryReceiptPump(platform, application.backend, state)
 
+    def _remember_processed_update(self, ctx: UpdateContext, provider_ref: str) -> None:
+        recorder = getattr(self.state, "record_processed_update", None)
+        if ctx.event_id and callable(recorder):
+            recorder(self.platform, ctx.event_id, provider_ref)
+
     def _message_result(self, ctx: UpdateContext, command: str, arg: str):
         if command.startswith("/start"):
             return self.app.start(ctx.subject, arg or None)
@@ -127,14 +132,27 @@ class BotRuntime:
     def handle_message(self, ctx: UpdateContext, text: str):
         command, *rest = (text or "").strip().split(maxsplit=1)
         arg = rest[0] if rest else ""
-        if command == "/resource" and ctx.event_id:
+        if ctx.event_id:
             prior = self.state.processed_update(self.platform, ctx.event_id)
             if prior is not None:
                 return prior
         with self.activity.operation(ctx.chat_id, private=ctx.private):
             result = self._message_result(ctx, command, arg)
-            result = self._prepare_result(ctx, result)
-        return self.deliver(ctx, result)
+            try:
+                result = self._prepare_result(ctx, result)
+            except Exception as exc:
+                self._remember_processed_update(ctx, f"failed:{type(exc).__name__}")
+                raise
+        try:
+            provider_ref = self.deliver(ctx, result)
+        except Exception as exc:
+            # Application logic has already run. Persist transport/rendering
+            # consumption so a duplicate update cannot replay a mutation.
+            self._remember_processed_update(ctx, f"failed:{type(exc).__name__}")
+            raise
+        if not result.receipt:
+            self._remember_processed_update(ctx, str(provider_ref or "sent"))
+        return provider_ref
 
     def handle_callback(self, ctx: UpdateContext, value: str):
         # ACK remains before dedupe, backend calls and all rendering work.
@@ -149,8 +167,19 @@ class BotRuntime:
                 return prior
         with self.activity.operation(ctx.chat_id, private=ctx.private):
             result = self.app.callback(ctx.subject, ctx.private, value)
-            result = self._prepare_result(ctx, result)
-        return self.deliver(ctx, result)
+            try:
+                result = self._prepare_result(ctx, result)
+            except Exception as exc:
+                self._remember_processed_update(ctx, f"failed:{type(exc).__name__}")
+                raise
+        try:
+            provider_ref = self.deliver(ctx, result)
+        except Exception as exc:
+            self._remember_processed_update(ctx, f"failed:{type(exc).__name__}")
+            raise
+        if not result.receipt:
+            self._remember_processed_update(ctx, str(provider_ref or "sent"))
+        return provider_ref
 
     def _queue_failed_receipt(self, result: ActionResult, error_code: str) -> None:
         if not result.receipt:
@@ -268,34 +297,53 @@ class NotificationPump:
         delivery = projection.get("delivery") if isinstance(projection, dict) else None
         if not delivery:
             return False
-        delivery_id = str(delivery["delivery_id"])
+        if not isinstance(delivery, dict):
+            return False
+        delivery_id = str(delivery.get("delivery_id") or "")
+        lease_token = str(delivery.get("lease_token") or "")
+        subject = str(delivery.get("subject") or "")
+        if not delivery_id or not lease_token or not subject:
+            return False
         prior = self.state.sent_delivery(delivery_id)
         idem = "notification:" + delivery_id
         if prior:
             self.backend.notification_receipt(
-                self.platform, delivery_id, delivery["lease_token"], idem,
+                self.platform, delivery_id, lease_token, idem,
                 "delivered", prior, None,
             )
             return True
 
         payload = delivery.get("payload") or {}
-        screen = notification_detail_screen(payload)
+        if not isinstance(payload, dict):
+            payload = {}
         try:
+            screen = notification_detail_screen(payload)
             ref = None
             limit = int(getattr(getattr(self.transport, "capabilities", None), "max_text_chars", 4096))
             texts = chunks(screen.text, limit)
             for text in texts:
                 part = screen if len(texts) == 1 else Screen(text)
-                sent = self.transport.send_screen(str(delivery["subject"]), part)
+                sent = self.transport.send_screen(subject, part)
                 ref = str(sent.get("message_id")) if isinstance(sent, dict) and sent.get("message_id") is not None else ref
-            self.state.remember_delivery(delivery_id, ref or "sent")
-            self.backend.notification_receipt(
-                self.platform, delivery_id, delivery["lease_token"], idem,
-                "delivered", ref, None,
-            )
         except BotApiError as exc:
             self.backend.notification_receipt(
-                self.platform, delivery_id, delivery["lease_token"], idem,
+                self.platform, delivery_id, lease_token, idem,
                 "retry" if exc.transient else "failed", None, exc.code,
             )
+        except Exception:
+            # Renderer/transport failures outside the provider error type must
+            # still close the canonical lease with a safe, non-sensitive code.
+            self.backend.notification_receipt(
+                self.platform, delivery_id, lease_token, idem,
+                "failed", None, "notification_delivery_failed",
+            )
+            return True
+        # Remember the successful provider send before acknowledging the
+        # canonical delivery. If the receipt call crashes, the next claim can
+        # acknowledge it without sending the notification again.
+        self.state.remember_delivery(delivery_id, ref or "sent")
+        self.backend.notification_receipt(
+            self.platform, delivery_id, lease_token, idem,
+            "delivered", ref, None,
+        )
         return True
