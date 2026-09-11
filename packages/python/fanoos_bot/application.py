@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 import secrets
 from dataclasses import dataclass
@@ -321,14 +322,7 @@ class BotApplication:
 
     def more(self, subject: str, private: bool):
         try:
-            _, selected, blocked = self._workspace_or_result(subject)
-            if blocked:
-                return blocked
-            rows: tuple[tuple[Button, ...], ...] = (
-                (Button("🎓 نمرات", self._cb("grades")), Button("📚 منابع", self._cb("resources"))),
-                (Button("📝 آزمون‌ها", self._cb("assess")), Button("💳 خرید و دسترسی", self._cb("payments"))),
-                (Button("🏫 فضای آموزشی", self._cb("workspaces")), Button("👤 حساب", self._cb("account"))),
-            )
+            can_manage = False
             if (
                 self.platform == "telegram"
                 and private
@@ -338,10 +332,42 @@ class BotApplication:
                     overview = self.backend.deployment_overview(
                         subject, self.config.deployment_target_key
                     )
-                    if overview.get("can_manage_deployments") is True:
-                        rows += ((Button("⚙️ مدیریت", self._cb("manage")),),)
-                except Exception:
-                    pass
+                    can_manage = overview.get("can_manage_deployments") is True
+                except Exception as exc:
+                    logging.warning(
+                        "more screen deployment_overview failed type=%s message=%s",
+                        type(exc).__name__,
+                        exc,
+                    )
+            management_row = (
+                ((Button("⚙️ مدیریت", self._cb("manage")),),) if can_manage else ()
+            )
+
+            # deployment.manage is platform-scoped and not inherited from workspace
+            # roles, so a platform-only operator correctly has no workspace — the
+            # management entry point must not depend on having one.
+            _, selected = self._selected(subject)
+            if not selected:
+                rows = (
+                    ((Button("🏫 انتخاب فضای آموزشی", self._cb("workspaces")),),)
+                    + management_row
+                    + self._nav_rows()
+                )
+                return ActionResult(
+                    warning_screen(
+                        "ابتدا یک فضای آموزشی فعال انتخاب کنید.",
+                        title="🏫 فضای آموزشی",
+                        kind="workspace_required",
+                        rows=rows,
+                    )
+                )
+
+            rows: tuple[tuple[Button, ...], ...] = (
+                (Button("🎓 نمرات", self._cb("grades")), Button("📚 منابع", self._cb("resources"))),
+                (Button("📝 آزمون‌ها", self._cb("assess")), Button("💳 خرید و دسترسی", self._cb("payments"))),
+                (Button("🏫 فضای آموزشی", self._cb("workspaces")), Button("👤 حساب", self._cb("account"))),
+            )
+            rows += management_row
             rows += self._nav_rows()
             return ActionResult(
                 semantic_screen(
