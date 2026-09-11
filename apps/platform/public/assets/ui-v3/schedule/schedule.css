@@ -15,7 +15,7 @@
   --f3-schedule-lantern: var(--f3-lantern, #d99a22);
   --f3-schedule-lantern-soft: var(--f3-lantern-soft, #fff4d9);
   color: var(--f3-schedule-text);
-  font-family: "Vazirmatn", "IRANSansX", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, Arial, sans-serif;
+  font-family: var(--f3-font-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, Arial, sans-serif);
   min-width: 0;
 }
 

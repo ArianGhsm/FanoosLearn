@@ -1,7 +1,7 @@
 .f3-progress-root {
   min-width: 0;
   color: var(--f3-text, #13201c);
-  font-family: var(--f3-font, "Vazirmatn", "IRANSansX", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, Arial, sans-serif);
+  font-family: var(--f3-font-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, Arial, sans-serif);
 }
 
 .f3-progress-root *,

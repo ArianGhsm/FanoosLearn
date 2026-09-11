@@ -19,6 +19,12 @@ const fontCss = read('apps/platform/public/assets/fonts/yekanbakh/fonts.css');
 const theme = read('apps/platform/public/assets/ui-v3/app/web-schoolhouse-r1.css');
 const mobileTheme = read('apps/platform/public/assets/ui-v3/app/web-mobile-r1.css');
 const designLock = read('docs/ui-v3/FANOOS_WEB_SCHOOLHOUSE_DESIGN_LOCK.md');
+const rebuildHandoff = read('docs/rebuild/03_WEB_DESIGN_SYSTEM.md');
+const sharedDomainStyles = [
+  read('apps/platform/public/assets/ui-v3/home/home.css'),
+  read('apps/platform/public/assets/ui-v3/schedule/schedule.css'),
+  read('apps/platform/public/assets/ui-v3/progress/progress.css'),
+].join('\n');
 
 const runtimeSource = [index, tokens, fontCss, theme, mobileTheme].join('\n');
 
@@ -28,6 +34,7 @@ assert.equal((index.match(/\/assets\/ui-v3\/app\/bootstrap\.js/g) || []).length,
 assert.equal(index.includes('/assets/ui-v2/'), false, 'V2 cannot be a primary boot dependency');
 assert.ok(index.includes('data-web-design-lock="FANOOS-WEB-UX-2026.09-SCHOOLHOUSE-R1"'));
 assert.ok(designLock.includes('FANOOS-WEB-UX-2026.09-SCHOOLHOUSE-R1'));
+assert.ok(rebuildHandoff.includes('YekanBakh Fanoos'));
 
 for (const id of ['top', 'capabilities', 'course-first', 'how-it-works', 'fanoos-auth']) {
   assert.ok(index.includes(`id="${id}"`), `public Home missing ${id}`);
@@ -57,6 +64,8 @@ assert.ok(tokens.includes('--f3-bg: #F7F4EC'));
 assert.ok(tokens.includes('--f3-primary: #4954D6'));
 assert.ok(tokens.includes('--f3-lantern: #F0B43C'));
 assert.ok(tokens.includes('--f3-control-min: 44px'));
+assert.ok(sharedDomainStyles.includes('var(--f3-font-sans'));
+assert.equal(/Vazirmatn|IRANSansX/.test(sharedDomainStyles), false, 'V3 domain surfaces must use the supplied local Website font token');
 assert.ok(theme.includes('.f3-public-lantern'));
 assert.ok(theme.includes('body:has(.f3-shell[data-f3-shell-root])'));
 assert.ok(theme.includes('.f3-home-hero'));
