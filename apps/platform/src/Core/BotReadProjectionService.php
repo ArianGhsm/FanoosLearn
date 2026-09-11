@@ -154,12 +154,16 @@ SQL);
     }
 
     /** @return array<string,mixed> */
-    public function announcements(string $userId, string $workspaceId, int $limit = 20, ?string $cursor = null): array
+    public function announcements(string $userId, string $workspaceId, int $limit = 20, ?string $cursor = null, ?string $courseId = null): array
     {
         $this->access->requireWorkspace($userId, $workspaceId, 'notification.receive');
         $offset = $this->decodeCursor($cursor);
         $limit = max(1, min(100, $limit));
-        $query = $this->database->prepare(<<<'SQL'
+        $courseFilter = '';
+        if ($courseId !== null && trim($courseId) !== '') {
+            $courseFilter = ' AND scope_course.id = :course';
+        }
+        $sql = <<<'SQL'
 SELECT message.id, message.title, message.body, message.published_at,
        scope_course.course_code AS scope_course_code,
        scope_course.title AS scope_course_title,
@@ -171,11 +175,14 @@ LEFT JOIN academic_courses scope_course ON scope_course.id = JSON_UNQUOTE(JSON_E
  AND scope_course.workspace_id = message.workspace_id AND scope_course.status = 'active' AND scope_course.archived_at IS NULL
 WHERE recipient.workspace_id = :workspace AND recipient.user_id = :user
   AND recipient.channel = 'web' AND message.status = 'published' AND message.archived_at IS NULL
-ORDER BY message.published_at DESC, message.id DESC
-LIMIT :limit OFFSET :offset
-SQL);
+SQL;
+        $sql .= $courseFilter . "\nORDER BY message.published_at DESC, message.id DESC\nLIMIT :limit OFFSET :offset";
+        $query = $this->database->prepare($sql);
         $query->bindValue(':workspace', $workspaceId);
         $query->bindValue(':user', $userId);
+        if ($courseFilter !== '') {
+            $query->bindValue(':course', trim($courseId));
+        }
         $query->bindValue(':limit', $limit + 1, PDO::PARAM_INT);
         $query->bindValue(':offset', $offset, PDO::PARAM_INT);
         $query->execute();

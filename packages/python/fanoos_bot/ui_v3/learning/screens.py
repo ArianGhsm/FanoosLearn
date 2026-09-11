@@ -29,6 +29,7 @@ from ..core import (
     Section,
     Severity,
 )
+from ...formatting import format_datetime
 from .intents import LearningIntent
 
 
@@ -89,6 +90,15 @@ _ASSESSMENT_STATES = {
     "practice": "تمرینی",
     "past_exam": "آزمون گذشته",
 }
+_FORM_STATES = {
+    "open": "باز",
+    "active": "باز",
+    "closed": "بسته‌شده",
+    "archived": "بایگانی‌شده",
+    "draft": "پیش‌نویس",
+    "submitted": "پاسخ ثبت‌شده",
+    "pending": "در انتظار بررسی",
+}
 
 
 class ProtectedDeliveryState(str, Enum):
@@ -113,6 +123,20 @@ def _clean(value: Any, limit: int = 120) -> str:
 
 def _digits(value: Any) -> str:
     return str(value).translate(_PERSIAN_DIGITS)
+
+
+def _form_status_label(value: Any, *, submitted: Any = None) -> str:
+    submitted_raw = str(submitted or "").strip().lower()
+    if submitted in {True, 1, "1"} or submitted_raw in {"true", "submitted", "completed", "complete"}:
+        return "پاسخ ثبت‌شده"
+    raw = str(value or "").strip().lower()
+    return _FORM_STATES.get(raw, "وضعیت مشخص نشده") if raw else "باز"
+
+
+def _form_bool(value: Any) -> bool:
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "on"}
+    return bool(value)
 
 
 def _https(url: Any) -> str | None:
@@ -801,11 +825,15 @@ def forms_hub_screen(
         for form in forms[:8]:
             form_id = str(form.get("form_id") or form.get("id") or "")
             title = _clean(form.get("title") or "فرم", 100)
+            status_label = _form_status_label(
+                form.get("state") or form.get("status") or "open",
+                submitted=form.get("submission_status") or form.get("submitted_at"),
+            )
             items.append(
                 _item(
                     title,
                     description=_clean(form.get("description"), 90),
-                    marker=_clean(form.get("state") or form.get("status"), 40),
+                    marker=status_label,
                 )
             )
             if form_id and len(form_actions) < 6:
@@ -830,15 +858,28 @@ def form_detail_screen(
     form: Mapping[str, Any],
     *,
     web_url: str | None = None,
+    timezone_name: str | None = None,
 ) -> Screen:
     safe_web = _https(web_url)
     facts = []
-    status = _clean(form.get("state") or form.get("status"), 50)
-    if status:
-        facts.append(_fact("وضعیت", status))
-    deadline = _clean(form.get("deadline") or form.get("closes_at"), 80)
+    status = _form_status_label(
+        form.get("state") or form.get("status") or "open",
+        submitted=form.get("submission_status") or form.get("submitted_at"),
+    )
+    facts.append(_fact("وضعیت", status))
+    deadline_value = form.get("deadline") or form.get("closes_at")
+    deadline = format_datetime(deadline_value, timezone_name) if deadline_value else ""
     if deadline:
         facts.append(_fact("مهلت", deadline))
+    if form.get("allow_multiple") is not None:
+        facts.append(
+            _fact(
+                "ارسال پاسخ",
+                "امکان ارسال چند پاسخ وجود دارد."
+                if _form_bool(form.get("allow_multiple"))
+                else "هر عضو یک پاسخ می‌تواند ثبت کند.",
+            )
+        )
     rows: list[ActionRow] = []
     if safe_web:
         rows.append(_row(_action("🌐 تکمیل در فانوس", LearningIntent.FORM_OPEN_WEB, url=safe_web)))
@@ -850,7 +891,7 @@ def form_detail_screen(
         intro=_clean(form.get("description"), 450),
         sections=(_section("جزئیات", facts=facts) if facts else _section("جزئیات", body="اطلاعات تکمیلی ثبت نشده است."),),
         rows=rows,
-        footer="ارسال داخل ربات فقط پس از قرارداد bot-safe صریح فعال می‌شود.",
+        footer="برای تکمیل پاسخ، از مسیر امن فانوس استفاده کنید؛ وضعیت ثبت‌شده از backend خوانده می‌شود.",
     )
 
 

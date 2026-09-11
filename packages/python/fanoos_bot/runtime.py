@@ -71,10 +71,13 @@ class BotRuntime:
         if command == "/unlink": return self.app.unlink(ctx.subject)
         if command in {"/menu", "/home"}: return self.app.home(ctx.subject)
         if command in {"/workspace", "/workspaces"}: return self.app.workspaces(ctx.subject)
+        if command == "/courses": return self.app.courses(ctx.subject)
+        if command == "/schedule": return self.app.schedule_menu(ctx.subject)
         if command == "/today": return self.app.day_schedule(ctx.subject, 0)
         if command == "/tomorrow": return self.app.day_schedule(ctx.subject, 1)
         if command == "/grades": return self.app.grades(ctx.subject)
         if command == "/announcements": return self.app.announcements(ctx.subject)
+        if command == "/forms": return self.app.forms(ctx.subject)
         if command == "/resources": return self.app.resources(ctx.subject)
         if command == "/buy":
             return self.app.create_order(

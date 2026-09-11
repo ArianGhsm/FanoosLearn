@@ -32,7 +32,7 @@ Frozen endpoints:
 
 All require signed adapter identity plus linked `platform + subject`, explicit workspace, active canonical membership and the relevant existing RBAC/entitlement check.
 
-Schedule uses canonical `tenant_workspaces.timezone_name`, local `YYYY-MM-DD` boundaries, bounded range/pagination and ISO-8601 localized timestamps. Grades are only the linked canonical user's published results. Announcements and resource catalog use stable IDs and bounded pagination. Resource catalog reuses `ProtectedResourceAuthorizer`; it does not return object/storage paths or keys.
+Schedule uses canonical `tenant_workspaces.timezone_name`, local `YYYY-MM-DD` boundaries, bounded range/pagination and ISO-8601 localized timestamps. Grades are only the linked canonical user's published results. Announcements and resource catalog use stable IDs and bounded pagination. The announcements read accepts an optional `course_id` filter; the platform validates the active course relation within the selected workspace before returning rows. Resource catalog reuses `ProtectedResourceAuthorizer`; it does not return object/storage paths or keys.
 
 ## 3. Protected-media source capability redemption — RESOLVED
 

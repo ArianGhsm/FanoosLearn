@@ -114,10 +114,14 @@ final class InternalApiKernel
             return $this->reads->grades($context['user_id'], $context['workspace_id'], (int) ($request->body['limit'] ?? 50), $this->nullableString($request->body['cursor'] ?? null));
         }
         if ($path === '/api/internal/v1/announcements/list') {
-            $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id', 'limit', 'cursor']);
+            $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id', 'limit', 'cursor', 'course_id']);
             $principal = $this->serviceAuth->authenticate($request, 'announcement.read');
             $context = $this->linkedWorkspace($principal, $request->body);
-            return $this->reads->announcements($context['user_id'], $context['workspace_id'], (int) ($request->body['limit'] ?? 20), $this->nullableString($request->body['cursor'] ?? null));
+            return $this->reads->announcements(
+                $context['user_id'], $context['workspace_id'],
+                (int) ($request->body['limit'] ?? 20), $this->nullableString($request->body['cursor'] ?? null),
+                $this->nullableString($request->body['course_id'] ?? null),
+            );
         }
         if ($path === '/api/internal/v1/content/resources/list') {
             $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id', 'limit', 'cursor']);

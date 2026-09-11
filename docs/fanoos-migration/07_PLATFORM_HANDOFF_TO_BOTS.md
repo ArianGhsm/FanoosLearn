@@ -76,6 +76,7 @@ Only published grade results belonging to the linked canonical user's active enr
 - action: `announcement.read`
 
 Returns the linked user's canonical workspace announcement inbox with stable IDs and bounded pagination.
+An optional canonical `course_id` may scope the read to an active course in the same workspace; the platform rechecks that relation and never trusts the bot as an authorization source.
 
 ### Accessible resources/content
 
