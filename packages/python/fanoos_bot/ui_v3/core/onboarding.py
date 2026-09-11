@@ -4,6 +4,7 @@ from .actions import (
     account_action,
     help_action,
     home_action,
+    more_action,
     website_action,
     workspace_action,
     workspace_select_action,
@@ -37,8 +38,13 @@ def unlinked_account_screen(website_url: str) -> Screen:
     )
 
 
-def linked_no_workspace_screen(website_url: str) -> Screen:
-    """Critical zero-workspace state: complete product shell with no fake create action."""
+def linked_no_workspace_screen(website_url: str, *, show_more: bool = False) -> Screen:
+    """Critical zero-workspace state: complete product shell with no fake create action.
+
+    `show_more` is purely a presentation switch: the caller decides, from backend
+    authority, whether this viewer may reach the management entry point via
+    more(). This function has no permission logic of its own.
+    """
 
     return Screen(
         identifier="onboarding.linked_no_workspace",
@@ -54,7 +60,10 @@ def linked_no_workspace_screen(website_url: str) -> Screen:
         action_rows=(
             ActionRow((workspace_action(),)),
             ActionRow((account_action(), help_action())),
-        ) + _website_row(website_url) + (ActionRow((home_action(),)),),
+        )
+        + ((ActionRow((more_action(),)),) if show_more else ())
+        + _website_row(website_url)
+        + (ActionRow((home_action(),)),),
     )
 
 
