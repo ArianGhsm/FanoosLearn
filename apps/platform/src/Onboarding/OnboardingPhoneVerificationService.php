@@ -81,7 +81,7 @@ INSERT INTO onboarding_phone_challenges (
 ) VALUES (
     :id, :platform, :subject_digest, :phone_digest, :phone_ciphertext, :token_digest, :code_digest,
     0, :max_attempts, :send_count, FROM_UNIXTIME(:window_start), FROM_UNIXTIME(:cooldown_until),
-    FROM_UNIXTIME(:token_expires), FROM_UNIXTIME(:code_expires), NULL, FROM_UNIXTIME(:now), FROM_UNIXTIME(:now)
+    FROM_UNIXTIME(:token_expires), FROM_UNIXTIME(:code_expires), NULL, FROM_UNIXTIME(:created_at), FROM_UNIXTIME(:updated_at)
 )
 SQL);
             $insert->bindValue(':id', $id);
@@ -97,7 +97,8 @@ SQL);
             $insert->bindValue(':cooldown_until', $now + self::COOLDOWN_SECONDS, PDO::PARAM_INT);
             $insert->bindValue(':token_expires', $now + self::TOKEN_TTL_SECONDS, PDO::PARAM_INT);
             $insert->bindValue(':code_expires', $now + self::CODE_TTL_SECONDS, PDO::PARAM_INT);
-            $insert->bindValue(':now', $now, PDO::PARAM_INT);
+            $insert->bindValue(':created_at', $now, PDO::PARAM_INT);
+            $insert->bindValue(':updated_at', $now, PDO::PARAM_INT);
             $insert->execute();
 
             return ['id' => $id, 'token' => $token];
@@ -340,8 +341,10 @@ SQL);
 
     private function invalidateAfterSendFailure(string $id, int $now): void
     {
-        $statement = $this->database->prepare('UPDATE onboarding_phone_challenges SET token_expires_at = FROM_UNIXTIME(:now), code_expires_at = FROM_UNIXTIME(:now), updated_at = FROM_UNIXTIME(:now) WHERE id = :id');
-        $statement->bindValue(':now', $now, PDO::PARAM_INT);
+        $statement = $this->database->prepare('UPDATE onboarding_phone_challenges SET token_expires_at = FROM_UNIXTIME(:expires_a), code_expires_at = FROM_UNIXTIME(:expires_b), updated_at = FROM_UNIXTIME(:expires_c) WHERE id = :id');
+        $statement->bindValue(':expires_a', $now, PDO::PARAM_INT);
+        $statement->bindValue(':expires_b', $now, PDO::PARAM_INT);
+        $statement->bindValue(':expires_c', $now, PDO::PARAM_INT);
         $statement->bindValue(':id', $id);
         $statement->execute();
     }
