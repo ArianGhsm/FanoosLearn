@@ -50,26 +50,9 @@ jobs:
         shell: bash
         run: |
           php -l apps/platform/public/index.php
-          node --check apps/platform/public/assets/app.js
-          node --check apps/platform/public/assets/domain-ux.js
           while IFS= read -r -d '' file; do node --input-type=module --check < "$file"; done < <(find apps/platform/public/assets/ui-v3 -name '*.js' -print0)
-          python3 tests/ux/worker01_static_quality.py
-          node tests/ux/worker02_domain_ux_test.js
-          node tests/ux/integration_web_ux_test.js
-          node tests/ux/domain_fuzz_test.js
           node tests/ux-v3/web_integration_contract_test.js
           node tests/ux-v3/web_schoolhouse_redesign_contract_test.js
-      - name: Web UI V2 product contracts
-        run: |
-          node --check apps/platform/public/assets/ui-v2/product-core.js
-          node --check apps/platform/public/assets/ui-v2/product-learning.js
-          node --check apps/platform/public/assets/ui-v2/product-academic.js
-          node --check apps/platform/public/assets/ui-v2/product-communication.js
-          node --check apps/platform/public/assets/ui-v2/product-account.js
-          node --check apps/platform/public/assets/ui-v2/product-ui.js
-          python3 tests/ux-v2/web/static_contract_test.py
-          node tests/ux-v2/web/product_ui_test.js
-          node tests/ux-v2/web/product_dom_safety_test.js
 
   python-bot-worker:
     runs-on: ubuntu-latest

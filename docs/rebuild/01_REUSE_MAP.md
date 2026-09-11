@@ -7,7 +7,7 @@ This map records behavior-level reuse decisions for the product reset. It does n
 | Area/evidence | Decision | Why / next boundary |
 | --- | --- | --- |
 | `apps/platform` module ownership, API boundary and PHP runtime | KEEP | It is the canonical backend direction. Continue enforcing owner-module writes, explicit workspace context and contract tests. |
-| `apps/platform/public/assets/ui-v2` and `ui-v3` web shell, learning, courses, progress and operations modules | KEEP as implementation baseline; ADAPT as product evolves | Preserve current feature behavior and Schoolhouse-inspired visual work. Generalize data/configuration; no Dentistry labels or tenant assumptions. This stage makes no UI redesign. |
+| `apps/platform/public/assets/ui-v3` web shell, learning, courses, progress and operations modules | KEEP as implementation baseline; ADAPT as product evolves | Preserve current feature behavior and Schoolhouse-inspired visual work. Generalize data/configuration; no Dentistry labels or tenant assumptions. This stage makes no UI redesign. |
 | `apps/telegram-bot` and `apps/bale-bot` transport/retry/idempotency seams | KEEP/ADAPT | Keep them as channel clients. Move every durable domain decision to the shared platform API. |
 | `apps/workers` job/capability boundary | KEEP/ADAPT | Keep least-privilege jobs and checksumed results; workers must not write canonical tables directly. |
 | `contracts/`, database migrations, ownership docs and existing deterministic checks | KEEP | They are the release/compatibility guardrails. Contract changes remain explicit and versioned. |
