@@ -11,6 +11,12 @@ if (!is_string($output)) {
 }
 $violations = [];
 foreach (array_filter(explode("\0", $output)) as $relative) {
+    // legacy/ is imported Dentistry1402TUMS source kept only to migrate from. It is
+    // outside the execution path, and its historical encoding is not FANOOS's to fix;
+    // files graduate into this guard when they are moved into FANOOS proper.
+    if (str_starts_with($relative, 'legacy/')) {
+        continue;
+    }
     $extension = strtolower(pathinfo($relative, PATHINFO_EXTENSION));
     if (!in_array($extension, $extensions, true) && !str_starts_with(basename($relative), '.env')) {
         continue;
