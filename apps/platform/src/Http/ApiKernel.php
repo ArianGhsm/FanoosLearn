@@ -180,6 +180,9 @@ final class ApiKernel
                 (string) ($request->body['idempotency_key'] ?? ''),
             )];
         }
+        if ($request->method === 'GET' && $suffix === '/catalog') {
+            return ['status' => 200, 'data' => $this->commerce->catalog($session->userId, $workspaceId)];
+        }
         if ($request->method === 'GET' && $suffix === '/orders') {
             return ['status' => 200, 'data' => $this->commerce->history($session->userId, $workspaceId)];
         }
@@ -201,6 +204,9 @@ final class ApiKernel
         }
         if ($request->method === 'GET' && $suffix === '/entitlements/check') {
             return ['status' => 200, 'data' => ['allowed' => $this->entitlements->has($session->userId, $workspaceId, $request->query['scope_id'] ?? '')]];
+        }
+        if ($request->method === 'GET' && $suffix === '/entitlements') {
+            return ['status' => 200, 'data' => $this->entitlements->library($session->userId, $workspaceId)];
         }
         if ($request->method === 'GET' && preg_match('#^/resources/([0-9a-f-]+)/authorize$#', $suffix, $match)) {
             return ['status' => 200, 'data' => $this->resources->decide($session->userId, $workspaceId, $match[1])];

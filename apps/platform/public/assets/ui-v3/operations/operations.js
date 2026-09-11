@@ -19,6 +19,7 @@ const STATUS_LABELS = Object.freeze({
   redirected: 'در انتظار تکمیل پرداخت',
   verifying: 'در حال بررسی پرداخت',
   refunded: 'بازپرداخت‌شده',
+  not_started: 'شروع نشده',
   active: 'دسترسی فعال',
   expired: 'منقضی‌شده',
   revoked: 'دسترسی لغوشده',
@@ -367,7 +368,7 @@ function orderPaymentState(row) {
 
 function explicitAccessState(row) {
   const raw = text(row?.entitlement_status || row?.access_status || row?.entitlement?.status).toLowerCase();
-  if (['active', 'expired', 'revoked'].includes(raw)) return raw;
+  if (['active', 'expired', 'revoked', 'pending'].includes(raw)) return raw;
   if (row?.entitlement?.granted === true) return 'active';
   return 'unknown';
 }
@@ -376,7 +377,13 @@ function accessLabel(value) {
   if (value === 'active') return 'دسترسی فعال';
   if (value === 'expired') return 'دسترسی منقضی‌شده';
   if (value === 'revoked') return 'دسترسی لغوشده';
+  if (value === 'pending') return 'دسترسی هنوز فعال نشده است';
   return 'وضعیت دسترسی ارائه نشده است';
+}
+
+function orderState(row) {
+  const raw = text(row?.order_status || row?.status).toLowerCase();
+  return raw || 'unknown';
 }
 
 function routeName(ctx, requested) {
@@ -724,40 +731,121 @@ function renderFormDetail(ctx, row, controller) {
   root.append(form);
 }
 
-function renderOrders(ctx, result, controller) {
+function renderCatalog(ctx, result, controller) {
+  const section = element('section', { className: 'f3-ops-commerce-section', attrs: { 'aria-labelledby': 'f3-ops-catalog-title' } });
+  section.append(element('div', { className: 'f3-ops-commerce-section__header' },
+    element('div', {}, element('h2', { attrs: { id: 'f3-ops-catalog-title' }, text: 'محصولات قابل خرید' }), element('p', { text: 'قیمت و واحد پول فقط از برآورد نهایی سرور خوانده می‌شود.' })),
+  ));
+  if (!result?.ok) {
+    const denied = result?.error?.status === 403;
+    section.append(stateBlock(denied ? 'خرید برای این عضویت فعال نیست' : 'کاتالوگ دریافت نشد', denied ? 'برای مشاهدهٔ محصولات، دسترسی خرید فضای آموزشی لازم است.' : 'فهرست محصولات فعلاً در دسترس نیست.', { tone: denied ? 'warning' : 'danger', actionLabel: denied ? null : 'تلاش دوباره', onAction: denied ? null : () => controller.render(ROUTES.orders) }));
+    return section;
+  }
+  const products = rowsOf(result);
+  if (!products.length) {
+    section.append(stateBlock('محصول قابل خریدی نیست', 'هنوز محصول فعالی برای این فضای آموزشی منتشر نشده است.'));
+    return section;
+  }
+  const grid = element('div', { className: 'f3-ops-commerce-grid' });
+  products.forEach((product) => {
+    const access = explicitAccessState(product);
+    const feedback = element('p', { className: 'f3-ops-commerce-feedback', attrs: { role: 'status', 'aria-live': 'polite' } });
+    const action = access === 'active'
+      ? statusChip('active', 'دسترسی فعال')
+      : button('ادامهٔ خرید', { variant: 'primary', onClick: async () => {
+        action.disabled = true;
+        feedback.textContent = 'در حال ایجاد سفارش امن…';
+        try {
+          const order = await beginPurchase(ctx, product, { signal: controller.signal });
+          feedback.textContent = order?.redirect_url ? 'به درگاه پرداخت منتقل می‌شوید…' : 'سفارش ایجاد شد؛ وضعیت پرداخت از سرور پیگیری می‌شود.';
+        } catch (error) {
+          const safe = safeError(error);
+          feedback.textContent = safe.code === 'payment_provider_not_configured'
+            ? 'درگاه پرداخت هنوز برای این محیط فعال نشده است.'
+            : 'شروع خرید انجام نشد. وضعیت سفارش‌ها را دوباره بررسی کنید.';
+          action.disabled = false;
+        }
+      } });
+    grid.append(element('article', { className: 'f3-ops-product-card' },
+      element('div', { className: 'f3-ops-product-card__top' },
+        element('div', { className: 'f3-ops-feature-icon f3-ops-feature-icon--small' }, icon('wallet')),
+        element('span', { className: 'f3-ops-product-card__scope', text: text(product.scope_label, 'دسترسی آموزشی') }),
+      ),
+      element('h3', { text: text(product.name, 'محصول آموزشی') }),
+      product.resource_title ? element('p', { className: 'f3-ops-product-card__resource', text: bounded(product.resource_title) }) : null,
+      element('strong', { className: 'f3-ops-product-card__price', text: formatMoney(ctx, product.amount_minor, product.currency) }),
+      element('div', { className: 'f3-ops-product-card__action' }, action),
+      feedback,
+    ));
+  });
+  section.append(grid);
+  return section;
+}
+
+function renderAccessLibrary(ctx, result) {
+  const section = element('section', { className: 'f3-ops-commerce-section', attrs: { 'aria-labelledby': 'f3-ops-library-title' } });
+  section.append(element('div', { className: 'f3-ops-commerce-section__header' },
+    element('div', {}, element('h2', { attrs: { id: 'f3-ops-library-title' }, text: 'کتابخانهٔ دسترسی' }), element('p', { text: 'این فهرست وضعیت مجوز دسترسی را جدا از نتیجهٔ پرداخت نشان می‌دهد.' })),
+  ));
+  if (!result?.ok) {
+    section.append(stateBlock('کتابخانهٔ دسترسی دریافت نشد', 'وضعیت مجوزها فعلاً قابل دریافت نیست.', { tone: result?.error?.status === 403 ? 'warning' : 'danger' }));
+    return section;
+  }
+  const rows = rowsOf(result);
+  if (!rows.length) {
+    section.append(stateBlock('هنوز دسترسی‌ای ثبت نشده است', 'پس از تأیید خرید یا اعطای دسترسی، محتوای شما اینجا دیده می‌شود.'));
+    return section;
+  }
+  const list = element('div', { className: 'f3-ops-access-list' });
+  rows.forEach((row) => list.append(element('article', { className: 'f3-ops-access-row' },
+    element('div', { className: 'f3-ops-access-row__copy' },
+      element('h3', { text: text(row.resource_title || row.course_title || row.scope_label, 'دسترسی آموزشی') }),
+      metaRow([{ value: text(row.resource_type_label || row.scope_label) }, { value: text(row.source_label, 'منبع دسترسی') }, { value: row.valid_until ? `تا ${formatDate(ctx, row.valid_until, true)}` : 'بدون تاریخ پایان' }]),
+    ),
+    statusChip(row.status, accessLabel(row.status)),
+  )));
+  section.append(list);
+  return section;
+}
+
+function renderOrders(ctx, result, controller, catalogResult, accessResult) {
   const root = controller.root;
   root.replaceChildren(pageHeader('خرید و دسترسی', 'خرید و دسترسی', 'سفارش، پرداخت و دسترسی سه وضعیت جداگانه‌اند.'));
   root.append(element('section', { className: 'f3-ops-callout' },
     element('div', { className: 'f3-ops-feature-icon' }, icon('wallet')),
     element('div', {},
-      element('strong', { text: 'فهرست محصولات قابل خرید هنوز از سمت سرور ارائه نشده است' }),
-      element('p', { text: 'به همین دلیل این صفحه از شما شناسهٔ فنی محصول نمی‌خواهد. در حال حاضر فقط سفارش‌های موجود نمایش داده می‌شوند.' }),
+      element('strong', { text: 'پرداخت امن و دسترسی قابل‌پیگیری' }),
+      element('p', { text: 'مبلغ، تأیید پرداخت و مجوز دسترسی در سمت سرور مستقل نگه داشته می‌شوند؛ پرداخت موفق به‌تنهایی مجوز محتوا نیست.' }),
     ),
   ));
-  if (!result.ok) {
-    const denied = result.error?.status === 403;
-    root.append(stateBlock(
-      denied ? 'دسترسی به سفارش‌ها ندارید' : 'سفارش‌ها دریافت نشدند',
-      denied ? 'خرید و دسترسی برای عضویت فعلی شما فعال نیست.' : 'وضعیت سفارش‌ها فعلاً قابل دریافت نیست.',
-      denied ? { tone: 'warning' } : { tone: 'danger', actionLabel: 'تلاش دوباره', onAction: () => controller.render(ROUTES.orders) },
-    ));
+  root.append(renderCatalog(ctx, catalogResult || { ok: false, error: { status: 0 } }, controller));
+  root.append(renderAccessLibrary(ctx, accessResult || { ok: false, error: { status: 0 } }));
+  const history = element('section', { className: 'f3-ops-commerce-section', attrs: { 'aria-labelledby': 'f3-ops-orders-title' } });
+  history.append(element('div', { className: 'f3-ops-commerce-section__header' }, element('div', {}, element('h2', { attrs: { id: 'f3-ops-orders-title' }, text: 'سابقهٔ سفارش‌ها' }), element('p', { text: 'وضعیت سفارش، پرداخت و دسترسی هرکدام جداگانه نمایش داده می‌شود.' }))));
+  if (!result?.ok) {
+    const denied = result?.error?.status === 403;
+    history.append(stateBlock(denied ? 'دسترسی به سفارش‌ها ندارید' : 'سفارش‌ها دریافت نشدند', denied ? 'خرید و دسترسی برای عضویت فعلی شما فعال نیست.' : 'وضعیت سفارش‌ها فعلاً قابل دریافت نیست.', { tone: denied ? 'warning' : 'danger', actionLabel: denied ? null : 'تلاش دوباره', onAction: denied ? null : () => controller.render(ROUTES.orders) }));
+    root.append(history);
     return;
   }
   const rows = dedupeOrders(rowsOf(result));
   if (!rows.length) {
-    root.append(stateBlock('هنوز سفارشی ثبت نشده است', 'پس از فراهم‌شدن فهرست خرید و ثبت سفارش معتبر، سابقهٔ سفارش‌ها اینجا نمایش داده می‌شود.'));
+    history.append(stateBlock('هنوز سفارشی ثبت نشده است', 'پس از ثبت سفارش معتبر، سابقهٔ خرید اینجا نمایش داده می‌شود.'));
+    root.append(history);
     return;
   }
   const list = element('section', { className: 'f3-ops-order-list', attrs: { 'aria-label': 'سفارش‌های من' } });
   rows.forEach((row) => {
     const payment = orderPaymentState(row);
     const access = explicitAccessState(row);
+    const order = orderState(row);
     list.append(element('article', { className: 'f3-ops-order-row' },
       element('div', { className: 'f3-ops-order-row__main' },
         element('h2', { text: text(row.product_name_snapshot || row.title, 'سفارش') }),
         metaRow([{ value: formatDate(ctx, row.created_at, true) }]),
       ),
       element('div', { className: 'f3-ops-order-row__states' },
+        element('div', {}, element('small', { text: 'وضعیت سفارش' }), statusChip(order)),
         element('div', {}, element('small', { text: 'وضعیت پرداخت' }), statusChip(payment)),
         element('div', {}, element('small', { text: 'دسترسی' }), access === 'unknown' ? statusChip('unknown', accessLabel(access)) : statusChip(access, accessLabel(access))),
       ),
@@ -767,7 +855,8 @@ function renderOrders(ctx, result, controller) {
       ),
     ));
   });
-  root.append(list);
+  history.append(list);
+  root.append(history);
 }
 
 function timelineItem(title, description, state = 'neutral') {
@@ -779,12 +868,13 @@ function timelineItem(title, description, state = 'neutral') {
 
 function renderOrderDetail(ctx, row, controller) {
   const root = controller.root;
+  const order = orderState(row);
   const payment = orderPaymentState(row);
   const access = explicitAccessState(row);
   const back = button('بازگشت به سفارش‌ها', { variant: 'quiet', onClick: () => controller.render(ROUTES.orders) });
   root.replaceChildren(pageHeader('جزئیات سفارش', text(row.product_name_snapshot || row.title, 'سفارش'), formatMoney(ctx, row.total_minor ?? row.amount_minor, row.currency), back));
   const timeline = element('ol', { className: 'f3-ops-timeline', attrs: { 'aria-label': 'روند سفارش' } });
-  timeline.append(timelineItem('سفارش ثبت شد', formatDate(ctx, row.created_at, true), 'complete'));
+  timeline.append(timelineItem('وضعیت سفارش', statusLabel(order), order === 'failed' || order === 'cancelled' ? 'danger' : 'complete'));
   if (payment === 'paid') {
     timeline.append(timelineItem('پرداخت تأیید شد', row.paid_at ? formatDate(ctx, row.paid_at, true) : 'تأیید پرداخت از سمت سرور ثبت شده است.', 'complete'));
   } else if (['failed', 'canceled', 'cancelled'].includes(payment)) {
@@ -795,10 +885,12 @@ function renderOrderDetail(ctx, row, controller) {
   if (access === 'active') timeline.append(timelineItem('دسترسی فعال است', 'وضعیت دسترسی به‌صورت مستقل تأیید شده است.', 'complete'));
   else if (access === 'expired') timeline.append(timelineItem('دسترسی منقضی شده است', 'پرداخت قبلی به‌تنهایی به معنی دسترسی فعال نیست.', 'warning'));
   else if (access === 'revoked') timeline.append(timelineItem('دسترسی لغو شده است', 'این وضعیت مستقل از نتیجهٔ پرداخت نمایش داده می‌شود.', 'danger'));
-  else timeline.append(timelineItem('وضعیت دسترسی جداگانه ارائه نشده است', 'فهرست عمومی سفارش‌ها در حال حاضر وضعیت دسترسی را برنمی‌گرداند؛ از روی پرداخت حدس زده نمی‌شود.', 'neutral'));
+  else if (access === 'pending') timeline.append(timelineItem('دسترسی هنوز فعال نشده است', 'پس از تأیید مستقل سمت سرور، وضعیت این مجوز به‌روزرسانی می‌شود.', 'current'));
+  else timeline.append(timelineItem('وضعیت دسترسی جداگانه ارائه نشده است', 'فهرست عمومی سفارش‌ها وضعیت دسترسی را برنمی‌گرداند؛ از روی پرداخت حدس زده نمی‌شود.', 'neutral'));
   root.append(element('section', { className: 'f3-ops-order-detail' },
     element('div', { className: 'f3-ops-order-summary' },
       element('div', {}, element('span', { text: 'مبلغ' }), element('strong', { text: formatMoney(ctx, row.total_minor ?? row.amount_minor, row.currency) })),
+      element('div', {}, element('span', { text: 'سفارش' }), statusChip(order)),
       element('div', {}, element('span', { text: 'پرداخت' }), statusChip(payment)),
       element('div', {}, element('span', { text: 'دسترسی' }), access === 'unknown' ? statusChip('unknown', accessLabel(access)) : statusChip(access, accessLabel(access))),
     ),
@@ -1217,8 +1309,12 @@ async function renderRoute(ctx, requestedRoute, controller) {
     return;
   }
   if (route === ROUTES.orders) {
-    const result = await safeRead(ctx, pathFor(ctx, '/orders'), controller.signal);
-    if (!controller.signal.aborted) renderOrders(ctx, result, controller);
+    const [catalogResult, ordersResult, accessResult] = await Promise.all([
+      safeRead(ctx, pathFor(ctx, '/catalog'), controller.signal),
+      safeRead(ctx, pathFor(ctx, '/orders'), controller.signal),
+      safeRead(ctx, pathFor(ctx, '/entitlements'), controller.signal),
+    ]);
+    if (!controller.signal.aborted) renderOrders(ctx, ordersResult, controller, catalogResult, accessResult);
     return;
   }
   if (route === ROUTES.management) {

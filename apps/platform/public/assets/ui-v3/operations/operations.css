@@ -880,6 +880,110 @@
   font-size: 0.86rem;
 }
 
+.f3-ops-commerce-section {
+  display: grid;
+  gap: var(--f3-space-4, 16px);
+  margin-block-end: var(--f3-space-7, 28px);
+}
+
+.f3-ops-commerce-section__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--f3-space-4, 16px);
+}
+
+.f3-ops-commerce-section__header h2 {
+  margin: 0;
+  color: var(--f3-text, #13201c);
+  font-size: 1.18rem;
+}
+
+.f3-ops-commerce-section__header p {
+  margin: 6px 0 0;
+  color: var(--f3-text-secondary, #50615b);
+  line-height: 1.75;
+}
+
+.f3-ops-commerce-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--f3-space-4, 16px);
+}
+
+.f3-ops-product-card,
+.f3-ops-access-row {
+  display: grid;
+  gap: var(--f3-space-3, 12px);
+  padding: var(--f3-space-5, 20px);
+  border: 1px solid var(--f3-border, #dfe6e2);
+  border-radius: var(--f3-radius-card, 16px);
+  background: var(--f3-surface, #fff);
+}
+
+.f3-ops-product-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--f3-space-3, 12px);
+}
+
+.f3-ops-product-card__scope {
+  color: var(--f3-text-muted, #71817b);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.f3-ops-product-card h3,
+.f3-ops-access-row h3 {
+  margin: 0;
+  color: var(--f3-text, #13201c);
+  font-size: 1rem;
+}
+
+.f3-ops-product-card__resource {
+  margin: -4px 0 0;
+  color: var(--f3-text-secondary, #50615b);
+  line-height: 1.7;
+}
+
+.f3-ops-product-card__price {
+  color: var(--f3-primary, #126b57);
+  font-size: 1.15rem;
+}
+
+.f3-ops-product-card__action {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.f3-ops-product-card__action .f3-ops-button {
+  width: 100%;
+}
+
+.f3-ops-commerce-feedback {
+  min-height: 1.5em;
+  margin: 0;
+  color: var(--f3-text-muted, #71817b);
+  font-size: 0.8rem;
+  line-height: 1.7;
+}
+
+.f3-ops-access-list {
+  display: grid;
+  gap: var(--f3-space-3, 12px);
+}
+
+.f3-ops-access-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.f3-ops-access-row__copy {
+  min-width: 0;
+}
+
 @media (max-width: 900px) {
   .f3-ops-content-form-grid {
     grid-template-columns: 1fr;
@@ -931,6 +1035,10 @@
   }
 
   .f3-ops-order-row {
+    grid-template-columns: 1fr;
+  }
+
+  .f3-ops-access-row {
     grid-template-columns: 1fr;
   }
 

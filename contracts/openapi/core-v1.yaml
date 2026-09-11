@@ -89,12 +89,23 @@ paths:
   /workspaces/{workspaceId}/orders:
     get: { operationId: listMyOrders, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
     post: { operationId: createOrder, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' }, '503': { $ref: '#/components/responses/Error' } } }
+  /workspaces/{workspaceId}/catalog:
+    get:
+      operationId: listPurchasableCatalog
+      description: Returns active server-priced products bound to a workspace, course, assessment or resource scope. The client must treat amount, currency and access status as read-only projections; private object addresses and payment proof are never returned.
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/payments/{attemptId}/reconcile:
     post:
       operationId: reconcilePayment
       parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: attemptId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }, { $ref: '#/components/parameters/Csrf' }]
       responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/entitlements:
+    get:
+      operationId: listMyEntitlements
+      description: Returns the authenticated member's access library with independent active, expired, revoked or pending states. Payment success is not treated as access.
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
     post: { operationId: grantEntitlement, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } } }
   /workspaces/{workspaceId}/entitlements/{grantId}/revoke:
     post:

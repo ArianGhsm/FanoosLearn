@@ -125,8 +125,14 @@ assert.equal(/\bGPA\b|میانگین کل|average/i.test(gradeUi), false, 'grade
 
 assert.ok(operations.includes('function orderPaymentState'));
 assert.ok(operations.includes('function explicitAccessState'));
+assert.ok(operations.includes("pathFor(ctx, '/catalog')"), 'Purchase UI must read the server catalog projection');
+assert.ok(operations.includes("pathFor(ctx, '/entitlements')"), 'Access library must read canonical entitlements');
+assert.ok(operations.includes('function orderState'), 'Order state must remain distinct from payment state');
+assert.ok(operations.includes('function renderAccessLibrary'), 'Access library UI missing');
+assert.ok(operations.includes('function renderCatalog'), 'Purchase catalog UI missing');
 assert.ok(operations.includes("row?.entitlement?.granted === true"));
 assert.ok(operations.includes("return 'unknown'"), 'paid must not imply entitlement');
+assert.ok(operations.includes('پرداخت موفق به‌تنهایی مجوز محتوا نیست'), 'UI must not imply impossible DRM or payment authority');
 assert.ok(operations.includes("hasCapability(ctx, 'notification.broadcast', dashboard)"));
 assert.ok(operations.includes("hasCapability(ctx, 'form.manage', dashboard)"));
 assert.ok(bootstrap.includes('has: () => false'), 'granular management mutations must fail closed until canonical capabilities are projected');

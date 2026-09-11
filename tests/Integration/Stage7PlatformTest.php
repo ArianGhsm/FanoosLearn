@@ -82,12 +82,23 @@ final class Stage7PlatformTest
 
         $server = $commerce->createOrder($fixture['student'], $fixture['workspace_a'], $product, $key);
         self::assert(isset($server['callback_token'], $server['authority']), 'Server payment edge could not retrieve canonical provider verification material.');
+        $catalog = $commerce->catalog($fixture['student'], $fixture['workspace_a']);
+        $catalogRow = array_values(array_filter($catalog, static fn (array $row): bool => $row['id'] === $product))[0] ?? null;
+        self::assert(is_array($catalogRow) && $catalogRow['amount_minor'] === 321000 && $catalogRow['currency'] === 'IRR', 'Catalog did not project the canonical server price and currency.');
+        $forged = $commerce->handleCallback((string) $server['callback_token'], (string) $server['authority'], ['status' => 'success', 'amount_minor' => 1, 'currency' => 'USD']);
+        self::assert($forged['status'] === 'failed', 'Provider payload amount/currency tampering was accepted.');
+        $server = $commerce->createOrder($fixture['student'], $fixture['workspace_a'], $product, $key . '-retry');
         $verified = $commerce->handleCallback((string) $server['callback_token'], (string) $server['authority'], ['status' => 'success']);
         self::assert($verified['status'] === 'paid', 'Provider-verified callback did not settle the canonical order.');
         $again = $commerce->handleCallback((string) $server['callback_token'], (string) $server['authority'], ['status' => 'success']);
         self::assert(($again['duplicate'] ?? false) === true, 'Duplicate provider callback was not idempotent.');
-        $paid = $bot->status($fixture['student'], $fixture['workspace_a'], $order['order_id']);
+        $paid = $bot->status($fixture['student'], $fixture['workspace_a'], $server['order_id']);
         self::assert(($paid['entitlement']['granted'] ?? false) === true, 'Verified payment did not project the canonical entitlement.');
+        $history = $commerce->history($fixture['student'], $fixture['workspace_a']);
+        $historyRow = array_values(array_filter($history, static fn (array $row): bool => $row['id'] === $server['order_id']))[0] ?? null;
+        self::assert(is_array($historyRow) && $historyRow['order_status'] === 'paid' && $historyRow['payment_status'] === 'verified' && $historyRow['entitlement_status'] === 'active', 'Order history did not keep order, payment and access states separate.');
+        $library = $entitlements->library($fixture['student'], $fixture['workspace_a']);
+        self::assert(count(array_filter($library, static fn (array $row): bool => $row['status'] === 'active')) > 0, 'Access library did not expose the verified entitlement.');
     }
 
     /** @param array<string,string> $fixture */
