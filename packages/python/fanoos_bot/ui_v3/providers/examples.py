@@ -70,10 +70,10 @@ def representative_examples(web_origin: str = "https://fanoos.invalid") -> tuple
             ProviderScreen(
                 title="🏠 خانه",
                 semantic_kind="home_active",
-                context="دندان‌پزشکی تهران · ورودی ۱۴۰۲",
+                context="دانشگاه نمونه · ورودی ۱۴۰۴",
                 sections=(
-                    ProviderSection("📅 بعدی", "ترمیمی ۱ — ۰۸:۳۰\nدانشکده دندان‌پزشکی"),
-                    ProviderSection("📢 تازه", "زمان آزمون میان‌ترم ترمیمی ۱ اعلام شد."),
+                    ProviderSection("📅 بعدی", "زیست‌مولکولی ۱ — ۰۸:۳۰\nدانشکده علوم"),
+                    ProviderSection("📢 تازه", "زمان آزمون میان‌ترم زیست‌مولکولی ۱ اعلام شد."),
                 ),
                 actions=(
                     _cb("📚 درس‌ها", "v3:courses"),
@@ -95,15 +95,15 @@ def representative_examples(web_origin: str = "https://fanoos.invalid") -> tuple
                 semantic_kind="courses",
                 context="نیمسال جاری",
                 list_items=(
-                    "ترمیمی ۱ · REST-301",
-                    "پریودانتیکس ۱ · PERIO-301",
-                    "رادیولوژی ۱ · RAD-301",
+                    "زیست‌مولکولی ۱ · BIO-301",
+                    "آمار زیستی · STAT-301",
+                    "فیزیولوژی ۱ · PHYS-301",
                 ),
                 pagination="صفحه ۱ از ۲",
                 actions=(
-                    _cb("ترمیمی ۱", "v3:course:rest"),
-                    _cb("پریودانتیکس ۱", "v3:course:perio"),
-                    _cb("رادیولوژی ۱", "v3:course:radio"),
+                    _cb("زیست‌مولکولی ۱", "v3:course:bio"),
+                    _cb("آمار زیستی", "v3:course:stats"),
+                    _cb("فیزیولوژی ۱", "v3:course:phys"),
                     _cb("صفحه بعد", "v3:courses:next", role="pagination"),
                     home,
                 ),
@@ -113,20 +113,20 @@ def representative_examples(web_origin: str = "https://fanoos.invalid") -> tuple
         ProviderExample(
             "course_detail",
             ProviderScreen(
-                title="📚 ترمیمی ۱",
+                title="📚 زیست‌مولکولی ۱",
                 semantic_kind="course_detail",
-                context="درس‌ها › ترمیمی ۱",
+                context="درس‌ها › زیست‌مولکولی ۱",
                 facts=(
-                    ProviderFact("کد درس", "REST-301"),
+                    ProviderFact("کد درس", "BIO-301"),
                     ProviderFact("نیمسال", "جاری"),
                 ),
                 sections=(ProviderSection("قدم بعدی", "کلاس بعدی: شنبه، ۰۸:۳۰"),),
                 actions=(
-                    _cb("📅 برنامه", "v3:course:rest:schedule"),
-                    _cb("📚 منابع", "v3:course:rest:resources"),
-                    _cb("🎓 نمرات", "v3:course:rest:grades"),
-                    _cb("📝 آزمون‌ها", "v3:course:rest:assessments"),
-                    _cb("📢 اطلاعیه‌ها", "v3:course:rest:announcements"),
+                    _cb("📅 برنامه", "v3:course:bio:schedule"),
+                    _cb("📚 منابع", "v3:course:bio:resources"),
+                    _cb("🎓 نمرات", "v3:course:bio:grades"),
+                    _cb("📝 آزمون‌ها", "v3:course:bio:assessments"),
+                    _cb("📢 اطلاعیه‌ها", "v3:course:bio:announcements"),
                     _cb("بازگشت به درس‌ها", "v3:courses", role="back"),
                     home,
                 ),
@@ -138,10 +138,10 @@ def representative_examples(web_origin: str = "https://fanoos.invalid") -> tuple
             ProviderScreen(
                 title="📅 برنامه امروز",
                 semantic_kind="schedule",
-                context="دندان‌پزشکی تهران · پنجشنبه ۱۹ شهریور",
+                context="دانشگاه نمونه · پنجشنبه ۱۹ شهریور",
                 sections=(
-                    ProviderSection("۰۸:۳۰", "ترمیمی ۱\nدانشکده دندان‌پزشکی"),
-                    ProviderSection("۱۰:۳۰", "پریودانتیکس ۱\nکلینیک پریو"),
+                    ProviderSection("۰۸:۳۰", "زیست‌مولکولی ۱\nدانشکده علوم"),
+                    ProviderSection("۱۰:۳۰", "آمار زیستی\nساختمان آموزش"),
                 ),
                 actions=(
                     _cb("امروز", "v3:schedule:today"),
@@ -160,9 +160,9 @@ def representative_examples(web_origin: str = "https://fanoos.invalid") -> tuple
                 semantic_kind="grades",
                 context="نمرات منتشرشده",
                 list_items=(
-                    "ترمیمی ۱ — ۱۷٫۵ از ۲۰",
-                    "رادیولوژی ۱ — ۱۸ از ۲۰",
-                    "پریودانتیکس ۱ — هنوز نمره‌ای منتشر نشده",
+                    "زیست‌مولکولی ۱ — ۱۷٫۵ از ۲۰",
+                    "فیزیولوژی ۱ — ۱۸ از ۲۰",
+                    "آمار زیستی — هنوز نمره‌ای منتشر نشده",
                 ),
                 actions=(back, home),
                 edit_policy="edit_if_safe",
@@ -174,8 +174,8 @@ def representative_examples(web_origin: str = "https://fanoos.invalid") -> tuple
                 title="📢 اطلاعیه‌ها",
                 semantic_kind="announcements",
                 list_items=(
-                    "زمان آزمون میان‌ترم ترمیمی ۱ اعلام شد.",
-                    "فایل جلسه جدید رادیولوژی ۱ منتشر شد.",
+                    "زمان آزمون میان‌ترم زیست‌مولکولی ۱ اعلام شد.",
+                    "فایل جلسه جدید فیزیولوژی ۱ منتشر شد.",
                 ),
                 pagination="صفحه ۱ از ۳",
                 actions=(
@@ -191,7 +191,7 @@ def representative_examples(web_origin: str = "https://fanoos.invalid") -> tuple
             ProviderScreen(
                 title="📚 منابع",
                 semantic_kind="resources",
-                context="ترمیمی ۱",
+                context="زیست‌مولکولی ۱",
                 list_items=(
                     "جزوه جلسه ۵ · PDF · دسترسی فعال",
                     "خلاصه جلسه ۴ · PDF · دسترسی فعال",
@@ -226,7 +226,7 @@ def representative_examples(web_origin: str = "https://fanoos.invalid") -> tuple
             ProviderScreen(
                 title="🔒 دریافت امن",
                 semantic_kind="protected_delivery_ready",
-                context="ترمیمی ۱ · جزوه جلسه ۵",
+                context="زیست‌مولکولی ۱ · جزوه جلسه ۵",
                 intro="نسخه محافظت‌شده آماده ارسال است.",
                 actions=(
                     _cb("بازگشت به منابع", "v3:resources", role="back"),
@@ -234,7 +234,7 @@ def representative_examples(web_origin: str = "https://fanoos.invalid") -> tuple
                 ),
                 protect_content=True,
                 edit_policy="new_message",
-                plain_text="🔒 دریافت امن\n\nترمیمی ۱ · جزوه جلسه ۵\n\nنسخه محافظت‌شده آماده ارسال است.",
+                plain_text="🔒 دریافت امن\n\nزیست‌مولکولی ۱ · جزوه جلسه ۵\n\nنسخه محافظت‌شده آماده ارسال است.",
             ),
         ),
         ProviderExample(
@@ -262,7 +262,7 @@ def representative_examples(web_origin: str = "https://fanoos.invalid") -> tuple
                 semantic_kind="account",
                 facts=(
                     ProviderFact("اتصال پیام‌رسان", "فعال"),
-                    ProviderFact("فضای آموزشی", "دندان‌پزشکی تهران · ورودی ۱۴۰۲"),
+                    ProviderFact("فضای آموزشی", "دانشگاه نمونه · ورودی ۱۴۰۴"),
                 ),
                 actions=(
                     _cb("🏫 تغییر فضای آموزشی", "v3:workspaces"),
