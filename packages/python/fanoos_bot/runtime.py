@@ -8,6 +8,7 @@ from pathlib import Path
 from .activity import ActivityController
 from .botapi import BotApiError
 from .chunking import chunks
+from .join_wizard import RawKeyboardHandoff, RawKeyboardSend
 from .models import ActionResult, Screen
 from .presentation import notification_detail_screen
 from .ui_v3.providers import ProviderContext
@@ -21,6 +22,7 @@ class UpdateContext:
     message_id: int | None = None
     callback_id: str | None = None
     event_id: str | None = None
+    contact_phone_number: str | None = None
 
 
 class DeliveryReceiptPump:
@@ -140,9 +142,19 @@ class BotRuntime:
             wizard_handler = getattr(self.app, "class_wizard_text", None)
             if callable(wizard_handler) and not raw_text.startswith("/"):
                 result = wizard_handler(ctx.subject, raw_text, ctx.private)
+            if result is None and not raw_text.startswith("/"):
+                join_handler = getattr(self.app, "join_wizard_text", None)
+                if callable(join_handler):
+                    result = join_handler(ctx.subject, raw_text, ctx.private)
+            if isinstance(result, (RawKeyboardSend, RawKeyboardHandoff)):
+                return self._deliver_raw_wizard_result(ctx, result)
             if result is None:
                 command, *rest = raw_text.split(maxsplit=1)
                 arg = rest[0] if rest else ""
+                if command == "/join":
+                    begin = getattr(self.app, "join_wizard_begin", None)
+                    if callable(begin):
+                        return self._deliver_raw_wizard_result(ctx, begin(ctx.subject, ctx.private))
                 result = self._message_result(ctx, command, arg)
             try:
                 result = self._prepare_result(ctx, result)
@@ -159,6 +171,53 @@ class BotRuntime:
         if not result.receipt:
             self._remember_processed_update(ctx, str(provider_ref or "sent"))
         return provider_ref
+
+    def handle_contact(self, ctx: UpdateContext, phone_number: str):
+        """A Telegram/Bale contact-share message -- only meaningful mid join
+        wizard (application.join_wizard_contact returns None otherwise, and
+        this is a no-op)."""
+        if ctx.event_id:
+            prior = self.state.processed_update(self.platform, ctx.event_id)
+            if prior is not None:
+                return prior
+        with self.activity.operation(ctx.chat_id, private=ctx.private):
+            handler = getattr(self.app, "join_wizard_contact", None)
+            result = handler(ctx.subject, phone_number, ctx.private) if callable(handler) else None
+        if result is None:
+            self._remember_processed_update(ctx, "ignored")
+            return None
+        return self._deliver_raw_wizard_result(ctx, result)
+
+    def _deliver_raw_wizard_result(self, ctx: UpdateContext, result):
+        """RawKeyboardSend/RawKeyboardHandoff bypass the ui_v3 Screen/deliver()
+        pipeline (structurally inline-keyboard-only) and call botapi's
+        reply-keyboard methods directly. A RawKeyboardHandoff ends the reply
+        keyboard and continues with a normal ActionResult through the usual
+        pipeline."""
+        try:
+            provider_ref = self._send_raw_wizard_result(ctx, result)
+        except Exception as exc:
+            self._remember_processed_update(ctx, f"failed:{type(exc).__name__}")
+            raise
+        if provider_ref != "handed-off":
+            self._remember_processed_update(ctx, str(provider_ref or "sent"))
+        return provider_ref
+
+    def _send_raw_wizard_result(self, ctx: UpdateContext, result):
+        if isinstance(result, RawKeyboardSend):
+            screen = result.screen
+            sent = self.transport.send_reply_keyboard(ctx.chat_id, screen.html, screen.keyboard, placeholder=screen.placeholder)
+            return str(sent.get("message_id")) if isinstance(sent, dict) and sent.get("message_id") is not None else "sent"
+        if isinstance(result, RawKeyboardHandoff):
+            try:
+                self.transport.remove_reply_keyboard(ctx.chat_id)
+            except Exception:
+                pass
+            if result.handoff is not None:
+                handoff_result = self._prepare_result(ctx, result.handoff)
+                self.deliver(ctx, handoff_result)
+            return "handed-off"
+        raise TypeError(f"unexpected join wizard result type: {type(result)!r}")
 
     def handle_callback(self, ctx: UpdateContext, value: str):
         # ACK remains before dedupe, backend calls and all rendering work.

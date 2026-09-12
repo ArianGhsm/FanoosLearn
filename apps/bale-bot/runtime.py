@@ -59,6 +59,13 @@ def context(update: dict):
         message = update["message"]
         chat = message.get("chat") or {}
         user = message.get("from") or {}
+        contact = message.get("contact") if isinstance(message.get("contact"), dict) else None
+        # Only trust a contact as "the sender's own phone" when the shared
+        # card's own user_id matches the sender -- see the identical check
+        # in apps/telegram-bot/runtime.py for why.
+        contact_phone = None
+        if contact and str(contact.get("user_id") or "") == str(user.get("id") or ""):
+            contact_phone = str(contact.get("phone_number") or "") or None
         return (
             UpdateContext(
                 str(user.get("id", "")),
@@ -70,6 +77,7 @@ def context(update: dict):
             ),
             str(message.get("text") or ""),
             None,
+            contact_phone,
         )
     if isinstance(update.get("callback_query"), dict):
         query = update["callback_query"]
@@ -87,6 +95,7 @@ def context(update: dict):
             ),
             "",
             str(query.get("data") or ""),
+            None,
         )
     return None
 
@@ -95,9 +104,11 @@ def _handle_update(runtime: BotRuntime, update: dict) -> None:
     parsed = context(update)
     if not parsed:
         return
-    ctx, text, callback = parsed
+    ctx, text, callback, contact_phone = parsed
     if callback is not None:
         runtime.handle_callback(ctx, callback)
+    elif contact_phone:
+        runtime.handle_contact(ctx, contact_phone)
     elif text:
         runtime.handle_message(ctx, text)
 

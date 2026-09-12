@@ -112,6 +112,41 @@ SQL);
         return $this->paged($query->fetchAll(), $limit, $offset);
     }
 
+    /**
+     * Cohorts under a program that already have a live class (tenant_workspaces
+     * row) to join. This is a narrower, deliberately different read than the
+     * province/institution/faculty/program methods above: those never expose
+     * cohort or workspace identity, because a caller with no membership browsing
+     * the catalog has no legitimate reason to enumerate which classes exist. A
+     * join wizard is the opposite case -- the caller has already narrowed down
+     * to one specific program and is asking "does my entry year actually have a
+     * class", which is the wizard's whole purpose. A cohort with no matching
+     * workspace is not a class anyone can join yet, so it is omitted entirely
+     * rather than offered and then failing at submission.
+     *
+     * @return array{items:list<array<string,mixed>>,next_cursor:?string}
+     */
+    public function joinableCohortsByProgram(string $programId, int $limit = self::DEFAULT_LIMIT, ?string $cursor = null): array
+    {
+        $this->requireExists('directory_programs', $programId, 'program_not_found', 'Program was not found.');
+        $limit = $this->boundedLimit($limit);
+        $offset = $this->decodeCursor($cursor);
+        $query = $this->database->prepare(<<<'SQL'
+SELECT cohort.id, cohort.entry_year, cohort.label, workspace.id AS workspace_id, workspace.name AS workspace_name
+FROM directory_cohorts cohort
+JOIN tenant_workspaces workspace ON workspace.cohort_id = cohort.id
+ AND workspace.status = 'active' AND workspace.archived_at IS NULL
+WHERE cohort.program_id = :program AND cohort.status = 'active' AND cohort.archived_at IS NULL
+ORDER BY cohort.entry_year DESC, cohort.id
+LIMIT :limit OFFSET :offset
+SQL);
+        $query->bindValue(':program', $programId);
+        $query->bindValue(':limit', $limit + 1, PDO::PARAM_INT);
+        $query->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $query->execute();
+        return $this->paged($query->fetchAll(), $limit, $offset);
+    }
+
     private function requireExists(string $table, string $id, string $errorCode, string $message): void
     {
         if (!preg_match('/^[a-z_]+$/', $table)) {

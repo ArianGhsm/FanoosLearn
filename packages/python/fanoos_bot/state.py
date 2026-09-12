@@ -89,6 +89,17 @@ class LocalState:
               expires_at INTEGER NOT NULL,
               PRIMARY KEY(platform, subject)
             );
+            CREATE TABLE IF NOT EXISTS join_wizards(
+              platform TEXT NOT NULL,
+              subject TEXT NOT NULL,
+              step TEXT NOT NULL,
+              history_json TEXT NOT NULL,
+              answers_json TEXT NOT NULL,
+              created_at INTEGER NOT NULL,
+              updated_at INTEGER NOT NULL,
+              expires_at INTEGER NOT NULL,
+              PRIMARY KEY(platform, subject)
+            );
             CREATE TABLE IF NOT EXISTS presentation_routes(
               ref TEXT PRIMARY KEY,
               platform TEXT NOT NULL,
@@ -286,6 +297,65 @@ class LocalState:
         )
         self.db.commit()
 
+    JOIN_WIZARD_TTL = 30 * 60
+
+    def start_join_wizard(self, platform: str, subject: str, first_step: str, *, now: int | None = None) -> None:
+        now = int(now or time.time())
+        self.db.execute(
+            """
+            INSERT INTO join_wizards(platform,subject,step,history_json,answers_json,created_at,updated_at,expires_at)
+            VALUES(?,?,?,'[]','{}',?,?,?)
+            ON CONFLICT(platform,subject) DO UPDATE SET
+              step=excluded.step, history_json='[]', answers_json='{}',
+              updated_at=excluded.updated_at, expires_at=excluded.expires_at
+            """,
+            (platform, str(subject), first_step, now, now, now + self.JOIN_WIZARD_TTL),
+        )
+        self.db.commit()
+
+    def join_wizard(self, platform: str, subject: str, now: int | None = None) -> dict | None:
+        now = int(now or time.time())
+        row = self.db.execute(
+            "SELECT step,history_json,answers_json,expires_at FROM join_wizards WHERE platform=? AND subject=?",
+            (platform, str(subject)),
+        ).fetchone()
+        if not row or int(row["expires_at"]) < now:
+            return None
+        try:
+            answers = json.loads(str(row["answers_json"]))
+        except (TypeError, ValueError, json.JSONDecodeError):
+            answers = {}
+        if not isinstance(answers, dict):
+            answers = {}
+        try:
+            history = json.loads(str(row["history_json"]))
+        except (TypeError, ValueError, json.JSONDecodeError):
+            history = []
+        if not isinstance(history, list) or not all(isinstance(item, str) for item in history):
+            history = []
+        return {"step": str(row["step"]), "history": history, "answers": answers}
+
+    def advance_join_wizard(
+        self, platform: str, subject: str, step: str, history: list[str], answers: dict, *, now: int | None = None
+    ) -> None:
+        now = int(now or time.time())
+        encoded_answers = json.dumps(answers, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        encoded_history = json.dumps(list(history), ensure_ascii=False, separators=(",", ":"))
+        self.db.execute(
+            """
+            UPDATE join_wizards SET step=?, history_json=?, answers_json=?, updated_at=?, expires_at=?
+            WHERE platform=? AND subject=?
+            """,
+            (step, encoded_history, encoded_answers, now, now + self.JOIN_WIZARD_TTL, platform, str(subject)),
+        )
+        self.db.commit()
+
+    def cancel_join_wizard(self, platform: str, subject: str) -> None:
+        self.db.execute(
+            "DELETE FROM join_wizards WHERE platform=? AND subject=?", (platform, str(subject))
+        )
+        self.db.commit()
+
     def record_deployment(self, subject: str, request_id: str):
         self.db.execute(
             "INSERT OR IGNORE INTO deployments VALUES(?,?,?)",
@@ -477,3 +547,4 @@ class LocalState:
             self.db.execute("DELETE FROM processed_updates WHERE created_at<?", (cutoff,))
             self.db.execute("DELETE FROM presentation_routes WHERE expires_at<?", (now,))
             self.db.execute("DELETE FROM class_wizards WHERE expires_at<?", (now,))
+            self.db.execute("DELETE FROM join_wizards WHERE expires_at<?", (now,))

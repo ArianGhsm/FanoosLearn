@@ -235,6 +235,13 @@ paths:
       x-required-service-action: onboarding.directory.read
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/DirectoryProgramsRead' } } } }
       responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' } }
+  /onboarding/directory/cohorts:
+    post:
+      operationId: listJoinableOnboardingCohorts
+      x-required-service-action: onboarding.directory.read
+      description: Cohorts under a program that already have a live class to join. Unlike the province/institution/faculty/program reads above, this deliberately does expose cohort and workspace identity -- it is the one directory read whose purpose is confirming a specific class exists, for a caller who has already narrowed down to one program.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/DirectoryCohortsRead' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' } }
   /onboarding/otp/request:
     post:
       operationId: requestOnboardingOtp
@@ -262,6 +269,43 @@ paths:
       x-required-service-action: onboarding.otp.status
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LinkedSubject' } } } }
       responses: { '200': { $ref: '#/components/responses/Success' } }
+  /onboarding/join:
+    post:
+      operationId: joinClassFromOnboarding
+      x-required-service-action: onboarding.join
+      description: >-
+        Turns a completed join wizard into a real membership, or reports honestly that no live class matches
+        yet (response data.status is 'joined' or 'class_not_found' -- this is not an error response, since no
+        match is an expected, common outcome the caller must display, not a failure). Requires a phone already
+        verified for this (platform, subject) via /onboarding/otp/verify. Finds-or-creates the canonical account
+        by that verified phone and links the calling platform subject to it either way; only a match additionally
+        creates a tenant_workspace_memberships row, at the limited 'workspace-limited-member' role, never full
+        membership. Idempotent: submitting the same (subject, program, entry_year) twice does not create a
+        second membership, and a person already a member of a different class is unaffected there.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/OnboardingJoin' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /onboarding/upgrade-request:
+    post:
+      operationId: requestWorkspaceRoleUpgrade
+      x-required-service-action: onboarding.upgrade_request
+      description: >-
+        Records a durable, idempotent request from a limited member asking their class representative to
+        upgrade them to the full 'student' role. Representatives do not exist yet, so this only records the
+        request; nothing here approves it. Repeated calls for the same (subject, workspace) return the existing
+        request's status rather than creating a second one.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/OnboardingUpgradeRequest' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /onboarding/class-creation-requests:
+    post:
+      operationId: requestClassCreationFromOnboarding
+      x-required-service-action: onboarding.class_creation_request
+      description: >-
+        Capability 5's seam only: records that a verified person asked for a program+entry_year with no live
+        class, so a join wizard that reaches a dead end is never silent about it. Nothing here notifies an
+        owner or creates a class -- that consumption side is a separate, later capability. Idempotent per
+        (subject, program, entry_year); requires a phone already verified via /onboarding/otp/verify.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/OnboardingClassCreationRequest' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
   /classes:
     post:
       operationId: createClass
@@ -507,6 +551,26 @@ components:
       type: object
       required: [platform, faculty_id]
       properties: { platform: { $ref: '#/components/schemas/Platform' }, faculty_id: { $ref: '#/components/schemas/Uuid' }, limit: { type: integer, minimum: 1, maximum: 50 }, cursor: { $ref: '#/components/schemas/Cursor' } }
+      additionalProperties: false
+    DirectoryCohortsRead:
+      type: object
+      required: [platform, program_id]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, program_id: { $ref: '#/components/schemas/Uuid' }, limit: { type: integer, minimum: 1, maximum: 50 }, cursor: { $ref: '#/components/schemas/Cursor' } }
+      additionalProperties: false
+    OnboardingJoin:
+      type: object
+      required: [platform, subject, program_id, entry_year]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, subject: { type: string, minLength: 1, maxLength: 160 }, program_id: { $ref: '#/components/schemas/Uuid' }, entry_year: { type: integer, minimum: 1000, maximum: 9999 } }
+      additionalProperties: false
+    OnboardingUpgradeRequest:
+      type: object
+      required: [platform, subject, workspace_id]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, subject: { type: string, minLength: 1, maxLength: 160 }, workspace_id: { $ref: '#/components/schemas/Uuid' } }
+      additionalProperties: false
+    OnboardingClassCreationRequest:
+      type: object
+      required: [platform, subject, program_id, entry_year]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, subject: { type: string, minLength: 1, maxLength: 160 }, program_id: { $ref: '#/components/schemas/Uuid' }, entry_year: { type: integer, minimum: 1000, maximum: 9999 } }
       additionalProperties: false
     OnboardingOtpRequest:
       type: object

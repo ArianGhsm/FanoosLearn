@@ -296,6 +296,71 @@ class JsonBotApiTransport:
         except BotApiError:
             return self.send_screen(chat_id, screen, context=context)
 
+    def send_reply_keyboard(
+        self,
+        chat_id: str,
+        html_text: str,
+        keyboard_rows: tuple[tuple[dict[str, Any], ...], ...],
+        *,
+        placeholder: str = "",
+        reply_to: int | None = None,
+    ):
+        """Send a persistent reply keyboard, ported from the legacy bot's
+        onboarding.py reply_keyboard() shape. This is a deliberate exception to
+        the rest of the transport, which only ever emits inline keyboards
+        (see _markup): the join wizard is the one flow the owner asked to keep
+        as a native reply keyboard rather than ui_v3 inline screens.
+
+        `html_text` is always Telegram-HTML (<b>/<u>/<code>/<blockquote>), the
+        same style legacy's onboarding.py used. On Telegram it is sent as a
+        native Rich Message (the same mechanism send_screen already uses for
+        everything else), which supports that markup directly. Bale has no
+        HTML rich-message equivalent, so its plain-text single-asterisk-bold
+        convention (join_wizard.html_to_bale_text, matching
+        ui_v3/providers/bale.py's own _safe_bold) is used instead.
+        """
+        markup: dict[str, Any] = {
+            "keyboard": [[dict(item) for item in row] for row in keyboard_rows],
+            "resize_keyboard": True,
+            "one_time_keyboard": False,
+        }
+        if placeholder:
+            markup["input_field_placeholder"] = placeholder[:64]
+        if self.capabilities.platform == "telegram" and self.capabilities.supports_native_rich:
+            return self._call("sendRichMessage", self._rich_payload(
+                chat_id, {"html": html_text, "is_rtl": True}, reply_to=reply_to, markup=markup,
+            ))
+        from .join_wizard import html_to_bale_text
+
+        text = html_to_bale_text(html_text)
+        return self._call("sendMessage", self._plain_payload(chat_id, text, reply_to=reply_to, markup=markup))
+
+    def remove_reply_keyboard(self, chat_id: str, text: str = "⌨️") -> dict:
+        """Remove a persistent reply keyboard before returning to the rest of
+        the (inline-keyboard) bot. Telegram and Bale keep a reply keyboard
+        client-side until a later sendMessage explicitly carries
+        remove_keyboard -- an inline keyboard on a newer message does not
+        replace it. Ported verbatim (payload shape and the immediate cleanup
+        delete) from the legacy bot's TelegramBotApi.remove_reply_keyboard
+        (legacy/bot/dent_bot/api.py), which both Telegram and Bale used
+        unchanged: send a message carrying remove_keyboard, then delete that
+        transport-only message immediately so it doesn't linger as a stray
+        "⌨️" in the chat history.
+        """
+        result = self._call("sendMessage", self._plain_payload(chat_id, text, markup={"remove_keyboard": True}))
+        message_id = 0
+        if isinstance(result, dict):
+            try:
+                message_id = int(result.get("message_id") or 0)
+            except (TypeError, ValueError):
+                message_id = 0
+        if message_id > 0:
+            try:
+                self._call("deleteMessage", {"chat_id": chat_id, "message_id": message_id})
+            except BotApiError:
+                pass
+        return result if isinstance(result, dict) else {}
+
     @staticmethod
     def _safe_filename(path: Path) -> str:
         stem = re.sub(r"[^A-Za-z0-9_-]+", "_", path.stem).strip("_")

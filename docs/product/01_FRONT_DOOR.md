@@ -234,3 +234,53 @@ This is a scoping rule for every capability from here on: ask whether the action
 *about* a class (owner) or *inside* a class (representative), and put the permission on the
 matching side of that line. The RBAC model already separates platform scope from workspace
 scope, so this needs no new machinery — only the discipline to use the right one.
+
+## 11. Correction — tiered access replaces the approval gate at join time
+
+§9's flow made membership itself wait on the representative: verify phone, then raise an
+approval request, then the representative decides, then membership is created. Shipped
+version reverses the order of the last two steps. The owner's instruction: a student who
+finishes the wizard and verifies their phone becomes a member **immediately**, at a new
+**limited** role — enough to buy things (e.g. a representative selling notes to the whole
+cohort) and receive notifications — not the full `student` role. Reaching anything
+class-internal (schedule, grades, exams) still requires the representative's approval,
+requested from inside the bot; the bot explains this in place rather than refusing silently,
+and the underlying permission check is always enforced server-side, never by the bot
+deciding not to show a button.
+
+Two reasons drove this, both from the owner directly:
+
+- Representatives are not a buildable capability yet — §10 describes the role but nothing
+  appoints one today — so a gate that only a representative can open would be a dead end for
+  every student who joins before one exists.
+- The commercial case doesn't want the wait: someone selling notes to a cohort needs buyers
+  to be members the moment they verify, not after a representative gets around to approving
+  them one by one.
+
+So the join flow actually built is:
+
+```
+student runs the wizard and selects their own class
+   (province -> institution -> faculty -> program -> entry year)
+  -> student submits a phone number
+  -> single-use code is sent and verified   <- the platform now holds a verified phone
+  -> the account is created/found regardless of whether the class resolves
+  -> if the class resolves: membership is created now, at the limited role
+     if it doesn't: a durable class-creation request is recorded instead (idempotent,
+     visible to the owners) and no membership is created
+  -> reaching class-internal material later raises an idempotent upgrade request to
+     that class's representative, once representatives exist to act on it
+```
+
+`tenant_workspace_role_upgrade_requests` and `class_creation_requests` are the two durable
+tables this needs; neither existed before this port. §9's approval step is not gone — it
+still gates the full `student` role — it has simply moved from *before* membership to
+*after* it.
+
+**The wizard itself grew one step relative to legacy.** `onboarding.py`'s twelve steps
+assume a single Tehran dental cohort with one fixed faculty; FANOOS's directory is
+per-institution, so a **faculty** step was inserted between institution and program,
+making it thirteen steps in the general case (twelve for آزاد institutions, which still
+skip the course-type step, instead of legacy's eleven). Entry year stayed legacy's static
+list (۱۳۹۹–۱۴۰۵) rather than becoming directory-driven — a deliberate choice against the
+directory-first spirit of §1, made because the owner asked to keep the proven list as-is.

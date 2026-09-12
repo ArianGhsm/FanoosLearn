@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Fanoos\Platform\Support\DatabaseConnection;
+use Fanoos\Tests\Core\ClassMembershipTest;
 use Fanoos\Tests\Core\ClassProvisioningTest;
 use Fanoos\Tests\Core\OnboardingDirectoryTest;
 use Fanoos\Tests\Core\OnboardingPhoneVerificationTest;
@@ -79,6 +80,8 @@ try {
         echo "PASS onboarding directory catalog and read scenarios\n";
         $assertions += (new OnboardingPhoneVerificationTest($database))->run();
         echo "PASS onboarding phone verification scenarios\n";
+        $assertions += (new ClassMembershipTest($database))->run();
+        echo "PASS join wizard membership and upgrade-request scenarios\n";
         $assertions += (new OwnerBootstrapTest($database, $root))->run();
         echo "PASS first-owner bootstrap tool scenarios\n";
         $assertions += (new BotPlatformHandoffTest($database))->run();

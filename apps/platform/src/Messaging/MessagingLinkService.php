@@ -111,54 +111,7 @@ SQL);
             }
 
             $userId = (string) $row['user_id'];
-            $subjectDigest = $this->subjects->digest($platform, $platformSubject);
-            $subjectCiphertext = $this->subjects->encrypt($platform, $platformSubject);
-
-            $subjectLookup = $this->database->prepare('SELECT id, user_id, status FROM messaging_links WHERE platform = :platform AND subject_digest = :digest LIMIT 1 FOR UPDATE');
-            $subjectLookup->bindValue(':platform', $platform);
-            $subjectLookup->bindValue(':digest', $subjectDigest, PDO::PARAM_LOB);
-            $subjectLookup->execute();
-            $subjectLink = $subjectLookup->fetch();
-            if ($subjectLink !== false && !hash_equals((string) $subjectLink['user_id'], $userId)) {
-                throw new PlatformException('platform_subject_conflict', 'Messaging account is linked to another account.', 409);
-            }
-
-            $userLookup = $this->database->prepare('SELECT id, subject_digest, status FROM messaging_links WHERE user_id = :user AND platform = :platform LIMIT 1 FOR UPDATE');
-            $userLookup->execute(['user' => $userId, 'platform' => $platform]);
-            $userLink = $userLookup->fetch();
-            if ($userLink !== false && $userLink['status'] === 'active' && !hash_equals((string) $userLink['subject_digest'], $subjectDigest)) {
-                throw new PlatformException('platform_already_linked', 'Unlink the current messaging account before linking another.', 409);
-            }
-
-            if ($userLink === false) {
-                $linkId = Uuid::v7();
-                $insert = $this->database->prepare(<<<'SQL'
-INSERT INTO messaging_links (
-    id, user_id, platform, subject_digest, subject_ciphertext, status,
-    linked_at, revoked_at, revoke_reason, updated_at
-) VALUES (:id, :user, :platform, :digest, :ciphertext, 'active', UTC_TIMESTAMP(6), NULL, NULL, UTC_TIMESTAMP(6))
-SQL);
-                $insert->bindValue(':id', $linkId);
-                $insert->bindValue(':user', $userId);
-                $insert->bindValue(':platform', $platform);
-                $insert->bindValue(':digest', $subjectDigest, PDO::PARAM_LOB);
-                $insert->bindValue(':ciphertext', $subjectCiphertext, PDO::PARAM_LOB);
-                $insert->execute();
-            } else {
-                $linkId = (string) $userLink['id'];
-                $update = $this->database->prepare(<<<'SQL'
-UPDATE messaging_links
-SET subject_digest = :digest, subject_ciphertext = :ciphertext, status = 'active',
-    linked_at = UTC_TIMESTAMP(6), revoked_at = NULL, revoke_reason = NULL, updated_at = UTC_TIMESTAMP(6)
-WHERE id = :id AND user_id = :user AND platform = :platform
-SQL);
-                $update->bindValue(':digest', $subjectDigest, PDO::PARAM_LOB);
-                $update->bindValue(':ciphertext', $subjectCiphertext, PDO::PARAM_LOB);
-                $update->bindValue(':id', $linkId);
-                $update->bindValue(':user', $userId);
-                $update->bindValue(':platform', $platform);
-                $update->execute();
-            }
+            $linkId = $this->linkSubjectToUser($platform, $platformSubject, $userId);
 
             $consume = $this->database->prepare('UPDATE messaging_link_challenges SET consumed_at = UTC_TIMESTAMP(6), consumed_link_id = :link WHERE id = :id AND consumed_at IS NULL');
             $consume->execute(['link' => $linkId, 'id' => $row['id']]);
@@ -168,6 +121,84 @@ SQL);
             $this->audit->record(null, $userId, 'messaging.link', 'messaging_link', $linkId, 'success', ['platform' => $platform]);
             return ['link_id' => $linkId, 'user_id' => $userId, 'platform' => $platform];
         });
+    }
+
+    /**
+     * Links a platform subject to an already-identified canonical user, without
+     * a challenge token. Used where some other flow already proved the caller
+     * owns the platform subject well enough to act as that identity (e.g. the
+     * onboarding join wizard, where phone OTP verification is the proof) --
+     * the challenge/token dance exists to prove that binding when nothing else
+     * already has, not as an end in itself. Same conflict rules as
+     * consumeChallenge: a platform subject already linked to a different user
+     * is refused, and a user already actively linked to a different subject on
+     * this platform must unlink first.
+     */
+    public function establishLink(string $userId, string $platform, string $platformSubject): string
+    {
+        $platform = $this->platform($platform);
+        return Transaction::run($this->database, function () use ($userId, $platform, $platformSubject): string {
+            $active = $this->database->prepare("SELECT 1 FROM iam_users WHERE id = :user AND status = 'active' AND deleted_at IS NULL");
+            $active->execute(['user' => $userId]);
+            if ($active->fetchColumn() === false) {
+                throw new PlatformException('account_unavailable', 'Account is unavailable.', 403);
+            }
+            return $this->linkSubjectToUser($platform, $platformSubject, $userId);
+        });
+    }
+
+    private function linkSubjectToUser(string $platform, string $platformSubject, string $userId): string
+    {
+        $subjectDigest = $this->subjects->digest($platform, $platformSubject);
+        $subjectCiphertext = $this->subjects->encrypt($platform, $platformSubject);
+
+        $subjectLookup = $this->database->prepare('SELECT id, user_id, status FROM messaging_links WHERE platform = :platform AND subject_digest = :digest LIMIT 1 FOR UPDATE');
+        $subjectLookup->bindValue(':platform', $platform);
+        $subjectLookup->bindValue(':digest', $subjectDigest, PDO::PARAM_LOB);
+        $subjectLookup->execute();
+        $subjectLink = $subjectLookup->fetch();
+        if ($subjectLink !== false && !hash_equals((string) $subjectLink['user_id'], $userId)) {
+            throw new PlatformException('platform_subject_conflict', 'Messaging account is linked to another account.', 409);
+        }
+
+        $userLookup = $this->database->prepare('SELECT id, subject_digest, status FROM messaging_links WHERE user_id = :user AND platform = :platform LIMIT 1 FOR UPDATE');
+        $userLookup->execute(['user' => $userId, 'platform' => $platform]);
+        $userLink = $userLookup->fetch();
+        if ($userLink !== false && $userLink['status'] === 'active' && !hash_equals((string) $userLink['subject_digest'], $subjectDigest)) {
+            throw new PlatformException('platform_already_linked', 'Unlink the current messaging account before linking another.', 409);
+        }
+
+        if ($userLink === false) {
+            $linkId = Uuid::v7();
+            $insert = $this->database->prepare(<<<'SQL'
+INSERT INTO messaging_links (
+    id, user_id, platform, subject_digest, subject_ciphertext, status,
+    linked_at, revoked_at, revoke_reason, updated_at
+) VALUES (:id, :user, :platform, :digest, :ciphertext, 'active', UTC_TIMESTAMP(6), NULL, NULL, UTC_TIMESTAMP(6))
+SQL);
+            $insert->bindValue(':id', $linkId);
+            $insert->bindValue(':user', $userId);
+            $insert->bindValue(':platform', $platform);
+            $insert->bindValue(':digest', $subjectDigest, PDO::PARAM_LOB);
+            $insert->bindValue(':ciphertext', $subjectCiphertext, PDO::PARAM_LOB);
+            $insert->execute();
+        } else {
+            $linkId = (string) $userLink['id'];
+            $update = $this->database->prepare(<<<'SQL'
+UPDATE messaging_links
+SET subject_digest = :digest, subject_ciphertext = :ciphertext, status = 'active',
+    linked_at = UTC_TIMESTAMP(6), revoked_at = NULL, revoke_reason = NULL, updated_at = UTC_TIMESTAMP(6)
+WHERE id = :id AND user_id = :user AND platform = :platform
+SQL);
+            $update->bindValue(':digest', $subjectDigest, PDO::PARAM_LOB);
+            $update->bindValue(':ciphertext', $subjectCiphertext, PDO::PARAM_LOB);
+            $update->bindValue(':id', $linkId);
+            $update->bindValue(':user', $userId);
+            $update->bindValue(':platform', $platform);
+            $update->execute();
+        }
+
+        return $linkId;
     }
 
     public function revoke(string $userId, string $platform, string $reason = 'user_unlink'): void
