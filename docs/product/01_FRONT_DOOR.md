@@ -320,3 +320,38 @@ The bot surface: the owner's management area gets `➕ انتصاب نمایند
 creation; a representative sees `📋 درخواست‌های عضویت` in `➕ بیشتر` — visible only when
 the backend actually grants `membership.approve` for their selected workspace, the same
 probe-and-hide pattern `⚙️ مدیریت` already used for owners.
+
+---
+
+## 11. Owed cleanup: remove the superseded layers
+
+The bot shell is being replaced by the legacy Dentistry1402TUMS shell, deliberately in two
+steps: the legacy shell lands first and the FANOOS ui_v3 shell is left in place, because
+deleting a large layer in the same change that introduces its replacement makes a bad
+failure impossible to bisect. The owner agreed to that sequencing and then asked, plainly,
+that the second step not be forgotten.
+
+**So it is recorded here as owed work, not as an option.**
+
+Once the legacy shell is proven in production, delete what it superseded:
+
+- the FANOOS ui_v3 modules the legacy shell no longer routes through. The shell task is
+  required to report that list; start from it rather than guessing.
+- the second code path behind the `بیشتر` button. Evidence that one exists: the running
+  release contains `more_action()` returning the label with a leading plus emoji, yet a
+  production screenshot shows the same button rendered without it. Two code paths produce
+  that button and only one was updated.
+- any legacy UI generation that came across in duplicate. The legacy carries both
+  `classops_ux_v2` and `classops_ux_v3`; only v3 is to be ported, and if any v2 arrives it
+  goes out with this pass.
+- `legacy/` itself, once nothing remains to translate from it.
+
+This is the same condition that was already removed from the web layer once, where roughly
+8400 lines of unreachable v1 and v2 assets were still being linted and tested against a
+frozen snapshot of a page that had stopped being served. That cleanup found a live bot test
+about to be deleted by accident and a release-artifact contract still asserting the presence
+of deleted files. Expect this one to find comparable things, and read the report from the
+shell task before starting.
+
+The standing rule that makes this safe: nothing is deleted while it is still reachable, and
+nothing is deleted in the same change that replaces it.
