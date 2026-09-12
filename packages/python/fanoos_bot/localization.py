@@ -50,7 +50,7 @@ RESOURCE_TYPE_LABELS = {
     "note": "جزوه",
     "notes": "جزوه",
     "summary": "خلاصه",
-    "dentnote": "DentNote",
+    "dentnote": "جزوه تخصصی",
     "discipline_note": "یادداشت تخصصی",
     "question_bank": "بانک سؤال",
     "past_exam": "آزمون گذشته",
