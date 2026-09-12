@@ -32,10 +32,9 @@ from .ui_v3.core import (
     Screen as CoreScreen,
 )
 from .ui_v3.core.account import linked_account_screen, unlink_confirmation_screen, unlink_success_screen
-from .ui_v3.core.actions import join_begin_action, workspace_page_action
-from .ui_v3.core.contracts import ActionRow
+from .ui_v3.core.actions import workspace_page_action
 from .ui_v3.core.home import HomeSlot, SlotState, home_screen
-from .ui_v3.core.onboarding import linked_no_workspace_screen, unlinked_account_screen
+from .ui_v3.core.onboarding import unlinked_account_screen
 from .ui_v3.core.workspace import WorkspaceOption, no_workspace_screen, workspace_list_screen
 from .ui_v3.learning import (
     assessment_course_filter_screen,
@@ -147,13 +146,6 @@ class BotApplication(BaseBotApplication):
             )
             return False
 
-    def _no_workspace_screen(self, subject: str) -> CoreScreen:
-        screen = linked_no_workspace_screen(self.config.web_base_url, show_more=self._can_manage(subject))
-        # A linked user with no class yet has exactly one honest next step:
-        # the join wizard. Give it a reachable button here instead of leaving
-        # it behind the /join text command (docs/product/01_FRONT_DOOR.md #2).
-        return replace(screen, action_rows=screen.action_rows + (ActionRow((join_begin_action(),)),))
-
     def _unlinked_screen(self) -> CoreScreen:
         return unlinked_account_screen(self.config.web_base_url)
 
@@ -247,21 +239,31 @@ class BotApplication(BaseBotApplication):
     def home(self, subject: str, notice: str = ""):
         try:
             projection, selected = self._selected(subject)
-            workspaces = [item for item in projection.get("workspaces") or [] if isinstance(item, dict)]
-            if not workspaces:
-                return self._v3_result(self._no_workspace_screen(subject))
+            clean_notice = truncate_text(notice, 180) if notice else ""
+            is_owner = self._can_manage(subject)
             if not selected:
-                # Membership exists but selection does not: selection remains an
-                # explicit user action and no first-workspace authority is invented.
-                return self._v3_result(self._workspace_screen(projection))
+                # Membership exists but selection does not (or there is no
+                # membership at all): selection remains an explicit user
+                # action and no first-workspace authority is invented. Both
+                # cases render the same shell, just without class-scoped rows
+                # -- there is no separate "no workspace" screen any more
+                # (docs/product/01_FRONT_DOOR.md #11's correction: one
+                # builder, content varying by what the viewer can do).
+                screen = home_screen(
+                    None,
+                    workspace_options=self._workspace_options(projection),
+                    is_owner=is_owner,
+                    notice=clean_notice,
+                )
+                return self._v3_result(screen)
 
             screen = home_screen(
                 self._selected_workspace_label(projection, selected),
                 next_schedule=self._home_schedule_slot(subject, selected),
                 latest_announcement=self._home_announcement_slot(subject, selected),
-                is_owner=self._can_manage(subject),
+                is_owner=is_owner,
                 show_representative_requests=self._can_approve_representative_requests(subject, selected),
-                notice=truncate_text(notice, 180) if notice else "",
+                notice=clean_notice,
             )
             return self._v3_result(screen)
         except Exception as exc:

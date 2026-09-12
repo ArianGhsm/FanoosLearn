@@ -79,11 +79,15 @@ class BotCoreUxContractTest(unittest.TestCase):
             temp.cleanup()
 
     def test_zero_workspace_has_distinct_list_empty_state_without_loop(self):
+        # home() renders the one shell (docs/product/01_FRONT_DOOR.md #11's
+        # correction); the standalone workspaces() switcher is a separate,
+        # still-real destination (reachable from the shell's own "🏫 فضای
+        # آموزشی" row) and keeps its own distinct empty-state screen.
         temp, state, app = make_app(CoreUxBackend())
         try:
             home = app.home("student")
             listing = app.workspaces("student")
-            self.assertEqual(home.screen.identifier, "onboarding.linked_no_workspace")
+            self.assertEqual(home.screen.identifier, "home.active")
             self.assertEqual(listing.screen.identifier, "workspace.empty")
             self.assertNotIn("انتخاب فضای آموزشی", listing.screen.plain_text())
         finally:
@@ -106,11 +110,15 @@ class BotCoreUxContractTest(unittest.TestCase):
             self.assertEqual(second.screen.pagination.page, 2)
             self.assertIn("فضای 6", second.screen.plain_text())
             self.assertNotIn(WORKSPACE_IDS[0], first.screen.plain_text())
+            # Both nav-row actions (back and home) point at the same "home"
+            # intent, and home() now always renders the one shell -- with
+            # nothing selected here, that shell holds its own embedded
+            # picker rather than redirecting back to this same screen.
             for navigation_action in first.screen.action_rows[-1].actions:
                 callback = navigation_action.intent.compact()
                 self.assertIsNotNone(callback)
                 self.assertLessEqual(len(callback.encode("utf-8")), 64)
-                self.assertEqual(app.callback("student", True, callback).screen.identifier, "workspace.list")
+                self.assertEqual(app.callback("student", True, callback).screen.identifier, "home.active")
         finally:
             state.close()
             temp.cleanup()

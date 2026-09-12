@@ -111,12 +111,15 @@ class HomeShellTest(unittest.TestCase):
         self.state.close()
         self.tmp.cleanup()
 
-    # 1. /start for a linked user with no workspace renders the shell's
-    # equivalent screen, and offers a reachable route into the join wizard.
+    # 1. /start for a linked user with no workspace renders the shell (the
+    # same screen identifier every other viewer gets -- there is no separate
+    # onboarding screen any more), and offers a reachable route into the
+    # join wizard.
     def test_start_no_workspace_offers_join_route(self):
         result = self.app.start("newcomer")
         self.assertIsInstance(result.screen, CoreScreen)
-        self.assertEqual(result.screen.identifier, "onboarding.linked_no_workspace")
+        self.assertEqual(result.screen.identifier, "home.active")
+        self.assertIn("هنوز فضای آموزشی فعالی", result.screen.intro)
         join_actions = [
             action for action in _core_actions(result.screen)
             if action.intent is not None and action.intent.name == "core.join.begin"
@@ -185,6 +188,44 @@ class HomeShellTest(unittest.TestCase):
         self.assertIn("اطلاعیه شیراز", home_b.screen.plain_text())
         self.assertNotIn("اطلاعیه تهران", home_b.screen.plain_text())
 
+    # 3b. A member of several classes who has not chosen yet gets the same
+    # shell with a class picker embedded -- never an auto-selected first
+    # class (docs/product/01_FRONT_DOOR.md #11's correction).
+    def test_member_without_selection_gets_picker_and_no_auto_select(self):
+        self.backend.workspaces_by_subject["undecided"] = [
+            {"id": WORKSPACE_A, "name": "دندان‌پزشکی تهران"},
+            {"id": WORKSPACE_B, "name": "پزشکی شیراز"},
+        ]
+        # selected_by_subject deliberately left unset: membership without a
+        # selection is exactly the state under test.
+
+        result = self.app.home("undecided")
+        self.assertIsInstance(result.screen, CoreScreen)
+        self.assertEqual(result.screen.identifier, "home.active")
+        self.assertIsNone(result.screen.context)
+        self.assertIn("انتخاب کنید", result.screen.intro)
+        pick_actions = {
+            action.intent.compact(): action.label
+            for action in _core_actions(result.screen)
+            if action.intent is not None and action.intent.name == "ws.select"
+        }
+        self.assertEqual(len(pick_actions), 2)
+        self.assertTrue(any("دندان‌پزشکی تهران" in label for label in pick_actions.values()))
+        self.assertTrue(any("پزشکی شیراز" in label for label in pick_actions.values()))
+        # No class-scoped rows without a class to scope them to.
+        labels = _core_action_labels(result.screen)
+        self.assertFalse(any("نمرات" in label for label in labels))
+        self.assertFalse(any("درس‌ها" in label for label in labels))
+        # The backend was never asked to select anything on our behalf.
+        self.assertNotIn("undecided", self.backend.selected_by_subject)
+
+        # Picking one from the shell lands on that class's full shell.
+        callback = next(iter(pick_actions))
+        picked = self.app.callback("undecided", True, callback)
+        self.assertEqual(picked.screen.identifier, "home.active")
+        self.assertEqual(picked.screen.context.value, "دندان‌پزشکی تهران")
+        self.assertEqual(self.backend.selected_by_subject["undecided"], WORKSPACE_A)
+
     # 4. A limited member reaching a gated screen gets the explanatory screen
     # with the upgrade option, not a refusal and not the data.
     def test_limited_member_gated_screen_gets_upgrade_prompt_not_refusal(self):
@@ -220,6 +261,28 @@ class HomeShellTest(unittest.TestCase):
         home = self.app.home("owner")
         manage_actions = [
             action for action in _core_actions(home.screen)
+            if action.intent is not None and action.intent.name == "core.manage"
+        ]
+        self.assertEqual(len(manage_actions), 1)
+
+        manage_result = self.app.callback("owner", True, manage_actions[0].intent.compact())
+        labels = [button.text for row in manage_result.screen.rows for button in row]
+        self.assertIn("➕ ساخت کلاس", labels)
+        self.assertIn("➕ انتصاب نماینده", labels)
+
+    # 5b. An owner who by design holds no class membership at all must still
+    # reach class creation and representative appointment directly from
+    # /start -- this is the exact complaint that started this work: the
+    # person who uses the bot most is the platform owner, who never has a
+    # selected class.
+    def test_owner_without_any_class_still_reaches_management_from_start(self):
+        self.backend.can_manage_subjects.add("owner")
+        # workspaces_by_subject deliberately left empty: no membership at all.
+
+        result = self.app.start("owner")
+        self.assertEqual(result.screen.identifier, "home.active")
+        manage_actions = [
+            action for action in _core_actions(result.screen)
             if action.intent is not None and action.intent.name == "core.manage"
         ]
         self.assertEqual(len(manage_actions), 1)

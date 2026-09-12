@@ -71,7 +71,7 @@ from .contracts import (
     Severity,
 )
 from .home import HomeSlot, SlotState, home_screen
-from .onboarding import linked_no_workspace_screen, unlinked_account_screen
+from .onboarding import unlinked_account_screen
 from .workspace import (
     WorkspaceOption,
     no_workspace_screen,
@@ -130,7 +130,6 @@ __all__ = [
     "home_screen",
     "join_begin_action",
     "linked_account_screen",
-    "linked_no_workspace_screen",
     "manage_action",
     "more_action",
     "no_workspace_screen",

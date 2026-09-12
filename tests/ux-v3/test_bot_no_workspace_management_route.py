@@ -38,14 +38,6 @@ def _core_action_labels(screen) -> list[str]:
     return [action.label for row in screen.action_rows for action in row.actions]
 
 
-def _has_more_action(screen) -> bool:
-    return any(
-        action.intent is not None and action.intent.name == "more"
-        for row in screen.action_rows
-        for action in row.actions
-    )
-
-
 def _runtime_button_labels(screen) -> list[str]:
     return [button.text for row in screen.rows for button in row]
 
@@ -74,20 +66,16 @@ class NoWorkspaceManagementRouteTest(unittest.TestCase):
         self.state.close()
         self.tmp.cleanup()
 
-    def test_workspaceless_owner_onboarding_screen_offers_more_route(self):
-        self.backend.subjects_that_can_manage.add("owner")
-        result = self.app.home("owner")
-        self.assertEqual(result.screen.identifier, "onboarding.linked_no_workspace")
-        self.assertTrue(_has_more_action(result.screen))
-
-    def test_workspaceless_owner_route_actually_reaches_management_entry_point(self):
-        self.backend.subjects_that_can_manage.add("owner")
-        onboarding = self.app.home("owner")
-        self.assertTrue(_has_more_action(onboarding.screen))
-        self.assertEqual(_core_action_label(onboarding.screen, "more"), "➕ بیشتر")
-
-        more_result = dispatch_v3_intent(self.app, "owner", True, "more", {})
-        self.assertIn("⚙️ مدیریت", _runtime_button_labels(more_result.screen))
+    # The two tests that used to live here -- a workspace-less owner's
+    # onboarding screen offering an indirect route into more(), and that
+    # route actually reaching management -- covered a screen and a hop that
+    # no longer exist: home() renders the one shell directly for every
+    # viewer now (docs/product/01_FRONT_DOOR.md #11's correction), and an
+    # owner without a class reaches management straight from /start with no
+    # "more" indirection at all. That direct route is covered by
+    # test_bot_home_shell.py's test_owner_without_any_class_still_reaches_management_from_start.
+    # Deleted rather than weakened: their subject (the indirect route) is
+    # gone, not failing.
 
     def test_workspaceless_owner_screen_does_not_read_as_a_hard_stop(self):
         self.backend.subjects_that_can_manage.add("owner")
@@ -104,10 +92,10 @@ class NoWorkspaceManagementRouteTest(unittest.TestCase):
         self.assertIn("ابتدا یک فضای آموزشی فعال انتخاب کنید.", more_result.screen.text)
         self.assertNotIn("⚙️ مدیریت", _runtime_button_labels(more_result.screen))
 
-    def test_workspaceless_non_owner_sees_onboarding_screen_unchanged(self):
+    def test_workspaceless_non_owner_sees_the_shell_without_management(self):
         result = self.app.home("student")
-        self.assertEqual(result.screen.identifier, "onboarding.linked_no_workspace")
-        self.assertFalse(_has_more_action(result.screen))
+        self.assertEqual(result.screen.identifier, "home.active")
+        self.assertIsNone(_core_action_label(result.screen, "core.manage"))
         labels = _core_action_labels(result.screen)
         self.assertTrue(any("فضای آموزشی" in label for label in labels))
         self.assertTrue(any("حساب" in label for label in labels))
@@ -134,8 +122,8 @@ class NoWorkspaceManagementRouteTest(unittest.TestCase):
         self.backend.raise_on_overview = True
         with self.assertLogs(level="WARNING") as captured:
             result = self.app.home("owner")
-        self.assertEqual(result.screen.identifier, "onboarding.linked_no_workspace")
-        self.assertFalse(_has_more_action(result.screen))
+        self.assertEqual(result.screen.identifier, "home.active")
+        self.assertIsNone(_core_action_label(result.screen, "core.manage"))
         self.assertTrue(
             any("deployment_overview" in message for message in captured.output)
         )
