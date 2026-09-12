@@ -416,6 +416,14 @@ SQL);
  */
 final class ThrowingPdoStatement extends PDOStatement
 {
+    // PDO instantiates the statement class itself, and PDOStatement's own
+    // constructor is not accessible to subclasses on PHP 8 -- without an
+    // explicit one here PDO reports "User-supplied statement does not accept
+    // constructor arguments" the first time it prepares anything.
+    protected function __construct()
+    {
+    }
+
     private static bool $armed = false;
     private static string $match = '';
 
