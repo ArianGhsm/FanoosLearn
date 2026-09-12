@@ -16,14 +16,23 @@ ON DUPLICATE KEY UPDATE
 -- Granted to the cohort representative (the intended day-to-day approver)
 -- and to every role that already holds membership.manage, so an
 -- institution/faculty/program/workspace admin -- and platform-super-admin
--- -- can approve too. platform-super-admin is listed explicitly here rather
--- than left to 0001_generic_rbac.sql's cross-join: that cross-join runs
--- before this file in file order, so on a fresh database it would only pick
--- up this permission starting from a *second* full seed run, not the first
--- -- SeedRunner replays every seed file on every run with no ledger, and
--- CI's rerun check compares row counts after exactly one run against
--- exactly two, so that one-run lag is a genuine idempotency bug, not a
--- rounding error.
+-- -- can approve too.
+--
+-- platform-super-admin is listed explicitly rather than left to
+-- 0001_generic_rbac.sql's CROSS JOIN rbac_permissions, because that cross
+-- join already ran (and already finished granting platform-super-admin
+-- every permission that existed at that point) before this file runs in
+-- the same pass -- SeedRunner has no ledger and replays every file every
+-- call, but within one call each file still runs exactly once, in name
+-- order. Without this explicit grant, platform-super-admin would be short
+-- exactly this one permission after the first pass; a *second* pass would
+-- then have 0001's cross join pick it up (rbac_permissions now already
+-- contains it), silently adding one role_permissions row that the first
+-- pass didn't. That is precisely what CI's seed-rerun idempotency check
+-- catches: it runs seeds once, snapshots row counts, runs again, and
+-- diffs -- see tests/Integration/TenantIsolationTest.php's
+-- describeCountDiff(), which will name role_permissions and the +1 if this
+-- regresses.
 INSERT IGNORE INTO rbac_role_permissions (role_template_id, permission_id, created_at)
 SELECT roles.id, permissions.id, NOW(6)
 FROM rbac_role_templates roles
