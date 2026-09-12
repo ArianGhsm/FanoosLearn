@@ -32,8 +32,10 @@ from .ui_v3.core import (
     Screen as CoreScreen,
 )
 from .ui_v3.core.account import linked_account_screen, unlink_confirmation_screen, unlink_success_screen
-from .ui_v3.core.actions import workspace_page_action
-from .ui_v3.core.home import HomeSlot, SlotState, active_home_screen
+from .ui_v3.core.actions import join_begin_action, workspace_page_action
+from .ui_v3.core.contracts import ActionRow
+from .ui_v3.core.home import HomeSlot, SlotState
+from .ui_v3.core.legacy_shell import legacy_home_screen
 from .ui_v3.core.onboarding import linked_no_workspace_screen, unlinked_account_screen
 from .ui_v3.core.workspace import WorkspaceOption, no_workspace_screen, workspace_list_screen
 from .ui_v3.learning import (
@@ -105,21 +107,53 @@ class BotApplication(BaseBotApplication):
             )
         return tuple(options)
 
-    def _no_workspace_screen(self, subject: str) -> CoreScreen:
-        can_manage = False
-        if self.platform == "telegram" and self.config.deployment_target_key:
-            try:
-                overview = self.backend.deployment_overview(
-                    subject, self.config.deployment_target_key
-                )
-                can_manage = overview.get("can_manage_deployments") is True
-            except Exception as exc:
+    def _can_manage(self, subject: str) -> bool:
+        """Same probe application.py's more() uses: the bot only ever hides a
+        management row it already knows the backend will refuse, it never
+        decides authorization itself."""
+        if self.platform != "telegram" or not self.config.deployment_target_key:
+            return False
+        try:
+            overview = self.backend.deployment_overview(subject, self.config.deployment_target_key)
+            return overview.get("can_manage_deployments") is True
+        except Exception as exc:
+            logging.warning(
+                "legacy shell deployment_overview failed type=%s message=%s",
+                type(exc).__name__,
+                exc,
+            )
+            return False
+
+    def _can_approve_representative_requests(self, subject: str, workspace_id: str | None) -> bool:
+        """Same probe application.py's more() uses for the representative
+        approval-queue row: the row appears only when a real, workspace-scoped
+        list call already succeeded, never from a locally-cached role."""
+        if not workspace_id:
+            return False
+        try:
+            self.backend.representative_requests_list(self.platform, subject, workspace_id)
+            return True
+        except FanoosApiError as exc:
+            if exc.code not in ("forbidden", "workspace_forbidden"):
                 logging.warning(
-                    "no-workspace screen deployment_overview failed type=%s message=%s",
-                    type(exc).__name__,
-                    exc,
+                    "legacy shell representative_requests_list failed code=%s",
+                    exc.code,
                 )
-        return linked_no_workspace_screen(self.config.web_base_url, show_more=can_manage)
+            return False
+        except Exception as exc:
+            logging.warning(
+                "legacy shell representative_requests_list failed type=%s message=%s",
+                type(exc).__name__,
+                exc,
+            )
+            return False
+
+    def _no_workspace_screen(self, subject: str) -> CoreScreen:
+        screen = linked_no_workspace_screen(self.config.web_base_url, show_more=self._can_manage(subject))
+        # A linked user with no class yet has exactly one honest next step:
+        # the join wizard. Give it a reachable button here instead of leaving
+        # it behind the /join text command (docs/product/01_FRONT_DOOR.md #2).
+        return replace(screen, action_rows=screen.action_rows + (ActionRow((join_begin_action(),)),))
 
     def _unlinked_screen(self) -> CoreScreen:
         return unlinked_account_screen(self.config.web_base_url)
@@ -222,13 +256,14 @@ class BotApplication(BaseBotApplication):
                 # explicit user action and no first-workspace authority is invented.
                 return self._v3_result(self._workspace_screen(projection))
 
-            screen = active_home_screen(
+            screen = legacy_home_screen(
                 self._selected_workspace_label(projection, selected),
                 next_schedule=self._home_schedule_slot(subject, selected),
                 latest_announcement=self._home_announcement_slot(subject, selected),
+                is_owner=self._can_manage(subject),
+                show_representative_requests=self._can_approve_representative_requests(subject, selected),
+                notice=truncate_text(notice, 180) if notice else "",
             )
-            if notice:
-                screen = replace(screen, footer=f"✅ {truncate_text(notice, 180)}")
             return self._v3_result(screen)
         except Exception as exc:
             return self._onboarding_error(exc)
