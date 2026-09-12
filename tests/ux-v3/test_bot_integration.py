@@ -82,6 +82,9 @@ class BotV3IntegrationTest(unittest.TestCase):
         self.tmp.cleanup()
 
     def test_single_membership_is_not_implicitly_selected(self):
+        # docs/product/01_FRONT_DOOR.md #11's correction: one shell, not a
+        # separate workspace.list screen -- the picker is embedded content on
+        # home.active, not a redirect to a different screen identifier.
         backend = WorkspaceBackend([{"id": WORKSPACE, "name": "دانشکده دندان‌پزشکی"}])
         app = BotApplication(
             backend,
@@ -91,11 +94,22 @@ class BotV3IntegrationTest(unittest.TestCase):
         )
         result = app.home("student")
         self.assertIsInstance(result.screen, CoreScreen)
-        self.assertEqual(result.screen.identifier, "workspace.list")
+        self.assertEqual(result.screen.identifier, "home.active")
         self.assertEqual(backend.select_calls, [])
         self.assertIn("انتخاب", result.screen.intro)
+        pick_actions = [
+            action
+            for row in result.screen.action_rows
+            for action in row.actions
+            if action.intent is not None and action.intent.name == "ws.select"
+        ]
+        self.assertEqual(len(pick_actions), 1)
 
     def test_zero_workspace_keeps_full_product_shell(self):
+        # Same shell as every other viewer (docs/product/01_FRONT_DOOR.md
+        # #11's correction) -- no separate onboarding screen. The website
+        # link this screen used to carry was dropped for consistency: the
+        # selected-workspace shell never had one either.
         app = BotApplication(
             WorkspaceBackend([]),
             self.state,
@@ -103,12 +117,12 @@ class BotV3IntegrationTest(unittest.TestCase):
             ApplicationConfig("https://fanoos.test/", "prod"),
         )
         result = app.home("student")
-        self.assertEqual(result.screen.identifier, "onboarding.linked_no_workspace")
+        self.assertEqual(result.screen.identifier, "home.active")
         labels = [action.label for row in result.screen.action_rows for action in row.actions]
         self.assertTrue(any("فضای آموزشی" in label for label in labels))
         self.assertTrue(any("حساب" in label for label in labels))
         self.assertTrue(any("راهنما" in label for label in labels))
-        self.assertTrue(any("فانوس" in label for label in labels))
+        self.assertTrue(any("عضویت در کلاس" in label for label in labels))
 
     def test_long_v3_callback_becomes_subject_bound_route_ref(self):
         app = RouteApp(self.state)
