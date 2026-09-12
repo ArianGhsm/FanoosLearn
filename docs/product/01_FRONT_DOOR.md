@@ -410,10 +410,16 @@ contains a single stray `image_url` reference and no question-level image suppor
 legacy exam system is effectively text-only, so there is no proven implementation to
 translate here — this one gets designed.
 
-Why it matters more than it sounds: the subject is dentistry. Radiographs, clinical
-photographs and anatomical diagrams are not decoration in that field, they are frequently
-the question itself. A text-only exam engine cannot ask a large share of the questions these
-students are actually examined on.
+Why it matters more than it sounds: across the fields FANOOS is meant to serve, an image is
+frequently the question itself rather than decoration — a diagram, a radiograph, a circuit, a
+map, a specimen, a geometric figure, a passage of notation. A text-only exam engine simply
+cannot ask a large share of what students are actually examined on, in any of them.
+
+FANOOS is not a dentistry product. Dentistry 1402 is the first cohort to use it, not the
+scope of it, and this requirement is general: the exam engine takes images because exams
+take images, not because one cohort needs radiographs. `AGENTS.md` §1 applies to how
+features are justified as much as to how they are coded — reasoning from a single cohort is
+how a product quietly becomes single-tenant again.
 
 ### The part worth deciding early
 
