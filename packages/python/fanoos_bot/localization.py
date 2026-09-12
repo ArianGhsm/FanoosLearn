@@ -98,6 +98,17 @@ ERROR_MESSAGES = {
     "service_unavailable": "سرویس موقتاً پاسخ نمی‌دهد. دوباره امتحان کنید.",
     "upstream_unavailable": "سرویس موقتاً پاسخ نمی‌دهد. دوباره امتحان کنید.",
     "timeout": "سرویس موقتاً پاسخ نمی‌دهد. دوباره امتحان کنید.",
+    "onboarding_phone_invalid": "شماره موبایل معتبر نیست.",
+    "onboarding_otp_cooldown": "برای دریافت کد جدید کمی صبر کن.",
+    "onboarding_otp_rate_limited": "تعداد درخواست‌های کد تایید بیش از حد مجاز است؛ کمی بعد دوباره امتحان کن.",
+    "onboarding_otp_send_failed": "ارسال کد تایید انجام نشد. دوباره امتحان کن.",
+    "onboarding_challenge_not_found": "درخواست کد تایید پیدا نشد. دوباره شماره موبایل را بفرست.",
+    "onboarding_challenge_used": "این کد قبلاً استفاده شده است.",
+    "onboarding_challenge_expired": "این درخواست منقضی شده؛ دوباره شماره موبایل را بفرست.",
+    "onboarding_otp_code_expired": "کد تایید منقضی شده؛ یک کد جدید بگیر.",
+    "onboarding_otp_code_invalid": "کد تایید صحیح نیست.",
+    "onboarding_otp_attempts_exceeded": "تعداد تلاش‌های اشتباه بیش از حد مجاز شد؛ یک کد جدید بگیر.",
+    "onboarding_phone_not_verified": "ابتدا باید شماره موبایلت را تأیید کنی.",
 }
 
 

@@ -461,7 +461,7 @@ class BotApplication(BaseBotApplication):
                 )
             )
         except Exception as exc:
-            return self._error(exc)
+            return self._error(exc, subject=subject, gated_label="برنامه درس")
 
     def course_grades(self, subject: str, course_id: str):
         if not is_uuid(course_id):
@@ -482,7 +482,7 @@ class BotApplication(BaseBotApplication):
             items = [item for item in projection.get("items") or [] if isinstance(item, dict)]
             return self._v3_result(course_grade_detail_screen(course, items))
         except Exception as exc:
-            return self._error(exc)
+            return self._error(exc, subject=subject, gated_label="نمرات درس")
 
     def schedule_menu(self, subject: str):
         try:
@@ -491,7 +491,7 @@ class BotApplication(BaseBotApplication):
                 return blocked
             return self._v3_result(schedule_hub_screen())
         except Exception as exc:
-            return self._error(exc)
+            return self._error(exc, subject=subject, gated_label="برنامه کلاسی")
 
     def day_schedule(self, subject: str, offset: int):
         if offset not in (0, 1):
@@ -516,7 +516,7 @@ class BotApplication(BaseBotApplication):
                 )
             )
         except Exception as exc:
-            return self._error(exc)
+            return self._error(exc, subject=subject, gated_label="برنامه کلاسی")
 
     def week_schedule(self, subject: str, page: int = 0):
         try:
@@ -551,7 +551,7 @@ class BotApplication(BaseBotApplication):
                 )
             )
         except Exception as exc:
-            return self._error(exc)
+            return self._error(exc, subject=subject, gated_label="برنامه کلاسی")
 
     def schedule_event(self, subject: str, event_id: str):
         if not is_uuid(event_id):
@@ -569,7 +569,7 @@ class BotApplication(BaseBotApplication):
                 return self._expired_route()
             return self._v3_result(event_detail_screen(event, timezone_name=timezone_name))
         except Exception as exc:
-            return self._error(exc)
+            return self._error(exc, subject=subject, gated_label="برنامه کلاسی")
 
     def grades(
         self,
@@ -617,7 +617,7 @@ class BotApplication(BaseBotApplication):
                 )
             )
         except Exception as exc:
-            return self._error(exc)
+            return self._error(exc, subject=subject, gated_label="نمرات")
 
     def _announcements_projection(
         self,

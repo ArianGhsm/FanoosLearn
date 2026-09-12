@@ -299,7 +299,7 @@ class JsonBotApiTransport:
     def send_reply_keyboard(
         self,
         chat_id: str,
-        text: str,
+        html_text: str,
         keyboard_rows: tuple[tuple[dict[str, Any], ...], ...],
         *,
         placeholder: str = "",
@@ -310,6 +310,14 @@ class JsonBotApiTransport:
         the rest of the transport, which only ever emits inline keyboards
         (see _markup): the join wizard is the one flow the owner asked to keep
         as a native reply keyboard rather than ui_v3 inline screens.
+
+        `html_text` is always Telegram-HTML (<b>/<u>/<code>/<blockquote>), the
+        same style legacy's onboarding.py used. On Telegram it is sent as a
+        native Rich Message (the same mechanism send_screen already uses for
+        everything else), which supports that markup directly. Bale has no
+        HTML rich-message equivalent, so its plain-text single-asterisk-bold
+        convention (join_wizard.html_to_bale_text, matching
+        ui_v3/providers/bale.py's own _safe_bold) is used instead.
         """
         markup: dict[str, Any] = {
             "keyboard": [[dict(item) for item in row] for row in keyboard_rows],
@@ -318,6 +326,13 @@ class JsonBotApiTransport:
         }
         if placeholder:
             markup["input_field_placeholder"] = placeholder[:64]
+        if self.capabilities.platform == "telegram" and self.capabilities.supports_native_rich:
+            return self._call("sendRichMessage", self._rich_payload(
+                chat_id, {"html": html_text, "is_rtl": True}, reply_to=reply_to, markup=markup,
+            ))
+        from .join_wizard import html_to_bale_text
+
+        text = html_to_bale_text(html_text)
         return self._call("sendMessage", self._plain_payload(chat_id, text, reply_to=reply_to, markup=markup))
 
     def remove_reply_keyboard(self, chat_id: str, text: str = "⌨️") -> dict:

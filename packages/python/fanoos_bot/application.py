@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
+from . import join_wizard as jw
 from .api import FanoosApiError
 from .callbacks import CallbackCodec
 from .formatting import (
@@ -151,7 +152,16 @@ class BotApplication:
     def _safe_error_rows(self) -> tuple[tuple[Button, ...], ...]:
         return (self._home_row(),)
 
-    def _error(self, exc: Exception):
+    def _error(self, exc: Exception, *, subject: str | None = None, gated_label: str | None = None):
+        # The backend, not the bot, decides who may reach class-internal material
+        # (docs/product/01_FRONT_DOOR.md #9): a limited (self-joined, unapproved)
+        # member gets 'forbidden' from AccessGate the same as anyone else without
+        # the permission. When the caller tells us what was being attempted, turn
+        # that specific denial into an explanation and a one-tap upgrade request
+        # instead of the generic error screen -- the bot only ever hides a button
+        # it already knows is unavailable; it never grants what the backend denied.
+        if isinstance(exc, FanoosApiError) and exc.code == "forbidden" and subject and gated_label:
+            return self._gated_action_result(subject, gated_label)
         if isinstance(exc, FanoosApiError):
             return ActionResult(
                 error_screen(
@@ -163,6 +173,37 @@ class BotApplication:
             error_screen(
                 "سرویس موقتاً پاسخ نمی‌دهد. دوباره امتحان کنید.",
                 rows=self._safe_error_rows(),
+            )
+        )
+
+    def _gated_action_result(self, subject: str, action_label: str):
+        rows = ((Button("✋ درخواست تأیید نماینده", self._cb("joinupgrade")),),) + self._nav_rows()
+        return ActionResult(
+            warning_screen(
+                f"برای دسترسی به «{action_label}» باید نماینده کلاست تو رو تأیید کنه.",
+                title="🔒 نیاز به تأیید نماینده",
+                kind="join_upgrade_required",
+                rows=rows,
+            )
+        )
+
+    def join_wizard_request_upgrade(self, subject: str):
+        """Idempotent per (person, class); the backend, not this method,
+        enforces that only an active member may request this."""
+        _, selected, blocked = self._workspace_or_result(subject)
+        if blocked:
+            return blocked
+        try:
+            self.backend.onboarding_upgrade_request(self.platform, subject, selected)
+        except Exception as exc:
+            return self._error(exc)
+        return ActionResult(
+            semantic_screen(
+                "✋ درخواست تأیید",
+                "join_upgrade_requested",
+                severity="success",
+                intro="درخواستت برای نماینده کلاس ثبت شد؛ وقتی تأییدت کنه، دسترسی کاملت فعال می‌شه.",
+                rows=self._nav_rows(),
             )
         )
 
@@ -648,7 +689,7 @@ class BotApplication:
                 )
             )
         except Exception as exc:
-            return self._error(exc)
+            return self._error(exc, subject=subject, gated_label="برنامه درس")
 
     def course_resources(self, subject: str, course_id: str):
         try:
@@ -710,7 +751,7 @@ class BotApplication:
                 )
             )
         except Exception as exc:
-            return self._error(exc)
+            return self._error(exc, subject=subject, gated_label="نمرات درس")
 
     def course_announcements(self, subject: str, course_id: str):
         return self._course_gap(
@@ -831,7 +872,7 @@ class BotApplication:
                 )
             )
         except Exception as exc:
-            return self._error(exc)
+            return self._error(exc, subject=subject, gated_label="برنامه کلاسی")
 
     def week_schedule(self, subject: str, cursor: str | None = None, history: list[str] | None = None):
         try:
@@ -887,7 +928,7 @@ class BotApplication:
                 )
             )
         except Exception as exc:
-            return self._error(exc)
+            return self._error(exc, subject=subject, gated_label="برنامه کلاسی")
 
     @staticmethod
     def _grade_lines(items, *, include_course: bool = True) -> tuple[str, ...]:
@@ -958,7 +999,7 @@ class BotApplication:
                 )
             )
         except Exception as exc:
-            return self._error(exc)
+            return self._error(exc, subject=subject, gated_label="نمرات")
 
     def announcements(
         self,
@@ -2113,6 +2154,331 @@ class BotApplication:
             )
         )
 
+    # -- Student join wizard -------------------------------------------------
+    # Reply-keyboard exception to the rest of the bot (owner's explicit
+    # request); see join_wizard.py's module docstring for the three
+    # deliberate differences from legacy/bot/dent_bot/onboarding.py. Methods
+    # here return jw.RawKeyboardSend / jw.RawKeyboardHandoff / None (not
+    # ActionResult) -- the runtime special-cases these to call botapi's
+    # reply-keyboard methods directly, bypassing the ui_v3 Screen/deliver()
+    # pipeline, which is structurally inline-keyboard-only.
+
+    def _join_wizard_azad(self, answers: dict) -> bool:
+        return answers.get("institution_type") == "azad_university"
+
+    def _join_wizard_next_step(self, step: str, azad: bool) -> str:
+        index = jw.STEP_ORDER.index(step)
+        next_step = jw.STEP_ORDER[index + 1]
+        if next_step == "course-type" and azad:
+            return jw.STEP_ORDER[index + 2]
+        return next_step
+
+    def _join_wizard_cancelled_result(self):
+        return ActionResult(
+            semantic_screen(
+                "عضویت در کلاس",
+                "join_wizard_cancelled",
+                intro="فرآیند عضویت لغو شد. اطلاعات واردشده ذخیره نشد.",
+                rows=self._nav_rows(),
+            )
+        )
+
+    def join_wizard_begin(self, subject: str, private: bool):
+        if not private:
+            return jw.RawKeyboardHandoff(
+                handoff=ActionResult(
+                    warning_screen(
+                        "برای عضویت در کلاس، این گفت‌وگو را به‌صورت خصوصی با ربات ادامه بده.",
+                        title="عضویت در کلاس",
+                        kind="join_wizard_private_required",
+                        rows=self._nav_rows(),
+                    )
+                )
+            )
+        first_step = jw.STEP_ORDER[0]
+        self.state.start_join_wizard(self.platform, subject, first_step)
+        return self._join_wizard_render(subject, first_step, [], {})
+
+    def join_wizard_text(self, subject: str, text: str, private: bool = True):
+        """Advance an in-progress join wizard with free text (including a
+        reply-keyboard button's label, which arrives as ordinary text), or
+        return None. None means "no active wizard for this subject": the
+        caller (bot runtime) should fall through to normal dispatch."""
+        if not private:
+            return None
+        wizard = self.state.join_wizard(self.platform, subject)
+        if wizard is None:
+            return None
+        step = wizard["step"]
+        history = list(wizard["history"])
+        answers = dict(wizard["answers"])
+        raw = (text or "").strip()
+
+        if raw == jw.CANCEL:
+            self.state.cancel_join_wizard(self.platform, subject)
+            return jw.RawKeyboardHandoff(handoff=self._join_wizard_cancelled_result())
+        if raw == jw.BACK_STEP or (step == "otp" and raw == jw.CHANGE_PHONE):
+            return self._join_wizard_back(subject, history, answers)
+        if step == "review" and raw == jw.RESTART_PROFILE:
+            first_step = jw.STEP_ORDER[0]
+            self.state.start_join_wizard(self.platform, subject, first_step)
+            return self._join_wizard_render(subject, first_step, [], {})
+
+        return self._join_wizard_handle_input(subject, step, history, answers, raw)
+
+    def join_wizard_contact(self, subject: str, phone_number: str, private: bool = True):
+        """A Telegram/Bale contact-share message. Only meaningful at the
+        'contact' step; returns None otherwise so the runtime's normal
+        dispatch is unaffected (same None-means-inactive contract as
+        join_wizard_text)."""
+        if not private:
+            return None
+        wizard = self.state.join_wizard(self.platform, subject)
+        if wizard is None or wizard["step"] != "contact":
+            return None
+        answers = dict(wizard["answers"])
+        try:
+            issued = self.backend.onboarding_otp_request(self.platform, subject, str(phone_number or ""))
+        except Exception as exc:
+            return jw.RawKeyboardHandoff(handoff=self._error(exc))
+        answers["phone_masked"] = str(issued.get("phone_masked") or "")
+        answers["challenge_token"] = str(issued.get("challenge_token") or "")
+        new_history = wizard["history"] + ["contact"]
+        self.state.advance_join_wizard(self.platform, subject, "otp", new_history, answers)
+        return jw.RawKeyboardSend(jw.otp_screen(answers["phone_masked"]))
+
+    def _join_wizard_back(self, subject: str, history: list[str], answers: dict):
+        if not history:
+            self.state.cancel_join_wizard(self.platform, subject)
+            return jw.RawKeyboardHandoff(handoff=self._join_wizard_cancelled_result())
+        previous_step = history[-1]
+        new_history = history[:-1]
+        answers = dict(answers)
+        answers.pop("_cursors", None)
+        answers.pop("_page", None)
+        self.state.advance_join_wizard(self.platform, subject, previous_step, new_history, answers)
+        return self._join_wizard_render(subject, previous_step, new_history, answers)
+
+    def _join_wizard_go_forward(self, subject: str, step: str, history: list[str], answers: dict):
+        azad = self._join_wizard_azad(answers)
+        next_step = self._join_wizard_next_step(step, azad)
+        new_history = history + [step]
+        answers = dict(answers)
+        answers.pop("_cursors", None)
+        answers.pop("_page", None)
+        self.state.advance_join_wizard(self.platform, subject, next_step, new_history, answers)
+        return self._join_wizard_render(subject, next_step, new_history, answers)
+
+    def _join_wizard_render(self, subject: str, step: str, history: list[str], answers: dict):
+        if step in ("province", "institution", "faculty", "program"):
+            try:
+                page, items = self._join_wizard_fetch_page(step, answers, page_delta=0)
+            except Exception as exc:
+                return jw.RawKeyboardHandoff(handoff=self._error(exc))
+            return self._join_wizard_render_list_result(step, page, items, answers)
+        azad = self._join_wizard_azad(answers)
+        if step == "first-name":
+            return jw.RawKeyboardSend(jw.first_name_screen())
+        if step == "last-name":
+            return jw.RawKeyboardSend(jw.last_name_screen())
+        if step == "entry-year":
+            return jw.RawKeyboardSend(jw.entry_year_screen(azad=azad))
+        if step == "entry-term":
+            return jw.RawKeyboardSend(jw.entry_term_screen(azad=azad))
+        if step == "course-type":
+            return jw.RawKeyboardSend(jw.course_type_screen())
+        if step == "student-number":
+            return jw.RawKeyboardSend(jw.student_number_screen(azad=azad))
+        if step == "review":
+            return jw.RawKeyboardSend(jw.review_screen(answers, azad=azad))
+        if step == "contact":
+            return jw.RawKeyboardSend(jw.contact_screen())
+        if step == "otp":
+            return jw.RawKeyboardSend(jw.otp_screen(str(answers.get("phone_masked") or "")))
+        if step == "awaiting-creation-decision":
+            return jw.RawKeyboardSend(jw.class_not_found_screen())
+        return jw.RawKeyboardHandoff(
+            handoff=ActionResult(
+                warning_screen("این مرحله دیگر در دسترس نیست.", kind="join_wizard_expired", rows=self._nav_rows())
+            )
+        )
+
+    def _join_wizard_fetch_page(self, step: str, answers: dict, *, page_delta: int):
+        cursors = list(answers.get("_cursors") or [None])
+        page_index = max(0, int(answers.get("_page") or 0) + page_delta)
+        if page_index >= len(cursors):
+            page_index = len(cursors) - 1
+        cursor = cursors[page_index]
+        if step == "province":
+            result = self.backend.directory_provinces(self.platform, jw.PAGE_SIZE, cursor)
+        elif step == "institution":
+            result = self.backend.directory_institutions(self.platform, answers.get("province_id", ""), jw.PAGE_SIZE, cursor)
+        elif step == "faculty":
+            result = self.backend.directory_faculties(self.platform, answers.get("institution_id", ""), jw.PAGE_SIZE, cursor)
+        elif step == "program":
+            result = self.backend.directory_programs(self.platform, answers.get("faculty_id", ""), jw.PAGE_SIZE, cursor)
+        else:
+            raise ValueError(f"not a listing step: {step}")
+        items = list(result.get("items") or [])
+        next_cursor = self._clean_cursor(result.get("next_cursor"))
+        if next_cursor and len(cursors) == page_index + 1:
+            cursors = cursors + [next_cursor]
+        answers["_cursors"] = cursors
+        answers["_page"] = page_index
+        page = jw.ListPage(items=items, page_index=page_index, has_previous=page_index > 0, has_next=next_cursor is not None)
+        return page, items
+
+    def _join_wizard_render_list_result(self, step: str, page, items: list, answers: dict):
+        if not items and page.page_index == 0:
+            messages = {
+                "faculty": f"برای {answers.get('institution_name') or 'این دانشگاه'} هنوز دانشکده‌ای ثبت نشده.",
+                "program": f"برای {answers.get('faculty_name') or 'این دانشکده'} هنوز رشته‌ای ثبت نشده.",
+            }
+            return jw.RawKeyboardSend(jw.empty_list_screen(messages.get(step, "موردی برای انتخاب پیدا نشد.")))
+        if step == "province":
+            return jw.RawKeyboardSend(jw.province_screen(page))
+        if step == "institution":
+            return jw.RawKeyboardSend(jw.institution_screen(page, str(answers.get("province_name") or "")))
+        azad = self._join_wizard_azad(answers)
+        if step == "faculty":
+            return jw.RawKeyboardSend(jw.faculty_screen(page, str(answers.get("institution_name") or ""), azad=azad))
+        return jw.RawKeyboardSend(jw.program_screen(page, str(answers.get("faculty_name") or ""), azad=azad))
+
+    def _join_wizard_handle_list_input(self, subject: str, step: str, history: list[str], answers: dict, raw: str):
+        delta = 1 if raw == jw.NEXT_PAGE else (-1 if raw == jw.PREVIOUS_PAGE else 0)
+        try:
+            page, items = self._join_wizard_fetch_page(step, answers, page_delta=delta)
+        except Exception as exc:
+            return jw.RawKeyboardHandoff(handoff=self._error(exc))
+        if delta != 0:
+            self.state.advance_join_wizard(self.platform, subject, step, history, answers)
+            return self._join_wizard_render_list_result(step, page, items, answers)
+        matched = next((item for item in items if str(item.get("name")) == raw), None)
+        if matched is None:
+            self.state.advance_join_wizard(self.platform, subject, step, history, answers)
+            return self._join_wizard_render_list_result(step, page, items, answers)
+        if step == "province":
+            answers["province_id"] = str(matched.get("id") or "")
+            answers["province_name"] = str(matched.get("name") or "")
+        elif step == "institution":
+            answers["institution_id"] = str(matched.get("id") or "")
+            answers["institution_name"] = str(matched.get("name") or "")
+            answers["institution_type"] = str(matched.get("institution_type") or "")
+        elif step == "faculty":
+            answers["faculty_id"] = str(matched.get("id") or "")
+            answers["faculty_name"] = str(matched.get("name") or "")
+        elif step == "program":
+            answers["program_id"] = str(matched.get("id") or "")
+            answers["program_name"] = str(matched.get("name") or "")
+        return self._join_wizard_go_forward(subject, step, history, answers)
+
+    def _join_wizard_handle_input(self, subject: str, step: str, history: list[str], answers: dict, raw: str):
+        if step in ("province", "institution", "faculty", "program"):
+            return self._join_wizard_handle_list_input(subject, step, history, answers, raw)
+        if step == "first-name":
+            value = jw.clean_text(raw, 64)
+            if len(value) < 2:
+                return jw.RawKeyboardSend(jw.first_name_screen())
+            answers["first_name"] = value
+            return self._join_wizard_go_forward(subject, step, history, answers)
+        if step == "last-name":
+            value = jw.clean_text(raw, 64)
+            if len(value) < 2:
+                return jw.RawKeyboardSend(jw.last_name_screen())
+            answers["last_name"] = value
+            return self._join_wizard_go_forward(subject, step, history, answers)
+        if step == "entry-year":
+            if raw not in jw.ENTRY_YEARS:
+                return self._join_wizard_render(subject, step, history, answers)
+            answers["entry_year_fa"] = raw
+            answers["entry_year"] = int(jw.normalize_digits(raw))
+            return self._join_wizard_go_forward(subject, step, history, answers)
+        if step == "entry-term":
+            if raw not in jw.ENTRY_TERMS:
+                return self._join_wizard_render(subject, step, history, answers)
+            answers["entry_term"] = raw
+            return self._join_wizard_go_forward(subject, step, history, answers)
+        if step == "course-type":
+            if raw not in jw.COURSE_TYPES:
+                return self._join_wizard_render(subject, step, history, answers)
+            answers["course_type"] = raw
+            return self._join_wizard_go_forward(subject, step, history, answers)
+        if step == "student-number":
+            if raw == jw.SKIP_STUDENT_NUMBER:
+                answers["student_number"] = ""
+                return self._join_wizard_go_forward(subject, step, history, answers)
+            number = jw.normalize_student_number(raw)
+            if not re.fullmatch(r"[0-9]{5,20}", number):
+                return jw.RawKeyboardSend(jw.student_number_screen(azad=self._join_wizard_azad(answers)))
+            answers["student_number"] = number
+            return self._join_wizard_go_forward(subject, step, history, answers)
+        if step == "review":
+            if raw == jw.CONFIRM_PROFILE:
+                return self._join_wizard_go_forward(subject, step, history, answers)
+            return self._join_wizard_render(subject, step, history, answers)
+        if step == "contact":
+            # A typed phone number is not proof of ownership; only the
+            # request_contact button (join_wizard_contact) starts the OTP.
+            return self._join_wizard_render(subject, step, history, answers)
+        if step == "otp":
+            return self._join_wizard_handle_otp_text(subject, history, answers, raw)
+        if step == "awaiting-creation-decision":
+            return self._join_wizard_handle_creation_decision(subject, answers, raw)
+        return self._join_wizard_render(subject, step, history, answers)
+
+    def _join_wizard_handle_otp_text(self, subject: str, history: list[str], answers: dict, raw: str):
+        if raw == jw.RESEND_OTP:
+            try:
+                issued = self.backend.onboarding_otp_resend(self.platform, subject, str(answers.get("challenge_token") or ""))
+            except FanoosApiError as exc:
+                return jw.RawKeyboardSend(jw.otp_screen(str(answers.get("phone_masked") or ""), error=error_message(exc.code, exc.status)))
+            except Exception as exc:
+                return jw.RawKeyboardHandoff(handoff=self._error(exc))
+            answers["challenge_token"] = str(issued.get("challenge_token") or "")
+            answers["phone_masked"] = str(issued.get("phone_masked") or "")
+            self.state.advance_join_wizard(self.platform, subject, "otp", history, answers)
+            return jw.RawKeyboardSend(jw.otp_screen(answers["phone_masked"]))
+        code = jw.normalize_digits(raw)
+        if not re.fullmatch(r"[0-9]{4,8}", code):
+            return jw.RawKeyboardSend(jw.otp_screen(str(answers.get("phone_masked") or "")))
+        try:
+            self.backend.onboarding_otp_verify(self.platform, subject, str(answers.get("challenge_token") or ""), code)
+        except FanoosApiError as exc:
+            # OnboardingPhoneVerificationService enforces expiry/attempts/used-code
+            # rules; surface exactly what it says rather than masking it behind a
+            # generic failure (wrong code vs. attempts exceeded are different facts).
+            return jw.RawKeyboardSend(jw.otp_screen(str(answers.get("phone_masked") or ""), error=error_message(exc.code, exc.status)))
+        except Exception as exc:
+            return jw.RawKeyboardHandoff(handoff=self._error(exc))
+        return self._join_wizard_finish(subject, history, answers)
+
+    def _join_wizard_finish(self, subject: str, history: list[str], answers: dict):
+        program_id = str(answers.get("program_id") or "")
+        entry_year = int(answers.get("entry_year") or 0)
+        try:
+            result = self.backend.onboarding_join(self.platform, subject, program_id, entry_year)
+        except Exception as exc:
+            return jw.RawKeyboardHandoff(handoff=self._error(exc))
+        if result.get("status") == "joined":
+            self.state.cancel_join_wizard(self.platform, subject)
+            workspace_name = str(result.get("workspace_name") or "")
+            return jw.RawKeyboardHandoff(handoff=self.home(subject, notice=jw.success_notice(workspace_name)))
+        new_history = history + ["otp"]
+        self.state.advance_join_wizard(self.platform, subject, "awaiting-creation-decision", new_history, answers)
+        return jw.RawKeyboardSend(jw.class_not_found_screen())
+
+    def _join_wizard_handle_creation_decision(self, subject: str, answers: dict, raw: str):
+        if raw == jw.REQUEST_CLASS_CREATION:
+            program_id = str(answers.get("program_id") or "")
+            entry_year = int(answers.get("entry_year") or 0)
+            try:
+                self.backend.onboarding_class_creation_request(self.platform, subject, program_id, entry_year)
+            except Exception as exc:
+                return jw.RawKeyboardHandoff(handoff=self._error(exc))
+            self.state.cancel_join_wizard(self.platform, subject)
+            return jw.RawKeyboardHandoff(handoff=self.home(subject, notice=jw.class_creation_recorded_notice()))
+        return jw.RawKeyboardSend(jw.class_not_found_screen())
+
     def callback(self, subject: str, private: bool, value: str):
         try:
             action, ref = CallbackCodec.decode(value)
@@ -2127,6 +2493,8 @@ class BotApplication:
 
         if action == "home":
             return self.home(subject)
+        if action == "joinupgrade":
+            return self.join_wizard_request_upgrade(subject)
         if action == "more":
             return self.more(subject, private)
         if action == "courses":
