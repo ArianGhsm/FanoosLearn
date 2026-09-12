@@ -9,6 +9,7 @@ from fanoos_bot.activity import ActivityController
 from fanoos_bot.application import ApplicationConfig, BotApplication
 from fanoos_bot.botapi import JsonBotApiTransport
 from fanoos_bot.capabilities import BALE, TELEGRAM
+from fanoos_bot.integrated_application import BotApplication as IntegratedBotApplication
 from fanoos_bot.runtime import BotRuntime, UpdateContext
 from fanoos_bot.state import LocalState
 
@@ -110,6 +111,39 @@ class ReplyKeyboardRuntimeTest(unittest.TestCase):
             remove_call = next(payload for method, payload in transport.calls if method == "sendMessage")
             self.assertTrue(remove_call["reply_markup"]["remove_keyboard"])
             self.assertIn("deleteMessage", methods)
+        finally:
+            state.close()
+            tmp.cleanup()
+
+
+class LegacyShellJoinButtonTest(unittest.TestCase):
+    """The legacy shell gives the join wizard a real inline-keyboard button
+    (docs/product/01_FRONT_DOOR.md #2/#3) instead of leaving it behind the
+    /join text command. An inline callback_query result is structurally
+    different from a text message, so this pins that handle_callback (not
+    just handle_message) also recognizes a RawKeyboardSend/RawKeyboardHandoff
+    and routes it through _deliver_raw_wizard_result, on
+    integrated_application.BotApplication -- the class the runtime actually
+    constructs."""
+
+    def _runtime(self):
+        tmp = tempfile.TemporaryDirectory()
+        state = LocalState(Path(tmp.name) / "state.sqlite3")
+        backend = MinimalDirectoryBackend()
+        app = IntegratedBotApplication(backend, state, TELEGRAM.platform, ApplicationConfig("https://fanoos.test/"))
+        transport = RecordingTransport(TELEGRAM)
+        runtime = BotRuntime(TELEGRAM.platform, transport, app, state, activity=ActivityController(transport, enabled=False))
+        return tmp, state, runtime, transport
+
+    def test_join_button_callback_sends_reply_keyboard_like_slash_join(self):
+        tmp, state, runtime, transport = self._runtime()
+        try:
+            runtime.handle_callback(UpdateContext("student", "42", True), "core.join.begin")
+            methods = [method for method, _ in transport.calls]
+            self.assertIn("sendRichMessage", methods)
+            method, payload = next((m, p) for m, p in transport.calls if m == "sendRichMessage")
+            self.assertIn("keyboard", payload["reply_markup"])
+            self.assertNotIn("inline_keyboard", payload["reply_markup"])
         finally:
             state.close()
             tmp.cleanup()

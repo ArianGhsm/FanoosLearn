@@ -127,7 +127,11 @@ class BotCoreUxContractTest(unittest.TestCase):
             self.assertIn("فیزیولوژی", text)
             self.assertIn("ثبت‌نام آزمون میان‌ترم", text)
             labels = [action.label for row in screen.action_rows for action in row.actions]
-            for required in ("درس‌ها", "برنامه", "نمرات", "اعلان‌ها", "منابع", "آزمون‌ها", "خرید و دسترسی", "حساب", "بیشتر"):
+            # The legacy shell (docs/product/01_FRONT_DOOR.md) puts these
+            # directly on home rather than nested under "بیشتر" -- "امروز"
+            # replaces the generic schedule-hub shortcut with legacy's own
+            # "📅 امروز" quick-access to today's schedule.
+            for required in ("درس‌ها", "امروز", "نمرات", "اعلان‌ها", "منابع", "آزمون‌ها", "خرید و دسترسی", "حساب", "فضای آموزشی", "راهنما"):
                 self.assertTrue(any(required in label for label in labels), required)
             self.assertLessEqual(len(screen.action_rows), 10)
         finally:

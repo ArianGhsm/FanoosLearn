@@ -23,6 +23,10 @@ ACTION_WORKSPACE_PAGE = "core.workspace.page"
 ACTION_ACCOUNT = "core.account"
 ACTION_ACCOUNT_UNLINK_REQUEST = "core.account.unlink.request"
 ACTION_ACCOUNT_UNLINK_CONFIRM = "core.account.unlink.confirm"
+ACTION_SCHEDULE_TODAY = "core.schedule.today"
+ACTION_JOIN_BEGIN = "core.join.begin"
+ACTION_MANAGE = "core.manage"
+ACTION_REP_REQUESTS = "core.rep.requests"
 
 
 def _callback(identifier: str, label: str, name: str, *, params=(), destructive: bool = False) -> Action:
@@ -127,6 +131,25 @@ def unlink_confirm_action() -> Action:
         "acct.unlink.do",
         destructive=True,
     )
+
+
+def schedule_today_action() -> Action:
+    """Reuses the existing academic.schedule.today intent (already registered
+    for the schedule hub) so the legacy shell's "امروز" shortcut goes through
+    the same day_schedule() path rather than a second one."""
+    return _callback(ACTION_SCHEDULE_TODAY, "📅 امروز", "academic.schedule.today")
+
+
+def join_begin_action() -> Action:
+    return _callback(ACTION_JOIN_BEGIN, "🎓 عضویت در کلاس جدید", "core.join.begin")
+
+
+def manage_action() -> Action:
+    return _callback(ACTION_MANAGE, "🛠 مدیریت", "core.manage")
+
+
+def representative_requests_action() -> Action:
+    return _callback(ACTION_REP_REQUESTS, "📋 درخواست‌های عضویت", "core.rep.requests")
 
 
 def home_row() -> ActionRow:

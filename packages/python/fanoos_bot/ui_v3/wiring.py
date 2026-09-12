@@ -45,6 +45,12 @@ INTENT_REGISTRY: dict[str, str] = {
     "account": "account",
     "acct.unlink.ask": "unlink_ask",
     "acct.unlink.do": "unlink_do",
+    # legacy-shell: the ported home menu's owner/representative/join rows.
+    # Targets are legacy application.py methods reused as-is; the backend,
+    # not this registry, decides whether the caller may actually use them.
+    "core.join.begin": "join_begin",
+    "core.manage": "manage",
+    "core.rep.requests": "rep_requests",
     # bot-02/academic
     "academic.courses.page": "courses_page",
     "academic.course.open": "course_open",
@@ -362,6 +368,9 @@ def dispatch_v3_intent(app: Any, subject: str, private: bool, name: str, params:
         if resource: return app.protected_resource(subject, resource)
         return app.resources(subject)
     if target == "payments": return app.payments(subject)
+    if target == "join_begin": return app.join_wizard_begin(subject, private)
+    if target == "manage": return app.management(subject, private)
+    if target == "rep_requests": return app.representative_requests(subject)
     # Page/filter intents without an opaque integration route recover safely to
     # their canonical list rather than trusting client cursor/page values.
     if target == "courses_page": return app.courses(subject)

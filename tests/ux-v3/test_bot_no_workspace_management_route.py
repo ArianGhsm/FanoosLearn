@@ -113,15 +113,21 @@ class NoWorkspaceManagementRouteTest(unittest.TestCase):
         self.assertTrue(any("حساب" in label for label in labels))
 
     def test_owner_with_selected_workspace_still_reaches_management_via_active_home(self):
+        # The legacy shell (docs/product/01_FRONT_DOOR.md) puts management
+        # directly on the home menu -- "🛠 مدیریت ربات" was never behind a
+        # "more" hop in the legacy bot either -- rather than nested one level
+        # under "بیشتر" the way bot-01's original active_home_screen had it.
         self.backend.subjects_that_can_manage.add("owner")
         self.backend.subjects_with_workspace.add("owner")
         home = self.app.home("owner")
         self.assertEqual(home.screen.identifier, "home.active")
-        self.assertTrue(_has_more_action(home.screen))
-        self.assertEqual(_core_action_label(home.screen, "more"), "➕ بیشتر")
+        self.assertEqual(_core_action_label(home.screen, "core.manage"), "🛠 مدیریت")
 
-        more_result = dispatch_v3_intent(self.app, "owner", True, "more", {})
-        self.assertIn("⚙️ مدیریت", _runtime_button_labels(more_result.screen))
+        manage_result = dispatch_v3_intent(self.app, "owner", True, "core.manage", {})
+        self.assertEqual(manage_result.screen.presentation.semantic_kind, "management")
+        labels = _runtime_button_labels(manage_result.screen)
+        self.assertIn("➕ ساخت کلاس", labels)
+        self.assertIn("➕ انتصاب نماینده", labels)
 
     def test_deployment_overview_failure_falls_back_without_crash_and_is_logged(self):
         self.backend.subjects_that_can_manage.add("owner")

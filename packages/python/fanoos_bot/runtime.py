@@ -232,6 +232,11 @@ class BotRuntime:
                 return prior
         with self.activity.operation(ctx.chat_id, private=ctx.private):
             result = self.app.callback(ctx.subject, ctx.private, value)
+            if isinstance(result, (RawKeyboardSend, RawKeyboardHandoff)):
+                # The legacy shell's join-wizard button is an inline-keyboard
+                # action whose destination is the reply-keyboard wizard; route
+                # it the same way handle_message routes /join.
+                return self._deliver_raw_wizard_result(ctx, result)
             try:
                 result = self._prepare_result(ctx, result)
             except Exception as exc:
