@@ -228,7 +228,11 @@ SQL)->execute(['actor' => $actorUserId, 'id' => $requestId]);
 
         return Transaction::run($this->database, function () use ($actorUserId, $workspaceId, $requestId): array {
             $request = $this->lockUpgradeRequest($workspaceId, $requestId);
-            if ($request['status'] === 'declined') {
+            // The row's own status enum (migrations/0014) spells this
+            // 'rejected'; the public status word here stays 'declined' to
+            // match declineUpgradeRequest()'s own name and the
+            // /representatives/requests/decline contract.
+            if ($request['status'] === 'rejected') {
                 return ['status' => 'declined', 'already' => true];
             }
             if ($request['status'] !== 'pending') {
@@ -237,7 +241,7 @@ SQL)->execute(['actor' => $actorUserId, 'id' => $requestId]);
 
             $this->database->prepare(<<<'SQL'
 UPDATE tenant_workspace_role_upgrade_requests
-SET status = 'declined', resolved_at = UTC_TIMESTAMP(6), resolved_by_user_id = :actor, updated_at = UTC_TIMESTAMP(6)
+SET status = 'rejected', resolved_at = UTC_TIMESTAMP(6), resolved_by_user_id = :actor, updated_at = UTC_TIMESTAMP(6)
 WHERE id = :id
 SQL)->execute(['actor' => $actorUserId, 'id' => $requestId]);
 
