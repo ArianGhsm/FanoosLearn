@@ -60,7 +60,7 @@ def home_screen(
     Provenance: this layout and wording is ported from the legacy Dent bot's
     live home screen (legacy/bot/dent_bot/bot_home_classops_ux_v2.py's
     canonical_home_screen -- not classops_ux_v3.py, which never held a home
-    screen). "دنت‌یار | ورودی ۱۴۰۲" becomes "دنت‌یار | {selected workspace}":
+    screen). "دنت‌یار | ورودی ۱۴۰۲" becomes "فانوس | {selected workspace}":
     the cohort year was the only hardcoded part, everything else is reused
     verbatim. Rows are wired to whatever FANOOS can already serve for real
     (courses, today's schedule, grades, assessments, resources, purchase,
@@ -93,7 +93,7 @@ def home_screen(
 
     return Screen(
         identifier="home.active",
-        title=f"دنت‌یار | {workspace_label}",
+        title=f"فانوس | {workspace_label}",
         intro=intro,
         context=Context("فضای آموزشی", workspace_label),
         sections=(
