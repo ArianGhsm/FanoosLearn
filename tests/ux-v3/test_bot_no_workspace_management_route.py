@@ -112,11 +112,11 @@ class NoWorkspaceManagementRouteTest(unittest.TestCase):
         self.assertTrue(any("فضای آموزشی" in label for label in labels))
         self.assertTrue(any("حساب" in label for label in labels))
 
-    def test_owner_with_selected_workspace_still_reaches_management_via_active_home(self):
-        # The legacy shell (docs/product/01_FRONT_DOOR.md) puts management
+    def test_owner_with_selected_workspace_still_reaches_management_via_home(self):
+        # The bot's shell (docs/product/01_FRONT_DOOR.md) puts management
         # directly on the home menu -- "🛠 مدیریت ربات" was never behind a
         # "more" hop in the legacy bot either -- rather than nested one level
-        # under "بیشتر" the way bot-01's original active_home_screen had it.
+        # under "بیشتر" the way bot-01's original home screen had it.
         self.backend.subjects_that_can_manage.add("owner")
         self.backend.subjects_with_workspace.add("owner")
         home = self.app.home("owner")

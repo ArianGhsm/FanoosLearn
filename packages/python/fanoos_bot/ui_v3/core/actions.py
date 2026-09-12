@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .contracts import Action, ActionRow, CallbackIntent
+from .contracts import Action, CallbackIntent
 
 
 ACTION_HOME = "core.home"
@@ -135,8 +135,8 @@ def unlink_confirm_action() -> Action:
 
 def schedule_today_action() -> Action:
     """Reuses the existing academic.schedule.today intent (already registered
-    for the schedule hub) so the legacy shell's "امروز" shortcut goes through
-    the same day_schedule() path rather than a second one."""
+    for the schedule hub) so the shell's "امروز" shortcut goes through the
+    same day_schedule() path rather than a second one."""
     return _callback(ACTION_SCHEDULE_TODAY, "📅 امروز", "academic.schedule.today")
 
 
@@ -152,9 +152,3 @@ def representative_requests_action() -> Action:
     return _callback(ACTION_REP_REQUESTS, "📋 درخواست‌های عضویت", "core.rep.requests")
 
 
-def home_row() -> ActionRow:
-    return ActionRow((home_action(),))
-
-
-def back_home_row() -> ActionRow:
-    return ActionRow((back_action(), home_action()))

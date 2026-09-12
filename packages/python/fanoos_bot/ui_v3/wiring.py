@@ -45,9 +45,9 @@ INTENT_REGISTRY: dict[str, str] = {
     "account": "account",
     "acct.unlink.ask": "unlink_ask",
     "acct.unlink.do": "unlink_do",
-    # legacy-shell: the ported home menu's owner/representative/join rows.
-    # Targets are legacy application.py methods reused as-is; the backend,
-    # not this registry, decides whether the caller may actually use them.
+    # home shell: the ported home menu's owner/representative/join rows.
+    # Targets are application.py methods reused as-is; the backend, not
+    # this registry, decides whether the caller may actually use them.
     "core.join.begin": "join_begin",
     "core.manage": "manage",
     "core.rep.requests": "rep_requests",

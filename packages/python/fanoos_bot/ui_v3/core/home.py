@@ -9,16 +9,19 @@ from .actions import (
     courses_action,
     grades_action,
     help_action,
-    home_action,
-    more_action,
+    join_begin_action,
+    manage_action,
     notifications_action,
     payments_action,
+    representative_requests_action,
     resources_action,
-    schedule_action,
-    website_action,
+    schedule_today_action,
     workspace_action,
 )
 from .contracts import ActionRow, Context, ListItem, Screen, Section
+
+_INTRO = "سرویس موردنظرت را از منوی زیر انتخاب کن."
+_FOOTER = "اطلاعات شخصی فقط از حساب متصل و منبع رسمی نمایش داده می‌شود."
 
 
 class SlotState(str, Enum):
@@ -43,47 +46,63 @@ class HomeSlot:
         return ListItem(self.headline, self.detail, meta=self.title, marker=marker)
 
 
-def active_home_screen(
+def home_screen(
     workspace_label: str,
     *,
     next_schedule: HomeSlot,
     latest_announcement: HomeSlot,
-    today_schedule: HomeSlot | None = None,
-    date_label: str = "",
+    is_owner: bool = False,
+    show_representative_requests: bool = False,
+    notice: str = "",
 ) -> Screen:
-    """Build Home from explicit canonical content/empty/unavailable slot decisions."""
+    """The bot's one home screen and main menu.
 
-    schedule_items = (next_schedule.list_item(),)
-    if today_schedule is not None:
-        schedule_items += (today_schedule.list_item(),)
+    Provenance: this layout and wording is ported from the legacy Dent bot's
+    live home screen (legacy/bot/dent_bot/bot_home_classops_ux_v2.py's
+    canonical_home_screen -- not classops_ux_v3.py, which never held a home
+    screen). "دنت‌یار | ورودی ۱۴۰۲" becomes "دنت‌یار | {selected workspace}":
+    the cohort year was the only hardcoded part, everything else is reused
+    verbatim. Rows are wired to whatever FANOOS can already serve for real
+    (courses, today's schedule, grades, assessments, resources, purchase,
+    notifications, account, workspace switching, help, the join wizard) plus
+    owner/representative rows shown only when the backend already granted
+    that capability -- the same probe-and-hide pattern application.py's
+    more() uses, never a client-side authorization decision.
+
+    This replaced an earlier FANOOS-native home screen (bot-01's original
+    active_home_screen); that screen and the ui_v3 modules it alone reached
+    were removed once this one took over the only call site, so there is
+    again exactly one home screen builder, not two that override each other.
+    """
+    intro = _INTRO
+    if notice:
+        intro = f"✅ {notice}\n\n{intro}"
+
+    rows = [
+        ActionRow((schedule_today_action(), courses_action())),
+        ActionRow((grades_action(), assessments_action())),
+        ActionRow((resources_action(), payments_action())),
+        ActionRow((notifications_action(), account_action())),
+        ActionRow((workspace_action(), help_action())),
+        ActionRow((join_begin_action(),)),
+    ]
+    if is_owner:
+        rows.append(ActionRow((manage_action(),)))
+    if show_representative_requests:
+        rows.append(ActionRow((representative_requests_action(),)))
 
     return Screen(
         identifier="home.active",
-        title="🏠 خانه",
-        context=Context("فضای آموزشی", workspace_label, date_label),
+        title=f"دنت‌یار | {workspace_label}",
+        intro=intro,
+        context=Context("فضای آموزشی", workspace_label),
         sections=(
-            Section(title="📅 برنامه", items=schedule_items[:2]),
+            Section(title="📅 برنامه", items=(next_schedule.list_item(),)),
             Section(title="📢 تازه", items=(latest_announcement.list_item(),)),
         ),
-        action_rows=(
-            ActionRow((courses_action(), schedule_action())),
-            ActionRow((grades_action(), notifications_action())),
-            ActionRow((resources_action(), assessments_action())),
-            ActionRow((payments_action(), account_action())),
-            ActionRow((more_action(),)),
-        ),
+        action_rows=tuple(rows),
+        footer=_FOOTER,
     )
 
 
-def more_menu_screen(website_url: str) -> Screen:
-    secondary_actions = (help_action(), website_action(website_url)) if website_url else (help_action(),)
-    return Screen(
-        identifier="core.more",
-        title="بیشتر",
-        intro="تنظیمات و مسیرهای تکمیلی فانوس.",
-        action_rows=(
-            ActionRow((workspace_action(), account_action())),
-            ActionRow(secondary_actions),
-            ActionRow((home_action(),)),
-        ),
-    )
+__all__ = ["HomeSlot", "SlotState", "home_screen"]

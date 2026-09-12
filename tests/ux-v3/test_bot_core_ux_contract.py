@@ -115,7 +115,7 @@ class BotCoreUxContractTest(unittest.TestCase):
             state.close()
             temp.cleanup()
 
-    def test_active_home_has_bounded_primary_menu_and_live_slots(self):
+    def test_home_has_bounded_primary_menu_and_live_slots(self):
         workspace = {"id": WORKSPACE_IDS[0], "name": "فضای علوم پزشکی"}
         temp, state, app = make_app(CoreUxBackend(workspaces=[workspace], selected=workspace["id"]))
         try:
@@ -127,10 +127,10 @@ class BotCoreUxContractTest(unittest.TestCase):
             self.assertIn("فیزیولوژی", text)
             self.assertIn("ثبت‌نام آزمون میان‌ترم", text)
             labels = [action.label for row in screen.action_rows for action in row.actions]
-            # The legacy shell (docs/product/01_FRONT_DOOR.md) puts these
+            # The bot's shell (docs/product/01_FRONT_DOOR.md) puts these
             # directly on home rather than nested under "بیشتر" -- "امروز"
-            # replaces the generic schedule-hub shortcut with legacy's own
-            # "📅 امروز" quick-access to today's schedule.
+            # replaces the generic schedule-hub shortcut with the legacy
+            # bot's own "📅 امروز" quick-access to today's schedule.
             for required in ("درس‌ها", "امروز", "نمرات", "اعلان‌ها", "منابع", "آزمون‌ها", "خرید و دسترسی", "حساب", "فضای آموزشی", "راهنما"):
                 self.assertTrue(any(required in label for label in labels), required)
             self.assertLessEqual(len(screen.action_rows), 10)
