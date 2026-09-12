@@ -355,3 +355,45 @@ shell task before starting.
 
 The standing rule that makes this safe: nothing is deleted while it is still reachable, and
 nothing is deleted in the same change that replaces it.
+
+---
+
+## 12. The website is migrated the same way, and it is the larger half
+
+The bot is not the whole legacy product. The website carries features FANOOS has no
+equivalent for, and the owner has been explicit that it comes across by the same method:
+translate from the imported source, edit down, do not reimplement from a summary.
+
+What was imported to `legacy/site/`, by file count:
+
+| area | files | note |
+| --- | --- | --- |
+| `exams` | 815 | by far the largest single feature in the whole legacy product |
+| `api` | 264 | the backend endpoints the bot and the site both spoke to |
+| `assets` + `fonts` | 243 | the visual layer, including the Persian faces |
+| `buy` | 18 | commerce surface |
+| `notes` | 13 | note distribution |
+| `chat` | 4 | |
+| `grades`, `account`, `forms`, `msg`, `paste`, `dis-request`, `resources`, `payments`, `payment`, `navid`, `html-uploader`, `classops` | 1-3 each | small surfaces, real features |
+
+And it is a **progressive web app**, not just a site: `manifest.webmanifest`, `sw.js`,
+`offline.html`, `app-version.json` and installable icons. That means the legacy already
+solved installability and offline behaviour for students on poor connections — in Iran, on
+mobile data, behind filtering. FANOOS has none of that today and would not have thought to
+build it first.
+
+Left upstream deliberately: about 34MB of one cohort's exam content
+(`api/exams_term6_reference_data/`, `exams_bank.php`, the `*_mcq_fa.txt` question banks).
+That is Dentistry-1402 course material, not product code. It stays available in the upstream
+repository if it is ever wanted as seed content for that one class.
+
+### The order that follows from this
+
+The site is deliberately last and done in one pass, not per-capability, for a reason the
+owner named himself: the FANOOS site has no visual identity at all, so adding one capability
+at a time would produce a handful of unrelated pages. Doing it once means one design system
+serving every flow — and by then the contracts are settled, so the site is mostly a
+consumer rather than an author of rules.
+
+The `exams` area deserves its own planning pass when the time comes. At 815 files it is not
+a task, it is a project, and it is the part of the legacy the owner is proudest of.
