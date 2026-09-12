@@ -397,3 +397,35 @@ consumer rather than an author of rules.
 
 The `exams` area deserves its own planning pass when the time comes. At 815 files it is not
 a task, it is a project, and it is the part of the legacy the owner is proudest of.
+
+---
+
+## 13. Requested feature: exam questions with images
+
+Owner request, to be built when the `exams` area is reached: a question in a site exam must
+be able to carry an image, not only text.
+
+**This is new, not a port.** Checked against the imported source: the legacy exam code
+contains a single stray `image_url` reference and no question-level image support. The
+legacy exam system is effectively text-only, so there is no proven implementation to
+translate here — this one gets designed.
+
+Why it matters more than it sounds: the subject is dentistry. Radiographs, clinical
+photographs and anatomical diagrams are not decoration in that field, they are frequently
+the question itself. A text-only exam engine cannot ask a large share of the questions these
+students are actually examined on.
+
+### The part worth deciding early
+
+FANOOS already has a protected-media pipeline, and exam images are exactly the kind of asset
+it exists for: `apps/workers/protected-media`, the delivery issue/consume/receipt contract,
+watermarking, and the forensic attribution work carried over from the legacy. Exam images
+almost certainly want that path rather than a plain public upload — a leaked question bank
+is a real cost, and this project already paid to build the machinery that prevents it.
+
+So when this is designed, the first question is not "how do we store an image" but "does an
+exam image go through protected delivery like other paid content, and if not, why not".
+Decide that before building the upload surface, because it determines the storage model.
+
+Related: section 12 notes that `exams` at 815 files is a project rather than a task, and
+needs its own planning pass. This requirement belongs inside that pass.
