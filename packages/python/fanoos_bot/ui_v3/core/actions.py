@@ -9,7 +9,6 @@ ACTION_CANCEL = "core.cancel"
 ACTION_RETRY = "core.retry"
 ACTION_WEBSITE = "core.website.open"
 ACTION_HELP = "core.help"
-ACTION_MORE = "core.more"
 ACTION_COURSES = "core.courses"
 ACTION_SCHEDULE = "core.schedule"
 ACTION_GRADES = "core.grades"
@@ -57,8 +56,6 @@ def help_action() -> Action:
     return _callback(ACTION_HELP, "ℹ️ راهنمای شروع", "help")
 
 
-def more_action() -> Action:
-    return _callback(ACTION_MORE, "➕ بیشتر", "more")
 
 
 def courses_action() -> Action:
