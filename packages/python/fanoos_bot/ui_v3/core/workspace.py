@@ -10,7 +10,7 @@ from .actions import (
     website_action,
     workspace_select_action,
 )
-from .contracts import ActionRow, Context, ListItem, Pagination, Screen, Section, Severity
+from .contracts import ActionRow, ListItem, Pagination, Screen, Section, Severity
 
 
 @dataclass(frozen=True)
@@ -71,15 +71,4 @@ def no_workspace_screen(website_url: str) -> Screen:
         action_rows=(ActionRow((account_action(), help_action())),)
         + ((ActionRow((website_action(website_url),)),) if website_url else ())
         + (ActionRow((home_action(),)),),
-    )
-
-
-def workspace_switch_success_screen(workspace_label: str) -> Screen:
-    return Screen(
-        identifier="workspace.switch_success",
-        title="✅ فضای آموزشی تغییر کرد",
-        intro="از این پس صفحه‌های بعدی با زمینه این فضای آموزشی باز می‌شوند.",
-        severity=Severity.SUCCESS,
-        context=Context("فضای آموزشی فعال", workspace_label),
-        action_rows=(ActionRow((home_action(),)),),
     )

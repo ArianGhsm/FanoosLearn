@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 import re
-from typing import Any, Iterable
+from typing import Any
 
 
 _IDENTIFIER_RE = re.compile(r"^[a-z0-9][a-z0-9_.:-]{0,63}$")
@@ -303,9 +303,3 @@ class Screen:
         if self.footer:
             lines.extend(("", self.footer))
         return "\n".join(lines).strip()
-
-
-def rows(*rows: Iterable[Action]) -> tuple[ActionRow, ...]:
-    """Convenience constructor that preserves the one/two-action row contract."""
-
-    return tuple(ActionRow(tuple(row)) for row in rows)

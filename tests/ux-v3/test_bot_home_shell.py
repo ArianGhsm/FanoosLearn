@@ -1,3 +1,12 @@
+"""Tests for the bot's one home screen and main menu.
+
+Provenance: this shell's layout and wording were ported from the legacy Dent
+bot (see ui_v3/core/home.py's home_screen() docstring); it is no longer a
+second, alternative shell next to a FANOOS-native one -- that one was removed
+once this became the only call site for /start's home screen, so these tests
+just cover "the shell," not "the legacy shell" as opposed to something else.
+"""
+
 from __future__ import annotations
 
 import tempfile
@@ -93,7 +102,7 @@ def _make_app(backend: Backend):
     return tmp, state, app
 
 
-class LegacyShellTest(unittest.TestCase):
+class HomeShellTest(unittest.TestCase):
     def setUp(self):
         self.backend = Backend()
         self.tmp, self.state, self.app = _make_app(self.backend)
@@ -102,9 +111,8 @@ class LegacyShellTest(unittest.TestCase):
         self.state.close()
         self.tmp.cleanup()
 
-    # 1. /start for a linked user with no workspace renders the legacy
-    # shell's equivalent screen, and offers a reachable route into the join
-    # wizard.
+    # 1. /start for a linked user with no workspace renders the shell's
+    # equivalent screen, and offers a reachable route into the join wizard.
     def test_start_no_workspace_offers_join_route(self):
         result = self.app.start("newcomer")
         self.assertIsInstance(result.screen, CoreScreen)
@@ -119,7 +127,7 @@ class LegacyShellTest(unittest.TestCase):
         begin = self.app.callback("newcomer", True, callback)
         self.assertIsInstance(begin, RawKeyboardSend)
 
-    # 2. /start for a member of one class renders the legacy home with that
+    # 2. /start for a member of one class renders the shell home with that
     # class's real data.
     def test_start_single_class_shows_real_data(self):
         self.backend.workspaces_by_subject["student"] = [{"id": WORKSPACE_A, "name": "دانشکده دندان‌پزشکی تهران"}]

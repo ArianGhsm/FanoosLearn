@@ -116,8 +116,8 @@ class ReplyKeyboardRuntimeTest(unittest.TestCase):
             tmp.cleanup()
 
 
-class LegacyShellJoinButtonTest(unittest.TestCase):
-    """The legacy shell gives the join wizard a real inline-keyboard button
+class HomeShellJoinButtonTest(unittest.TestCase):
+    """The bot's shell gives the join wizard a real inline-keyboard button
     (docs/product/01_FRONT_DOOR.md #2/#3) instead of leaving it behind the
     /join text command. An inline callback_query result is structurally
     different from a text message, so this pins that handle_callback (not

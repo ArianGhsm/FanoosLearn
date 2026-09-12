@@ -34,8 +34,7 @@ from .ui_v3.core import (
 from .ui_v3.core.account import linked_account_screen, unlink_confirmation_screen, unlink_success_screen
 from .ui_v3.core.actions import join_begin_action, workspace_page_action
 from .ui_v3.core.contracts import ActionRow
-from .ui_v3.core.home import HomeSlot, SlotState
-from .ui_v3.core.legacy_shell import legacy_home_screen
+from .ui_v3.core.home import HomeSlot, SlotState, home_screen
 from .ui_v3.core.onboarding import linked_no_workspace_screen, unlinked_account_screen
 from .ui_v3.core.workspace import WorkspaceOption, no_workspace_screen, workspace_list_screen
 from .ui_v3.learning import (
@@ -118,7 +117,7 @@ class BotApplication(BaseBotApplication):
             return overview.get("can_manage_deployments") is True
         except Exception as exc:
             logging.warning(
-                "legacy shell deployment_overview failed type=%s message=%s",
+                "shell deployment_overview failed type=%s message=%s",
                 type(exc).__name__,
                 exc,
             )
@@ -136,13 +135,13 @@ class BotApplication(BaseBotApplication):
         except FanoosApiError as exc:
             if exc.code not in ("forbidden", "workspace_forbidden"):
                 logging.warning(
-                    "legacy shell representative_requests_list failed code=%s",
+                    "shell representative_requests_list failed code=%s",
                     exc.code,
                 )
             return False
         except Exception as exc:
             logging.warning(
-                "legacy shell representative_requests_list failed type=%s message=%s",
+                "shell representative_requests_list failed type=%s message=%s",
                 type(exc).__name__,
                 exc,
             )
@@ -256,7 +255,7 @@ class BotApplication(BaseBotApplication):
                 # explicit user action and no first-workspace authority is invented.
                 return self._v3_result(self._workspace_screen(projection))
 
-            screen = legacy_home_screen(
+            screen = home_screen(
                 self._selected_workspace_label(projection, selected),
                 next_schedule=self._home_schedule_slot(subject, selected),
                 latest_announcement=self._home_announcement_slot(subject, selected),
