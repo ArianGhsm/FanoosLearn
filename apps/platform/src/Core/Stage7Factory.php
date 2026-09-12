@@ -114,7 +114,8 @@ final class Stage7Factory
             new ClassProvisioningService($database, $access, $audit),
             new DirectoryReadService($database),
             new OnboardingPhoneVerificationService($database, $audit, $subjectProtector, new UnconfiguredSmsGateway()),
-            new ClassMembershipService($database, $audit, $subjectProtector, $links),
+            new ClassMembershipService($database, $audit, $subjectProtector, $links, $access),
+            new WorkspacePlatformService($database, $access, $audit),
             $paymentsEnabled,
         );
     }

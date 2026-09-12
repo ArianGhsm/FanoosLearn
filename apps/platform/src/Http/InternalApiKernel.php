@@ -12,6 +12,7 @@ use Fanoos\Platform\Content\ProtectedMediaTransferService;
 use Fanoos\Platform\Content\SecureDeliveryService;
 use Fanoos\Platform\Core\BotReadProjectionService;
 use Fanoos\Platform\Core\ClassProvisioningService;
+use Fanoos\Platform\Core\WorkspacePlatformService;
 use Fanoos\Platform\Integration\ServiceAuthenticator;
 use Fanoos\Platform\Integration\ServicePrincipal;
 use Fanoos\Platform\Messaging\MessagingLinkService;
@@ -45,6 +46,7 @@ final class InternalApiKernel
         private readonly DirectoryReadService $directory,
         private readonly OnboardingPhoneVerificationService $onboardingPhones,
         private readonly ClassMembershipService $membership,
+        private readonly WorkspacePlatformService $workspacePlatform,
         private readonly bool $paymentsEnabled,
     ) {
     }
@@ -394,6 +396,57 @@ final class InternalApiKernel
             $principal = $this->serviceAuth->authenticate($request, 'workspace.provision');
             $link = $this->linked($principal, $request->body);
             return $this->classes->createClass($link['user_id'], $request->body);
+        }
+        if ($path === '/api/internal/v1/representatives/workspaces') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'limit', 'cursor']);
+            $principal = $this->serviceAuth->authenticate($request, 'representative.workspaces.read');
+            $link = $this->linked($principal, $request->body);
+            return $this->workspacePlatform->listActiveWorkspaces(
+                $link['user_id'], (int) ($request->body['limit'] ?? 10), $this->nullableString($request->body['cursor'] ?? null),
+            );
+        }
+        if ($path === '/api/internal/v1/representatives/candidates') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id', 'limit', 'cursor']);
+            $principal = $this->serviceAuth->authenticate($request, 'representative.candidates.read');
+            $link = $this->linked($principal, $request->body);
+            return $this->workspacePlatform->listAppointableMembers(
+                $link['user_id'], (string) ($request->body['workspace_id'] ?? ''),
+                (int) ($request->body['limit'] ?? 10), $this->nullableString($request->body['cursor'] ?? null),
+            );
+        }
+        if ($path === '/api/internal/v1/representatives/appoint') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id', 'target_user_id']);
+            $principal = $this->serviceAuth->authenticate($request, 'representative.appoint');
+            $link = $this->linked($principal, $request->body);
+            return ['assignment_id' => $this->workspacePlatform->assignRepresentative(
+                $link['user_id'], (string) ($request->body['workspace_id'] ?? ''), (string) ($request->body['target_user_id'] ?? ''),
+            )];
+        }
+        if ($path === '/api/internal/v1/representatives/requests/list') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id']);
+            $principal = $this->serviceAuth->authenticate($request, 'representative.requests.read');
+            $platform = $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
+            return ['items' => $this->membership->pendingUpgradeRequests(
+                $platform, (string) ($request->body['subject'] ?? ''), (string) ($request->body['workspace_id'] ?? ''),
+            )];
+        }
+        if ($path === '/api/internal/v1/representatives/requests/approve') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id', 'request_id']);
+            $principal = $this->serviceAuth->authenticate($request, 'representative.requests.approve');
+            $platform = $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
+            return $this->membership->approveUpgradeRequest(
+                $platform, (string) ($request->body['subject'] ?? ''),
+                (string) ($request->body['workspace_id'] ?? ''), (string) ($request->body['request_id'] ?? ''),
+            );
+        }
+        if ($path === '/api/internal/v1/representatives/requests/decline') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id', 'request_id']);
+            $principal = $this->serviceAuth->authenticate($request, 'representative.requests.decline');
+            $platform = $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
+            return $this->membership->declineUpgradeRequest(
+                $platform, (string) ($request->body['subject'] ?? ''),
+                (string) ($request->body['workspace_id'] ?? ''), (string) ($request->body['request_id'] ?? ''),
+            );
         }
 
         throw new PlatformException('route_not_found', 'Internal API route was not found.', 404);

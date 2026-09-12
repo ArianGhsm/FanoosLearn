@@ -40,7 +40,8 @@ final class TenantIsolationTest
         $seedRunner->run();
         $seedCounts = $this->seedCounts();
         $seedRunner->run();
-        self::assert($seedCounts === $this->seedCounts(), 'Seed rerun changed generic row counts.');
+        $seedCountsAfterRerun = $this->seedCounts();
+        self::assert($seedCounts === $seedCountsAfterRerun, 'Seed rerun changed generic row counts: ' . self::describeCountDiff($seedCounts, $seedCountsAfterRerun));
 
         $fixture = $this->createFixture();
         $authorizer = new ScopeAuthorizer($this->database);
@@ -91,6 +92,26 @@ final class TenantIsolationTest
             'role_permissions' => (int) $this->database->query('SELECT COUNT(*) FROM rbac_role_permissions')->fetchColumn(),
             'resource_types' => (int) $this->database->query('SELECT COUNT(*) FROM content_resource_types')->fetchColumn(),
         ];
+    }
+
+    /**
+     * Renders exactly which of seedCounts()'s tables changed between two
+     * snapshots, and by how much -- a bare "counts differ" failure gives no
+     * lead on which seed file (or cross-file interaction) is non-idempotent.
+     *
+     * @param array<string, int> $before
+     * @param array<string, int> $after
+     */
+    private static function describeCountDiff(array $before, array $after): string
+    {
+        $parts = [];
+        foreach ($after as $table => $count) {
+            $previous = $before[$table] ?? null;
+            if ($previous !== $count) {
+                $parts[] = sprintf('%s: %s -> %d (%+d)', $table, $previous === null ? 'missing' : (string) $previous, $count, $count - (int) $previous);
+            }
+        }
+        return $parts === [] ? 'no per-table difference detected (non-deterministic count?)' : implode(', ', $parts);
     }
 
     /** @return array<string, string> */

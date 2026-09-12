@@ -207,6 +207,78 @@ class BotApplication:
             )
         )
 
+    def representative_requests(self, subject: str):
+        """A representative's own approval queue for the currently selected
+        workspace. membership.approve is checked server-side on every call
+        (list, approve, decline); this method never decides authorization,
+        it only renders whatever the backend already allowed."""
+        try:
+            _, selected, blocked = self._workspace_or_result(subject)
+            if blocked:
+                return blocked
+            pending = self.backend.representative_requests_list(self.platform, subject, selected)
+        except Exception as exc:
+            return self._error(exc)
+        items = [
+            item for item in pending.get("items") or []
+            if isinstance(item, dict) and is_uuid(str(item.get("request_id") or ""))
+        ]
+        if not items:
+            return ActionResult(
+                semantic_screen(
+                    "📋 درخواست‌های عضویت",
+                    "representative_requests_empty",
+                    breadcrumb="بیشتر › درخواست‌های عضویت",
+                    intro="درخواست در انتظار تأییدی برای این فضای آموزشی وجود ندارد.",
+                    rows=self._nav_rows(back_action="more", back_label="‹ بیشتر"),
+                )
+            )
+        rows = tuple(
+            (
+                Button(f"✅ تأیید «{name}»", self._cb("repappr", request_id)),
+                Button("❌ رد", self._cb("repdecl", request_id)),
+            )
+            for item in items
+            for request_id in (str(item["request_id"]),)
+            for name in (truncate_text(str(item.get("display_name") or "دانشجو"), 30),)
+        ) + self._nav_rows(back_action="more", back_label="‹ بیشتر")
+        return ActionResult(
+            semantic_screen(
+                "📋 درخواست‌های عضویت",
+                "representative_requests",
+                breadcrumb="بیشتر › درخواست‌های عضویت",
+                intro="درخواست‌های در انتظار تأیید برای این فضای آموزشی:",
+                rows=rows,
+            )
+        )
+
+    def representative_request_approve(self, subject: str, request_id: str):
+        return self._representative_request_decision(subject, request_id, approve=True)
+
+    def representative_request_decline(self, subject: str, request_id: str):
+        return self._representative_request_decision(subject, request_id, approve=False)
+
+    def _representative_request_decision(self, subject: str, request_id: str, *, approve: bool):
+        if not is_uuid(request_id):
+            return self._expired_route()
+        try:
+            _, selected, blocked = self._workspace_or_result(subject)
+            if blocked:
+                return blocked
+            if approve:
+                self.backend.representative_requests_approve(self.platform, subject, selected, request_id)
+            else:
+                self.backend.representative_requests_decline(self.platform, subject, selected, request_id)
+        except Exception as exc:
+            logging.error(
+                "representative request decision failed approve=%s type=%s message=%s",
+                approve,
+                type(exc).__name__,
+                exc,
+            )
+            return self._error(exc)
+        return self.representative_requests(subject)
+
     @staticmethod
     def _workspace_label(workspace: dict) -> str:
         for key in ("name", "title", "label"):
@@ -489,11 +561,29 @@ class BotApplication:
                     )
                 )
 
+            representative_row: tuple[tuple[Button, ...], ...] = ()
+            try:
+                self.backend.representative_requests_list(self.platform, subject, selected)
+                representative_row = ((Button("📋 درخواست‌های عضویت", self._cb("reprequests")),),)
+            except FanoosApiError as exc:
+                if exc.code not in ("forbidden", "workspace_forbidden"):
+                    logging.warning(
+                        "more screen representative_requests_list failed code=%s",
+                        exc.code,
+                    )
+            except Exception as exc:
+                logging.warning(
+                    "more screen representative_requests_list failed type=%s message=%s",
+                    type(exc).__name__,
+                    exc,
+                )
+
             rows: tuple[tuple[Button, ...], ...] = (
                 (Button("🎓 نمرات", self._cb("grades")), Button("📚 منابع", self._cb("resources"))),
                 (Button("📝 آزمون‌ها", self._cb("assess")), Button("💳 خرید و دسترسی", self._cb("payments"))),
                 (Button("🏫 فضای آموزشی", self._cb("workspaces")), Button("👤 حساب", self._cb("account"))),
             )
+            rows += representative_row
             rows += management_row
             rows += self._nav_rows()
             return ActionResult(
@@ -1689,6 +1779,7 @@ class BotApplication:
             rows = (
                 (Button("🔄 به‌روزرسانی سرور", self._cb("update")),),
                 (Button("➕ ساخت کلاس", self._cb("clsnew")),),
+                (Button("➕ انتصاب نماینده", self._cb("repnew")),),
             )
             if self.state.latest_deployment(subject):
                 rows += ((Button("وضعیت آخرین به‌روزرسانی", self._cb("updlast")),),)
@@ -2154,6 +2245,290 @@ class BotApplication:
             )
         )
 
+    # -- Representative appointment wizard (owner) ---------------------------
+    # Same shape as the class wizard above: gated by deployment_overview,
+    # state in its own small table, review-free here only because there is
+    # nothing to mistype -- both choices are made by tapping an inline
+    # button, never typed. Two list-picker steps (which class, then which of
+    # its members) instead of class_wizard's free-text fields, because the
+    # owner is choosing among existing rows, not naming new ones; the person
+    # being appointed must already be a member -- this reuses that identity
+    # path rather than inventing a second way to name someone
+    # (docs/product/01_FRONT_DOOR.md #10).
+
+    APPOINT_PAGE_SIZE = 8
+
+    def _appoint_wizard_cancelled_result(self):
+        return ActionResult(
+            semantic_screen(
+                "➕ انتصاب نماینده",
+                "appoint_wizard_cancelled",
+                intro="انتصاب نماینده لغو شد.",
+                rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+            )
+        )
+
+    def appoint_wizard_begin(self, subject: str, private: bool):
+        if self.platform != "telegram" or not private:
+            return ActionResult(
+                warning_screen(
+                    "انتصاب نماینده فقط در گفت‌وگوی خصوصی تلگرام و پس از مجوز canonical فعال است.",
+                    title="➕ انتصاب نماینده",
+                    kind="appoint_wizard_unavailable",
+                    rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+                )
+            )
+        if not self.config.deployment_target_key:
+            return ActionResult(
+                warning_screen(
+                    "بررسی مجوز انتصاب نماینده برای این محیط تنظیم نشده است.",
+                    title="➕ انتصاب نماینده",
+                    kind="appoint_wizard_unavailable",
+                    rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+                )
+            )
+        try:
+            # Same re-verification note as class_wizard_begin: this call only
+            # decides what to show, the canonical authority is still the
+            # backend's own membership.manage check on the appoint call.
+            overview = self.backend.deployment_overview(subject, self.config.deployment_target_key)
+        except Exception as exc:
+            logging.warning(
+                "appoint wizard begin deployment_overview failed type=%s message=%s",
+                type(exc).__name__,
+                exc,
+            )
+            return self._error(exc)
+        if not overview.get("can_manage_deployments"):
+            return ActionResult(
+                error_screen(
+                    "اجازه انتصاب نماینده را ندارید.",
+                    title="➕ انتصاب نماینده",
+                    kind="appoint_wizard_denied",
+                    rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+                )
+            )
+        self.state.start_appoint_wizard(self.platform, subject)
+        return self._appoint_wizard_render_workspaces(subject, None)
+
+    def appoint_wizard_cancel(self, subject: str):
+        self.state.cancel_appoint_wizard(self.platform, subject)
+        return self._appoint_wizard_cancelled_result()
+
+    def appoint_wizard_back(self, subject: str):
+        wizard = self.state.appoint_wizard(self.platform, subject)
+        if wizard is None:
+            return self._appoint_wizard_expired()
+        if wizard["step_index"] <= 0:
+            self.state.cancel_appoint_wizard(self.platform, subject)
+            return self._appoint_wizard_cancelled_result()
+        if wizard["step_index"] == 1:
+            self.state.advance_appoint_wizard(self.platform, subject, 0, {})
+            return self._appoint_wizard_render_workspaces(subject, None)
+        answers = dict(wizard["answers"])
+        answers.pop("target_user_id", None)
+        answers.pop("target_name", None)
+        self.state.advance_appoint_wizard(self.platform, subject, 1, answers)
+        return self._appoint_wizard_render_candidates(subject, answers, None)
+
+    def _appoint_wizard_expired(self):
+        return ActionResult(
+            warning_screen(
+                "این فرآیند دیگر در دسترس نیست. از مدیریت دوباره شروع کنید.",
+                title="➕ انتصاب نماینده",
+                kind="appoint_wizard_expired",
+                rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+            )
+        )
+
+    def _appoint_wizard_render_workspaces(self, subject: str, cursor: str | None):
+        try:
+            page = self.backend.representative_workspaces(self.platform, subject, self.APPOINT_PAGE_SIZE, cursor)
+        except Exception as exc:
+            return self._error(exc)
+        items = [item for item in page.get("items") or [] if is_uuid(str(item.get("id") or ""))]
+        next_cursor = self._clean_cursor(page.get("next_cursor"))
+        rows: tuple[tuple[Button, ...], ...] = tuple(
+            (Button(
+                self._workspace_label(item),
+                self._route_callback(subject, "appoint_workspace_pick", "apws", {
+                    "id": str(item.get("id") or ""), "name": self._workspace_label(item),
+                }),
+            ),)
+            for item in items
+        )
+        if next_cursor:
+            rows += ((Button(
+                "بعدی ›",
+                self._route_callback(subject, "appoint_workspace_page", "apwsp", {"cursor": next_cursor}),
+            ),),)
+        rows += self._nav_rows(back_action="manage", back_label="‹ مدیریت")
+        return ActionResult(
+            semantic_screen(
+                "➕ انتصاب نماینده",
+                "appoint_wizard_workspace",
+                breadcrumb="بیشتر › مدیریت › انتصاب نماینده",
+                intro=(
+                    "کلاسی که می‌خواهید برایش نماینده انتصاب کنید را انتخاب کنید."
+                    if items
+                    else "کلاس فعالی برای انتصاب نماینده وجود ندارد."
+                ),
+                rows=rows,
+            )
+        )
+
+    def appoint_wizard_pick_workspace(self, subject: str, ref: str):
+        payload = self._route_payload(subject, ref, "appoint_workspace_pick")
+        if not payload or not is_uuid(str(payload.get("id") or "")):
+            return self._expired_route()
+        wizard = self.state.appoint_wizard(self.platform, subject)
+        if wizard is None:
+            return self._appoint_wizard_expired()
+        answers = {"workspace_id": str(payload["id"]), "workspace_name": str(payload.get("name") or "")}
+        self.state.advance_appoint_wizard(self.platform, subject, 1, answers)
+        return self._appoint_wizard_render_candidates(subject, answers, None)
+
+    def appoint_wizard_page_workspaces(self, subject: str, ref: str):
+        payload = self._route_payload(subject, ref, "appoint_workspace_page")
+        if not payload:
+            return self._expired_route()
+        return self._appoint_wizard_render_workspaces(subject, self._clean_cursor(payload.get("cursor")))
+
+    def _appoint_wizard_render_candidates(self, subject: str, answers: dict, cursor: str | None):
+        workspace_id = str(answers.get("workspace_id") or "")
+        if not is_uuid(workspace_id):
+            return self._appoint_wizard_expired()
+        try:
+            page = self.backend.representative_candidates(self.platform, subject, workspace_id, self.APPOINT_PAGE_SIZE, cursor)
+        except Exception as exc:
+            return self._error(exc)
+        items = [item for item in page.get("items") or [] if is_uuid(str(item.get("user_id") or ""))]
+        next_cursor = self._clean_cursor(page.get("next_cursor"))
+
+        def label(item: dict) -> str:
+            return truncate_text(str(item.get("display_name") or "عضو کلاس"), 70)
+
+        rows: tuple[tuple[Button, ...], ...] = tuple(
+            (Button(
+                label(item),
+                self._route_callback(subject, "appoint_candidate_pick", "apcd", {
+                    "id": str(item.get("user_id") or ""), "name": label(item),
+                }),
+            ),)
+            for item in items
+        )
+        if next_cursor:
+            rows += ((Button(
+                "بعدی ›",
+                self._route_callback(subject, "appoint_candidate_page", "apcdp", {
+                    "cursor": next_cursor, "workspace_id": workspace_id, "workspace_name": answers.get("workspace_name") or "",
+                }),
+            ),),)
+        rows += (
+            (Button("↩️ بازگشت", self._cb("apback")), Button("انصراف", self._cb("apcancel"))),
+        ) + self._nav_rows(back_action="manage", back_label="‹ مدیریت")
+        workspace_name = str(answers.get("workspace_name") or "")
+        return ActionResult(
+            semantic_screen(
+                "➕ انتصاب نماینده",
+                "appoint_wizard_candidate",
+                breadcrumb="بیشتر › مدیریت › انتصاب نماینده",
+                intro=(
+                    f"عضوی از «{workspace_name}» را برای نمایندگی انتخاب کنید."
+                    if items
+                    else f"«{workspace_name}» عضو فعالی ندارد."
+                ),
+                rows=rows,
+            )
+        )
+
+    def appoint_wizard_pick_candidate(self, subject: str, ref: str):
+        payload = self._route_payload(subject, ref, "appoint_candidate_pick")
+        if not payload or not is_uuid(str(payload.get("id") or "")):
+            return self._expired_route()
+        wizard = self.state.appoint_wizard(self.platform, subject)
+        if wizard is None:
+            return self._appoint_wizard_expired()
+        answers = dict(wizard["answers"])
+        answers["target_user_id"] = str(payload["id"])
+        answers["target_name"] = str(payload.get("name") or "")
+        self.state.advance_appoint_wizard(self.platform, subject, 2, answers)
+        return self._appoint_wizard_render_confirm(answers)
+
+    def appoint_wizard_page_candidates(self, subject: str, ref: str):
+        payload = self._route_payload(subject, ref, "appoint_candidate_page")
+        if not payload:
+            return self._expired_route()
+        answers = {
+            "workspace_id": str(payload.get("workspace_id") or ""),
+            "workspace_name": str(payload.get("workspace_name") or ""),
+        }
+        return self._appoint_wizard_render_candidates(subject, answers, self._clean_cursor(payload.get("cursor")))
+
+    def _appoint_wizard_render_confirm(self, answers: dict):
+        workspace_name = str(answers.get("workspace_name") or "")
+        target_name = str(answers.get("target_name") or "")
+        rows = (
+            (Button("✅ انتصاب شود", self._cb("apconfirm")),),
+            (Button("↩️ بازگشت", self._cb("apback")), Button("انصراف", self._cb("apcancel"))),
+        )
+        return ActionResult(
+            semantic_screen(
+                "➕ انتصاب نماینده",
+                "appoint_wizard_confirm",
+                breadcrumb="بیشتر › مدیریت › انتصاب نماینده",
+                intro=f"«{target_name}» به‌عنوان نماینده «{workspace_name}» منصوب شود؟",
+                rows=rows,
+            )
+        )
+
+    def appoint_wizard_confirm(self, subject: str, private: bool):
+        if self.platform != "telegram" or not private:
+            return self._appoint_wizard_expired()
+        wizard = self.state.appoint_wizard(self.platform, subject)
+        if wizard is None:
+            return self._appoint_wizard_expired()
+        answers = wizard["answers"]
+        workspace_id = str(answers.get("workspace_id") or "")
+        target_user_id = str(answers.get("target_user_id") or "")
+        if not is_uuid(workspace_id) or not is_uuid(target_user_id):
+            return self._appoint_wizard_expired()
+        try:
+            self.backend.representative_appoint(self.platform, subject, workspace_id, target_user_id)
+        except Exception as exc:
+            logging.error(
+                "appoint wizard representative_appoint failed type=%s message=%s",
+                type(exc).__name__,
+                exc,
+            )
+            message = (
+                error_message(exc.code, exc.status)
+                if isinstance(exc, FanoosApiError)
+                else "انتصاب نماینده ناموفق بود. دوباره امتحان کنید."
+            )
+            return ActionResult(
+                error_screen(
+                    message,
+                    title="➕ انتصاب نماینده",
+                    kind="appoint_wizard_failed",
+                    rows=(
+                        (Button("🔁 تلاش دوباره", self._cb("apconfirm")),),
+                    )
+                    + self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+                )
+            )
+        self.state.cancel_appoint_wizard(self.platform, subject)
+        return ActionResult(
+            semantic_screen(
+                "✅ نماینده منصوب شد",
+                "appoint_wizard_created",
+                severity="success",
+                breadcrumb="بیشتر › مدیریت › انتصاب نماینده",
+                intro=f"«{answers.get('target_name') or ''}» نماینده «{answers.get('workspace_name') or ''}» شد.",
+                rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+            )
+        )
+
     # -- Student join wizard -------------------------------------------------
     # Reply-keyboard exception to the rest of the bot (owner's explicit
     # request); see join_wizard.py's module docstring for the three
@@ -2607,6 +2982,28 @@ class BotApplication:
             return self.class_wizard_cancel(subject)
         if action == "clsconfirm":
             return self.class_wizard_confirm(subject, private)
+        if action == "repnew":
+            return self.appoint_wizard_begin(subject, private)
+        if action == "apback":
+            return self.appoint_wizard_back(subject)
+        if action == "apcancel":
+            return self.appoint_wizard_cancel(subject)
+        if action == "apconfirm":
+            return self.appoint_wizard_confirm(subject, private)
+        if action == "apws" and ref:
+            return self.appoint_wizard_pick_workspace(subject, ref)
+        if action == "apwsp" and ref:
+            return self.appoint_wizard_page_workspaces(subject, ref)
+        if action == "apcd" and ref:
+            return self.appoint_wizard_pick_candidate(subject, ref)
+        if action == "apcdp" and ref:
+            return self.appoint_wizard_page_candidates(subject, ref)
+        if action == "reprequests":
+            return self.representative_requests(subject)
+        if action == "repappr" and ref:
+            return self.representative_request_approve(subject, ref)
+        if action == "repdecl" and ref:
+            return self.representative_request_decline(subject, ref)
         if action == "update":
             return self.update_begin(subject, private)
         if action == "updlast":

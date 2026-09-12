@@ -284,3 +284,39 @@ making it thirteen steps in the general case (twelve for آزاد institutions, 
 skip the course-type step, instead of legacy's eleven). Entry year stayed legacy's static
 list (۱۳۹۹–۱۴۰۵) rather than becoming directory-driven — a deliberate choice against the
 directory-first spirit of §1, made because the owner asked to keep the proven list as-is.
+
+## 12. Representatives now exist: appointment and approval close the loop
+
+§11 shipped the tier but left the gate itself unbuilt — a limited member could raise an
+upgrade request, but "once representatives exist to act on it" was still a future
+condition. This closes it.
+
+**Appointment reused what already existed rather than being built from scratch.**
+`WorkspacePlatformService::assignRepresentative()` — owner-only, workspace-scoped
+`membership.manage` (the platform scope is always an ancestor of a workspace scope, so a
+platform owner satisfies this the same way any workspace-scoped check does), idempotent,
+restoring a previously-revoked assignment rather than duplicating one — already existed on
+the web side (`POST /workspaces/{id}/admin/representatives`), tested in
+`tests/Integration/CorePlatformTest.php`. What this added was only a bot-facing path to the
+same capability (`POST /representatives/{workspaces,candidates,appoint}`), plus the bot's
+own two-step picker (which class, then which of its members) — the person appointed must
+already be a member; the join wizard is the only identity path, on purpose, so there is
+never a second way to name someone.
+
+**Approval is the genuinely new capability**, and it needed a permission narrower than
+`membership.manage`: `membership.approve` (`database/seeds/0009_membership_approve_permission.sql`),
+granted to `cohort-representative` and every role that already holds `membership.manage`.
+The distinction matters because §10 says everything inside a class belongs to its
+representative, but approving a join is not the same power as administering the roster —
+`membership.manage` also carries removing classmates and ending memberships outright,
+which a representative admitting their own cohort has no business needing.
+`ClassMembershipService::approveUpgradeRequest()` closes the request and promotes
+`workspace-limited-member` → `student` in one transaction — neither ever applies without
+the other — and a request is always looked up scoped to its own `workspace_id`, so a
+representative of one class can never see, approve or decline another class's request even
+by id.
+
+The bot surface: the owner's management area gets `➕ انتصاب نماینده` beside class
+creation; a representative sees `📋 درخواست‌های عضویت` in `➕ بیشتر` — visible only when
+the backend actually grants `membership.approve` for their selected workspace, the same
+probe-and-hide pattern `⚙️ مدیریت` already used for owners.
