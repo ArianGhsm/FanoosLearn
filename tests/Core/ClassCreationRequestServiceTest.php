@@ -15,6 +15,8 @@ use Fanoos\Platform\Onboarding\ClassMembershipService;
 use Fanoos\Platform\Support\PlatformException;
 use Fanoos\Platform\Support\Uuid;
 use PDO;
+use PDOException;
+use PDOStatement;
 use RuntimeException;
 use Throwable;
 
@@ -114,11 +116,11 @@ SQL);
     }
 
     /**
-     * The status CHECK constraint is temporarily narrowed so the
-     * status-closing UPDATE genuinely fails after ClassProvisioningService
-     * has already written the cohort/workspace rows in the same PHP call --
-     * both share one Transaction::run() closure, so if either half were not
-     * rolled back with the other, this test fails.
+     * ThrowingPdoStatement (defined below) makes the status-closing UPDATE
+     * genuinely fail after ClassProvisioningService has already written the
+     * cohort/workspace rows in the same PHP call -- both share one
+     * Transaction::run() closure, so if either half were not rolled back
+     * with the other, this test fails.
      */
     private function assertFailureMidApprovalLeavesNeitherClassNorStatusChange(): void
     {
@@ -132,16 +134,24 @@ SQL);
         $this->requestClassCreation($protector, 'tg-atomic-b-' . $suffix, $fixture['program_id'], $entryYear, '+989142100' . substr($suffix, 0, 3));
 
         $service = $this->requests();
-        $this->database->exec("ALTER TABLE class_creation_requests DROP CHECK chk_class_creation_requests_status");
-        $this->database->exec("ALTER TABLE class_creation_requests ADD CONSTRAINT chk_class_creation_requests_status CHECK (status IN ('pending', 'declined'))");
+        // Fault injection is done at the PDOStatement level, never by mutating
+        // schema or shared data: DDL (e.g. toggling a CHECK constraint) causes
+        // an implicit commit in MySQL, which is exactly wrong here -- it would
+        // commit the very transaction this test needs to prove rolls back, and
+        // an incompletely restored schema mutation would leak into later
+        // tests. ThrowingPdoStatement instead throws once, only for the
+        // specific UPDATE this test targets, entirely inside the PHP process
+        // and fully reversible via ATTR_STATEMENT_CLASS.
+        $this->database->setAttribute(PDO::ATTR_STATEMENT_CLASS, [ThrowingPdoStatement::class, []]);
+        ThrowingPdoStatement::arm('UPDATE class_creation_requests');
         $threw = false;
         try {
             $service->approveGroup($owner, $fixture['program_id'], $entryYear, 'Atomic Cohort ' . $suffix, 'Atomic Class ' . $suffix);
         } catch (Throwable) {
             $threw = true;
         } finally {
-            $this->database->exec("ALTER TABLE class_creation_requests DROP CHECK chk_class_creation_requests_status");
-            $this->database->exec("ALTER TABLE class_creation_requests ADD CONSTRAINT chk_class_creation_requests_status CHECK (status IN ('pending', 'created', 'declined'))");
+            ThrowingPdoStatement::disarm();
+            $this->database->setAttribute(PDO::ATTR_STATEMENT_CLASS, [PDOStatement::class, []]);
         }
         $this->assert($threw, 'Expected the mid-approval failure to throw.');
 
@@ -392,5 +402,41 @@ SQL);
         if (!$condition) {
             throw new RuntimeException($message);
         }
+    }
+}
+
+/**
+ * PDOStatement fault injection for atomicity tests: throws once, only for a
+ * statement whose SQL contains a chosen substring, then behaves normally
+ * again. Installed via PDO::ATTR_STATEMENT_CLASS on the shared test
+ * connection -- a per-connection PHP-level setting, not a schema or data
+ * mutation, so there is nothing to leak into other tests even if a caller
+ * forgets to disarm() (restoring PDOStatement::class as the statement class
+ * is still required to stop intercepting future queries).
+ */
+final class ThrowingPdoStatement extends PDOStatement
+{
+    private static bool $armed = false;
+    private static string $match = '';
+
+    public static function arm(string $sqlSubstring): void
+    {
+        self::$armed = true;
+        self::$match = $sqlSubstring;
+    }
+
+    public static function disarm(): void
+    {
+        self::$armed = false;
+        self::$match = '';
+    }
+
+    public function execute(?array $params = null): bool
+    {
+        if (self::$armed && str_contains($this->queryString, self::$match)) {
+            self::$armed = false;
+            throw new PDOException('Injected failure for atomicity test.');
+        }
+        return parent::execute($params);
     }
 }
