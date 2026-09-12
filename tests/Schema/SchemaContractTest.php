@@ -20,7 +20,7 @@ final class SchemaContractTest
     {
         $migrationPaths = glob($this->root . '/database/migrations/*.sql') ?: [];
         sort($migrationPaths, SORT_STRING);
-        $this->assert(count($migrationPaths) === 13, 'Expected exactly thirteen versioned platform migrations through the onboarding phone verification contract.');
+        $this->assert(count($migrationPaths) === 15, 'Expected exactly fifteen versioned platform migrations through the class creation request contract.');
 
         $sql = '';
         foreach ($migrationPaths as $path) {

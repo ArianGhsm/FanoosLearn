@@ -17,6 +17,7 @@ use Fanoos\Platform\Integration\ServicePrincipal;
 use Fanoos\Platform\Messaging\MessagingLinkService;
 use Fanoos\Platform\Messaging\MessagingUnlinkService;
 use Fanoos\Platform\Notifications\NotificationDeliveryService;
+use Fanoos\Platform\Onboarding\ClassMembershipService;
 use Fanoos\Platform\Onboarding\DirectoryReadService;
 use Fanoos\Platform\Onboarding\OnboardingPhoneVerificationService;
 use Fanoos\Platform\Operations\DeploymentControlService;
@@ -43,6 +44,7 @@ final class InternalApiKernel
         private readonly ClassProvisioningService $classes,
         private readonly DirectoryReadService $directory,
         private readonly OnboardingPhoneVerificationService $onboardingPhones,
+        private readonly ClassMembershipService $membership,
         private readonly bool $paymentsEnabled,
     ) {
     }
@@ -324,6 +326,15 @@ final class InternalApiKernel
                 (int) ($request->body['limit'] ?? 10), $this->nullableString($request->body['cursor'] ?? null),
             );
         }
+        if ($path === '/api/internal/v1/onboarding/directory/cohorts') {
+            $this->assertKeys($request->body, ['platform', 'program_id', 'limit', 'cursor']);
+            $principal = $this->serviceAuth->authenticate($request, 'onboarding.directory.read');
+            $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
+            return $this->directory->joinableCohortsByProgram(
+                (string) ($request->body['program_id'] ?? ''),
+                (int) ($request->body['limit'] ?? 10), $this->nullableString($request->body['cursor'] ?? null),
+            );
+        }
         if ($path === '/api/internal/v1/onboarding/otp/request') {
             $this->assertKeys($request->body, ['platform', 'subject', 'phone_number']);
             $principal = $this->serviceAuth->authenticate($request, 'onboarding.otp.request');
@@ -350,6 +361,30 @@ final class InternalApiKernel
             $principal = $this->serviceAuth->authenticate($request, 'onboarding.otp.status');
             $platform = $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
             return $this->onboardingPhones->status($platform, (string) ($request->body['subject'] ?? ''));
+        }
+        if ($path === '/api/internal/v1/onboarding/join') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'program_id', 'entry_year']);
+            $principal = $this->serviceAuth->authenticate($request, 'onboarding.join');
+            $platform = $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
+            return $this->membership->join(
+                $platform, (string) ($request->body['subject'] ?? ''),
+                (string) ($request->body['program_id'] ?? ''), (int) ($request->body['entry_year'] ?? 0),
+            );
+        }
+        if ($path === '/api/internal/v1/onboarding/upgrade-request') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id']);
+            $principal = $this->serviceAuth->authenticate($request, 'onboarding.upgrade_request');
+            $platform = $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
+            return $this->membership->requestUpgrade($platform, (string) ($request->body['subject'] ?? ''), (string) ($request->body['workspace_id'] ?? ''));
+        }
+        if ($path === '/api/internal/v1/onboarding/class-creation-requests') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'program_id', 'entry_year']);
+            $principal = $this->serviceAuth->authenticate($request, 'onboarding.class_creation_request');
+            $platform = $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
+            return $this->membership->requestClassCreation(
+                $platform, (string) ($request->body['subject'] ?? ''),
+                (string) ($request->body['program_id'] ?? ''), (int) ($request->body['entry_year'] ?? 0),
+            );
         }
         if ($path === '/api/internal/v1/classes') {
             $this->assertKeys($request->body, [
