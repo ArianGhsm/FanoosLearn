@@ -151,7 +151,10 @@ SQL);
             $threw = true;
         } finally {
             ThrowingPdoStatement::disarm();
-            $this->database->setAttribute(PDO::ATTR_STATEMENT_CLASS, [PDOStatement::class, []]);
+            // Restore with no ctor_args: PDOStatement itself exposes no constructor,
+            // and supplying even an empty args array makes PDO reject it with
+            // "User-supplied statement does not accept constructor arguments".
+            $this->database->setAttribute(PDO::ATTR_STATEMENT_CLASS, [PDOStatement::class]);
         }
         $this->assert($threw, 'Expected the mid-approval failure to throw.');
 
