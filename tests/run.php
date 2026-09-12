@@ -7,6 +7,7 @@ use Fanoos\Tests\Core\ClassMembershipTest;
 use Fanoos\Tests\Core\ClassProvisioningTest;
 use Fanoos\Tests\Core\OnboardingDirectoryTest;
 use Fanoos\Tests\Core\OnboardingPhoneVerificationTest;
+use Fanoos\Tests\Core\RepresentativeApprovalTest;
 use Fanoos\Tests\Integration\TenantIsolationTest;
 use Fanoos\Tests\Integration\MigrationSafetyTest;
 use Fanoos\Tests\Integration\CorePlatformTest;
@@ -82,6 +83,8 @@ try {
         echo "PASS onboarding phone verification scenarios\n";
         $assertions += (new ClassMembershipTest($database))->run();
         echo "PASS join wizard membership and upgrade-request scenarios\n";
+        $assertions += (new RepresentativeApprovalTest($database))->run();
+        echo "PASS representative appointment and approval scenarios\n";
         $assertions += (new OwnerBootstrapTest($database, $root))->run();
         echo "PASS first-owner bootstrap tool scenarios\n";
         $assertions += (new BotPlatformHandoffTest($database))->run();

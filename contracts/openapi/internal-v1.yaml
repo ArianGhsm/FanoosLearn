@@ -290,9 +290,9 @@ paths:
       x-required-service-action: onboarding.upgrade_request
       description: >-
         Records a durable, idempotent request from a limited member asking their class representative to
-        upgrade them to the full 'student' role. Representatives do not exist yet, so this only records the
-        request; nothing here approves it. Repeated calls for the same (subject, workspace) return the existing
-        request's status rather than creating a second one.
+        upgrade them to the full 'student' role. Approval itself is the /representatives/requests/* family
+        below. Repeated calls for the same (subject, workspace) return the existing request's status rather
+        than creating a second one.
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/OnboardingUpgradeRequest' } } } }
       responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
   /onboarding/class-creation-requests:
@@ -317,6 +317,67 @@ paths:
         returns the same workspace and never duplicates a directory row at any level.
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ClassProvision' } } } }
       responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '409': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } }
+  /representatives/workspaces:
+    post:
+      operationId: listActiveWorkspacesForAppointment
+      x-required-service-action: representative.workspaces.read
+      description: >-
+        Platform-owner-only. Every active class, paginated, for the appointment wizard's first step (pick which
+        class). Authorized the same way /classes is: workspace.provision at platform scope.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/OwnerPagedRead' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /representatives/candidates:
+    post:
+      operationId: listAppointableMembers
+      x-required-service-action: representative.candidates.read
+      description: >-
+        A workspace's active members, paginated, for the appointment wizard's second step (pick who to
+        appoint). Deliberately separate from the admin dashboard's unpaginated roster read; only id and a
+        display label are returned.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PagedWorkspaceRead' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /representatives/appoint:
+    post:
+      operationId: appointRepresentative
+      x-required-service-action: representative.appoint
+      description: >-
+        Platform-owner-only (membership.manage, workspace-scoped -- the platform scope is always an ancestor of
+        a workspace scope, so a platform owner satisfies this the same way any workspace-scoped permission
+        check does). The target must already be an active member of the workspace; the join wizard is the only
+        identity path -- this promotes an existing member, it does not name a new person. Idempotent: appointing
+        an already-appointed representative again changes nothing.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/RepresentativeAppoint' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' } }
+  /representatives/requests/list:
+    post:
+      operationId: listPendingUpgradeRequests
+      x-required-service-action: representative.requests.read
+      description: >-
+        A representative's (or admin's) own approval queue: pending workspace role-upgrade requests for one
+        workspace, filtered server-side by that workspace_id -- a representative of a different class never
+        sees this list even if they can name another class's workspace_id. Requires membership.approve.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/OnboardingUpgradeRequest' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /representatives/requests/approve:
+    post:
+      operationId: approveUpgradeRequest
+      x-required-service-action: representative.requests.approve
+      description: >-
+        Approves a pending request: closes it and moves the member from 'workspace-limited-member' to the full
+        'student' role for that workspace, both in one transaction -- neither ever applies without the other.
+        Idempotent on an already-approved request; refused (409) on an already-declined one. The request_id is
+        looked up scoped to workspace_id, so a request id from another class can never be approved here.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/UpgradeRequestDecision' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' }, '409': { $ref: '#/components/responses/Error' } }
+  /representatives/requests/decline:
+    post:
+      operationId: declineUpgradeRequest
+      x-required-service-action: representative.requests.decline
+      description: >-
+        Ends a pending request in a terminal declined state rather than leaving it to linger. Idempotent on an
+        already-declined request; refused (409) on an already-approved one.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/UpgradeRequestDecision' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' }, '409': { $ref: '#/components/responses/Error' } }
 components:
   securitySchemes:
     serviceKey:
@@ -566,6 +627,33 @@ components:
       type: object
       required: [platform, subject, workspace_id]
       properties: { platform: { $ref: '#/components/schemas/Platform' }, subject: { type: string, minLength: 1, maxLength: 160 }, workspace_id: { $ref: '#/components/schemas/Uuid' } }
+      additionalProperties: false
+    OwnerPagedRead:
+      type: object
+      required: [platform, subject]
+      properties:
+        platform: { $ref: '#/components/schemas/Platform' }
+        subject: { type: string, minLength: 1, maxLength: 160 }
+        limit: { type: integer, minimum: 1, maximum: 50 }
+        cursor: { $ref: '#/components/schemas/Cursor' }
+      additionalProperties: false
+    RepresentativeAppoint:
+      type: object
+      required: [platform, subject, workspace_id, target_user_id]
+      properties:
+        platform: { $ref: '#/components/schemas/Platform' }
+        subject: { type: string, minLength: 1, maxLength: 160 }
+        workspace_id: { $ref: '#/components/schemas/Uuid' }
+        target_user_id: { $ref: '#/components/schemas/Uuid' }
+      additionalProperties: false
+    UpgradeRequestDecision:
+      type: object
+      required: [platform, subject, workspace_id, request_id]
+      properties:
+        platform: { $ref: '#/components/schemas/Platform' }
+        subject: { type: string, minLength: 1, maxLength: 160 }
+        workspace_id: { $ref: '#/components/schemas/Uuid' }
+        request_id: { $ref: '#/components/schemas/Uuid' }
       additionalProperties: false
     OnboardingClassCreationRequest:
       type: object

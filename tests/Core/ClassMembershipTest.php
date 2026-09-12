@@ -210,7 +210,8 @@ final class ClassMembershipTest
     private function service(ChannelSubjectProtector $protector): ClassMembershipService
     {
         $links = new MessagingLinkService($this->database, new AuditLogger($this->database), $protector);
-        return new ClassMembershipService($this->database, new AuditLogger($this->database), $protector, $links);
+        $access = new AccessGate($this->database, new ScopeAuthorizer($this->database));
+        return new ClassMembershipService($this->database, new AuditLogger($this->database), $protector, $links, $access);
     }
 
     private function markPhoneVerified(ChannelSubjectProtector $protector, string $platform, string $subject, string $phone): void

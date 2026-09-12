@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fanoos\Platform\Onboarding;
 
 use Fanoos\Platform\Audit\AuditLogger;
+use Fanoos\Platform\Authorization\AccessGate;
 use Fanoos\Platform\Messaging\ChannelSubjectProtector;
 use Fanoos\Platform\Messaging\MessagingLinkService;
 use Fanoos\Platform\Support\PlatformException;
@@ -53,12 +54,14 @@ final class ClassMembershipService
 {
     private const PLATFORMS = ['telegram', 'bale'];
     private const LIMITED_ROLE_KEY = 'workspace-limited-member';
+    private const FULL_ROLE_KEY = 'student';
 
     public function __construct(
         private readonly PDO $database,
         private readonly AuditLogger $audit,
         private readonly ChannelSubjectProtector $subjects,
         private readonly MessagingLinkService $links,
+        private readonly AccessGate $access,
     ) {
     }
 
@@ -126,19 +129,9 @@ SQL);
     public function requestUpgrade(string $platform, string $subject, string $workspaceId): array
     {
         $platform = $this->platform($platform);
-        $resolved = $this->links->resolve($platform, $subject);
-        if ($resolved === null) {
-            throw new PlatformException('messaging_link_required', 'Messaging account is not linked.', 403);
-        }
-        $userId = $resolved['user_id'];
+        $userId = $this->requireActiveMember($platform, $subject, $workspaceId);
 
         return Transaction::run($this->database, function () use ($userId, $workspaceId): array {
-            $membership = $this->database->prepare("SELECT 1 FROM tenant_workspace_memberships WHERE workspace_id = :workspace AND user_id = :user AND status = 'active'");
-            $membership->execute(['workspace' => $workspaceId, 'user' => $userId]);
-            if ($membership->fetchColumn() === false) {
-                throw new PlatformException('workspace_forbidden', 'Linked account is not an active member of this workspace.', 403);
-            }
-
             $existing = $this->database->prepare('SELECT status FROM tenant_workspace_role_upgrade_requests WHERE workspace_id = :workspace AND user_id = :user FOR UPDATE');
             $existing->execute(['workspace' => $workspaceId, 'user' => $userId]);
             $existingStatus = $existing->fetchColumn();
@@ -156,6 +149,187 @@ SQL);
 
             return ['status' => 'pending', 'created' => true];
         });
+    }
+
+    /**
+     * A workspace's pending upgrade requests, for a representative's (or
+     * admin's) own approval queue. membership.approve is the narrow
+     * permission this needs -- deliberately not membership.manage, which
+     * would also let a representative remove classmates wholesale
+     * (docs/product/01_FRONT_DOOR.md #10 says everything inside a class
+     * belongs to the representative, but approving a join is not the same
+     * capability as administering the roster).
+     *
+     * @return list<array{request_id:string,user_id:string,display_name:string,requested_at:string}>
+     */
+    public function pendingUpgradeRequests(string $platform, string $subject, string $workspaceId): array
+    {
+        $platform = $this->platform($platform);
+        $actorUserId = $this->requireActiveMember($platform, $subject, $workspaceId);
+        $this->access->requireWorkspace($actorUserId, $workspaceId, 'membership.approve');
+
+        $query = $this->database->prepare(<<<'SQL'
+SELECT request.id AS request_id, request.user_id, user.display_name, request.requested_at
+FROM tenant_workspace_role_upgrade_requests request
+JOIN iam_users user ON user.id = request.user_id
+WHERE request.workspace_id = :workspace AND request.status = 'pending'
+ORDER BY request.requested_at, request.id
+SQL);
+        $query->execute(['workspace' => $workspaceId]);
+        return $query->fetchAll();
+    }
+
+    /**
+     * Both halves happen in one transaction: the request row closes, and the
+     * member moves from the limited role to the full 'student' role for this
+     * workspace. Neither ever applies without the other -- a half-applied
+     * approval (request closed but role unchanged, or the reverse) is the
+     * failure mode this is built against.
+     *
+     * @return array{status:string,already:bool}
+     */
+    public function approveUpgradeRequest(string $platform, string $subject, string $workspaceId, string $requestId): array
+    {
+        $platform = $this->platform($platform);
+        $actorUserId = $this->requireActiveMember($platform, $subject, $workspaceId);
+        $this->access->requireWorkspace($actorUserId, $workspaceId, 'membership.approve');
+
+        return Transaction::run($this->database, function () use ($actorUserId, $workspaceId, $requestId): array {
+            $request = $this->lockUpgradeRequest($workspaceId, $requestId);
+            if ($request['status'] === 'approved') {
+                return ['status' => 'approved', 'already' => true];
+            }
+            if ($request['status'] !== 'pending') {
+                throw new PlatformException('upgrade_request_not_pending', 'This request is no longer pending.', 409);
+            }
+
+            $this->database->prepare(<<<'SQL'
+UPDATE tenant_workspace_role_upgrade_requests
+SET status = 'approved', resolved_at = UTC_TIMESTAMP(6), resolved_by_user_id = :actor, updated_at = UTC_TIMESTAMP(6)
+WHERE id = :id
+SQL)->execute(['actor' => $actorUserId, 'id' => $requestId]);
+
+            $this->promoteToFullRole((string) $request['user_id'], $workspaceId);
+
+            $this->audit->record($workspaceId, $actorUserId, 'membership.upgrade_request.approve', 'tenant_workspace_role_upgrade_request', $requestId, 'success', [
+                'member_user_id' => $request['user_id'],
+            ]);
+
+            return ['status' => 'approved', 'already' => false];
+        });
+    }
+
+    /** @return array{status:string,already:bool} */
+    public function declineUpgradeRequest(string $platform, string $subject, string $workspaceId, string $requestId): array
+    {
+        $platform = $this->platform($platform);
+        $actorUserId = $this->requireActiveMember($platform, $subject, $workspaceId);
+        $this->access->requireWorkspace($actorUserId, $workspaceId, 'membership.approve');
+
+        return Transaction::run($this->database, function () use ($actorUserId, $workspaceId, $requestId): array {
+            $request = $this->lockUpgradeRequest($workspaceId, $requestId);
+            if ($request['status'] === 'declined') {
+                return ['status' => 'declined', 'already' => true];
+            }
+            if ($request['status'] !== 'pending') {
+                throw new PlatformException('upgrade_request_not_pending', 'This request is no longer pending.', 409);
+            }
+
+            $this->database->prepare(<<<'SQL'
+UPDATE tenant_workspace_role_upgrade_requests
+SET status = 'declined', resolved_at = UTC_TIMESTAMP(6), resolved_by_user_id = :actor, updated_at = UTC_TIMESTAMP(6)
+WHERE id = :id
+SQL)->execute(['actor' => $actorUserId, 'id' => $requestId]);
+
+            $this->audit->record($workspaceId, $actorUserId, 'membership.upgrade_request.decline', 'tenant_workspace_role_upgrade_request', $requestId, 'success', [
+                'member_user_id' => $request['user_id'],
+            ]);
+
+            return ['status' => 'declined', 'already' => false];
+        });
+    }
+
+    /** @return array{id:string,user_id:string,status:string} */
+    private function lockUpgradeRequest(string $workspaceId, string $requestId): array
+    {
+        // Filtered by workspace_id, not just id: a representative of one
+        // class must never be able to act on a request that leaked from --
+        // or was guessed for -- another class, even indirectly through this
+        // lookup.
+        $request = $this->database->prepare(<<<'SQL'
+SELECT id, user_id, status FROM tenant_workspace_role_upgrade_requests
+WHERE id = :id AND workspace_id = :workspace FOR UPDATE
+SQL);
+        $request->execute(['id' => $requestId, 'workspace' => $workspaceId]);
+        $row = $request->fetch();
+        if ($row === false) {
+            throw new PlatformException('upgrade_request_not_found', 'Upgrade request was not found in this workspace.', 404);
+        }
+        return $row;
+    }
+
+    private function promoteToFullRole(string $userId, string $workspaceId): void
+    {
+        $scope = $this->database->prepare("SELECT id FROM rbac_scopes WHERE scope_type = 'workspace' AND entity_id = :workspace");
+        $scope->execute(['workspace' => $workspaceId]);
+        $scopeId = $scope->fetchColumn();
+        if ($scopeId === false) {
+            throw new PlatformException('workspace_scope_missing', 'Workspace authorization scope was not found.', 500);
+        }
+
+        $limitedRole = $this->database->prepare('SELECT id FROM rbac_role_templates WHERE role_key = :role');
+        $limitedRole->execute(['role' => self::LIMITED_ROLE_KEY]);
+        $limitedRoleId = $limitedRole->fetchColumn();
+        if ($limitedRoleId !== false) {
+            $this->database->prepare(<<<'SQL'
+UPDATE rbac_role_assignments
+SET revoked_at = UTC_TIMESTAMP(6), revoke_reason = 'role_upgraded'
+WHERE user_id = :user AND role_template_id = :role AND scope_id = :scope AND revoked_at IS NULL
+SQL)->execute(['user' => $userId, 'role' => $limitedRoleId, 'scope' => $scopeId]);
+        }
+
+        $fullRole = $this->database->prepare('SELECT id FROM rbac_role_templates WHERE role_key = :role');
+        $fullRole->execute(['role' => self::FULL_ROLE_KEY]);
+        $fullRoleId = $fullRole->fetchColumn();
+        if ($fullRoleId === false) {
+            throw new PlatformException('role_template_missing', 'Student role template was not found.', 500);
+        }
+
+        $existing = $this->database->prepare(<<<'SQL'
+SELECT id FROM rbac_role_assignments WHERE user_id = :user AND role_template_id = :role AND scope_id = :scope
+SQL);
+        $existing->execute(['user' => $userId, 'role' => $fullRoleId, 'scope' => $scopeId]);
+        $existingId = $existing->fetchColumn();
+        if ($existingId !== false) {
+            $this->database->prepare(<<<'SQL'
+UPDATE rbac_role_assignments
+SET revoked_at = NULL, revoke_reason = NULL, valid_from = UTC_TIMESTAMP(6), valid_until = NULL
+WHERE id = :id
+SQL)->execute(['id' => $existingId]);
+            return;
+        }
+
+        $this->database->prepare(<<<'SQL'
+INSERT INTO rbac_role_assignments (id, user_id, role_template_id, scope_id, valid_from, created_at)
+VALUES (:id, :user, :role, :scope, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))
+SQL)->execute(['id' => Uuid::v7(), 'user' => $userId, 'role' => $fullRoleId, 'scope' => $scopeId]);
+    }
+
+    private function requireActiveMember(string $platform, string $subject, string $workspaceId): string
+    {
+        $resolved = $this->links->resolve($platform, $subject);
+        if ($resolved === null) {
+            throw new PlatformException('messaging_link_required', 'Messaging account is not linked.', 403);
+        }
+        $userId = $resolved['user_id'];
+
+        $membership = $this->database->prepare("SELECT 1 FROM tenant_workspace_memberships WHERE workspace_id = :workspace AND user_id = :user AND status = 'active'");
+        $membership->execute(['workspace' => $workspaceId, 'user' => $userId]);
+        if ($membership->fetchColumn() === false) {
+            throw new PlatformException('workspace_forbidden', 'Linked account is not an active member of this workspace.', 403);
+        }
+
+        return $userId;
     }
 
     /**

@@ -68,6 +68,11 @@ _OWNER_ALLOWED_KINDS = {
     "class_wizard_review",
     "class_wizard_cancelled",
     "class_wizard_created",
+    "appoint_wizard_workspace",
+    "appoint_wizard_candidate",
+    "appoint_wizard_confirm",
+    "appoint_wizard_cancelled",
+    "appoint_wizard_created",
 }
 
 

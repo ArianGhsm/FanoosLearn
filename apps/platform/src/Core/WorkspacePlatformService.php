@@ -636,6 +636,65 @@ SQL);
         return $query->fetchAll();
     }
 
+    /**
+     * Platform-owner-only: every active class, for the appointment wizard's
+     * first step (pick which class). Paginated the same way
+     * DirectoryReadService reads are, since a platform can eventually host
+     * more than the one class it starts with (AGENTS.md #1).
+     *
+     * @return array{items:list<array<string,mixed>>,next_cursor:?string}
+     */
+    public function listActiveWorkspaces(string $actorUserId, int $limit = 10, ?string $cursor = null): array
+    {
+        $this->access->requirePlatform($actorUserId, 'workspace.provision');
+        $limit = $this->boundedPageLimit($limit);
+        $offset = $this->decodePageCursor($cursor);
+        $query = $this->database->prepare(<<<'SQL'
+SELECT id, slug, name
+FROM tenant_workspaces
+WHERE status = 'active' AND archived_at IS NULL
+ORDER BY created_at DESC, id
+LIMIT :limit OFFSET :offset
+SQL);
+        $query->bindValue(':limit', $limit + 1, PDO::PARAM_INT);
+        $query->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $query->execute();
+        return $this->pagedRows($query->fetchAll(), $limit, $offset);
+    }
+
+    /**
+     * A workspace's active members, for the appointment wizard's second step
+     * (pick who to appoint). Deliberately separate from members() above: that
+     * method is the admin dashboard's roster (unpaginated, includes computed
+     * role_keys) and already has its own tests/callers; changing its contract
+     * to add pagination would risk both for a picker that only needs id and a
+     * label. requireWorkspace('membership.manage') matches
+     * assignRepresentative()'s own requirement -- anyone who can appoint can
+     * browse candidates.
+     *
+     * @return array{items:list<array<string,mixed>>,next_cursor:?string}
+     */
+    public function listAppointableMembers(string $actorUserId, string $workspaceId, int $limit = 10, ?string $cursor = null): array
+    {
+        $this->access->requireWorkspace($actorUserId, $workspaceId, 'membership.manage');
+        $limit = $this->boundedPageLimit($limit);
+        $offset = $this->decodePageCursor($cursor);
+        $query = $this->database->prepare(<<<'SQL'
+SELECT membership.user_id, user.display_name, membership.joined_at
+FROM tenant_workspace_memberships membership
+JOIN iam_users user ON user.id = membership.user_id
+WHERE membership.workspace_id = :workspace AND membership.status = 'active'
+  AND (membership.ended_at IS NULL OR membership.ended_at > UTC_TIMESTAMP(6))
+ORDER BY membership.joined_at, membership.user_id
+LIMIT :limit OFFSET :offset
+SQL);
+        $query->bindValue(':workspace', $workspaceId);
+        $query->bindValue(':limit', $limit + 1, PDO::PARAM_INT);
+        $query->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $query->execute();
+        return $this->pagedRows($query->fetchAll(), $limit, $offset);
+    }
+
     public function assignRepresentative(string $actorUserId, string $workspaceId, string $targetUserId): string
     {
         $this->access->requireWorkspace($actorUserId, $workspaceId, 'membership.manage');
@@ -803,6 +862,46 @@ SQL);
             throw new PlatformException('workspace_scope_not_found', 'Workspace authorization scope was not found.', 500);
         }
         return (string) $id;
+    }
+
+    /** @return array{items:list<array<string,mixed>>,next_cursor:?string} */
+    private function pagedRows(array $rows, int $limit, int $offset): array
+    {
+        $hasMore = count($rows) > $limit;
+        if ($hasMore) {
+            array_pop($rows);
+        }
+        return ['items' => $rows, 'next_cursor' => $hasMore ? $this->encodePageCursor($offset + count($rows)) : null];
+    }
+
+    private function boundedPageLimit(int $limit): int
+    {
+        return max(1, min(50, $limit));
+    }
+
+    private function decodePageCursor(?string $cursor): int
+    {
+        if ($cursor === null || $cursor === '') {
+            return 0;
+        }
+        if (!preg_match('/^[A-Za-z0-9_-]{1,32}$/', $cursor)) {
+            throw new PlatformException('cursor_invalid', 'Pagination cursor is invalid.', 422);
+        }
+        $padding = (4 - strlen($cursor) % 4) % 4;
+        $decoded = base64_decode(strtr($cursor . str_repeat('=', $padding), '-_', '+/'), true);
+        if (!is_string($decoded) || !preg_match('/^o:[0-9]{1,7}$/', $decoded)) {
+            throw new PlatformException('cursor_invalid', 'Pagination cursor is invalid.', 422);
+        }
+        $offset = (int) substr($decoded, 2);
+        if ($offset > 1_000_000) {
+            throw new PlatformException('cursor_invalid', 'Pagination cursor is invalid.', 422);
+        }
+        return $offset;
+    }
+
+    private function encodePageCursor(int $offset): string
+    {
+        return rtrim(strtr(base64_encode('o:' . $offset), '+/', '-_'), '=');
     }
 
     /** @return array{published_at:string,id:string}|null */
