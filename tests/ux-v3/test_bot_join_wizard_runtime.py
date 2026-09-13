@@ -167,8 +167,9 @@ class ContactSpoofingGuardTest(unittest.TestCase):
                 "contact": {"phone_number": "09121234567", "user_id": 42},
             },
         }
-        ctx, text, callback, contact_phone = module.context(own_update)
+        ctx, text, callback, contact_phone, document = module.context(own_update)
         self.assertEqual(contact_phone, "09121234567")
+        self.assertIsNone(document)
 
         forwarded_update = {
             "update_id": 2,
@@ -179,7 +180,7 @@ class ContactSpoofingGuardTest(unittest.TestCase):
                 "contact": {"phone_number": "09120000000", "user_id": 999},
             },
         }
-        ctx2, text2, callback2, contact_phone2 = module.context(forwarded_update)
+        ctx2, text2, callback2, contact_phone2, document2 = module.context(forwarded_update)
         self.assertIsNone(contact_phone2)
 
     def test_bale_runtime_accepts_own_contact_and_rejects_forwarded_one(self):

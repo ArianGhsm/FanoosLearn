@@ -5,7 +5,7 @@ from pathlib import Path
 from fanoos_bot.botapi import BotApiError
 from fanoos_bot.capabilities import BALE, TELEGRAM
 from fanoos_bot.models import ActionResult, DeliveryReceiptContext, DocumentPayload, Screen
-from fanoos_bot.runtime import BotRuntime, NotificationPump, UpdateContext
+from fanoos_bot.runtime import BotRuntime, IncomingDocument, NotificationPump, UpdateContext
 from fanoos_bot.state import LocalState
 
 
@@ -132,6 +132,121 @@ class RuntimeFeedbackTest(unittest.TestCase):
         temp=tempfile.TemporaryDirectory();state=LocalState(Path(temp.name)/'s');transport=RecordingIdentityTransport();app=App();runtime=BotRuntime('telegram',transport,app,state);screen=Screen('home');result=ActionResult(screen)
         runtime.deliver(UpdateContext('1','1',True),result)
         self.assertIs(transport.received,screen);state.close();temp.cleanup()
+
+
+class ForensicDocumentTransport(RecordingTransport):
+    """Records download_document calls; can simulate a network/API failure
+    without ever writing a destination file."""
+
+    def __init__(self, *, fail=False):
+        super().__init__()
+        self.fail = fail
+        self.download_calls = []
+
+    def download_document(self, file_id, destination, max_bytes):
+        self.download_calls.append((file_id, str(destination), max_bytes))
+        if self.fail:
+            raise BotApiError("network_unavailable", transient=True)
+        Path(destination).write_bytes(b"%PDF-evidence")
+        return len(b"%PDF-evidence")
+
+
+class ForensicApp:
+    FORENSIC_EVIDENCE_MAX_BYTES = 20 * 1024 * 1024
+
+    def __init__(self, *, awaiting=True, result=None):
+        self.backend = self
+        self.awaiting = awaiting
+        self.result = result or ActionResult(Screen("forensic-result"))
+        self.too_large_calls = 0
+        self.download_failed_calls = 0
+        self.document_calls = []
+
+    def forensic_wizard_awaiting_document(self, subject, private=True):
+        return self.awaiting
+
+    def forensic_wizard_document_too_large(self, subject, private=True):
+        self.too_large_calls += 1
+        return ActionResult(Screen("too-large"))
+
+    def forensic_wizard_document_download_failed(self, subject, private=True):
+        self.download_failed_calls += 1
+        return ActionResult(Screen("download-failed"))
+
+    def forensic_wizard_document(self, subject, evidence_path, private=True):
+        path = Path(evidence_path)
+        self.document_calls.append((subject, str(path), path.exists(), path.read_bytes() if path.exists() else None))
+        return self.result
+
+    def home(self, *args):
+        return ActionResult(Screen("home"))
+
+
+class ForensicDocumentHandlingTest(unittest.TestCase):
+    """apps/telegram-bot/runtime.py hands an incoming document to
+    BotRuntime.handle_document, which owns download/tempfile concerns the
+    application layer cannot reach (it only ever sees the FANOOS platform
+    client, never the bot transport). These cover the parts of the flow that
+    live at this layer specifically: a document is ignored unless the
+    application says it is expecting one, an oversized upload (by the
+    platform's own reported size) is refused before any download is
+    attempted, a download failure surfaces a retryable screen rather than
+    crashing, and the evidence file never survives past this call whether
+    the outcome was success or failure.
+    """
+
+    def _runtime(self, transport, app):
+        temp = tempfile.TemporaryDirectory()
+        state = LocalState(Path(temp.name) / "s")
+        runtime = BotRuntime("telegram", transport, app, state)
+        # addCleanup runs LIFO: register temp.cleanup first so state.close()
+        # (added second) runs before it -- sqlite must release the file
+        # before the directory removal, or Windows refuses the unlink.
+        self.addCleanup(temp.cleanup)
+        self.addCleanup(state.close)
+        return runtime
+
+    def test_document_ignored_when_application_is_not_awaiting_one(self):
+        transport = ForensicDocumentTransport()
+        app = ForensicApp(awaiting=False)
+        runtime = self._runtime(transport, app)
+        result = runtime.handle_document(UpdateContext("42", "42", True, 1, None, "u1"), IncomingDocument("file-1", 1000))
+        self.assertIsNone(result)
+        self.assertEqual(transport.download_calls, [])
+        self.assertEqual(app.document_calls, [])
+
+    def test_oversized_upload_is_refused_before_any_download_is_attempted(self):
+        transport = ForensicDocumentTransport()
+        app = ForensicApp(awaiting=True)
+        runtime = self._runtime(transport, app)
+        oversized = IncomingDocument("file-1", app.FORENSIC_EVIDENCE_MAX_BYTES + 1)
+        runtime.handle_document(UpdateContext("42", "42", True, 1, None, "u2"), oversized)
+        self.assertEqual(transport.download_calls, [], "a document already too large per its reported size must never trigger a download")
+        self.assertEqual(app.too_large_calls, 1)
+        self.assertEqual(app.document_calls, [])
+
+    def test_document_within_limit_is_downloaded_processed_and_temp_file_deleted(self):
+        transport = ForensicDocumentTransport()
+        app = ForensicApp(awaiting=True)
+        runtime = self._runtime(transport, app)
+        runtime.handle_document(UpdateContext("42", "42", True, 1, None, "u3"), IncomingDocument("file-1", 1000))
+        self.assertEqual(len(transport.download_calls), 1)
+        self.assertEqual(len(app.document_calls), 1)
+        subject, path, existed_during_call, data = app.document_calls[0]
+        self.assertEqual(subject, "42")
+        self.assertTrue(existed_during_call, "evidence file must exist while the application processes it")
+        self.assertEqual(data, b"%PDF-evidence")
+        self.assertFalse(Path(path).exists(), "evidence file must be deleted once handling finishes (success path)")
+
+    def test_download_failure_surfaces_retry_screen_and_deletes_any_partial_file(self):
+        transport = ForensicDocumentTransport(fail=True)
+        app = ForensicApp(awaiting=True)
+        runtime = self._runtime(transport, app)
+        runtime.handle_document(UpdateContext("42", "42", True, 1, None, "u4"), IncomingDocument("file-1", 1000))
+        self.assertEqual(app.download_failed_calls, 1)
+        self.assertEqual(app.document_calls, [], "investigate must never run against a file that failed to download")
+        _, destination, _ = transport.download_calls[0]
+        self.assertFalse(Path(destination).exists(), "a failed download must not leave a partial evidence file behind")
 
 
 def load_tests(loader, tests, pattern):

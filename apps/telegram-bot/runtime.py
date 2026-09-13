@@ -14,7 +14,7 @@ from fanoos_bot.api import FanoosApiClient
 from fanoos_bot.integrated_application import ApplicationConfig, BotApplication
 from fanoos_bot.botapi import BotApiError, JsonBotApiTransport
 from fanoos_bot.capabilities import TELEGRAM
-from fanoos_bot.runtime import BotRuntime, NotificationPump, UpdateContext
+from fanoos_bot.runtime import BotRuntime, IncomingDocument, NotificationPump, UpdateContext
 from fanoos_bot.state import LocalState
 
 
@@ -61,6 +61,9 @@ def build():
             os.getenv("FANOOS_PROTECTED_RENDERER_VERSION", "fanoos-raster-v2"),
             os.getenv("FANOOS_DEFAULT_COUNTRY_CODE", "").strip(),
             os.getenv("FANOOS_DEFAULT_COUNTRY_NAME", "").strip(),
+            # Fail closed at boot, never a default: this key decodes marks
+            # already distributed in production and must never be rotated.
+            required("FANOOS_PROTECTED_MEDIA_FINGERPRINT_KEY").encode(),
         ),
     )
     transport = TelegramTransport(required("FANOOS_TELEGRAM_BOT_TOKEN"))
@@ -88,6 +91,16 @@ def context(update: dict):
         contact_phone = None
         if contact and str(contact.get("user_id") or "") == str(user.get("id") or ""):
             contact_phone = str(contact.get("phone_number") or "") or None
+        document_payload = message.get("document") if isinstance(message.get("document"), dict) else None
+        document = None
+        if document_payload and str(document_payload.get("file_id") or ""):
+            file_size = document_payload.get("file_size")
+            document = IncomingDocument(
+                file_id=str(document_payload["file_id"]),
+                file_size=int(file_size) if isinstance(file_size, (int, float)) else None,
+                file_name=str(document_payload.get("file_name") or ""),
+                mime_type=str(document_payload.get("mime_type") or ""),
+            )
         return (
             UpdateContext(
                 str(user.get("id", "")),
@@ -100,6 +113,7 @@ def context(update: dict):
             str(message.get("text") or ""),
             None,
             contact_phone,
+            document,
         )
     if isinstance(update.get("callback_query"), dict):
         query = update["callback_query"]
@@ -118,6 +132,7 @@ def context(update: dict):
             "",
             str(query.get("data") or ""),
             None,
+            None,
         )
     return None
 
@@ -126,9 +141,11 @@ def _handle_update(runtime: BotRuntime, update: dict) -> None:
     parsed = context(update)
     if not parsed:
         return
-    ctx, text, callback, contact_phone = parsed
+    ctx, text, callback, contact_phone, document = parsed
     if callback is not None:
         runtime.handle_callback(ctx, callback)
+    elif document is not None:
+        runtime.handle_document(ctx, document)
     elif contact_phone:
         runtime.handle_contact(ctx, contact_phone)
     elif text:
