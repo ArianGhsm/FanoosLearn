@@ -321,7 +321,11 @@ final class InstitutionTermServiceTest
     /** @param array<string,mixed> $fixture */
     private function joinAsMember(ChannelSubjectProtector $protector, string $subject, array $fixture): string
     {
-        $phone = '+9891' . substr(str_replace('-', '', Uuid::v7()), 0, 8);
+        // Uuid::v7() is time-ordered: its leading hex is a millisecond timestamp,
+        // so two fixtures created in the same millisecond produced the SAME
+        // phone, resolved to one user, and the second link violated
+        // uq_messaging_links_user_platform. Use randomness, not the clock.
+        $phone = '+9891' . str_pad((string) random_int(0, 99999999), 8, '0', STR_PAD_LEFT);
         $this->markPhoneVerified($protector, 'telegram', $subject, $phone);
         $membership = $this->classMembership($protector);
         $entryYear = $this->entryYearFor($fixture);
