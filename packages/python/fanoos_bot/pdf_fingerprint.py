@@ -173,6 +173,22 @@ def derive_fingerprint_material(
     )
 
 
+def canonical_user_id(user_id: str) -> int:
+    """Adapt derive_fingerprint_material's positive-int user_id (legacy: a raw
+    Telegram id) to FANOOS's CHAR(36) iam_users.id UUID string. Hashing the
+    full UUID keeps every byte of the real identity participating in the
+    canonical HMAC binding instead of truncating/colliding it -- casting a
+    UUID straight to int silently mangles it (any UUID starting with a hex
+    letter casts to 0 in both Python and PHP). Shared by the worker (marking)
+    and the forensic detector (decoding): both must derive the same int from
+    the same UUID for a mark to ever be recoverable.
+    """
+    if not user_id:
+        return 0
+    digest = hashlib.sha256(user_id.encode("utf-8")).digest()[:8]
+    return int.from_bytes(digest, "big") or 1
+
+
 def secure_page_seed(material: FingerprintMaterial, page_index: int, domain: bytes) -> bytes:
     if not material.page_seed_key or page_index < 0:
         raise PdfFingerprintError("Secure page seed is unavailable")

@@ -201,6 +201,26 @@ paths:
           content: { application/pdf: { schema: { type: string, format: binary } } }
         '403': { $ref: '#/components/responses/Error' }
         '404': { $ref: '#/components/responses/Error' }
+  /protected-media/forensic/candidates:
+    post:
+      operationId: listProtectedMediaForensicCandidates
+      x-required-service-action: protected_media.forensic.candidates
+      description: Owner-only. Returns exactly the recipients who were actually issued a fanoos-raster-v2 derivative of the given resource in the given workspace -- never a search across other workspaces or resources. Requires the platform-scoped protected_media.forensic.investigate permission.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ForensicCandidates' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } }
+  /protected-media/forensic/source:
+    post:
+      operationId: redeemProtectedMediaForensicSource
+      x-required-service-action: protected_media.forensic.source
+      description: Owner-only. Returns the bounded original PDF bytes for one candidate's object/version, so the detector can recompute the same source hash the worker bound into the mark. No storage path or credential is exposed.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ForensicSource' } } } }
+      responses:
+        '200':
+          description: Bounded original PDF bytes.
+          content: { application/pdf: { schema: { type: string, format: binary } } }
+        '403': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
   /deployments/overview:
     post:
       operationId: getOwnerDeploymentOverview
@@ -630,6 +650,16 @@ components:
       type: object
       required: [platform, subject, workspace_id, artifact_capability]
       properties: { platform: { $ref: '#/components/schemas/Platform' }, subject: { type: string, minLength: 1, maxLength: 160 }, workspace_id: { $ref: '#/components/schemas/Uuid' }, artifact_capability: { type: string, minLength: 16, maxLength: 2048 } }
+      additionalProperties: false
+    ForensicCandidates:
+      type: object
+      required: [platform, subject, workspace_id, resource_id]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, subject: { type: string, minLength: 1, maxLength: 160 }, workspace_id: { $ref: '#/components/schemas/Uuid' }, resource_id: { $ref: '#/components/schemas/Uuid' } }
+      additionalProperties: false
+    ForensicSource:
+      type: object
+      required: [platform, subject, workspace_id, object_id, resource_version_id, classification]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, subject: { type: string, minLength: 1, maxLength: 160 }, workspace_id: { $ref: '#/components/schemas/Uuid' }, object_id: { $ref: '#/components/schemas/Uuid' }, resource_version_id: { $ref: '#/components/schemas/Uuid' }, classification: { type: string, enum: [private, protected, public] } }
       additionalProperties: false
     DeploymentOverview:
       type: object
