@@ -11,6 +11,7 @@ use Fanoos\Platform\Content\ProtectedMediaJobService;
 use Fanoos\Platform\Content\ProtectedMediaTransferService;
 use Fanoos\Platform\Content\SecureDeliveryService;
 use Fanoos\Platform\Core\BotReadProjectionService;
+use Fanoos\Platform\Core\ClassCreationRequestService;
 use Fanoos\Platform\Core\ClassProvisioningService;
 use Fanoos\Platform\Core\WorkspacePlatformService;
 use Fanoos\Platform\Integration\ServiceAuthenticator;
@@ -47,6 +48,7 @@ final class InternalApiKernel
         private readonly OnboardingPhoneVerificationService $onboardingPhones,
         private readonly ClassMembershipService $membership,
         private readonly WorkspacePlatformService $workspacePlatform,
+        private readonly ClassCreationRequestService $classCreationRequests,
         private readonly bool $paymentsEnabled,
     ) {
     }
@@ -446,6 +448,31 @@ final class InternalApiKernel
             return $this->membership->declineUpgradeRequest(
                 $platform, (string) ($request->body['subject'] ?? ''),
                 (string) ($request->body['workspace_id'] ?? ''), (string) ($request->body['request_id'] ?? ''),
+            );
+        }
+        if ($path === '/api/internal/v1/classes/creation-requests/list') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'limit', 'cursor']);
+            $principal = $this->serviceAuth->authenticate($request, 'workspace.provision');
+            $link = $this->linked($principal, $request->body);
+            return $this->classCreationRequests->listPendingGroups(
+                $link['user_id'], (int) ($request->body['limit'] ?? 10), $this->nullableString($request->body['cursor'] ?? null),
+            );
+        }
+        if ($path === '/api/internal/v1/classes/creation-requests/approve') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'program_id', 'entry_year', 'cohort_label', 'workspace_name']);
+            $principal = $this->serviceAuth->authenticate($request, 'workspace.provision');
+            $link = $this->linked($principal, $request->body);
+            return $this->classCreationRequests->approveGroup(
+                $link['user_id'], (string) ($request->body['program_id'] ?? ''), (int) ($request->body['entry_year'] ?? 0),
+                (string) ($request->body['cohort_label'] ?? ''), (string) ($request->body['workspace_name'] ?? ''),
+            );
+        }
+        if ($path === '/api/internal/v1/classes/creation-requests/decline') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'program_id', 'entry_year']);
+            $principal = $this->serviceAuth->authenticate($request, 'workspace.provision');
+            $link = $this->linked($principal, $request->body);
+            return $this->classCreationRequests->declineGroup(
+                $link['user_id'], (string) ($request->body['program_id'] ?? ''), (int) ($request->body['entry_year'] ?? 0),
             );
         }
 

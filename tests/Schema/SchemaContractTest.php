@@ -20,7 +20,7 @@ final class SchemaContractTest
     {
         $migrationPaths = glob($this->root . '/database/migrations/*.sql') ?: [];
         sort($migrationPaths, SORT_STRING);
-        $this->assert(count($migrationPaths) === 15, 'Expected exactly fifteen versioned platform migrations through the class creation request contract.');
+        $this->assert(count($migrationPaths) === 16, 'Expected exactly sixteen versioned platform migrations through the class creation request resolution contract.');
 
         $sql = '';
         foreach ($migrationPaths as $path) {
@@ -31,7 +31,7 @@ final class SchemaContractTest
             $this->assert(!preg_match('/Dentistry|IntegratedDent|TUMS|1402/i', $contents), 'Legacy product identifier found in a migration.');
         }
 
-        foreach (['0008_stage7_platform_contracts.sql', '0009_stage7_notification_receipts.sql', '0010_bot_handoff_contracts.sql', '0011_stage2_rbac_projection_indexes.sql', '0012_stage8_assessment_variants.sql'] as $migration) {
+        foreach (['0008_stage7_platform_contracts.sql', '0009_stage7_notification_receipts.sql', '0010_bot_handoff_contracts.sql', '0011_stage2_rbac_projection_indexes.sql', '0012_stage8_assessment_variants.sql', '0016_class_creation_request_resolution.sql'] as $migration) {
             $contents = file_get_contents($this->root . '/database/migrations/' . $migration);
             $this->assert(is_string($contents) && preg_match('/^\s*--\s*fanoos:rollback-compatible=expand\s*$/mi', $contents) === 1, "Migration is missing the unattended expand-compatibility marker: {$migration}");
         }

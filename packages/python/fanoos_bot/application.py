@@ -1780,6 +1780,7 @@ class BotApplication:
                 (Button("🔄 به‌روزرسانی سرور", self._cb("update")),),
                 (Button("➕ ساخت کلاس", self._cb("clsnew")),),
                 (Button("➕ انتصاب نماینده", self._cb("repnew")),),
+                (Button("📋 درخواست‌های ساخت کلاس", self._cb("cqlist")),),
             )
             if self.state.latest_deployment(subject):
                 rows += ((Button("وضعیت آخرین به‌روزرسانی", self._cb("updlast")),),)
@@ -2529,6 +2530,390 @@ class BotApplication:
             )
         )
 
+    # -- Class-creation request review (owner) -------------------------------
+    # Capability 5's consumption side (docs/product/01_FRONT_DOOR.md #9):
+    # ClassMembershipService::requestClassCreation() already records a
+    # student's request when their class does not exist yet; nothing read
+    # those rows until this. Grouped by (program_id, entry_year), since
+    # several students land on the same identity -- the demand count is the
+    # number waiting, and is the entire point of this screen. Gated the same
+    # way as class_wizard_begin/appoint_wizard_begin: workspace.provision has
+    # no cheap standalone read yet, so deployment_overview's
+    # can_manage_deployments decides what to show here, while every actual
+    # list/approve/decline call is independently re-authorized by the
+    # backend's own workspace.provision check.
+
+    CREQ_PAGE_SIZE = 8
+
+    _CREQ_STEP_PROMPTS: dict[str, tuple[str, str]] = {
+        "cohort_label": ("برچسب ورودی", "یک برچسب برای این ورودی بنویسید؛ مثلاً «ورودی ۱۴۰۲»."),
+        "workspace_name": (
+            "نام نمایشی کلاس",
+            "یک نام نمایشی برای این کلاس بنویسید؛ همین نام برای اعضا نمایش داده می‌شود.",
+        ),
+    }
+    _CREQ_STEP_ORDER: tuple[str, ...] = ("cohort_label", "workspace_name")
+    _CREQ_TEXT_LIMITS: dict[str, tuple[int, int]] = {
+        "cohort_label": (1, 160),
+        "workspace_name": (1, 200),
+    }
+
+    @staticmethod
+    def _creq_group_label(group: dict) -> str:
+        parts = [str(group.get(key) or "") for key in ("institution", "faculty", "program")]
+        label = " · ".join(part for part in parts if part)
+        year = group.get("entry_year")
+        if year:
+            label = f"{label} · ورودی {to_persian_digits(year)}" if label else f"ورودی {to_persian_digits(year)}"
+        return truncate_text(label or "کلاس", 90)
+
+    def class_creation_requests_begin(self, subject: str, private: bool):
+        if self.platform != "telegram" or not private:
+            return ActionResult(
+                warning_screen(
+                    "درخواست‌های ساخت کلاس فقط در گفت‌وگوی خصوصی تلگرام و پس از مجوز canonical فعال است.",
+                    title="📋 درخواست‌های ساخت کلاس",
+                    kind="creq_list_unavailable",
+                    rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+                )
+            )
+        if not self.config.deployment_target_key:
+            return ActionResult(
+                warning_screen(
+                    "بررسی مجوز این بخش برای این محیط تنظیم نشده است.",
+                    title="📋 درخواست‌های ساخت کلاس",
+                    kind="creq_list_unavailable",
+                    rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+                )
+            )
+        try:
+            overview = self.backend.deployment_overview(subject, self.config.deployment_target_key)
+        except Exception as exc:
+            return self._error(exc)
+        if not overview.get("can_manage_deployments"):
+            return ActionResult(
+                error_screen(
+                    "اجازه دیدن درخواست‌های ساخت کلاس را ندارید.",
+                    title="📋 درخواست‌های ساخت کلاس",
+                    kind="creq_list_denied",
+                    rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+                )
+            )
+        return self._creq_render_list(subject, None)
+
+    def _creq_render_list(self, subject: str, cursor: str | None):
+        try:
+            page = self.backend.class_creation_requests_list(self.platform, subject, self.CREQ_PAGE_SIZE, cursor)
+        except Exception as exc:
+            return self._error(exc)
+        items = [
+            item for item in page.get("items") or []
+            if isinstance(item, dict) and is_uuid(str(item.get("program_id") or ""))
+        ]
+        next_cursor = self._clean_cursor(page.get("next_cursor"))
+
+        def row_label(group: dict) -> str:
+            count = to_persian_digits(group.get("demand_count") or 0)
+            return truncate_text(f"{self._creq_group_label(group)} ({count} نفر)", 90)
+
+        rows: tuple[tuple[Button, ...], ...] = tuple(
+            (Button(
+                row_label(group),
+                self._route_callback(subject, "creq_pick", "cqpick", group),
+            ),)
+            for item in items
+            for group in (
+                {
+                    "program_id": str(item.get("program_id") or ""),
+                    "entry_year": int(item.get("entry_year") or 0),
+                    "institution": str(item.get("institution_name") or ""),
+                    "faculty": str(item.get("faculty_name") or ""),
+                    "program": str(item.get("program_name") or ""),
+                    "demand_count": int(item.get("demand_count") or 0),
+                },
+            )
+        )
+        if next_cursor:
+            rows += ((Button(
+                "بعدی ›",
+                self._route_callback(subject, "creq_page", "cqpage", {"cursor": next_cursor}),
+            ),),)
+        rows += self._nav_rows(back_action="manage", back_label="‹ مدیریت")
+        return ActionResult(
+            semantic_screen(
+                "📋 درخواست‌های ساخت کلاس",
+                "creq_list",
+                breadcrumb="بیشتر › مدیریت › درخواست‌های ساخت کلاس",
+                intro=(
+                    "کلاس‌هایی که دانشجویان برای ساختشان درخواست داده‌اند؛ عدد جلوی هرکدام تعداد افرادی است "
+                    "که منتظرند."
+                    if items
+                    else "در حال حاضر درخواست ساخت کلاسی در انتظار بررسی نیست."
+                ),
+                rows=rows,
+            )
+        )
+
+    def class_creation_requests_page(self, subject: str, ref: str):
+        payload = self._route_payload(subject, ref, "creq_page")
+        if not payload:
+            return self._expired_route()
+        return self._creq_render_list(subject, self._clean_cursor(payload.get("cursor")))
+
+    @staticmethod
+    def _creq_group_from_payload(payload: dict) -> dict:
+        return {
+            "program_id": str(payload.get("program_id") or ""),
+            "entry_year": int(payload.get("entry_year") or 0),
+            "institution": str(payload.get("institution") or ""),
+            "faculty": str(payload.get("faculty") or ""),
+            "program": str(payload.get("program") or ""),
+            "demand_count": int(payload.get("demand_count") or 0),
+        }
+
+    def _creq_detail_screen(self, subject: str, group: dict):
+        rows = (
+            (Button("✅ تأیید و ساخت کلاس", self._route_callback(subject, "creq_approve", "cqappr", group)),),
+            (Button("❌ رد درخواست‌ها", self._route_callback(subject, "creq_decline", "cqdecl", group)),),
+            (Button("↩️ بازگشت", self._cb("cqlist")),),
+        ) + self._nav_rows(back_action="manage", back_label="‹ مدیریت")
+        count = to_persian_digits(group.get("demand_count") or 0)
+        return ActionResult(
+            semantic_screen(
+                "📋 درخواست ساخت کلاس",
+                "creq_detail",
+                breadcrumb="بیشتر › مدیریت › درخواست‌های ساخت کلاس",
+                intro=f"«{self._creq_group_label(group)}» — {count} نفر منتظر این کلاس هستند.",
+                rows=rows,
+            )
+        )
+
+    def class_creation_request_pick(self, subject: str, ref: str):
+        payload = self._route_payload(subject, ref, "creq_pick")
+        if not payload or not is_uuid(str(payload.get("program_id") or "")):
+            return self._expired_route()
+        return self._creq_detail_screen(subject, self._creq_group_from_payload(payload))
+
+    def class_creation_request_approve_begin(self, subject: str, ref: str):
+        payload = self._route_payload(subject, ref, "creq_approve")
+        if not payload or not is_uuid(str(payload.get("program_id") or "")):
+            return self._expired_route()
+        group = self._creq_group_from_payload(payload)
+        self.state.start_creq_wizard(self.platform, subject, group)
+        return ActionResult(self._creq_wizard_step_screen(self._CREQ_STEP_ORDER, 0, group))
+
+    def _creq_wizard_step_screen(
+        self,
+        steps: tuple[str, ...],
+        index: int,
+        answers: dict,
+        *,
+        error: str | None = None,
+    ):
+        key = steps[index]
+        label, prompt = self._CREQ_STEP_PROMPTS[key]
+        counter = f"مرحله {to_persian_digits(index + 1)} از {to_persian_digits(len(steps) + 1)}"
+        nav: list[Button] = []
+        if index > 0:
+            nav.append(Button("↩️ مرحله قبل", self._cb("cqaback")))
+        nav.append(Button("❌ لغو", self._cb("cqacxl")))
+        body = f"«{self._creq_group_label(answers)}»\n\n{prompt}"
+        return semantic_screen(
+            f"➕ ساخت کلاس · {label}",
+            "creq_wizard_step",
+            severity="warning" if error else "info",
+            breadcrumb="بیشتر › مدیریت › درخواست‌های ساخت کلاس › ساخت",
+            intro=(f"⚠️ {error}\n\n{prompt}" if error else body),
+            pagination=counter,
+            rows=(tuple(nav),),
+        )
+
+    def _creq_wizard_review_screen(self, answers: dict):
+        facts = [
+            ("کلاس", self._creq_group_label(answers)),
+            ("برچسب ورودی", str(answers.get("cohort_label") or "")),
+            ("نام نمایشی کلاس", str(answers.get("workspace_name") or "")),
+        ]
+        rows = (
+            (Button("✅ ساخت کلاس", self._cb("cqaconf")),),
+            (Button("↩️ مرحله قبل", self._cb("cqaback")), Button("❌ لغو", self._cb("cqacxl"))),
+        )
+        return semantic_screen(
+            "➕ ساخت کلاس · بازبینی",
+            "creq_wizard_review",
+            breadcrumb="بیشتر › مدیریت › درخواست‌های ساخت کلاس › بازبینی",
+            intro="پیش از ساخت کلاس و بستن درخواست‌ها، اطلاعات را بررسی کنید.",
+            facts=facts,
+            rows=rows,
+        )
+
+    def _creq_wizard_expired(self):
+        return ActionResult(
+            warning_screen(
+                "این فرآیند دیگر در دسترس نیست. از «درخواست‌های ساخت کلاس» دوباره شروع کنید.",
+                title="➕ ساخت کلاس",
+                kind="creq_wizard_expired",
+                rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+            )
+        )
+
+    def class_creation_request_wizard_text(self, subject: str, text: str, private: bool = True):
+        """Advance an in-progress class-creation-request approve wizard with
+        free text, or return None so the runtime falls through to other
+        handlers -- same contract as class_wizard_text."""
+        if not private:
+            return None
+        wizard = self.state.creq_wizard(self.platform, subject)
+        if wizard is None:
+            return None
+        steps = self._CREQ_STEP_ORDER
+        index = wizard["step_index"]
+        answers = wizard["answers"]
+        if index >= len(steps):
+            return ActionResult(self._creq_wizard_review_screen(answers))
+        key = steps[index]
+        min_len, max_len = self._CREQ_TEXT_LIMITS[key]
+        value, error = _validate_class_text(text, min_len, max_len)
+        if error:
+            return ActionResult(self._creq_wizard_step_screen(steps, index, answers, error=error))
+        next_answers = dict(answers)
+        next_answers[key] = value
+        next_index = index + 1
+        self.state.advance_creq_wizard(self.platform, subject, next_index, next_answers)
+        if next_index >= len(steps):
+            return ActionResult(self._creq_wizard_review_screen(next_answers))
+        return ActionResult(self._creq_wizard_step_screen(steps, next_index, next_answers))
+
+    def class_creation_request_wizard_back(self, subject: str):
+        wizard = self.state.creq_wizard(self.platform, subject)
+        if wizard is None:
+            return self._creq_wizard_expired()
+        steps = self._CREQ_STEP_ORDER
+        index = max(0, wizard["step_index"] - 1)
+        self.state.advance_creq_wizard(self.platform, subject, index, wizard["answers"])
+        return ActionResult(self._creq_wizard_step_screen(steps, index, wizard["answers"]))
+
+    def class_creation_request_wizard_cancel(self, subject: str):
+        self.state.cancel_creq_wizard(self.platform, subject)
+        return ActionResult(
+            semantic_screen(
+                "➕ ساخت کلاس",
+                "creq_wizard_cancelled",
+                intro="ساخت کلاس لغو شد. درخواست‌ها همچنان در انتظار بررسی‌اند.",
+                rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+            )
+        )
+
+    def class_creation_request_wizard_confirm(self, subject: str, private: bool):
+        if self.platform != "telegram" or not private:
+            return self._creq_wizard_expired()
+        wizard = self.state.creq_wizard(self.platform, subject)
+        if wizard is None:
+            return self._creq_wizard_expired()
+        answers = wizard["answers"]
+        steps = self._CREQ_STEP_ORDER
+        if wizard["step_index"] < len(steps):
+            return ActionResult(self._creq_wizard_step_screen(steps, wizard["step_index"], answers))
+        program_id = str(answers.get("program_id") or "")
+        entry_year = int(answers.get("entry_year") or 0)
+        if not is_uuid(program_id):
+            return self._creq_wizard_expired()
+        try:
+            result = self.backend.class_creation_requests_approve(
+                self.platform, subject, program_id, entry_year,
+                str(answers.get("cohort_label") or ""), str(answers.get("workspace_name") or ""),
+            )
+        except Exception as exc:
+            # A mid-wizard backend failure must reach the owner, not be
+            # swallowed -- same discipline as class_wizard_confirm above.
+            logging.error(
+                "class creation request approve failed type=%s message=%s",
+                type(exc).__name__,
+                exc,
+            )
+            message = (
+                error_message(exc.code, exc.status)
+                if isinstance(exc, FanoosApiError)
+                else "ساخت کلاس ناموفق بود. دوباره امتحان کنید."
+            )
+            return ActionResult(
+                error_screen(
+                    message,
+                    title="➕ ساخت کلاس",
+                    kind="creq_wizard_failed",
+                    rows=(
+                        (Button("🔁 تلاش دوباره", self._cb("cqaconf")),),
+                    )
+                    + self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+                )
+            )
+        self.state.cancel_creq_wizard(self.platform, subject)
+        workspace_created = result.get("workspace_created") is True
+        resolved_count = to_persian_digits(result.get("resolved_count") or 0)
+        return ActionResult(
+            semantic_screen(
+                "✅ کلاس آماده است",
+                "creq_wizard_created",
+                severity="success",
+                breadcrumb="بیشتر › مدیریت › درخواست‌های ساخت کلاس",
+                intro=(
+                    "کلاس جدید ساخته شد."
+                    if workspace_created
+                    else "این هویت با کلاس موجود مطابقت داشت؛ کلاس تکراری ساخته نشد و همان استفاده شد."
+                ),
+                facts=[("درخواست‌های بسته‌شده", resolved_count)],
+                rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+            )
+        )
+
+    def class_creation_request_decline_confirm(self, subject: str, ref: str):
+        payload = self._route_payload(subject, ref, "creq_decline")
+        if not payload or not is_uuid(str(payload.get("program_id") or "")):
+            return self._expired_route()
+        group = self._creq_group_from_payload(payload)
+        rows = (
+            (Button("❌ بله، رد شوند", self._route_callback(subject, "creq_decline_do", "cqdyes", group)),),
+            (Button("↩️ بازگشت", self._route_callback(subject, "creq_pick", "cqdno", group)),),
+        )
+        count = to_persian_digits(group.get("demand_count") or 0)
+        return ActionResult(
+            semantic_screen(
+                "❌ رد درخواست‌های ساخت کلاس",
+                "creq_decline_confirm",
+                severity="warning",
+                breadcrumb="بیشتر › مدیریت › درخواست‌های ساخت کلاس",
+                intro=f"همه‌ی {count} درخواست برای «{self._creq_group_label(group)}» رد شود؟ این کار قابل بازگشت نیست.",
+                rows=rows,
+            )
+        )
+
+    def class_creation_request_decline_do(self, subject: str, ref: str):
+        payload = self._route_payload(subject, ref, "creq_decline_do")
+        if not payload or not is_uuid(str(payload.get("program_id") or "")):
+            return self._expired_route()
+        program_id = str(payload.get("program_id") or "")
+        entry_year = int(payload.get("entry_year") or 0)
+        try:
+            result = self.backend.class_creation_requests_decline(self.platform, subject, program_id, entry_year)
+        except Exception as exc:
+            logging.error(
+                "class creation request decline failed type=%s message=%s",
+                type(exc).__name__,
+                exc,
+            )
+            return self._error(exc)
+        count = to_persian_digits(result.get("declined_count") or 0)
+        return ActionResult(
+            semantic_screen(
+                "❌ درخواست‌ها رد شد",
+                "creq_declined",
+                severity="success",
+                breadcrumb="بیشتر › مدیریت › درخواست‌های ساخت کلاس",
+                intro=f"{count} درخواست رد شد.",
+                rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+            )
+        )
+
     # -- Student join wizard -------------------------------------------------
     # Reply-keyboard exception to the rest of the bot (owner's explicit
     # request); see join_wizard.py's module docstring for the three
@@ -2998,6 +3383,26 @@ class BotApplication:
             return self.appoint_wizard_pick_candidate(subject, ref)
         if action == "apcdp" and ref:
             return self.appoint_wizard_page_candidates(subject, ref)
+        if action == "cqlist":
+            return self.class_creation_requests_begin(subject, private)
+        if action == "cqpage" and ref:
+            return self.class_creation_requests_page(subject, ref)
+        if action == "cqpick" and ref:
+            return self.class_creation_request_pick(subject, ref)
+        if action == "cqdno" and ref:
+            return self.class_creation_request_pick(subject, ref)
+        if action == "cqappr" and ref:
+            return self.class_creation_request_approve_begin(subject, ref)
+        if action == "cqaback":
+            return self.class_creation_request_wizard_back(subject)
+        if action == "cqacxl":
+            return self.class_creation_request_wizard_cancel(subject)
+        if action == "cqaconf":
+            return self.class_creation_request_wizard_confirm(subject, private)
+        if action == "cqdecl" and ref:
+            return self.class_creation_request_decline_confirm(subject, ref)
+        if action == "cqdyes" and ref:
+            return self.class_creation_request_decline_do(subject, ref)
         if action == "reprequests":
             return self.representative_requests(subject)
         if action == "repappr" and ref:

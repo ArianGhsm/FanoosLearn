@@ -96,6 +96,7 @@ final class Stage7Factory
             $audit,
         );
         $snapshots = new DeploymentSnapshotStore($database);
+        $classProvisioning = new ClassProvisioningService($database, $access, $audit);
 
         return new InternalApiKernel(
             new ServiceAuthenticator($database),
@@ -111,11 +112,12 @@ final class Stage7Factory
             $mediaTransfers,
             new DeploymentControlService($database, $access, $audit),
             new OwnerControlPlaneService($database, $access, $snapshots),
-            new ClassProvisioningService($database, $access, $audit),
+            $classProvisioning,
             new DirectoryReadService($database),
             new OnboardingPhoneVerificationService($database, $audit, $subjectProtector, new UnconfiguredSmsGateway()),
             new ClassMembershipService($database, $audit, $subjectProtector, $links, $access),
             new WorkspacePlatformService($database, $access, $audit),
+            new ClassCreationRequestService($database, $access, $audit, $classProvisioning),
             $paymentsEnabled,
         );
     }

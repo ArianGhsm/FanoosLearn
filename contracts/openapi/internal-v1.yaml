@@ -378,6 +378,44 @@ paths:
         already-declined request; refused (409) on an already-approved one.
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/UpgradeRequestDecision' } } } }
       responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' }, '409': { $ref: '#/components/responses/Error' } }
+  /classes/creation-requests/list:
+    post:
+      operationId: listPendingClassCreationRequests
+      x-required-service-action: workspace.provision
+      description: >-
+        Platform-owner-only. Pending /onboarding/class-creation-requests rows grouped by
+        (program_id, entry_year) -- several students asking for the same class are one row here,
+        with a demand_count -- alongside resolved institution/faculty/program labels and the
+        earliest requested_at, ordered oldest-demand-first. Authorized the same way /classes is:
+        workspace.provision at platform scope, since reviewing a request to create a class is
+        the same authority as creating one directly.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/OwnerPagedRead' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /classes/creation-requests/approve:
+    post:
+      operationId: approveClassCreationRequests
+      x-required-service-action: workspace.provision
+      description: >-
+        Platform-owner-only. Hands the group's already-known directory identity (resolved from
+        program_id up through faculty/institution/city/province/country) to
+        ClassProvisioningService::createClass() together with the two fields a pending request
+        cannot already answer -- the new cohort's label and the class's display name -- then
+        marks every pending request in the (program_id, entry_year) group 'created', all in one
+        transaction: a class created with requests left pending, or requests closed with no
+        class, are both refused. Idempotent by directory identity -- a class that already exists
+        (created manually, or by a concurrent approval) is reused, never duplicated.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ClassCreationRequestApprove' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } }
+  /classes/creation-requests/decline:
+    post:
+      operationId: declineClassCreationRequests
+      x-required-service-action: workspace.provision
+      description: >-
+        Platform-owner-only. Ends every pending request in the (program_id, entry_year) group in
+        a terminal 'declined' state; a declined group has no pending requests left to approve
+        afterward.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ClassCreationRequestGroup' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' } }
 components:
   securitySchemes:
     serviceKey:
@@ -659,6 +697,26 @@ components:
       type: object
       required: [platform, subject, program_id, entry_year]
       properties: { platform: { $ref: '#/components/schemas/Platform' }, subject: { type: string, minLength: 1, maxLength: 160 }, program_id: { $ref: '#/components/schemas/Uuid' }, entry_year: { type: integer, minimum: 1000, maximum: 9999 } }
+      additionalProperties: false
+    ClassCreationRequestGroup:
+      type: object
+      required: [platform, subject, program_id, entry_year]
+      properties:
+        platform: { $ref: '#/components/schemas/Platform' }
+        subject: { type: string, minLength: 1, maxLength: 160 }
+        program_id: { $ref: '#/components/schemas/Uuid' }
+        entry_year: { type: integer, minimum: 1000, maximum: 9999 }
+      additionalProperties: false
+    ClassCreationRequestApprove:
+      type: object
+      required: [platform, subject, program_id, entry_year, cohort_label, workspace_name]
+      properties:
+        platform: { $ref: '#/components/schemas/Platform' }
+        subject: { type: string, minLength: 1, maxLength: 160 }
+        program_id: { $ref: '#/components/schemas/Uuid' }
+        entry_year: { type: integer, minimum: 1000, maximum: 9999 }
+        cohort_label: { type: string, minLength: 1, maxLength: 160 }
+        workspace_name: { type: string, minLength: 1, maxLength: 200 }
       additionalProperties: false
     OnboardingOtpRequest:
       type: object

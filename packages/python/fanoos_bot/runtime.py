@@ -143,6 +143,10 @@ class BotRuntime:
             if callable(wizard_handler) and not raw_text.startswith("/"):
                 result = wizard_handler(ctx.subject, raw_text, ctx.private)
             if result is None and not raw_text.startswith("/"):
+                creq_handler = getattr(self.app, "class_creation_request_wizard_text", None)
+                if callable(creq_handler):
+                    result = creq_handler(ctx.subject, raw_text, ctx.private)
+            if result is None and not raw_text.startswith("/"):
                 join_handler = getattr(self.app, "join_wizard_text", None)
                 if callable(join_handler):
                     result = join_handler(ctx.subject, raw_text, ctx.private)

@@ -73,6 +73,14 @@ _OWNER_ALLOWED_KINDS = {
     "appoint_wizard_confirm",
     "appoint_wizard_cancelled",
     "appoint_wizard_created",
+    "creq_list",
+    "creq_detail",
+    "creq_wizard_step",
+    "creq_wizard_review",
+    "creq_wizard_cancelled",
+    "creq_wizard_created",
+    "creq_decline_confirm",
+    "creq_declined",
 }
 
 
