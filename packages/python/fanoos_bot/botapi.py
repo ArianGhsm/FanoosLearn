@@ -386,3 +386,27 @@ class JsonBotApiTransport:
         parts.append(path.read_bytes())
         parts.append(f"\r\n--{boundary}--\r\n".encode("utf-8"))
         return self._multipart_call("sendDocument", b"".join(parts), boundary)
+
+    def download_document(self, file_id: str, destination: Path, max_bytes: int) -> int:
+        """Downloads a document a user sent to the bot (the inverse of
+        send_document). Bounded by max_bytes: the Bot-API file endpoint gives
+        no reliable Content-Length ahead of time, so this reads at most
+        max_bytes+1 and rejects anything larger rather than buffering an
+        unbounded response.
+        """
+        info = self._call("getFile", {"file_id": file_id})
+        file_path = str((info or {}).get("file_path") or "") if isinstance(info, dict) else ""
+        if not file_path:
+            raise BotApiError("file_path_unavailable")
+        url = f"{self.endpoint}/file/bot{self.token}/{file_path}"
+        try:
+            with request.urlopen(request.Request(url, method="GET"), timeout=self.timeout) as res:
+                data = res.read(max_bytes + 1)
+        except error.HTTPError as exc:
+            raise BotApiError(str(exc.code), transient=exc.code >= 500) from exc
+        except (error.URLError, TimeoutError, OSError) as exc:
+            raise BotApiError("network_unavailable", transient=True) from exc
+        if len(data) > max_bytes:
+            raise BotApiError("file_too_large")
+        destination.write_bytes(data)
+        return len(data)

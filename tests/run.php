@@ -19,6 +19,7 @@ use Fanoos\Tests\Integration\Stage7PlatformTest;
 use Fanoos\Tests\Integration\ServiceAuthLinkTest;
 use Fanoos\Tests\Integration\DeploymentControlTest;
 use Fanoos\Tests\Integration\BotPlatformHandoffTest;
+use Fanoos\Tests\Integration\ProtectedMediaForensicTest;
 use Fanoos\Tests\Integration\Stage8FinalClosureTest;
 use Fanoos\Tests\Operations\BackupContractTest;
 use Fanoos\Tests\Operations\GitHubCiVerifierContractTest;
@@ -98,6 +99,9 @@ try {
         echo "PASS first-owner bootstrap tool scenarios\n";
         $assertions += (new BotPlatformHandoffTest($database))->run();
         echo "PASS Stage 7 bot/platform handoff scenarios\n";
+        $forensicStorageRoot = sys_get_temp_dir() . '/fanoos-forensic-test-' . bin2hex(random_bytes(8));
+        $assertions += (new ProtectedMediaForensicTest($database, $forensicStorageRoot))->run();
+        echo "PASS protected-media forensic candidate lookup scenarios\n";
         $assertions += (new Stage8FinalClosureTest($database, $hmacKey))->run();
         echo "PASS Stage 8 migration/reconciliation final-closure scenarios\n";
     }

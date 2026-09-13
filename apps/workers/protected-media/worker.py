@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Protocol
 sys.path.insert(0,str(Path(__file__).resolve().parents[3]/'packages/python'))
 from fanoos_bot.pdf_fingerprint import (
-    PdfFingerprintError,WATERMARK_VERSION,derive_fingerprint_material,file_sha256,
+    PdfFingerprintError,WATERMARK_VERSION,canonical_user_id,derive_fingerprint_material,file_sha256,
     secure_page_seed,secure_raster_symbol_layout,
 )
 
@@ -126,18 +126,6 @@ class PrivateSpoolArtifactSink:
         if not re.fullmatch(r'[0-9a-f-]{36}',job_id,re.I):raise WorkerFailure('output_invalid','job id invalid')
         target=self.root/f'{job_id}-{checksum[:16]}.pdf';shutil.copyfile(source,target);os.chmod(target,0o600);return f'pm:{job_id}:{checksum[:16]}'
 
-def _canonical_user_id(user_id:str)->int:
-    """derive_fingerprint_material's user_id is a positive int (legacy: a raw
-    Telegram id). FANOOS's iam_users.id is a CHAR(36) UUID string instead, so
-    it cannot be cast to int without truncating/colliding real identities
-    (e.g. any UUID starting with a hex letter casts to 0 in both PHP and
-    Python). Hash the full UUID into a stable positive int instead -- every
-    byte of the identifier still participates in the canonical HMAC binding.
-    """
-    if not user_id:return 0
-    digest=hashlib.sha256(user_id.encode('utf-8')).digest()[:8]
-    return int.from_bytes(digest,'big') or 1
-
 class JobProcessor:
     RENDERER_ALGORITHM_VERSION='fanoos-raster-v2'
     MAX_OUTPUT_BYTES=100*1024*1024
@@ -152,7 +140,7 @@ class JobProcessor:
             return derive_fingerprint_material(
                 self.fingerprint_key,
                 issuance_id=f"iss_{job.get('job_id') or ''}",
-                user_id=_canonical_user_id(str(job.get('user_id') or '')),
+                user_id=canonical_user_id(str(job.get('user_id') or '')),
                 document_id=str(job.get('resource_id') or job.get('job_id') or ''),
                 source_hash=file_sha256(src),
                 watermark_version=WATERMARK_VERSION,

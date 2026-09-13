@@ -14,6 +14,7 @@ use Fanoos\Platform\Content\DeliveryReceiptService;
 use Fanoos\Platform\Content\ProtectedMediaArtifactCapability;
 use Fanoos\Platform\Content\ProtectedMediaArtifactStore;
 use Fanoos\Platform\Content\ProtectedMediaEnqueueService;
+use Fanoos\Platform\Content\ProtectedMediaForensicService;
 use Fanoos\Platform\Content\ProtectedMediaJobService;
 use Fanoos\Platform\Content\ProtectedMediaTransferService;
 use Fanoos\Platform\Content\ProtectedMediaUploadCapability;
@@ -84,17 +85,19 @@ final class Stage7Factory
         $mediaCapabilityKey = $config->requireString('FANOOS_PROTECTED_MEDIA_CAPABILITY_KEY');
         $artifactCapabilities = new ProtectedMediaArtifactCapability($mediaCapabilityKey);
         $uploadCapabilities = new ProtectedMediaUploadCapability($mediaCapabilityKey);
+        $sourceStore = new FilesystemObjectStore($config->requireString('FANOOS_STORAGE_ROOT'));
         $mediaTransfers = new ProtectedMediaTransferService(
             $database,
             $resources,
             $downloadTokens,
-            new FilesystemObjectStore($config->requireString('FANOOS_STORAGE_ROOT')),
+            $sourceStore,
             new ProtectedMediaArtifactStore($config->requireString('FANOOS_PROTECTED_MEDIA_ROOT')),
             $artifactCapabilities,
             $uploadCapabilities,
             $mediaJobs,
             $audit,
         );
+        $mediaForensics = new ProtectedMediaForensicService($database, $access, $sourceStore, $audit);
         $snapshots = new DeploymentSnapshotStore($database);
         $classProvisioning = new ClassProvisioningService($database, $access, $audit);
         $institutionTerms = new InstitutionTermService($database, $access, $audit);
@@ -120,6 +123,7 @@ final class Stage7Factory
             new WorkspacePlatformService($database, $access, $audit),
             new ClassCreationRequestService($database, $access, $audit, $classProvisioning, $institutionTerms),
             $institutionTerms,
+            $mediaForensics,
             $paymentsEnabled,
         );
     }

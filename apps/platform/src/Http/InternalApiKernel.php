@@ -7,6 +7,7 @@ namespace Fanoos\Platform\Http;
 use Fanoos\Platform\Commerce\BotCommerceService;
 use Fanoos\Platform\Content\DeliveryReceiptService;
 use Fanoos\Platform\Content\ProtectedMediaEnqueueService;
+use Fanoos\Platform\Content\ProtectedMediaForensicService;
 use Fanoos\Platform\Content\ProtectedMediaJobService;
 use Fanoos\Platform\Content\ProtectedMediaTransferService;
 use Fanoos\Platform\Content\SecureDeliveryService;
@@ -51,6 +52,7 @@ final class InternalApiKernel
         private readonly WorkspacePlatformService $workspacePlatform,
         private readonly ClassCreationRequestService $classCreationRequests,
         private readonly InstitutionTermService $institutionTerms,
+        private readonly ProtectedMediaForensicService $forensic,
         private readonly bool $paymentsEnabled,
     ) {
     }
@@ -278,6 +280,24 @@ final class InternalApiKernel
             $context = $this->linkedWorkspace($principal, $request->body);
             $artifact = $this->mediaTransfers->redeemDerivative($context['user_id'], $context['workspace_id'], $context['platform'], (string) ($request->body['artifact_capability'] ?? ''));
             return new BinaryResponse(200, $artifact['stream'], $artifact['mime'], $artifact['size']);
+        }
+        if ($path === '/api/internal/v1/protected-media/forensic/candidates') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id', 'resource_id']);
+            $principal = $this->serviceAuth->authenticate($request, 'protected_media.forensic.candidates');
+            // Owners are platform-scoped, not necessarily workspace members, so
+            // this resolves the caller only (linked()) -- never linkedWorkspace(),
+            // which would wrongly demand membership in the class being
+            // investigated. The forensic permission check and the workspace
+            // bound on the candidate query both happen inside the service.
+            $link = $this->linked($principal, $request->body);
+            return $this->forensic->candidates($link['user_id'], (string) ($request->body['workspace_id'] ?? ''), (string) ($request->body['resource_id'] ?? ''));
+        }
+        if ($path === '/api/internal/v1/protected-media/forensic/source') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id', 'job_id']);
+            $principal = $this->serviceAuth->authenticate($request, 'protected_media.forensic.source');
+            $link = $this->linked($principal, $request->body);
+            $source = $this->forensic->originalSource($link['user_id'], (string) ($request->body['workspace_id'] ?? ''), (string) ($request->body['job_id'] ?? ''));
+            return new BinaryResponse(200, $source['stream'], $source['mime'], $source['size']);
         }
         if ($path === '/api/internal/v1/deployments/overview') {
             $this->assertKeys($request->body, ['platform', 'subject', 'target_key']);

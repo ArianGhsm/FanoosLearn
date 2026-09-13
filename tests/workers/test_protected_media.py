@@ -80,10 +80,10 @@ class ProtectedMediaTest(unittest.TestCase):
     def test_canonical_user_id_does_not_truncate_a_uuid_to_zero(self):
         # A UUID beginning with a hex letter (a-f) is exactly the case a naive
         # int() cast mangles to 0 in both PHP and Python.
-        self.assertNotEqual(worker._canonical_user_id('aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'),0)
+        self.assertNotEqual(worker.canonical_user_id('aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'),0)
         self.assertNotEqual(
-            worker._canonical_user_id('aaaaaaaa-0000-4000-8000-000000000000'),
-            worker._canonical_user_id('ffffffff-0000-4000-8000-000000000000'),
+            worker.canonical_user_id('aaaaaaaa-0000-4000-8000-000000000000'),
+            worker.canonical_user_id('ffffffff-0000-4000-8000-000000000000'),
         )
     def test_private_spool_ref_no_path(self):
         with tempfile.TemporaryDirectory() as d:
@@ -138,7 +138,7 @@ class ProtectedMediaEndToEndTest(unittest.TestCase):
             deadline=_time.monotonic()+60
             pages=worker.CommandPdfInspector().inspect(source,deadline)
             self.assertEqual(pages,2)
-            material=derive_fingerprint_material(FINGERPRINT_KEY,issuance_id='iss_66666666666666666666666666666666666666',user_id=worker._canonical_user_id('aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'),document_id='resource-e2e',source_hash=file_sha256(source),watermark_version=WATERMARK_VERSION)
+            material=derive_fingerprint_material(FINGERPRINT_KEY,issuance_id='iss_66666666666666666666666666666666666666',user_id=worker.canonical_user_id('aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'),document_id='resource-e2e',source_hash=file_sha256(source),watermark_version=WATERMARK_VERSION)
             rendered=worker.PopplerPillowRasterizer().render(source,output,'FANOOS',material,deadline)
             self.assertEqual(rendered,pages)
             reraster=root/'reraster';reraster.mkdir()
