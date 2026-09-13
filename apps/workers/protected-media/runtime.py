@@ -15,7 +15,11 @@ def build():
     api=FanoosApiClient(required('FANOOS_API_ORIGIN'),required('FANOOS_PROTECTED_MEDIA_SERVICE_KEY_ID'),required('FANOOS_PROTECTED_MEDIA_SERVICE_SECRET'))
     temp=Path(os.getenv('FANOOS_PROTECTED_MEDIA_TEMP','/var/lib/fanoos/protected-media/tmp')).resolve();temp.mkdir(parents=True,exist_ok=True);os.chmod(temp,0o700)
     font=os.getenv('FANOOS_PROTECTED_MEDIA_FONT_PATH','').strip() or None
-    processor=JobProcessor(ApiCapabilitySource(api),ApiArtifactSink(api),rasterizer=PopplerPillowRasterizer(font_path=font),temp_root=temp)
+    # Fails closed via `required`: this key must never default to anything,
+    # and once in use it must never be rotated -- rotating it orphans every
+    # mark already issued against it (see runtime.env.example).
+    fingerprint_key=required('FANOOS_PROTECTED_MEDIA_FINGERPRINT_KEY').encode()
+    processor=JobProcessor(ApiCapabilitySource(api),ApiArtifactSink(api),rasterizer=PopplerPillowRasterizer(font_path=font),temp_root=temp,fingerprint_key=fingerprint_key)
     return api,processor
 
 def _safe_failure(api,job,code):

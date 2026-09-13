@@ -1,8 +1,13 @@
 from __future__ import annotations
-import hashlib,os,re,shutil,subprocess,tempfile,time
+import hashlib,os,random,re,shutil,subprocess,sys,tempfile,time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
+sys.path.insert(0,str(Path(__file__).resolve().parents[3]/'packages/python'))
+from fanoos_bot.pdf_fingerprint import (
+    PdfFingerprintError,WATERMARK_VERSION,derive_fingerprint_material,file_sha256,
+    secure_page_seed,secure_raster_symbol_layout,
+)
 
 class WorkerFailure(RuntimeError):
     def __init__(self,code:str,message:str):super().__init__(message);self.code=code
@@ -33,9 +38,37 @@ class CommandPdfInspector:
         except Exception as exc:raise WorkerFailure('render_failed','PDF inspection failed') from exc
         m=re.search(r'^Pages:\s+(\d+)',out,re.M);return int(m.group(1)) if m else 0
 
+def draw_secure_raster_marks(image,material,page_index:int,dpi:int)->int:
+    """Burn the ported secure-raster micro-dot constellation into one rasterized page.
+
+    Positions/bits come verbatim from ``secure_raster_symbol_layout`` (itself a
+    literal port of legacy's ``dent_bot.pdf_fingerprint``); only the final ink
+    step is FANOOS-specific, since this worker already has a Pillow raster
+    image in hand instead of a live PDF page to draw vector shapes on. The
+    circle/cross-line style choice and its RNG seed/ranges mirror legacy's
+    ``_place_secure_raster_constellation`` exactly; only unit conversion
+    (PDF points -> this raster's pixels) and a 0.75px floor -- so a mark
+    committed to a fixed-DPI raster immediately can never round away to
+    nothing -- are new.
+    """
+    from PIL import ImageDraw
+    scale=dpi/72.0
+    width_pt,height_pt=image.width/scale,image.height/scale
+    draw=ImageDraw.Draw(image,'RGBA');color=(51,43,56,56);total=0
+    for copy_index,layout in enumerate(secure_raster_symbol_layout(width_pt,height_pt,material,page_index)):
+        rng=random.Random(int.from_bytes(secure_page_seed(material,page_index,f'mark-style-{copy_index}'.encode('ascii'))[:8],'big'))
+        for pair,_logical_index,bit in layout:
+            x,y=pair[int(bit)];px,py=x*scale,y*scale
+            if rng.random()<0.72:
+                r=max(0.75,rng.uniform(0.38,0.54)*scale);draw.ellipse((px-r,py-r,px+r,py+r),fill=color)
+            else:
+                half=max(0.75,rng.uniform(0.34,0.50)*scale);draw.line((px-half,py,px+half,py),fill=color,width=1);draw.line((px,py-half,px,py+half),fill=color,width=1)
+            total+=1
+    return total
+
 class PopplerPillowRasterizer:
     def __init__(self,pdftoppm='pdftoppm',font_path:str|None=None,dpi:int=180):self.pdftoppm=pdftoppm;self.font_path=font_path;self.dpi=max(144,min(220,int(dpi)))
-    def render(self,source:Path,output:Path,label:str,forensic:str,deadline:float)->int:
+    def render(self,source:Path,output:Path,label:str,material,deadline:float)->int:
         try:from PIL import Image,ImageDraw,ImageFont
         except ImportError as exc:raise WorkerFailure('internal_error','Pillow is unavailable') from exc
         work=output.parent/'pages';work.mkdir()
@@ -51,14 +84,14 @@ class PopplerPillowRasterizer:
         if self.font_path:
             try:font=ImageFont.truetype(self.font_path,28)
             except Exception:font=None
-        font=font or ImageFont.load_default(); trace_font=ImageFont.load_default(); images=[]
+        font=font or ImageFont.load_default(); images=[]
         for idx,path in enumerate(pages):
             if time.monotonic()>deadline:raise WorkerFailure('time_limit','Rendering timed out')
             im=Image.open(path).convert('RGB');draw=ImageDraw.Draw(im,'RGBA')
-            footer=f'{label} · FANOOS-{forensic[:12]}'
+            footer=f'{label} · FANOOS {material.trace_code}'
             draw.rectangle((0,max(0,im.height-62),im.width,im.height),fill=(255,255,255,190));draw.text((24,max(8,im.height-52)),footer,font=font,fill=(0,0,0,165))
-            seed=hashlib.sha256(f'{forensic}:{idx}'.encode()).digest();tx=24 if seed[0]&1==0 else max(24,im.width-260);ty=max(24,im.height//4) if seed[1]&1==0 else max(24,(im.height*3)//5)
-            draw.text((tx,ty),f'FANOOS·{forensic[:12]}',font=trace_font,fill=(0,0,0,46));images.append(im)
+            draw_secure_raster_marks(im,material,idx,self.dpi)
+            images.append(im)
         images[0].save(output,'PDF',save_all=True,append_images=images[1:],resolution=float(self.dpi))
         for im in images:im.close()
         return len(pages)
@@ -93,10 +126,38 @@ class PrivateSpoolArtifactSink:
         if not re.fullmatch(r'[0-9a-f-]{36}',job_id,re.I):raise WorkerFailure('output_invalid','job id invalid')
         target=self.root/f'{job_id}-{checksum[:16]}.pdf';shutil.copyfile(source,target);os.chmod(target,0o600);return f'pm:{job_id}:{checksum[:16]}'
 
+def _canonical_user_id(user_id:str)->int:
+    """derive_fingerprint_material's user_id is a positive int (legacy: a raw
+    Telegram id). FANOOS's iam_users.id is a CHAR(36) UUID string instead, so
+    it cannot be cast to int without truncating/colliding real identities
+    (e.g. any UUID starting with a hex letter casts to 0 in both PHP and
+    Python). Hash the full UUID into a stable positive int instead -- every
+    byte of the identifier still participates in the canonical HMAC binding.
+    """
+    if not user_id:return 0
+    digest=hashlib.sha256(user_id.encode('utf-8')).digest()[:8]
+    return int.from_bytes(digest,'big') or 1
+
 class JobProcessor:
-    RENDERER_ALGORITHM_VERSION='fanoos-raster-v1'
+    RENDERER_ALGORITHM_VERSION='fanoos-raster-v2'
     MAX_OUTPUT_BYTES=100*1024*1024
-    def __init__(self,source:CapabilitySource,sink:ArtifactSink,inspector=None,rasterizer=None,temp_root:Path|None=None):self.source=source;self.sink=sink;self.inspector=inspector or CommandPdfInspector();self.rasterizer=rasterizer or PopplerPillowRasterizer();self.temp_root=temp_root
+    def __init__(self,source:CapabilitySource,sink:ArtifactSink,inspector=None,rasterizer=None,temp_root:Path|None=None,fingerprint_key:bytes=b''):self.source=source;self.sink=sink;self.inspector=inspector or CommandPdfInspector();self.rasterizer=rasterizer or PopplerPillowRasterizer();self.temp_root=temp_root;self.fingerprint_key=bytes(fingerprint_key)
+    def _fingerprint_material(self,job:dict,src:Path):
+        # derive_fingerprint_material fails closed (PdfFingerprintError) on an
+        # unset/short key -- self.fingerprint_key must never default to
+        # anything but b'' so a missing key cannot silently mark with a
+        # predictable secret. This key must never be rotated: rotating it
+        # orphans every mark already issued against it (see runtime.env.example).
+        try:
+            return derive_fingerprint_material(
+                self.fingerprint_key,
+                issuance_id=f"iss_{job.get('job_id') or ''}",
+                user_id=_canonical_user_id(str(job.get('user_id') or '')),
+                document_id=str(job.get('resource_id') or job.get('job_id') or ''),
+                source_hash=file_sha256(src),
+                watermark_version=WATERMARK_VERSION,
+            )
+        except PdfFingerprintError as exc:raise WorkerFailure('internal_error',str(exc)) from exc
     def process(self,job:dict)->dict:
         if str(job.get('renderer_algorithm_version') or '')!=self.RENDERER_ALGORITHM_VERSION:raise WorkerFailure('render_failed','renderer algorithm version is unsupported')
         limits=JobLimits.parse(job.get('limits'));deadline=time.monotonic()+limits.max_seconds
@@ -109,7 +170,8 @@ class JobProcessor:
             pages=self.inspector.inspect(src,deadline)
             if pages<1:raise WorkerFailure('render_failed','page count unavailable')
             if pages>limits.max_pages:raise WorkerFailure('page_limit','PDF exceeds page limit')
-            rendered=self.rasterizer.render(src,out,str(job.get('watermark_label') or 'FANOOS'),str(job.get('forensic_id') or ''),deadline)
+            material=self._fingerprint_material(job,src)
+            rendered=self.rasterizer.render(src,out,str(job.get('watermark_label') or 'FANOOS'),material,deadline)
             if rendered!=pages or not out.is_file():raise WorkerFailure('output_invalid','rendered output mismatch')
             size=out.stat().st_size;output_limit=min(self.MAX_OUTPUT_BYTES,limits.max_input_bytes*4)
             if size<1 or size>output_limit:raise WorkerFailure('output_invalid','output size invalid')

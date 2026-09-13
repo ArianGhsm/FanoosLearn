@@ -157,7 +157,7 @@ def _announcement_field_validator(key: str):
 class ApplicationConfig:
     web_base_url: str = ""
     deployment_target_key: str = ""
-    protected_renderer_version: str = "fanoos-raster-v1"
+    protected_renderer_version: str = "fanoos-raster-v2"
     default_country_code: str = ""
     default_country_name: str = ""
 

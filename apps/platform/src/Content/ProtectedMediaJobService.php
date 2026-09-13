@@ -161,6 +161,11 @@ SQL);
                 'object_capability' => $this->capabilities->issue($address, $now, min(300, $leaseSeconds)),
                 'watermark_label' => (string) $job['watermark_label'],
                 'forensic_id' => (string) $job['forensic_id'],
+                // iam_users.id is a CHAR(36) UUID, not an integer -- keep the
+                // full canonical identifier; the worker derives a stable
+                // positive int from it for derive_fingerprint_material rather
+                // than truncating it here.
+                'user_id' => (string) $job['user_id'],
                 'renderer_algorithm_version' => (string) $job['renderer_algorithm_version'],
                 'limits' => is_array($limits) ? $limits : [],
                 'completion_key' => (string) $job['completion_key'],
