@@ -6,6 +6,7 @@ use Fanoos\Platform\Support\DatabaseConnection;
 use Fanoos\Tests\Core\ClassCreationRequestServiceTest;
 use Fanoos\Tests\Core\ClassMembershipTest;
 use Fanoos\Tests\Core\ClassProvisioningTest;
+use Fanoos\Tests\Core\InstitutionTermServiceTest;
 use Fanoos\Tests\Core\OnboardingDirectoryTest;
 use Fanoos\Tests\Core\OnboardingPhoneVerificationTest;
 use Fanoos\Tests\Core\RepresentativeApprovalTest;
@@ -88,6 +89,8 @@ try {
         echo "PASS representative appointment and approval scenarios\n";
         $assertions += (new ClassCreationRequestServiceTest($database))->run();
         echo "PASS owner class-creation request review scenarios\n";
+        $assertions += (new InstitutionTermServiceTest($database))->run();
+        echo "PASS institution term-date scenarios\n";
         $assertions += (new OwnerBootstrapTest($database, $root))->run();
         echo "PASS first-owner bootstrap tool scenarios\n";
         $assertions += (new BotPlatformHandoffTest($database))->run();

@@ -416,6 +416,55 @@ paths:
         afterward.
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ClassCreationRequestGroup' } } } }
       responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' } }
+  /institution-terms/institutions:
+    post:
+      operationId: listInstitutionsForTermSetting
+      x-required-service-action: workspace.provision
+      description: >-
+        Platform-owner-only. Every active institution, paginated, for the term-setting wizard's
+        first step (which institution). Authorized the same way /classes is: workspace.provision
+        at platform scope.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/OwnerPagedRead' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /institution-terms/set:
+    post:
+      operationId: setInstitutionTerm
+      x-required-service-action: workspace.provision
+      description: >-
+        Platform-owner-only. Sets or edits the institution's canonical term (docs/product/01_FRONT_DOOR.md
+        #4: dates are configured once per institution, not re-typed per class) and materialises it
+        into every currently active class under that institution in one transaction. A row a
+        representative already overrode for their own class (POST /academic-terms/override) is left
+        untouched rather than clobbered. Refuses end-before-start ranges before writing anything.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/InstitutionTermSet' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } }
+  /academic-terms/list:
+    post:
+      operationId: listWorkspaceAcademicTerms
+      x-required-service-action: academic_term.workspace.read
+      description: >-
+        A workspace's own term rows (each labelled inherited or override), for the representative's
+        override screen or anyone who can already view academic structures. Requires academic.view,
+        workspace-scoped. Response data also carries can_override, a plain read of whether the
+        caller separately holds academic.manage on this workspace -- lets a caller decide whether to
+        offer the override action at all (the same probe-and-hide pattern already used for
+        membership.approve); POST /academic-terms/override re-checks academic.manage itself
+        regardless of what this flag said.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/OnboardingUpgradeRequest' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /academic-terms/override:
+    post:
+      operationId: overrideClassAcademicTerm
+      x-required-service-action: academic_term.workspace.override
+      description: >-
+        A representative (or admin) overriding their own class's term dates because they genuinely
+        differ from the institution's canonical term. Requires academic.manage, workspace-scoped --
+        already granted to cohort-representative (database/seeds/0010_representative_academic_manage.sql)
+        alongside institution/faculty/program/workspace admins. Marks the row 'override' so a later
+        institution-wide edit never overwrites it. Refuses end-before-start ranges before writing
+        anything.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AcademicTermOverride' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } }
 components:
   securitySchemes:
     serviceKey:
@@ -717,6 +766,33 @@ components:
         entry_year: { type: integer, minimum: 1000, maximum: 9999 }
         cohort_label: { type: string, minLength: 1, maxLength: 160 }
         workspace_name: { type: string, minLength: 1, maxLength: 200 }
+      additionalProperties: false
+    TermStatus: { type: string, enum: [planned, active, closed, archived] }
+    InstitutionTermSet:
+      type: object
+      required: [platform, subject, institution_id, term_key, name, starts_on, ends_on, status]
+      properties:
+        platform: { $ref: '#/components/schemas/Platform' }
+        subject: { type: string, minLength: 1, maxLength: 160 }
+        institution_id: { $ref: '#/components/schemas/Uuid' }
+        term_key: { type: string, minLength: 1, maxLength: 64, pattern: '^[a-z0-9-]{1,64}$' }
+        name: { type: string, minLength: 1, maxLength: 160 }
+        starts_on: { type: string, format: date }
+        ends_on: { type: string, format: date }
+        status: { $ref: '#/components/schemas/TermStatus' }
+      additionalProperties: false
+    AcademicTermOverride:
+      type: object
+      required: [platform, subject, workspace_id, term_key, name, starts_on, ends_on, status]
+      properties:
+        platform: { $ref: '#/components/schemas/Platform' }
+        subject: { type: string, minLength: 1, maxLength: 160 }
+        workspace_id: { $ref: '#/components/schemas/Uuid' }
+        term_key: { type: string, minLength: 1, maxLength: 64, pattern: '^[a-z0-9-]{1,64}$' }
+        name: { type: string, minLength: 1, maxLength: 160 }
+        starts_on: { type: string, format: date }
+        ends_on: { type: string, format: date }
+        status: { $ref: '#/components/schemas/TermStatus' }
       additionalProperties: false
     OnboardingOtpRequest:
       type: object
