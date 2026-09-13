@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import tempfile
 from dataclasses import dataclass
@@ -23,6 +24,20 @@ class UpdateContext:
     callback_id: str | None = None
     event_id: str | None = None
     contact_phone_number: str | None = None
+
+
+@dataclass(frozen=True)
+class IncomingDocument:
+    """A document a user sent to the bot. ``file_size`` is whatever the
+    platform reported alongside the message, before anything is downloaded --
+    it may be absent (older clients), so it can reject an oversized upload
+    early but is never the only bound; download_document's own max_bytes
+    enforces the real limit regardless of what was reported."""
+
+    file_id: str
+    file_size: int | None = None
+    file_name: str = ""
+    mime_type: str = ""
 
 
 class DeliveryReceiptPump:
@@ -199,6 +214,64 @@ class BotRuntime:
             self._remember_processed_update(ctx, "ignored")
             return None
         return self._deliver_raw_wizard_result(ctx, result)
+
+    def handle_document(self, ctx: UpdateContext, document: IncomingDocument):
+        """A document a user sent to the bot. Currently meaningful only mid
+        forensic wizard (forensic_wizard_awaiting_document returns False
+        otherwise, and this is a no-op) -- deliberately not a general
+        document-upload feature. The evidence file only ever exists inside
+        the TemporaryDirectory below, which is removed on every exit path
+        (return, exception, or the successful screen below), so it is never
+        left on disk after this call returns, whether the investigation
+        succeeded or failed.
+        """
+        if ctx.event_id:
+            prior = self.state.processed_update(self.platform, ctx.event_id)
+            if prior is not None:
+                return prior
+        awaiting = getattr(self.app, "forensic_wizard_awaiting_document", None)
+        if not callable(awaiting) or not awaiting(ctx.subject, ctx.private):
+            self._remember_processed_update(ctx, "ignored")
+            return None
+        max_bytes = int(getattr(self.app, "FORENSIC_EVIDENCE_MAX_BYTES", 0))
+        with self.activity.operation(ctx.chat_id, private=ctx.private):
+            if document.file_size is not None and document.file_size > max_bytes:
+                result = self.app.forensic_wizard_document_too_large(ctx.subject, ctx.private)
+            else:
+                with tempfile.TemporaryDirectory(prefix="fanoos-forensic-evidence-") as root:
+                    try:
+                        os.chmod(root, 0o700)
+                    except OSError:
+                        pass
+                    evidence_path = Path(root) / "evidence"
+                    try:
+                        self.transport.download_document(document.file_id, evidence_path, max_bytes)
+                    except Exception as exc:
+                        logging.warning(
+                            "forensic evidence download failed type=%s message=%s",
+                            type(exc).__name__,
+                            exc,
+                        )
+                        result = self.app.forensic_wizard_document_download_failed(ctx.subject, ctx.private)
+                    else:
+                        try:
+                            os.chmod(evidence_path, 0o600)
+                        except OSError:
+                            pass
+                        result = self.app.forensic_wizard_document(ctx.subject, evidence_path, ctx.private)
+            try:
+                result = self._prepare_result(ctx, result)
+            except Exception as exc:
+                self._remember_processed_update(ctx, f"failed:{type(exc).__name__}")
+                raise
+        try:
+            provider_ref = self.deliver(ctx, result)
+        except Exception as exc:
+            self._remember_processed_update(ctx, f"failed:{type(exc).__name__}")
+            raise
+        if not result.receipt:
+            self._remember_processed_update(ctx, str(provider_ref or "sent"))
+        return provider_ref
 
     def _deliver_raw_wizard_result(self, ctx: UpdateContext, result):
         """RawKeyboardSend/RawKeyboardHandoff bypass the ui_v3 Screen/deliver()

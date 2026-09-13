@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 
 from .api import FanoosApiClient
@@ -34,6 +35,23 @@ def _normalize_candidate(item: dict) -> dict | None:
     }
 
 
+@dataclass(frozen=True)
+class InvestigationOutcome:
+    """Carries *why* detect() found nothing, not just that it found nothing.
+
+    `candidates_found == 0` means the resource had no real deliveries to
+    compare against at all (wrong resource picked, or nobody was ever
+    issued it) -- the file was never examined. `candidates_found > 0` and
+    `detections` empty means candidates existed and the file was actually
+    compared against them, but no mark was recovered. format_result_fa
+    renders these as two different sentences on purpose: "clean file" and
+    "nothing to compare against" are not the same finding.
+    """
+
+    candidates_found: int
+    detections: tuple[Detection, ...]
+
+
 def investigate(
     api: FanoosApiClient,
     *,
@@ -44,7 +62,7 @@ def investigate(
     evidence_path: Path,
     secret: bytes,
     deadline: float,
-) -> list[Detection]:
+) -> InvestigationOutcome:
     """Owner-facing orchestration: fetch this resource's real delivery
     candidates and their original bytes from the platform (never bot-local
     state, never another workspace's deliveries -- both enforced server-side
@@ -56,6 +74,8 @@ def investigate(
     response = api.media_forensic_candidates(platform, subject, workspace_id, resource_id)
     raw_candidates = response.get("candidates") if isinstance(response, dict) else None
     candidates = [normalized for item in (raw_candidates or []) if (normalized := _normalize_candidate(item)) is not None]
+    if not candidates:
+        return InvestigationOutcome(candidates_found=0, detections=())
 
     with tempfile.TemporaryDirectory(prefix="fanoos-forensic-source-") as work:
         work_dir = Path(work)
@@ -77,24 +97,46 @@ def investigate(
             cache[key] = path
             return path
 
-        return detect(evidence_path, candidates=candidates, secret=secret, fetch_original=fetch_original, deadline=deadline)
+        detections = detect(evidence_path, candidates=candidates, secret=secret, fetch_original=fetch_original, deadline=deadline)
+        return InvestigationOutcome(candidates_found=len(candidates), detections=tuple(detections))
 
 
 _VERDICT_FA = {"attributed": "قطعی", "candidate": "احتمالی"}
 
 
-def format_result_fa(results: list[Detection]) -> str:
+def format_result_fa(outcome: InvestigationOutcome) -> str:
     """Persian summary for the owner. Never includes a phone number or any
     personal identifier -- only the platform user id, the verdict, the
     confidence, and which channels agreed (never just a verdict).
+
+    Four distinguishable outcomes, deliberately worded differently so none
+    of them can be mistaken for another:
+      1. no candidates at all -- nothing to compare against, file unexamined;
+      2. candidates existed, nothing decoded -- a clean/unmarked file;
+      3. exactly one confident (crc-valid) attribution;
+      4. two or more confident attributions -- a contradiction (at most one
+         can be true), surfaced as a warning banner *first*, not a footnote,
+         since a reader acts on the first name they see.
     """
-    if not results:
+    if outcome.candidates_found == 0:
         return (
-            "🔍 هیچ نشانه‌ای از علامت‌گذاری فانوس در این فایل پیدا نشد، "
-            "یا با هیچ‌یک از دریافت‌کنندگان واقعی این منبع مطابقت نداشت."
+            "🔍 برای این منبع هیچ دریافت‌کننده‌ای ثبت نشده است؛ چیزی برای مقایسه با فایل ارسالی وجود ندارد. "
+            "منبع درستی را انتخاب کرده‌اید؟"
         )
-    lines = ["🔍 نتیجه ردیابی نشت:"]
-    for item in results[:5]:
+    if not outcome.detections:
+        return (
+            "🔍 فایل با نشانه‌های دریافت‌کنندگان واقعی این منبع مقایسه شد و هیچ نشانه‌ای از "
+            "علامت‌گذاری فانوس در آن پیدا نشد."
+        )
+    attributed = [item for item in outcome.detections if item.verdict == "attributed"]
+    lines: list[str] = []
+    if len(attributed) >= 2:
+        lines.append(
+            "⚠️ هشدار: این فایل به‌طور قطعی به بیش از یک نفر نسبت داده شد. حداکثر یکی از این نتیجه‌ها "
+            "می‌تواند درست باشد؛ پیش از هر اقدامی این مورد را دستی بررسی کنید."
+        )
+    lines.append("🔍 نتیجه ردیابی نشت:")
+    for item in outcome.detections[:5]:
         verdict_fa = _VERDICT_FA.get(item.verdict, item.verdict)
         channels = "، ".join(item.channels) if item.channels else "—"
         lines.append(
@@ -102,6 +144,6 @@ def format_result_fa(results: list[Detection]) -> str:
             f"  نتیجه: {verdict_fa} (اطمینان {item.confidence:.0%})\n"
             f"  کانال‌های موافق: {channels}"
         )
-    if len(results) > 1:
-        lines.append(f"({len(results)} مورد یافت شد؛ {min(5, len(results))} مورد نمایش داده شد.)")
+    if len(outcome.detections) > 1 and len(attributed) < 2:
+        lines.append(f"({len(outcome.detections)} مورد یافت شد؛ {min(5, len(outcome.detections))} مورد نمایش داده شد.)")
     return "\n\n".join(lines)

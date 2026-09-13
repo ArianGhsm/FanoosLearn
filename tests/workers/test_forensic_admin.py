@@ -75,8 +75,23 @@ class ForensicAdminTests(unittest.TestCase):
             self.assertEqual(len(api.source_calls), 1, "the source endpoint must be called once per distinct (object, version), not once per candidate")
             self.assertEqual(len(captured["candidates"]), 2)
 
+    def test_format_result_fa_no_candidates_differs_from_clean_file(self) -> None:
+        no_candidates = forensic_admin.format_result_fa(
+            forensic_admin.InvestigationOutcome(candidates_found=0, detections=())
+        )
+        no_match = forensic_admin.format_result_fa(
+            forensic_admin.InvestigationOutcome(candidates_found=2, detections=())
+        )
+        self.assertNotEqual(no_candidates, no_match, "no deliveries to compare against must read differently from a clean file")
+        self.assertIn("هیچ دریافت‌کننده‌ای", no_candidates)
+        self.assertIn("هیچ نشانه‌ای", no_match)
+        self.assertNotIn("هیچ نشانه‌ای", no_candidates)
+        self.assertNotIn("هیچ دریافت‌کننده‌ای", no_match)
+
     def test_format_result_fa_distinguishes_no_match_single_and_multi_match(self) -> None:
-        no_match = forensic_admin.format_result_fa([])
+        no_match = forensic_admin.format_result_fa(
+            forensic_admin.InvestigationOutcome(candidates_found=1, detections=())
+        )
         self.assertIn("هیچ نشانه‌ای", no_match)
 
         single = Detection(
@@ -85,10 +100,12 @@ class ForensicAdminTests(unittest.TestCase):
             channel_results=(ChannelResult("x", True, 1.0, 120, 120, "valid", True),),
             evidence={}, verdict="attributed", watermark_version="recipient-pdf-v9",
         )
-        single_text = forensic_admin.format_result_fa([single])
+        single_text = forensic_admin.format_result_fa(
+            forensic_admin.InvestigationOutcome(candidates_found=1, detections=(single,))
+        )
         self.assertIn("user-1", single_text)
         self.assertIn("قطعی", single_text)
-        self.assertNotIn("مورد یافت شد", single_text)
+        self.assertNotIn("هشدار", single_text, "a single confident attribution must not be flagged as contradictory")
 
         other = Detection(
             issuance_id="job-2", user_id="user-2", document_id="resource-1", confidence=0.75,
@@ -96,10 +113,36 @@ class ForensicAdminTests(unittest.TestCase):
             channel_results=(ChannelResult("y", True, 0.8, 90, 120, "partial", False),),
             evidence={}, verdict="candidate", watermark_version="recipient-pdf-v9",
         )
-        multi_text = forensic_admin.format_result_fa([single, other])
+        multi_text = forensic_admin.format_result_fa(
+            forensic_admin.InvestigationOutcome(candidates_found=2, detections=(single, other))
+        )
         self.assertIn("user-1", multi_text)
         self.assertIn("user-2", multi_text)
-        self.assertIn("مورد یافت شد", multi_text, "multiple matches must be visibly distinguishable from a single confident match")
+        self.assertNotIn("هشدار", multi_text, "a single attributed result plus a mere candidate is not a contradiction")
+
+    def test_format_result_fa_multi_attribution_is_a_warning_banner_at_the_top(self) -> None:
+        first = Detection(
+            issuance_id="job-1", user_id="user-1", document_id="resource-1", confidence=0.97,
+            successful_channels=("raster-constellation-repetition3-v1-ecc-fusion",), failed_channels=(),
+            channel_results=(ChannelResult("x", True, 1.0, 120, 120, "valid", True),),
+            evidence={}, verdict="attributed", watermark_version="recipient-pdf-v9",
+        )
+        second = Detection(
+            issuance_id="job-2", user_id="user-2", document_id="resource-1", confidence=0.95,
+            successful_channels=("raster-constellation-repetition3-v1-ecc-fusion",), failed_channels=(),
+            channel_results=(ChannelResult("x", True, 1.0, 120, 120, "valid", True),),
+            evidence={}, verdict="attributed", watermark_version="recipient-pdf-v9",
+        )
+        text = forensic_admin.format_result_fa(
+            forensic_admin.InvestigationOutcome(candidates_found=2, detections=(first, second))
+        )
+        self.assertIn("هشدار", text)
+        self.assertLess(
+            text.index("هشدار"), text.index("user-1"),
+            "the contradiction warning must appear before any attributed name, not as a trailing footnote",
+        )
+        self.assertIn("user-1", text)
+        self.assertIn("user-2", text)
 
 
 if __name__ == "__main__":

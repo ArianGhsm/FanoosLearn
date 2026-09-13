@@ -299,6 +299,17 @@ final class InternalApiKernel
             $source = $this->forensic->originalSource($link['user_id'], (string) ($request->body['workspace_id'] ?? ''), (string) ($request->body['job_id'] ?? ''));
             return new BinaryResponse(200, $source['stream'], $source['mime'], $source['size']);
         }
+        if ($path === '/api/internal/v1/protected-media/forensic/resources') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id', 'limit', 'cursor']);
+            $principal = $this->serviceAuth->authenticate($request, 'protected_media.forensic.resources');
+            // Same reasoning as candidates/source above: linked() only, the
+            // owner need not be a member of the workspace under suspicion.
+            $link = $this->linked($principal, $request->body);
+            return $this->forensic->resourcesWithCandidates(
+                $link['user_id'], (string) ($request->body['workspace_id'] ?? ''),
+                (int) ($request->body['limit'] ?? 10), $this->nullableString($request->body['cursor'] ?? null),
+            );
+        }
         if ($path === '/api/internal/v1/deployments/overview') {
             $this->assertKeys($request->body, ['platform', 'subject', 'target_key']);
             $principal = $this->serviceAuth->authenticate($request, 'deployment.overview');

@@ -221,6 +221,13 @@ paths:
         '403': { $ref: '#/components/responses/Error' }
         '409': { $ref: '#/components/responses/Error' }
         '422': { $ref: '#/components/responses/Error' }
+  /protected-media/forensic/resources:
+    post:
+      operationId: listProtectedMediaForensicResources
+      x-required-service-action: protected_media.forensic.resources
+      description: Owner-only. Every resource in the given workspace that has at least one completed fanoos-raster-v2 candidate job, paginated -- lets the bot offer a resource picker instead of asking the owner to type a resource UUID. Requires the platform-scoped protected_media.forensic.investigate permission; uses the same non-membership authorization as candidates/source.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PagedWorkspaceRead' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } }
   /deployments/overview:
     post:
       operationId: getOwnerDeploymentOverview

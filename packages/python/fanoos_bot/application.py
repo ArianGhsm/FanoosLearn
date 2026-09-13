@@ -3,10 +3,13 @@ from __future__ import annotations
 import logging
 import re
 import secrets
+import time
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from . import forensic_admin
 from . import join_wizard as jw
 from .api import FanoosApiError
 from .callbacks import CallbackCodec
@@ -160,6 +163,7 @@ class ApplicationConfig:
     protected_renderer_version: str = "fanoos-raster-v2"
     default_country_code: str = ""
     default_country_name: str = ""
+    protected_media_fingerprint_key: bytes = b""
 
 
 class BotApplication:
@@ -2169,6 +2173,7 @@ class BotApplication:
                 (Button("➕ انتصاب نماینده", self._cb("repnew")),),
                 (Button("📋 درخواست‌های ساخت کلاس", self._cb("cqlist")),),
                 (Button("📅 تنظیم ترم‌ها", self._cb("trmlist")),),
+                (Button("🔎 ردیابی نشت", self._cb("fornew")),),
             )
             if self.state.latest_deployment(subject):
                 rows += ((Button("وضعیت آخرین به‌روزرسانی", self._cb("updlast")),),)
@@ -2914,6 +2919,358 @@ class BotApplication:
                 severity="success",
                 breadcrumb="بیشتر › مدیریت › انتصاب نماینده",
                 intro=f"«{answers.get('target_name') or ''}» نماینده «{answers.get('workspace_name') or ''}» شد.",
+                rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+            )
+        )
+
+    # -- Leak detector owner surface (PR #52 shipped ProtectedMediaForensicService
+    # / forensic_admin.investigate / download_document, but nothing in the bot
+    # ever called any of it). This wizard is only the surface: it collects
+    # (workspace, resource, evidence file) the same way appoint_wizard collects
+    # (workspace, candidate), then hands off to forensic_admin.investigate and
+    # renders format_result_fa's own text verbatim -- it never touches
+    # forensic_detector's channel logic, thresholds or scoring. Gated by the
+    # same can_manage_deployments probe as every other management entry
+    # (deliberately not a second, narrower probe: protected_media.forensic.
+    # investigate is still independently re-checked by the backend on every
+    # call this wizard makes, so the bot is only ever hiding a button it
+    # already expects the backend to refuse, never granting anything itself).
+    # Workspace listing reuses representative_workspaces() (backend.
+    # representatives/workspaces) exactly like appoint_wizard's own first
+    # step -- it returns only workspace id/name, nothing forensic-sensitive.
+    # Resource listing has no existing reusable read: the resource catalog
+    # (resources()) is membership-gated for the *caller's own* selected
+    # workspace, which is the wrong shape for an owner investigating a
+    # workspace they need not belong to, so this adds
+    # ProtectedMediaForensicService::resourcesWithCandidates(), scoped by the
+    # same protected_media.forensic.investigate permission as candidates()/
+    # originalSource(), not by membership.
+
+    FORENSIC_PAGE_SIZE = 8
+    # Well under Telegram's own 50MB bot-document ceiling; a forensic upload
+    # is one PDF someone suspects was leaked, not a large archive, so bounding
+    # it tighter keeps a hostile or oversized upload from tying up an
+    # investigation that must finish inside one runtime lifetime (see the
+    # deadline below).
+    FORENSIC_EVIDENCE_MAX_BYTES = 20 * 1024 * 1024
+    # This bot restarts roughly every 10 minutes for proxy rotation. An
+    # investigation that straddled a restart would be silently lost mid-way
+    # with no resumption mechanism, so its own internal deadline is bounded
+    # far below that window; combined with Telegram's own update redelivery
+    # (the offset in apps/telegram-bot/runtime.py only advances after a
+    # document update is fully handled), a restart mid-investigation is
+    # recovered by the owner's document update simply being reprocessed from
+    # scratch on the next poll, never by resuming partial state.
+    FORENSIC_INVESTIGATION_SECONDS = 90
+
+    def _forensic_wizard_cancelled_result(self):
+        return ActionResult(
+            semantic_screen(
+                "🔎 ردیابی نشت",
+                "forensic_wizard_cancelled",
+                intro="ردیابی نشت لغو شد.",
+                rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+            )
+        )
+
+    def forensic_wizard_begin(self, subject: str, private: bool):
+        if self.platform != "telegram" or not private:
+            return ActionResult(
+                warning_screen(
+                    "ردیابی نشت فقط در گفت‌وگوی خصوصی تلگرام و پس از مجوز canonical فعال است.",
+                    title="🔎 ردیابی نشت",
+                    kind="forensic_wizard_unavailable",
+                    rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+                )
+            )
+        if not self.config.deployment_target_key:
+            return ActionResult(
+                warning_screen(
+                    "بررسی مجوز ردیابی نشت برای این محیط تنظیم نشده است.",
+                    title="🔎 ردیابی نشت",
+                    kind="forensic_wizard_unavailable",
+                    rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+                )
+            )
+        if not self.config.protected_media_fingerprint_key:
+            # Fail closed: never proceed with an unset/empty fingerprint key.
+            # The key belongs in this process's own environment (never a
+            # default, never sent to the platform) -- if it is missing,
+            # nothing here can be trusted to decode a real mark.
+            return ActionResult(
+                warning_screen(
+                    "کلید اثرانگشت ردیابی نشت در این محیط تنظیم نشده است.",
+                    title="🔎 ردیابی نشت",
+                    kind="forensic_wizard_unavailable",
+                    rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+                )
+            )
+        try:
+            # Same re-verification note as appoint_wizard_begin: this call only
+            # decides what to show, the canonical authority is still the
+            # backend's own protected_media.forensic.investigate check on
+            # every forensic call this wizard makes.
+            overview = self.backend.deployment_overview(subject, self.config.deployment_target_key)
+        except Exception as exc:
+            logging.warning(
+                "forensic wizard begin deployment_overview failed type=%s message=%s",
+                type(exc).__name__,
+                exc,
+            )
+            return self._error(exc)
+        if not overview.get("can_manage_deployments"):
+            return ActionResult(
+                error_screen(
+                    "اجازه ردیابی نشت را ندارید.",
+                    title="🔎 ردیابی نشت",
+                    kind="forensic_wizard_denied",
+                    rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+                )
+            )
+        self.state.start_forensic_wizard(self.platform, subject)
+        return self._forensic_wizard_render_workspaces(subject, None)
+
+    def forensic_wizard_cancel(self, subject: str):
+        self.state.cancel_forensic_wizard(self.platform, subject)
+        return self._forensic_wizard_cancelled_result()
+
+    def forensic_wizard_back(self, subject: str):
+        wizard = self.state.forensic_wizard(self.platform, subject)
+        if wizard is None:
+            return self._forensic_wizard_expired()
+        if wizard["step_index"] <= 0:
+            self.state.cancel_forensic_wizard(self.platform, subject)
+            return self._forensic_wizard_cancelled_result()
+        if wizard["step_index"] == 1:
+            self.state.advance_forensic_wizard(self.platform, subject, 0, {})
+            return self._forensic_wizard_render_workspaces(subject, None)
+        answers = dict(wizard["answers"])
+        answers.pop("resource_id", None)
+        answers.pop("resource_title", None)
+        self.state.advance_forensic_wizard(self.platform, subject, 1, answers)
+        return self._forensic_wizard_render_resources(subject, answers, None)
+
+    def _forensic_wizard_expired(self):
+        return ActionResult(
+            warning_screen(
+                "این فرآیند دیگر در دسترس نیست. از مدیریت دوباره شروع کنید.",
+                title="🔎 ردیابی نشت",
+                kind="forensic_wizard_expired",
+                rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+            )
+        )
+
+    def _forensic_wizard_render_workspaces(self, subject: str, cursor: str | None):
+        try:
+            page = self.backend.representative_workspaces(self.platform, subject, self.FORENSIC_PAGE_SIZE, cursor)
+        except Exception as exc:
+            return self._error(exc)
+        items = [item for item in page.get("items") or [] if is_uuid(str(item.get("id") or ""))]
+        next_cursor = self._clean_cursor(page.get("next_cursor"))
+        rows: tuple[tuple[Button, ...], ...] = tuple(
+            (Button(
+                self._workspace_label(item),
+                self._route_callback(subject, "forensic_workspace_pick", "forws", {
+                    "id": str(item.get("id") or ""), "name": self._workspace_label(item),
+                }),
+            ),)
+            for item in items
+        )
+        if next_cursor:
+            rows += ((Button(
+                "بعدی ›",
+                self._route_callback(subject, "forensic_workspace_page", "forwsp", {"cursor": next_cursor}),
+            ),),)
+        rows += ((Button("انصراف", self._cb("forcancel")),),) + self._nav_rows(back_action="manage", back_label="‹ مدیریت")
+        return ActionResult(
+            semantic_screen(
+                "🔎 ردیابی نشت",
+                "forensic_wizard_workspace",
+                breadcrumb="بیشتر › مدیریت › ردیابی نشت",
+                intro=(
+                    "فضای آموزشی‌ای که منبع مشکوک به آن تعلق دارد را انتخاب کنید."
+                    if items
+                    else "کلاس فعالی برای ردیابی نشت وجود ندارد."
+                ),
+                rows=rows,
+            )
+        )
+
+    def forensic_wizard_pick_workspace(self, subject: str, ref: str):
+        payload = self._route_payload(subject, ref, "forensic_workspace_pick")
+        if not payload or not is_uuid(str(payload.get("id") or "")):
+            return self._expired_route()
+        wizard = self.state.forensic_wizard(self.platform, subject)
+        if wizard is None:
+            return self._forensic_wizard_expired()
+        answers = {"workspace_id": str(payload["id"]), "workspace_name": str(payload.get("name") or "")}
+        self.state.advance_forensic_wizard(self.platform, subject, 1, answers)
+        return self._forensic_wizard_render_resources(subject, answers, None)
+
+    def forensic_wizard_page_workspaces(self, subject: str, ref: str):
+        payload = self._route_payload(subject, ref, "forensic_workspace_page")
+        if not payload:
+            return self._expired_route()
+        return self._forensic_wizard_render_workspaces(subject, self._clean_cursor(payload.get("cursor")))
+
+    def _forensic_wizard_render_resources(self, subject: str, answers: dict, cursor: str | None):
+        workspace_id = str(answers.get("workspace_id") or "")
+        if not is_uuid(workspace_id):
+            return self._forensic_wizard_expired()
+        try:
+            page = self.backend.media_forensic_resources(self.platform, subject, workspace_id, self.FORENSIC_PAGE_SIZE, cursor)
+        except Exception as exc:
+            return self._error(exc)
+        items = [item for item in page.get("items") or [] if is_uuid(str(item.get("resource_id") or ""))]
+        next_cursor = self._clean_cursor(page.get("next_cursor"))
+
+        def label(item: dict) -> str:
+            title = truncate_text(str(item.get("title") or "منبع"), 45)
+            count = to_persian_digits(str(int(item.get("candidate_count") or 0)))
+            return f"{title} ({count})"
+
+        rows: tuple[tuple[Button, ...], ...] = tuple(
+            (Button(
+                label(item),
+                self._route_callback(subject, "forensic_resource_pick", "forres", {
+                    "id": str(item.get("resource_id") or ""), "title": str(item.get("title") or ""),
+                }),
+            ),)
+            for item in items
+        )
+        if next_cursor:
+            rows += ((Button(
+                "بعدی ›",
+                self._route_callback(subject, "forensic_resource_page", "forresp", {
+                    "cursor": next_cursor, "workspace_id": workspace_id, "workspace_name": answers.get("workspace_name") or "",
+                }),
+            ),),)
+        rows += (
+            (Button("↩️ بازگشت", self._cb("forback")), Button("انصراف", self._cb("forcancel"))),
+        ) + self._nav_rows(back_action="manage", back_label="‹ مدیریت")
+        workspace_name = str(answers.get("workspace_name") or "")
+        return ActionResult(
+            semantic_screen(
+                "🔎 ردیابی نشت",
+                "forensic_wizard_resource",
+                breadcrumb="بیشتر › مدیریت › ردیابی نشت",
+                intro=(
+                    f"منبعی که مشکوک به نشت آن هستید را از «{workspace_name}» انتخاب کنید. عدد جلوی هر منبع تعداد دریافت‌کنندگان واقعی آن است."
+                    if items
+                    else f"«{workspace_name}» منبعی با دریافت‌کننده ردیابی‌شده ندارد."
+                ),
+                rows=rows,
+            )
+        )
+
+    def forensic_wizard_pick_resource(self, subject: str, ref: str):
+        payload = self._route_payload(subject, ref, "forensic_resource_pick")
+        if not payload or not is_uuid(str(payload.get("id") or "")):
+            return self._expired_route()
+        wizard = self.state.forensic_wizard(self.platform, subject)
+        if wizard is None:
+            return self._forensic_wizard_expired()
+        answers = dict(wizard["answers"])
+        answers["resource_id"] = str(payload["id"])
+        answers["resource_title"] = truncate_text(str(payload.get("title") or "منبع"), 70)
+        self.state.advance_forensic_wizard(self.platform, subject, 2, answers)
+        return self._forensic_wizard_render_upload(answers)
+
+    def forensic_wizard_page_resources(self, subject: str, ref: str):
+        payload = self._route_payload(subject, ref, "forensic_resource_page")
+        if not payload:
+            return self._expired_route()
+        answers = {
+            "workspace_id": str(payload.get("workspace_id") or ""),
+            "workspace_name": str(payload.get("workspace_name") or ""),
+        }
+        return self._forensic_wizard_render_resources(subject, answers, self._clean_cursor(payload.get("cursor")))
+
+    def _forensic_wizard_render_upload(self, answers: dict, *, warning: str | None = None):
+        resource_title = str(answers.get("resource_title") or "")
+        max_mb = to_persian_digits(str(self.FORENSIC_EVIDENCE_MAX_BYTES // (1024 * 1024)))
+        intro = f"فایل مشکوک به نشت «{resource_title}» را به‌صورت سند (نه عکس) ارسال کنید. حداکثر حجم مجاز {max_mb} مگابایت است."
+        if warning:
+            intro = f"⚠️ {warning}\n\n{intro}"
+        rows = (
+            (Button("↩️ بازگشت", self._cb("forback")), Button("انصراف", self._cb("forcancel"))),
+        ) + self._nav_rows(back_action="manage", back_label="‹ مدیریت")
+        return ActionResult(
+            semantic_screen(
+                "🔎 ردیابی نشت",
+                "forensic_wizard_upload",
+                breadcrumb="بیشتر › مدیریت › ردیابی نشت",
+                intro=intro,
+                rows=rows,
+            )
+        )
+
+    def forensic_wizard_awaiting_document(self, subject: str, private: bool = True) -> bool:
+        # Same private-chat re-check every other wizard's text/document
+        # continuation makes (see class_wizard_text): wizard state is keyed
+        # by (platform, subject) alone, not by chat, so without this a
+        # document sent from a group the bot is also in could still be
+        # accepted as evidence for a wizard the owner started privately.
+        if self.platform != "telegram" or not private:
+            return False
+        wizard = self.state.forensic_wizard(self.platform, subject)
+        return bool(wizard and wizard["step_index"] == 2 and is_uuid(str(wizard["answers"].get("resource_id") or "")))
+
+    def forensic_wizard_document_too_large(self, subject: str, private: bool = True):
+        if not self.forensic_wizard_awaiting_document(subject, private):
+            return self._forensic_wizard_expired()
+        wizard = self.state.forensic_wizard(self.platform, subject)
+        return self._forensic_wizard_render_upload(wizard["answers"], warning="فایل ارسالی بیش از حد مجاز است.")
+
+    def forensic_wizard_document_download_failed(self, subject: str, private: bool = True):
+        if not self.forensic_wizard_awaiting_document(subject, private):
+            return self._forensic_wizard_expired()
+        wizard = self.state.forensic_wizard(self.platform, subject)
+        return self._forensic_wizard_render_upload(
+            wizard["answers"], warning="دریافت فایل ارسالی ناموفق بود. دوباره ارسال کنید."
+        )
+
+    def forensic_wizard_document(self, subject: str, evidence_path: Path, private: bool = True):
+        if not self.forensic_wizard_awaiting_document(subject, private):
+            return self._forensic_wizard_expired()
+        wizard = self.state.forensic_wizard(self.platform, subject)
+        answers = wizard["answers"]
+        workspace_id = str(answers.get("workspace_id") or "")
+        resource_id = str(answers.get("resource_id") or "")
+        if not is_uuid(workspace_id) or not is_uuid(resource_id):
+            return self._forensic_wizard_expired()
+        if not self.config.protected_media_fingerprint_key:
+            return self._forensic_wizard_expired()
+        # The evidence file is single-use regardless of outcome (the runtime
+        # layer deletes it right after this call returns, success or
+        # failure), so there is nothing a "retry" could safely re-run --
+        # every outcome below ends the wizard and a fresh attempt means a
+        # fresh upload.
+        self.state.cancel_forensic_wizard(self.platform, subject)
+        try:
+            outcome = forensic_admin.investigate(
+                self.backend,
+                platform=self.platform,
+                subject=subject,
+                workspace_id=workspace_id,
+                resource_id=resource_id,
+                evidence_path=evidence_path,
+                secret=self.config.protected_media_fingerprint_key,
+                deadline=time.time() + self.FORENSIC_INVESTIGATION_SECONDS,
+            )
+        except Exception as exc:
+            logging.error(
+                "forensic wizard investigate failed type=%s message=%s",
+                type(exc).__name__,
+                exc,
+            )
+            return self._error(exc)
+        return ActionResult(
+            semantic_screen(
+                "🔎 نتیجه ردیابی نشت",
+                "forensic_wizard_result",
+                breadcrumb="بیشتر › مدیریت › ردیابی نشت",
+                intro=forensic_admin.format_result_fa(outcome),
                 rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
             )
         )
@@ -4232,6 +4589,20 @@ class BotApplication:
             return self.appoint_wizard_pick_candidate(subject, ref)
         if action == "apcdp" and ref:
             return self.appoint_wizard_page_candidates(subject, ref)
+        if action == "fornew":
+            return self.forensic_wizard_begin(subject, private)
+        if action == "forback":
+            return self.forensic_wizard_back(subject)
+        if action == "forcancel":
+            return self.forensic_wizard_cancel(subject)
+        if action == "forws" and ref:
+            return self.forensic_wizard_pick_workspace(subject, ref)
+        if action == "forwsp" and ref:
+            return self.forensic_wizard_page_workspaces(subject, ref)
+        if action == "forres" and ref:
+            return self.forensic_wizard_pick_resource(subject, ref)
+        if action == "forresp" and ref:
+            return self.forensic_wizard_page_resources(subject, ref)
         if action == "cqlist":
             return self.class_creation_requests_begin(subject, private)
         if action == "cqpage" and ref:

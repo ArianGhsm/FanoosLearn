@@ -86,6 +86,11 @@ _OWNER_ALLOWED_KINDS = {
     "term_wizard_review",
     "term_wizard_cancelled",
     "term_wizard_created",
+    "forensic_wizard_workspace",
+    "forensic_wizard_resource",
+    "forensic_wizard_upload",
+    "forensic_wizard_result",
+    "forensic_wizard_cancelled",
 }
 
 

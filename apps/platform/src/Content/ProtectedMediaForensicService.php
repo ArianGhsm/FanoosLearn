@@ -74,6 +74,87 @@ SQL);
     }
 
     /**
+     * Lists resources in one workspace that have at least one completed
+     * `fanoos-raster-v2` candidate job -- i.e. resources an owner could
+     * actually investigate. Deliberately uses `linked()` at the HTTP layer,
+     * never `linkedWorkspace()`, for the same reason as `candidates()`: an
+     * owner is platform-scoped and need not be a member of the workspace
+     * under suspicion. This lets the bot offer a resource picker instead of
+     * asking the owner to type a resource UUID, without reusing the
+     * membership-gated resource catalog (which would wrongly refuse a
+     * non-member owner).
+     *
+     * @return array{items: list<array{resource_id:string,title:string,candidate_count:int}>, next_cursor:?string}
+     */
+    public function resourcesWithCandidates(string $actorUserId, string $workspaceId, int $limit, ?string $cursor): array
+    {
+        $this->access->requirePlatform($actorUserId, 'protected_media.forensic.investigate');
+        $workspaceId = trim($workspaceId);
+        if ($workspaceId === '') {
+            throw new PlatformException('forensic_request_invalid', 'A workspace identifier is required.', 422);
+        }
+        $limit = $this->boundedPageLimit($limit);
+        $offset = $this->decodePageCursor($cursor);
+        $query = $this->database->prepare(<<<'SQL'
+SELECT resource.id AS resource_id, resource.title AS title, COUNT(*) AS candidate_count
+FROM protected_media_jobs job
+JOIN content_resources resource ON resource.id = job.resource_id AND resource.workspace_id = job.workspace_id
+WHERE job.workspace_id = :workspace AND job.state = 'completed' AND job.renderer_algorithm_version = :renderer
+GROUP BY resource.id, resource.title
+ORDER BY resource.title ASC, resource.id ASC
+LIMIT :limit OFFSET :offset
+SQL);
+        $query->bindValue(':workspace', $workspaceId);
+        $query->bindValue(':renderer', self::RENDERER_ALGORITHM_VERSION);
+        $query->bindValue(':limit', $limit + 1, PDO::PARAM_INT);
+        $query->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $query->execute();
+        $rows = $query->fetchAll();
+        $hasMore = count($rows) > $limit;
+        if ($hasMore) {
+            array_pop($rows);
+        }
+        return [
+            'items' => array_map(static fn (array $row): array => [
+                'resource_id' => (string) $row['resource_id'],
+                'title' => (string) $row['title'],
+                'candidate_count' => (int) $row['candidate_count'],
+            ], $rows),
+            'next_cursor' => $hasMore ? $this->encodePageCursor($offset + count($rows)) : null,
+        ];
+    }
+
+    private function boundedPageLimit(int $limit): int
+    {
+        return max(1, min(50, $limit));
+    }
+
+    private function decodePageCursor(?string $cursor): int
+    {
+        if ($cursor === null || $cursor === '') {
+            return 0;
+        }
+        if (!preg_match('/^[A-Za-z0-9_-]{1,32}$/', $cursor)) {
+            throw new PlatformException('cursor_invalid', 'Pagination cursor is invalid.', 422);
+        }
+        $padding = (4 - strlen($cursor) % 4) % 4;
+        $decoded = base64_decode(strtr($cursor . str_repeat('=', $padding), '-_', '+/'), true);
+        if (!is_string($decoded) || !preg_match('/^o:[0-9]{1,7}$/', $decoded)) {
+            throw new PlatformException('cursor_invalid', 'Pagination cursor is invalid.', 422);
+        }
+        $offset = (int) substr($decoded, 2);
+        if ($offset > 1_000_000) {
+            throw new PlatformException('cursor_invalid', 'Pagination cursor is invalid.', 422);
+        }
+        return $offset;
+    }
+
+    private function encodePageCursor(int $offset): string
+    {
+        return rtrim(strtr(base64_encode('o:' . $offset), '+/', '-_'), '=');
+    }
+
+    /**
      * `jobId` is exactly the `issuance_id` a `candidates()` row returned --
      * the object/version/classification tuple is read from that job's own
      * row, never accepted from the caller, so this can only ever redeem the

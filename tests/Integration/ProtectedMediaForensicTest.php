@@ -79,6 +79,32 @@ final class ProtectedMediaForensicTest
 
         $this->expectCode('forbidden', fn () => $service->candidates($bystander, $workspaceA, $resourceA));
 
+        // resourcesWithCandidates lets the bot offer a resource picker
+        // instead of a typed UUID: it must list exactly the resources that
+        // actually have a completed fanoos-raster-v2 job in that workspace
+        // (never a resource with only a pre-secure-raster or still-queued
+        // job, and never another workspace's resource), and it is bound by
+        // the same workspace and permission as candidates()/originalSource().
+        [$resourceA2, $objectA2, $versionA2] = $this->contentFixture($workspaceA, $recipient, 'Forensic Resource A2 ' . $suffix);
+        $this->completedJob($workspaceA, $resourceA2, $versionA2, $objectA2, $recipient, 'fanoos-raster-v2');
+
+        $resourcesInA = $service->resourcesWithCandidates($owner, $workspaceA, 10, null);
+        $resourceIdsInA = array_column($resourcesInA['items'], 'resource_id');
+        self::assert(count($resourcesInA['items']) === 2, 'Resource picker did not return exactly the two resources with a completed candidate job in workspace A.');
+        self::assert(in_array($resourceA, $resourceIdsInA, true) && in_array($resourceA2, $resourceIdsInA, true), 'Resource picker missed a resource that has a completed candidate job.');
+        self::assert($resourcesInA['next_cursor'] === null, 'Resource picker returned a next_cursor when every match fit on one page.');
+
+        $resourcesInB = $service->resourcesWithCandidates($owner, $workspaceB, 10, null);
+        self::assert(count($resourcesInB['items']) === 1 && $resourcesInB['items'][0]['resource_id'] === $resourceB, 'Resource picker leaked workspace A\'s resource into a workspace B listing, or missed workspace B\'s own resource.');
+
+        $firstPage = $service->resourcesWithCandidates($owner, $workspaceA, 1, null);
+        self::assert(count($firstPage['items']) === 1 && $firstPage['next_cursor'] !== null, 'Resource picker did not paginate a two-resource workspace with a page size of one.');
+        $secondPage = $service->resourcesWithCandidates($owner, $workspaceA, 1, $firstPage['next_cursor']);
+        self::assert(count($secondPage['items']) === 1 && $secondPage['next_cursor'] === null, 'Resource picker\'s second page did not deliver the remaining resource and stop.');
+        self::assert($firstPage['items'][0]['resource_id'] !== $secondPage['items'][0]['resource_id'], 'Resource picker returned the same resource on both pages instead of advancing.');
+
+        $this->expectCode('forbidden', fn () => $service->resourcesWithCandidates($bystander, $workspaceA, 10, null));
+
         return $this->assertions;
     }
 
