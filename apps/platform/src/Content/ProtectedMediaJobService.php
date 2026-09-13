@@ -161,6 +161,7 @@ SQL);
                 'object_capability' => $this->capabilities->issue($address, $now, min(300, $leaseSeconds)),
                 'watermark_label' => (string) $job['watermark_label'],
                 'forensic_id' => (string) $job['forensic_id'],
+                'user_id' => (int) $job['user_id'],
                 'renderer_algorithm_version' => (string) $job['renderer_algorithm_version'],
                 'limits' => is_array($limits) ? $limits : [],
                 'completion_key' => (string) $job['completion_key'],

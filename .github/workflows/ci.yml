@@ -69,6 +69,10 @@ jobs:
               raise SystemExit(f"Unsupported Python runtime: {sys.version}")
           print(sys.version)
           PY
+      - name: Install protected-media rasterization binaries and Python dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends qpdf poppler-utils
+          python3 -m pip install --disable-pip-version-check -r apps/workers/protected-media/requirements.txt
       - name: Deterministic Telegram Bale and worker tests
         run: bash ops/stage7-bots/run-deterministic-tests.sh
 
