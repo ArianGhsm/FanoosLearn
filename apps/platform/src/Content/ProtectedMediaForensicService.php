@@ -25,13 +25,13 @@ use Throwable;
 final class ProtectedMediaForensicService
 {
     private const RENDERER_ALGORITHM_VERSION = 'fanoos-raster-v2';
+    private const MAXIMUM_INPUT_BYTES_CEILING = 209715200;
 
     public function __construct(
         private readonly PDO $database,
         private readonly AccessGate $access,
         private readonly FilesystemObjectStore $sourceStore,
         private readonly AuditLogger $audit,
-        private readonly int $maximumSourceBytes = 52428800,
     ) {
     }
 
@@ -73,34 +73,49 @@ SQL);
         ], $rows)];
     }
 
-    /** @return array{stream:resource,size:int,mime:string} */
-    public function originalSource(
-        string $actorUserId,
-        string $workspaceId,
-        string $objectId,
-        string $resourceVersionId,
-        string $classification,
-    ): array {
+    /**
+     * `jobId` is exactly the `issuance_id` a `candidates()` row returned --
+     * the object/version/classification tuple is read from that job's own
+     * row, never accepted from the caller, so this can only ever redeem the
+     * original behind a real, completed, secure-raster candidate job in the
+     * caller's own workspace. It cannot be turned into a general "fetch any
+     * verified object" capability by supplying an unrelated version/
+     * classification for a real object id.
+     *
+     * @return array{stream:resource,size:int,mime:string}
+     */
+    public function originalSource(string $actorUserId, string $workspaceId, string $jobId): array
+    {
         $this->access->requirePlatform($actorUserId, 'protected_media.forensic.investigate');
-        $query = $this->database->prepare(
-            'SELECT byte_size, detected_mime, status FROM content_objects WHERE id = :object AND workspace_id = :workspace LIMIT 1',
-        );
-        $query->execute(['object' => $objectId, 'workspace' => $workspaceId]);
+        $query = $this->database->prepare(<<<'SQL'
+SELECT job.object_id, job.resource_version_id, job.limits_json,
+       object_record.classification, object_record.byte_size, object_record.detected_mime, object_record.status
+FROM protected_media_jobs job
+JOIN content_objects object_record ON object_record.id = job.object_id AND object_record.workspace_id = job.workspace_id
+WHERE job.id = :job AND job.workspace_id = :workspace
+  AND job.state = 'completed' AND job.renderer_algorithm_version = :renderer
+LIMIT 1
+SQL);
+        $query->execute(['job' => $jobId, 'workspace' => $workspaceId, 'renderer' => self::RENDERER_ALGORITHM_VERSION]);
         $row = $query->fetch();
         if ($row === false || (string) $row['status'] !== 'verified' || (string) $row['detected_mime'] !== 'application/pdf') {
             throw new PlatformException('input_unavailable', 'Forensic source input is unavailable or has an unexpected MIME type.', 409);
         }
+        $limits = json_decode((string) $row['limits_json'], true, 16, JSON_THROW_ON_ERROR);
+        $maximumBytes = is_array($limits) && isset($limits['max_input_bytes'])
+            ? min(self::MAXIMUM_INPUT_BYTES_CEILING, max(1, (int) $limits['max_input_bytes']))
+            : self::MAXIMUM_INPUT_BYTES_CEILING;
         $size = (int) $row['byte_size'];
-        if ($size < 5 || $size > $this->maximumSourceBytes) {
+        if ($size < 5 || $size > $maximumBytes) {
             throw new PlatformException('input_too_large', 'Forensic source input exceeds the configured limit.', 422);
         }
-        $address = new ObjectAddress($workspaceId, $objectId, $resourceVersionId, $classification);
+        $address = new ObjectAddress($workspaceId, (string) $row['object_id'], (string) $row['resource_version_id'], (string) $row['classification']);
         try {
             $stream = $this->sourceStore->openRead($address);
         } catch (Throwable) {
             throw new PlatformException('input_unavailable', 'Forensic source input is unavailable.', 409);
         }
-        $this->audit->record($workspaceId, $actorUserId, 'protected_media.forensic.source_redeem', 'content_object', $objectId, 'success', [
+        $this->audit->record($workspaceId, $actorUserId, 'protected_media.forensic.source_redeem', 'protected_media_job', $jobId, 'success', [
             'bytes' => $size,
         ]);
         return ['stream' => $stream, 'size' => $size, 'mime' => 'application/pdf'];

@@ -454,6 +454,14 @@ def detect(
     with tempfile.TemporaryDirectory(prefix="fanoos-forensic-") as work:
         work_dir = Path(work)
         original_cache: dict[tuple[str, str], Path] = {}
+        # The evidence/original raster diff for a given page is entirely
+        # candidate-independent (it never touches `material`); only the
+        # symbol sampling in _secure_raster_micro_results is per-candidate.
+        # When many recipients share one (object, resource_version) -- the
+        # common case -- this avoids re-running pdftoppm for every candidate
+        # and page, which would otherwise burn through the shared deadline
+        # before reaching the actual recipient.
+        analysis_cache: dict[tuple[str, str, int], object] = {}
         detections: list[Detection] = []
         for candidate in candidates:
             if time.monotonic() > deadline:
@@ -485,7 +493,11 @@ def detect(
             for page_index in range(page_span):
                 if time.monotonic() > deadline:
                     raise ForensicDetectorError("time_limit", "Forensic analysis timed out")
-                analysis = _prepare_secure_raster_analysis(evidence_path, original_path, page_index, dpi, deadline, work_dir, pdftoppm=pdftoppm_binary)
+                analysis_key = (*object_key, page_index)
+                analysis = analysis_cache.get(analysis_key)
+                if analysis is None:
+                    analysis = _prepare_secure_raster_analysis(evidence_path, original_path, page_index, dpi, deadline, work_dir, pdftoppm=pdftoppm_binary)
+                    analysis_cache[analysis_key] = analysis
                 channels = _secure_raster_micro_results(analysis, material, page_index)
                 score = max((item.score for item in channels), default=0.0)
                 if score > best_score:

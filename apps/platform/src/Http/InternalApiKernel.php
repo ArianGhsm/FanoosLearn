@@ -293,13 +293,10 @@ final class InternalApiKernel
             return $this->forensic->candidates($link['user_id'], (string) ($request->body['workspace_id'] ?? ''), (string) ($request->body['resource_id'] ?? ''));
         }
         if ($path === '/api/internal/v1/protected-media/forensic/source') {
-            $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id', 'object_id', 'resource_version_id', 'classification']);
+            $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id', 'job_id']);
             $principal = $this->serviceAuth->authenticate($request, 'protected_media.forensic.source');
             $link = $this->linked($principal, $request->body);
-            $source = $this->forensic->originalSource(
-                $link['user_id'], (string) ($request->body['workspace_id'] ?? ''), (string) ($request->body['object_id'] ?? ''),
-                (string) ($request->body['resource_version_id'] ?? ''), (string) ($request->body['classification'] ?? ''),
-            );
+            $source = $this->forensic->originalSource($link['user_id'], (string) ($request->body['workspace_id'] ?? ''), (string) ($request->body['job_id'] ?? ''));
             return new BinaryResponse(200, $source['stream'], $source['mime'], $source['size']);
         }
         if ($path === '/api/internal/v1/deployments/overview') {

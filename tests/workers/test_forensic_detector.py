@@ -261,6 +261,50 @@ class ForensicDetectorAlgorithmTests(unittest.TestCase):
         self.assertFalse(any(item.success for item in channels))
 
 
+class ForensicDetectorCachingTests(unittest.TestCase):
+    """Needs no real binaries: patches out the subprocess-backed helpers to
+    prove the call-count behavior directly, since real pdftoppm timing isn't
+    observable without the binaries this machine doesn't have.
+    """
+
+    def test_raster_analysis_is_shared_across_candidates_with_the_same_original(self) -> None:
+        from unittest import mock
+        from PIL import Image
+
+        calls = {"count": 0}
+
+        def fake_prepare(evidence_path, original_path, page_index, dpi, deadline, work_dir, *, pdftoppm="pdftoppm"):
+            calls["count"] += 1
+            return Image.new("L", (100, 100), 0), (100.0, 100.0)
+
+        with tempfile.TemporaryDirectory() as d:
+            evidence = Path(d) / "evidence.pdf"
+            evidence.write_bytes(b"%PDF-1.4 fake, never really opened because qpdf/pdfinfo/pdftoppm are all patched")
+            original = Path(d) / "original.pdf"
+            original.write_bytes(b"%PDF-1.4 fake original, same story")
+
+            candidates = [
+                _candidate("77777777-7777-4777-8777-777777777771", "aaaaaaaa-0000-4000-8000-000000000001", "resource-shared"),
+                _candidate("77777777-7777-4777-8777-777777777772", "bbbbbbbb-0000-4000-8000-000000000002", "resource-shared"),
+                _candidate("77777777-7777-4777-8777-777777777773", "cccccccc-0000-4000-8000-000000000003", "resource-shared"),
+            ]
+            for candidate in candidates:
+                candidate["objectId"] = "same-object"
+                candidate["resourceVersionId"] = "same-version"
+
+            with mock.patch.object(forensic_detector, "_run", lambda *a, **k: None), \
+                 mock.patch.object(forensic_detector, "_pdf_page_count", lambda *a, **k: 1), \
+                 mock.patch.object(forensic_detector, "_prepare_secure_raster_analysis", fake_prepare):
+                forensic_detector.detect(
+                    evidence, candidates=candidates, secret=FINGERPRINT_KEY,
+                    fetch_original=lambda c: original, deadline=time.monotonic() + 30,
+                )
+            self.assertEqual(
+                calls["count"], 1,
+                "three candidates sharing one (object, version, page) must rasterize/diff only once, not once per candidate",
+            )
+
+
 class ForensicDetectorFailClosedTests(unittest.TestCase):
     """These do not need qpdf/pdftoppm since they fail before any subprocess call."""
 

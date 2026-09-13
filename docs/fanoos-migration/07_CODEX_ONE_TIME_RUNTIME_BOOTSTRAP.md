@@ -6,7 +6,7 @@ During the supervised bootstrap, inspect Python, systemd/process manager, disk/m
 
 Recommended least-privilege service actions:
 
-- Telegram adapter: `messaging.link.consume,messaging.workspace.read,messaging.workspace.select,commerce.order.create,commerce.order.read,notification.claim,notification.receipt,delivery.issue,delivery.consume,delivery.receipt,protected_media.enqueue,deployment.request,deployment.status`
+- Telegram adapter: `messaging.link.consume,messaging.workspace.read,messaging.workspace.select,commerce.order.create,commerce.order.read,notification.claim,notification.receipt,delivery.issue,delivery.consume,delivery.receipt,protected_media.enqueue,protected_media.forensic.candidates,protected_media.forensic.source,deployment.request,deployment.status`
 - Bale adapter: same messaging/commerce/notification/delivery actions, without deployment or protected-media enqueue used for protected direct sends.
 - Notification projector: `notification.project`
 - Protected-media worker: `protected_media.claim,protected_media.complete,protected_media.fail`

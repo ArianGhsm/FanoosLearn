@@ -62,15 +62,16 @@ def investigate(
         cache: dict[tuple[str, str], Path] = {}
 
         def fetch_original(candidate: dict) -> Path:
+            # Any candidate job sharing (object, version) resolves to the
+            # identical bytes server-side (ProtectedMediaForensicService
+            # derives the object/version/classification from the job row
+            # itself), so this candidate's own issuanceId is a valid key to
+            # fetch the group's bytes exactly once.
             key = (candidate["objectId"], candidate["resourceVersionId"])
             cached = cache.get(key)
             if cached is not None:
                 return cached
-            data = api.media_forensic_source(
-                platform, subject, workspace_id,
-                candidate["objectId"], candidate["resourceVersionId"], candidate["classification"],
-                MAX_ORIGINAL_SOURCE_BYTES,
-            )
+            data = api.media_forensic_source(platform, subject, workspace_id, candidate["issuanceId"], MAX_ORIGINAL_SOURCE_BYTES)
             path = work_dir / f"original-{len(cache)}.pdf"
             path.write_bytes(data)
             cache[key] = path

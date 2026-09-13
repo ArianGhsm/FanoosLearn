@@ -212,7 +212,7 @@ paths:
     post:
       operationId: redeemProtectedMediaForensicSource
       x-required-service-action: protected_media.forensic.source
-      description: Owner-only. Returns the bounded original PDF bytes for one candidate's object/version, so the detector can recompute the same source hash the worker bound into the mark. No storage path or credential is exposed.
+      description: Owner-only. job_id must be a completed fanoos-raster-v2 candidate job in the caller's own workspace; the object/version/classification tuple is read from that job's own row server-side, never accepted from the caller, so this can never be turned into a general "fetch any verified object" capability. Returns the bounded original PDF bytes (bounded by that job's own recorded max_input_bytes) so the detector can recompute the same source hash the worker bound into the mark. No storage path or credential is exposed.
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ForensicSource' } } } }
       responses:
         '200':
@@ -658,8 +658,8 @@ components:
       additionalProperties: false
     ForensicSource:
       type: object
-      required: [platform, subject, workspace_id, object_id, resource_version_id, classification]
-      properties: { platform: { $ref: '#/components/schemas/Platform' }, subject: { type: string, minLength: 1, maxLength: 160 }, workspace_id: { $ref: '#/components/schemas/Uuid' }, object_id: { $ref: '#/components/schemas/Uuid' }, resource_version_id: { $ref: '#/components/schemas/Uuid' }, classification: { type: string, enum: [private, protected, public] } }
+      required: [platform, subject, workspace_id, job_id]
+      properties: { platform: { $ref: '#/components/schemas/Platform' }, subject: { type: string, minLength: 1, maxLength: 160 }, workspace_id: { $ref: '#/components/schemas/Uuid' }, job_id: { $ref: '#/components/schemas/Uuid' } }
       additionalProperties: false
     DeploymentOverview:
       type: object

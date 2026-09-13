@@ -9,19 +9,24 @@ from fanoos_bot.forensic_detector import ChannelResult, Detection
 
 
 class FakeApi:
-    def __init__(self, candidates: list[dict], sources: dict[tuple[str, str], bytes]):
+    """Mirrors the real contract: media_forensic_source takes only a job_id
+    (issuanceId) -- the platform derives object/version/classification from
+    that job's own row, never from caller-supplied values.
+    """
+
+    def __init__(self, candidates: list[dict], sources_by_job: dict[str, bytes]):
         self._candidates = candidates
-        self._sources = sources
+        self._sources_by_job = sources_by_job
         self.candidate_calls = 0
-        self.source_calls: list[tuple[str, str]] = []
+        self.source_calls: list[str] = []
 
     def media_forensic_candidates(self, platform, subject, workspace_id, resource_id):
         self.candidate_calls += 1
         return {"candidates": self._candidates}
 
-    def media_forensic_source(self, platform, subject, workspace_id, object_id, resource_version_id, classification, max_bytes):
-        self.source_calls.append((object_id, resource_version_id))
-        return self._sources[(object_id, resource_version_id)]
+    def media_forensic_source(self, platform, subject, workspace_id, job_id, max_bytes):
+        self.source_calls.append(job_id)
+        return self._sources_by_job[job_id]
 
 
 class ForensicAdminTests(unittest.TestCase):
@@ -43,7 +48,7 @@ class ForensicAdminTests(unittest.TestCase):
             {"issuance_id": "job-1", "user_id": "user-1", "document_id": "resource-1", "object_id": "object-a", "resource_version_id": "version-1", "classification": "private"},
             {"issuance_id": "job-2", "user_id": "user-2", "document_id": "resource-1", "object_id": "object-a", "resource_version_id": "version-1", "classification": "private"},
         ]
-        api = FakeApi(candidates, {("object-a", "version-1"): b"%PDF-1.4 not a real pdf but never opened in this fake"})
+        api = FakeApi(candidates, {"job-1": b"%PDF-1.4 not a real pdf but never opened in this fake"})
         with tempfile.TemporaryDirectory() as d:
             evidence = Path(d) / "evidence.pdf"
             evidence.write_bytes(b"not actually validated in this test")
