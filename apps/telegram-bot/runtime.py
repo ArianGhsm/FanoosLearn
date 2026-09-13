@@ -61,9 +61,16 @@ def build():
             os.getenv("FANOOS_PROTECTED_RENDERER_VERSION", "fanoos-raster-v2"),
             os.getenv("FANOOS_DEFAULT_COUNTRY_CODE", "").strip(),
             os.getenv("FANOOS_DEFAULT_COUNTRY_NAME", "").strip(),
-            # Fail closed at boot, never a default: this key decodes marks
-            # already distributed in production and must never be rotated.
-            required("FANOOS_PROTECTED_MEDIA_FINGERPRINT_KEY").encode(),
+            # Fails closed, but at the feature and not at boot. This key
+            # decodes marks already distributed in production and must never
+            # be rotated, so leak investigation refuses to run without it
+            # (application.py checks for an empty key at both the wizard
+            # entry point and the moment of investigation). Making it
+            # required() here instead took the whole bot down in production
+            # when the key was present only in the protected-media worker's
+            # environment: an optional owner capability must never be able to
+            # stop students reaching the bot at all.
+            os.getenv("FANOOS_PROTECTED_MEDIA_FINGERPRINT_KEY", "").strip().encode(),
         ),
     )
     transport = TelegramTransport(required("FANOOS_TELEGRAM_BOT_TOKEN"))
