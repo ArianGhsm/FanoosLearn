@@ -9,13 +9,13 @@ use Fanoos\Platform\Authorization\AccessGate;
 use Fanoos\Platform\Authorization\ScopeAuthorizer;
 use Fanoos\Platform\Core\ClassCreationRequestService;
 use Fanoos\Platform\Core\ClassProvisioningService;
+use Fanoos\Platform\Core\InstitutionTermService;
 use Fanoos\Platform\Messaging\ChannelSubjectProtector;
 use Fanoos\Platform\Messaging\MessagingLinkService;
 use Fanoos\Platform\Onboarding\ClassMembershipService;
 use Fanoos\Platform\Support\PlatformException;
 use Fanoos\Platform\Support\Uuid;
 use PDO;
-use PDOException;
 use PDOStatement;
 use RuntimeException;
 use Throwable;
@@ -116,7 +116,7 @@ SQL);
     }
 
     /**
-     * ThrowingPdoStatement (defined below) makes the status-closing UPDATE
+     * ThrowingPdoStatement (tests/Core/ThrowingPdoStatement.php) makes the status-closing UPDATE
      * genuinely fail after ClassProvisioningService has already written the
      * cohort/workspace rows in the same PHP call -- both share one
      * Transaction::run() closure, so if either half were not rolled back
@@ -290,7 +290,14 @@ SQL);
 
     private function requests(): ClassCreationRequestService
     {
-        return new ClassCreationRequestService($this->database, $this->accessGate(), new AuditLogger($this->database), $this->provisioning());
+        return new ClassCreationRequestService(
+            $this->database, $this->accessGate(), new AuditLogger($this->database), $this->provisioning(), $this->terms(),
+        );
+    }
+
+    private function terms(): InstitutionTermService
+    {
+        return new InstitutionTermService($this->database, $this->accessGate(), new AuditLogger($this->database));
     }
 
     private function protector(): ChannelSubjectProtector
@@ -405,49 +412,5 @@ SQL);
         if (!$condition) {
             throw new RuntimeException($message);
         }
-    }
-}
-
-/**
- * PDOStatement fault injection for atomicity tests: throws once, only for a
- * statement whose SQL contains a chosen substring, then behaves normally
- * again. Installed via PDO::ATTR_STATEMENT_CLASS on the shared test
- * connection -- a per-connection PHP-level setting, not a schema or data
- * mutation, so there is nothing to leak into other tests even if a caller
- * forgets to disarm() (restoring PDOStatement::class as the statement class
- * is still required to stop intercepting future queries).
- */
-final class ThrowingPdoStatement extends PDOStatement
-{
-    // PDO instantiates the statement class itself, and PDOStatement's own
-    // constructor is not accessible to subclasses on PHP 8 -- without an
-    // explicit one here PDO reports "User-supplied statement does not accept
-    // constructor arguments" the first time it prepares anything.
-    protected function __construct()
-    {
-    }
-
-    private static bool $armed = false;
-    private static string $match = '';
-
-    public static function arm(string $sqlSubstring): void
-    {
-        self::$armed = true;
-        self::$match = $sqlSubstring;
-    }
-
-    public static function disarm(): void
-    {
-        self::$armed = false;
-        self::$match = '';
-    }
-
-    public function execute(?array $params = null): bool
-    {
-        if (self::$armed && str_contains($this->queryString, self::$match)) {
-            self::$armed = false;
-            throw new PDOException('Injected failure for atomicity test.');
-        }
-        return parent::execute($params);
     }
 }

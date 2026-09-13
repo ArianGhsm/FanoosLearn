@@ -45,6 +45,7 @@ final class ClassCreationRequestService
         private readonly AccessGate $access,
         private readonly AuditLogger $audit,
         private readonly ClassProvisioningService $provisioning,
+        private readonly InstitutionTermService $terms,
     ) {
     }
 
@@ -115,6 +116,15 @@ SQL);
 
             $result = $this->provisioning->createClass($actorUserId, $identity);
             $workspaceId = (string) $result['workspace_id'];
+
+            if ($result['workspace_created'] === true) {
+                // docs/product/01_FRONT_DOOR.md #4: a class created here
+                // must pick up its institution's current terms, not start
+                // with none. Same transaction as the class creation and the
+                // request closing below -- all three commit or roll back
+                // together.
+                $this->terms->materializeCurrentTermsIntoWorkspace($workspaceId, (string) $result['institution_id']);
+            }
 
             $this->resolveGroup($ids, $actorUserId, 'created');
 

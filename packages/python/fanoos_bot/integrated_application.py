@@ -81,6 +81,11 @@ _OWNER_ALLOWED_KINDS = {
     "creq_wizard_created",
     "creq_decline_confirm",
     "creq_declined",
+    "term_institution_list",
+    "term_wizard_step",
+    "term_wizard_review",
+    "term_wizard_cancelled",
+    "term_wizard_created",
 }
 
 

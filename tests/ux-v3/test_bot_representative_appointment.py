@@ -71,6 +71,11 @@ class RepresentativeBackend:
             raise FanoosApiError("forbidden", "اجازه انجام این عملیات را ندارید.", 403)
         return {"items": list(self.pending_by_workspace.get(workspace_id) or [])}
 
+    def academic_terms_list(self, platform, subject, workspace_id):
+        if subject not in self.representative_subjects:
+            raise FanoosApiError("forbidden", "اجازه انجام این عملیات را ندارید.", 403)
+        return {"items": [], "can_override": True}
+
     def representative_requests_approve(self, platform, subject, workspace_id, request_id):
         self.approve_calls.append((platform, subject, workspace_id, request_id))
         self.pending_by_workspace[workspace_id] = [

@@ -13,6 +13,7 @@ use Fanoos\Platform\Content\SecureDeliveryService;
 use Fanoos\Platform\Core\BotReadProjectionService;
 use Fanoos\Platform\Core\ClassCreationRequestService;
 use Fanoos\Platform\Core\ClassProvisioningService;
+use Fanoos\Platform\Core\InstitutionTermService;
 use Fanoos\Platform\Core\WorkspacePlatformService;
 use Fanoos\Platform\Integration\ServiceAuthenticator;
 use Fanoos\Platform\Integration\ServicePrincipal;
@@ -49,6 +50,7 @@ final class InternalApiKernel
         private readonly ClassMembershipService $membership,
         private readonly WorkspacePlatformService $workspacePlatform,
         private readonly ClassCreationRequestService $classCreationRequests,
+        private readonly InstitutionTermService $institutionTerms,
         private readonly bool $paymentsEnabled,
     ) {
     }
@@ -397,7 +399,15 @@ final class InternalApiKernel
             ]);
             $principal = $this->serviceAuth->authenticate($request, 'workspace.provision');
             $link = $this->linked($principal, $request->body);
-            return $this->classes->createClass($link['user_id'], $request->body);
+            $result = $this->classes->createClass($link['user_id'], $request->body);
+            if ($result['workspace_created'] === true) {
+                // docs/product/01_FRONT_DOOR.md #4: a class created here must
+                // pick up its institution's current terms, not start with none.
+                $this->institutionTerms->materializeCurrentTermsIntoWorkspace(
+                    (string) $result['workspace_id'], (string) $result['institution_id'],
+                );
+            }
+            return $result;
         }
         if ($path === '/api/internal/v1/representatives/workspaces') {
             $this->assertKeys($request->body, ['platform', 'subject', 'limit', 'cursor']);
@@ -473,6 +483,40 @@ final class InternalApiKernel
             $link = $this->linked($principal, $request->body);
             return $this->classCreationRequests->declineGroup(
                 $link['user_id'], (string) ($request->body['program_id'] ?? ''), (int) ($request->body['entry_year'] ?? 0),
+            );
+        }
+        if ($path === '/api/internal/v1/institution-terms/institutions') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'limit', 'cursor']);
+            $principal = $this->serviceAuth->authenticate($request, 'workspace.provision');
+            $link = $this->linked($principal, $request->body);
+            return $this->institutionTerms->listInstitutions(
+                $link['user_id'], (int) ($request->body['limit'] ?? 10), $this->nullableString($request->body['cursor'] ?? null),
+            );
+        }
+        if ($path === '/api/internal/v1/institution-terms/set') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'institution_id', 'term_key', 'name', 'starts_on', 'ends_on', 'status']);
+            $principal = $this->serviceAuth->authenticate($request, 'workspace.provision');
+            $link = $this->linked($principal, $request->body);
+            return $this->institutionTerms->setInstitutionTerm(
+                $link['user_id'], (string) ($request->body['institution_id'] ?? ''), (string) ($request->body['term_key'] ?? ''),
+                (string) ($request->body['name'] ?? ''), (string) ($request->body['starts_on'] ?? ''),
+                (string) ($request->body['ends_on'] ?? ''), (string) ($request->body['status'] ?? 'planned'),
+            );
+        }
+        if ($path === '/api/internal/v1/academic-terms/list') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id']);
+            $principal = $this->serviceAuth->authenticate($request, 'academic_term.workspace.read');
+            $link = $this->linked($principal, $request->body);
+            return $this->institutionTerms->listWorkspaceTerms($link['user_id'], (string) ($request->body['workspace_id'] ?? ''));
+        }
+        if ($path === '/api/internal/v1/academic-terms/override') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id', 'term_key', 'name', 'starts_on', 'ends_on', 'status']);
+            $principal = $this->serviceAuth->authenticate($request, 'academic_term.workspace.override');
+            $link = $this->linked($principal, $request->body);
+            return $this->institutionTerms->overrideClassTerm(
+                $link['user_id'], (string) ($request->body['workspace_id'] ?? ''), (string) ($request->body['term_key'] ?? ''),
+                (string) ($request->body['name'] ?? ''), (string) ($request->body['starts_on'] ?? ''),
+                (string) ($request->body['ends_on'] ?? ''), (string) ($request->body['status'] ?? 'planned'),
             );
         }
 

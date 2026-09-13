@@ -97,6 +97,7 @@ final class Stage7Factory
         );
         $snapshots = new DeploymentSnapshotStore($database);
         $classProvisioning = new ClassProvisioningService($database, $access, $audit);
+        $institutionTerms = new InstitutionTermService($database, $access, $audit);
 
         return new InternalApiKernel(
             new ServiceAuthenticator($database),
@@ -117,7 +118,8 @@ final class Stage7Factory
             new OnboardingPhoneVerificationService($database, $audit, $subjectProtector, new UnconfiguredSmsGateway()),
             new ClassMembershipService($database, $audit, $subjectProtector, $links, $access),
             new WorkspacePlatformService($database, $access, $audit),
-            new ClassCreationRequestService($database, $access, $audit, $classProvisioning),
+            new ClassCreationRequestService($database, $access, $audit, $classProvisioning, $institutionTerms),
+            $institutionTerms,
             $paymentsEnabled,
         );
     }

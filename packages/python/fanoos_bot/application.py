@@ -34,6 +34,7 @@ from .localization import (
 )
 from .media_state import ProtectedMediaLocalState
 from .models import ActionResult, Button, DeliveryReceiptContext, DocumentPayload, SemanticSection
+from .persian_datetime import format_jalali_date, parse_jalali_date_input
 from .presentation import error_screen, semantic_screen, success_screen, warning_screen
 from .product_ui import course_catalog, filter_course, find_course
 
@@ -98,6 +99,23 @@ def _validate_entry_year(value: str) -> tuple[str | None, str | None]:
     if not normalized.isdigit() or not (1000 <= int(normalized) <= 9999):
         return None, "سال ورود را فقط با رقم و در بازه‌ای معتبر بنویسید؛ مثلاً ۱۴۰۲."
     return str(int(normalized)), None
+
+
+_TERM_KEY_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$")
+
+
+def _validate_term_key(value: str) -> tuple[str | None, str | None]:
+    normalized = re.sub(r"[^a-z0-9]+", "-", (value or "").strip().lower()).strip("-")
+    if not normalized or not _TERM_KEY_RE.fullmatch(normalized):
+        return None, "شناسه ترم را فقط با حروف انگلیسی و رقم بنویسید؛ مثلاً fall-1406."
+    return normalized, None
+
+
+def _validate_jalali_date(value: str) -> tuple[str | None, str | None]:
+    iso = parse_jalali_date_input(value)
+    if iso is None:
+        return None, "تاریخ را به شکل سال/ماه/روز شمسی بنویسید؛ مثلاً ۱۴۰۶/۰۷/۰۱."
+    return iso, None
 
 
 def _class_field_validator(key: str):
@@ -578,12 +596,31 @@ class BotApplication:
                     exc,
                 )
 
+            class_terms_row: tuple[tuple[Button, ...], ...] = ()
+            try:
+                terms_page = self.backend.academic_terms_list(self.platform, subject, selected)
+                if terms_page.get("can_override") is True:
+                    class_terms_row = ((Button("📅 ترم‌های کلاس", self._cb("acterms")),),)
+            except FanoosApiError as exc:
+                if exc.code not in ("forbidden", "workspace_forbidden"):
+                    logging.warning(
+                        "more screen academic_terms_list failed code=%s",
+                        exc.code,
+                    )
+            except Exception as exc:
+                logging.warning(
+                    "more screen academic_terms_list failed type=%s message=%s",
+                    type(exc).__name__,
+                    exc,
+                )
+
             rows: tuple[tuple[Button, ...], ...] = (
                 (Button("🎓 نمرات", self._cb("grades")), Button("📚 منابع", self._cb("resources"))),
                 (Button("📝 آزمون‌ها", self._cb("assess")), Button("💳 خرید و دسترسی", self._cb("payments"))),
                 (Button("🏫 فضای آموزشی", self._cb("workspaces")), Button("👤 حساب", self._cb("account"))),
             )
             rows += representative_row
+            rows += class_terms_row
             rows += management_row
             rows += self._nav_rows()
             return ActionResult(
@@ -1781,6 +1818,7 @@ class BotApplication:
                 (Button("➕ ساخت کلاس", self._cb("clsnew")),),
                 (Button("➕ انتصاب نماینده", self._cb("repnew")),),
                 (Button("📋 درخواست‌های ساخت کلاس", self._cb("cqlist")),),
+                (Button("📅 تنظیم ترم‌ها", self._cb("trmlist")),),
             )
             if self.state.latest_deployment(subject):
                 rows += ((Button("وضعیت آخرین به‌روزرسانی", self._cb("updlast")),),)
@@ -2914,6 +2952,467 @@ class BotApplication:
             )
         )
 
+    # -- Institution term dates (owner) --------------------------------------
+    # docs/product/01_FRONT_DOOR.md #4: term dates are configured once per
+    # institution, not re-typed per class. Gated the same way as the other
+    # owner-only screens above: deployment_overview's can_manage_deployments
+    # decides what to show here, while every actual list/set call is
+    # independently re-authorized by the backend's own workspace.provision
+    # check. Dates are typed and shown in Jalali (persian_datetime) and sent
+    # to the backend as Gregorian ISO dates; storage and every existing read
+    # stay untouched. The representative's own class-term override below
+    # shares this same small wizard (term_wizards), distinguished by an
+    # internal 'mode' marker in its answers, since only one such wizard is
+    # ever active per subject at a time.
+
+    TERM_PAGE_SIZE = 8
+
+    _TERM_STEP_PROMPTS: dict[str, tuple[str, str]] = {
+        "term_key": ("شناسه ترم", "یک شناسه کوتاه انگلیسی برای این ترم بنویسید؛ مثلاً fall-1406."),
+        "name": ("نام ترم", "یک نام نمایشی برای این ترم بنویسید؛ مثلاً «نیم‌سال اول ۱۴۰۶-۱۴۰۷»."),
+        "starts_on": ("تاریخ شروع", "تاریخ شروع ترم را به شمسی بنویسید؛ مثلاً ۱۴۰۶/۰۷/۰۱."),
+        "ends_on": ("تاریخ پایان", "تاریخ پایان ترم را به شمسی بنویسید؛ مثلاً ۱۴۰۶/۱۰/۱۵."),
+    }
+    _TERM_STEP_ORDER: tuple[str, ...] = ("term_key", "name", "starts_on", "ends_on")
+    _CLASS_TERM_STEP_PROMPTS: dict[str, tuple[str, str]] = {
+        "starts_on": ("تاریخ شروع", "تاریخ شروع تازه این ترم را به شمسی بنویسید؛ مثلاً ۱۴۰۶/۰۷/۰۱."),
+        "ends_on": ("تاریخ پایان", "تاریخ پایان تازه این ترم را به شمسی بنویسید؛ مثلاً ۱۴۰۶/۱۰/۱۵."),
+    }
+    _CLASS_TERM_STEP_ORDER: tuple[str, ...] = ("starts_on", "ends_on")
+
+    def _term_wizard_steps(self, answers: dict) -> tuple[str, ...]:
+        return self._CLASS_TERM_STEP_ORDER if answers.get("mode") == "class_term" else self._TERM_STEP_ORDER
+
+    def _term_wizard_prompts(self, answers: dict) -> dict[str, tuple[str, str]]:
+        return self._CLASS_TERM_STEP_PROMPTS if answers.get("mode") == "class_term" else self._TERM_STEP_PROMPTS
+
+    def institution_terms_begin(self, subject: str, private: bool):
+        if self.platform != "telegram" or not private:
+            return ActionResult(
+                warning_screen(
+                    "تنظیم ترم‌ها فقط در گفت‌وگوی خصوصی تلگرام و پس از مجوز canonical فعال است.",
+                    title="📅 تنظیم ترم‌ها",
+                    kind="term_list_unavailable",
+                    rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+                )
+            )
+        if not self.config.deployment_target_key:
+            return ActionResult(
+                warning_screen(
+                    "بررسی مجوز این بخش برای این محیط تنظیم نشده است.",
+                    title="📅 تنظیم ترم‌ها",
+                    kind="term_list_unavailable",
+                    rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+                )
+            )
+        try:
+            overview = self.backend.deployment_overview(subject, self.config.deployment_target_key)
+        except Exception as exc:
+            return self._error(exc)
+        if not overview.get("can_manage_deployments"):
+            return ActionResult(
+                error_screen(
+                    "اجازه تنظیم ترم‌ها را ندارید.",
+                    title="📅 تنظیم ترم‌ها",
+                    kind="term_list_denied",
+                    rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+                )
+            )
+        return self._term_render_institutions(subject, None)
+
+    def _term_render_institutions(self, subject: str, cursor: str | None):
+        try:
+            page = self.backend.institution_terms_institutions(self.platform, subject, self.TERM_PAGE_SIZE, cursor)
+        except Exception as exc:
+            return self._error(exc)
+        items = [
+            item for item in page.get("items") or []
+            if isinstance(item, dict) and is_uuid(str(item.get("id") or ""))
+        ]
+        next_cursor = self._clean_cursor(page.get("next_cursor"))
+
+        def label(item: dict) -> str:
+            return truncate_text(str(item.get("name") or "دانشگاه"), 70)
+
+        rows: tuple[tuple[Button, ...], ...] = tuple(
+            (Button(
+                label(item),
+                self._route_callback(subject, "term_institution_pick", "trmpick", {
+                    "institution_id": str(item.get("id") or ""), "institution_name": label(item),
+                }),
+            ),)
+            for item in items
+        )
+        if next_cursor:
+            rows += ((Button(
+                "بعدی ›",
+                self._route_callback(subject, "term_institution_page", "trmpage", {"cursor": next_cursor}),
+            ),),)
+        rows += self._nav_rows(back_action="manage", back_label="‹ مدیریت")
+        return ActionResult(
+            semantic_screen(
+                "📅 تنظیم ترم‌ها",
+                "term_institution_list",
+                breadcrumb="بیشتر › مدیریت › تنظیم ترم‌ها",
+                intro=(
+                    "دانشگاهی که می‌خواهید برایش ترم تنظیم کنید را انتخاب کنید."
+                    if items
+                    else "دانشگاهی برای تنظیم ترم یافت نشد."
+                ),
+                rows=rows,
+            )
+        )
+
+    def institution_terms_page(self, subject: str, ref: str):
+        payload = self._route_payload(subject, ref, "term_institution_page")
+        if not payload:
+            return self._expired_route()
+        return self._term_render_institutions(subject, self._clean_cursor(payload.get("cursor")))
+
+    def institution_term_pick(self, subject: str, ref: str):
+        payload = self._route_payload(subject, ref, "term_institution_pick")
+        if not payload or not is_uuid(str(payload.get("institution_id") or "")):
+            return self._expired_route()
+        answers = {
+            "mode": "institution",
+            "institution_id": str(payload["institution_id"]),
+            "institution_name": str(payload.get("institution_name") or ""),
+        }
+        self.state.start_term_wizard(self.platform, subject, answers)
+        return ActionResult(self._term_wizard_step_screen(self._TERM_STEP_ORDER, 0, answers))
+
+    def _term_wizard_step_screen(
+        self,
+        steps: tuple[str, ...],
+        index: int,
+        answers: dict,
+        *,
+        error: str | None = None,
+    ):
+        prompts = self._term_wizard_prompts(answers)
+        key = steps[index]
+        label, prompt = prompts[key]
+        counter = f"مرحله {to_persian_digits(index + 1)} از {to_persian_digits(len(steps) + 1)}"
+        nav: list[Button] = []
+        if index > 0:
+            nav.append(Button("↩️ مرحله قبل", self._cb("trmback")))
+        nav.append(Button("❌ لغو", self._cb("trmcxl")))
+        subtitle = str(answers.get("institution_name") or answers.get("name") or "")
+        title_prefix = "📅 تنظیم ترم" if answers.get("mode") != "class_term" else "✏️ ویرایش ترم"
+        body = f"«{subtitle}»\n\n{prompt}" if subtitle else prompt
+        return semantic_screen(
+            f"{title_prefix} · {label}",
+            "term_wizard_step" if answers.get("mode") != "class_term" else "class_term_wizard_step",
+            severity="warning" if error else "info",
+            breadcrumb="بیشتر › مدیریت › تنظیم ترم‌ها" if answers.get("mode") != "class_term" else "بیشتر › ترم‌های کلاس",
+            intro=(f"⚠️ {error}\n\n{prompt}" if error else body),
+            pagination=counter,
+            rows=(tuple(nav),),
+        )
+
+    def _term_wizard_review_screen(self, answers: dict):
+        if answers.get("mode") == "class_term":
+            facts = [
+                ("ترم", str(answers.get("name") or answers.get("term_key") or "")),
+                ("تاریخ شروع", format_jalali_date(str(answers.get("starts_on") or ""))),
+                ("تاریخ پایان", format_jalali_date(str(answers.get("ends_on") or ""))),
+            ]
+            title = "✏️ ویرایش ترم · بازبینی"
+            breadcrumb = "بیشتر › ترم‌های کلاس › بازبینی"
+            intro = "پیش از ذخیره، تاریخ‌های تازه را بررسی کنید."
+            confirm_label = "✅ ذخیره تاریخ‌ها"
+        else:
+            facts = [
+                ("دانشگاه", str(answers.get("institution_name") or "")),
+                ("شناسه ترم", str(answers.get("term_key") or "")),
+                ("نام ترم", str(answers.get("name") or "")),
+                ("تاریخ شروع", format_jalali_date(str(answers.get("starts_on") or ""))),
+                ("تاریخ پایان", format_jalali_date(str(answers.get("ends_on") or ""))),
+            ]
+            title = "📅 تنظیم ترم · بازبینی"
+            breadcrumb = "بیشتر › مدیریت › تنظیم ترم‌ها › بازبینی"
+            intro = "پیش از اعمال روی همه کلاس‌های این دانشگاه، اطلاعات را بررسی کنید."
+            confirm_label = "✅ اعمال روی همه کلاس‌ها"
+        rows = (
+            (Button(confirm_label, self._cb("trmconf")),),
+            (Button("↩️ مرحله قبل", self._cb("trmback")), Button("❌ لغو", self._cb("trmcxl"))),
+        )
+        return semantic_screen(
+            title,
+            "term_wizard_review" if answers.get("mode") != "class_term" else "class_term_wizard_review",
+            breadcrumb=breadcrumb,
+            intro=intro,
+            facts=facts,
+            rows=rows,
+        )
+
+    def _term_wizard_expired(self):
+        return ActionResult(
+            warning_screen(
+                "این فرآیند دیگر در دسترس نیست. دوباره شروع کنید.",
+                title="📅 ترم",
+                kind="term_wizard_expired",
+                rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+            )
+        )
+
+    def term_wizard_text(self, subject: str, text: str, private: bool = True):
+        """Advance an in-progress institution-term or class-term-override
+        wizard with free text, or return None -- same contract as
+        class_wizard_text."""
+        if not private:
+            return None
+        wizard = self.state.term_wizard(self.platform, subject)
+        if wizard is None:
+            return None
+        answers = wizard["answers"]
+        steps = self._term_wizard_steps(answers)
+        index = wizard["step_index"]
+        if index >= len(steps):
+            return ActionResult(self._term_wizard_review_screen(answers))
+        key = steps[index]
+        if key == "term_key":
+            value, error = _validate_term_key(text)
+        elif key == "name":
+            value, error = _validate_class_text(text, 1, 160)
+        else:
+            value, error = _validate_jalali_date(text)
+            if error is None and key == "ends_on" and value < str(answers.get("starts_on") or ""):
+                value, error = None, "تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد."
+        if error:
+            return ActionResult(self._term_wizard_step_screen(steps, index, answers, error=error))
+        next_answers = dict(answers)
+        next_answers[key] = value
+        next_index = index + 1
+        self.state.advance_term_wizard(self.platform, subject, next_index, next_answers)
+        if next_index >= len(steps):
+            return ActionResult(self._term_wizard_review_screen(next_answers))
+        return ActionResult(self._term_wizard_step_screen(steps, next_index, next_answers))
+
+    def term_wizard_back(self, subject: str):
+        wizard = self.state.term_wizard(self.platform, subject)
+        if wizard is None:
+            return self._term_wizard_expired()
+        steps = self._term_wizard_steps(wizard["answers"])
+        index = max(0, wizard["step_index"] - 1)
+        self.state.advance_term_wizard(self.platform, subject, index, wizard["answers"])
+        return ActionResult(self._term_wizard_step_screen(steps, index, wizard["answers"]))
+
+    def term_wizard_cancel(self, subject: str):
+        wizard = self.state.term_wizard(self.platform, subject)
+        is_class_term = bool(wizard and wizard["answers"].get("mode") == "class_term")
+        self.state.cancel_term_wizard(self.platform, subject)
+        if is_class_term:
+            return ActionResult(
+                semantic_screen(
+                    "✏️ ویرایش ترم",
+                    "class_term_wizard_cancelled",
+                    intro="ویرایش ترم لغو شد.",
+                    rows=self._nav_rows(back_action="more", back_label="‹ بیشتر"),
+                )
+            )
+        return ActionResult(
+            semantic_screen(
+                "📅 تنظیم ترم‌ها",
+                "term_wizard_cancelled",
+                intro="تنظیم ترم لغو شد.",
+                rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+            )
+        )
+
+    def term_wizard_confirm(self, subject: str, private: bool):
+        if self.platform != "telegram" or not private:
+            return self._term_wizard_expired()
+        wizard = self.state.term_wizard(self.platform, subject)
+        if wizard is None:
+            return self._term_wizard_expired()
+        answers = wizard["answers"]
+        steps = self._term_wizard_steps(answers)
+        if wizard["step_index"] < len(steps):
+            return ActionResult(self._term_wizard_step_screen(steps, wizard["step_index"], answers))
+        if answers.get("mode") == "class_term":
+            return self._class_term_wizard_confirm(subject, answers)
+        return self._institution_term_wizard_confirm(subject, answers)
+
+    def _institution_term_wizard_confirm(self, subject: str, answers: dict):
+        institution_id = str(answers.get("institution_id") or "")
+        if not is_uuid(institution_id):
+            return self._term_wizard_expired()
+        try:
+            result = self.backend.institution_terms_set(
+                self.platform, subject, institution_id,
+                str(answers.get("term_key") or ""), str(answers.get("name") or ""),
+                str(answers.get("starts_on") or ""), str(answers.get("ends_on") or ""),
+            )
+        except Exception as exc:
+            logging.error(
+                "institution term set failed type=%s message=%s",
+                type(exc).__name__,
+                exc,
+            )
+            message = (
+                error_message(exc.code, exc.status)
+                if isinstance(exc, FanoosApiError)
+                else "تنظیم ترم ناموفق بود. دوباره امتحان کنید."
+            )
+            return ActionResult(
+                error_screen(
+                    message,
+                    title="📅 تنظیم ترم‌ها",
+                    kind="term_wizard_failed",
+                    rows=(
+                        (Button("🔁 تلاش دوباره", self._cb("trmconf")),),
+                    )
+                    + self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+                )
+            )
+        self.state.cancel_term_wizard(self.platform, subject)
+        applied = to_persian_digits(result.get("applied_count") or 0)
+        skipped = to_persian_digits(result.get("skipped_count") or 0)
+        return ActionResult(
+            semantic_screen(
+                "✅ ترم اعمال شد",
+                "term_wizard_created",
+                severity="success",
+                breadcrumb="بیشتر › مدیریت › تنظیم ترم‌ها",
+                intro="ترم روی کلاس‌های فعال این دانشگاه اعمال شد.",
+                facts=[
+                    ("کلاس‌های به‌روزشده", applied),
+                    ("کلاس‌های دارای تاریخ اختصاصی (نادیده‌گرفته‌شده)", skipped),
+                ],
+                rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+            )
+        )
+
+    # -- Class term dates (representative) -----------------------------------
+    # A representative's own view of their class's term dates, alongside
+    # their pending-requests view. The entry point probes academic_terms_list
+    # (requires academic.view, workspace-scoped) purely to decide what to
+    # show; can_override in the response is a separate, non-throwing read of
+    # academic.manage, and POST /academic-terms/override re-checks it
+    # server-side regardless of what this screen showed -- the bot only ever
+    # hides what the backend has already told it is unavailable.
+
+    def class_terms(self, subject: str):
+        try:
+            _, selected, blocked = self._workspace_or_result(subject)
+            if blocked:
+                return blocked
+            page = self.backend.academic_terms_list(self.platform, subject, selected)
+        except Exception as exc:
+            return self._error(exc)
+        items = [
+            item for item in page.get("items") or []
+            if isinstance(item, dict) and is_uuid(str(item.get("id") or ""))
+        ]
+        can_override = page.get("can_override") is True
+        if not items:
+            return ActionResult(
+                semantic_screen(
+                    "📅 ترم‌های کلاس",
+                    "class_terms_empty",
+                    breadcrumb="بیشتر › ترم‌های کلاس",
+                    intro="هنوز ترمی برای این کلاس ثبت نشده است.",
+                    rows=self._nav_rows(back_action="more", back_label="‹ بیشتر"),
+                )
+            )
+
+        def row_label(item: dict) -> str:
+            starts = format_jalali_date(str(item.get("starts_on") or ""))
+            ends = format_jalali_date(str(item.get("ends_on") or ""))
+            badge = "✏️" if item.get("origin") == "override" else "🏫"
+            name = truncate_text(str(item.get("name") or item.get("term_key") or ""), 50)
+            return truncate_text(f"{badge} {name} ({starts} تا {ends})", 90)
+
+        if can_override:
+            rows: tuple[tuple[Button, ...], ...] = tuple(
+                (Button(
+                    row_label(item),
+                    self._route_callback(subject, "class_term_pick", "actovr", {
+                        "workspace_id": selected,
+                        "term_key": str(item.get("term_key") or ""),
+                        "name": str(item.get("name") or ""),
+                        "status": str(item.get("status") or "planned"),
+                        "starts_on": str(item.get("starts_on") or ""),
+                    }),
+                ),)
+                for item in items
+            )
+        else:
+            rows = tuple((Button(row_label(item), self._cb("acterms")),) for item in items)
+        rows += self._nav_rows(back_action="more", back_label="‹ بیشتر")
+        return ActionResult(
+            semantic_screen(
+                "📅 ترم‌های کلاس",
+                "class_terms",
+                breadcrumb="بیشتر › ترم‌های کلاس",
+                intro=(
+                    "برای ویرایش تاریخ یک ترم، آن را انتخاب کنید."
+                    if can_override
+                    else "ترم‌های این کلاس؛ فقط نماینده کلاس می‌تواند تاریخ‌ها را تغییر دهد."
+                ),
+                rows=rows,
+            )
+        )
+
+    def class_term_pick(self, subject: str, ref: str):
+        payload = self._route_payload(subject, ref, "class_term_pick")
+        if not payload or not is_uuid(str(payload.get("workspace_id") or "")):
+            return self._expired_route()
+        answers = {
+            "mode": "class_term",
+            "workspace_id": str(payload["workspace_id"]),
+            "term_key": str(payload.get("term_key") or ""),
+            "name": str(payload.get("name") or ""),
+            "status": str(payload.get("status") or "planned"),
+        }
+        self.state.start_term_wizard(self.platform, subject, answers)
+        return ActionResult(self._term_wizard_step_screen(self._CLASS_TERM_STEP_ORDER, 0, answers))
+
+    def _class_term_wizard_confirm(self, subject: str, answers: dict):
+        workspace_id = str(answers.get("workspace_id") or "")
+        if not is_uuid(workspace_id):
+            return self._term_wizard_expired()
+        try:
+            self.backend.academic_terms_override(
+                self.platform, subject, workspace_id, str(answers.get("term_key") or ""),
+                str(answers.get("name") or ""), str(answers.get("starts_on") or ""),
+                str(answers.get("ends_on") or ""), str(answers.get("status") or "planned"),
+            )
+        except Exception as exc:
+            logging.error(
+                "class term override failed type=%s message=%s",
+                type(exc).__name__,
+                exc,
+            )
+            message = (
+                error_message(exc.code, exc.status)
+                if isinstance(exc, FanoosApiError)
+                else "ویرایش ترم ناموفق بود. دوباره امتحان کنید."
+            )
+            return ActionResult(
+                error_screen(
+                    message,
+                    title="✏️ ویرایش ترم",
+                    kind="class_term_wizard_failed",
+                    rows=(
+                        (Button("🔁 تلاش دوباره", self._cb("trmconf")),),
+                    )
+                    + self._nav_rows(back_action="more", back_label="‹ بیشتر"),
+                )
+            )
+        self.state.cancel_term_wizard(self.platform, subject)
+        return ActionResult(
+            semantic_screen(
+                "✅ ترم ذخیره شد",
+                "class_term_wizard_created",
+                severity="success",
+                breadcrumb="بیشتر › ترم‌های کلاس",
+                intro="تاریخ‌های تازه این ترم برای کلاس شما ذخیره شد.",
+                rows=self._nav_rows(back_action="more", back_label="‹ بیشتر"),
+            )
+        )
+
     # -- Student join wizard -------------------------------------------------
     # Reply-keyboard exception to the rest of the bot (owner's explicit
     # request); see join_wizard.py's module docstring for the three
@@ -3403,6 +3902,22 @@ class BotApplication:
             return self.class_creation_request_decline_confirm(subject, ref)
         if action == "cqdyes" and ref:
             return self.class_creation_request_decline_do(subject, ref)
+        if action == "trmlist":
+            return self.institution_terms_begin(subject, private)
+        if action == "trmpage" and ref:
+            return self.institution_terms_page(subject, ref)
+        if action == "trmpick" and ref:
+            return self.institution_term_pick(subject, ref)
+        if action == "trmback":
+            return self.term_wizard_back(subject)
+        if action == "trmcxl":
+            return self.term_wizard_cancel(subject)
+        if action == "trmconf":
+            return self.term_wizard_confirm(subject, private)
+        if action == "acterms":
+            return self.class_terms(subject)
+        if action == "actovr" and ref:
+            return self.class_term_pick(subject, ref)
         if action == "reprequests":
             return self.representative_requests(subject)
         if action == "repappr" and ref:
