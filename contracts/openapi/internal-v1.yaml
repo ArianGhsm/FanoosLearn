@@ -57,6 +57,18 @@ paths:
       x-required-service-action: announcement.read
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AnnouncementRead' } } } }
       responses: { '200': { $ref: '#/components/responses/Success' } }
+  /announcements/publish:
+    post:
+      operationId: publishBotAnnouncement
+      x-required-service-action: announcement.publish
+      description: >-
+        Workspace-scoped notification.broadcast, already held by cohort-representative -- this is the same
+        WorkspacePlatformService::publishAnnouncement the web API calls, exposed to the bot for the first
+        time. Title and body are required and re-validated server-side regardless of what the bot already
+        checked; publishing enqueues delivery through the existing notification_messages/outbox pipeline,
+        never a parallel one.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AnnouncementCompose' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } }
   /content/resources/list:
     post:
       operationId: listBotAccessibleResources
@@ -510,6 +522,17 @@ components:
         workspace_id: { $ref: '#/components/schemas/Uuid' }
         limit: { type: integer, minimum: 1, maximum: 100 }
         cursor: { $ref: '#/components/schemas/Cursor' }
+        course_id: { $ref: '#/components/schemas/Uuid' }
+      additionalProperties: false
+    AnnouncementCompose:
+      type: object
+      required: [platform, subject, workspace_id, title, body]
+      properties:
+        platform: { $ref: '#/components/schemas/Platform' }
+        subject: { type: string, minLength: 1, maxLength: 160 }
+        workspace_id: { $ref: '#/components/schemas/Uuid' }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        body: { type: string, minLength: 1, maxLength: 4000 }
         course_id: { $ref: '#/components/schemas/Uuid' }
       additionalProperties: false
     ScheduleRead:

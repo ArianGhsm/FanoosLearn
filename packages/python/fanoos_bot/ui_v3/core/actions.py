@@ -26,6 +26,7 @@ ACTION_SCHEDULE_TODAY = "core.schedule.today"
 ACTION_JOIN_BEGIN = "core.join.begin"
 ACTION_MANAGE = "core.manage"
 ACTION_REP_REQUESTS = "core.rep.requests"
+ACTION_ANNOUNCEMENTS_MANAGE = "core.ann.manage"
 
 
 def _callback(identifier: str, label: str, name: str, *, params=(), destructive: bool = False) -> Action:
@@ -147,5 +148,9 @@ def manage_action() -> Action:
 
 def representative_requests_action() -> Action:
     return _callback(ACTION_REP_REQUESTS, "📋 درخواست‌های عضویت", "core.rep.requests")
+
+
+def announcements_manage_action() -> Action:
+    return _callback(ACTION_ANNOUNCEMENTS_MANAGE, "📢 اطلاعیه‌های کلاس", "core.ann.manage")
 
 

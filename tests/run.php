@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Fanoos\Platform\Support\DatabaseConnection;
+use Fanoos\Tests\Core\AnnouncementPublishTest;
 use Fanoos\Tests\Core\ClassCreationRequestServiceTest;
 use Fanoos\Tests\Core\ClassMembershipTest;
 use Fanoos\Tests\Core\ClassProvisioningTest;
@@ -87,6 +88,8 @@ try {
         echo "PASS join wizard membership and upgrade-request scenarios\n";
         $assertions += (new RepresentativeApprovalTest($database))->run();
         echo "PASS representative appointment and approval scenarios\n";
+        $assertions += (new AnnouncementPublishTest($database))->run();
+        echo "PASS representative announcement publish/read scenarios\n";
         $assertions += (new ClassCreationRequestServiceTest($database))->run();
         echo "PASS owner class-creation request review scenarios\n";
         $assertions += (new InstitutionTermServiceTest($database))->run();

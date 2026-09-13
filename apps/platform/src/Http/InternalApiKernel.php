@@ -137,6 +137,16 @@ final class InternalApiKernel
                 $this->nullableString($request->body['course_id'] ?? null),
             );
         }
+        if ($path === '/api/internal/v1/announcements/publish') {
+            $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id', 'title', 'body', 'course_id']);
+            $principal = $this->serviceAuth->authenticate($request, 'announcement.publish');
+            $context = $this->linkedWorkspace($principal, $request->body);
+            return ['id' => $this->workspacePlatform->publishAnnouncement(
+                $context['user_id'], $context['workspace_id'],
+                (string) ($request->body['title'] ?? ''), (string) ($request->body['body'] ?? ''),
+                $this->nullableString($request->body['course_id'] ?? null),
+            )];
+        }
         if ($path === '/api/internal/v1/content/resources/list') {
             $this->assertKeys($request->body, ['platform', 'subject', 'workspace_id', 'limit', 'cursor']);
             $principal = $this->serviceAuth->authenticate($request, 'content.catalog.read');

@@ -159,6 +159,31 @@ class BotApplication(BaseBotApplication):
             )
             return False
 
+    def _can_publish_announcements(self, subject: str, workspace_id: str | None) -> bool:
+        """Same probe as _can_approve_representative_requests: the row
+        appears only when the same announcements/list projection this
+        screen would read anyway already reports can_publish=True for this
+        viewer, never from a locally-cached role."""
+        if not workspace_id:
+            return False
+        try:
+            page = self.backend.announcements(self.platform, subject, workspace_id, 1, None)
+            return bool(page.get("can_publish"))
+        except FanoosApiError as exc:
+            if exc.code not in ("forbidden", "workspace_forbidden"):
+                logging.warning(
+                    "shell announcements can_publish probe failed code=%s",
+                    exc.code,
+                )
+            return False
+        except Exception as exc:
+            logging.warning(
+                "shell announcements can_publish probe failed type=%s message=%s",
+                type(exc).__name__,
+                exc,
+            )
+            return False
+
     def _unlinked_screen(self) -> CoreScreen:
         return unlinked_account_screen(self.config.web_base_url)
 
@@ -276,6 +301,7 @@ class BotApplication(BaseBotApplication):
                 latest_announcement=self._home_announcement_slot(subject, selected),
                 is_owner=is_owner,
                 show_representative_requests=self._can_approve_representative_requests(subject, selected),
+                show_announcements_manage=self._can_publish_announcements(subject, selected),
                 notice=clean_notice,
             )
             return self._v3_result(screen)

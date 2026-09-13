@@ -130,6 +130,16 @@ class LocalState:
               expires_at INTEGER NOT NULL,
               PRIMARY KEY(platform, subject)
             );
+            CREATE TABLE IF NOT EXISTS announcement_wizards(
+              platform TEXT NOT NULL,
+              subject TEXT NOT NULL,
+              step_index INTEGER NOT NULL,
+              answers_json TEXT NOT NULL,
+              created_at INTEGER NOT NULL,
+              updated_at INTEGER NOT NULL,
+              expires_at INTEGER NOT NULL,
+              PRIMARY KEY(platform, subject)
+            );
             CREATE TABLE IF NOT EXISTS presentation_routes(
               ref TEXT PRIMARY KEY,
               platform TEXT NOT NULL,
@@ -542,6 +552,57 @@ class LocalState:
     def cancel_term_wizard(self, platform: str, subject: str) -> None:
         self.db.execute(
             "DELETE FROM term_wizards WHERE platform=? AND subject=?", (platform, str(subject))
+        )
+        self.db.commit()
+
+    ANNOUNCEMENT_WIZARD_TTL = 30 * 60
+
+    def start_announcement_wizard(self, platform: str, subject: str, *, now: int | None = None) -> None:
+        now = int(now or time.time())
+        self.db.execute(
+            """
+            INSERT INTO announcement_wizards(platform,subject,step_index,answers_json,created_at,updated_at,expires_at)
+            VALUES(?,?,0,'{}',?,?,?)
+            ON CONFLICT(platform,subject) DO UPDATE SET
+              step_index=0, answers_json='{}', updated_at=excluded.updated_at, expires_at=excluded.expires_at
+            """,
+            (platform, str(subject), now, now, now + self.ANNOUNCEMENT_WIZARD_TTL),
+        )
+        self.db.commit()
+
+    def announcement_wizard(self, platform: str, subject: str, now: int | None = None) -> dict | None:
+        now = int(now or time.time())
+        row = self.db.execute(
+            "SELECT step_index,answers_json,expires_at FROM announcement_wizards WHERE platform=? AND subject=?",
+            (platform, str(subject)),
+        ).fetchone()
+        if not row or int(row["expires_at"]) < now:
+            return None
+        try:
+            answers = json.loads(str(row["answers_json"]))
+        except (TypeError, ValueError, json.JSONDecodeError):
+            answers = {}
+        if not isinstance(answers, dict):
+            answers = {}
+        return {"step_index": int(row["step_index"]), "answers": answers}
+
+    def advance_announcement_wizard(
+        self, platform: str, subject: str, step_index: int, answers: dict, *, now: int | None = None
+    ) -> None:
+        now = int(now or time.time())
+        encoded = json.dumps(answers, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        self.db.execute(
+            """
+            UPDATE announcement_wizards SET step_index=?, answers_json=?, updated_at=?, expires_at=?
+            WHERE platform=? AND subject=?
+            """,
+            (int(step_index), encoded, now, now + self.ANNOUNCEMENT_WIZARD_TTL, platform, str(subject)),
+        )
+        self.db.commit()
+
+    def cancel_announcement_wizard(self, platform: str, subject: str) -> None:
+        self.db.execute(
+            "DELETE FROM announcement_wizards WHERE platform=? AND subject=?", (platform, str(subject))
         )
         self.db.commit()
 
