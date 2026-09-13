@@ -24,7 +24,7 @@ class Api:
         self.calls.append(('publish',cap,pdf));self.published=pdf;return {'artifact_ref':'pma:77777777-7777-4777-8777-777777777777','checksum_sha256':__import__('hashlib').sha256(pdf).hexdigest(),'size':len(pdf),'mime':'application/pdf'}
 class ProtectedMediaTest(unittest.TestCase):
     def job(self,**kw):
-        j={'job_id':'11111111-1111-4111-8111-111111111111','lease_token':'lease','completion_key':'completion','object_capability':'opaque','renderer_algorithm_version':worker.JobProcessor.RENDERER_ALGORITHM_VERSION,'watermark_label':'کاربر','forensic_id':'ABCDEF123456','user_id':7,'resource_id':'resource-abc','limits':{'max_input_bytes':1024,'max_pages':10,'max_seconds':30}};j.update(kw);return j
+        j={'job_id':'11111111-1111-4111-8111-111111111111','lease_token':'lease','completion_key':'completion','object_capability':'opaque','renderer_algorithm_version':worker.JobProcessor.RENDERER_ALGORITHM_VERSION,'watermark_label':'کاربر','forensic_id':'ABCDEF123456','user_id':'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee','resource_id':'resource-abc','limits':{'max_input_bytes':1024,'max_pages':10,'max_seconds':30}};j.update(kw);return j
     def test_limits_bounded(self):
         l=worker.JobLimits.parse({'max_input_bytes':9999999999,'max_pages':9999,'max_seconds':9999});self.assertLessEqual(l.max_input_bytes,200*1024*1024);self.assertEqual(l.max_pages,2000);self.assertEqual(l.max_seconds,1800)
     def test_renderer_version_mismatch_fails_closed(self):
@@ -71,12 +71,20 @@ class ProtectedMediaTest(unittest.TestCase):
         p=worker.JobProcessor(Source(),Sink(),Inspector(2),Raster(2),fingerprint_key=FINGERPRINT_KEY)
         with tempfile.TemporaryDirectory() as d:
             src=Path(d)/'input.pdf';src.write_bytes(b'%PDF-fake')
-            one=p._fingerprint_material(self.job(job_id='11111111-1111-4111-8111-111111111111',user_id=7),src)
-            two=p._fingerprint_material(self.job(job_id='22222222-2222-4222-8222-222222222222',user_id=8),src)
+            one=p._fingerprint_material(self.job(job_id='11111111-1111-4111-8111-111111111111',user_id='aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'),src)
+            two=p._fingerprint_material(self.job(job_id='22222222-2222-4222-8222-222222222222',user_id='ffffffff-1111-4222-8333-444444444444'),src)
         self.assertNotEqual(one.fingerprint_hash,two.fingerprint_hash)
         self.assertNotEqual(one.trace_code,two.trace_code)
         from fanoos_bot.pdf_fingerprint import secure_page_prefix
         self.assertNotEqual(secure_page_prefix(one,0),secure_page_prefix(two,0))
+    def test_canonical_user_id_does_not_truncate_a_uuid_to_zero(self):
+        # A UUID beginning with a hex letter (a-f) is exactly the case a naive
+        # int() cast mangles to 0 in both PHP and Python.
+        self.assertNotEqual(worker._canonical_user_id('aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'),0)
+        self.assertNotEqual(
+            worker._canonical_user_id('aaaaaaaa-0000-4000-8000-000000000000'),
+            worker._canonical_user_id('ffffffff-0000-4000-8000-000000000000'),
+        )
     def test_private_spool_ref_no_path(self):
         with tempfile.TemporaryDirectory() as d:
             src=Path(d)/'x.pdf';src.write_bytes(b'x');sink=worker.PrivateSpoolArtifactSink(Path(d)/'out');ref=sink.publish(self.job(),src,'a'*64);self.assertNotIn('/',ref);self.assertTrue(ref.startswith('pm:'))
@@ -130,7 +138,7 @@ class ProtectedMediaEndToEndTest(unittest.TestCase):
             deadline=_time.monotonic()+60
             pages=worker.CommandPdfInspector().inspect(source,deadline)
             self.assertEqual(pages,2)
-            material=derive_fingerprint_material(FINGERPRINT_KEY,issuance_id='iss_66666666666666666666666666666666666666',user_id=13,document_id='resource-e2e',source_hash=file_sha256(source),watermark_version=WATERMARK_VERSION)
+            material=derive_fingerprint_material(FINGERPRINT_KEY,issuance_id='iss_66666666666666666666666666666666666666',user_id=worker._canonical_user_id('aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'),document_id='resource-e2e',source_hash=file_sha256(source),watermark_version=WATERMARK_VERSION)
             rendered=worker.PopplerPillowRasterizer().render(source,output,'FANOOS',material,deadline)
             self.assertEqual(rendered,pages)
             reraster=root/'reraster';reraster.mkdir()

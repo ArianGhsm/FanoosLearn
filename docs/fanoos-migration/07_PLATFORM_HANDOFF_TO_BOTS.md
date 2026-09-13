@@ -229,6 +229,20 @@ One-time runtime bootstrap must additionally provision:
 
 Live Telegram/Bale/provider/worker/systemd/storage behavior remains `RUNTIME_VALIDATION_REQUIRED` until observed on the supervised runtime.
 
+### Protected-media secure-raster micro watermark (renderer `fanoos-raster-v2`)
+
+Same rollout rule as `FANOOS_PROTECTED_MEDIA_CAPABILITY_KEY` above, plus one
+that is specific to this key: provision an independent, >=32-byte
+`FANOOS_PROTECTED_MEDIA_FINGERPRINT_KEY` in the worker's own runtime env
+before the worker is (re)started -- `build()` fails closed with no default.
+Never rotate it once in use; rotating it orphans every mark already burned
+into a distributed derivative. Deploy the worker at the same time as, or
+before, any bot build that starts enqueuing `renderer_algorithm_version:
+fanoos-raster-v2` -- the worker accepts exactly one renderer version at a
+time, so a job enqueued under a version the running worker does not accept
+fails cleanly (`render_failed`) and simply needs re-enqueuing once both
+sides agree on the version.
+
 ## Re-entry gate for Chat 2
 
 After this Platform branch is merged and repository CI is green, Chat 2 should:

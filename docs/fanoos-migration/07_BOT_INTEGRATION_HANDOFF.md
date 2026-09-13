@@ -110,6 +110,30 @@ One-time runtime/bootstrap must provision:
 
 No server changes are performed by this source task.
 
+### Protected-media secure-raster micro watermark (renderer `fanoos-raster-v2`)
+
+Before deploying the protected-media worker at or after the commit that ported
+`dent_bot.pdf_fingerprint`'s secure-raster micro watermark:
+- generate and provision `FANOOS_PROTECTED_MEDIA_FINGERPRINT_KEY` (an
+  independent, >=32-byte random secret, outside Git, in the worker's own
+  runtime env -- see `apps/workers/protected-media/runtime.env.example`) --
+  the worker's `build()` fails closed and will not start without it, and it
+  is **never** the same secret as `FANOOS_PROTECTED_MEDIA_CAPABILITY_KEY`;
+- back this key up the same way as `FANOOS_PROTECTED_MEDIA_CAPABILITY_KEY`
+  and **never rotate it**: rotating it orphans every mark already burned
+  into a distributed derivative, since it is the only key that can ever
+  recover one;
+- deploy the worker (and this key) at the same time as, or before, any bot
+  build that enqueues `renderer_algorithm_version: fanoos-raster-v2` --
+  `JobProcessor.process()` accepts exactly one renderer version at a time by
+  design (the point of bumping it is that old and new derivatives stay
+  distinguishable), so a job enqueued under the version the running worker
+  does not accept fails cleanly with `render_failed` rather than producing
+  an unmarked or wrongly-marked file. Any such job simply needs
+  re-enqueuing once both sides agree on the version -- this is a normal,
+  bounded rollout-ordering effect of every renderer version bump, not new
+  behavior from this port.
+
 ## Bot re-entry gate
 
 Chat 2 may resume only after this Platform branch is merged to `main` with green repository CI. At re-entry it must:
