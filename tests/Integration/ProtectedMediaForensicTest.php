@@ -177,7 +177,7 @@ final class ProtectedMediaForensicTest
             throw new RuntimeException("Role template not found: {$roleKey}");
         }
         $this->insert(
-            "INSERT INTO rbac_role_assignments (id, user_id, role_template_id, scope_id, granted_by_user_id, granted_at) VALUES (:id, :user, :role, :scope, :user, UTC_TIMESTAMP(6))",
+            "INSERT INTO rbac_role_assignments (id, user_id, role_template_id, scope_id, valid_from, created_at) VALUES (:id, :user, :role, :scope, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))",
             ['id' => Uuid::v7(), 'user' => $userId, 'role' => $roleId, 'scope' => $scopeId],
         );
     }
