@@ -51,6 +51,7 @@ INTENT_REGISTRY: dict[str, str] = {
     "core.join.begin": "join_begin",
     "core.manage": "manage",
     "core.rep.requests": "rep_requests",
+    "core.ann.manage": "announcements_manage",
     # bot-02/academic
     "academic.courses.page": "courses_page",
     "academic.course.open": "course_open",
@@ -371,6 +372,7 @@ def dispatch_v3_intent(app: Any, subject: str, private: bool, name: str, params:
     if target == "join_begin": return app.join_wizard_begin(subject, private)
     if target == "manage": return app.management(subject, private)
     if target == "rep_requests": return app.representative_requests(subject)
+    if target == "announcements_manage": return app.announcements_manage(subject)
     # Page/filter intents without an opaque integration route recover safely to
     # their canonical list rather than trusting client cursor/page values.
     if target == "courses_page": return app.courses(subject)

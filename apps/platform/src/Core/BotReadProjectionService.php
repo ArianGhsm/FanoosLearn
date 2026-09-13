@@ -191,7 +191,16 @@ SQL;
         if ($hasMore) {
             array_pop($rows);
         }
-        return ['items' => $rows, 'next_cursor' => $hasMore ? $this->encodeCursor($offset + count($rows)) : null];
+        return [
+            'items' => $rows,
+            'next_cursor' => $hasMore ? $this->encodeCursor($offset + count($rows)) : null,
+            // Additive capability flag so the bot can hide its compose entry
+            // point for viewers the backend would refuse anyway (the same
+            // probe-and-hide precedent as academic_terms_list's can_override);
+            // it is never itself an authorization decision -- publishAnnouncement
+            // re-checks notification.broadcast independently on every call.
+            'can_publish' => $this->access->workspace($userId, $workspaceId, 'notification.broadcast')->allowed,
+        ];
     }
 
     /** @return array<string,mixed> */

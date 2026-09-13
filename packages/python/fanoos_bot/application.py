@@ -127,6 +127,32 @@ def _class_field_validator(key: str):
     return lambda value: _validate_class_text(value, min_len, max_len)
 
 
+# Announcement compose wizard (representative's core loop: compose -> preview
+# -> send). Ported from legacy/bot/dent_bot/class_operations.py's
+# _compose_prompt/_handle_dialog_message quick-draft dialog -- title then
+# body, then a preview before anything is sent. Unlike the legacy dialog,
+# body has no "-" skip: WorkspacePlatformService::publishAnnouncement refuses
+# an empty body server-side, so the escape hatch would only ever bounce.
+_ANNOUNCEMENT_STEP_PROMPTS: dict[str, tuple[str, str]] = {
+    "title": ("عنوان", "عنوان کوتاه اطلاعیه را در یک پیام بفرست."),
+    "body": ("متن اطلاعیه", "متن اطلاعیه را بفرست."),
+}
+_ANNOUNCEMENT_STEP_ORDER: tuple[str, ...] = ("title", "body")
+_ANNOUNCEMENT_TEXT_LIMITS: dict[str, tuple[int, int]] = {"title": (3, 200), "body": (1, 4000)}
+
+
+def _validate_announcement_text(value: str, min_len: int, max_len: int) -> tuple[str | None, str | None]:
+    text = " ".join((value or "").strip().split())
+    if len(text) < min_len or len(text) > max_len:
+        return None, f"متن باید بین {to_persian_digits(min_len)} تا {to_persian_digits(max_len)} نویسه باشد."
+    return text, None
+
+
+def _announcement_field_validator(key: str):
+    min_len, max_len = _ANNOUNCEMENT_TEXT_LIMITS[key]
+    return lambda value: _validate_announcement_text(value, min_len, max_len)
+
+
 @dataclass(frozen=True)
 class ApplicationConfig:
     web_base_url: str = ""
@@ -296,6 +322,311 @@ class BotApplication:
             )
             return self._error(exc)
         return self.representative_requests(subject)
+
+    # -- Announcements (representative's core loop: compose -> preview -> ---
+    # -- send, plus list -> detail) ------------------------------------------
+    # Ported from legacy/bot/dent_bot/class_operations.py's quick-compose
+    # dialog and its list/detail screens, scoped to announcements only --
+    # daily digests, scheduled delivery, AI drafting and the owner surface
+    # are each their own later task. WorkspacePlatformService::publishAnnouncement
+    # already exists and already enforces notification.broadcast; this only
+    # adds the bot-facing wizard around the internal announcements/publish
+    # operation. The backend, not this method, decides who may publish --
+    # every screen here re-reads capability from the same announcements/list
+    # projection (its additive can_publish flag) rather than caching a role.
+
+    ANNOUNCEMENT_LIST_LIMIT = 8
+
+    _ANNOUNCEMENT_TYPE_LABEL = "اطلاعیه"
+
+    def _announcement_time(self, item: dict) -> str:
+        value = item.get("published_at") or item.get("effective_at") or item.get("created_at")
+        return format_datetime(value) if value else ""
+
+    def announcements_manage(self, subject: str):
+        try:
+            _, selected, blocked = self._workspace_or_result(subject)
+            if blocked:
+                return blocked
+            page = self.backend.announcements(self.platform, subject, selected, 1, None)
+        except Exception as exc:
+            return self._error(exc)
+        if not bool(page.get("can_publish")):
+            return ActionResult(
+                error_screen(
+                    "اجازه ثبت یا مدیریت اطلاعیه‌های این فضای آموزشی را نداری.",
+                    title="📢 اطلاعیه‌های کلاس",
+                    kind="announcement_manage_denied",
+                    rows=self._nav_rows(back_action="more", back_label="‹ بیشتر"),
+                )
+            )
+        rows: tuple[tuple[Button, ...], ...] = (
+            (Button("✍️ ثبت اطلاعیه", self._cb("annnew")),),
+            (Button("📋 فهرست اطلاعیه‌ها", self._cb("annlist")),),
+        )
+        rows += self._nav_rows(back_action="more", back_label="‹ بیشتر")
+        return ActionResult(
+            semantic_screen(
+                "📢 اطلاعیه‌های کلاس",
+                "announcement_manage",
+                breadcrumb="بیشتر › اطلاعیه‌های کلاس",
+                intro="اطلاعیه تازه برای اعضای این فضای آموزشی ثبت کن یا فهرست اطلاعیه‌های قبلی را ببین.",
+                rows=rows,
+            )
+        )
+
+    def announcement_list(self, subject: str):
+        try:
+            _, selected, blocked = self._workspace_or_result(subject)
+            if blocked:
+                return blocked
+            page = self.backend.announcements(self.platform, subject, selected, self.ANNOUNCEMENT_LIST_LIMIT, None)
+        except Exception as exc:
+            return self._error(exc)
+        items = [item for item in page.get("items") or [] if isinstance(item, dict)]
+        rows: tuple[tuple[Button, ...], ...] = tuple(
+            (Button(truncate_text(item.get("title") or self._ANNOUNCEMENT_TYPE_LABEL, 28), self._cb("annview", str(item.get("id") or ""))),)
+            for item in items
+            if is_uuid(str(item.get("id") or ""))
+        )
+        list_items = [
+            f"{truncate_text(item.get('title') or self._ANNOUNCEMENT_TYPE_LABEL, 90)} · {self._announcement_time(item) or '—'}"
+            for item in items
+        ]
+        rows += self._nav_rows(back_action="annmng", back_label="‹ اطلاعیه‌های کلاس")
+        return ActionResult(
+            semantic_screen(
+                "📋 فهرست اطلاعیه‌ها",
+                "announcement_list",
+                breadcrumb="بیشتر › اطلاعیه‌های کلاس › فهرست",
+                intro="آخرین اطلاعیه‌های این فضای آموزشی." if items else "هنوز اطلاعیه‌ای برای این فضای آموزشی ثبت نشده است.",
+                list_items=list_items,
+                rows=rows,
+            )
+        )
+
+    def _find_announcement_item(self, subject: str, workspace_id: str, announcement_id: str) -> dict | None:
+        cursor = None
+        for _ in range(5):
+            page = self.backend.announcements(self.platform, subject, workspace_id, 20, cursor)
+            for item in page.get("items") or []:
+                if isinstance(item, dict) and str(item.get("id") or "") == announcement_id:
+                    return item
+            cursor = self._clean_cursor(page.get("next_cursor"))
+            if not cursor:
+                break
+        return None
+
+    def announcement_item_detail(self, subject: str, announcement_id: str):
+        # Named distinctly from integrated_application.BotApplication's
+        # existing announcement_detail (the student-facing per-course read):
+        # a same-named method here would silently override that one via
+        # MRO for every viewer, not just representatives.
+        if not is_uuid(announcement_id):
+            return self._expired_route()
+        try:
+            _, selected, blocked = self._workspace_or_result(subject)
+            if blocked:
+                return blocked
+            item = self._find_announcement_item(subject, selected, announcement_id)
+        except Exception as exc:
+            return self._error(exc)
+        if item is None:
+            return self._expired_route()
+        facts: list[tuple[str, str]] = [("نوع", self._ANNOUNCEMENT_TYPE_LABEL)]
+        published = self._announcement_time(item)
+        if published:
+            facts.append(("زمان انتشار", published))
+        return ActionResult(
+            semantic_screen(
+                str(item.get("title") or self._ANNOUNCEMENT_TYPE_LABEL),
+                "announcement_detail",
+                breadcrumb="بیشتر › اطلاعیه‌های کلاس › فهرست › جزئیات",
+                intro=str(item.get("body") or "").strip() or "متنی برای این اطلاعیه ثبت نشده است.",
+                facts=facts,
+                rows=self._nav_rows(back_action="annlist", back_label="‹ فهرست"),
+            )
+        )
+
+    def _announcement_compose_cancelled_result(self):
+        return ActionResult(
+            semantic_screen(
+                "📢 اطلاعیه‌های کلاس",
+                "announcement_compose_cancelled",
+                intro="ثبت اطلاعیه لغو شد. چیزی ذخیره یا ارسال نشد.",
+                rows=self._nav_rows(back_action="annmng", back_label="‹ اطلاعیه‌های کلاس"),
+            )
+        )
+
+    def _announcement_compose_expired(self):
+        return ActionResult(
+            warning_screen(
+                "این فرآیند ثبت اطلاعیه منقضی شده یا برای این حساب نیست. دوباره از «اطلاعیه‌های کلاس» شروع کن.",
+                title="📢 اطلاعیه‌های کلاس",
+                kind="announcement_compose_expired",
+                rows=self._nav_rows(back_action="annmng", back_label="‹ اطلاعیه‌های کلاس"),
+            )
+        )
+
+    def _announcement_compose_step_screen(
+        self,
+        index: int,
+        answers: dict,
+        *,
+        error: str | None = None,
+    ):
+        steps = _ANNOUNCEMENT_STEP_ORDER
+        key = steps[index]
+        label, prompt = _ANNOUNCEMENT_STEP_PROMPTS[key]
+        counter = f"مرحله {to_persian_digits(index + 1)} از {to_persian_digits(len(steps) + 1)}"
+        nav: list[Button] = []
+        if index > 0:
+            nav.append(Button("↩️ مرحله قبل", self._cb("annback")))
+        nav.append(Button("❌ انصراف", self._cb("anncncl")))
+        facts: list[tuple[str, str]] = []
+        existing = answers.get(key)
+        if existing:
+            facts.append(("مقدار قبلی", str(existing)))
+        return semantic_screen(
+            f"✍️ اطلاعیه جدید · {label}",
+            "announcement_compose_step",
+            severity="warning" if error else "info",
+            breadcrumb="بیشتر › اطلاعیه‌های کلاس › ثبت اطلاعیه",
+            intro=(f"⚠️ {error}\n\n{prompt}" if error else prompt),
+            facts=facts,
+            pagination=counter,
+            rows=(tuple(nav),),
+        )
+
+    def _announcement_compose_review_screen(self, answers: dict):
+        facts: list[tuple[str, str]] = [
+            ("نوع", self._ANNOUNCEMENT_TYPE_LABEL),
+            ("عنوان", str(answers.get("title") or "")),
+            ("مخاطبان", "همه اعضای فعال این فضای آموزشی"),
+        ]
+        rows = (
+            (Button("✅ تأیید و ارسال", self._cb("annconf")),),
+            (Button("↩️ مرحله قبل", self._cb("annback")), Button("❌ انصراف", self._cb("anncncl"))),
+        )
+        return semantic_screen(
+            "👁 پیش‌نمایش قبل از ارسال",
+            "announcement_compose_review",
+            breadcrumb="بیشتر › اطلاعیه‌های کلاس › ثبت اطلاعیه › پیش‌نمایش",
+            intro="پیش از تأیید صریح، چیزی ثبت یا ارسال نمی‌شود.",
+            facts=facts,
+            sections=(SemanticSection("متن اطلاعیه", str(answers.get("body") or "")),),
+            rows=rows,
+        )
+
+    def announcement_compose_begin(self, subject: str, private: bool):
+        try:
+            _, selected, blocked = self._workspace_or_result(subject)
+            if blocked:
+                return blocked
+            page = self.backend.announcements(self.platform, subject, selected, 1, None)
+        except Exception as exc:
+            return self._error(exc)
+        if not bool(page.get("can_publish")):
+            return ActionResult(
+                error_screen(
+                    "اجازه ثبت اطلاعیه برای این فضای آموزشی را نداری.",
+                    title="✍️ اطلاعیه جدید",
+                    kind="announcement_compose_denied",
+                    rows=self._nav_rows(back_action="annmng", back_label="‹ اطلاعیه‌های کلاس"),
+                )
+            )
+        self.state.start_announcement_wizard(self.platform, subject)
+        return ActionResult(self._announcement_compose_step_screen(0, {}))
+
+    def announcement_compose_text(self, subject: str, text: str, private: bool = True):
+        """Advance an in-progress announcement wizard with free text, or
+        return None -- None means "no active wizard for this subject": the
+        caller (bot runtime) falls through to normal command dispatch."""
+        if not private:
+            return None
+        wizard = self.state.announcement_wizard(self.platform, subject)
+        if wizard is None:
+            return None
+        steps = _ANNOUNCEMENT_STEP_ORDER
+        index = wizard["step_index"]
+        answers = wizard["answers"]
+        if index >= len(steps):
+            return ActionResult(self._announcement_compose_review_screen(answers))
+        key = steps[index]
+        value, error = _announcement_field_validator(key)(text)
+        if error:
+            return ActionResult(self._announcement_compose_step_screen(index, answers, error=error))
+        next_answers = dict(answers)
+        next_answers[key] = value
+        next_index = index + 1
+        self.state.advance_announcement_wizard(self.platform, subject, next_index, next_answers)
+        if next_index >= len(steps):
+            return ActionResult(self._announcement_compose_review_screen(next_answers))
+        return ActionResult(self._announcement_compose_step_screen(next_index, next_answers))
+
+    def announcement_compose_back(self, subject: str):
+        wizard = self.state.announcement_wizard(self.platform, subject)
+        if wizard is None:
+            return self._announcement_compose_expired()
+        index = max(0, wizard["step_index"] - 1)
+        self.state.advance_announcement_wizard(self.platform, subject, index, wizard["answers"])
+        return ActionResult(self._announcement_compose_step_screen(index, wizard["answers"]))
+
+    def announcement_compose_cancel(self, subject: str):
+        self.state.cancel_announcement_wizard(self.platform, subject)
+        return self._announcement_compose_cancelled_result()
+
+    def announcement_compose_confirm(self, subject: str, private: bool):
+        wizard = self.state.announcement_wizard(self.platform, subject)
+        if wizard is None:
+            return self._announcement_compose_expired()
+        steps = _ANNOUNCEMENT_STEP_ORDER
+        if wizard["step_index"] < len(steps):
+            return ActionResult(self._announcement_compose_step_screen(wizard["step_index"], wizard["answers"]))
+        answers = wizard["answers"]
+        try:
+            _, selected, blocked = self._workspace_or_result(subject)
+            if blocked:
+                return blocked
+            self.backend.announcement_publish(
+                self.platform, subject, selected, str(answers.get("title") or ""), str(answers.get("body") or "")
+            )
+        except Exception as exc:
+            # A mid-wizard backend failure must reach the representative, not
+            # be swallowed: wizard state is kept so a retry does not force
+            # retyping the announcement.
+            logging.error(
+                "announcement compose confirm failed type=%s message=%s",
+                type(exc).__name__,
+                exc,
+            )
+            message = (
+                error_message(exc.code, exc.status)
+                if isinstance(exc, FanoosApiError)
+                else "ثبت اطلاعیه ناموفق بود. دوباره امتحان کن."
+            )
+            return ActionResult(
+                error_screen(
+                    message,
+                    title="✍️ اطلاعیه جدید",
+                    kind="announcement_compose_failed",
+                    rows=((Button("🔁 تلاش دوباره", self._cb("annconf")),),) + self._nav_rows(back_action="annmng", back_label="‹ اطلاعیه‌های کلاس"),
+                )
+            )
+        self.state.cancel_announcement_wizard(self.platform, subject)
+        return ActionResult(
+            semantic_screen(
+                "✅ اطلاعیه ثبت شد",
+                "announcement_compose_sent",
+                severity="success",
+                breadcrumb="بیشتر › اطلاعیه‌های کلاس",
+                intro="اطلاعیه برای همه اعضای این فضای آموزشی ارسال شد.",
+                facts=(("عنوان", str(answers.get("title") or "")),),
+                rows=(
+                    (Button("📋 فهرست اطلاعیه‌ها", self._cb("annlist")),),
+                ) + self._nav_rows(back_action="annmng", back_label="‹ اطلاعیه‌های کلاس"),
+            )
+        )
 
     @staticmethod
     def _workspace_label(workspace: dict) -> str:
@@ -614,12 +945,31 @@ class BotApplication:
                     exc,
                 )
 
+            announcement_row: tuple[tuple[Button, ...], ...] = ()
+            try:
+                announcements_page = self.backend.announcements(self.platform, subject, selected, 1, None)
+                if bool(announcements_page.get("can_publish")):
+                    announcement_row = ((Button("📢 اطلاعیه‌های کلاس", self._cb("annmng")),),)
+            except FanoosApiError as exc:
+                if exc.code not in ("forbidden", "workspace_forbidden"):
+                    logging.warning(
+                        "more screen announcements can_publish probe failed code=%s",
+                        exc.code,
+                    )
+            except Exception as exc:
+                logging.warning(
+                    "more screen announcements can_publish probe failed type=%s message=%s",
+                    type(exc).__name__,
+                    exc,
+                )
+
             rows: tuple[tuple[Button, ...], ...] = (
                 (Button("🎓 نمرات", self._cb("grades")), Button("📚 منابع", self._cb("resources"))),
                 (Button("📝 آزمون‌ها", self._cb("assess")), Button("💳 خرید و دسترسی", self._cb("payments"))),
                 (Button("🏫 فضای آموزشی", self._cb("workspaces")), Button("👤 حساب", self._cb("account"))),
             )
             rows += representative_row
+            rows += announcement_row
             rows += class_terms_row
             rows += management_row
             rows += self._nav_rows()
@@ -3924,6 +4274,20 @@ class BotApplication:
             return self.representative_request_approve(subject, ref)
         if action == "repdecl" and ref:
             return self.representative_request_decline(subject, ref)
+        if action == "annmng":
+            return self.announcements_manage(subject)
+        if action == "annnew":
+            return self.announcement_compose_begin(subject, private)
+        if action == "annback":
+            return self.announcement_compose_back(subject)
+        if action == "anncncl":
+            return self.announcement_compose_cancel(subject)
+        if action == "annconf":
+            return self.announcement_compose_confirm(subject, private)
+        if action == "annlist":
+            return self.announcement_list(subject)
+        if action == "annview" and ref:
+            return self.announcement_item_detail(subject, ref)
         if action == "update":
             return self.update_begin(subject, private)
         if action == "updlast":

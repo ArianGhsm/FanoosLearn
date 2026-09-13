@@ -5,6 +5,7 @@ from enum import Enum
 
 from .actions import (
     account_action,
+    announcements_manage_action,
     assessments_action,
     courses_action,
     grades_action,
@@ -60,6 +61,7 @@ def home_screen(
     workspace_options: tuple[WorkspaceOption, ...] = (),
     is_owner: bool = False,
     show_representative_requests: bool = False,
+    show_announcements_manage: bool = False,
     notice: str = "",
 ) -> Screen:
     """The bot's one home screen and main menu -- for every viewer, not only
@@ -133,6 +135,8 @@ def home_screen(
         rows.append(ActionRow((manage_action(),)))
     if show_representative_requests:
         rows.append(ActionRow((representative_requests_action(),)))
+    if show_announcements_manage:
+        rows.append(ActionRow((announcements_manage_action(),)))
 
     return Screen(
         identifier="home.active",
