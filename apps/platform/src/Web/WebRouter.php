@@ -111,9 +111,15 @@ final class WebRouter
             }
         }
 
+        // account() nests the person under 'user'; reading display_name from
+        // the top level silently yields '' and every signed-in page greets a
+        // nameless visitor. The rendering tests construct a ViewerContext
+        // directly, so only a test that goes through this method catches it.
+        $person = is_array($account['user'] ?? null) ? $account['user'] : [];
+
         return new ViewerContext(
             $session->userId,
-            (string) ($account['display_name'] ?? ''),
+            (string) ($person['display_name'] ?? ''),
             $session->csrfToken,
             $session->selectedWorkspaceId,
             $workspaceName === '' ? null : $workspaceName,

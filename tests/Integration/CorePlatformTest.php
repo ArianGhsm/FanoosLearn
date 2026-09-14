@@ -14,6 +14,9 @@ use Fanoos\Platform\Core\WorkspacePlatformService;
 use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Http\ApiKernel;
 use Fanoos\Platform\Http\Request;
+use Fanoos\Platform\Web\AssetVersioner;
+use Fanoos\Platform\Web\PageRenderer;
+use Fanoos\Platform\Web\WebRouter;
 use Fanoos\Platform\Identity\AuthenticatedSession;
 use Fanoos\Platform\Identity\AuthService;
 use Fanoos\Platform\Identity\PasswordHasher;
@@ -54,6 +57,7 @@ final class CorePlatformTest
         $this->seedAuthenticator($fixture['student'], 'student-' . substr($fixture['student'], -8), 'correct horse battery staple');
         $this->assertLoginAndWorkspaceSelection($auth, $fixture);
         $this->assertPlatformOwnerReachesEveryWorkspace($auth, $fixture);
+        $this->assertRenderedPageGreetsThePersonBehindTheSession($auth, $fixture);
         $domain = $this->seedDomain($fixture);
 
         self::assert(count($core->academicNavigation($fixture['student'], $fixture['workspace_a'])['courses']) >= 1, 'Academic navigation did not return tenant courses.');
@@ -152,6 +156,34 @@ final class CorePlatformTest
      * reach none of it. These assert the two halves of that fix, and that it
      * did not quietly become "everyone sees everything".
      */
+
+    /**
+     * The website resolves its viewer from the session cookie through
+     * WebRouter, not from a hand-built ViewerContext, so this is the only
+     * place a mistake in that resolution shows up. It shipped one: the
+     * display name was read from the top level of account(), where it does
+     * not live, and every signed-in page greeted a nameless visitor.
+     */
+    private function assertRenderedPageGreetsThePersonBehindTheSession(AuthService $auth, array $fixture): void
+    {
+        $token = 'router-probe-token';
+        $this->insert(
+            'INSERT INTO iam_sessions (id, user_id, token_digest, csrf_token_digest, client_json, created_at, last_seen_at, expires_at) VALUES (:id, :user, :token, :csrf, JSON_OBJECT(), UTC_TIMESTAMP(6), UTC_TIMESTAMP(6), DATE_ADD(UTC_TIMESTAMP(6), INTERVAL 1 HOUR))',
+            ['id' => 'router-probe', 'user' => $fixture['student'], 'token' => hash('sha256', $token, true), 'csrf' => hash('sha256', 'router-probe-csrf', true)],
+        );
+
+        $name = (string) $this->database->query('SELECT display_name FROM iam_users WHERE id = ' . $this->database->quote($fixture['student']))->fetchColumn();
+        self::assert($name !== '', 'This fixture must give the student a display name for the test to mean anything.');
+
+        $renderer = new PageRenderer(new AssetVersioner(dirname(__DIR__, 2) . '/apps/platform/public'));
+        $response = (new WebRouter($auth, $renderer))->handle('/app', ['fanoos_session' => $token]);
+
+        self::assert($response['status'] === 200, 'A live session must render the app, not redirect to sign-in.');
+        self::assert(str_contains($response['body'], $name), 'The rendered page did not greet the person the session belongs to.');
+
+        $this->database->prepare('UPDATE iam_sessions SET revoked_at = UTC_TIMESTAMP(6) WHERE id = :id')->execute(['id' => 'router-probe']);
+    }
+
     private function assertPlatformOwnerReachesEveryWorkspace(AuthService $auth, array $fixture): void
     {
         $ownerMemberships = $this->database->prepare("SELECT COUNT(*) FROM tenant_workspace_memberships WHERE user_id = :user AND status = 'active'");
