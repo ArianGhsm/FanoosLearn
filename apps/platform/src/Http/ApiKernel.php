@@ -349,6 +349,9 @@ final class ApiKernel
                 $session->userId, $workspaceId, $match[1], (int) ($request->body['revision'] ?? 0), $answers,
             )];
         }
+        if ($request->method === 'GET' && preg_match('#^/attempts/([0-9a-f-]+)/questions/([0-9]+)$#', $suffix, $match)) {
+            return ['status' => 200, 'data' => $this->requireExams()->readQuestion($session->userId, $workspaceId, $match[1], (int) $match[2])];
+        }
         if ($request->method === 'POST' && preg_match('#^/attempts/([0-9a-f-]+)/submit$#', $suffix, $match)) {
             $answers = is_array($request->body['answers'] ?? null) ? $request->body['answers'] : [];
             return ['status' => 200, 'data' => $this->requireExams()->submitAttempt(
@@ -357,6 +360,9 @@ final class ApiKernel
         }
         if ($request->method === 'GET' && preg_match('#^/attempts/([0-9a-f-]+)/review$#', $suffix, $match)) {
             return ['status' => 200, 'data' => $this->requireExams()->attemptReview($session->userId, $workspaceId, $match[1])];
+        }
+        if ($request->method === 'GET' && preg_match('#^/attempts/([0-9a-f-]+)/review/questions/([0-9]+)$#', $suffix, $match)) {
+            return ['status' => 200, 'data' => $this->requireExams()->attemptReviewQuestion($session->userId, $workspaceId, $match[1], (int) $match[2])];
         }
 
         throw new PlatformException('route_not_found', 'API route was not found.', 404);

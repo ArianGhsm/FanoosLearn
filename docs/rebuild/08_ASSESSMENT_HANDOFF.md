@@ -37,6 +37,27 @@ The content registry already accepts a `flashcards` resource type, but the repos
 - `tests/ux-v3/web_student_operations_contract_test.js`
   - static contract checks for filters, past exams, resume, hidden answers and server scoring.
 
+## Follow-up: single-question pacing closes the bulk-export hole
+
+Superseding the "student attempts receive a safe question projection" line
+above: `startAttempt` (fresh or resumed) and `attemptReview` no longer return
+question/review content in bulk. `ExamService::readQuestion()` and
+`attemptReviewQuestion()` serve one question/explanation at a time, by
+position, paced by a per-user token bucket (`ExamQuestionRateGuard`,
+`database/migrations/0018_exam_question_read_pacing.sql`) and audited via
+`AuditLogger`. Question and choice order are permuted per attempt
+(`ExamAttemptShuffle`, seeded from the attempt's own UUIDv7 id) so a leaked
+set of reads carries the specific permutation of the attempt it came from;
+scoring still uses stable question ids and the canonical (authored) choice
+index, so this does not change what counts as correct. See
+`contracts/REGISTRY.md`'s "Exam question-bank bulk-export protection" entry
+for the full contract and the known course-scope entitlement gap it flags.
+This is a breaking core-v1 change (bumped 1.2.0 -> 1.3.0); the web UI has not
+been updated to the new per-question shape yet (`apps/platform/public/assets/ui-v3/progress/`
+already degrades to its existing "no question received" / "review not
+available" empty states rather than crashing, so nothing needs to change
+there for correctness, only for the exam-taking experience to work again).
+
 ## Validation and follow-up
 
 Run the existing local integration and UX checks before deployment. The repository’s PHP integration runner may still report the workstation’s missing `finfo` extension; that is an environment prerequisite, not a Stage 8 code path. No production migration, service restart or deployment was performed for this stage. The next stage should add a dedicated flashcard contract only when server-owned review persistence is available, and should preserve the current attempt revision/idempotency semantics.

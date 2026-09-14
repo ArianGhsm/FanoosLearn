@@ -15,6 +15,7 @@ use Fanoos\Tests\Integration\TenantIsolationTest;
 use Fanoos\Tests\Integration\MigrationSafetyTest;
 use Fanoos\Tests\Integration\CorePlatformTest;
 use Fanoos\Tests\Integration\ContentEngineTest;
+use Fanoos\Tests\Integration\ExamQuestionPacingTest;
 use Fanoos\Tests\Integration\Stage7PlatformTest;
 use Fanoos\Tests\Integration\ServiceAuthLinkTest;
 use Fanoos\Tests\Integration\DeploymentControlTest;
@@ -73,6 +74,8 @@ try {
         echo "PASS core platform adaptation scenarios\n";
         $assertions += (new ContentEngineTest($database, $hmacKey))->run();
         echo "PASS content engine and secure learning scenarios\n";
+        $assertions += (new ExamQuestionPacingTest($database))->run();
+        echo "PASS exam question read pacing scenarios\n";
         $assertions += (new Stage7PlatformTest($database))->run();
         echo "PASS Stage 7 commerce notification delivery and media scenarios\n";
         $assertions += (new ServiceAuthLinkTest($database))->run();

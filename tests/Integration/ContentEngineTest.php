@@ -10,6 +10,8 @@ use Fanoos\Platform\Authorization\ScopeAuthorizer;
 use Fanoos\Platform\Content\ContentImportService;
 use Fanoos\Platform\Content\ContentService;
 use Fanoos\Platform\Content\ContentUploadService;
+use Fanoos\Platform\Content\ExamAttemptShuffle;
+use Fanoos\Platform\Content\ExamQuestionRateGuard;
 use Fanoos\Platform\Content\ExamService;
 use Fanoos\Platform\Content\ProtectedResourceAuthorizer;
 use Fanoos\Platform\Content\SecureDeliveryService;
@@ -40,7 +42,7 @@ final class ContentEngineTest
         $entitlements = new EntitlementService($this->database, $access, $audit);
         $protected = new ProtectedResourceAuthorizer($this->database, $scopeAuthorizer, $entitlements);
         $content = new ContentService($this->database, $access, $protected, $audit);
-        $exams = new ExamService($this->database, $access, $scopeAuthorizer, $entitlements, $audit);
+        $exams = new ExamService($this->database, $access, $scopeAuthorizer, $entitlements, $audit, new ExamQuestionRateGuard($this->database));
 
         $this->createScopedOperators($fixture);
         $courses = $this->sameNamedCourses($fixture);
@@ -161,20 +163,65 @@ final class ContentEngineTest
         $exams->publishVersion($fixture['manager'], $fixture['workspace_a'], $assessment['assessment_id'], $assessment['version_id']);
         self::assert(count($exams->catalog($fixture['student'], $fixture['workspace_a'], $courses['a'], 'mock_exam')) === 1, 'Assessment catalog/filter failed.');
         $attempt = $exams->startAttempt($fixture['student'], $fixture['workspace_a'], $assessment['assessment_id']);
-        self::assert(!array_key_exists('answer', $attempt['questions'][0]), 'Correct answer leaked before submission.');
+        self::assert(!array_key_exists('questions', $attempt) && ($attempt['question_count'] ?? null) === 2, 'startAttempt must not return question content in bulk.');
+
+        // Single-question reads, per docs/product/01_FRONT_DOOR.md's bulk-export
+        // protection: a question is only reachable one at a time, by position,
+        // inside an attempt the caller owns.
+        $byPosition = [
+            1 => $exams->readQuestion($fixture['student'], $fixture['workspace_a'], $attempt['attempt_id'], 1),
+            2 => $exams->readQuestion($fixture['student'], $fixture['workspace_a'], $attempt['attempt_id'], 2),
+        ];
+        foreach ($byPosition as $read) {
+            self::assert(!array_key_exists('answer', $read['question']) && !array_key_exists('explanation', $read['question']), 'Correct answer or explanation leaked before submission.');
+        }
+        $q1Position = ($byPosition[1]['question']['id'] ?? null) === 'q1' ? 1 : 2;
+        $q2Position = $q1Position === 1 ? 2 : 1;
+        self::assert(($byPosition[$q1Position]['question']['topic'] ?? '') === 'حساب پایه' && ($byPosition[$q1Position]['question']['difficulty'] ?? '') === 'easy', 'Question study metadata was not projected without the answer key.');
+        $this->expectPlatformException('question_position_invalid', fn () => $exams->readQuestion($fixture['student'], $fixture['workspace_a'], $attempt['attempt_id'], 3));
+        $this->expectPlatformException('attempt_not_found', fn () => $exams->readQuestion($fixture['outsider'], $fixture['workspace_a'], $attempt['attempt_id'], 1));
+        $this->expectPlatformException('attempt_not_found', fn () => $exams->readQuestion($fixture['student'], $fixture['workspace_b'], $attempt['attempt_id'], 1));
+
+        // Choice order is shuffled per attempt but answers still score against
+        // the canonical (authored) choice, so submit the displayed index that
+        // corresponds to each question's real correct answer.
+        $q1DisplayedCorrect = array_search(1, ExamAttemptShuffle::choiceOrder($attempt['attempt_id'], 'q1', 2), true);
+        $q2DisplayedCorrect = array_search(0, ExamAttemptShuffle::choiceOrder($attempt['attempt_id'], 'q2', 2), true);
+        self::assert($byPosition[$q1Position]['question']['choices'][$q1DisplayedCorrect] === 'چهار', 'Shuffled choice order did not match the deterministic per-attempt permutation.');
+
         $saved = $exams->saveProgress($fixture['student'], $fixture['workspace_a'], $attempt['attempt_id'], 1, ['q1' => 1]);
         self::assert($saved['revision'] === 2, 'Attempt progress revision did not advance.');
         $this->expectPlatformException('attempt_revision_conflict', fn () => $exams->saveProgress($fixture['student'], $fixture['workspace_a'], $attempt['attempt_id'], 1, ['q1' => 0]));
         $resumed = $exams->startAttempt($fixture['student'], $fixture['workspace_a'], $assessment['assessment_id']);
-        self::assert($resumed['attempt_id'] === $attempt['attempt_id'] && $resumed['resumed'] === true, 'Starting an existing attempt must be resumable and idempotent.');
-        self::assert(($attempt['questions'][0]['topic'] ?? '') === 'حساب پایه' && ($attempt['questions'][0]['difficulty'] ?? '') === 'easy', 'Question study metadata was not projected without the answer key.');
+        self::assert($resumed['attempt_id'] === $attempt['attempt_id'] && $resumed['resumed'] === true && $resumed['question_count'] === 2, 'Starting an existing attempt must be resumable and idempotent.');
+        self::assert(!array_key_exists('questions', $resumed), 'Resuming an attempt must not be an unlimited free re-read of the whole paper.');
+        $resumedFirst = $exams->readQuestion($fixture['student'], $fixture['workspace_a'], $attempt['attempt_id'], 1);
+        self::assert($resumedFirst['question']['id'] === $byPosition[1]['question']['id'] && $resumedFirst['question']['choices'] === $byPosition[1]['question']['choices'], 'Resuming an attempt did not yield the identical question/choice order.');
         $activeCatalog = $exams->catalog($fixture['student'], $fixture['workspace_a'], $courses['a'], 'mock_exam')[0] ?? [];
         self::assert(($activeCatalog['active_attempt_id'] ?? '') === $attempt['attempt_id'] && ($activeCatalog['active_attempt_status'] ?? '') === 'in_progress', 'Assessment catalog did not expose the resumable attempt state.');
         self::assert(($activeCatalog['source_resource_id'] ?? '') === $questionBank['resource_id'], 'Assessment catalog lost source-resource provenance.');
-        $scored = $exams->submitAttempt($fixture['student'], $fixture['workspace_a'], $attempt['attempt_id'], 2, ['q1' => 1, 'q2' => 0]);
-        self::assert($scored['status'] === 'scored' && $scored['score_basis_points'] === 10000, 'Server-side assessment scoring failed.');
-        self::assert(count($exams->attemptReview($fixture['student'], $fixture['workspace_a'], $attempt['attempt_id'])['review']) === 2, 'Attempt review result is incomplete.');
+        $scored = $exams->submitAttempt($fixture['student'], $fixture['workspace_a'], $attempt['attempt_id'], 2, ['q1' => $q1DisplayedCorrect, 'q2' => $q2DisplayedCorrect]);
+        self::assert($scored['status'] === 'scored' && $scored['score_basis_points'] === 10000, 'Server-side assessment scoring failed for a shuffled attempt with the objectively correct choices.');
+        $reviewSummary = $exams->attemptReview($fixture['student'], $fixture['workspace_a'], $attempt['attempt_id']);
+        self::assert(!array_key_exists('review', $reviewSummary) && $reviewSummary['question_count'] === 2 && $reviewSummary['score_basis_points'] === 10000, 'Attempt review must be a summary only, not the whole per-question set.');
+        $q1Review = $exams->attemptReviewQuestion($fixture['student'], $fixture['workspace_a'], $attempt['attempt_id'], $q1Position);
+        self::assert($q1Review['question_id'] === 'q1' && $q1Review['is_correct'] === true && $q1Review['explanation'] === 'پاسخ چهار است.', 'Per-question review/explanation read failed.');
+        $q2Review = $exams->attemptReviewQuestion($fixture['student'], $fixture['workspace_a'], $attempt['attempt_id'], $q2Position);
+        self::assert($q2Review['question_id'] === 'q2' && $q2Review['is_correct'] === true, 'Per-question review for the second question failed.');
         self::assert($exams->analytics($fixture['manager'], $fixture['workspace_a'], $assessment['assessment_id'])['average_score_basis_points'] === 10000, 'Assessment analytics did not use scored attempts.');
+
+        // A second attempt (still within max_attempts=2) gets an independent
+        // per-attempt shuffle -- a different attempt id almost certainly
+        // permutes differently. Submitting the same objectively-correct
+        // choices must still score 100%, proving scoring is unaffected by
+        // which permutation the student happened to see.
+        $secondAttempt = $exams->startAttempt($fixture['student'], $fixture['workspace_a'], $assessment['assessment_id']);
+        self::assert($secondAttempt['attempt_id'] !== $attempt['attempt_id'], 'A second attempt within max_attempts was not created.');
+        $q1SecondDisplayedCorrect = array_search(1, ExamAttemptShuffle::choiceOrder($secondAttempt['attempt_id'], 'q1', 2), true);
+        $q2SecondDisplayedCorrect = array_search(0, ExamAttemptShuffle::choiceOrder($secondAttempt['attempt_id'], 'q2', 2), true);
+        $secondScored = $exams->submitAttempt($fixture['student'], $fixture['workspace_a'], $secondAttempt['attempt_id'], 1, ['q1' => $q1SecondDisplayedCorrect, 'q2' => $q2SecondDisplayedCorrect]);
+        self::assert($secondScored['score_basis_points'] === 10000, 'An independently-shuffled second attempt did not score identically for the same objectively-correct choices.');
+
         $this->expectPlatformException('assessment_not_found', fn () => $exams->startAttempt($fixture['student'], $fixture['workspace_b'], $assessment['assessment_id']));
 
         $sourceId = Uuid::v7();

@@ -11,6 +11,7 @@ use Fanoos\Platform\Commerce\CommerceService;
 use Fanoos\Platform\Commerce\FakePaymentGateway;
 use Fanoos\Platform\Content\ProtectedResourceAuthorizer;
 use Fanoos\Platform\Content\ContentService;
+use Fanoos\Platform\Content\ExamQuestionRateGuard;
 use Fanoos\Platform\Content\ExamService;
 use Fanoos\Platform\Content\SecureDeliveryService;
 use Fanoos\Platform\Content\SecureObjectDownloadService;
@@ -39,7 +40,7 @@ final class PlatformFactory
         $callbackKey = $config->optionalString('FANOOS_PAYMENT_CALLBACK_KEY', 'disabled-payment-callback-key-000000') ?? '';
         $resources = new ProtectedResourceAuthorizer($database, $authorizer, $entitlements);
         $content = new ContentService($database, $access, $resources, $audit);
-        $exams = new ExamService($database, $access, $authorizer, $entitlements, $audit);
+        $exams = new ExamService($database, $access, $authorizer, $entitlements, $audit, new ExamQuestionRateGuard($database));
         $deliveryKey = $config->optionalString('FANOOS_DELIVERY_SIGNING_KEY');
         $downloadKey = $config->optionalString('FANOOS_DOWNLOAD_SIGNING_KEY');
         $storageRoot = $config->optionalString('FANOOS_OBJECT_STORAGE_ROOT');

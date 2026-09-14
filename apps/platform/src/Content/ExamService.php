@@ -21,6 +21,7 @@ final class ExamService
         private readonly ScopeAuthorizer $authorizer,
         private readonly EntitlementService $entitlements,
         private readonly AuditLogger $audit,
+        private readonly ExamQuestionRateGuard $questionRateGuard,
     ) {
     }
 
@@ -310,7 +311,7 @@ SQL);
                 'attempt_id' => (string) $existingAttempt['id'], 'revision' => (int) $existingAttempt['revision'],
                 'status' => 'in_progress', 'assessment_id' => $assessmentId, 'title' => (string) $assessment['title'],
                 'answers' => json_decode((string) ($existingAttempt['answers_json'] ?? '{}'), true, 64, JSON_THROW_ON_ERROR),
-                'resumed' => true, 'questions' => $this->safeQuestions($definition),
+                'resumed' => true, 'question_count' => count($definition['questions']),
             ];
         }
         $attempts = $this->database->prepare("SELECT COUNT(*) FROM exam_attempts WHERE workspace_id = :workspace AND assessment_id = :assessment AND user_id = :user AND status IN ('submitted', 'scored')");
@@ -338,9 +339,80 @@ SQL, [
             'attempt_id' => $attemptId, 'revision' => 1, 'status' => 'in_progress',
             'assessment_id' => $assessmentId, 'title' => (string) $assessment['title'],
             'answers' => [], 'resumed' => false,
-            'questions' => $this->safeQuestions($definition),
+            'question_count' => count($definition['questions']),
         ];
         });
+    }
+
+    /**
+     * Serves exactly one question of an in-progress attempt the caller owns,
+     * paced by the shared per-user token bucket. Never the answer or
+     * explanation (the definition()-validated question set never leaves this
+     * class with those fields intact before submission -- AGENTS.md §8).
+     * Question and choice order are permuted deterministically
+     * per attempt (ExamAttemptShuffle) so a resumed attempt sees the exact
+     * same order every time, and a leaked set of reads carries the specific
+     * permutation of the attempt it came from.
+     *
+     * @return array{position:int,question_count:int,question:array<string,mixed>}
+     */
+    public function readQuestion(string $userId, string $workspaceId, string $attemptId, int $position, ?int $now = null): array
+    {
+        $outcome = Transaction::run($this->database, function () use ($userId, $workspaceId, $attemptId, $position, $now): array {
+            $attempt = $this->attempt($userId, $workspaceId, $attemptId, false);
+            if ($attempt['status'] !== 'in_progress') {
+                throw new PlatformException('attempt_not_in_progress', 'Only an in-progress attempt exposes questions.', 409);
+            }
+            $assessment = $this->publishedAssessment($workspaceId, (string) $attempt['assessment_id']);
+            $decision = $this->authorizer->decide($userId, 'exam.take', 'assessment', (string) $assessment['scope_id'], $workspaceId);
+            if (!$decision->allowed) {
+                throw new PlatformException('assessment_access_denied', 'Assessment access was denied.', 403);
+            }
+            if ((bool) $assessment['requires_entitlement'] && !$this->entitlements->has($userId, $workspaceId, (string) $assessment['target_scope_id'])) {
+                throw new PlatformException('entitlement_required', 'An active entitlement is required for this assessment.', 403);
+            }
+
+            $definition = json_decode((string) $attempt['definition_json'], true, 64, JSON_THROW_ON_ERROR);
+            $questionIds = array_map(static fn (array $question): string => (string) $question['id'], $definition['questions']);
+            $questionCount = count($questionIds);
+            if ($position < 1 || $position > $questionCount) {
+                throw new PlatformException('question_position_invalid', 'Question position is out of range.', 422);
+            }
+
+            // Everything above is a pure read; nothing has been written yet,
+            // so throwing from any of those checks is safe. From here on a
+            // refusal must not throw until after this transaction commits --
+            // see ExamQuestionRateGuard's docblock.
+            if (!$this->questionRateGuard->consume($userId, $now)) {
+                return ['allowed' => false];
+            }
+
+            $order = ExamAttemptShuffle::questionOrder($attemptId, $questionIds);
+            $questionId = $order[$position - 1];
+            $question = $this->questionById($definition, $questionId);
+            $choiceOrder = ExamAttemptShuffle::choiceOrder($attemptId, $questionId, count($question['choices']));
+            $displayedChoices = array_map(static fn (int $canonicalIndex): string => $question['choices'][$canonicalIndex], $choiceOrder);
+
+            $this->audit->record($workspaceId, $userId, 'exam.question.read', 'exam_attempt', $attemptId, 'success', [
+                'question_id' => $questionId, 'position' => $position,
+            ]);
+
+            $safe = ['id' => $question['id'], 'prompt' => $question['prompt'], 'choices' => $displayedChoices];
+            foreach (['topic', 'tags', 'difficulty', 'provenance'] as $key) {
+                if (array_key_exists($key, $question)) {
+                    $safe[$key] = $question[$key];
+                }
+            }
+
+            return ['allowed' => true, 'position' => $position, 'question_count' => $questionCount, 'question' => $safe];
+        });
+
+        if ($outcome['allowed'] === false) {
+            throw new PlatformException('question_read_rate_limited', 'Slow down before reading the next question.', 429);
+        }
+        unset($outcome['allowed']);
+
+        return $outcome;
     }
 
     /** @param array<string, mixed> $answers @return array{attempt_id:string,revision:int,status:string} */
@@ -387,7 +459,15 @@ SQL, [
             $correct = 0;
             foreach ($definition['questions'] as $question) {
                 $id = (string) $question['id'];
-                $selected = $normalized[$id] ?? null;
+                // Stored answers are indices into the per-attempt *displayed*
+                // choice order (what the student actually saw via
+                // readQuestion), so they must be translated back to the
+                // canonical (authored) index before comparing against
+                // $question['answer'] -- this is what keeps scoring
+                // unaffected by the per-attempt choice shuffle.
+                $displayedSelected = $normalized[$id] ?? null;
+                $choiceOrder = ExamAttemptShuffle::choiceOrder($attemptId, $id, count($question['choices']));
+                $selected = $displayedSelected === null ? null : ($choiceOrder[$displayedSelected] ?? null);
                 $isCorrect = $selected !== null && $selected === $question['answer'];
                 $correct += $isCorrect ? 1 : 0;
                 $review[] = [
@@ -422,12 +502,19 @@ SQL, [
         });
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * Scored-attempt summary only -- never the per-question review list.
+     * Explanations and per-choice correctness are the most valuable part of
+     * the product and are served one at a time by attemptReviewQuestion(),
+     * through the same pacing and audit as readQuestion().
+     *
+     * @return array<string, mixed>
+     */
     public function attemptReview(string $userId, string $workspaceId, string $attemptId): array
     {
         $query = $this->database->prepare(<<<'SQL'
 SELECT attempt.id, attempt.assessment_id, attempt.revision, attempt.status,
-       result.correct_count, result.question_count, result.score_basis_points, result.review_json
+       result.correct_count, result.question_count, result.score_basis_points
 FROM exam_attempts attempt
 JOIN exam_attempt_results result ON result.attempt_id = attempt.id AND result.workspace_id = attempt.workspace_id
 WHERE attempt.id = :attempt AND attempt.workspace_id = :workspace AND attempt.user_id = :user
@@ -437,10 +524,60 @@ SQL);
         if ($row === false) {
             throw new PlatformException('attempt_not_found', 'Scored attempt was not found.', 404);
         }
-        $row['review'] = json_decode((string) $row['review_json'], true, 64, JSON_THROW_ON_ERROR);
-        unset($row['review_json']);
 
         return $row;
+    }
+
+    /**
+     * One reviewed question -- selection, correct choice and explanation --
+     * of a scored attempt the caller owns, paced by the same token bucket
+     * readQuestion() uses. Position follows the identical per-attempt order
+     * ExamAttemptShuffle produced while the attempt was in progress, so
+     * "question 3" means the same thing before and after submission.
+     *
+     * @return array{position:int,question_count:int,question_id:string,selected:?int,correct:int,is_correct:bool,explanation:?string}
+     */
+    public function attemptReviewQuestion(string $userId, string $workspaceId, string $attemptId, int $position, ?int $now = null): array
+    {
+        $outcome = Transaction::run($this->database, function () use ($userId, $workspaceId, $attemptId, $position, $now): array {
+            $scored = $this->scoredAttemptWithDefinition($userId, $workspaceId, $attemptId);
+            $review = json_decode((string) $scored['review_json'], true, 64, JSON_THROW_ON_ERROR);
+            $questionCount = count($review);
+            if ($position < 1 || $position > $questionCount) {
+                throw new PlatformException('question_position_invalid', 'Question position is out of range.', 422);
+            }
+
+            if (!$this->questionRateGuard->consume($userId, $now)) {
+                return ['allowed' => false];
+            }
+
+            $definition = json_decode((string) $scored['definition_json'], true, 64, JSON_THROW_ON_ERROR);
+            $questionIds = array_map(static fn (array $question): string => (string) $question['id'], $definition['questions']);
+            $order = ExamAttemptShuffle::questionOrder($attemptId, $questionIds);
+            $questionId = $order[$position - 1];
+            $byId = array_column($review, null, 'id');
+            $entry = $byId[$questionId] ?? null;
+            if ($entry === null) {
+                throw new PlatformException('question_not_found', 'Question was not found.', 404);
+            }
+
+            $this->audit->record($workspaceId, $userId, 'exam.explanation.read', 'exam_attempt', $attemptId, 'success', [
+                'question_id' => $questionId, 'position' => $position,
+            ]);
+
+            return [
+                'allowed' => true, 'position' => $position, 'question_count' => $questionCount,
+                'question_id' => $questionId, 'selected' => $entry['selected'], 'correct' => $entry['correct'],
+                'is_correct' => $entry['is_correct'], 'explanation' => $entry['explanation'],
+            ];
+        });
+
+        if ($outcome['allowed'] === false) {
+            throw new PlatformException('question_read_rate_limited', 'Slow down before reading the next explanation.', 429);
+        }
+        unset($outcome['allowed']);
+
+        return $outcome;
     }
 
     /** @return array{assessment_id:string,attempt_count:int,average_score_basis_points:int,min_score_basis_points:int,max_score_basis_points:int} */
@@ -656,19 +793,35 @@ SQL, ['workspace' => $workspaceId, 'assessment' => $assessmentId, 'version' => $
         return ContentPayload::encode($definition);
     }
 
-    /** @param array<string, mixed> $definition @return list<array<string, mixed>> */
-    private function safeQuestions(array $definition): array
+    /** @param array<string, mixed> $definition @return array<string, mixed> */
+    private function questionById(array $definition, string $questionId): array
     {
-        $safe = [];
         foreach ($definition['questions'] as $question) {
-            $item = ['id' => $question['id'], 'prompt' => $question['prompt'], 'choices' => $question['choices']];
-            foreach (['topic', 'tags', 'difficulty', 'provenance'] as $key) {
-                if (array_key_exists($key, $question)) $item[$key] = $question[$key];
+            if ((string) $question['id'] === $questionId) {
+                return $question;
             }
-            $safe[] = $item;
+        }
+        throw new PlatformException('question_not_found', 'Question was not found.', 404);
+    }
+
+    /** @return array<string, mixed> */
+    private function scoredAttemptWithDefinition(string $userId, string $workspaceId, string $attemptId): array
+    {
+        $query = $this->database->prepare(<<<'SQL'
+SELECT attempt.id, attempt.assessment_id, result.review_json, version.definition_json
+FROM exam_attempts attempt
+JOIN exam_attempt_results result ON result.attempt_id = attempt.id AND result.workspace_id = attempt.workspace_id
+JOIN exam_assessment_versions version ON version.id = attempt.assessment_version_id
+ AND version.assessment_id = attempt.assessment_id AND version.workspace_id = attempt.workspace_id
+WHERE attempt.id = :attempt AND attempt.workspace_id = :workspace AND attempt.user_id = :user
+SQL);
+        $query->execute(['attempt' => $attemptId, 'workspace' => $workspaceId, 'user' => $userId]);
+        $row = $query->fetch();
+        if ($row === false) {
+            throw new PlatformException('attempt_not_found', 'Scored attempt was not found.', 404);
         }
 
-        return $safe;
+        return $row;
     }
 
     /** @param array<string, mixed> $definition @param array<string, mixed> $answers @return array<string, int> */
