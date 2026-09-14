@@ -52,6 +52,8 @@ try {
     echo "PASS backup integrity contracts\n";
     $assertions += (new GitHubCiVerifierContractTest())->run();
     echo "PASS GitHub Actions CI verifier contracts\n";
+    $assertions += (new WebRenderingTest($root))->run();
+    echo "PASS website page rendering\n";
 
     $mode = getenv('FANOOS_TEST_MODE') ?: 'all';
     if ($mode !== 'static') {
