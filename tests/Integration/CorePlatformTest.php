@@ -167,8 +167,8 @@ final class CorePlatformTest
 
         // Selection is enforced server-side, not merely offered in the list.
         $this->insert(
-            'INSERT INTO iam_sessions (id, user_id, token_digest, csrf_digest, issued_at, expires_at, last_seen_at) VALUES (:id, :user, :token, :csrf, UTC_TIMESTAMP(6), DATE_ADD(UTC_TIMESTAMP(6), INTERVAL 1 HOUR), UTC_TIMESTAMP(6))',
-            ['id' => 's-owner', 'user' => $fixture['global_admin'], 'token' => hash('sha256', 'owner-token', true), 'csrf' => hash('sha256', 'owner-csrf', true)],
+            'INSERT INTO iam_sessions (id, user_id, token_digest, created_at, last_seen_at, expires_at) VALUES (:id, :user, :token, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6), DATE_ADD(UTC_TIMESTAMP(6), INTERVAL 1 HOUR))',
+            ['id' => 's-owner', 'user' => $fixture['global_admin'], 'token' => hash('sha256', 'owner-token', true)],
         );
         $auth->selectWorkspace($ownerSession, $fixture['workspace_b']);
         $selected = $this->database->prepare('SELECT selected_workspace_id FROM iam_sessions WHERE id = :id');
