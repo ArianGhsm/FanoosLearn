@@ -240,7 +240,7 @@ paths:
   /workspaces/{workspaceId}/attempts/{attemptId}/review/questions/{position}:
     get:
       operationId: readAssessmentReviewQuestion
-      description: Returns one reviewed question -- selection, correct choice and explanation -- of a scored attempt the caller owns, by the same per-attempt position readAssessmentQuestion used. Paced by the same per-user token bucket and audited the same way.
+      description: Returns one reviewed question -- selection, correct choice and explanation -- of a scored attempt the caller owns, by the same per-attempt position readAssessmentQuestion used. `selected` and `correct` are indices into the returned `choices`, which are in the same displayed order the student answered against -- never the canonical authored order, which would highlight a different option than the one that was correct. Paced by the same per-user token bucket and audited the same way.
       parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AttemptId' }, { $ref: '#/components/parameters/PositionIndex' }]
       responses: { '200': { $ref: '#/components/responses/AssessmentReviewQuestion' }, '404': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' }, '429': { $ref: '#/components/responses/Error' } }
 components:
@@ -303,11 +303,13 @@ components:
       additionalProperties: false
     AssessmentReviewQuestion:
       type: object
-      required: [position, question_count, question_id, correct, is_correct]
+      required: [position, question_count, question_id, prompt, choices, correct, is_correct]
       properties:
         position: { type: integer, minimum: 1 }
         question_count: { type: integer, minimum: 1 }
         question_id: { type: string }
+        prompt: { type: string }
+        choices: { type: array, items: { type: string }, minItems: 2, maxItems: 10 }
         selected: { type: [integer, 'null'] }
         correct: { type: integer }
         is_correct: { type: boolean }
