@@ -184,6 +184,14 @@ SQL);
             throw new PlatformException('account_not_found', 'Account was not found.', 404);
         }
 
+        // A platform operator is authorized in every workspace (the scope
+        // chain adds the platform scope as an ancestor of everything), but
+        // until now they could not *reach* one: this listing was
+        // membership-only, so an owner with every permission in the system
+        // still had nothing to select. Owners see every active workspace;
+        // everyone else sees only the ones they belong to.
+        $isPlatformOperator = $this->isPlatformOperator($session->userId);
+
         $workspaces = $this->database->prepare(<<<'SQL'
 SELECT membership.id AS membership_id, workspace.id, workspace.slug, workspace.name, workspace.timezone_name,
        membership.status, membership.joined_at, membership.ended_at,
@@ -191,20 +199,25 @@ SELECT membership.id AS membership_id, workspace.id, workspace.slug, workspace.n
        institution.id AS institution_id,
        institution.name AS institution_name, faculty.name AS faculty_name,
        program.name AS program_name, cohort.label AS cohort_label
-FROM tenant_workspace_memberships membership
-JOIN tenant_workspaces workspace ON workspace.id = membership.workspace_id
+FROM tenant_workspaces workspace
+LEFT JOIN tenant_workspace_memberships membership
+       ON membership.workspace_id = workspace.id
+      AND membership.user_id = :user_id
+      AND membership.status = 'active'
+      AND (membership.ended_at IS NULL OR membership.ended_at > UTC_TIMESTAMP(6))
 JOIN directory_cohorts cohort ON cohort.id = workspace.cohort_id
 JOIN directory_programs program ON program.id = cohort.program_id
 JOIN directory_faculties faculty ON faculty.id = program.faculty_id
 JOIN directory_institutions institution ON institution.id = faculty.institution_id
-WHERE membership.user_id = :user_id
-  AND membership.status = 'active'
-  AND (membership.ended_at IS NULL OR membership.ended_at > UTC_TIMESTAMP(6))
-  AND workspace.status = 'active'
+WHERE workspace.status = 'active'
   AND workspace.archived_at IS NULL
+  AND (membership.id IS NOT NULL OR :is_platform_operator = 1)
 ORDER BY workspace.name, workspace.id
 SQL);
-        $workspaces->execute(['user_id' => $session->userId]);
+        $workspaces->execute([
+            'user_id' => $session->userId,
+            'is_platform_operator' => $isPlatformOperator ? 1 : 0,
+        ]);
 
         $workspaceRows = $workspaces->fetchAll();
         $selectedWorkspaceId = $session->selectedWorkspaceId;
@@ -225,6 +238,36 @@ SQL);
         return ['user' => $account, 'selected_workspace_id' => $selectedWorkspaceId, 'workspaces' => $workspaceRows];
     }
 
+    /**
+     * Whether this account holds a live role assignment on the platform
+     * scope -- the owners of the installation.
+     *
+     * Deliberately a role-assignment check rather than a hardcoded user id
+     * or a role-key match: an owner is whoever has been granted the platform
+     * scope, which is the same fact `ScopeAuthorizer` already decides
+     * against, so the two cannot drift apart.
+     */
+    private function isPlatformOperator(string $userId): bool
+    {
+        $query = $this->database->prepare(<<<'SQL'
+SELECT 1
+FROM rbac_role_assignments assignment
+JOIN rbac_scopes scope ON scope.id = assignment.scope_id
+JOIN rbac_role_templates role ON role.id = assignment.role_template_id
+WHERE assignment.user_id = :user
+  AND scope.scope_type = 'platform'
+  AND scope.archived_at IS NULL
+  AND role.status = 'active'
+  AND assignment.revoked_at IS NULL
+  AND assignment.valid_from <= UTC_TIMESTAMP(6)
+  AND (assignment.valid_until IS NULL OR assignment.valid_until > UTC_TIMESTAMP(6))
+LIMIT 1
+SQL);
+        $query->execute(['user' => $userId]);
+
+        return $query->fetchColumn() !== false;
+    }
+
     public function selectWorkspace(AuthenticatedSession $session, string $workspaceId): void
     {
         $membership = $this->database->prepare(<<<'SQL'
@@ -238,7 +281,7 @@ WHERE membership.user_id = :user AND membership.workspace_id = :workspace
 LIMIT 1
 SQL);
         $membership->execute(['user' => $session->userId, 'workspace' => $workspaceId]);
-        if ($membership->fetchColumn() === false) {
+        if ($membership->fetchColumn() === false && !$this->isPlatformOperator($session->userId)) {
             throw new PlatformException('workspace_forbidden', 'The account is not an active member of this workspace.', 403);
         }
         $update = $this->database->prepare('UPDATE iam_sessions SET selected_workspace_id = :workspace WHERE id = :session AND user_id = :user AND revoked_at IS NULL');
