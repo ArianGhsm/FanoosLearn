@@ -56,6 +56,12 @@ final class PageRenderer
         if ($viewer !== null) {
             $head[] = '<meta name="fanoos-csrf" content="' . $this->escape($viewer->csrfToken) . '">';
         }
+        // Page scripts build workspace-scoped API paths from this rather than
+        // parsing the URL, so a workspace can never be spoofed by editing the
+        // address bar: it is whatever the session actually has selected.
+        if ($viewer !== null && $viewer->workspaceId !== null) {
+            $head[] = '<meta name="fanoos-workspace" content="' . $this->escape($viewer->workspaceId) . '">';
+        }
 
         foreach (['/assets/web/foundation/tokens.css', '/assets/web/foundation/type.css', '/assets/web/foundation/base.css'] as $sheet) {
             $head[] = '<link rel="stylesheet" href="' . $this->escape($this->assets->url($sheet)) . '">';

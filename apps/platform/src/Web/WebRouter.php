@@ -49,6 +49,27 @@ final class WebRouter
                 : $this->page(200, (new HomePage($this->renderer))->render($viewer, isset($query['switch'])));
         }
 
+        if ($path === '/app/exams') {
+            if ($viewer === null) {
+                return $this->redirect('/login');
+            }
+            // Every exam read is workspace-scoped; without a selected
+            // workspace there is nothing to list, so send them to choose one
+            // rather than render a page that can only be empty.
+            return $viewer->workspaceId === null
+                ? $this->redirect('/app')
+                : $this->page(200, (new ExamsPage($this->renderer))->render($viewer));
+        }
+
+        if (preg_match('#^/app/exams/([0-9a-f-]{36})$#', $path, $match) === 1) {
+            if ($viewer === null) {
+                return $this->redirect('/login');
+            }
+            return $viewer->workspaceId === null
+                ? $this->redirect('/app')
+                : $this->page(200, (new ExamAttemptPage($this->renderer))->render($viewer, $match[1]));
+        }
+
         return $this->page(404, (new NotFoundPage($this->renderer))->render($viewer));
     }
 

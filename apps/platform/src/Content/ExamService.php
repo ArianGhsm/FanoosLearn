@@ -390,14 +390,12 @@ SQL, [
             $order = ExamAttemptShuffle::questionOrder($attemptId, $questionIds);
             $questionId = $order[$position - 1];
             $question = $this->questionById($definition, $questionId);
-            $choiceOrder = ExamAttemptShuffle::choiceOrder($attemptId, $questionId, count($question['choices']));
-            $displayedChoices = array_map(static fn (int $canonicalIndex): string => $question['choices'][$canonicalIndex], $choiceOrder);
 
             $this->audit->record($workspaceId, $userId, 'exam.question.read', 'exam_attempt', $attemptId, 'success', [
                 'question_id' => $questionId, 'position' => $position,
             ]);
 
-            $safe = ['id' => $question['id'], 'prompt' => $question['prompt'], 'choices' => $displayedChoices];
+            $safe = ['id' => $question['id'], 'prompt' => $question['prompt'], 'choices' => $question['choices']];
             foreach (['topic', 'tags', 'difficulty', 'provenance'] as $key) {
                 if (array_key_exists($key, $question)) {
                     $safe[$key] = $question[$key];
@@ -459,15 +457,7 @@ SQL, [
             $correct = 0;
             foreach ($definition['questions'] as $question) {
                 $id = (string) $question['id'];
-                // Stored answers are indices into the per-attempt *displayed*
-                // choice order (what the student actually saw via
-                // readQuestion), so they must be translated back to the
-                // canonical (authored) index before comparing against
-                // $question['answer'] -- this is what keeps scoring
-                // unaffected by the per-attempt choice shuffle.
-                $displayedSelected = $normalized[$id] ?? null;
-                $choiceOrder = ExamAttemptShuffle::choiceOrder($attemptId, $id, count($question['choices']));
-                $selected = $displayedSelected === null ? null : ($choiceOrder[$displayedSelected] ?? null);
+                $selected = $normalized[$id] ?? null;
                 $isCorrect = $selected !== null && $selected === $question['answer'];
                 $correct += $isCorrect ? 1 : 0;
                 $review[] = [
@@ -568,24 +558,16 @@ SQL);
                 'question_id' => $questionId, 'position' => $position,
             ]);
 
-            // review_json stores canonical (authored) choice indices, but the
-            // student answered against this attempt's *displayed* order. The
-            // review must speak the order they actually saw, or it highlights
-            // a different option than the one that was correct -- silently
-            // teaching the wrong answer. Translate both indices back, and
-            // return the displayed choices so the review can render the
-            // question at all.
+            // The review returns the question itself, not just indices: the
+            // client has no other way to obtain the choices, since
+            // readQuestion refuses once the attempt is no longer in progress.
             $question = $this->questionById($definition, $questionId);
-            $choiceOrder = ExamAttemptShuffle::choiceOrder($attemptId, $questionId, count($question['choices']));
-            $displayedChoices = array_map(static fn (int $canonical): string => $question['choices'][$canonical], $choiceOrder);
-            $displayedOf = array_flip($choiceOrder);
-            $selected = $entry['selected'] === null ? null : ($displayedOf[$entry['selected']] ?? null);
 
             return [
                 'allowed' => true, 'position' => $position, 'question_count' => $questionCount,
                 'question_id' => $questionId, 'prompt' => $question['prompt'],
-                'choices' => $displayedChoices,
-                'selected' => $selected, 'correct' => $displayedOf[$entry['correct']],
+                'choices' => $question['choices'],
+                'selected' => $entry['selected'], 'correct' => $entry['correct'],
                 'is_correct' => $entry['is_correct'], 'explanation' => $entry['explanation'],
             ];
         });

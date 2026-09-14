@@ -8,6 +8,8 @@ use Fanoos\Platform\Web\AssetVersioner;
 use Fanoos\Platform\Web\LandingPage;
 use Fanoos\Platform\Web\LoginPage;
 use Fanoos\Platform\Web\HomePage;
+use Fanoos\Platform\Web\ExamAttemptPage;
+use Fanoos\Platform\Web\ExamsPage;
 use Fanoos\Platform\Web\NotFoundPage;
 use Fanoos\Platform\Web\PageRenderer;
 use Fanoos\Platform\Web\ViewerContext;
@@ -44,6 +46,7 @@ final class WebRenderingTest
         $this->homeShowsTheChooserWhenAskedToSwitch($renderer);
         $this->notFoundSaysTheAddressIsWrong($renderer);
         $this->everyPageIsRightToLeftPersian($renderer);
+        $this->examPagesCarryTheWorkspaceButNoQuestionContent($renderer);
 
         return $this->assertions;
     }
@@ -151,6 +154,30 @@ final class WebRenderingTest
                 !preg_match('/href="\/assets\/[^"?]+"/', $html),
                 'Every stylesheet URL must carry a cache-busting version.',
             );
+        }
+    }
+
+    private function examPagesCarryTheWorkspaceButNoQuestionContent(PageRenderer $renderer): void
+    {
+        $viewer = new ViewerContext('u1', 'آرین', 'csrf-x', 'ws-9', 'کلاس من');
+        $catalogue = (new ExamsPage($renderer))->render($viewer);
+        $attempt = (new ExamAttemptPage($renderer))->render($viewer, '11111111-2222-4333-8444-555555555555');
+
+        foreach ([$catalogue, $attempt] as $html) {
+            $this->assert(
+                str_contains($html, '<meta name="fanoos-workspace" content="ws-9">'),
+                'Exam pages must carry the selected workspace so scripts never take it from the URL.',
+            );
+        }
+        $this->assert(
+            str_contains($attempt, 'data-assessment="11111111-2222-4333-8444-555555555555"'),
+            'The runner page must carry the assessment it is for.',
+        );
+        // The whole point of serving questions one at a time is that a paper is
+        // never delivered in one response. Rendering any of it into this
+        // document would put it straight back.
+        foreach (['choices', 'prompt', 'answer', 'explanation'] as $leak) {
+            $this->assert(!str_contains($attempt, '"' . $leak . '"'), "The runner document must not carry question data: {$leak}");
         }
     }
 
