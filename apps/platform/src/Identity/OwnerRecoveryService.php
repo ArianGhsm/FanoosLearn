@@ -87,12 +87,18 @@ final class OwnerRecoveryService
             $id = Uuid::v7();
             $insert = $this->database->prepare(<<<'SQL'
 INSERT INTO owner_recovery_tokens (id, user_id, token_digest, expires_at, consumed_at, created_at)
-VALUES (:id, :user, :digest, FROM_UNIXTIME(:expires), NULL, UTC_TIMESTAMP(6))
+VALUES (:id, :user, :digest, FROM_UNIXTIME(:expires), NULL, FROM_UNIXTIME(:created))
 SQL);
             $insert->bindValue(':id', $id);
             $insert->bindValue(':user', $userId);
             $insert->bindValue(':digest', hash('sha256', $token, true), PDO::PARAM_LOB);
+            // Both timestamps must derive from the same $now: created_at as
+            // real UTC_TIMESTAMP(6) here while expires_at was computed from
+            // an injected (possibly fake, for deterministic tests) $now let
+            // the two diverge and trip chk_owner_recovery_tokens_expiry the
+            // moment a test injected a $now far from the real wall clock.
             $insert->bindValue(':expires', $now + self::TOKEN_TTL_SECONDS, PDO::PARAM_INT);
+            $insert->bindValue(':created', $now, PDO::PARAM_INT);
             $insert->execute();
 
             $this->audit->record(null, $userId, 'auth.owner_recovery.requested', 'owner_recovery_token', $id, 'success');
