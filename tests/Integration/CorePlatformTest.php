@@ -14,6 +14,7 @@ use Fanoos\Platform\Core\WorkspacePlatformService;
 use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Http\ApiKernel;
 use Fanoos\Platform\Http\Request;
+use Fanoos\Platform\Identity\AuthenticatedSession;
 use Fanoos\Platform\Identity\AuthService;
 use Fanoos\Platform\Identity\PasswordHasher;
 use Fanoos\Platform\Support\PlatformException;
@@ -52,6 +53,7 @@ final class CorePlatformTest
 
         $this->seedAuthenticator($fixture['student'], 'student-' . substr($fixture['student'], -8), 'correct horse battery staple');
         $this->assertLoginAndWorkspaceSelection($auth, $fixture);
+        $this->assertPlatformOwnerReachesEveryWorkspace($auth, $fixture);
         $domain = $this->seedDomain($fixture);
 
         self::assert(count($core->academicNavigation($fixture['student'], $fixture['workspace_a'])['courses']) >= 1, 'Academic navigation did not return tenant courses.');
@@ -142,6 +144,44 @@ final class CorePlatformTest
     }
 
     /** @param array<string, string> $fixture */
+    /**
+     * An installation owner is authorized in every workspace -- the scope
+     * chain makes the platform scope an ancestor of all of them -- but the
+     * account listing used to be membership-only, so an owner holding every
+     * permission in the system still had no workspace to select and could
+     * reach none of it. These assert the two halves of that fix, and that it
+     * did not quietly become "everyone sees everything".
+     */
+    private function assertPlatformOwnerReachesEveryWorkspace(AuthService $auth, array $fixture): void
+    {
+        $ownerMemberships = $this->database->prepare("SELECT COUNT(*) FROM tenant_workspace_memberships WHERE user_id = :user AND status = 'active'");
+        $ownerMemberships->execute(['user' => $fixture['global_admin']]);
+        self::assert((int) $ownerMemberships->fetchColumn() === 0, 'This fixture must keep the owner a non-member for the test to mean anything.');
+
+        $ownerSession = new AuthenticatedSession('s-owner', $fixture['global_admin'], 't-owner', 'c-owner', null, '2099-01-01 00:00:00');
+        $ownerAccount = $auth->account($ownerSession);
+        $ownerWorkspaceIds = array_map(static fn (array $row): string => (string) $row['id'], $ownerAccount['workspaces']);
+        foreach (['workspace_a', 'workspace_b'] as $key) {
+            self::assert(in_array($fixture[$key], $ownerWorkspaceIds, true), "Platform owner could not see {$key} despite being authorized in it.");
+        }
+
+        // Selection is enforced server-side, not merely offered in the list.
+        $this->insert(
+            'INSERT INTO iam_sessions (id, user_id, token_digest, csrf_digest, issued_at, expires_at, last_seen_at) VALUES (:id, :user, :token, :csrf, UTC_TIMESTAMP(6), DATE_ADD(UTC_TIMESTAMP(6), INTERVAL 1 HOUR), UTC_TIMESTAMP(6))',
+            ['id' => 's-owner', 'user' => $fixture['global_admin'], 'token' => hash('sha256', 'owner-token', true), 'csrf' => hash('sha256', 'owner-csrf', true)],
+        );
+        $auth->selectWorkspace($ownerSession, $fixture['workspace_b']);
+        $selected = $this->database->prepare('SELECT selected_workspace_id FROM iam_sessions WHERE id = :id');
+        $selected->execute(['id' => 's-owner']);
+        self::assert((string) $selected->fetchColumn() === $fixture['workspace_b'], 'Platform owner could not select a workspace they do not belong to.');
+
+        // And a plain member still cannot reach a workspace they are not in.
+        $outsiderSession = new AuthenticatedSession('s-rep', $fixture['representative'], 't-rep', 'c-rep', null, '2099-01-01 00:00:00');
+        $outsiderIds = array_map(static fn (array $row): string => (string) $row['id'], $auth->account($outsiderSession)['workspaces']);
+        self::assert(!in_array($fixture['workspace_b'], $outsiderIds, true), 'A non-owner must not see a workspace they do not belong to.');
+        $this->expectPlatformException('workspace_forbidden', fn () => $auth->selectWorkspace($outsiderSession, $fixture['workspace_b']));
+    }
+
     private function assertLoginAndWorkspaceSelection(AuthService $auth, array $fixture): void
     {
         $identifier = 'student-' . substr($fixture['student'], -8);
