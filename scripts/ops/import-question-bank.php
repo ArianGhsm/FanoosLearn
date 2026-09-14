@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Fanoos\Platform\Audit\AuditLogger;
 use Fanoos\Platform\Authorization\AccessGate;
 use Fanoos\Platform\Authorization\ScopeAuthorizer;
-use Fanoos\Platform\Commerce\EntitlementService;
+use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Content\ExamQuestionRateGuard;
 use Fanoos\Platform\Content\ExamService;
 use Fanoos\Platform\Support\DatabaseConnection;
