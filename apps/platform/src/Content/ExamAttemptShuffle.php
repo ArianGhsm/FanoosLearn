@@ -11,10 +11,16 @@ namespace Fanoos\Platform\Content;
  * same attempt always recomputes the same order on every read/resume without
  * a dedicated storage column, and two different attempts of the same
  * assessment almost never share an order. This is presentation ordering
- * only: answers stay keyed to stable question ids and are scored against the
- * canonical (authored) choice index, so a shuffled attempt scores identically
- * to an unshuffled one for the same choices (ExamService::submitAttempt
- * translates the displayed choice index back to canonical before comparing).
+ * only: answers stay keyed to stable question ids, so a shuffled attempt
+ * scores identically to an unshuffled one.
+ *
+ * Question order only -- choice order is deliberately NOT shuffled. Real
+ * explanations name the option they are about ("گزینه C صحیح است"); in the
+ * first bank imported here that is 78% of them. Permuting the choices makes
+ * the explanation contradict the answer the review marks as correct, which
+ * is worse than the modest extraction cost it buys: a scraper merges copies
+ * by text, not by position, and question-order shuffling still fingerprints
+ * the attempt a leaked set came from.
  */
 final class ExamAttemptShuffle
 {
@@ -25,15 +31,6 @@ final class ExamAttemptShuffle
     public static function questionOrder(string $attemptId, array $questionIds): array
     {
         return self::permute($attemptId . ':questions', $questionIds);
-    }
-
-    /**
-     * @return list<int> canonical (authored) choice indices, in the order
-     *     they should be displayed for this attempt/question
-     */
-    public static function choiceOrder(string $attemptId, string $questionId, int $choiceCount): array
-    {
-        return self::permute($attemptId . ':choices:' . $questionId, range(0, $choiceCount - 1));
     }
 
     /**

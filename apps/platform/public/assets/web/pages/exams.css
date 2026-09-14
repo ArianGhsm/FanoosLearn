@@ -1,0 +1,122 @@
+/* Shared exam styling: the catalogue, chips and skeletons. */
+
+.x-catalog__head {
+    margin-bottom: var(--space-5);
+}
+
+.x-catalog__filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-5);
+}
+
+.x-chip {
+    min-height: 36px;
+    padding: 0 var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--text-secondary);
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.88rem;
+    cursor: pointer;
+}
+
+.x-chip:hover {
+    border-color: var(--accent);
+}
+
+.x-chip.is-active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--text-on-accent);
+}
+
+.x-chip--static {
+    cursor: default;
+    background: var(--accent-soft);
+    border-color: transparent;
+    color: var(--accent);
+    min-height: 26px;
+    font-size: 0.78rem;
+    padding: 0 var(--space-3);
+}
+
+.x-cards {
+    display: grid;
+    gap: var(--space-3);
+}
+
+.x-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+}
+
+.x-card.is-exhausted {
+    opacity: 0.7;
+}
+
+.x-card__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.x-card__title {
+    font-size: 1.05rem;
+    margin-bottom: var(--space-2);
+}
+
+.x-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+}
+
+.x-card__side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-2);
+    flex: none;
+}
+
+.x-card__status {
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+}
+
+.x-card__status.is-active {
+    color: var(--warning);
+    font-weight: 700;
+}
+
+@media (max-width: 560px) {
+    .x-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .x-card__side {
+        align-items: stretch;
+    }
+}
+
+/* A skeleton says "content is coming" without pretending to be content. */
+.x-skeleton {
+    height: 72px;
+    margin-bottom: var(--space-3);
+    border-radius: var(--radius-md);
+    background: linear-gradient(90deg, var(--surface-muted), var(--surface-strong), var(--surface-muted));
+    background-size: 200% 100%;
+    animation: x-shimmer 1.4s linear infinite;
+}
+
+@keyframes x-shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+}

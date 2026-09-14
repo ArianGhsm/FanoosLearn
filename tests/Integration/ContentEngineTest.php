@@ -10,7 +10,6 @@ use Fanoos\Platform\Authorization\ScopeAuthorizer;
 use Fanoos\Platform\Content\ContentImportService;
 use Fanoos\Platform\Content\ContentService;
 use Fanoos\Platform\Content\ContentUploadService;
-use Fanoos\Platform\Content\ExamAttemptShuffle;
 use Fanoos\Platform\Content\ExamQuestionRateGuard;
 use Fanoos\Platform\Content\ExamService;
 use Fanoos\Platform\Content\ProtectedResourceAuthorizer;
@@ -182,12 +181,12 @@ final class ContentEngineTest
         $this->expectPlatformException('attempt_not_found', fn () => $exams->readQuestion($fixture['outsider'], $fixture['workspace_a'], $attempt['attempt_id'], 1));
         $this->expectPlatformException('attempt_not_found', fn () => $exams->readQuestion($fixture['student'], $fixture['workspace_b'], $attempt['attempt_id'], 1));
 
-        // Choice order is shuffled per attempt but answers still score against
-        // the canonical (authored) choice, so submit the displayed index that
-        // corresponds to each question's real correct answer.
-        $q1DisplayedCorrect = array_search(1, ExamAttemptShuffle::choiceOrder($attempt['attempt_id'], 'q1', 2), true);
-        $q2DisplayedCorrect = array_search(0, ExamAttemptShuffle::choiceOrder($attempt['attempt_id'], 'q2', 2), true);
-        self::assert($byPosition[$q1Position]['question']['choices'][$q1DisplayedCorrect] === 'چهار', 'Shuffled choice order did not match the deterministic per-attempt permutation.');
+        // Question order is shuffled per attempt; choice order deliberately is
+        // not, because real explanations name the option they are about and a
+        // permuted choice list makes them contradict the review.
+        $q1DisplayedCorrect = 1;
+        $q2DisplayedCorrect = 0;
+        self::assert($byPosition[$q1Position]['question']['choices'] === ['سه', 'چهار'], 'Choices must be served in their authored order.');
 
         $saved = $exams->saveProgress($fixture['student'], $fixture['workspace_a'], $attempt['attempt_id'], 1, ['q1' => 1]);
         self::assert($saved['revision'] === 2, 'Attempt progress revision did not advance.');
@@ -210,22 +209,21 @@ final class ContentEngineTest
         // against. Asserting is_correct alone cannot catch a canonical/
         // displayed index mix-up, which would mark a different option as the
         // right answer and teach the wrong thing. Assert against the text.
-        self::assert($q1Review['choices'] === $byPosition[$q1Position]['question']['choices'], 'Review choices must be the same displayed order the student answered against.');
-        self::assert($q1Review['choices'][$q1Review['correct']] === 'چهار', 'Review marked the wrong option as correct: the correct index is not in displayed order.');
-        self::assert($q1Review['selected'] === $q1DisplayedCorrect, 'Review reported the selection in a different order than the student answered in.');
+        self::assert($q1Review['choices'] === $byPosition[$q1Position]['question']['choices'], 'Review must show the same choices, in the same order, the student answered against.');
+        self::assert($q1Review['choices'][$q1Review['correct']] === 'چهار', 'Review marked the wrong option as correct.');
+        self::assert($q1Review['selected'] === $q1DisplayedCorrect, 'Review reported a different selection than the student made.');
         $q2Review = $exams->attemptReviewQuestion($fixture['student'], $fixture['workspace_a'], $attempt['attempt_id'], $q2Position);
         self::assert($q2Review['question_id'] === 'q2' && $q2Review['is_correct'] === true, 'Per-question review for the second question failed.');
         self::assert($exams->analytics($fixture['manager'], $fixture['workspace_a'], $assessment['assessment_id'])['average_score_basis_points'] === 10000, 'Assessment analytics did not use scored attempts.');
 
         // A second attempt (still within max_attempts=2) gets an independent
-        // per-attempt shuffle -- a different attempt id almost certainly
-        // permutes differently. Submitting the same objectively-correct
+        // per-attempt question order. Submitting the same objectively-correct
         // choices must still score 100%, proving scoring is unaffected by
         // which permutation the student happened to see.
         $secondAttempt = $exams->startAttempt($fixture['student'], $fixture['workspace_a'], $assessment['assessment_id']);
         self::assert($secondAttempt['attempt_id'] !== $attempt['attempt_id'], 'A second attempt within max_attempts was not created.');
-        $q1SecondDisplayedCorrect = array_search(1, ExamAttemptShuffle::choiceOrder($secondAttempt['attempt_id'], 'q1', 2), true);
-        $q2SecondDisplayedCorrect = array_search(0, ExamAttemptShuffle::choiceOrder($secondAttempt['attempt_id'], 'q2', 2), true);
+        $q1SecondDisplayedCorrect = 1;
+        $q2SecondDisplayedCorrect = 0;
         $secondScored = $exams->submitAttempt($fixture['student'], $fixture['workspace_a'], $secondAttempt['attempt_id'], 1, ['q1' => $q1SecondDisplayedCorrect, 'q2' => $q2SecondDisplayedCorrect]);
         self::assert($secondScored['score_basis_points'] === 10000, 'An independently-shuffled second attempt did not score identically for the same objectively-correct choices.');
 
