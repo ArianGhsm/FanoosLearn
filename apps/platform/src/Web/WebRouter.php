@@ -43,6 +43,14 @@ final class WebRouter
                 : $this->redirect('/app');
         }
 
+        if ($path === '/recovery') {
+            // The token lives in the query string and is read client-side;
+            // a signed-in visitor has nothing to redeem here.
+            return $viewer === null
+                ? $this->page(200, (new RecoveryPage($this->renderer))->render())
+                : $this->redirect('/app');
+        }
+
         if ($path === '/app') {
             return $viewer === null
                 ? $this->redirect('/login')

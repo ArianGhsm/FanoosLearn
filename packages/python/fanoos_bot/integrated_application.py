@@ -91,6 +91,8 @@ _OWNER_ALLOWED_KINDS = {
     "forensic_wizard_upload",
     "forensic_wizard_result",
     "forensic_wizard_cancelled",
+    "owner_recovery",
+    "owner_recovery_issued",
 }
 
 

@@ -24,6 +24,7 @@ use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Http\HumanMessagingApiKernel;
 use Fanoos\Platform\Http\InternalApiKernel;
 use Fanoos\Platform\Identity\AuthService;
+use Fanoos\Platform\Identity\OwnerRecoveryService;
 use Fanoos\Platform\Identity\PasswordHasher;
 use Fanoos\Platform\Integration\ServiceAuthenticator;
 use Fanoos\Platform\Messaging\ChannelSubjectProtector;
@@ -101,6 +102,7 @@ final class Stage7Factory
         $snapshots = new DeploymentSnapshotStore($database);
         $classProvisioning = new ClassProvisioningService($database, $access, $audit);
         $institutionTerms = new InstitutionTermService($database, $access, $audit);
+        $ownerRecovery = new OwnerRecoveryService($database, new AuthService($database, new PasswordHasher(), $audit), $audit);
 
         return new InternalApiKernel(
             new ServiceAuthenticator($database),
@@ -125,6 +127,7 @@ final class Stage7Factory
             $institutionTerms,
             $mediaForensics,
             $paymentsEnabled,
+            $ownerRecovery,
         );
     }
 }

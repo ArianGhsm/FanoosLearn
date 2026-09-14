@@ -18,6 +18,7 @@ use Fanoos\Platform\Content\SecureObjectDownloadService;
 use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Http\ApiKernel;
 use Fanoos\Platform\Identity\AuthService;
+use Fanoos\Platform\Identity\OwnerRecoveryService;
 use Fanoos\Platform\Web\AssetVersioner;
 use Fanoos\Platform\Web\PageRenderer;
 use Fanoos\Platform\Web\WebRouter;
@@ -79,9 +80,10 @@ final class PlatformFactory
             $access,
             new ScheduleWindowResolver($database),
         );
+        $auth = new AuthService($database, new PasswordHasher(), $audit);
 
         return new ApiKernel(
-            new AuthService($database, new PasswordHasher(), $audit),
+            $auth,
             new WorkspacePlatformService($database, $access, $audit, $resources),
             new CommerceService($database, $access, $entitlements, $audit, new FakePaymentGateway(), $callbackKey),
             $entitlements,
@@ -92,6 +94,7 @@ final class PlatformFactory
             $delivery,
             $downloads,
             $schedule,
+            new OwnerRecoveryService($database, $auth, $audit),
         );
     }
 }

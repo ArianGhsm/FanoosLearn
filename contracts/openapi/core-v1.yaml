@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Fanoos Core API
-  version: 1.3.0
+  version: 1.4.0
   description: Canonical human/browser API. Mutating authenticated operations require the existing session CSRF contract.
 servers:
   - url: /api/v1
@@ -19,6 +19,20 @@ paths:
       operationId: logout
       parameters: [{ $ref: '#/components/parameters/Csrf' }]
       responses: { '200': { $ref: '#/components/responses/Success' } }
+  /auth/recovery/redeem:
+    post:
+      security: []
+      operationId: redeemOwnerRecoveryToken
+      description: Redeems a single-use, short-lived, workspace-less token an owner requested from the bot (internal-v1 requestOwnerRecoveryLink) and establishes a normal session for the token's owner -- the same session shape login produces. The token is consumed on first successful redemption; a second attempt, an expired token, or an unknown token are all refused.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/OwnerRecoveryRedeem' } } } }
+      responses: { '200': { $ref: '#/components/responses/OwnerRecoverySession' }, '404': { $ref: '#/components/responses/Error' }, '409': { $ref: '#/components/responses/Error' }, '410': { $ref: '#/components/responses/Error' } }
+  /auth/password:
+    post:
+      operationId: setOwnPassword
+      description: Sets the caller's own password from their own authenticated session -- the only way one is ever set. Revokes the previous password authenticator (if any) and inserts a new one; nothing upstream (a recovery token, an operator, a script) ever carries or reads back the plaintext value.
+      parameters: [{ $ref: '#/components/parameters/Csrf' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/SetPassword' } } } }
+      responses: { '200': { $ref: '#/components/responses/PasswordSet' }, '422': { $ref: '#/components/responses/Error' } }
   /account:
     get: { operationId: getCanonicalAccount, responses: { '200': { $ref: '#/components/responses/Success' } } }
   /workspaces:
@@ -256,6 +270,30 @@ components:
       type: object
       required: [ok, error, meta]
       properties: { ok: { const: false }, error: { type: object, required: [code, message], properties: { code: { type: string }, message: { type: string } } }, meta: { type: object } }
+    OwnerRecoveryRedeem:
+      type: object
+      required: [token]
+      properties: { token: { type: string, minLength: 1, maxLength: 4096 } }
+      additionalProperties: false
+    OwnerRecoverySession:
+      type: object
+      required: [token, csrf_token, expires_at, account]
+      properties:
+        token: { type: string }
+        csrf_token: { type: string }
+        expires_at: { type: string, format: date-time }
+        account: { type: object, description: 'Same shape getCanonicalAccount returns.' }
+      additionalProperties: false
+    SetPassword:
+      type: object
+      required: [new_password]
+      properties: { new_password: { type: string, minLength: 8, maxLength: 128 } }
+      additionalProperties: false
+    PasswordSet:
+      type: object
+      required: [password_set]
+      properties: { password_set: { const: true } }
+      additionalProperties: false
     AssessmentAttemptStarted:
       type: object
       required: [attempt_id, revision, status, assessment_id, title, answers, resumed, question_count]
@@ -326,6 +364,12 @@ components:
   responses:
     Success: { description: Successful response, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
     Error: { description: Error response, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+    OwnerRecoverySession:
+      description: Recovery token redeemed -- a normal session for the token's owner, same shape login returns.
+      content: { application/json: { schema: { allOf: [{ $ref: '#/components/schemas/Envelope' }, { type: object, properties: { data: { $ref: '#/components/schemas/OwnerRecoverySession' } } }] } } }
+    PasswordSet:
+      description: The caller's password was replaced.
+      content: { application/json: { schema: { allOf: [{ $ref: '#/components/schemas/Envelope' }, { type: object, properties: { data: { $ref: '#/components/schemas/PasswordSet' } } }] } } }
     AssessmentAttemptStarted:
       description: Attempt started or resumed -- metadata only, no question content.
       content: { application/json: { schema: { allOf: [{ $ref: '#/components/schemas/Envelope' }, { type: object, properties: { data: { $ref: '#/components/schemas/AssessmentAttemptStarted' } } }] } } }

@@ -16,6 +16,7 @@ use Fanoos\Platform\Core\ClassCreationRequestService;
 use Fanoos\Platform\Core\ClassProvisioningService;
 use Fanoos\Platform\Core\InstitutionTermService;
 use Fanoos\Platform\Core\WorkspacePlatformService;
+use Fanoos\Platform\Identity\OwnerRecoveryService;
 use Fanoos\Platform\Integration\ServiceAuthenticator;
 use Fanoos\Platform\Integration\ServicePrincipal;
 use Fanoos\Platform\Messaging\MessagingLinkService;
@@ -54,6 +55,7 @@ final class InternalApiKernel
         private readonly InstitutionTermService $institutionTerms,
         private readonly ProtectedMediaForensicService $forensic,
         private readonly bool $paymentsEnabled,
+        private readonly OwnerRecoveryService $ownerRecovery,
     ) {
     }
 
@@ -559,6 +561,15 @@ final class InternalApiKernel
                 (string) ($request->body['name'] ?? ''), (string) ($request->body['starts_on'] ?? ''),
                 (string) ($request->body['ends_on'] ?? ''), (string) ($request->body['status'] ?? 'planned'),
             );
+        }
+        if ($path === '/api/internal/v1/auth/owner-recovery/request') {
+            $this->assertKeys($request->body, ['platform', 'subject']);
+            $principal = $this->serviceAuth->authenticate($request, 'auth.owner_recovery.request');
+            // Deliberately linked(), not linkedWorkspace(): recovery is a
+            // platform-scope concern, not a workspace one, and the owner
+            // asking need not even be a member of any workspace.
+            $link = $this->linked($principal, $request->body);
+            return $this->ownerRecovery->requestLink($link['user_id']);
         }
 
         throw new PlatformException('route_not_found', 'Internal API route was not found.', 404);
