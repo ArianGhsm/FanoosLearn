@@ -37,6 +37,7 @@ jobs:
           php scripts/ci/check-secrets.php
           php scripts/ci/check-text.php
           php scripts/ci/check-stage8.php
+          php scripts/ci/check-imports.php
       - name: Exact-commit release artifact
         run: php scripts/ops/build-release.php "$GITHUB_SHA"
 
