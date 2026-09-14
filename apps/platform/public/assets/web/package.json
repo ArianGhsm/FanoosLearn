@@ -1,0 +1,6 @@
+{
+  "name": "fanoos-web-assets",
+  "private": true,
+  "type": "module",
+  "//": "Not a package and never installed. Node resolves a .js file's module type from the nearest package.json, so without this the browser-native ES modules in this tree cannot be imported by the test runner. There is no build step and no dependency here."
+}

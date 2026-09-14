@@ -1,0 +1,20 @@
+.f-login {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 160px);
+}
+
+.f-login__card {
+    width: min(100%, 420px);
+}
+
+.f-login__hint {
+    margin-top: var(--space-4);
+    margin-bottom: 0;
+    text-align: center;
+}
+
+.f-login-page .f-page {
+    padding-block: var(--space-6);
+}

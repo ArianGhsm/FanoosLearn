@@ -96,7 +96,7 @@ final class SchemaContractTest
         foreach (['03_DATA_MODEL.md', '03_LEGACY_DATA_MAPPING.md', '03_RBAC_SCOPE_MATRIX.md', '03_MIGRATION_RUNBOOK.md'] as $document) {
             $this->assert(is_file($this->root . '/docs/fanoos-migration/' . $document), "Required document is missing: {$document}");
         }
-        foreach (['index.php', 'api.php', 'assets/ui-v3/foundation/tokens.css', 'assets/ui-v3/app/bootstrap.js'] as $asset) {
+        foreach (['index.php', 'api.php', 'assets/web/foundation/tokens.css', 'assets/web/foundation/api.js'] as $asset) {
             $this->assert(is_file($this->root . '/apps/platform/public/' . $asset), "Platform UI/API asset is missing: {$asset}");
         }
         foreach (['core-v1.yaml', 'internal-v1.yaml'] as $contract) {
