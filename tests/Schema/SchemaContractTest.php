@@ -20,7 +20,7 @@ final class SchemaContractTest
     {
         $migrationPaths = glob($this->root . '/database/migrations/*.sql') ?: [];
         sort($migrationPaths, SORT_STRING);
-        $this->assert(count($migrationPaths) === 18, 'Expected exactly eighteen versioned platform migrations through the exam question read pacing contract.');
+        $this->assert(count($migrationPaths) === 19, 'Expected exactly nineteen versioned platform migrations through the owner recovery contract.');
 
         $sql = '';
         foreach ($migrationPaths as $path) {
@@ -62,7 +62,7 @@ final class SchemaContractTest
             'notification_channel_preferences', 'notification_channel_deliveries', 'notification_delivery_receipts',
             'content_delivery_receipts', 'protected_media_jobs', 'protected_media_artifacts',
             'release_update_targets', 'release_update_requests', 'release_update_events', 'release_update_snapshots',
-            'exam_question_read_rate_guards',
+            'exam_question_read_rate_guards', 'owner_recovery_tokens', 'owner_recovery_rate_guards',
         ];
         foreach ($requiredTables as $table) {
             $this->assert(in_array($table, $tables, true), "Required table is missing: {$table}");

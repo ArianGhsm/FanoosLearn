@@ -2174,6 +2174,7 @@ class BotApplication:
                 (Button("📋 درخواست‌های ساخت کلاس", self._cb("cqlist")),),
                 (Button("📅 تنظیم ترم‌ها", self._cb("trmlist")),),
                 (Button("🔎 ردیابی نشت", self._cb("fornew")),),
+                (Button("🔑 پیوند ورود به وب", self._cb("ownrec")),),
             )
             if self.state.latest_deployment(subject):
                 rows += ((Button("وضعیت آخرین به‌روزرسانی", self._cb("updlast")),),)
@@ -2189,6 +2190,63 @@ class BotApplication:
             )
         except Exception as exc:
             return self._error(exc)
+
+    def owner_recovery_request(self, subject: str, private: bool):
+        """Issues a single-use web sign-in/recovery link (docs/product owner
+        access recovery). Gated by the same can_manage_deployments probe as
+        the rest of the management menu -- re-checked here, not trusted from
+        the earlier screen, exactly like management()/update_begin() already
+        re-check it rather than caching the first answer. The backend is the
+        actual authority (OwnerRecoveryService checks a live platform-scope
+        role assignment independently); this only decides whether to show
+        the button and a friendly denial if someone reaches it anyway.
+        """
+        if not private:
+            return ActionResult(
+                warning_screen(
+                    "درخواست پیوند ورود فقط در گفت‌وگوی خصوصی امکان‌پذیر است.",
+                    title="🔑 پیوند ورود به وب",
+                    kind="owner_recovery",
+                    rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+                )
+            )
+        try:
+            overview = (
+                self.backend.deployment_overview(subject, self.config.deployment_target_key)
+                if self.config.deployment_target_key
+                else {}
+            )
+            if not overview.get("can_manage_deployments"):
+                return ActionResult(
+                    error_screen(
+                        "اجازه دریافت پیوند ورود را ندارید.",
+                        title="🔑 پیوند ورود به وب",
+                        kind="owner_recovery",
+                        rows=self._nav_rows(back_action="manage", back_label="‹ مدیریت"),
+                    )
+                )
+            issued = self.backend.owner_recovery_request(self.platform, subject)
+        except Exception as exc:
+            return self._error(exc)
+        token = str(issued.get("token") or "")
+        minutes = max(1, int(issued.get("expires_in_seconds") or 0) // 60)
+        rows: tuple = ()
+        if self.config.web_base_url and token:
+            url = f"{self.config.web_base_url}/recovery?token={token}"
+            rows += ((Button("ورود به فانوس", url=url),),)
+        rows += self._nav_rows(back_action="manage", back_label="‹ مدیریت")
+        return ActionResult(
+            semantic_screen(
+                "🔑 پیوند ورود به وب",
+                "owner_recovery_issued",
+                breadcrumb="بیشتر › مدیریت › پیوند ورود",
+                intro=(
+                    f"این پیوند فقط یک‌بار کار می‌کند و تا {minutes} دقیقه دیگر منقضی می‌شود. "
+                    "آن را با کسی به اشتراک نگذار."
+                ),
+                rows=rows,
+            )
+        )
 
     def update_begin(self, subject: str, private: bool):
         if self.platform != "telegram":
@@ -4565,6 +4623,8 @@ class BotApplication:
 
         if action == "manage":
             return self.management(subject, private)
+        if action == "ownrec":
+            return self.owner_recovery_request(subject, private)
         if action == "clsnew":
             return self.class_wizard_begin(subject, private)
         if action == "clsback":

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Fanoos Internal Service API
-  version: 1.1.0
+  version: 1.2.0
   description: |
     Signed service-only API for Telegram, Bale and narrow workers. Human bearer sessions and browser CSRF are not accepted here.
     Every request is signed over the exact raw body using HMAC-SHA256. Canonical bytes are:
@@ -13,6 +13,13 @@ servers:
 security:
   - serviceKey: []
 paths:
+  /auth/owner-recovery/request:
+    post:
+      operationId: requestOwnerRecoveryLink
+      x-required-service-action: auth.owner_recovery.request
+      description: Issues a single-use, short-lived, workspace-less recovery token bound to the linked user, only when that user already holds a live platform-scope role assignment (the same predicate AuthService::isPlatformOperator() decides web-side with). Rate-limited per user. The token itself is returned here (never a password) so the adapter can deliver it over the same messaging channel that authenticated the request; redeeming it is a core-v1 (web) call, not an internal one.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LinkedSubject' } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '429': { $ref: '#/components/responses/Error' } }
   /messaging/link-challenges/consume:
     post:
       operationId: consumeMessagingLinkChallenge

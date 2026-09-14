@@ -484,7 +484,7 @@ body.x-focus .f-page {
 
 .x-report__percent {
     grid-area: 1 / 1;
-    font-family: var(--font-display);
+    font-family: var(--font-body);
     font-size: 2rem;
     font-weight: 700;
 }

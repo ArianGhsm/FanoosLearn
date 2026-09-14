@@ -15,6 +15,7 @@ use Fanoos\Platform\Core\WorkspacePlatformService;
 use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Identity\AuthService;
 use Fanoos\Platform\Identity\AuthenticatedSession;
+use Fanoos\Platform\Identity\OwnerRecoveryService;
 use Fanoos\Platform\Support\PlatformException;
 use Throwable;
 
@@ -32,6 +33,7 @@ final class ApiKernel
         private readonly ?SecureDeliveryService $delivery = null,
         private readonly ?SecureObjectDownloadService $downloads = null,
         private readonly ?ScheduleProjectionService $schedule = null,
+        private readonly ?OwnerRecoveryService $ownerRecovery = null,
     ) {
     }
 
@@ -83,6 +85,18 @@ final class ApiKernel
             ];
         }
 
+        if ($request->method === 'POST' && $request->path === '/api/v1/auth/recovery/redeem') {
+            $session = $this->requireOwnerRecovery()->redeem((string) ($request->body['token'] ?? ''));
+            return [
+                'status' => 200,
+                'data' => [
+                    'token' => $session->token, 'csrf_token' => $session->csrfToken,
+                    'expires_at' => $session->expiresAt, 'account' => $this->auth->account($session),
+                ],
+                'headers' => ['Set-Cookie: fanoos_session=' . rawurlencode($session->token) . '; Path=/; HttpOnly; Secure; SameSite=Lax'],
+            ];
+        }
+
         if ($request->method === 'POST' && $request->path === '/api/v1/payments/callback') {
             $this->requirePayments();
             return ['status' => 200, 'data' => $this->commerce->handleCallback(
@@ -100,6 +114,10 @@ final class ApiKernel
         if ($request->method === 'POST' && $request->path === '/api/v1/auth/logout') {
             $this->auth->logout($session);
             return ['status' => 200, 'data' => ['logged_out' => true], 'headers' => ['Set-Cookie: fanoos_session=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax']];
+        }
+        if ($request->method === 'POST' && $request->path === '/api/v1/auth/password') {
+            $this->auth->setPassword($session, (string) ($request->body['new_password'] ?? ''));
+            return ['status' => 200, 'data' => ['password_set' => true]];
         }
         if ($request->method === 'GET' && in_array($request->path, ['/api/v1/account', '/api/v1/workspaces'], true)) {
             return ['status' => 200, 'data' => $this->auth->account($session)];
@@ -403,6 +421,15 @@ final class ApiKernel
         }
 
         return $this->exams;
+    }
+
+    private function requireOwnerRecovery(): OwnerRecoveryService
+    {
+        if ($this->ownerRecovery === null) {
+            throw new PlatformException('owner_recovery_unavailable', 'Recovery service is not configured.', 503);
+        }
+
+        return $this->ownerRecovery;
     }
 
     private function requireDelivery(): SecureDeliveryService

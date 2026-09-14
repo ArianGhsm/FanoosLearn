@@ -91,11 +91,34 @@ SQL);
                 $touch->execute(['id' => $account['authenticator_id']]);
             }
 
-            $token = self::randomToken();
-            $csrf = self::randomToken();
-            $sessionId = Uuid::v7();
-            $expiresAt = gmdate('Y-m-d H:i:s.u', time() + $this->sessionLifetimeSeconds);
-            $session = $this->database->prepare(<<<'SQL'
+            $session = $this->establishSession((string) $account['user_id'], $client);
+            $this->audit->record(null, (string) $account['user_id'], 'auth.login', 'session', $session->sessionId);
+            return $session;
+        });
+
+        if ($result instanceof PlatformException) {
+            throw $result;
+        }
+        return $result;
+    }
+
+    /**
+     * Inserts a new iam_sessions row for an already-identified user and
+     * returns it as an AuthenticatedSession. Shared by login() (after
+     * password verification) and OwnerRecoveryService::redeem() (after
+     * consuming a recovery token) so the two never drift into two slightly
+     * different session shapes. Must be called from inside the caller's own
+     * Transaction::run -- it does not open one itself.
+     *
+     * @param array<string, scalar|null> $client
+     */
+    public function establishSession(string $userId, array $client = []): AuthenticatedSession
+    {
+        $token = self::randomToken();
+        $csrf = self::randomToken();
+        $sessionId = Uuid::v7();
+        $expiresAt = gmdate('Y-m-d H:i:s.u', time() + $this->sessionLifetimeSeconds);
+        $session = $this->database->prepare(<<<'SQL'
 INSERT INTO iam_sessions (
     id, user_id, selected_workspace_id, token_digest, csrf_token_digest,
     created_at, last_seen_at, expires_at, revoked_at, client_json
@@ -104,22 +127,15 @@ INSERT INTO iam_sessions (
     UTC_TIMESTAMP(6), UTC_TIMESTAMP(6), :expires_at, NULL, :client_json
 )
 SQL);
-            $session->bindValue(':id', $sessionId);
-            $session->bindValue(':user_id', (string) $account['user_id']);
-            $session->bindValue(':token_digest', hash('sha256', $token, true), PDO::PARAM_LOB);
-            $session->bindValue(':csrf_digest', hash('sha256', $csrf, true), PDO::PARAM_LOB);
-            $session->bindValue(':expires_at', $expiresAt);
-            $session->bindValue(':client_json', json_encode($client, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));
-            $session->execute();
+        $session->bindValue(':id', $sessionId);
+        $session->bindValue(':user_id', $userId);
+        $session->bindValue(':token_digest', hash('sha256', $token, true), PDO::PARAM_LOB);
+        $session->bindValue(':csrf_digest', hash('sha256', $csrf, true), PDO::PARAM_LOB);
+        $session->bindValue(':expires_at', $expiresAt);
+        $session->bindValue(':client_json', json_encode($client, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));
+        $session->execute();
 
-            $this->audit->record(null, (string) $account['user_id'], 'auth.login', 'session', $sessionId);
-            return new AuthenticatedSession($sessionId, (string) $account['user_id'], $token, $csrf, null, $expiresAt);
-        });
-
-        if ($result instanceof PlatformException) {
-            throw $result;
-        }
-        return $result;
+        return new AuthenticatedSession($sessionId, $userId, $token, $csrf, null, $expiresAt);
     }
 
     public function authenticate(string $token): AuthenticatedSession
@@ -246,8 +262,14 @@ SQL);
      * or a role-key match: an owner is whoever has been granted the platform
      * scope, which is the same fact `ScopeAuthorizer` already decides
      * against, so the two cannot drift apart.
+     *
+     * Public so any other service that needs "is this account an owner of
+     * the installation" (OwnerRecoveryService, for one) asks this exact
+     * question rather than writing a second definition that can drift from
+     * it -- a role-key match or a hardcoded user id would both be that
+     * second definition.
      */
-    private function isPlatformOperator(string $userId): bool
+    public function isPlatformOperator(string $userId): bool
     {
         $query = $this->database->prepare(<<<'SQL'
 SELECT 1
@@ -286,6 +308,45 @@ SQL);
         }
         $update = $this->database->prepare('UPDATE iam_sessions SET selected_workspace_id = :workspace WHERE id = :session AND user_id = :user AND revoked_at IS NULL');
         $update->execute(['workspace' => $workspaceId, 'session' => $session->sessionId, 'user' => $session->userId]);
+    }
+
+    /**
+     * Sets the caller's own password -- the only way one is ever set. The
+     * caller types it, once, into their own authenticated browser session;
+     * nothing upstream of this method (a recovery token, an operator, a
+     * script) ever carries the plaintext value or reads it back.
+     *
+     * Revokes the previous 'password' authenticator (if any) and inserts a
+     * new one rather than updating the row in place, so a leaked or
+     * mis-issued old digest cannot verify again even if something retained
+     * it -- and so this also doubles as the "no web login yet" path: an
+     * account with no password authenticator simply has nothing to revoke.
+     */
+    public function setPassword(AuthenticatedSession $session, string $newPassword): void
+    {
+        if (mb_strlen($newPassword) < 8 || mb_strlen($newPassword) > 128) {
+            throw new PlatformException('password_invalid', 'Password must be between 8 and 128 characters.', 422);
+        }
+        Transaction::run($this->database, function () use ($session, $newPassword): void {
+            $revoke = $this->database->prepare(<<<'SQL'
+UPDATE iam_authenticators
+SET revoked_at = UTC_TIMESTAMP(6)
+WHERE user_id = :user AND authenticator_type = 'password' AND revoked_at IS NULL
+SQL);
+            $revoke->execute(['user' => $session->userId]);
+
+            $insert = $this->database->prepare(<<<'SQL'
+INSERT INTO iam_authenticators (id, user_id, authenticator_type, secret_digest, metadata_json, created_at)
+VALUES (:id, :user, 'password', :digest, JSON_OBJECT(), UTC_TIMESTAMP(6))
+SQL);
+            $insert->execute([
+                'id' => Uuid::v7(),
+                'user' => $session->userId,
+                'digest' => $this->passwordHasher->hash($newPassword),
+            ]);
+
+            $this->audit->record(null, $session->userId, 'auth.password.set', 'iam_authenticator', null, 'success');
+        });
     }
 
     /** @return array{role_keys:list<string>,permission_keys:list<string>} */

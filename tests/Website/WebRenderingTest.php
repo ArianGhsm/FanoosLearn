@@ -12,6 +12,7 @@ use Fanoos\Platform\Web\ExamAttemptPage;
 use Fanoos\Platform\Web\ExamsPage;
 use Fanoos\Platform\Web\NotFoundPage;
 use Fanoos\Platform\Web\PageRenderer;
+use Fanoos\Platform\Web\RecoveryPage;
 use Fanoos\Platform\Web\ViewerContext;
 use RuntimeException;
 
@@ -47,6 +48,8 @@ final class WebRenderingTest
         $this->notFoundSaysTheAddressIsWrong($renderer);
         $this->everyPageIsRightToLeftPersian($renderer);
         $this->examPagesCarryTheWorkspaceButNoQuestionContent($renderer);
+        $this->recoveryPageChecksTheLinkClientSideAndCarriesNoToken($renderer);
+        $this->noPageReferencesTheRemovedDisplayFace($renderer);
 
         return $this->assertions;
     }
@@ -179,6 +182,39 @@ final class WebRenderingTest
         foreach (['choices', 'prompt', 'answer', 'explanation'] as $leak) {
             $this->assert(!str_contains($attempt, '"' . $leak . '"'), "The runner document must not carry question data: {$leak}");
         }
+    }
+
+    private function recoveryPageChecksTheLinkClientSideAndCarriesNoToken(PageRenderer $renderer): void
+    {
+        $html = (new RecoveryPage($renderer))->render();
+
+        $this->assert(!str_contains($html, 'fanoos-csrf'), 'The recovery page is reached signed-out and must carry no CSRF token.');
+        $this->assert(str_contains($html, 'id="recovery-checking"'), 'The recovery page must show a checking state while it redeems the link.');
+        $this->assert(str_contains($html, 'id="recovery-failed"') && str_contains($html, 'recovery-failed-text'), 'The recovery page must have a failure state for an invalid/used/expired link.');
+        $this->assert(str_contains($html, 'id="recovery-form"') && str_contains($html, 'name="new_password"'), 'The recovery page must offer a way to set a new password.');
+        // The server never sees the query string's token here (it is read
+        // and sent by the client script only), so the rendered document
+        // itself must never carry one either.
+        $this->assert(!preg_match('/[?&]token=/', $html), 'The rendered recovery page must not embed a token.');
+    }
+
+    /**
+     * The owner dropped the two-family split (docs/product decision): one
+     * face, Vazirmatn, everywhere including headings. AbarHigh's files were
+     * deleted; this asserts nothing in the shipped stylesheets can still
+     * name it, which is the only way `var(--font-display)` could resolve to
+     * a font that is no longer served.
+     */
+    private function noPageReferencesTheRemovedDisplayFace(PageRenderer $renderer): void
+    {
+        foreach (['/assets/web/foundation/type.css', '/assets/web/pages/runner.css'] as $sheet) {
+            $contents = file_get_contents($this->root . '/apps/platform/public' . $sheet);
+            $this->assert(is_string($contents), "Stylesheet is missing: {$sheet}");
+            $this->assert(!str_contains((string) $contents, 'AbarHigh'), "Removed display face is still referenced in {$sheet}.");
+            $this->assert(!str_contains((string) $contents, '--font-display'), "Removed --font-display token is still referenced in {$sheet}.");
+        }
+        $this->assert(!is_dir($this->root . '/apps/platform/public/assets/fonts/abarhigh'), 'AbarHigh font files were not removed.');
+        $this->assert(is_dir($this->root . '/apps/platform/public/assets/fonts/yekanbakh'), 'Yekan Bakh must stay -- it is the protected-media worker\'s watermark font, unrelated to this change.');
     }
 
     private function assert(bool $condition, string $message): void
