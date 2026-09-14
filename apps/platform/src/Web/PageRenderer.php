@@ -57,7 +57,7 @@ final class PageRenderer
             $head[] = '<meta name="fanoos-csrf" content="' . $this->escape($viewer->csrfToken) . '">';
         }
 
-        foreach (['/assets/fonts/yekanbakh/fonts.css', '/assets/web/foundation/tokens.css', '/assets/web/foundation/base.css'] as $sheet) {
+        foreach (['/assets/web/foundation/tokens.css', '/assets/web/foundation/type.css', '/assets/web/foundation/base.css'] as $sheet) {
             $head[] = '<link rel="stylesheet" href="' . $this->escape($this->assets->url($sheet)) . '">';
         }
         if ($viewer !== null) {
