@@ -21,10 +21,15 @@ use Fanoos\Platform\Support\DatabaseConnection;
  *
  * Usage:
  *   php scripts/ops/import-question-bank.php \
- *       --file=<export.json> --workspace=<uuid> --actor=<uuid> \
+ *       --file=<export.json> --workspace=<uuid> --actor=<uuid> --reviewer=<uuid> \
  *       --subject=<subject> --chapter=<chapter> --title=<title> \
  *       [--limit=N] [--kind=practice|mock_exam|past_exam] [--max-attempts=N]
  *       [--course=<uuid>] [--dry-run]
+ *
+ * `--reviewer` must be a different person from `--actor`: ExamService
+ * refuses to let an assessment's creator approve their own work, and that
+ * separation is worth honouring for an import too -- it is the only check
+ * standing between a bad bank and a published one.
  *
  * A row is skipped, and counted, when it cannot be scored or rendered:
  * a non-multiple-choice question, a deleted one, a missing or ambiguous
@@ -69,6 +74,7 @@ try {
     $file = (string) argument('file', '');
     $workspaceId = (string) argument('workspace', '');
     $actorId = (string) argument('actor', '');
+    $reviewerId = (string) argument('reviewer', '');
     $subject = (string) argument('subject', '');
     $chapter = (string) argument('chapter', '');
     $title = (string) argument('title', '');
@@ -78,10 +84,13 @@ try {
     $courseId = argument('course');
     $dryRun = argument('dry-run') !== null;
 
-    foreach (['file' => $file, 'workspace' => $workspaceId, 'actor' => $actorId, 'title' => $title] as $name => $value) {
+    foreach (['file' => $file, 'workspace' => $workspaceId, 'actor' => $actorId, 'reviewer' => $reviewerId, 'title' => $title] as $name => $value) {
         if ($value === '') {
             throw new RuntimeException("--{$name} is required.");
         }
+    }
+    if ($reviewerId === $actorId) {
+        throw new RuntimeException('--reviewer must be a different account from --actor: a creator cannot approve their own assessment.');
     }
     if (!is_file($file)) {
         throw new RuntimeException("Export file not found: {$file}");
@@ -208,8 +217,8 @@ try {
     $assessmentId = (string) $created['assessment_id'];
     $versionId = (string) $created['version_id'];
     $exams->submitForReview($actorId, $workspaceId, $assessmentId, $versionId);
-    $exams->reviewVersion($actorId, $workspaceId, $assessmentId, $versionId, 'approved', 'imported question bank');
-    $exams->publishVersion($actorId, $workspaceId, $assessmentId, $versionId);
+    $exams->reviewVersion($reviewerId, $workspaceId, $assessmentId, $versionId, 'approved', 'imported question bank');
+    $exams->publishVersion($reviewerId, $workspaceId, $assessmentId, $versionId);
 
     $policy = $database->prepare(<<<'SQL'
 UPDATE exam_access_policies SET max_attempts = :attempts, updated_at = UTC_TIMESTAMP(6)
