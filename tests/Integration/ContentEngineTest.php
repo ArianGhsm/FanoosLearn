@@ -206,6 +206,13 @@ final class ContentEngineTest
         self::assert(!array_key_exists('review', $reviewSummary) && $reviewSummary['question_count'] === 2 && $reviewSummary['score_basis_points'] === 10000, 'Attempt review must be a summary only, not the whole per-question set.');
         $q1Review = $exams->attemptReviewQuestion($fixture['student'], $fixture['workspace_a'], $attempt['attempt_id'], $q1Position);
         self::assert($q1Review['question_id'] === 'q1' && $q1Review['is_correct'] === true && $q1Review['explanation'] === 'پاسخ چهار است.', 'Per-question review/explanation read failed.');
+        // The review must speak the order the student actually answered
+        // against. Asserting is_correct alone cannot catch a canonical/
+        // displayed index mix-up, which would mark a different option as the
+        // right answer and teach the wrong thing. Assert against the text.
+        self::assert($q1Review['choices'] === $byPosition[$q1Position]['question']['choices'], 'Review choices must be the same displayed order the student answered against.');
+        self::assert($q1Review['choices'][$q1Review['correct']] === 'چهار', 'Review marked the wrong option as correct: the correct index is not in displayed order.');
+        self::assert($q1Review['selected'] === $q1DisplayedCorrect, 'Review reported the selection in a different order than the student answered in.');
         $q2Review = $exams->attemptReviewQuestion($fixture['student'], $fixture['workspace_a'], $attempt['attempt_id'], $q2Position);
         self::assert($q2Review['question_id'] === 'q2' && $q2Review['is_correct'] === true, 'Per-question review for the second question failed.');
         self::assert($exams->analytics($fixture['manager'], $fixture['workspace_a'], $assessment['assessment_id'])['average_score_basis_points'] === 10000, 'Assessment analytics did not use scored attempts.');

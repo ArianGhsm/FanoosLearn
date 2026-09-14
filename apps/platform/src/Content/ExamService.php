@@ -533,9 +533,12 @@ SQL);
      * of a scored attempt the caller owns, paced by the same token bucket
      * readQuestion() uses. Position follows the identical per-attempt order
      * ExamAttemptShuffle produced while the attempt was in progress, so
-     * "question 3" means the same thing before and after submission.
+     * "question 3" means the same thing before and after submission -- and so
+     * do its choice positions: `selected` and `correct` are indices into the
+     * returned `choices`, which are in the same displayed order the student
+     * answered against, never the canonical authored order.
      *
-     * @return array{position:int,question_count:int,question_id:string,selected:?int,correct:int,is_correct:bool,explanation:?string}
+     * @return array{position:int,question_count:int,question_id:string,prompt:string,choices:list<string>,selected:?int,correct:int,is_correct:bool,explanation:?string}
      */
     public function attemptReviewQuestion(string $userId, string $workspaceId, string $attemptId, int $position, ?int $now = null): array
     {
@@ -565,9 +568,24 @@ SQL);
                 'question_id' => $questionId, 'position' => $position,
             ]);
 
+            // review_json stores canonical (authored) choice indices, but the
+            // student answered against this attempt's *displayed* order. The
+            // review must speak the order they actually saw, or it highlights
+            // a different option than the one that was correct -- silently
+            // teaching the wrong answer. Translate both indices back, and
+            // return the displayed choices so the review can render the
+            // question at all.
+            $question = $this->questionById($definition, $questionId);
+            $choiceOrder = ExamAttemptShuffle::choiceOrder($attemptId, $questionId, count($question['choices']));
+            $displayedChoices = array_map(static fn (int $canonical): string => $question['choices'][$canonical], $choiceOrder);
+            $displayedOf = array_flip($choiceOrder);
+            $selected = $entry['selected'] === null ? null : ($displayedOf[$entry['selected']] ?? null);
+
             return [
                 'allowed' => true, 'position' => $position, 'question_count' => $questionCount,
-                'question_id' => $questionId, 'selected' => $entry['selected'], 'correct' => $entry['correct'],
+                'question_id' => $questionId, 'prompt' => $question['prompt'],
+                'choices' => $displayedChoices,
+                'selected' => $selected, 'correct' => $displayedOf[$entry['correct']],
                 'is_correct' => $entry['is_correct'], 'explanation' => $entry['explanation'],
             ];
         });
