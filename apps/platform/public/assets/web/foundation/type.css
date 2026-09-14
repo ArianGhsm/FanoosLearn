@@ -1,0 +1,94 @@
+/*
+ * FANOOS type system.
+ *
+ * Two families, each doing one job:
+ *
+ *   Vazirmatn  -- body, interface, and above all question and answer text.
+ *                 It is the most legible Persian screen face at reading
+ *                 sizes, and it carries a matched Latin, which matters here:
+ *                 exam questions are full of Latin terminology and a Persian
+ *                 face without one leaves the browser to substitute a
+ *                 mismatched Latin mid-sentence.
+ *   AbarHigh   -- headings only. It has the display weight that makes a page
+ *                 feel deliberate; it is not a reading face and is never
+ *                 used for a question.
+ *
+ * Both are self-hosted. Google Fonts is not reachably usable from Iran, so a
+ * CDN reference would silently fall back to a system font for exactly the
+ * people this product serves. Vazirmatn ships under the SIL Open Font
+ * License (see OFL.txt beside the files).
+ *
+ * `font-display: swap` throughout: text must be readable while a face loads,
+ * never invisible. On a slow connection a student reads the question in a
+ * fallback rather than staring at blank space.
+ */
+
+@font-face {
+    font-family: "Vazirmatn";
+    src: url("/assets/fonts/vazirmatn/Vazirmatn-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Vazirmatn";
+    src: url("/assets/fonts/vazirmatn/Vazirmatn-SemiBold.woff2") format("woff2");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Vazirmatn";
+    src: url("/assets/fonts/vazirmatn/Vazirmatn-Bold.woff2") format("woff2");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "AbarHigh";
+    src: url("/assets/fonts/abarhigh/AbarHigh-SemiBold.woff2") format("woff2");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "AbarHigh";
+    src: url("/assets/fonts/abarhigh/AbarHigh-Bold.woff2") format("woff2");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/*
+ * Persian text needs more line height than Latin at the same size: the
+ * ascenders, descenders and dots of the script collide at Latin leading.
+ * These are the reading defaults; question and choice text raises them
+ * further in the exam stylesheet.
+ */
+:root {
+    --font-body: "Vazirmatn", "Segoe UI", Tahoma, system-ui, sans-serif;
+    --font-display: "AbarHigh", var(--font-body);
+
+    /* Reading text -- questions, choices, explanations. */
+    --reading-size: 1.05rem;
+    --reading-leading: 2;
+}
+
+h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+}
+
+/*
+ * Persian digits read as numbers to this audience; Latin digits read as
+ * foreign. `font-variant-numeric` cannot do this, so anything that should
+ * display Persian digits carries this class and the value is converted at
+ * the point it is written.
+ */
+.f-num {
+    font-feature-settings: "ss01";
+}
