@@ -18,6 +18,9 @@ use Fanoos\Platform\Content\SecureObjectDownloadService;
 use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Http\ApiKernel;
 use Fanoos\Platform\Identity\AuthService;
+use Fanoos\Platform\Web\AssetVersioner;
+use Fanoos\Platform\Web\PageRenderer;
+use Fanoos\Platform\Web\WebRouter;
 use Fanoos\Platform\Identity\PasswordHasher;
 use Fanoos\Platform\Storage\FilesystemObjectStore;
 use Fanoos\Platform\Storage\SignedDownloadToken;
@@ -26,6 +29,24 @@ use Fanoos\Platform\Support\RuntimeConfig;
 
 final class PlatformFactory
 {
+    /**
+     * The website's router. Shares nothing with the API kernel except the
+     * database and AuthService: pages resolve the viewer from the session
+     * cookie and then render, while every piece of data on them still comes
+     * from the same public API the browser would call.
+     */
+    public static function web(): WebRouter
+    {
+        $database = DatabaseConnection::fromEnvironment();
+        $config = RuntimeConfig::load();
+        $release = $config->optionalString('FANOOS_ASSET_VERSION');
+
+        return new WebRouter(
+            new AuthService($database, new PasswordHasher(), new AuditLogger($database)),
+            new PageRenderer(new AssetVersioner(__DIR__ . '/../../public', $release)),
+        );
+    }
+
     public static function api(): ApiKernel
     {
         $database = DatabaseConnection::fromEnvironment();

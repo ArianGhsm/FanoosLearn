@@ -1,0 +1,273 @@
+/*
+ * Reset, typography and the small set of components every page shares.
+ * Written RTL-first: `start`/`end` logical properties throughout, never
+ * left/right, so a future LTR locale needs no stylesheet changes.
+ */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--font-main);
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--text-primary);
+    background:
+        radial-gradient(120% 80% at 50% 0%, var(--bg-aura-start), transparent 60%),
+        linear-gradient(180deg, var(--bg-aura-end), var(--bg-body) 40%);
+    background-attachment: fixed;
+}
+
+h1, h2, h3, h4 {
+    margin: 0 0 var(--space-3);
+    line-height: 1.35;
+    font-weight: 700;
+}
+
+h1 { font-size: 1.65rem; }
+h2 { font-size: 1.3rem; }
+h3 { font-size: 1.05rem; }
+
+p {
+    margin: 0 0 var(--space-3);
+}
+
+a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* The `hidden` attribute is how pages hide things, and every component below
+ * that sets `display` would otherwise silently override it -- which is how a
+ * hidden error notice ends up visible on a freshly loaded form. */
+[hidden] {
+    display: none !important;
+}
+
+/* Every interactive element gets the same visible focus treatment. Removing
+ * it makes the site unusable by keyboard, which is not a trade we make. */
+:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+}
+
+.f-skip {
+    position: absolute;
+    inset-inline-start: var(--space-4);
+    top: -60px;
+    z-index: 100;
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: var(--text-on-accent);
+    transition: top 0.15s ease;
+}
+
+.f-skip:focus {
+    top: var(--space-3);
+}
+
+.f-page {
+    width: min(100% - 2 * var(--space-4), var(--content-width));
+    margin-inline: auto;
+    padding-block: var(--space-6) var(--space-7);
+}
+
+.f-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+    padding: var(--space-5);
+}
+
+.f-muted {
+    color: var(--text-secondary);
+}
+
+.f-tiny {
+    font-size: 0.82rem;
+    color: var(--text-tertiary);
+}
+
+/* Buttons */
+
+.f-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: 44px;
+    padding: var(--space-2) var(--space-5);
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--surface-strong);
+    color: var(--text-primary);
+    transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.f-btn:hover:not(:disabled) {
+    background: var(--surface-inset);
+    text-decoration: none;
+}
+
+.f-btn:disabled,
+.f-btn[aria-disabled="true"] {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.f-btn--primary {
+    background: var(--accent);
+    color: var(--text-on-accent);
+}
+
+.f-btn--primary:hover:not(:disabled) {
+    background: var(--accent-strong);
+}
+
+.f-btn--ghost {
+    background: transparent;
+    border-color: var(--border-strong);
+}
+
+.f-btn--block {
+    width: 100%;
+}
+
+/* Forms */
+
+.f-field {
+    display: block;
+    margin-bottom: var(--space-4);
+}
+
+.f-field__label {
+    display: block;
+    margin-bottom: var(--space-2);
+    font-weight: 600;
+    font-size: 0.92rem;
+}
+
+.f-field__hint {
+    margin-top: var(--space-1);
+    font-size: 0.82rem;
+    color: var(--text-tertiary);
+}
+
+.f-input {
+    width: 100%;
+    min-height: 46px;
+    padding: var(--space-2) var(--space-4);
+    font: inherit;
+    color: var(--text-primary);
+    background: var(--surface-muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+
+.f-input:focus {
+    border-color: var(--accent);
+}
+
+.f-input[aria-invalid="true"] {
+    border-color: var(--danger);
+}
+
+/* Notices. `role` is set in markup; the class only carries the colour. */
+
+.f-notice {
+    display: flex;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--surface-muted);
+    margin-bottom: var(--space-4);
+}
+
+.f-notice--error {
+    border-color: var(--danger);
+    background: var(--danger-soft);
+}
+
+.f-notice--warning {
+    border-color: var(--warning);
+    background: var(--warning-soft);
+}
+
+.f-notice--success {
+    border-color: var(--success);
+    background: var(--success-soft);
+}
+
+.f-notice__body {
+    flex: 1;
+}
+
+.f-notice__title {
+    font-weight: 700;
+    margin-bottom: var(--space-1);
+}
+
+.f-notice p:last-child {
+    margin-bottom: 0;
+}
+
+/* Empty states -- used wherever a list has nothing in it. A blank area with
+ * no explanation reads as a broken page, so this always says why. */
+
+.f-empty {
+    text-align: center;
+    padding: var(--space-6) var(--space-4);
+    color: var(--text-secondary);
+}
+
+.f-empty__title {
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+}
+
+.f-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

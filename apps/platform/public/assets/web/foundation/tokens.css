@@ -1,0 +1,144 @@
+/*
+ * FANOOS web design tokens.
+ *
+ * Every colour, radius and shadow used anywhere on the site is defined here
+ * once, in both themes. A page stylesheet that hard-codes a colour is a bug:
+ * it will be wrong in the other theme, and nothing will catch it.
+ *
+ * The palette takes its proportions from the legacy Dent site (a light,
+ * low-contrast paper ground with one confident blue accent) because that is
+ * the look the owner already trusts with real students -- but the values are
+ * FANOOS's own, and nothing here names a university, a cohort or a subject.
+ */
+
+:root {
+    color-scheme: light;
+
+    --font-main: "YekanBakh Fanoos", "Segoe UI", Tahoma, system-ui, sans-serif;
+
+    --bg-body: #f4f7fb;
+    --bg-aura-start: #f8fbff;
+    --bg-aura-end: #edf4ff;
+
+    --surface: #ffffff;
+    --surface-muted: #f7f9fc;
+    --surface-strong: #edf2f7;
+    --surface-inset: #f1f5fa;
+
+    --text-primary: #162235;
+    --text-secondary: #5d6b7d;
+    --text-tertiary: #8491a3;
+    --text-on-accent: #ffffff;
+
+    --accent: #2b6df3;
+    --accent-strong: #1f56d6;
+    --accent-soft: rgba(43, 109, 243, 0.12);
+
+    --success: #158f63;
+    --success-soft: rgba(21, 143, 99, 0.12);
+    --warning: #c2811d;
+    --warning-soft: rgba(194, 129, 29, 0.12);
+    --danger: #c7535e;
+    --danger-soft: rgba(199, 83, 94, 0.12);
+
+    --border: rgba(127, 145, 165, 0.22);
+    --border-strong: rgba(102, 122, 148, 0.34);
+
+    --focus-ring: rgba(43, 109, 243, 0.35);
+    --shadow-soft: 0 16px 40px -30px rgba(19, 35, 62, 0.22);
+    --shadow-strong: 0 22px 50px -34px rgba(17, 30, 54, 0.28);
+
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --radius-pill: 999px;
+
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --space-6: 32px;
+    --space-7: 48px;
+
+    --content-width: 1080px;
+    --header-height: 64px;
+}
+
+/*
+ * Dark theme. The viewer's own setting wins over the system preference, so
+ * both a media query and an explicit attribute are defined -- and the media
+ * query is guarded so an explicit "light" choice is never overridden by a
+ * dark system setting.
+ */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        color-scheme: dark;
+
+        --bg-body: #0f151f;
+        --bg-aura-start: #131b28;
+        --bg-aura-end: #0d1320;
+
+        --surface: #182231;
+        --surface-muted: #141d2a;
+        --surface-strong: #1f2a3b;
+        --surface-inset: #121a26;
+
+        --text-primary: #e8eef7;
+        --text-secondary: #a3b1c4;
+        --text-tertiary: #7a8798;
+
+        --accent: #5b91ff;
+        --accent-strong: #7aa6ff;
+        --accent-soft: rgba(91, 145, 255, 0.16);
+
+        --success: #3fbf8f;
+        --success-soft: rgba(63, 191, 143, 0.16);
+        --warning: #e0a63f;
+        --warning-soft: rgba(224, 166, 63, 0.16);
+        --danger: #e8737e;
+        --danger-soft: rgba(232, 115, 126, 0.16);
+
+        --border: rgba(160, 180, 205, 0.18);
+        --border-strong: rgba(170, 190, 215, 0.3);
+
+        --focus-ring: rgba(91, 145, 255, 0.45);
+        --shadow-soft: 0 16px 40px -30px rgba(0, 0, 0, 0.7);
+        --shadow-strong: 0 22px 50px -34px rgba(0, 0, 0, 0.8);
+    }
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+
+    --bg-body: #0f151f;
+    --bg-aura-start: #131b28;
+    --bg-aura-end: #0d1320;
+
+    --surface: #182231;
+    --surface-muted: #141d2a;
+    --surface-strong: #1f2a3b;
+    --surface-inset: #121a26;
+
+    --text-primary: #e8eef7;
+    --text-secondary: #a3b1c4;
+    --text-tertiary: #7a8798;
+
+    --accent: #5b91ff;
+    --accent-strong: #7aa6ff;
+    --accent-soft: rgba(91, 145, 255, 0.16);
+
+    --success: #3fbf8f;
+    --success-soft: rgba(63, 191, 143, 0.16);
+    --warning: #e0a63f;
+    --warning-soft: rgba(224, 166, 63, 0.16);
+    --danger: #e8737e;
+    --danger-soft: rgba(232, 115, 126, 0.16);
+
+    --border: rgba(160, 180, 205, 0.18);
+    --border-strong: rgba(170, 190, 215, 0.3);
+
+    --focus-ring: rgba(91, 145, 255, 0.45);
+    --shadow-soft: 0 16px 40px -30px rgba(0, 0, 0, 0.7);
+    --shadow-strong: 0 22px 50px -34px rgba(0, 0, 0, 0.8);
+}

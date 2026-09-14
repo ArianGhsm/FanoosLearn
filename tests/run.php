@@ -27,6 +27,7 @@ use Fanoos\Tests\Operations\GitHubCiVerifierContractTest;
 use Fanoos\Tests\Operations\OwnerBootstrapTest;
 use Fanoos\Tests\Schema\SchemaContractTest;
 use Fanoos\Tests\Storage\StorageSecurityTest;
+use Fanoos\Tests\Website\WebRenderingTest;
 
 $root = dirname(__DIR__);
 require $root . '/apps/platform/bootstrap.php';

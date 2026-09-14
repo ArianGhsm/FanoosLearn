@@ -50,9 +50,8 @@ jobs:
         shell: bash
         run: |
           php -l apps/platform/public/index.php
-          while IFS= read -r -d '' file; do node --input-type=module --check < "$file"; done < <(find apps/platform/public/assets/ui-v3 -name '*.js' -print0)
-          node tests/ux-v3/web_integration_contract_test.js
-          node tests/ux-v3/web_schoolhouse_redesign_contract_test.js
+          while IFS= read -r -d '' file; do node --input-type=module --check < "$file"; done < <(find apps/platform/public/assets/web -name '*.js' -print0)
+          node --test "tests/web/*_test.mjs"
 
   python-bot-worker:
     runs-on: ubuntu-latest
