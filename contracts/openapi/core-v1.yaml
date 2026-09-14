@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Fanoos Core API
-  version: 1.2.0
+  version: 1.3.0
   description: Canonical human/browser API. Mutating authenticated operations require the existing session CSRF contract.
 servers:
   - url: /api/v1
@@ -214,15 +214,35 @@ paths:
   /workspaces/{workspaceId}/assessments/{assessmentId}/versions/{versionId}/publish:
     post: { operationId: publishAssessmentVersion, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AssessmentId' }, { $ref: '#/components/parameters/VersionId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
   /workspaces/{workspaceId}/assessments/{assessmentId}/attempts:
-    post: { operationId: startAssessmentAttempt, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AssessmentId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' } } }
+    post:
+      operationId: startAssessmentAttempt
+      description: Starts or resumes an in-progress attempt. Returns attempt metadata, the title, any already-saved answers and the question count -- never question content. Questions are fetched one at a time from the questions/{position} route below, so this response is identical (and cheap) whether the attempt is new or being resumed.
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AssessmentId' }, { $ref: '#/components/parameters/Csrf' }]
+      responses: { '201': { $ref: '#/components/responses/AssessmentAttemptStarted' }, '403': { $ref: '#/components/responses/Error' }, '409': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/assessments/{assessmentId}/analytics:
     get: { operationId: getAssessmentAnalytics, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AssessmentId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
   /workspaces/{workspaceId}/attempts/{attemptId}:
     patch: { operationId: saveAssessmentProgress, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AttemptId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' } } }
+  /workspaces/{workspaceId}/attempts/{attemptId}/questions/{position}:
+    get:
+      operationId: readAssessmentQuestion
+      description: Returns exactly one question of an in-progress attempt the caller owns, by its 1-based position in that attempt's per-attempt shuffled order (ExamAttemptShuffle) -- never the answer or explanation. Reads are paced by a per-user token bucket (a small burst, then a slow sustained rate); a caller reading past the burst receives 429 until the bucket refills.
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AttemptId' }, { $ref: '#/components/parameters/PositionIndex' }]
+      responses: { '200': { $ref: '#/components/responses/AssessmentQuestion' }, '404': { $ref: '#/components/responses/Error' }, '409': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' }, '429': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/attempts/{attemptId}/submit:
     post: { operationId: submitAndScoreAssessment, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AttemptId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
   /workspaces/{workspaceId}/attempts/{attemptId}/review:
-    get: { operationId: reviewAssessmentAttempt, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AttemptId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+    get:
+      operationId: reviewAssessmentAttempt
+      description: Scored-attempt summary only (score, correct/question counts) -- never the per-question review list. Explanations and per-choice correctness are served one at a time by the review/questions/{position} route below.
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AttemptId' }]
+      responses: { '200': { $ref: '#/components/responses/AssessmentAttemptReviewSummary' } }
+  /workspaces/{workspaceId}/attempts/{attemptId}/review/questions/{position}:
+    get:
+      operationId: readAssessmentReviewQuestion
+      description: Returns one reviewed question -- selection, correct choice and explanation -- of a scored attempt the caller owns, by the same per-attempt position readAssessmentQuestion used. Paced by the same per-user token bucket and audited the same way.
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AttemptId' }, { $ref: '#/components/parameters/PositionIndex' }]
+      responses: { '200': { $ref: '#/components/responses/AssessmentReviewQuestion' }, '404': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' }, '429': { $ref: '#/components/responses/Error' } }
 components:
   securitySchemes:
     bearerSession: { type: http, scheme: bearer }
@@ -236,13 +256,83 @@ components:
       type: object
       required: [ok, error, meta]
       properties: { ok: { const: false }, error: { type: object, required: [code, message], properties: { code: { type: string }, message: { type: string } } }, meta: { type: object } }
+    AssessmentAttemptStarted:
+      type: object
+      required: [attempt_id, revision, status, assessment_id, title, answers, resumed, question_count]
+      properties:
+        attempt_id: { $ref: '#/components/schemas/Uuid' }
+        revision: { type: integer, minimum: 1 }
+        status: { const: in_progress }
+        assessment_id: { $ref: '#/components/schemas/Uuid' }
+        title: { type: string }
+        answers: { type: object, description: 'Question id -> previously-saved displayed choice index.', additionalProperties: { type: integer } }
+        resumed: { type: boolean }
+        question_count: { type: integer, minimum: 1 }
+      additionalProperties: false
+    AssessmentQuestion:
+      type: object
+      required: [position, question_count, question]
+      properties:
+        position: { type: integer, minimum: 1 }
+        question_count: { type: integer, minimum: 1 }
+        question:
+          type: object
+          description: Never includes answer or explanation. Choice order is permuted deterministically per attempt.
+          required: [id, prompt, choices]
+          properties:
+            id: { type: string }
+            prompt: { type: string }
+            choices: { type: array, items: { type: string }, minItems: 2 }
+            topic: { type: string }
+            difficulty: { type: string, enum: [easy, medium, hard] }
+            tags: { type: array, items: { type: string } }
+            provenance: { type: object }
+          additionalProperties: false
+      additionalProperties: false
+    AssessmentAttemptReviewSummary:
+      type: object
+      required: [id, assessment_id, revision, status, correct_count, question_count, score_basis_points]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        assessment_id: { $ref: '#/components/schemas/Uuid' }
+        revision: { type: integer }
+        status: { type: string }
+        correct_count: { type: integer, minimum: 0 }
+        question_count: { type: integer, minimum: 0 }
+        score_basis_points: { type: integer, minimum: 0, maximum: 10000 }
+      additionalProperties: false
+    AssessmentReviewQuestion:
+      type: object
+      required: [position, question_count, question_id, correct, is_correct]
+      properties:
+        position: { type: integer, minimum: 1 }
+        question_count: { type: integer, minimum: 1 }
+        question_id: { type: string }
+        selected: { type: [integer, 'null'] }
+        correct: { type: integer }
+        is_correct: { type: boolean }
+        explanation: { type: [string, 'null'] }
+      additionalProperties: false
   parameters:
     WorkspaceId: { name: workspaceId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
     ResourceId: { name: resourceId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
     AssessmentId: { name: assessmentId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
     AttemptId: { name: attemptId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
     VersionId: { name: versionId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+    PositionIndex: { name: position, in: path, required: true, description: 1-based position in the attempt's per-attempt question order., schema: { type: integer, minimum: 1 } }
     Csrf: { name: X-CSRF-Token, in: header, required: true, schema: { type: string } }
   responses:
     Success: { description: Successful response, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
     Error: { description: Error response, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+    AssessmentAttemptStarted:
+      description: Attempt started or resumed -- metadata only, no question content.
+      content: { application/json: { schema: { allOf: [{ $ref: '#/components/schemas/Envelope' }, { type: object, properties: { data: { $ref: '#/components/schemas/AssessmentAttemptStarted' } } }] } } }
+    AssessmentQuestion:
+      description: One question of an in-progress attempt.
+      content: { application/json: { schema: { allOf: [{ $ref: '#/components/schemas/Envelope' }, { type: object, properties: { data: { $ref: '#/components/schemas/AssessmentQuestion' } } }] } } }
+    AssessmentAttemptReviewSummary:
+      description: Scored-attempt summary -- no per-question detail.
+      content: { application/json: { schema: { allOf: [{ $ref: '#/components/schemas/Envelope' }, { type: object, properties: { data: { $ref: '#/components/schemas/AssessmentAttemptReviewSummary' } } }] } } }
+    AssessmentReviewQuestion:
+      description: One reviewed question of a scored attempt.
+      content: { application/json: { schema: { allOf: [{ $ref: '#/components/schemas/Envelope' }, { type: object, properties: { data: { $ref: '#/components/schemas/AssessmentReviewQuestion' } } }] } } }
