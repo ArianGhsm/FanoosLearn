@@ -85,12 +85,18 @@ final class ExamTimedAttemptTest
             $fixture['student'], $fixture['workspace'], $started['attempt_id'], 2, ['q1' => 1], $now + 700,
         ));
 
-        // The refusal must not have silently written the late answer.
+        // The refusal must not have silently written the late answer. Decode
+        // rather than substring-match: exam_attempts.answers_json is a
+        // native MySQL JSON column, which re-serializes on storage (a space
+        // after ":", for one) -- comparing raw text against the exact bytes
+        // this code happened to json_encode would be testing MySQL's
+        // formatting, not the refusal.
         $answers = $this->database->prepare('SELECT answers_json, revision FROM exam_attempts WHERE id = :attempt');
         $answers->execute(['attempt' => $started['attempt_id']]);
         $row = $answers->fetch();
         $this->assert((int) $row['revision'] === 2, 'A refused late save still advanced the revision.');
-        $this->assert(str_contains((string) $row['answers_json'], '"q1":0'), 'A refused late save overwrote the last legitimately saved answer.');
+        $storedAnswers = json_decode((string) $row['answers_json'], true, 16, JSON_THROW_ON_ERROR);
+        $this->assert(($storedAnswers['q1'] ?? null) === 0, 'A refused late save overwrote the last legitimately saved answer.');
     }
 
     private function assertLateSubmissionIsRefusedAndClosesWithLastSavedAnswers(): void

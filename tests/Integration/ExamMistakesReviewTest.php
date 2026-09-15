@@ -34,6 +34,7 @@ final class ExamMistakesReviewTest
     {
         $this->assertReviewContainsExactlyWrongAnsweredQuestions();
         $this->assertRetakingAndFixingAMistakeClearsIt();
+        $this->assertLeavingItBlankOnARetakeDoesNotEraseAnOlderMistake();
         $this->assertAnotherStudentsMistakesDoNotLeak();
         $this->assertMistakesFromAnotherWorkspaceDoNotLeak();
         $this->assertAnInProgressAttemptContributesNothing();
@@ -94,6 +95,29 @@ final class ExamMistakesReviewTest
         $exams->submitAttempt($workspace['student'], $workspace['workspace'], $second['attempt_id'], 1, ['q1' => 1]);
         $reviewAfterFix = $exams->mistakesReview($workspace['student'], $workspace['workspace']);
         $this->assert($reviewAfterFix['questions'] === [], 'Fixing a mistake on a later attempt did not clear it from the review.');
+    }
+
+    private function assertLeavingItBlankOnARetakeDoesNotEraseAnOlderMistake(): void
+    {
+        $suffix = $this->suffix();
+        $workspace = $this->workspace('blank-retake-' . $suffix);
+        $exams = $this->exams();
+        $a = $this->assessment($workspace, 'BlankRetake-' . $suffix, [
+            ['id' => 'q1', 'prompt' => 'دو بعلاوه دو؟', 'choices' => ['سه', 'چهار'], 'answer' => 1],
+            ['id' => 'q2', 'prompt' => 'اول را انتخاب کن.', 'choices' => ['اول', 'دوم'], 'answer' => 0],
+        ], maxAttempts: 5);
+
+        $first = $exams->startAttempt($workspace['student'], $workspace['workspace'], $a);
+        $exams->submitAttempt($workspace['student'], $workspace['workspace'], $first['attempt_id'], 1, ['q1' => 0, 'q2' => 0]);
+
+        // Retake, but this time leave q1 blank entirely (only answer q2).
+        // Leaving it blank is not the same as answering it correctly, so
+        // the still-wrong verdict from the first attempt must keep showing.
+        $second = $exams->startAttempt($workspace['student'], $workspace['workspace'], $a);
+        $exams->submitAttempt($workspace['student'], $workspace['workspace'], $second['attempt_id'], 1, ['q2' => 0]);
+
+        $review = $exams->mistakesReview($workspace['student'], $workspace['workspace']);
+        $this->assert(array_column($review['questions'], 'question_id') === ['q1'], 'Leaving a mistake blank on a retake erased it from the review instead of keeping the older wrong verdict.');
     }
 
     private function assertAnotherStudentsMistakesDoNotLeak(): void

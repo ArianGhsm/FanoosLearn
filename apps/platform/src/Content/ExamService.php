@@ -306,22 +306,29 @@ SQL);
         $query->execute(['workspace' => $workspaceId, 'user' => $userId]);
 
         // Newest attempt first, and the first (= most recent) time a given
-        // question is seen settles it -- so retaking an assessment and
-        // getting a question right the second time clears it from the
-        // review, it does not merely add another entry alongside the old
-        // wrong one.
+        // question was actually *answered* settles it -- so retaking an
+        // assessment and getting a question right the second time clears it
+        // from the review, it does not merely add another entry alongside
+        // the old wrong one. A blank entry on a later attempt must not
+        // settle anything: leaving a question blank on a retake is not the
+        // same as answering it correctly, so it must not erase an earlier
+        // wrong answer either -- the most recent *answered* outcome is what
+        // decides, skipping blanks as if that attempt never touched it.
         $seen = [];
         $questions = [];
         while (($row = $query->fetch()) !== false) {
             $review = json_decode((string) $row['review_json'], true, 64, JSON_THROW_ON_ERROR);
             $definition = null;
             foreach ($review as $entry) {
+                if ($entry['selected'] === null) {
+                    continue;
+                }
                 $key = $row['assessment_id'] . ':' . $entry['id'];
                 if (isset($seen[$key])) {
                     continue;
                 }
                 $seen[$key] = true;
-                if ($entry['selected'] === null || $entry['is_correct'] !== false) {
+                if ($entry['is_correct'] !== false) {
                     continue;
                 }
                 $definition ??= json_decode((string) $row['definition_json'], true, 64, JSON_THROW_ON_ERROR);

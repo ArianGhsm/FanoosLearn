@@ -245,6 +245,38 @@ function stopDeadlineTimer() {
     deadlineTimer = null;
 }
 
+/**
+ * A submit can be refused with attempt_deadline_passed even though the
+ * server already scored and closed the attempt -- from the last answers it
+ * had saved, not this request's (see ExamService::submitAttempt()'s late
+ * path). That leaves the attempt genuinely gone: any further read, save or
+ * submit against it fails too, and a background tab's throttled timer is
+ * enough to trigger this even for a student who finished on time. So this
+ * is not a plain error to show and stop -- it is treated as "the exam is
+ * over", by fetching the summary the server already computed and moving on
+ * to the report, the same place a normal submit would have landed.
+ *
+ * @returns {Promise<boolean>} whether the closure was recovered from (the caller should not also show `error` as a failure)
+ */
+async function recoverFromDeadlineClosure(error) {
+    if (!(error instanceof ApiError) || error.code !== 'attempt_deadline_passed') return false;
+    try {
+        summary = await transport.review(state.attemptId);
+    } catch {
+        return false; // the server's own account could not be fetched either; fall through to the generic error.
+    }
+    state.submitted = true;
+    dialog = null;
+    dialogKind = null;
+    phase = 'report';
+    stopDeadlineTimer();
+    pageError = notice(
+        'warning', 'زمان آزمون تمام شد',
+        'پیش از آن‌که این درخواست به سرور برسد، زمان آزمون تمام شده و آزمون با آخرین پاسخ‌های ذخیره‌شده بسته و نمره‌گذاری شده بود.',
+    );
+    return true;
+}
+
 /** The client's mirror of the deadline hit zero: submit whatever is saved rather than making the student click through, since every extra second is now server-refused anyway. */
 async function autoSubmitOnTimeout() {
     if (!state || state.submitting || state.submitted) return;
@@ -260,10 +292,11 @@ async function autoSubmitOnTimeout() {
         phase = 'report';
         pageError = notice('warning', 'زمان آزمون تمام شد', 'آزمون به‌صورت خودکار با آخرین پاسخ‌های ذخیره‌شده ثبت شد.');
     } catch (error) {
-        // Most likely the server had already refused a save near the end
-        // (attempt_deadline_passed) and closed the attempt itself -- show
-        // whatever it says rather than failing silently.
-        showError(error, null);
+        if (!(await recoverFromDeadlineClosure(error))) {
+            // Most likely a genuine failure (offline, etc); show it rather
+            // than failing silently.
+            showError(error, null);
+        }
     } finally {
         state.submitting = false;
         draw();
@@ -427,7 +460,9 @@ const submitActions = {
             stopDeadlineTimer();
             clearError();
         } catch (error) {
-            showError(error, null);
+            if (!(await recoverFromDeadlineClosure(error))) {
+                showError(error, null);
+            }
         } finally {
             state.submitting = false;
             draw();
