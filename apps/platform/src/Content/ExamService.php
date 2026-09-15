@@ -283,7 +283,7 @@ SQL, implode(' AND ', $where)));
         if ((bool) $assessment['requires_entitlement'] && !$this->entitlements->has($userId, $workspaceId, (string) $assessment['target_scope_id'])) {
             throw new PlatformException('entitlement_required', 'An active entitlement is required for this assessment.', 403);
         }
-        return Transaction::run($this->database, function () use ($userId, $workspaceId, $assessmentId, $assessment): array {
+        return Transaction::run($this->database, function () use ($userId, $workspaceId, $assessmentId, $assessment, $mode): array {
         // Serialize starts per assessment so two concurrent clicks cannot create
         // two open attempts for the same published version.
         $lock = $this->database->prepare('SELECT id FROM exam_assessments WHERE id = :assessment AND workspace_id = :workspace FOR UPDATE');
