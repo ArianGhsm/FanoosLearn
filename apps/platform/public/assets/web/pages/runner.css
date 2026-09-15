@@ -211,7 +211,9 @@ body.x-focus .f-page {
 }
 
 .x-question__prompt {
-    font-size: var(--reading-size);
+    /* اندازه فونت (سؤال) writes --x-question-font-scale on the root; every
+       reader of it multiplies rather than restyling itself, per the task. */
+    font-size: calc(var(--reading-size) * var(--x-question-font-scale, 1));
     line-height: var(--reading-leading);
     margin-bottom: var(--space-5);
 }
@@ -244,7 +246,7 @@ body.x-focus .f-page {
     background: var(--surface-muted);
     color: var(--text-primary);
     font: inherit;
-    font-size: var(--reading-size);
+    font-size: calc(var(--reading-size) * var(--x-question-font-scale, 1));
     line-height: 1.8;
     text-align: start;
     cursor: pointer;
@@ -569,7 +571,9 @@ body.x-focus .f-page {
 
 .x-md p,
 .x-md li {
-    font-size: 0.98rem;
+    /* اندازه فونت (توضیح) -- the explanation's own slider, independent of
+       the question card's. */
+    font-size: calc(0.98rem * var(--x-explanation-font-scale, 1));
     line-height: var(--reading-leading);
 }
 
@@ -689,4 +693,331 @@ body.x-focus .f-page {
 
 .x-revealed:not(.is-right) .x-revealed__head {
     color: var(--danger);
+}
+
+.x-revealed__show-explanation {
+    margin-top: var(--space-2);
+}
+
+/* ------------------------------------------------------------- intro/bar settings entry */
+
+.x-intro__head-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-bottom: var(--space-2);
+}
+
+.x-settings-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    background: var(--surface-muted);
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.x-settings-trigger:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.x-bar__settings {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    flex: none;
+}
+
+.x-bar__settings:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* --------------------------------------------------- question navigation gutters */
+
+.x-question__stage {
+    display: flex;
+    align-items: stretch;
+    gap: var(--space-2);
+}
+
+.x-question__stage > .x-question__card {
+    flex: 1;
+    min-width: 0;
+}
+
+/* اسکرول عمودی کنار سؤال: an empty gutter with nothing of its own to
+   scroll, so a vertical wheel there navigates instead of doing nothing.
+   Hidden where there is no real margin to place it in. */
+.x-question__margin {
+    flex: none;
+    width: 44px;
+}
+
+@media (max-width: 900px) {
+    .x-question__margin {
+        display: none;
+    }
+}
+
+/* ---------------------------------------------------------------- settings */
+
+.x-settings__panel {
+    width: min(100%, 560px);
+}
+
+.x-settings__tabs {
+    display: flex;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+    border-bottom: 1px solid var(--border);
+}
+
+.x-settings__tab-btn {
+    padding: var(--space-2) var(--space-1);
+    margin-bottom: -1px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.x-settings__tab-btn.is-active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+.x-settings__section {
+    padding-block: var(--space-4);
+    border-bottom: 1px solid var(--border);
+}
+
+.x-settings__section:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.x-settings__section h3 {
+    margin: 0 0 var(--space-3);
+    font-size: 0.95rem;
+}
+
+.x-settings__section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+}
+
+.x-settings__section-head h3 {
+    margin: 0;
+}
+
+.x-settings__row {
+    margin-bottom: var(--space-4);
+}
+
+.x-settings__row:last-child {
+    margin-bottom: 0;
+}
+
+.x-settings__row-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-2);
+    font-size: 0.9rem;
+}
+
+.x-settings__value {
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+}
+
+.x-settings__slider {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.x-settings__slider input[type="range"] {
+    flex: 1;
+    accent-color: var(--accent);
+}
+
+.x-stepper__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    background: var(--surface-muted);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.x-stepper__btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.x-segmented {
+    display: inline-flex;
+    padding: 3px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-strong);
+    gap: 2px;
+}
+
+.x-segmented__btn {
+    padding: var(--space-2) var(--space-4);
+    border: none;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.x-segmented__btn.is-active {
+    background: var(--surface);
+    color: var(--accent);
+    box-shadow: var(--shadow-soft);
+}
+
+.x-settings__row--toggle {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+
+.x-toggle {
+    flex: none;
+    width: 44px;
+    height: 26px;
+    padding: 3px;
+    border: none;
+    border-radius: var(--radius-pill);
+    background: var(--surface-strong);
+    cursor: pointer;
+}
+
+.x-toggle__thumb {
+    display: block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+    transition: transform 0.15s ease;
+}
+
+.x-toggle.is-on {
+    background: var(--accent);
+}
+
+/* The page is always dir="rtl" (PageRenderer sets it on <html>), so "on"
+   moves the thumb toward the inline end, which is left in RTL. */
+.x-toggle.is-on .x-toggle__thumb {
+    transform: translateX(-18px);
+}
+
+.x-settings__note {
+    margin-top: var(--space-4);
+    text-align: center;
+    color: var(--text-tertiary);
+}
+
+.x-shortcuts {
+    display: grid;
+    gap: var(--space-2);
+}
+
+.x-shortcuts__row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+}
+
+.x-shortcuts__row.is-listening {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.x-shortcuts__label {
+    font-size: 0.88rem;
+}
+
+.x-shortcuts__key {
+    min-width: 84px;
+    padding: var(--space-1) var(--space-3);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+}
+
+.x-shortcuts__clear-slot {
+    min-width: 44px;
+}
+
+.x-shortcuts__clear {
+    padding: var(--space-1) var(--space-2);
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    font: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.x-shortcuts__clear:hover {
+    color: var(--danger);
+}
+
+@media (max-width: 480px) {
+    .x-shortcuts__row {
+        grid-template-columns: 1fr auto;
+    }
+
+    .x-shortcuts__clear-slot {
+        grid-column: 1 / -1;
+        justify-self: end;
+    }
 }

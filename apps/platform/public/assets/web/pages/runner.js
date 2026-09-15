@@ -10,11 +10,19 @@ import {
     afterAnswer, clampPosition, clearAnswer, createAttemptState, hasUnsavedAnswers,
     nextUnanswered, setAnswer, showExplanation as markExplanationShown, toggleFlag, toggleStrike, unansweredPositions,
 } from './runner-state.js';
-import { AnswerSync, ExamTransport, QuestionWindow } from './runner-transport.js';
+import { AnswerSync, ExamTransport, QuestionWindow, TurboRevealer } from './runner-transport.js';
 import {
     notice, renderIntro, renderMap, renderQuestion, renderReport,
     renderReviewQuestion, renderSubmitDialog,
 } from './runner-view.js';
+import {
+    actionForKey, bindShortcut, clearShortcut as clearSettingsShortcut, effectiveSpeed, loadSettings,
+    resetShortcuts as resetSettingsShortcuts, saveSettings, setFontSize, setNavigation as setSettingsNavigation,
+    setSound as setSettingsSound, setSpeed as setSettingsSpeed, setTheme as setSettingsTheme,
+    shortcutsAreLive, stepFontSize,
+} from './runner-settings.js';
+import { applyFontSize, applyTheme, playFeedbackTone } from './runner-settings-effects.js';
+import { renderSettings } from './runner-settings-view.js';
 
 const root = document.getElementById('runner');
 const assessmentId = document.querySelector('.x-runner')?.dataset.assessment ?? '';
@@ -28,12 +36,21 @@ let assessment = null;
 let state = null;
 let questions = null;
 let sync = null;
+let turbo = null;
+let autoAdvanceTimer = null;
 let summary = null;
 let reviewPosition = 1;
 let reviewEntry = null;
 let dialog = null;
+/** 'map' | 'submit' | 'settings' | null -- which dialog `dialog` currently holds, so Escape and the shortcut guard know what they are closing. */
+let dialogKind = null;
 let banner = null;
 let pageError = null;
+
+let settings = loadSettings();
+let settingsUi = { tab: 'general', rebinding: null };
+applyFontSize(settings);
+applyTheme(settings);
 
 function draw() {
     const frame = document.createDocumentFragment();
@@ -41,7 +58,7 @@ function draw() {
     if (pageError) frame.append(pageError);
 
     if (phase === 'intro' && assessment) {
-        frame.append(renderIntro(assessment, { start }));
+        frame.append(renderIntro(assessment, { start, openSettings }));
     } else if (phase === 'question' && state) {
         const question = questions.get(state.position);
         frame.append(question
@@ -125,6 +142,7 @@ async function start(mode) {
         });
         questions = new QuestionWindow(transport, state.attemptId, state.questionCount);
         sync = new AnswerSync(transport, state, { onStateChange: () => { if (phase === 'question') draw(); } });
+        turbo = new TurboRevealer(transport);
         // Resuming lands on the first gap, not on question one: that is where
         // the student actually stopped.
         state.position = nextUnanswered(state) ?? 1;
@@ -138,8 +156,10 @@ async function start(mode) {
 }
 
 async function showQuestion(position) {
+    cancelAutoAdvance();
     state.position = clampPosition(state, position);
     draw();
+    arriveForTurbo(state.position);
     if (questions.has(state.position)) return;
     try {
         await questions.load(state.position);
@@ -148,6 +168,47 @@ async function showQuestion(position) {
         showError(error, () => showQuestion(state.position));
     }
     draw();
+}
+
+/**
+ * فوق‌سریع: the current question's answer is fetched the moment the student
+ * lands on it, one request at a time (TurboRevealer), only in learning mode,
+ * and never for a question the student is not currently on. Compare
+ * ExamQuestionRateGuard, which this deliberately never outruns.
+ */
+function arriveForTurbo(position) {
+    if (effectiveSpeed(settings, state.mode) !== 'turbo' || state.mode !== 'learning') return;
+    if (state.reveals.has(position)) return;
+    turbo.arrive(state.attemptId, position, (error, revealedPosition, payload) => {
+        if (error) {
+            if (revealedPosition === state.position) showError(error, null);
+            if (phase === 'question') draw();
+            return;
+        }
+        state.reveals.set(revealedPosition, payload);
+        if (revealedPosition === state.position) draw();
+    });
+}
+
+function cancelAutoAdvance() {
+    if (autoAdvanceTimer === null) return;
+    clearTimeout(autoAdvanceTimer);
+    autoAdvanceTimer = null;
+}
+
+/**
+ * سریع: after a correct answer, move on by itself after a short beat. A
+ * wrong answer always stops here -- the student reads it instead.
+ */
+function scheduleAutoAdvance() {
+    cancelAutoAdvance();
+    autoAdvanceTimer = setTimeout(() => {
+        autoAdvanceTimer = null;
+        if (phase !== 'question') return;
+        const target = afterAnswer(state, state.position);
+        if (target.kind === 'review') { openSubmit(); return; }
+        showQuestion(target.position);
+    }, 900);
 }
 
 /* --------------------------------------------------------------- question */
@@ -201,10 +262,12 @@ const questionActions = {
     },
     async reveal() {
         if ((state.mode !== 'learning' && state.mode !== 'practice') || state.reveals.has(state.position)) return;
+        const position = state.position;
         try {
-            const payload = await transport.reveal(state.attemptId, state.position);
-            state.reveals.set(state.position, payload);
+            const payload = await transport.reveal(state.attemptId, position);
+            state.reveals.set(position, payload);
             clearError();
+            afterReveal(position, payload);
         } catch (error) {
             showError(error, () => questionActions.reveal());
         }
@@ -215,6 +278,7 @@ const questionActions = {
         draw();
     },
     openMap() {
+        dialogKind = 'map';
         dialog = renderMap(state, mapActions);
         draw();
     },
@@ -227,7 +291,28 @@ const questionActions = {
             : 'از آزمون خارج می‌شوی؟ پاسخ‌هایت ذخیره شده و بعداً می‌توانی ادامه بدهی.';
         if (window.confirm(message)) window.location.assign('/app/exams');
     },
+    openSettings,
+    cardWheel(event) { handleHorizontalWheel(event); },
+    marginWheel(event) { handleVerticalMarginWheel(event); },
+    cardTouchStart(event) { handleTouchStart(event); },
+    cardTouchMove(event) { handleTouchMove(event); },
+    cardTouchEnd(event) { handleTouchEnd(event); },
 };
+
+/**
+ * Sound and سریع auto-advance both key off "an answer was actually given and
+ * we now know if it was right" -- true only when reveal() ran because the
+ * student chose something, never for the pre-answer "بلد نیستم" reveal or a
+ * فوق‌سریع arrival, both of which pass through the same reveal machinery
+ * without a selection yet.
+ */
+function afterReveal(position, payload) {
+    const chosen = state.answers[String(position)];
+    if (chosen === undefined) return;
+    const correct = chosen === payload.answer;
+    if (state.mode !== 'assessment') playFeedbackTone(settings, correct ? 'correct' : 'incorrect');
+    if (correct && effectiveSpeed(settings, state.mode) === 'fast') scheduleAutoAdvance();
+}
 
 const mapActions = {
     setFilter(filter) {
@@ -237,10 +322,12 @@ const mapActions = {
     },
     goTo(position) {
         dialog = null;
+        dialogKind = null;
         showQuestion(position);
     },
     close() {
         dialog = null;
+        dialogKind = null;
         draw();
     },
 };
@@ -248,6 +335,7 @@ const mapActions = {
 /* ----------------------------------------------------------------- submit */
 
 function openSubmit() {
+    dialogKind = 'submit';
     dialog = renderSubmitDialog(state, submitActions);
     draw();
 }
@@ -255,6 +343,7 @@ function openSubmit() {
 const submitActions = {
     close() {
         dialog = null;
+        dialogKind = null;
         draw();
     },
     firstUnanswered() {
@@ -274,6 +363,7 @@ const submitActions = {
             summary = await transport.submit(state.attemptId, state.revision, state.answers);
             state.submitted = true;
             dialog = null;
+            dialogKind = null;
             phase = 'report';
             clearError();
         } catch (error) {
@@ -311,42 +401,211 @@ const reviewActions = {
     next() { showReview(reviewPosition + 1); },
 };
 
+/* ---------------------------------------------------------------- settings */
+
+function openSettings() {
+    dialogKind = 'settings';
+    settingsUi = { ...settingsUi, rebinding: null };
+    dialog = renderSettings(settings, settingsUi, state?.mode ?? null, settingsActions);
+    draw();
+}
+
+function closeSettings() {
+    dialog = null;
+    dialogKind = null;
+    settingsUi = { ...settingsUi, rebinding: null };
+    draw();
+}
+
+/** Every settings mutation goes through here: persist, apply, and redraw whichever dialog is open. */
+function updateSettings(next) {
+    settings = next;
+    saveSettings(settings);
+    applyFontSize(settings);
+    applyTheme(settings);
+    if (dialogKind === 'settings') dialog = renderSettings(settings, settingsUi, state?.mode ?? null, settingsActions);
+    draw();
+}
+
+const settingsActions = {
+    close: closeSettings,
+    setTab(tab) {
+        settingsUi = { ...settingsUi, tab, rebinding: null };
+        dialog = renderSettings(settings, settingsUi, state?.mode ?? null, settingsActions);
+        draw();
+    },
+    setFont(target, percent) { updateSettings(setFontSize(settings, target, percent)); },
+    // Dragging the slider only paints the CSS variable; it does not persist
+    // or redraw, so the native drag gesture is never interrupted mid-way.
+    previewFont(target, percent) {
+        applyFontSize({ ...settings, fontSize: { ...settings.fontSize, [target]: percent } });
+    },
+    stepFont(target, direction) { updateSettings(stepFontSize(settings, target, direction)); },
+    setTheme(theme) { updateSettings(setSettingsTheme(settings, theme)); },
+    setSound(enabled) { updateSettings(setSettingsSound(settings, enabled)); },
+    setSpeed(speed) { updateSettings(setSettingsSpeed(settings, speed)); },
+    setNavigation(key, enabled) { updateSettings(setSettingsNavigation(settings, key, enabled)); },
+    startRebind(action) {
+        settingsUi = { ...settingsUi, rebinding: action };
+        dialog = renderSettings(settings, settingsUi, state?.mode ?? null, settingsActions);
+        draw();
+    },
+    clearShortcut(action) { updateSettings(clearSettingsShortcut(settings, action)); },
+    resetShortcuts() { updateSettings(resetSettingsShortcuts(settings)); },
+};
+
+/* --------------------------------------------------------- question gestures */
+
+/*
+ * اسکرول افقی روی سؤال، اسکرول عمودی کنار سؤال، سوایپ لمسی روی سؤال. Every
+ * one of these is a convenience layered on top of ordinary browser behaviour
+ * -- ordinary vertical scrolling, ordinary text selection -- and each guards
+ * against swallowing it, per setting, before doing anything.
+ */
+
+const WHEEL_THRESHOLD = 24;
+const WHEEL_COOLDOWN_MS = 500;
+const SWIPE_INTENT_PX = 10;
+const SWIPE_DISTANCE_PX = 60;
+
+let lastWheelNav = 0;
+
+function wheelNavigate(deltaSign) {
+    const now = Date.now();
+    if (now - lastWheelNav < WHEEL_COOLDOWN_MS) return;
+    lastWheelNav = now;
+    if (deltaSign < 0) questionActions.next(); else questionActions.previous();
+}
+
+/** Over the card: only a genuinely horizontal gesture is taken, so ordinary vertical scrolling never stops working. */
+function handleHorizontalWheel(event) {
+    if (!settings.navigation.horizontalScroll) return;
+    if (Math.abs(event.deltaX) <= Math.abs(event.deltaY)) return;
+    if (Math.abs(event.deltaX) < WHEEL_THRESHOLD) return;
+    event.preventDefault();
+    wheelNavigate(event.deltaX);
+}
+
+/** In the empty gutter beside the card: nothing there needs to scroll, so any vertical wheel input navigates instead. */
+function handleVerticalMarginWheel(event) {
+    if (!settings.navigation.verticalScroll) return;
+    if (Math.abs(event.deltaY) < WHEEL_THRESHOLD) return;
+    event.preventDefault();
+    wheelNavigate(-event.deltaY);
+}
+
+let touchStartX = null;
+let touchStartY = null;
+let touchIsHorizontal = false;
+
+function handleTouchStart(event) {
+    if (!settings.navigation.swipe || event.touches.length !== 1) {
+        touchStartX = null;
+        return;
+    }
+    touchStartX = event.touches[0].clientX;
+    touchStartY = event.touches[0].clientY;
+    touchIsHorizontal = false;
+    // No preventDefault here on purpose: a long-press text selection must
+    // still be able to start.
+}
+
+function handleTouchMove(event) {
+    if (touchStartX === null) return;
+    const dx = event.touches[0].clientX - touchStartX;
+    const dy = event.touches[0].clientY - touchStartY;
+    if (!touchIsHorizontal) {
+        if (Math.abs(dx) < SWIPE_INTENT_PX && Math.abs(dy) < SWIPE_INTENT_PX) return;
+        touchIsHorizontal = Math.abs(dx) > Math.abs(dy);
+        if (!touchIsHorizontal) {
+            // A vertical drag: this is a scroll or a selection, not a swipe.
+            // Stop tracking and leave the browser's own handling alone.
+            touchStartX = null;
+            return;
+        }
+    }
+    // Confirmed horizontal: stop the page from also panning under the
+    // finger while the gesture plays out.
+    event.preventDefault();
+}
+
+function handleTouchEnd(event) {
+    if (touchStartX === null || !touchIsHorizontal) {
+        touchStartX = null;
+        return;
+    }
+    const endX = event.changedTouches[0]?.clientX ?? touchStartX;
+    const dx = endX - touchStartX;
+    touchStartX = null;
+    if (Math.abs(dx) < SWIPE_DISTANCE_PX) return;
+    if (dx < 0) questionActions.next(); else questionActions.previous();
+}
+
 /* ------------------------------------------------------------------ setup */
 
 /*
  * Keyboard shortcuts. Answering forty questions is a keyboard task, and
  * reaching for the mouse for every one of them is the difference between a
- * tool and a chore.
+ * tool and a chore. Bindings come from settings.shortcuts (رفتار پیش‌فرض:
+ * 1-9, arrows, F, M, R) so the student can rebind them from پیشرفته.
  *
- * Deliberately not bound while a dialog is open or a field has focus: a
- * shortcut that fires while someone is typing is worse than no shortcut.
+ * Deliberately not bound while a dialog is open or a field has focus (see
+ * shortcutsAreLive): a shortcut that fires while someone is typing is worse
+ * than no shortcut.
  */
 document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && dialog) {
+    // Capturing a new binding for the settings sheet takes priority over
+    // everything else, including Escape -- while rebinding, Escape cancels
+    // the rebind in progress rather than closing the whole sheet.
+    if (settingsUi.rebinding) {
+        if (['Shift', 'Control', 'Alt', 'Meta', 'Tab'].includes(event.key)) return;
         event.preventDefault();
-        dialog = null;
+        if (event.key !== 'Escape') {
+            updateSettings(bindShortcut(settings, settingsUi.rebinding, event.key));
+        }
+        settingsUi = { ...settingsUi, rebinding: null };
+        if (dialogKind === 'settings') dialog = renderSettings(settings, settingsUi, state?.mode ?? null, settingsActions);
         draw();
         return;
     }
-    if (phase !== 'question' || dialog || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.key === 'Escape' && dialog) {
+        event.preventDefault();
+        dialog = null;
+        dialogKind = null;
+        draw();
+        return;
+    }
     const target = event.target;
-    if (target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) return;
+    const live = shortcutsAreLive({
+        phase, hasDialog: dialog !== null,
+        targetTagName: target instanceof HTMLElement ? target.tagName : null,
+        isContentEditable: target instanceof HTMLElement && target.isContentEditable,
+    });
+    if (!live || event.ctrlKey || event.metaKey || event.altKey) return;
 
-    const question = questions.get(state.position);
-    // Arrows follow the text direction: this is an RTL page, so "next" is the
-    // left arrow and "previous" the right one. Binding them the Latin way
-    // round would send the student backwards every time.
-    if (event.key === 'ArrowLeft') { event.preventDefault(); questionActions.next(); return; }
-    if (event.key === 'ArrowRight') { event.preventDefault(); questionActions.previous(); return; }
-    if (event.key.toLowerCase() === 'f') { event.preventDefault(); questionActions.toggleFlag(); return; }
-    if (event.key.toLowerCase() === 'm') { event.preventDefault(); questionActions.openMap(); return; }
-    if (event.key.toLowerCase() === 'r' && state.mode === 'learning') { event.preventDefault(); questionActions.reveal(); return; }
+    const action = actionForKey(settings.shortcuts, event.key);
+    if (action === null) return;
+    if (action === 'reveal' && state.mode !== 'learning') return;
 
-    // 1-9 pick a choice, in the order shown.
-    const choiceIndex = Number(event.key) - 1;
-    if (question && Number.isInteger(choiceIndex) && choiceIndex >= 0 && choiceIndex < (question.choices || []).length) {
+    if (action.startsWith('choice_')) {
+        const question = questions.get(state.position);
+        const choiceIndex = Number(action.slice('choice_'.length)) - 1;
+        if (!question || choiceIndex >= (question.choices || []).length) return;
         event.preventDefault();
         questionActions.choose(choiceIndex);
+        return;
+    }
+
+    const handler = {
+        previous: questionActions.previous,
+        next: questionActions.next,
+        flag: questionActions.toggleFlag,
+        map: questionActions.openMap,
+        reveal: questionActions.reveal,
+    }[action];
+    if (handler) {
+        event.preventDefault();
+        handler();
     }
 });
 

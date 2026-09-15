@@ -145,6 +145,45 @@ export class QuestionWindow {
 }
 
 /**
+ * فوق‌سریع's arrival-triggered reveals: as the student lands on each
+ * question, the answer is fetched automatically. The one rule that makes
+ * this safe rather than a bulk-export shortcut is that never more than one
+ * reveal request is in flight at a time -- a student navigating faster than
+ * the network answers supersedes the stale request for whatever question
+ * they already left, rather than piling up one in-flight call per question
+ * passed through.
+ */
+export class TurboRevealer {
+    constructor(transport) {
+        this.transport = transport;
+        this.pumping = false;
+        this.wanted = null;
+    }
+
+    /** Requests a reveal for `position`, calling `onSettled(error, position, payload)` once it resolves. */
+    arrive(attemptId, position, onSettled) {
+        this.wanted = position;
+        if (this.pumping) return;
+        this.pump(attemptId, onSettled);
+    }
+
+    async pump(attemptId, onSettled) {
+        this.pumping = true;
+        while (this.wanted !== null) {
+            const position = this.wanted;
+            this.wanted = null;
+            try {
+                const payload = await this.transport.reveal(attemptId, position);
+                onSettled(null, position, payload);
+            } catch (error) {
+                onSettled(error, position, null);
+            }
+        }
+        this.pumping = false;
+    }
+}
+
+/**
  * Debounced, coalescing answer saving with an explicit flush.
  *
  * Every save sends the whole answer set rather than a delta, so a save that

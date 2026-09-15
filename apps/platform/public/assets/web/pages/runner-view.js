@@ -113,6 +113,9 @@ export function el(tag, options = {}, ...children) {
 const ICONS = {
     grid: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',
     flag: 'M5 3v18M5 4h11l-2 3 2 3H5',
+    // A hex nut with a hole -- reads as "settings/tools" without relying on
+    // U+2699, which the note above already explains gets substituted.
+    settings: 'M18.93 16L12 20L5.07 16L5.07 8L12 4L18.93 8ZM12 9a3 3 0 100 6 3 3 0 000-6z',
 };
 
 export function icon(name, { filled = false } = {}) {
@@ -160,7 +163,13 @@ export function renderIntro(assessment, actions) {
     if (max > 0) addFact('تلاش', `${faDigits(used)} از ${faDigits(max)}`);
 
     return el('div', { className: 'f-card x-intro' },
-        el('p', { className: 'x-intro__eyebrow', text: kindLabel(assessment.assessment_kind) }),
+        el('div', { className: 'x-intro__head-row' },
+            el('p', { className: 'x-intro__eyebrow', text: kindLabel(assessment.assessment_kind) }),
+            el('button', {
+                className: 'x-settings-trigger', type: 'button',
+                attrs: { 'aria-label': 'تنظیمات' },
+                on: { click: actions.openSettings },
+            }, icon('settings'), el('span', { text: 'تنظیمات' }))),
         el('h1', { className: 'x-intro__title', text: String(assessment.title || 'آزمون') }),
         facts,
         el('div', { className: 'x-intro__notes' },
@@ -225,6 +234,11 @@ function renderTopBar(state, saveStatus, actions) {
             })),
         el('span', { className: `x-bar__save is-${saveStatus}`, text: saveLabel(saveStatus), attrs: { role: 'status' } }),
         el('button', {
+            className: 'x-bar__settings', type: 'button',
+            attrs: { 'aria-label': 'تنظیمات' },
+            on: { click: actions.openSettings },
+        }, icon('settings')),
+        el('button', {
             className: 'f-btn f-btn--ghost x-bar__leave', type: 'button', text: 'خروج',
             attrs: { 'aria-label': 'خروج از آزمون بدون ثبت' },
             on: { click: actions.leave },
@@ -275,35 +289,52 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
 
     const flagged = isFlagged(state, position);
 
+    const card = el('article', {
+        className: 'f-card x-question__card',
+        on: {
+            wheel: actions.cardWheel,
+            touchstart: actions.cardTouchStart,
+            touchmove: actions.cardTouchMove,
+            touchend: actions.cardTouchEnd,
+        },
+    },
+        el('header', { className: 'x-question__head' },
+            el('span', { className: 'x-question__index', text: `سؤال ${faDigits(position)} از ${faDigits(state.questionCount)}` }),
+            el('button', {
+                className: `x-flag${flagged ? ' is-on' : ''}`, type: 'button',
+                attrs: { 'aria-pressed': flagged ? 'true' : 'false' },
+                on: { click: actions.toggleFlag },
+            }, icon('flag', { filled: flagged }), el('span', { text: flagged ? 'نشان‌دار' : 'نشان‌دار کن' }))),
+        el('p', { className: 'x-question__prompt', text: faText(question.prompt) }),
+        choices,
+        el('div', { className: 'x-question__foot' },
+            selected === undefined ? null : el('button', {
+                className: 'x-question__clear', type: 'button', text: 'پاک کردن پاسخ',
+                on: { click: actions.clear },
+            }),
+            state.mode !== 'learning' || reveal ? null : el('button', {
+                className: 'f-btn f-btn--ghost x-question__reveal', type: 'button', text: 'بلد نیستم، پاسخ را نشانم بده',
+                on: { click: actions.reveal },
+            })),
+        reveal ? renderReveal(reveal, question, selected, {
+            // Learning always shows the explanation alongside the verdict;
+            // practice tells you right/wrong at once but keeps the
+            // explanation behind a tap, so the two don't blur into the same
+            // mode.
+            explanationVisible: state.mode !== 'practice' || isExplanationShown(state, position),
+            onShowExplanation: actions.showExplanation,
+        }) : null);
+
+    // Empty gutters flank the card: اسکرول عمودی کنار سؤال. There is nothing
+    // else to scroll in them, so a vertical wheel there always navigates --
+    // CSS hides them below the width where there is no real margin to put
+    // them in.
+    const marginStart = el('div', { className: 'x-question__margin', attrs: { 'aria-hidden': 'true' }, on: { wheel: actions.marginWheel } });
+    const marginEnd = el('div', { className: 'x-question__margin', attrs: { 'aria-hidden': 'true' }, on: { wheel: actions.marginWheel } });
+
     return el('div', { className: 'x-question' },
         renderTopBar(state, saveStatus, actions),
-        el('article', { className: 'f-card x-question__card' },
-            el('header', { className: 'x-question__head' },
-                el('span', { className: 'x-question__index', text: `سؤال ${faDigits(position)} از ${faDigits(state.questionCount)}` }),
-                el('button', {
-                    className: `x-flag${flagged ? ' is-on' : ''}`, type: 'button',
-                    attrs: { 'aria-pressed': flagged ? 'true' : 'false' },
-                    on: { click: actions.toggleFlag },
-                }, icon('flag', { filled: flagged }), el('span', { text: flagged ? 'نشان‌دار' : 'نشان‌دار کن' }))),
-            el('p', { className: 'x-question__prompt', text: faText(question.prompt) }),
-            choices,
-            el('div', { className: 'x-question__foot' },
-                selected === undefined ? null : el('button', {
-                    className: 'x-question__clear', type: 'button', text: 'پاک کردن پاسخ',
-                    on: { click: actions.clear },
-                }),
-                state.mode !== 'learning' || reveal ? null : el('button', {
-                    className: 'f-btn f-btn--ghost x-question__reveal', type: 'button', text: 'بلد نیستم، پاسخ را نشانم بده',
-                    on: { click: actions.reveal },
-                })),
-            reveal ? renderReveal(reveal, question, selected, {
-                // Learning always shows the explanation alongside the
-                // verdict; practice tells you right/wrong at once but keeps
-                // the explanation behind a tap, so the two don't blur into
-                // the same mode.
-                explanationVisible: state.mode !== 'practice' || isExplanationShown(state, position),
-                onShowExplanation: actions.showExplanation,
-            }) : null),
+        el('div', { className: 'x-question__stage' }, marginStart, card, marginEnd),
         el('nav', { className: 'x-nav', attrs: { 'aria-label': 'پیمایش سؤال‌ها' } },
             el('button', {
                 className: 'f-btn f-btn--ghost', type: 'button', text: '→ قبلی',
