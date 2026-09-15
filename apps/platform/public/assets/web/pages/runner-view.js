@@ -282,7 +282,11 @@ function renderTopBar(state, saveStatus, actions) {
             className: `x-bar__timer${isTimeCritical(state) ? ' is-critical' : ''}`,
             attrs: { role: 'timer', 'aria-live': 'polite', 'aria-label': 'زمان باقی‌مانده' },
         }, icon('clock'), el('span', { text: formatRemaining(remaining) })),
-        el('span', { className: `x-bar__save is-${saveStatus}`, text: saveLabel(saveStatus), attrs: { role: 'status' } }),
+        el('span', {
+            className: `x-bar__save is-${state.submitQueued ? 'queued' : saveStatus}`,
+            text: state.submitQueued ? 'ثبت آزمون آفلاین در صف ماند — به‌محض اتصال دوباره ارسال می‌شود' : saveLabel(saveStatus),
+            attrs: { role: 'status' },
+        }),
         el('button', {
             className: 'x-bar__settings', type: 'button',
             attrs: { 'aria-label': 'تنظیمات' },
