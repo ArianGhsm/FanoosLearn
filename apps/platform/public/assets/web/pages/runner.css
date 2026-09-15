@@ -670,3 +670,23 @@ body.x-focus .f-page {
     background: var(--surface-strong);
     color: var(--text-secondary);
 }
+
+/* A revealed question is settled: the pointer no longer invites a change. */
+.x-revealed ~ * .x-choice,
+.x-choice.is-correct,
+.x-choice.is-wrong {
+    cursor: default;
+}
+
+.x-choice.is-wrong {
+    border-color: var(--danger);
+    background: var(--danger-soft);
+}
+
+.x-revealed.is-right .x-revealed__head {
+    color: var(--success);
+}
+
+.x-revealed:not(.is-right) .x-revealed__head {
+    color: var(--danger);
+}
