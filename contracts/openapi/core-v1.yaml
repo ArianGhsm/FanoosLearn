@@ -235,6 +235,18 @@ paths:
       responses: { '201': { $ref: '#/components/responses/AssessmentAttemptStarted' }, '403': { $ref: '#/components/responses/Error' }, '409': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/assessments/{assessmentId}/analytics:
     get: { operationId: getAssessmentAnalytics, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AssessmentId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/assessments/{assessmentId}/attempts/history:
+    get:
+      operationId: readOwnAttemptHistory
+      description: 'تاریخچه‌ی تلاش‌ها: the caller''s own past scored attempts at this assessment, newest first -- aggregate outcome per attempt (score, date, mode) only, reachable from the assessment''s intro card.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AssessmentId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+  /workspaces/{workspaceId}/mistakes-review:
+    get:
+      operationId: readMistakesReview
+      description: 'مرور اشتباه‌ها: every question this student has answered incorrectly (and actually answered, not left blank) across their own scored attempts in this workspace, deduplicated by question -- a later correct attempt clears an earlier wrong one rather than both appearing. Not paced: this re-surfaces review content the caller is already entitled to see per attempt, it does not expose anything new.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/attempts/{attemptId}:
     patch: { operationId: saveAssessmentProgress, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AttemptId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' } } }
   /workspaces/{workspaceId}/attempts/{attemptId}/questions/{position}:
@@ -296,7 +308,7 @@ components:
       additionalProperties: false
     AssessmentAttemptStarted:
       type: object
-      required: [attempt_id, revision, status, assessment_id, title, answers, resumed, question_count]
+      required: [attempt_id, revision, status, assessment_id, title, answers, resumed, question_count, mode, deadline_at]
       properties:
         attempt_id: { $ref: '#/components/schemas/Uuid' }
         revision: { type: integer, minimum: 1 }
@@ -306,6 +318,8 @@ components:
         answers: { type: object, description: 'Question id -> previously-saved displayed choice index.', additionalProperties: { type: integer } }
         resumed: { type: boolean }
         question_count: { type: integer, minimum: 1 }
+        mode: { type: string, enum: [assessment, learning, practice], description: 'Fixed for the life of the attempt; resuming never changes it.' }
+        deadline_at: { type: [string, 'null'], format: date-time, description: 'Fixed once, when the attempt first started; resuming never extends it. Null for an untimed assessment. A client timer only mirrors this -- the server enforces it independently on save/submit.' }
       additionalProperties: false
     AssessmentQuestion:
       type: object

@@ -12,17 +12,25 @@
  */
 
 /** Positions are 1-based everywhere, matching the API's question positions. */
-export function createAttemptState({ attemptId, assessmentId, title, questionCount, revision, answers = {}, mode = 'assessment' }) {
+export function createAttemptState({ attemptId, assessmentId, title, questionCount, revision, answers = {}, mode = 'assessment', deadlineAt = null }) {
     return {
         attemptId,
         assessmentId,
         title,
         questionCount,
         revision,
-        /** 'assessment' (a real sitting) or 'learning' (answers can be revealed) */
+        /** ISO timestamp fixed by the server when the attempt started, or null for an untimed assessment. A browser timer only mirrors this. */
+        deadlineAt,
+        /**
+         * 'assessment' (a real sitting, no feedback until submitted),
+         * 'practice' (right/wrong shown at once, explanation on demand) or
+         * 'learning' (answer and explanation shown together, on demand)
+         */
         mode,
         /** position -> {answer, explanation} for questions revealed so far */
         reveals: new Map(),
+        /** positions whose explanation the student has chosen to read (practice mode gates it; learning shows it as soon as revealed) */
+        explanationShown: new Set(),
         /** position -> chosen choice index, in the order the student saw them */
         answers: { ...answers },
         /** position -> question payload from the API, cached once fetched */
@@ -46,6 +54,14 @@ export function isAnswered(state, position) {
 
 export function answeredCount(state) {
     return Object.keys(state.answers).length;
+}
+
+export function isExplanationShown(state, position) {
+    return state.explanationShown.has(position);
+}
+
+export function showExplanation(state, position) {
+    state.explanationShown.add(position);
 }
 
 export function isFlagged(state, position) {
@@ -176,4 +192,24 @@ export function unansweredPositions(state) {
 export function progressPercent(state) {
     if (state.questionCount === 0) return 0;
     return Math.round((answeredCount(state) / state.questionCount) * 100);
+}
+
+/** Seconds until state.deadlineAt, floored and never negative; null for an untimed attempt. */
+export function remainingSeconds(state, nowMs = Date.now()) {
+    if (!state.deadlineAt) return null;
+    const deadlineMs = Date.parse(state.deadlineAt);
+    if (Number.isNaN(deadlineMs)) return null;
+    return Math.max(0, Math.floor((deadlineMs - nowMs) / 1000));
+}
+
+/** The runner bar switches to a warning style at or under this much time left. */
+export const TIME_WARNING_SECONDS = 120;
+
+export function isTimeCritical(state, nowMs = Date.now()) {
+    const remaining = remainingSeconds(state, nowMs);
+    return remaining !== null && remaining <= TIME_WARNING_SECONDS;
+}
+
+export function isTimeExpired(state, nowMs = Date.now()) {
+    return remainingSeconds(state, nowMs) === 0;
 }

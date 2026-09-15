@@ -7,8 +7,8 @@
  * choice text is written through textContent, always.
  */
 import {
-    ATTEMPT_FILTERS, answeredCount, isAnswered, isFlagged, isStruck,
-    progressPercent, unansweredPositions, visiblePositions,
+    ATTEMPT_FILTERS, answeredCount, isAnswered, isExplanationShown, isFlagged, isStruck, isTimeCritical,
+    progressPercent, remainingSeconds, unansweredPositions, visiblePositions,
 } from './runner-state.js';
 import { renderMarkdown } from './markdown.js';
 
@@ -113,6 +113,10 @@ export function el(tag, options = {}, ...children) {
 const ICONS = {
     grid: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',
     flag: 'M5 3v18M5 4h11l-2 3 2 3H5',
+    // A hex nut with a hole -- reads as "settings/tools" without relying on
+    // U+2699, which the note above already explains gets substituted.
+    settings: 'M18.93 16L12 20L5.07 16L5.07 8L12 4L18.93 8ZM12 9a3 3 0 100 6 3 3 0 000-6z',
+    clock: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v5l4 2',
 };
 
 export function icon(name, { filled = false } = {}) {
@@ -158,9 +162,16 @@ export function renderIntro(assessment, actions) {
     if (assessment.course_title) addFact('درس', String(assessment.course_title));
     if (assessment.term_name) addFact('ترم', String(assessment.term_name));
     if (max > 0) addFact('تلاش', `${faDigits(used)} از ${faDigits(max)}`);
+    if (Number(assessment.time_limit_minutes || 0) > 0) addFact('زمان', `${faDigits(assessment.time_limit_minutes)} دقیقه`);
 
     return el('div', { className: 'f-card x-intro' },
-        el('p', { className: 'x-intro__eyebrow', text: kindLabel(assessment.assessment_kind) }),
+        el('div', { className: 'x-intro__head-row' },
+            el('p', { className: 'x-intro__eyebrow', text: kindLabel(assessment.assessment_kind) }),
+            el('button', {
+                className: 'x-settings-trigger', type: 'button',
+                attrs: { 'aria-label': 'تنظیمات' },
+                on: { click: actions.openSettings },
+            }, icon('settings'), el('span', { text: 'تنظیمات' }))),
         el('h1', { className: 'x-intro__title', text: String(assessment.title || 'آزمون') }),
         facts,
         el('div', { className: 'x-intro__notes' },
@@ -176,16 +187,26 @@ export function renderIntro(assessment, actions) {
                 : el('div', { className: 'x-intro__modes' },
                     el('button', {
                         className: 'x-mode', type: 'button',
-                        on: { click: () => actions.start('assessment') },
-                    },
-                        el('strong', { text: 'آزمون' }),
-                        el('span', { className: 'f-muted', text: 'مثل جلسه‌ی واقعی؛ پاسخ درست را بعد از ثبت می‌بینی.' })),
-                    el('button', {
-                        className: 'x-mode', type: 'button',
                         on: { click: () => actions.start('learning') },
                     },
                         el('strong', { text: 'یادگیری' }),
-                        el('span', { className: 'f-muted', text: 'هر وقت خواستی پاسخ و توضیح همان سؤال را ببین.' })))),
+                        el('span', { className: 'f-muted', text: 'هر وقت خواستی پاسخ و توضیح همان سؤال را ببین.' })),
+                    el('button', {
+                        className: 'x-mode', type: 'button',
+                        on: { click: () => actions.start('practice') },
+                    },
+                        el('strong', { text: 'تمرین' }),
+                        el('span', { className: 'f-muted', text: 'بلافاصله می‌فهمی درست گفتی یا نه؛ توضیح را هر وقت خواستی ببین.' })),
+                    el('button', {
+                        className: 'x-mode', type: 'button',
+                        on: { click: () => actions.start('assessment') },
+                    },
+                        el('strong', { text: 'آزمون' }),
+                        el('span', { className: 'f-muted', text: 'مثل جلسه‌ی واقعی؛ پاسخ درست را بعد از ثبت می‌بینی.' })))),
+        used > 0 ? el('button', {
+            className: 'f-btn f-btn--ghost x-intro__history', type: 'button', text: 'تاریخچه‌ی تلاش‌ها',
+            on: { click: actions.openHistory },
+        }) : null,
         el('p', { className: 'x-intro__back' },
             el('a', { attrs: { href: '/app/exams' }, text: '‹ بازگشت به فهرست آزمون‌ها' })));
 }
@@ -197,9 +218,49 @@ export function kindLabel(kind) {
     return 'آزمون';
 }
 
+const ATTEMPT_MODE_LABELS = { assessment: 'آزمون', learning: 'یادگیری', practice: 'تمرین' };
+
+function historyRow(attempt) {
+    const total = Number(attempt.question_count || 0);
+    const percent = total === 0 ? 0 : Math.round((Number(attempt.correct_count || 0) / total) * 100);
+    const date = attempt.submitted_at ? new Date(attempt.submitted_at) : null;
+    const dateLabel = date && !Number.isNaN(date.getTime())
+        ? faDigits(new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium', timeStyle: 'short' }).format(date))
+        : '';
+    return el('li', { className: 'x-history__row' },
+        el('span', { className: 'x-history__score', text: `٪${faDigits(percent)}` }),
+        el('div', { className: 'x-history__meta' },
+            el('span', { text: `${faDigits(attempt.correct_count)} از ${faDigits(total)} پاسخ درست` }),
+            el('span', { className: 'f-tiny', text: `${ATTEMPT_MODE_LABELS[attempt.mode] ?? attempt.mode} · ${dateLabel}` })));
+}
+
+/** تاریخچه‌ی تلاش‌ها: this student's own past scored attempts, newest first. */
+export function renderHistory(attempts, actions, { loading = false } = {}) {
+    const body = loading
+        ? el('p', { className: 'f-muted', text: 'در حال گرفتن تاریخچه…' })
+        : (attempts.length === 0
+            ? el('p', { className: 'f-muted', text: 'هنوز تلاشی ثبت نشده.' })
+            : el('ul', { className: 'x-history__list' }, ...attempts.map((attempt) => historyRow(attempt))));
+
+    return el('div', { className: 'x-dialog', attrs: { role: 'dialog', 'aria-modal': 'true', 'aria-label': 'تاریخچه‌ی تلاش‌ها', tabindex: '-1' } },
+        el('div', { className: 'x-dialog__panel x-dialog__panel--narrow' },
+            el('header', { className: 'x-dialog__head' },
+                el('h2', { text: 'تاریخچه‌ی تلاش‌ها' }),
+                el('button', { className: 'x-dialog__close', type: 'button', text: '✕', attrs: { 'aria-label': 'بستن' }, on: { click: actions.close } })),
+            body));
+}
+
+/** mm:ss, Persian digits, seconds zero-padded. */
+function formatRemaining(totalSeconds) {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${faDigits(minutes)}:${faDigits(String(seconds).padStart(2, '0'))}`;
+}
+
 /** The bar pinned to the top of a running attempt. */
 function renderTopBar(state, saveStatus, actions) {
     const percent = progressPercent(state);
+    const remaining = remainingSeconds(state);
     return el('div', { className: 'x-bar' },
         el('button', {
             className: 'x-bar__map', type: 'button',
@@ -217,7 +278,16 @@ function renderTopBar(state, saveStatus, actions) {
                 text: `${faDigits(answeredCount(state))} از ${faDigits(state.questionCount)} پاسخ‌داده`,
                 attrs: { role: 'status' },
             })),
+        remaining === null ? null : el('span', {
+            className: `x-bar__timer${isTimeCritical(state) ? ' is-critical' : ''}`,
+            attrs: { role: 'timer', 'aria-live': 'polite', 'aria-label': 'زمان باقی‌مانده' },
+        }, icon('clock'), el('span', { text: formatRemaining(remaining) })),
         el('span', { className: `x-bar__save is-${saveStatus}`, text: saveLabel(saveStatus), attrs: { role: 'status' } }),
+        el('button', {
+            className: 'x-bar__settings', type: 'button',
+            attrs: { 'aria-label': 'تنظیمات' },
+            on: { click: actions.openSettings },
+        }, icon('settings')),
         el('button', {
             className: 'f-btn f-btn--ghost x-bar__leave', type: 'button', text: 'خروج',
             attrs: { 'aria-label': 'خروج از آزمون بدون ثبت' },
@@ -269,28 +339,52 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
 
     const flagged = isFlagged(state, position);
 
+    const card = el('article', {
+        className: 'f-card x-question__card',
+        on: {
+            wheel: actions.cardWheel,
+            touchstart: actions.cardTouchStart,
+            touchmove: actions.cardTouchMove,
+            touchend: actions.cardTouchEnd,
+        },
+    },
+        el('header', { className: 'x-question__head' },
+            el('span', { className: 'x-question__index', text: `سؤال ${faDigits(position)} از ${faDigits(state.questionCount)}` }),
+            el('button', {
+                className: `x-flag${flagged ? ' is-on' : ''}`, type: 'button',
+                attrs: { 'aria-pressed': flagged ? 'true' : 'false' },
+                on: { click: actions.toggleFlag },
+            }, icon('flag', { filled: flagged }), el('span', { text: flagged ? 'نشان‌دار' : 'نشان‌دار کن' }))),
+        el('p', { className: 'x-question__prompt', text: faText(question.prompt) }),
+        choices,
+        el('div', { className: 'x-question__foot' },
+            selected === undefined ? null : el('button', {
+                className: 'x-question__clear', type: 'button', text: 'پاک کردن پاسخ',
+                on: { click: actions.clear },
+            }),
+            state.mode !== 'learning' || reveal ? null : el('button', {
+                className: 'f-btn f-btn--ghost x-question__reveal', type: 'button', text: 'بلد نیستم، پاسخ را نشانم بده',
+                on: { click: actions.reveal },
+            })),
+        reveal ? renderReveal(reveal, question, selected, {
+            // Learning always shows the explanation alongside the verdict;
+            // practice tells you right/wrong at once but keeps the
+            // explanation behind a tap, so the two don't blur into the same
+            // mode.
+            explanationVisible: state.mode !== 'practice' || isExplanationShown(state, position),
+            onShowExplanation: actions.showExplanation,
+        }) : null);
+
+    // Empty gutters flank the card: اسکرول عمودی کنار سؤال. There is nothing
+    // else to scroll in them, so a vertical wheel there always navigates --
+    // CSS hides them below the width where there is no real margin to put
+    // them in.
+    const marginStart = el('div', { className: 'x-question__margin', attrs: { 'aria-hidden': 'true' }, on: { wheel: actions.marginWheel } });
+    const marginEnd = el('div', { className: 'x-question__margin', attrs: { 'aria-hidden': 'true' }, on: { wheel: actions.marginWheel } });
+
     return el('div', { className: 'x-question' },
         renderTopBar(state, saveStatus, actions),
-        el('article', { className: 'f-card x-question__card' },
-            el('header', { className: 'x-question__head' },
-                el('span', { className: 'x-question__index', text: `سؤال ${faDigits(position)} از ${faDigits(state.questionCount)}` }),
-                el('button', {
-                    className: `x-flag${flagged ? ' is-on' : ''}`, type: 'button',
-                    attrs: { 'aria-pressed': flagged ? 'true' : 'false' },
-                    on: { click: actions.toggleFlag },
-                }, icon('flag', { filled: flagged }), el('span', { text: flagged ? 'نشان‌دار' : 'نشان‌دار کن' }))),
-            el('p', { className: 'x-question__prompt', text: faText(question.prompt) }),
-            choices,
-            el('div', { className: 'x-question__foot' },
-                selected === undefined ? null : el('button', {
-                    className: 'x-question__clear', type: 'button', text: 'پاک کردن پاسخ',
-                    on: { click: actions.clear },
-                }),
-                state.mode !== 'learning' || reveal ? null : el('button', {
-                    className: 'f-btn f-btn--ghost x-question__reveal', type: 'button', text: 'بلد نیستم، پاسخ را نشانم بده',
-                    on: { click: actions.reveal },
-                })),
-            reveal ? renderReveal(reveal, question, selected) : null),
+        el('div', { className: 'x-question__stage' }, marginStart, card, marginEnd),
         el('nav', { className: 'x-nav', attrs: { 'aria-label': 'پیمایش سؤال‌ها' } },
             el('button', {
                 className: 'f-btn f-btn--ghost', type: 'button', text: '→ قبلی',
@@ -313,18 +407,25 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
  * attempt. It says plainly that this one was seen, because the report will
  * say so too and the student should not be surprised by that later.
  */
-function renderReveal(reveal, question, chosen) {
+function renderReveal(reveal, question, chosen, { explanationVisible = true, onShowExplanation = null } = {}) {
     const letter = CHOICE_LETTERS[reveal.answer] ?? faDigits(reveal.answer + 1);
     const verdict = chosen === null || chosen === undefined
         ? `پاسخ درست: گزینه ${letter}`
         : (chosen === reveal.answer ? `درست گفتی — گزینه ${letter}` : `نادرست. پاسخ درست گزینه ${letter} است.`);
 
-    return el('section', { className: `x-revealed${chosen === reveal.answer ? ' is-right' : ''}` },
-        el('p', { className: 'x-revealed__head', text: verdict }),
-        reveal.explanation
+    const explanationBody = !explanationVisible
+        ? el('button', {
+            className: 'f-btn f-btn--ghost x-revealed__show-explanation', type: 'button', text: 'نمایش توضیح',
+            on: { click: onShowExplanation },
+        })
+        : (reveal.explanation
             ? el('div', {}, renderMarkdown(reveal.explanation),
                 el('p', { className: 'x-explanation__origin', text: 'این توضیح با کمک هوش مصنوعی نوشته شده و بازبینی انسانی نشده است.' }))
-            : el('p', { className: 'f-tiny', text: 'برای این سؤال توضیحی ثبت نشده است.' }),
+            : el('p', { className: 'f-tiny', text: 'برای این سؤال توضیحی ثبت نشده است.' }));
+
+    return el('section', { className: `x-revealed${chosen === reveal.answer ? ' is-right' : ''}` },
+        el('p', { className: 'x-revealed__head', text: verdict }),
+        explanationBody,
         el('p', { className: 'f-tiny', text: 'این سؤال در کارنامه به‌عنوان «پاسخ دیده‌شده» علامت می‌خورد.' }));
 }
 

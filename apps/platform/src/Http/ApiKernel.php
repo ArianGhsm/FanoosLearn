@@ -368,6 +368,12 @@ final class ApiKernel
         if ($request->method === 'GET' && preg_match('#^/assessments/([0-9a-f-]+)/analytics$#', $suffix, $match)) {
             return ['status' => 200, 'data' => $this->requireExams()->analytics($session->userId, $workspaceId, $match[1])];
         }
+        if ($request->method === 'GET' && preg_match('#^/assessments/([0-9a-f-]+)/attempts/history$#', $suffix, $match)) {
+            return ['status' => 200, 'data' => $this->requireExams()->attemptHistory($session->userId, $workspaceId, $match[1])];
+        }
+        if ($request->method === 'GET' && $suffix === '/mistakes-review') {
+            return ['status' => 200, 'data' => $this->requireExams()->mistakesReview($session->userId, $workspaceId)];
+        }
         if ($request->method === 'PATCH' && preg_match('#^/attempts/([0-9a-f-]+)$#', $suffix, $match)) {
             $answers = is_array($request->body['answers'] ?? null) ? $request->body['answers'] : [];
             return ['status' => 200, 'data' => $this->requireExams()->saveProgress(
