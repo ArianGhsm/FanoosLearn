@@ -31,8 +31,15 @@ export class ExamTransport {
         this.savePromise = null;
     }
 
-    start(assessmentId) {
-        return this.api.post(`${this.base}/assessments/${encodeURIComponent(assessmentId)}/attempts`, {});
+    start(assessmentId, mode) {
+        return this.api.post(
+            `${this.base}/assessments/${encodeURIComponent(assessmentId)}/attempts`,
+            mode === null || mode === undefined ? {} : { mode },
+        );
+    }
+
+    reveal(attemptId, position) {
+        return this.api.get(`${this.base}/attempts/${encodeURIComponent(attemptId)}/questions/${position}/reveal`);
     }
 
     /**

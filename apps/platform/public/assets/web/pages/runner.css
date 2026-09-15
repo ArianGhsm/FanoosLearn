@@ -591,3 +591,82 @@ body.x-focus .f-page {
     text-align: center;
     font-size: 0.9rem;
 }
+
+/* ------------------------------------------------------- mode choice */
+
+.x-intro__modes {
+    display: grid;
+    gap: var(--space-3);
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.x-mode {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+    color: var(--text-primary);
+    font: inherit;
+    text-align: center;
+    cursor: pointer;
+}
+
+.x-mode:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.x-mode strong {
+    font-size: 1.05rem;
+}
+
+.x-mode span {
+    font-size: 0.85rem;
+    line-height: 1.7;
+}
+
+/* --------------------------------------------------- learning reveal */
+
+.x-question__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+}
+
+.x-question__clear {
+    margin-top: 0;
+}
+
+.x-question__reveal {
+    min-height: 38px;
+    margin-inline-start: auto;
+}
+
+/* The revealed correct choice, marked in place while answering. */
+.x-choice.is-correct {
+    border-color: var(--success);
+    background: var(--success-soft);
+}
+
+.x-revealed {
+    margin-top: var(--space-5);
+    padding-top: var(--space-4);
+    border-top: 2px dashed var(--border-strong);
+}
+
+.x-revealed__head {
+    font-weight: 700;
+    color: var(--success);
+    margin-bottom: var(--space-3);
+}
+
+/* A question whose answer was seen, marked in the report. */
+.x-verdict.is-revealed {
+    background: var(--surface-strong);
+    color: var(--text-secondary);
+}
