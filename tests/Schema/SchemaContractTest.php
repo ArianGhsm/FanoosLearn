@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Fanoos\Tests\Schema;
 
+use Fanoos\Platform\Migration\MigrationSafety;
+
 use Fanoos\Platform\Migration\SqlStatementSplitter;
 use Fanoos\Platform\Support\Uuid;
 use RuntimeException;
@@ -14,6 +16,43 @@ final class SchemaContractTest
 
     public function __construct(private readonly string $root)
     {
+    }
+
+    /**
+     * The two guards agree on every real migration.
+     *
+     * This is the check that was missing when they drifted: the repository
+     * accepted a migration the updater then refused, and the difference only
+     * showed up mid-deployment. Running the updater's own predicate over the
+     * migrations on disk is what makes "CI passed" mean "the updater will
+     * accept it".
+     */
+    private function assertTheUpdaterWouldAcceptEveryMigration(array $migrationPaths): void
+    {
+        foreach ($migrationPaths as $path) {
+            if ((int) substr(basename($path), 0, 4) < 8) {
+                continue;
+            }
+            $sql = (string) file_get_contents($path);
+            $this->assert(
+                MigrationSafety::declaresExpandCompatible($sql),
+                'The updater would refuse this migration as undeclared: ' . basename($path),
+            );
+            $this->assert(
+                MigrationSafety::unsafeReason($sql) === null,
+                'The updater would refuse this migration as unsafe: ' . basename($path),
+            );
+        }
+
+        // And the predicate still refuses what it is there to refuse.
+        $this->assert(MigrationSafety::unsafeReason('ALTER TABLE t DROP COLUMN c;') !== null, 'Dropping a column must stay refused.');
+        $this->assert(MigrationSafety::unsafeReason('TRUNCATE TABLE t;') !== null, 'Truncating must stay refused.');
+        $this->assert(MigrationSafety::unsafeReason('ALTER TABLE t MODIFY c INT;') !== null, 'Rewriting a column must stay refused.');
+        $this->assert(MigrationSafety::unsafeReason('ALTER TABLE t DROP CHECK chk_x;') !== null, 'A bare CHECK removal must stay refused.');
+        $this->assert(
+            MigrationSafety::unsafeReason("ALTER TABLE t DROP CHECK chk_x, ADD CONSTRAINT chk_x CHECK (c IN ('a','b'));") === null,
+            'A paired CHECK widen must be allowed -- MySQL cannot express it any other way.',
+        );
     }
 
     public function run(): int
@@ -33,29 +72,21 @@ final class SchemaContractTest
             );
         }
 
+        $this->assertTheUpdaterWouldAcceptEveryMigration($migrationPaths);
+
         $sql = '';
         foreach ($migrationPaths as $path) {
             $contents = file_get_contents($path);
             $this->assert($contents !== false, 'Migration could not be read: ' . basename($path));
             $sql .= "\n" . $contents;
-            // DROP CHECK is the sole exception, and only paired: MySQL has no
-            // ALTER CHECK for a condition change, so widening a named CHECK
-            // constraint (e.g. a mode enum gaining a value) is only
-            // expressible as dropping and re-adding it. The guard checks the
-            // pairing itself -- every dropped name must be re-added with an
-            // ADD CONSTRAINT of the same name in the same file -- so this
-            // stays a widening tool and not a way to remove a constraint for
-            // good; every other DROP, and TRUNCATE, stays blocked outright.
-            $this->assert(!preg_match('/\bTRUNCATE\b/i', $contents), 'Destructive DDL found in ' . basename($path));
-            $this->assert(!preg_match('/\bDROP\s+(?!CHECK\b)\w+/i', $contents), 'Destructive DDL found in ' . basename($path));
-            if (preg_match_all('/\bDROP\s+CHECK\s+(\w+)/i', $contents, $droppedChecks)) {
-                foreach ($droppedChecks[1] as $checkName) {
-                    $this->assert(
-                        preg_match('/\bADD\s+CONSTRAINT\s+' . preg_quote($checkName, '/') . '\s+CHECK\s*\(/i', $contents) === 1,
-                        "Migration drops CHECK {$checkName} without re-adding a constraint of the same name -- a bare removal, not a widen: " . basename($path),
-                    );
-                }
-            }
+            // One rule, stated once, in Fanoos\Platform\Migration\MigrationSafety:
+            // the updater refuses an unsafe migration at deploy time and this
+            // refuses one into the repository, and they must not drift. They
+            // did once -- this test learned about paired CHECK widening and
+            // the updater did not, so CI went green and the deployment stopped
+            // after a backup had been taken and the release staged.
+            $unsafe = MigrationSafety::unsafeReason($contents);
+            $this->assert($unsafe === null, basename($path) . ' ' . (string) $unsafe);
             $this->assert(!preg_match('/Dentistry|IntegratedDent|TUMS|1402/i', $contents), 'Legacy product identifier found in a migration.');
             // The updater refuses to apply a migration that has not declared
             // how it behaves on rollback. Nothing checked that here, so an
