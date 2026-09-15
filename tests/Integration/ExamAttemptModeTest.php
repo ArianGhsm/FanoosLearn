@@ -67,15 +67,19 @@ final class ExamAttemptModeTest
         $exams = $this->exams();
         $attempt = $exams->startAttempt($fixture['student'], $fixture['workspace'], $fixture['assessment_id'], 'practice');
 
-        $reveal = $exams->revealQuestion($fixture['student'], $fixture['workspace'], $attempt['attempt_id'], 1, 1_700_000_300);
+        // Questions are shown in a per-attempt shuffled order (ExamAttemptShuffle),
+        // so "position 1" is not necessarily q1 -- find it by the question_id the
+        // reveal actually returns, the same idiom ExamQuestionPacingTest uses.
+        $position = $this->positionOfQuestion($exams, $fixture, $attempt['attempt_id'], 'q1', 1_700_000_300);
+        $reveal = $exams->revealQuestion($fixture['student'], $fixture['workspace'], $attempt['attempt_id'], $position, 1_700_000_300);
         $this->assert($reveal['answer'] === 1, 'Practice reveal did not return the correct choice index.');
         $this->assert($reveal['explanation'] === 'پاسخ چهار است.', 'Practice reveal did not reach the explanation on demand.');
-        $this->assert($reveal['revealed'] === [1], 'Practice reveal was not recorded on the attempt.');
+        $this->assert($reveal['revealed'] === [$position], 'Practice reveal was not recorded on the attempt.');
 
         // Revealing the same position again must not duplicate the record.
-        $exams->revealQuestion($fixture['student'], $fixture['workspace'], $attempt['attempt_id'], 1, 1_700_000_301);
+        $exams->revealQuestion($fixture['student'], $fixture['workspace'], $attempt['attempt_id'], $position, 1_700_000_301);
         $revealedAgain = $this->revealedPositions($attempt['attempt_id']);
-        $this->assert($revealedAgain === [1], 'Re-revealing the same position duplicated the revealed-positions record.');
+        $this->assert($revealedAgain === [$position], 'Re-revealing the same position duplicated the revealed-positions record.');
     }
 
     private function assertLearningStillReveals(): void
@@ -84,9 +88,29 @@ final class ExamAttemptModeTest
         $exams = $this->exams();
         $attempt = $exams->startAttempt($fixture['student'], $fixture['workspace'], $fixture['assessment_id'], 'learning');
 
-        $reveal = $exams->revealQuestion($fixture['student'], $fixture['workspace'], $attempt['attempt_id'], 1, 1_700_000_400);
+        $position = $this->positionOfQuestion($exams, $fixture, $attempt['attempt_id'], 'q1', 1_700_000_400);
+        $reveal = $exams->revealQuestion($fixture['student'], $fixture['workspace'], $attempt['attempt_id'], $position, 1_700_000_400);
         $this->assert($reveal['answer'] === 1, 'Learning reveal regressed: wrong answer index.');
         $this->assert($reveal['explanation'] === 'پاسخ چهار است.', 'Learning reveal regressed: explanation missing.');
+    }
+
+    /**
+     * Finds which 1-based position a question id actually shows up at for
+     * this attempt (ExamAttemptShuffle orders questions per attempt, so
+     * position 1 is not necessarily q1). Uses readQuestion() rather than
+     * revealQuestion() to search -- revealing records the position as seen,
+     * and searching must not contaminate the very revealed-positions
+     * assertion the caller is about to make.
+     */
+    private function positionOfQuestion(ExamService $exams, array $fixture, string $attemptId, string $questionId, int $now): int
+    {
+        for ($position = 1; $position <= 2; $position++) {
+            $read = $exams->readQuestion($fixture['student'], $fixture['workspace'], $attemptId, $position, $now);
+            if ($read['question']['id'] === $questionId) {
+                return $position;
+            }
+        }
+        throw new RuntimeException("Question {$questionId} was not found at any position.");
     }
 
     private function assertAssessmentIsRefusedAnyReveal(): void
