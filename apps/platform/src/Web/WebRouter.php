@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace Fanoos\Platform\Web;
 
+use Fanoos\Platform\Content\ExamService;
 use Fanoos\Platform\Identity\AuthService;
 use Throwable;
 
 /**
  * Maps a request path to a page.
  *
- * Every route is declared here, exactly once. nginx sends anything that is
+ * Every route is declared here, exactly once. The web server (Apache via
+ * apps/platform/public/.htaccess in this deployment) sends anything that is
  * not a real file to this front controller, so an unknown path must produce
  * a real 404 page rather than silently rendering the home page -- otherwise
  * a typo in a link looks like a working page with the wrong content.
@@ -20,6 +22,7 @@ final class WebRouter
     public function __construct(
         private readonly AuthService $auth,
         private readonly PageRenderer $renderer,
+        private readonly ?ExamService $exams = null,
     ) {
     }
 
@@ -90,9 +93,12 @@ final class WebRouter
             if ($viewer === null) {
                 return $this->redirect('/login');
             }
-            return $viewer->workspaceId === null
-                ? $this->redirect('/app')
-                : $this->page(200, (new ExamAttemptPage($this->renderer))->render($viewer, $match[1]));
+            if ($viewer->workspaceId === null) {
+                return $this->redirect('/app');
+            }
+            return $this->page(200, (new ExamAttemptPage($this->renderer))->render(
+                $viewer, $match[1], $this->assessmentIntro($viewer->userId, $viewer->workspaceId, $match[1]),
+            ));
         }
 
         return $this->page(404, (new NotFoundPage($this->renderer))->render($viewer));
@@ -141,6 +147,33 @@ final class WebRouter
             $session->selectedWorkspaceId,
             $workspaceName === '' ? null : $workspaceName,
         );
+    }
+
+    /**
+     * The one catalogue-shaped row for the exam being opened, embedded into
+     * the rendered page so the runner script does not have to fetch the
+     * whole catalogue just to find the one assessment it already knows the
+     * id of (see ExamAttemptPage, ExamService::catalogEntry()).
+     *
+     * null covers every case where the client-side fallback must run
+     * instead: the exam service is not configured, the id does not resolve
+     * to a published assessment in this workspace, or access is denied --
+     * exactly the same "not available" outcome the page already showed via
+     * a failed client-side lookup, just resolved here instead. Never lets an
+     * exception here turn a normal not-found/denied case into a 500.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function assessmentIntro(string $userId, string $workspaceId, string $assessmentId): ?array
+    {
+        if ($this->exams === null) {
+            return null;
+        }
+        try {
+            return $this->exams->catalogEntry($userId, $workspaceId, $assessmentId);
+        } catch (Throwable) {
+            return null;
+        }
     }
 
     /** @return array{status:int,headers:list<string>,body:string} */

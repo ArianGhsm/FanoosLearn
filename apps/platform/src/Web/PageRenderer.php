@@ -130,4 +130,25 @@ final class PageRenderer
     {
         return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
+
+    /**
+     * Embeds server-known data as a JSON `<script>` block a page script can
+     * read with `JSON.parse(document.getElementById(id).textContent)`
+     * instead of fetching it. JSON_HEX_TAG (plus the other HEX flags) is
+     * what makes this safe to place inside a `<script>` element: it escapes
+     * `<`, `>`, `&`, `'` and `"` to `\uXXXX` sequences, so a string value
+     * containing literal `</script>` cannot close the tag early and inject
+     * markup.
+     *
+     * @param mixed $data must be JSON-encodable
+     */
+    public function embedJson(string $id, mixed $data): string
+    {
+        $json = json_encode(
+            $data,
+            JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR,
+        );
+
+        return '<script id="' . $this->escape($id) . '" type="application/json">' . $json . '</script>';
+    }
 }

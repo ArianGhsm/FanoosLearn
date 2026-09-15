@@ -41,6 +41,8 @@ final class ExamQuestionPacingTest
         $this->assertRateLimitEngagesAndCounterSurvivesRefusal();
         $this->assertAuditRecordsReadsWithoutQuestionOrExplanationText();
         $this->assertEntitlementIsRecheckedOnEveryRead();
+        $this->assertStartAttemptReturnsExactlyOneQuestionAndConsumesAPacingToken();
+        $this->assertStartAttemptDegradesGracefullyWhenPacingIsExhausted();
 
         return $this->assertions;
     }
@@ -129,6 +131,74 @@ final class ExamQuestionPacingTest
         // entitlement must stop further reads immediately, not only block a
         // brand-new startAttempt.
         $this->expectCode('entitlement_required', fn () => $exams->readQuestion($fixture['student'], $fixture['workspace'], $attempt['attempt_id'], 2, 1_700_000_201));
+    }
+
+    /**
+     * ExamService::startAttempt()'s bonus first-question (perf/exam-load-time):
+     * a fresh attempt start returns position 1 already shaped exactly like
+     * readQuestion()'s own output (never `answer`/`explanation`), never more
+     * than that one question, and spends exactly one pacing token from the
+     * same shared budget readQuestion() draws from -- while the idempotent
+     * resume path (starting an attempt that is already in progress) returns
+     * no bonus question and spends none at all.
+     */
+    private function assertStartAttemptReturnsExactlyOneQuestionAndConsumesAPacingToken(): void
+    {
+        $fixture = $this->fixture('start-bonus-' . $this->suffix(), 5);
+        $exams = $this->exams(burstCapacity: 2.0, refillSecondsPerToken: 1000.0);
+        $now = 1_700_000_300;
+
+        $attempt = $exams->startAttempt($fixture['student'], $fixture['workspace'], $fixture['assessment_id'], 'assessment', $now);
+
+        $this->assert($attempt['resumed'] === false, 'Fixture attempt was not recognised as a fresh start.');
+        $this->assert(array_key_exists('first_question', $attempt), 'A fresh attempt start did not include first_question.');
+        $first = $attempt['first_question'];
+        $this->assert(is_array($first) && ($first['id'] ?? '') !== '', 'first_question was missing or malformed.');
+        $this->assert(array_key_exists('prompt', $first) && array_key_exists('choices', $first), 'first_question did not carry the safe question shape.');
+        foreach (['answer', 'explanation'] as $leak) {
+            $this->assert(!array_key_exists($leak, $first), "first_question leaked {$leak}, violating readQuestion()'s never-before-submission guarantee.");
+        }
+        // Exactly one question: no other question-bearing key snuck into the response.
+        $this->assert(!array_key_exists('questions', $attempt) && !array_key_exists('first_questions', $attempt), 'startAttempt returned more than a single bonus question.');
+
+        $tokensAfterFreshStart = $this->tokensRemaining($fixture['student']);
+        $this->assert(abs($tokensAfterFreshStart - 1.0) < 0.0001, 'A fresh attempt start did not spend exactly one pacing token from the 2.0 burst.');
+
+        // Re-starting the same (still in-progress) attempt is the idempotent
+        // resume path: it must return without first_question and without
+        // touching the pacing budget at all.
+        $resumed = $exams->startAttempt($fixture['student'], $fixture['workspace'], $fixture['assessment_id'], 'assessment', $now);
+        $this->assert($resumed['resumed'] === true, 'Second start of the same in-progress attempt was not recognised as a resume.');
+        $this->assert(!array_key_exists('first_question', $resumed), 'The idempotent resume path must never return a bonus question.');
+        $tokensAfterResume = $this->tokensRemaining($fixture['student']);
+        $this->assert(abs($tokensAfterResume - $tokensAfterFreshStart) < 0.0001, 'The idempotent resume path spent a pacing token; it must spend exactly zero.');
+
+        // Same shape readQuestion() itself would produce for position 1 of
+        // this attempt, confirming the two call sites did not drift apart --
+        // they share the one safeQuestion() shaping method.
+        $read = $exams->readQuestion($fixture['student'], $fixture['workspace'], $attempt['attempt_id'], 1, $now + 1000);
+        $this->assert($read['question'] === $first, "startAttempt()'s bonus question did not match readQuestion()'s own shape for position 1.");
+    }
+
+    /**
+     * A pacing guard that is already exhausted when an attempt starts must
+     * not fail attempt creation -- it degrades to the same two-request
+     * behaviour the client already falls back to (see runner.js's
+     * QuestionWindow.load(1) fallback), never a 429 on starting.
+     */
+    private function assertStartAttemptDegradesGracefullyWhenPacingIsExhausted(): void
+    {
+        $fixture = $this->fixture('start-exhausted-' . $this->suffix(), 5);
+        // Below one token and effectively no refill: even the very first
+        // consume() call inside startAttempt() refuses, simulating a guard
+        // already spent by prior reads.
+        $exams = $this->exams(burstCapacity: 0.5, refillSecondsPerToken: 1000.0);
+        $now = 1_700_000_400;
+
+        $attempt = $exams->startAttempt($fixture['student'], $fixture['workspace'], $fixture['assessment_id'], 'assessment', $now);
+
+        $this->assert($attempt['status'] === 'in_progress', 'Attempt creation must succeed even when the pacing guard refuses the bonus question.');
+        $this->assert(!array_key_exists('first_question', $attempt), 'A refused pacing guard must omit first_question rather than fail attempt creation or fabricate one anyway.');
     }
 
     // -- fixtures and small helpers ------------------------------------------

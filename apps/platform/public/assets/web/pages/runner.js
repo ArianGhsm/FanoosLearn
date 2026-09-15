@@ -116,10 +116,32 @@ function clearError() {
 
 /* ------------------------------------------------------------------ intro */
 
+/**
+ * The server embeds this assessment's catalogue row directly into the page
+ * (ExamAttemptPage / PageRenderer::embedJson) whenever it can resolve one, so
+ * the common case needs no network call at all here. The whole-catalogue GET
+ * below only runs as a fallback -- when the server could not resolve the row
+ * (e.g. the exam service was unavailable) or chose not to embed it -- and it
+ * is the exact same lookup this page used to do unconditionally.
+ */
+function readEmbeddedIntro() {
+    const node = document.getElementById('assessment-intro');
+    if (!node) return null;
+    try {
+        return JSON.parse(node.textContent);
+    } catch {
+        return null;
+    }
+}
+
+async function fetchAssessmentFromCatalog() {
+    const catalog = await transport.api.get(`/workspaces/${encodeURIComponent(workspaceId)}/assessments`);
+    return (Array.isArray(catalog) ? catalog : []).find((item) => item.id === assessmentId) ?? null;
+}
+
 async function loadAssessment() {
     try {
-        const catalog = await transport.api.get(`/workspaces/${encodeURIComponent(workspaceId)}/assessments`);
-        assessment = (Array.isArray(catalog) ? catalog : []).find((item) => item.id === assessmentId) ?? null;
+        assessment = readEmbeddedIntro() ?? await fetchAssessmentFromCatalog();
         if (!assessment) {
             pageError = notice('error', 'این آزمون در دسترس نیست', 'ممکن است منتشر نشده باشد یا به فضای آموزشی دیگری تعلق داشته باشد.');
         }
@@ -144,6 +166,15 @@ async function start(mode) {
             deadlineAt: attempt.deadline_at ?? null,
         });
         questions = new QuestionWindow(transport, state.attemptId, state.questionCount);
+        // start-attempt collapses the old start-then-read round trip by
+        // returning position 1 already shaped (ExamService::startAttempt()'s
+        // rate-guard-permitting bonus). Seeding it here means the first
+        // render of question 1 needs no network call at all. When the guard
+        // was exhausted, first_question is simply absent and the normal
+        // QuestionWindow.load(1) below runs exactly as it always has.
+        if (attempt.first_question) {
+            questions.cache.set(1, attempt.first_question);
+        }
         sync = new AnswerSync(transport, state, { onStateChange: () => { if (phase === 'question') draw(); } });
         turbo = new TurboRevealer(transport);
         // Resuming lands on the first gap, not on question one: that is where
