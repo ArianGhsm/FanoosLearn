@@ -178,3 +178,7 @@ test('resuming with answers already saved starts with nothing pending', () => {
     assert.equal(S.answeredCount(state), 2);
     assert.equal(S.hasUnsavedAnswers(state), false);
 });
+
+test('a fresh attempt has no submission queued', () => {
+    assert.equal(fresh().submitQueued, false);
+});
