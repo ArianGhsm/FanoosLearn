@@ -272,7 +272,7 @@ SQL, implode(' AND ', $where)));
     /** @return array<string, mixed> */
     public function startAttempt(string $userId, string $workspaceId, string $assessmentId, string $mode = 'assessment'): array
     {
-        if (!in_array($mode, ['assessment', 'learning'], true)) {
+        if (!in_array($mode, ['assessment', 'learning', 'practice'], true)) {
             throw new PlatformException('attempt_mode_invalid', 'Attempt mode is invalid.', 422);
         }
         $assessment = $this->publishedAssessment($workspaceId, $assessmentId);
@@ -354,14 +354,15 @@ SQL, [
      * Reveals the answer and explanation for one question of a learning
      * attempt, before it is submitted.
      *
-     * This is what makes learning mode possible without handing the paper
-     * over: the reveal is per question, only inside an attempt the caller
-     * owns, only when that attempt was started in learning mode, paced by
-     * the same token bucket as every other read, and audited. The
-     * alternative -- shipping answers alongside the questions so the page
-     * can reveal them itself -- would put the whole answer key in the
-     * browser for anyone who opens developer tools, which is precisely the
-     * bulk extraction the pacing work exists to prevent.
+     * This is what makes learning and practice mode possible without handing
+     * the paper over: the reveal is per question, only inside an attempt the
+     * caller owns, only when that attempt was started in a mode that reveals
+     * (learning or practice -- never assessment), paced by the same token
+     * bucket as every other read, and audited. The alternative -- shipping
+     * answers alongside the questions so the page can reveal them itself --
+     * would put the whole answer key in the browser for anyone who opens
+     * developer tools, which is precisely the bulk extraction the pacing
+     * work exists to prevent.
      *
      * Each reveal is recorded against the attempt so the report can say the
      * answer was seen first. A revealed question still scores by what the
@@ -377,9 +378,11 @@ SQL, [
             if ($attempt['status'] !== 'in_progress') {
                 throw new PlatformException('attempt_not_in_progress', 'Only an in-progress attempt can reveal an answer.', 409);
             }
-            if ((string) $attempt['mode'] !== 'learning') {
-                // A sitting cannot become a practice run halfway through.
-                throw new PlatformException('attempt_not_learning', 'This attempt was not started in learning mode.', 409);
+            if (!in_array((string) $attempt['mode'], ['learning', 'practice'], true)) {
+                // A real sitting cannot become a practice run halfway through:
+                // assessment attempts never reveal, in any form, before
+                // submission.
+                throw new PlatformException('attempt_not_learning', 'This attempt was not started in a mode that reveals answers.', 409);
             }
             $assessment = $this->publishedAssessment($workspaceId, (string) $attempt['assessment_id']);
             $decision = $this->authorizer->decide($userId, 'exam.take', 'assessment', (string) $assessment['scope_id'], $workspaceId);

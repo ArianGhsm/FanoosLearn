@@ -19,10 +19,16 @@ export function createAttemptState({ attemptId, assessmentId, title, questionCou
         title,
         questionCount,
         revision,
-        /** 'assessment' (a real sitting) or 'learning' (answers can be revealed) */
+        /**
+         * 'assessment' (a real sitting, no feedback until submitted),
+         * 'practice' (right/wrong shown at once, explanation on demand) or
+         * 'learning' (answer and explanation shown together, on demand)
+         */
         mode,
         /** position -> {answer, explanation} for questions revealed so far */
         reveals: new Map(),
+        /** positions whose explanation the student has chosen to read (practice mode gates it; learning shows it as soon as revealed) */
+        explanationShown: new Set(),
         /** position -> chosen choice index, in the order the student saw them */
         answers: { ...answers },
         /** position -> question payload from the API, cached once fetched */
@@ -46,6 +52,14 @@ export function isAnswered(state, position) {
 
 export function answeredCount(state) {
     return Object.keys(state.answers).length;
+}
+
+export function isExplanationShown(state, position) {
+    return state.explanationShown.has(position);
+}
+
+export function showExplanation(state, position) {
+    state.explanationShown.add(position);
 }
 
 export function isFlagged(state, position) {

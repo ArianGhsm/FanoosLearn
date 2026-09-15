@@ -8,7 +8,7 @@
 import { ApiError, describeError, watchConnection } from '../foundation/api.js';
 import {
     afterAnswer, clampPosition, clearAnswer, createAttemptState, hasUnsavedAnswers,
-    nextUnanswered, setAnswer, toggleFlag, toggleStrike, unansweredPositions,
+    nextUnanswered, setAnswer, showExplanation as markExplanationShown, toggleFlag, toggleStrike, unansweredPositions,
 } from './runner-state.js';
 import { AnswerSync, ExamTransport, QuestionWindow } from './runner-transport.js';
 import {
@@ -157,11 +157,12 @@ const questionActions = {
         setAnswer(state, state.position, index);
         sync.schedule();
 
-        // Learning mode answers immediately: choosing shows whether it was
-        // right, with the explanation, and stays put so it can be read.
-        // Auto-advancing here would sweep the student past the one thing
-        // they came for.
-        if (state.mode === 'learning') {
+        // Learning and practice both answer immediately: choosing shows
+        // whether it was right and stays put so it can be read (learning
+        // alongside the explanation, practice with the explanation a tap
+        // away). Auto-advancing here would sweep the student past the one
+        // thing they came for.
+        if (state.mode === 'learning' || state.mode === 'practice') {
             draw();
             questionActions.reveal();
             return;
@@ -199,7 +200,7 @@ const questionActions = {
         if (target !== null) showQuestion(target);
     },
     async reveal() {
-        if (state.mode !== 'learning' || state.reveals.has(state.position)) return;
+        if ((state.mode !== 'learning' && state.mode !== 'practice') || state.reveals.has(state.position)) return;
         try {
             const payload = await transport.reveal(state.attemptId, state.position);
             state.reveals.set(state.position, payload);
@@ -207,6 +208,10 @@ const questionActions = {
         } catch (error) {
             showError(error, () => questionActions.reveal());
         }
+        draw();
+    },
+    showExplanation() {
+        markExplanationShown(state, state.position);
         draw();
     },
     openMap() {

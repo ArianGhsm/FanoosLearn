@@ -7,7 +7,7 @@
  * choice text is written through textContent, always.
  */
 import {
-    ATTEMPT_FILTERS, answeredCount, isAnswered, isFlagged, isStruck,
+    ATTEMPT_FILTERS, answeredCount, isAnswered, isExplanationShown, isFlagged, isStruck,
     progressPercent, unansweredPositions, visiblePositions,
 } from './runner-state.js';
 import { renderMarkdown } from './markdown.js';
@@ -176,16 +176,22 @@ export function renderIntro(assessment, actions) {
                 : el('div', { className: 'x-intro__modes' },
                     el('button', {
                         className: 'x-mode', type: 'button',
-                        on: { click: () => actions.start('assessment') },
-                    },
-                        el('strong', { text: 'آزمون' }),
-                        el('span', { className: 'f-muted', text: 'مثل جلسه‌ی واقعی؛ پاسخ درست را بعد از ثبت می‌بینی.' })),
-                    el('button', {
-                        className: 'x-mode', type: 'button',
                         on: { click: () => actions.start('learning') },
                     },
                         el('strong', { text: 'یادگیری' }),
-                        el('span', { className: 'f-muted', text: 'هر وقت خواستی پاسخ و توضیح همان سؤال را ببین.' })))),
+                        el('span', { className: 'f-muted', text: 'هر وقت خواستی پاسخ و توضیح همان سؤال را ببین.' })),
+                    el('button', {
+                        className: 'x-mode', type: 'button',
+                        on: { click: () => actions.start('practice') },
+                    },
+                        el('strong', { text: 'تمرین' }),
+                        el('span', { className: 'f-muted', text: 'بلافاصله می‌فهمی درست گفتی یا نه؛ توضیح را هر وقت خواستی ببین.' })),
+                    el('button', {
+                        className: 'x-mode', type: 'button',
+                        on: { click: () => actions.start('assessment') },
+                    },
+                        el('strong', { text: 'آزمون' }),
+                        el('span', { className: 'f-muted', text: 'مثل جلسه‌ی واقعی؛ پاسخ درست را بعد از ثبت می‌بینی.' })))),
         el('p', { className: 'x-intro__back' },
             el('a', { attrs: { href: '/app/exams' }, text: '‹ بازگشت به فهرست آزمون‌ها' })));
 }
@@ -290,7 +296,14 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
                     className: 'f-btn f-btn--ghost x-question__reveal', type: 'button', text: 'بلد نیستم، پاسخ را نشانم بده',
                     on: { click: actions.reveal },
                 })),
-            reveal ? renderReveal(reveal, question, selected) : null),
+            reveal ? renderReveal(reveal, question, selected, {
+                // Learning always shows the explanation alongside the
+                // verdict; practice tells you right/wrong at once but keeps
+                // the explanation behind a tap, so the two don't blur into
+                // the same mode.
+                explanationVisible: state.mode !== 'practice' || isExplanationShown(state, position),
+                onShowExplanation: actions.showExplanation,
+            }) : null),
         el('nav', { className: 'x-nav', attrs: { 'aria-label': 'پیمایش سؤال‌ها' } },
             el('button', {
                 className: 'f-btn f-btn--ghost', type: 'button', text: '→ قبلی',
@@ -313,18 +326,25 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
  * attempt. It says plainly that this one was seen, because the report will
  * say so too and the student should not be surprised by that later.
  */
-function renderReveal(reveal, question, chosen) {
+function renderReveal(reveal, question, chosen, { explanationVisible = true, onShowExplanation = null } = {}) {
     const letter = CHOICE_LETTERS[reveal.answer] ?? faDigits(reveal.answer + 1);
     const verdict = chosen === null || chosen === undefined
         ? `پاسخ درست: گزینه ${letter}`
         : (chosen === reveal.answer ? `درست گفتی — گزینه ${letter}` : `نادرست. پاسخ درست گزینه ${letter} است.`);
 
-    return el('section', { className: `x-revealed${chosen === reveal.answer ? ' is-right' : ''}` },
-        el('p', { className: 'x-revealed__head', text: verdict }),
-        reveal.explanation
+    const explanationBody = !explanationVisible
+        ? el('button', {
+            className: 'f-btn f-btn--ghost x-revealed__show-explanation', type: 'button', text: 'نمایش توضیح',
+            on: { click: onShowExplanation },
+        })
+        : (reveal.explanation
             ? el('div', {}, renderMarkdown(reveal.explanation),
                 el('p', { className: 'x-explanation__origin', text: 'این توضیح با کمک هوش مصنوعی نوشته شده و بازبینی انسانی نشده است.' }))
-            : el('p', { className: 'f-tiny', text: 'برای این سؤال توضیحی ثبت نشده است.' }),
+            : el('p', { className: 'f-tiny', text: 'برای این سؤال توضیحی ثبت نشده است.' }));
+
+    return el('section', { className: `x-revealed${chosen === reveal.answer ? ' is-right' : ''}` },
+        el('p', { className: 'x-revealed__head', text: verdict }),
+        explanationBody,
         el('p', { className: 'f-tiny', text: 'این سؤال در کارنامه به‌عنوان «پاسخ دیده‌شده» علامت می‌خورد.' }));
 }
 

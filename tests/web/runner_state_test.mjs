@@ -128,6 +128,16 @@ test('unanswered positions come back in order for the submit dialog', () => {
     assert.deepEqual(S.unansweredPositions(state), [1, 3, 4]);
 });
 
+test('an explanation stays hidden until the student asks for it', () => {
+    // Practice mode tells right/wrong at once but keeps the explanation
+    // behind a tap; this is the flag the view reads to decide which.
+    const state = fresh();
+    assert.equal(S.isExplanationShown(state, 1), false);
+    S.showExplanation(state, 1);
+    assert.equal(S.isExplanationShown(state, 1), true);
+    assert.equal(S.isExplanationShown(state, 2), false);
+});
+
 test('resuming with answers already saved starts with nothing pending', () => {
     // A resumed attempt arrives with the server's answers. Treating them as
     // unsaved would fire a pointless write on every resume.

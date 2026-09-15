@@ -15,6 +15,7 @@ use Fanoos\Tests\Integration\TenantIsolationTest;
 use Fanoos\Tests\Integration\MigrationSafetyTest;
 use Fanoos\Tests\Integration\CorePlatformTest;
 use Fanoos\Tests\Integration\ContentEngineTest;
+use Fanoos\Tests\Integration\ExamAttemptModeTest;
 use Fanoos\Tests\Integration\ExamQuestionPacingTest;
 use Fanoos\Tests\Integration\OwnerRecoveryTest;
 use Fanoos\Tests\Integration\SessionCsrfTest;
@@ -81,6 +82,8 @@ try {
         echo "PASS content engine and secure learning scenarios\n";
         $assertions += (new ExamQuestionPacingTest($database))->run();
         echo "PASS exam question read pacing scenarios\n";
+        $assertions += (new ExamAttemptModeTest($database))->run();
+        echo "PASS exam attempt mode scenarios\n";
         $assertions += (new OwnerRecoveryTest($database))->run();
         echo "PASS owner sign-in recovery scenarios\n";
         $assertions += (new SessionCsrfTest($database))->run();

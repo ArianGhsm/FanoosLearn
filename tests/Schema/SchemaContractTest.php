@@ -38,7 +38,13 @@ final class SchemaContractTest
             $contents = file_get_contents($path);
             $this->assert($contents !== false, 'Migration could not be read: ' . basename($path));
             $sql .= "\n" . $contents;
-            $this->assert(!preg_match('/\b(?:DROP|TRUNCATE)\b/i', $contents), 'Destructive DDL found in ' . basename($path));
+            // DROP CHECK is the sole exception: MySQL has no ALTER CHECK for a
+            // condition change, so widening a named CHECK constraint (e.g. a
+            // mode enum gaining a value) is only expressible as dropping and
+            // re-adding it, and neither step touches a table, column or row.
+            // Every other DROP, and TRUNCATE, stays blocked.
+            $this->assert(!preg_match('/\bTRUNCATE\b/i', $contents), 'Destructive DDL found in ' . basename($path));
+            $this->assert(!preg_match('/\bDROP\s+(?!CHECK\b)\w+/i', $contents), 'Destructive DDL found in ' . basename($path));
             $this->assert(!preg_match('/Dentistry|IntegratedDent|TUMS|1402/i', $contents), 'Legacy product identifier found in a migration.');
             // The updater refuses to apply a migration that has not declared
             // how it behaves on rollback. Nothing checked that here, so an
