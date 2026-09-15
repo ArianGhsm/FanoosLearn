@@ -235,6 +235,12 @@ paths:
       responses: { '201': { $ref: '#/components/responses/AssessmentAttemptStarted' }, '403': { $ref: '#/components/responses/Error' }, '409': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/assessments/{assessmentId}/analytics:
     get: { operationId: getAssessmentAnalytics, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AssessmentId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/mistakes-review:
+    get:
+      operationId: readMistakesReview
+      description: 'مرور اشتباه‌ها: every question this student has answered incorrectly (and actually answered, not left blank) across their own scored attempts in this workspace, deduplicated by question -- a later correct attempt clears an earlier wrong one rather than both appearing. Not paced: this re-surfaces review content the caller is already entitled to see per attempt, it does not expose anything new.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/attempts/{attemptId}:
     patch: { operationId: saveAssessmentProgress, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AttemptId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' } } }
   /workspaces/{workspaceId}/attempts/{attemptId}/questions/{position}:

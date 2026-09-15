@@ -77,6 +77,15 @@ final class WebRouter
                 : $this->page(200, (new ExamsPage($this->renderer))->render($viewer));
         }
 
+        if ($path === '/app/exams/mistakes') {
+            if ($viewer === null) {
+                return $this->redirect('/login');
+            }
+            return $viewer->workspaceId === null
+                ? $this->redirect('/app')
+                : $this->page(200, (new MistakesReviewPage($this->renderer))->render($viewer));
+        }
+
         if (preg_match('#^/app/exams/([0-9a-f-]{36})$#', $path, $match) === 1) {
             if ($viewer === null) {
                 return $this->redirect('/login');

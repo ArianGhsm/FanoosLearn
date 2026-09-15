@@ -270,6 +270,84 @@ SQL, implode(' AND ', $where)));
         return $query->fetchAll();
     }
 
+    /**
+     * مرور اشتباه‌ها: every question this student has answered incorrectly
+     * across their own scored attempts in this workspace, deduplicated by
+     * (assessment, question) -- the most recently scored attempt wins when
+     * the same question was answered wrong more than once.
+     *
+     * Nothing here widens what a student can already see: every field
+     * returned (prompt, choices, correct answer, explanation) is the same
+     * review content attemptReviewQuestion() already serves for a scored
+     * attempt the caller owns -- this only aggregates it across attempts
+     * instead of within one, so it is read directly rather than paced like
+     * an in-progress question, which this is not.
+     *
+     * A question left blank does not count as "answered wrong": the review
+     * only includes an entry the student actually chose an incorrect
+     * option for.
+     *
+     * @return array{questions:list<array<string,mixed>>,count:int}
+     */
+    public function mistakesReview(string $userId, string $workspaceId): array
+    {
+        $this->access->requireWorkspace($userId, $workspaceId, 'exam.take');
+        $query = $this->database->prepare(<<<'SQL'
+SELECT attempt.assessment_id, assessment.title AS assessment_title,
+       version.definition_json, result.review_json
+FROM exam_attempts attempt
+JOIN exam_attempt_results result ON result.attempt_id = attempt.id AND result.workspace_id = attempt.workspace_id
+JOIN exam_assessment_versions version ON version.id = attempt.assessment_version_id
+ AND version.assessment_id = attempt.assessment_id AND version.workspace_id = attempt.workspace_id
+JOIN exam_assessments assessment ON assessment.id = attempt.assessment_id AND assessment.workspace_id = attempt.workspace_id
+WHERE attempt.workspace_id = :workspace AND attempt.user_id = :user AND attempt.status = 'scored'
+ORDER BY attempt.submitted_at DESC
+SQL);
+        $query->execute(['workspace' => $workspaceId, 'user' => $userId]);
+
+        // Newest attempt first, and the first (= most recent) time a given
+        // question is seen settles it -- so retaking an assessment and
+        // getting a question right the second time clears it from the
+        // review, it does not merely add another entry alongside the old
+        // wrong one.
+        $seen = [];
+        $questions = [];
+        while (($row = $query->fetch()) !== false) {
+            $review = json_decode((string) $row['review_json'], true, 64, JSON_THROW_ON_ERROR);
+            $definition = null;
+            foreach ($review as $entry) {
+                $key = $row['assessment_id'] . ':' . $entry['id'];
+                if (isset($seen[$key])) {
+                    continue;
+                }
+                $seen[$key] = true;
+                if ($entry['selected'] === null || $entry['is_correct'] !== false) {
+                    continue;
+                }
+                $definition ??= json_decode((string) $row['definition_json'], true, 64, JSON_THROW_ON_ERROR);
+                try {
+                    $question = $this->questionById($definition, (string) $entry['id']);
+                } catch (PlatformException) {
+                    // The question no longer exists in this version (edited
+                    // out since); skip it rather than failing the whole
+                    // review over one stale reference.
+                    continue;
+                }
+                $questions[$key] = [
+                    'assessment_id' => (string) $row['assessment_id'],
+                    'assessment_title' => (string) $row['assessment_title'],
+                    'question_id' => (string) $entry['id'],
+                    'prompt' => $question['prompt'],
+                    'choices' => $question['choices'],
+                    'correct' => $question['answer'],
+                    'explanation' => $question['explanation'] ?? null,
+                ];
+            }
+        }
+
+        return ['questions' => array_values($questions), 'count' => count($questions)];
+    }
+
     /** @return array<string, mixed> */
     public function startAttempt(string $userId, string $workspaceId, string $assessmentId, string $mode = 'assessment'): array
     {

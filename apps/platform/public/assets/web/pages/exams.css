@@ -4,6 +4,14 @@
     margin-bottom: var(--space-5);
 }
 
+.x-catalog__head-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+
 .x-catalog__filters {
     display: flex;
     flex-wrap: wrap;
@@ -47,6 +55,17 @@
 .x-cards {
     display: grid;
     gap: var(--space-3);
+}
+
+/* --------------------------------------------------------- مرور اشتباه‌ها */
+
+.x-mistakes__list {
+    display: grid;
+    gap: var(--space-4);
+}
+
+.x-mistakes__card .x-chip--static {
+    margin-bottom: var(--space-3);
 }
 
 .x-card {

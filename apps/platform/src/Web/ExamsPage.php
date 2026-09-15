@@ -22,8 +22,13 @@ final class ExamsPage
     {
         $main = <<<'HTML'
 <header class="x-catalog__head">
-    <h1>آزمون‌ها</h1>
-    <p class="f-muted">تمرین کن، و بعد از ثبت برای هر سؤال ببین چرا گزینه‌ی درست، درست است.</p>
+    <div class="x-catalog__head-row">
+        <div>
+            <h1>آزمون‌ها</h1>
+            <p class="f-muted">تمرین کن، و بعد از ثبت برای هر سؤال ببین چرا گزینه‌ی درست، درست است.</p>
+        </div>
+        <a class="f-btn f-btn--ghost" href="/app/exams/mistakes">مرور اشتباه‌ها</a>
+    </div>
 </header>
 
 <div class="x-catalog__filters" role="group" aria-label="فیلتر آزمون‌ها" id="catalog-filters" hidden>
