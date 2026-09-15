@@ -69,6 +69,9 @@ final class AccountPage
 <section class="f-card a-account">
     <h2>خروج</h2>
     <p class="f-muted">این نشست بسته می‌شود. روی دستگاه مشترک حتماً خارج شو.</p>
+    <div class="f-notice f-notice--error" id="signout-error" hidden>
+        <div class="f-notice__body"><p id="signout-error-text"></p></div>
+    </div>
     <button class="f-btn f-btn--ghost a-account__signout" type="button" id="signout">خروج از حساب</button>
 </section>
 HTML;

@@ -115,27 +115,30 @@ SQL);
     public function establishSession(string $userId, array $client = []): AuthenticatedSession
     {
         $token = self::randomToken();
-        $csrf = self::randomToken();
         $sessionId = Uuid::v7();
         $expiresAt = gmdate('Y-m-d H:i:s.u', time() + $this->sessionLifetimeSeconds);
+        // csrf_token_digest is no longer written -- see SessionCsrf's
+        // docblock. The column stays in the schema (this project's
+        // migration preflight refuses any pending migration containing a
+        // destructive ALTER/DROP for unattended update, so it cannot be
+        // dropped here) but nothing reads or writes it anymore.
         $session = $this->database->prepare(<<<'SQL'
 INSERT INTO iam_sessions (
-    id, user_id, selected_workspace_id, token_digest, csrf_token_digest,
+    id, user_id, selected_workspace_id, token_digest,
     created_at, last_seen_at, expires_at, revoked_at, client_json
 ) VALUES (
-    :id, :user_id, NULL, :token_digest, :csrf_digest,
+    :id, :user_id, NULL, :token_digest,
     UTC_TIMESTAMP(6), UTC_TIMESTAMP(6), :expires_at, NULL, :client_json
 )
 SQL);
         $session->bindValue(':id', $sessionId);
         $session->bindValue(':user_id', $userId);
         $session->bindValue(':token_digest', hash('sha256', $token, true), PDO::PARAM_LOB);
-        $session->bindValue(':csrf_digest', hash('sha256', $csrf, true), PDO::PARAM_LOB);
         $session->bindValue(':expires_at', $expiresAt);
         $session->bindValue(':client_json', json_encode($client, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));
         $session->execute();
 
-        return new AuthenticatedSession($sessionId, $userId, $token, $csrf, null, $expiresAt);
+        return new AuthenticatedSession($sessionId, $userId, $token, SessionCsrf::derive($token), null, $expiresAt);
     }
 
     public function authenticate(string $token): AuthenticatedSession
@@ -144,7 +147,7 @@ SQL);
             throw new PlatformException('unauthenticated', 'Authentication is required.', 401);
         }
         $query = $this->database->prepare(<<<'SQL'
-SELECT session.id, session.user_id, session.selected_workspace_id, session.csrf_token_digest, session.expires_at
+SELECT session.id, session.user_id, session.selected_workspace_id, session.expires_at
 FROM iam_sessions session
 JOIN iam_users user ON user.id = session.user_id
 WHERE session.token_digest = :digest
@@ -167,18 +170,23 @@ SQL);
             (string) $row['id'],
             (string) $row['user_id'],
             $token,
-            '',
+            SessionCsrf::derive($token),
             $row['selected_workspace_id'] === null ? null : (string) $row['selected_workspace_id'],
             (string) $row['expires_at'],
         );
     }
 
+    /**
+     * Recomputes the same derivation authenticate()/establishSession() used
+     * and compares -- no database read. The session's own revocation state
+     * was already checked moments earlier by the authenticate() call that
+     * produced $session (ApiKernel calls the two back to back on every
+     * request), so a second revoked_at check here would only repeat that
+     * work, not add a boundary.
+     */
     public function requireCsrf(AuthenticatedSession $session, string $csrfToken): void
     {
-        $query = $this->database->prepare('SELECT csrf_token_digest FROM iam_sessions WHERE id = :id AND revoked_at IS NULL');
-        $query->execute(['id' => $session->sessionId]);
-        $digest = $query->fetchColumn();
-        if (!is_string($digest) || $csrfToken === '' || !hash_equals($digest, hash('sha256', $csrfToken, true))) {
+        if ($csrfToken === '' || !hash_equals(SessionCsrf::derive($session->token), $csrfToken)) {
             throw new PlatformException('csrf_failed', 'The CSRF token is invalid.', 403);
         }
     }
