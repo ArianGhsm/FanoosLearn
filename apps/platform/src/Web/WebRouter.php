@@ -53,6 +53,12 @@ final class WebRouter
             return $this->page(200, (new RecoveryPage($this->renderer))->render());
         }
 
+        if ($path === '/account') {
+            return $viewer === null
+                ? $this->redirect('/login')
+                : $this->page(200, (new AccountPage($this->renderer))->render($viewer));
+        }
+
         if ($path === '/app') {
             return $viewer === null
                 ? $this->redirect('/login')
