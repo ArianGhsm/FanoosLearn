@@ -40,6 +40,21 @@ final class SchemaContractTest
             $sql .= "\n" . $contents;
             $this->assert(!preg_match('/\b(?:DROP|TRUNCATE)\b/i', $contents), 'Destructive DDL found in ' . basename($path));
             $this->assert(!preg_match('/Dentistry|IntegratedDent|TUMS|1402/i', $contents), 'Legacy product identifier found in a migration.');
+            // The updater refuses to apply a migration that has not declared
+            // how it behaves on rollback. Nothing checked that here, so an
+            // undeclared migration passed CI and was only caught by the
+            // production deployment refusing it -- after a backup had already
+            // been taken and the release staged.
+            //
+            // 0001-0007 are the baseline schema, applied before the
+            // convention existed and never re-applied; everything the updater
+            // will ever run is 0008 onward.
+            if ((int) substr(basename($path), 0, 4) >= 8) {
+                $this->assert(
+                    preg_match('/^--\s*fanoos:rollback-compatible=(expand|contract|manual)\s*$/m', $contents) === 1,
+                    'Migration must declare "-- fanoos:rollback-compatible=..." for the updater: ' . basename($path),
+                );
+            }
         }
 
         foreach (['0008_stage7_platform_contracts.sql', '0009_stage7_notification_receipts.sql', '0010_bot_handoff_contracts.sql', '0011_stage2_rbac_projection_indexes.sql', '0012_stage8_assessment_variants.sql', '0016_class_creation_request_resolution.sql', '0017_institution_terms.sql'] as $migration) {
