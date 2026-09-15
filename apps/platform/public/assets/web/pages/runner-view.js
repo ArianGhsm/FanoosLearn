@@ -21,9 +21,49 @@ const FILTER_LABELS = {
     flagged: 'نشان‌دار',
 };
 
-/** Persian digits, because Latin digits read as foreign to this audience. */
+const PERSIAN_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
+
+/** Persian digits, for numbers this interface produces itself. */
 export function faDigits(value) {
-    return String(value).replace(/[0-9]/g, (digit) => '۰۱۲۳۴۵۶۷۸۹'[Number(digit)]);
+    return String(value).replace(/[0-9]/g, (digit) => PERSIAN_DIGITS[Number(digit)]);
+}
+
+/**
+ * Persian digits inside authored text -- a question, a choice, an
+ * explanation.
+ *
+ * Not the same job as faDigits. Imported banks write Persian prose with
+ * Latin digits ("خانم 40 ساله"), which reads as foreign, but the same text
+ * also carries Latin terminology where the digits belong to the term and
+ * must stay Latin: T2, COVID-19, B12. Converting everything mangles the
+ * terminology; converting nothing leaves the prose looking wrong. Measured
+ * against the first imported bank: 118 digit runs standing alone in Persian
+ * text, 27 attached to a Latin term.
+ *
+ * So: convert a digit run only when no Latin letter touches either side.
+ */
+export function faText(value) {
+    const text = String(value ?? '');
+    return text.replace(/[0-9]+/g, (digits, index) =>
+        touchesLatinTerm(text, index, index + digits.length) ? digits : faDigits(digits));
+}
+
+/**
+ * Whether a digit run belongs to a Latin term rather than to Persian prose.
+ *
+ * Scans outward past the characters that join a term together, so the digits
+ * in COVID-19 and B-12 are recognised as part of the term even though the
+ * character immediately beside them is a hyphen rather than a letter.
+ */
+function touchesLatinTerm(text, start, end) {
+    const JOINERS = '-_.';
+    let before = start - 1;
+    while (before >= 0 && JOINERS.includes(text[before])) before--;
+    let after = end;
+    while (after < text.length && JOINERS.includes(text[after])) after++;
+
+    return (before >= 0 && /[A-Za-z]/.test(text[before]))
+        || (after < text.length && /[A-Za-z]/.test(text[after]));
 }
 
 export function el(tag, options = {}, ...children) {
@@ -107,11 +147,24 @@ export function renderIntro(assessment, actions) {
             el('p', { className: 'f-muted', text: 'پاسخ درست و توضیح هر سؤال فقط بعد از ثبت نهایی نشان داده می‌شود.' })),
         exhausted
             ? notice('warning', 'سقف تلاش‌ها استفاده شده است', 'برای این آزمون تلاش تازه‌ای باقی نمانده.')
-            : el('button', {
-                className: 'f-btn f-btn--primary x-intro__start', type: 'button',
-                text: resumable ? 'ادامه آزمون' : 'شروع آزمون',
-                on: { click: actions.start },
-            }),
+            : (resumable
+                ? el('button', {
+                    className: 'f-btn f-btn--primary x-intro__start', type: 'button', text: 'ادامه آزمون',
+                    on: { click: () => actions.start(null) },
+                })
+                : el('div', { className: 'x-intro__modes' },
+                    el('button', {
+                        className: 'x-mode', type: 'button',
+                        on: { click: () => actions.start('assessment') },
+                    },
+                        el('strong', { text: 'آزمون' }),
+                        el('span', { className: 'f-muted', text: 'مثل جلسه‌ی واقعی؛ پاسخ درست را بعد از ثبت می‌بینی.' })),
+                    el('button', {
+                        className: 'x-mode', type: 'button',
+                        on: { click: () => actions.start('learning') },
+                    },
+                        el('strong', { text: 'یادگیری' }),
+                        el('span', { className: 'f-muted', text: 'هر وقت خواستی پاسخ و توضیح همان سؤال را ببین.' })))),
         el('p', { className: 'x-intro__back' },
             el('a', { attrs: { href: '/app/exams' }, text: '‹ بازگشت به فهرست آزمون‌ها' })));
 }
@@ -161,7 +214,7 @@ function saveLabel(status) {
 }
 
 /** One question with its choices. */
-export function renderQuestion(state, question, saveStatus, actions) {
+export function renderQuestion(state, question, saveStatus, actions, reveal = null) {
     const position = state.position;
     const selected = state.answers[String(position)];
 
@@ -169,15 +222,16 @@ export function renderQuestion(state, question, saveStatus, actions) {
     (question.choices || []).forEach((choice, index) => {
         const struck = isStruck(state, position, index);
         const isSelected = selected === index;
+        const shownCorrect = reveal !== null && reveal.answer === index;
         choices.append(el('li', { className: 'x-choices__item' },
             el('button', {
-                className: `x-choice${isSelected ? ' is-selected' : ''}${struck ? ' is-struck' : ''}`,
+                className: `x-choice${isSelected ? ' is-selected' : ''}${struck ? ' is-struck' : ''}${shownCorrect ? ' is-correct' : ''}`,
                 type: 'button',
                 attrs: { role: 'radio', 'aria-checked': isSelected ? 'true' : 'false' },
                 on: { click: () => actions.choose(index) },
             },
                 el('span', { className: 'x-choice__letter', text: CHOICE_LETTERS[index] ?? faDigits(index + 1) }),
-                el('span', { className: 'x-choice__text', text: String(choice) })),
+                el('span', { className: 'x-choice__text', text: faText(choice) })),
             el('button', {
                 className: 'x-choice__strike', type: 'button',
                 text: struck ? '↺' : '✕',
@@ -203,12 +257,18 @@ export function renderQuestion(state, question, saveStatus, actions) {
                     attrs: { 'aria-pressed': flagged ? 'true' : 'false' },
                     on: { click: actions.toggleFlag },
                 }, icon('flag', { filled: flagged }), el('span', { text: flagged ? 'نشان‌دار' : 'نشان‌دار کن' }))),
-            el('p', { className: 'x-question__prompt', text: String(question.prompt || '') }),
+            el('p', { className: 'x-question__prompt', text: faText(question.prompt) }),
             choices,
-            selected === undefined ? null : el('button', {
-                className: 'x-question__clear', type: 'button', text: 'پاک کردن پاسخ',
-                on: { click: actions.clear },
-            })),
+            el('div', { className: 'x-question__foot' },
+                selected === undefined ? null : el('button', {
+                    className: 'x-question__clear', type: 'button', text: 'پاک کردن پاسخ',
+                    on: { click: actions.clear },
+                }),
+                state.mode !== 'learning' || reveal ? null : el('button', {
+                    className: 'f-btn f-btn--ghost x-question__reveal', type: 'button', text: 'پاسخ را نشانم بده',
+                    on: { click: actions.reveal },
+                })),
+            reveal ? renderReveal(reveal, question) : null),
         el('nav', { className: 'x-nav', attrs: { 'aria-label': 'پیمایش سؤال‌ها' } },
             el('button', {
                 className: 'f-btn f-btn--ghost', type: 'button', text: '→ قبلی',
@@ -223,6 +283,23 @@ export function renderQuestion(state, question, saveStatus, actions) {
             position >= state.questionCount
                 ? el('button', { className: 'f-btn f-btn--primary', type: 'button', text: 'پایان و ثبت', on: { click: actions.requestSubmit } })
                 : el('button', { className: 'f-btn f-btn--primary', type: 'button', text: 'بعدی ←', on: { click: actions.next } })));
+}
+
+
+/**
+ * The revealed answer, shown in place under the question during a learning
+ * attempt. It says plainly that this one was seen, because the report will
+ * say so too and the student should not be surprised by that later.
+ */
+function renderReveal(reveal, question) {
+    const letter = CHOICE_LETTERS[reveal.answer] ?? faDigits(reveal.answer + 1);
+    return el('section', { className: 'x-revealed' },
+        el('p', { className: 'x-revealed__head', text: `پاسخ درست: گزینه ${letter}` }),
+        reveal.explanation
+            ? el('div', {}, renderMarkdown(reveal.explanation),
+                el('p', { className: 'x-explanation__origin', text: 'این توضیح با کمک هوش مصنوعی نوشته شده و بازبینی انسانی نشده است.' }))
+            : el('p', { className: 'f-tiny', text: 'برای این سؤال توضیحی ثبت نشده است.' }),
+        el('p', { className: 'f-tiny', text: 'این سؤال در کارنامه به‌عنوان «پاسخ دیده‌شده» علامت می‌خورد.' }));
 }
 
 /** The question map: a grid of every question with its state. */
@@ -306,6 +383,11 @@ export function renderReport(summary, actions) {
                 attrs: { style: `--percent:${percent}`, role: 'img', 'aria-label': `نمره ${faDigits(percent)} از ۱۰۰` },
             }, el('span', { className: 'x-report__percent', text: `٪${faDigits(percent)}` })),
             el('p', { className: 'x-report__line', text: `${faDigits(correct)} پاسخ درست از ${faDigits(total)} سؤال` }),
+            Number(summary.revealed_count || 0) === 0 ? null : notice(
+                'warning',
+                `${faDigits(summary.revealed_count)} پاسخ را قبل از جواب دادن دیدی`,
+                'این کارنامه‌ی یک تمرین است، نه یک آزمون واقعی. برای سنجش خودت یک بار در حالت آزمون امتحان کن.',
+            ),
             el('div', { className: 'x-report__actions' },
                 el('button', { className: 'f-btn f-btn--primary', type: 'button', text: 'مرور پاسخ‌ها', on: { click: actions.review } }),
                 el('a', { className: 'f-btn f-btn--ghost', attrs: { href: '/app/exams' }, text: 'فهرست آزمون‌ها' }))));
@@ -323,7 +405,7 @@ export function renderReviewQuestion(entry, position, questionCount, actions) {
         choices.append(el('li', { className: 'x-choices__item' },
             el('div', { className: classes.join(' ') },
                 el('span', { className: 'x-choice__letter', text: CHOICE_LETTERS[index] ?? faDigits(index + 1) }),
-                el('span', { className: 'x-choice__text', text: String(choice) }),
+                el('span', { className: 'x-choice__text', text: faText(choice) }),
                 el('span', {
                     className: 'x-choice__mark',
                     text: isCorrect ? '✓ پاسخ درست' : (isChosen ? '✕ انتخاب تو' : ''),
@@ -333,6 +415,10 @@ export function renderReviewQuestion(entry, position, questionCount, actions) {
     const verdict = entry.selected === null || entry.selected === undefined
         ? { kind: 'warning', text: 'بی‌پاسخ' }
         : (entry.is_correct ? { kind: 'success', text: 'درست' } : { kind: 'error', text: 'نادرست' });
+    // Saying so is the whole point of recording it: a score that counts a
+    // seen answer as an earned one tells the student something untrue about
+    // what they know.
+    const seenFirst = entry.was_revealed === true;
 
     return el('div', { className: 'x-review' },
         el('div', { className: 'x-review__bar' },
@@ -347,7 +433,8 @@ export function renderReviewQuestion(entry, position, questionCount, actions) {
             })),
         el('article', { className: 'f-card x-review__card' },
             el('span', { className: `x-verdict is-${verdict.kind}`, text: verdict.text }),
-            el('p', { className: 'x-question__prompt', text: String(entry.prompt || '') }),
+            seenFirst ? el('span', { className: 'x-verdict is-revealed', text: 'پاسخ را قبل از جواب دادن دیدی' }) : null,
+            el('p', { className: 'x-question__prompt', text: faText(entry.prompt) }),
             choices,
             entry.explanation
                 ? el('section', { className: 'x-explanation' },

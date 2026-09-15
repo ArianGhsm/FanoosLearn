@@ -45,7 +45,7 @@ function draw() {
     } else if (phase === 'question' && state) {
         const question = questions.get(state.position);
         frame.append(question
-            ? renderQuestion(state, question, sync.status, questionActions)
+            ? renderQuestion(state, question, sync.status, questionActions, state.reveals.get(state.position) ?? null)
             : loading('در حال گرفتن سؤال…'));
     } else if (phase === 'report' && summary) {
         frame.append(renderReport(summary, { review: startReview }));
@@ -110,10 +110,10 @@ async function loadAssessment() {
     draw();
 }
 
-async function start() {
+async function start(mode) {
     clearError();
     try {
-        const attempt = await transport.start(assessmentId);
+        const attempt = await transport.start(assessmentId, mode);
         state = createAttemptState({
             attemptId: attempt.attempt_id,
             assessmentId,
@@ -121,6 +121,7 @@ async function start() {
             questionCount: Number(attempt.question_count || 0),
             revision: Number(attempt.revision || 1),
             answers: attempt.answers || {},
+            mode: attempt.mode || 'assessment',
         });
         questions = new QuestionWindow(transport, state.attemptId, state.questionCount);
         sync = new AnswerSync(transport, state, { onStateChange: () => { if (phase === 'question') draw(); } });
@@ -185,6 +186,17 @@ const questionActions = {
     firstUnanswered() {
         const target = nextUnanswered(state, 1);
         if (target !== null) showQuestion(target);
+    },
+    async reveal() {
+        if (state.mode !== 'learning' || state.reveals.has(state.position)) return;
+        try {
+            const payload = await transport.reveal(state.attemptId, state.position);
+            state.reveals.set(state.position, payload);
+            clearError();
+        } catch (error) {
+            showError(error, () => questionActions.reveal());
+        }
+        draw();
     },
     openMap() {
         dialog = renderMap(state, mapActions);
@@ -285,11 +297,40 @@ const reviewActions = {
 
 /* ------------------------------------------------------------------ setup */
 
+/*
+ * Keyboard shortcuts. Answering forty questions is a keyboard task, and
+ * reaching for the mouse for every one of them is the difference between a
+ * tool and a chore.
+ *
+ * Deliberately not bound while a dialog is open or a field has focus: a
+ * shortcut that fires while someone is typing is worse than no shortcut.
+ */
 document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && dialog) {
         event.preventDefault();
         dialog = null;
         draw();
+        return;
+    }
+    if (phase !== 'question' || dialog || event.ctrlKey || event.metaKey || event.altKey) return;
+    const target = event.target;
+    if (target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) return;
+
+    const question = questions.get(state.position);
+    // Arrows follow the text direction: this is an RTL page, so "next" is the
+    // left arrow and "previous" the right one. Binding them the Latin way
+    // round would send the student backwards every time.
+    if (event.key === 'ArrowLeft') { event.preventDefault(); questionActions.next(); return; }
+    if (event.key === 'ArrowRight') { event.preventDefault(); questionActions.previous(); return; }
+    if (event.key.toLowerCase() === 'f') { event.preventDefault(); questionActions.toggleFlag(); return; }
+    if (event.key.toLowerCase() === 'm') { event.preventDefault(); questionActions.openMap(); return; }
+    if (event.key.toLowerCase() === 'r' && state.mode === 'learning') { event.preventDefault(); questionActions.reveal(); return; }
+
+    // 1-9 pick a choice, in the order shown.
+    const choiceIndex = Number(event.key) - 1;
+    if (question && Number.isInteger(choiceIndex) && choiceIndex >= 0 && choiceIndex < (question.choices || []).length) {
+        event.preventDefault();
+        questionActions.choose(choiceIndex);
     }
 });
 

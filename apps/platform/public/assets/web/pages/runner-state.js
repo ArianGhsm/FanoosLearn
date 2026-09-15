@@ -12,13 +12,17 @@
  */
 
 /** Positions are 1-based everywhere, matching the API's question positions. */
-export function createAttemptState({ attemptId, assessmentId, title, questionCount, revision, answers = {} }) {
+export function createAttemptState({ attemptId, assessmentId, title, questionCount, revision, answers = {}, mode = 'assessment' }) {
     return {
         attemptId,
         assessmentId,
         title,
         questionCount,
         revision,
+        /** 'assessment' (a real sitting) or 'learning' (answers can be revealed) */
+        mode,
+        /** position -> {answer, explanation} for questions revealed so far */
+        reveals: new Map(),
         /** position -> chosen choice index, in the order the student saw them */
         answers: { ...answers },
         /** position -> question payload from the API, cached once fetched */

@@ -20,7 +20,18 @@ final class SchemaContractTest
     {
         $migrationPaths = glob($this->root . '/database/migrations/*.sql') ?: [];
         sort($migrationPaths, SORT_STRING);
-        $this->assert(count($migrationPaths) === 19, 'Expected exactly nineteen versioned platform migrations through the owner recovery contract.');
+        // Asserts the rule rather than a number: migrations are numbered from
+        // 0001 with no gaps and no duplicates. A hardcoded count says nothing
+        // about the sequence being sound and has to be hand-edited on every
+        // change, which makes it a chore rather than a check.
+        $this->assert($migrationPaths !== [], 'No versioned platform migrations were found.');
+        foreach (array_values($migrationPaths) as $index => $path) {
+            $expected = sprintf('%04d_', $index + 1);
+            $this->assert(
+                str_starts_with(basename($path), $expected),
+                'Migrations must be numbered from 0001 without gaps; expected ' . $expected . ', found ' . basename($path),
+            );
+        }
 
         $sql = '';
         foreach ($migrationPaths as $path) {

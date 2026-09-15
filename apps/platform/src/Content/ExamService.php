@@ -270,8 +270,11 @@ SQL, implode(' AND ', $where)));
     }
 
     /** @return array<string, mixed> */
-    public function startAttempt(string $userId, string $workspaceId, string $assessmentId): array
+    public function startAttempt(string $userId, string $workspaceId, string $assessmentId, string $mode = 'assessment'): array
     {
+        if (!in_array($mode, ['assessment', 'learning'], true)) {
+            throw new PlatformException('attempt_mode_invalid', 'Attempt mode is invalid.', 422);
+        }
         $assessment = $this->publishedAssessment($workspaceId, $assessmentId);
         $decision = $this->authorizer->decide($userId, 'exam.take', 'assessment', (string) $assessment['scope_id'], $workspaceId);
         if (!$decision->allowed) {
@@ -280,7 +283,7 @@ SQL, implode(' AND ', $where)));
         if ((bool) $assessment['requires_entitlement'] && !$this->entitlements->has($userId, $workspaceId, (string) $assessment['target_scope_id'])) {
             throw new PlatformException('entitlement_required', 'An active entitlement is required for this assessment.', 403);
         }
-        return Transaction::run($this->database, function () use ($userId, $workspaceId, $assessmentId, $assessment): array {
+        return Transaction::run($this->database, function () use ($userId, $workspaceId, $assessmentId, $assessment, $mode): array {
         // Serialize starts per assessment so two concurrent clicks cannot create
         // two open attempts for the same published version.
         $lock = $this->database->prepare('SELECT id FROM exam_assessments WHERE id = :assessment AND workspace_id = :workspace FOR UPDATE');
@@ -289,7 +292,7 @@ SQL, implode(' AND ', $where)));
             throw new PlatformException('assessment_not_found', 'Published assessment was not found.', 404);
         }
         $existing = $this->database->prepare(<<<'SQL'
-SELECT attempt.id, attempt.revision, attempt.status, attempt.answers_json,
+SELECT attempt.id, attempt.revision, attempt.status, attempt.mode, attempt.answers_json,
        version.definition_json
 FROM exam_attempts attempt
 JOIN exam_assessment_versions version ON version.id = attempt.assessment_version_id
@@ -312,6 +315,9 @@ SQL);
                 'status' => 'in_progress', 'assessment_id' => $assessmentId, 'title' => (string) $assessment['title'],
                 'answers' => json_decode((string) ($existingAttempt['answers_json'] ?? '{}'), true, 64, JSON_THROW_ON_ERROR),
                 'resumed' => true, 'question_count' => count($definition['questions']),
+                // The mode is fixed when the attempt starts; resuming never
+                // silently promotes a practice run into a real sitting.
+                'mode' => (string) $existingAttempt['mode'],
             ];
         }
         $attempts = $this->database->prepare("SELECT COUNT(*) FROM exam_attempts WHERE workspace_id = :workspace AND assessment_id = :assessment AND user_id = :user AND status IN ('submitted', 'scored')");
@@ -323,14 +329,14 @@ SQL);
         $this->execute(<<<'SQL'
 INSERT INTO exam_attempts (
     id, workspace_id, assessment_id, assessment_version_id, user_id,
-    status, revision, answers_json, started_at
+    status, mode, revision, answers_json, revealed_json, started_at
 ) VALUES (
     :id, :workspace, :assessment, :version, :user,
-    'in_progress', 1, JSON_OBJECT(), UTC_TIMESTAMP(6)
+    'in_progress', :mode, 1, JSON_OBJECT(), JSON_ARRAY(), UTC_TIMESTAMP(6)
 )
 SQL, [
             'id' => $attemptId, 'workspace' => $workspaceId, 'assessment' => $assessmentId,
-            'version' => $assessment['version_id'], 'user' => $userId,
+            'version' => $assessment['version_id'], 'user' => $userId, 'mode' => $mode,
         ]);
         $definition = json_decode((string) $assessment['definition_json'], true, 64, JSON_THROW_ON_ERROR);
         $this->audit->record($workspaceId, $userId, 'exam.attempt.started', 'exam_attempt', $attemptId, 'success', ['assessment_id' => $assessmentId, 'version_id' => $assessment['version_id']]);
@@ -338,10 +344,98 @@ SQL, [
         return [
             'attempt_id' => $attemptId, 'revision' => 1, 'status' => 'in_progress',
             'assessment_id' => $assessmentId, 'title' => (string) $assessment['title'],
-            'answers' => [], 'resumed' => false,
+            'answers' => [], 'resumed' => false, 'mode' => $mode,
             'question_count' => count($definition['questions']),
         ];
         });
+    }
+
+    /**
+     * Reveals the answer and explanation for one question of a learning
+     * attempt, before it is submitted.
+     *
+     * This is what makes learning mode possible without handing the paper
+     * over: the reveal is per question, only inside an attempt the caller
+     * owns, only when that attempt was started in learning mode, paced by
+     * the same token bucket as every other read, and audited. The
+     * alternative -- shipping answers alongside the questions so the page
+     * can reveal them itself -- would put the whole answer key in the
+     * browser for anyone who opens developer tools, which is precisely the
+     * bulk extraction the pacing work exists to prevent.
+     *
+     * Each reveal is recorded against the attempt so the report can say the
+     * answer was seen first. A revealed question still scores by what the
+     * student chose; what changes is that the score is no longer presented
+     * as if it were earned blind.
+     *
+     * @return array{position:int,question_count:int,question_id:string,answer:int,explanation:?string,revealed:list<int>}
+     */
+    public function revealQuestion(string $userId, string $workspaceId, string $attemptId, int $position, ?int $now = null): array
+    {
+        $outcome = Transaction::run($this->database, function () use ($userId, $workspaceId, $attemptId, $position, $now): array {
+            $attempt = $this->attempt($userId, $workspaceId, $attemptId, true);
+            if ($attempt['status'] !== 'in_progress') {
+                throw new PlatformException('attempt_not_in_progress', 'Only an in-progress attempt can reveal an answer.', 409);
+            }
+            if ((string) $attempt['mode'] !== 'learning') {
+                // A sitting cannot become a practice run halfway through.
+                throw new PlatformException('attempt_not_learning', 'This attempt was not started in learning mode.', 409);
+            }
+            $assessment = $this->publishedAssessment($workspaceId, (string) $attempt['assessment_id']);
+            $decision = $this->authorizer->decide($userId, 'exam.take', 'assessment', (string) $assessment['scope_id'], $workspaceId);
+            if (!$decision->allowed) {
+                throw new PlatformException('assessment_access_denied', 'Assessment access was denied.', 403);
+            }
+            if ((bool) $assessment['requires_entitlement'] && !$this->entitlements->has($userId, $workspaceId, (string) $assessment['target_scope_id'])) {
+                throw new PlatformException('entitlement_required', 'An active entitlement is required for this assessment.', 403);
+            }
+
+            $definition = json_decode((string) $attempt['definition_json'], true, 64, JSON_THROW_ON_ERROR);
+            $questionIds = array_map(static fn (array $question): string => (string) $question['id'], $definition['questions']);
+            $questionCount = count($questionIds);
+            if ($position < 1 || $position > $questionCount) {
+                throw new PlatformException('question_position_invalid', 'Question position is out of range.', 422);
+            }
+
+            // Everything above is a pure read. From here a refusal must not
+            // throw until after this transaction commits -- see
+            // ExamQuestionRateGuard's docblock.
+            if (!$this->questionRateGuard->consume($userId, $now)) {
+                return ['allowed' => false];
+            }
+
+            $order = ExamAttemptShuffle::questionOrder($attemptId, $questionIds);
+            $questionId = $order[$position - 1];
+            $question = $this->questionById($definition, $questionId);
+
+            $revealed = json_decode((string) ($attempt['revealed_json'] ?? '[]'), true, 16, JSON_THROW_ON_ERROR);
+            $revealed = is_array($revealed) ? array_values(array_unique(array_map('intval', $revealed))) : [];
+            if (!in_array($position, $revealed, true)) {
+                $revealed[] = $position;
+                sort($revealed);
+                $this->execute(
+                    'UPDATE exam_attempts SET revealed_json = :revealed WHERE id = :attempt AND workspace_id = :workspace AND user_id = :user',
+                    ['revealed' => json_encode($revealed, JSON_THROW_ON_ERROR), 'attempt' => $attemptId, 'workspace' => $workspaceId, 'user' => $userId],
+                );
+            }
+
+            $this->audit->record($workspaceId, $userId, 'exam.answer.revealed', 'exam_attempt', $attemptId, 'success', [
+                'question_id' => $questionId, 'position' => $position,
+            ]);
+
+            return [
+                'allowed' => true, 'position' => $position, 'question_count' => $questionCount,
+                'question_id' => $questionId, 'answer' => (int) $question['answer'],
+                'explanation' => $question['explanation'] ?? null, 'revealed' => $revealed,
+            ];
+        });
+
+        if ($outcome['allowed'] === false) {
+            throw new PlatformException('question_read_rate_limited', 'Slow down before revealing the next answer.', 429);
+        }
+        unset($outcome['allowed']);
+
+        return $outcome;
     }
 
     /**
@@ -503,7 +597,8 @@ SQL, [
     public function attemptReview(string $userId, string $workspaceId, string $attemptId): array
     {
         $query = $this->database->prepare(<<<'SQL'
-SELECT attempt.id, attempt.assessment_id, attempt.revision, attempt.status,
+SELECT attempt.id, attempt.assessment_id, attempt.revision, attempt.status, attempt.mode,
+       JSON_LENGTH(COALESCE(attempt.revealed_json, JSON_ARRAY())) AS revealed_count,
        result.correct_count, result.question_count, result.score_basis_points
 FROM exam_attempts attempt
 JOIN exam_attempt_results result ON result.attempt_id = attempt.id AND result.workspace_id = attempt.workspace_id
@@ -563,12 +658,21 @@ SQL);
             // readQuestion refuses once the attempt is no longer in progress.
             $question = $this->questionById($definition, $questionId);
 
+            // A question whose answer was revealed during a learning
+            // attempt is still scored on what the student chose, but the
+            // review has to say so -- a report that presents a seen answer
+            // as an earned one is telling the student something untrue about
+            // what they know.
+            $revealed = json_decode((string) ($scored['revealed_json'] ?? '[]'), true, 16, JSON_THROW_ON_ERROR);
+            $revealed = is_array($revealed) ? array_map('intval', $revealed) : [];
+
             return [
                 'allowed' => true, 'position' => $position, 'question_count' => $questionCount,
                 'question_id' => $questionId, 'prompt' => $question['prompt'],
                 'choices' => $question['choices'],
                 'selected' => $entry['selected'], 'correct' => $entry['correct'],
                 'is_correct' => $entry['is_correct'], 'explanation' => $entry['explanation'],
+                'was_revealed' => in_array($position, $revealed, true),
             ];
         });
 
@@ -649,7 +753,8 @@ SQL);
     {
         $lockClause = $lock ? 'FOR UPDATE' : '';
         $query = $this->database->prepare(<<<SQL
-SELECT attempt.id, attempt.assessment_id, attempt.status, attempt.revision, version.definition_json
+SELECT attempt.id, attempt.assessment_id, attempt.status, attempt.mode, attempt.revision,
+       attempt.answers_json, attempt.revealed_json, version.definition_json
 FROM exam_attempts attempt
 JOIN exam_assessment_versions version ON version.id = attempt.assessment_version_id
  AND version.assessment_id = attempt.assessment_id AND version.workspace_id = attempt.workspace_id
@@ -808,7 +913,7 @@ SQL, ['workspace' => $workspaceId, 'assessment' => $assessmentId, 'version' => $
     private function scoredAttemptWithDefinition(string $userId, string $workspaceId, string $attemptId): array
     {
         $query = $this->database->prepare(<<<'SQL'
-SELECT attempt.id, attempt.assessment_id, result.review_json, version.definition_json
+SELECT attempt.id, attempt.assessment_id, attempt.mode, attempt.revealed_json, result.review_json, version.definition_json
 FROM exam_attempts attempt
 JOIN exam_attempt_results result ON result.attempt_id = attempt.id AND result.workspace_id = attempt.workspace_id
 JOIN exam_assessment_versions version ON version.id = attempt.assessment_version_id

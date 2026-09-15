@@ -355,8 +355,15 @@ final class ApiKernel
             $this->requireExams()->publishVersion($session->userId, $workspaceId, $match[1], $match[2]);
             return ['status' => 200, 'data' => ['status' => 'published']];
         }
+        if ($request->method === 'GET' && preg_match('#^/attempts/([0-9a-f-]+)/questions/([0-9]+)/reveal$#', $suffix, $match)) {
+            return ['status' => 200, 'data' => $this->requireExams()->revealQuestion($session->userId, $workspaceId, $match[1], (int) $match[2])];
+        }
         if ($request->method === 'POST' && preg_match('#^/assessments/([0-9a-f-]+)/attempts$#', $suffix, $match)) {
-            return ['status' => 201, 'data' => $this->requireExams()->startAttempt($session->userId, $workspaceId, $match[1])];
+            // The student chooses how they are sitting this paper when they
+            // start it; an omitted mode is a real sitting, never a practice
+            // run, because that is the safer default to get wrong.
+            $mode = (string) ($request->body['mode'] ?? 'assessment');
+            return ['status' => 201, 'data' => $this->requireExams()->startAttempt($session->userId, $workspaceId, $match[1], $mode)];
         }
         if ($request->method === 'GET' && preg_match('#^/assessments/([0-9a-f-]+)/analytics$#', $suffix, $match)) {
             return ['status' => 200, 'data' => $this->requireExams()->analytics($session->userId, $workspaceId, $match[1])];
