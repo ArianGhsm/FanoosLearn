@@ -235,6 +235,12 @@ paths:
       responses: { '201': { $ref: '#/components/responses/AssessmentAttemptStarted' }, '403': { $ref: '#/components/responses/Error' }, '409': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/assessments/{assessmentId}/analytics:
     get: { operationId: getAssessmentAnalytics, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AssessmentId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /workspaces/{workspaceId}/assessments/{assessmentId}/attempts/history:
+    get:
+      operationId: readOwnAttemptHistory
+      description: 'تاریخچه‌ی تلاش‌ها: the caller''s own past scored attempts at this assessment, newest first -- aggregate outcome per attempt (score, date, mode) only, reachable from the assessment''s intro card.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AssessmentId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' } }
   /workspaces/{workspaceId}/mistakes-review:
     get:
       operationId: readMistakesReview

@@ -203,6 +203,10 @@ export function renderIntro(assessment, actions) {
                     },
                         el('strong', { text: 'آزمون' }),
                         el('span', { className: 'f-muted', text: 'مثل جلسه‌ی واقعی؛ پاسخ درست را بعد از ثبت می‌بینی.' })))),
+        used > 0 ? el('button', {
+            className: 'f-btn f-btn--ghost x-intro__history', type: 'button', text: 'تاریخچه‌ی تلاش‌ها',
+            on: { click: actions.openHistory },
+        }) : null,
         el('p', { className: 'x-intro__back' },
             el('a', { attrs: { href: '/app/exams' }, text: '‹ بازگشت به فهرست آزمون‌ها' })));
 }
@@ -212,6 +216,38 @@ export function kindLabel(kind) {
     if (kind === 'mock_exam') return 'آزمون آزمایشی';
     if (kind === 'past_exam') return 'آزمون گذشته';
     return 'آزمون';
+}
+
+const ATTEMPT_MODE_LABELS = { assessment: 'آزمون', learning: 'یادگیری', practice: 'تمرین' };
+
+function historyRow(attempt) {
+    const total = Number(attempt.question_count || 0);
+    const percent = total === 0 ? 0 : Math.round((Number(attempt.correct_count || 0) / total) * 100);
+    const date = attempt.submitted_at ? new Date(attempt.submitted_at) : null;
+    const dateLabel = date && !Number.isNaN(date.getTime())
+        ? faDigits(new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium', timeStyle: 'short' }).format(date))
+        : '';
+    return el('li', { className: 'x-history__row' },
+        el('span', { className: 'x-history__score', text: `٪${faDigits(percent)}` }),
+        el('div', { className: 'x-history__meta' },
+            el('span', { text: `${faDigits(attempt.correct_count)} از ${faDigits(total)} پاسخ درست` }),
+            el('span', { className: 'f-tiny', text: `${ATTEMPT_MODE_LABELS[attempt.mode] ?? attempt.mode} · ${dateLabel}` })));
+}
+
+/** تاریخچه‌ی تلاش‌ها: this student's own past scored attempts, newest first. */
+export function renderHistory(attempts, actions, { loading = false } = {}) {
+    const body = loading
+        ? el('p', { className: 'f-muted', text: 'در حال گرفتن تاریخچه…' })
+        : (attempts.length === 0
+            ? el('p', { className: 'f-muted', text: 'هنوز تلاشی ثبت نشده.' })
+            : el('ul', { className: 'x-history__list' }, ...attempts.map((attempt) => historyRow(attempt))));
+
+    return el('div', { className: 'x-dialog', attrs: { role: 'dialog', 'aria-modal': 'true', 'aria-label': 'تاریخچه‌ی تلاش‌ها', tabindex: '-1' } },
+        el('div', { className: 'x-dialog__panel x-dialog__panel--narrow' },
+            el('header', { className: 'x-dialog__head' },
+                el('h2', { text: 'تاریخچه‌ی تلاش‌ها' }),
+                el('button', { className: 'x-dialog__close', type: 'button', text: '✕', attrs: { 'aria-label': 'بستن' }, on: { click: actions.close } })),
+            body));
 }
 
 /** mm:ss, Persian digits, seconds zero-padded. */

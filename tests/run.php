@@ -15,6 +15,7 @@ use Fanoos\Tests\Integration\TenantIsolationTest;
 use Fanoos\Tests\Integration\MigrationSafetyTest;
 use Fanoos\Tests\Integration\CorePlatformTest;
 use Fanoos\Tests\Integration\ContentEngineTest;
+use Fanoos\Tests\Integration\ExamAttemptHistoryTest;
 use Fanoos\Tests\Integration\ExamAttemptModeTest;
 use Fanoos\Tests\Integration\ExamMistakesReviewTest;
 use Fanoos\Tests\Integration\ExamQuestionPacingTest;
@@ -90,6 +91,8 @@ try {
         echo "PASS exam timed attempt scenarios\n";
         $assertions += (new ExamMistakesReviewTest($database))->run();
         echo "PASS exam mistakes review scenarios\n";
+        $assertions += (new ExamAttemptHistoryTest($database))->run();
+        echo "PASS exam attempt history scenarios\n";
         $assertions += (new OwnerRecoveryTest($database))->run();
         echo "PASS owner sign-in recovery scenarios\n";
         $assertions += (new SessionCsrfTest($database))->run();

@@ -42,6 +42,11 @@ export class ExamTransport {
         return this.api.get(`${this.base}/attempts/${encodeURIComponent(attemptId)}/questions/${position}/reveal`);
     }
 
+    /** تاریخچه‌ی تلاش‌ها: the caller's own past scored attempts at this assessment. */
+    attemptHistory(assessmentId) {
+        return this.api.get(`${this.base}/assessments/${encodeURIComponent(assessmentId)}/attempts/history`);
+    }
+
     /**
      * One question. Concurrent requests for the same position share a single
      * network call -- otherwise a prefetch and a navigation racing each other

@@ -13,7 +13,7 @@ import {
 } from './runner-state.js';
 import { AnswerSync, ExamTransport, QuestionWindow, TurboRevealer } from './runner-transport.js';
 import {
-    notice, renderIntro, renderMap, renderQuestion, renderReport,
+    notice, renderHistory, renderIntro, renderMap, renderQuestion, renderReport,
     renderReviewQuestion, renderSubmitDialog,
 } from './runner-view.js';
 import {
@@ -60,7 +60,7 @@ function draw() {
     if (pageError) frame.append(pageError);
 
     if (phase === 'intro' && assessment) {
-        frame.append(renderIntro(assessment, { start, openSettings }));
+        frame.append(renderIntro(assessment, { start, openSettings, openHistory }));
     } else if (phase === 'question' && state) {
         const question = questions.get(state.position);
         frame.append(question
@@ -512,6 +512,35 @@ const settingsActions = {
     },
     clearShortcut(action) { updateSettings(clearSettingsShortcut(settings, action)); },
     resetShortcuts() { updateSettings(resetSettingsShortcuts(settings)); },
+};
+
+/* ----------------------------------------------------------------- history */
+
+/** تاریخچه‌ی تلاش‌ها, opened from the intro card. */
+async function openHistory() {
+    dialogKind = 'history';
+    dialog = renderHistory([], historyActions, { loading: true });
+    draw();
+    try {
+        const attempts = await transport.attemptHistory(assessmentId);
+        if (dialogKind !== 'history') return; // closed while the request was in flight
+        dialog = renderHistory(Array.isArray(attempts) ? attempts : [], historyActions);
+        draw();
+    } catch (error) {
+        if (dialogKind !== 'history') return;
+        dialog = null;
+        dialogKind = null;
+        showError(error, openHistory);
+        draw();
+    }
+}
+
+const historyActions = {
+    close() {
+        dialog = null;
+        dialogKind = null;
+        draw();
+    },
 };
 
 /* --------------------------------------------------------- question gestures */

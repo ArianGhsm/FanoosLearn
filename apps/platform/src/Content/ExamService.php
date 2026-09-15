@@ -868,6 +868,44 @@ SQL);
         return $outcome;
     }
 
+    /**
+     * تاریخچه‌ی تلاش‌ها: this student's own past scored attempts at one
+     * assessment, newest first -- reachable from the assessment's intro
+     * card. Only aggregate outcome per attempt (score, date, mode); the
+     * per-question review of any one of them still goes through
+     * attemptReview()/attemptReviewQuestion() the same as always.
+     *
+     * @return list<array{attempt_id:string,mode:string,submitted_at:?string,correct_count:int,question_count:int,score_basis_points:int}>
+     */
+    public function attemptHistory(string $userId, string $workspaceId, string $assessmentId): array
+    {
+        $this->access->requireWorkspace($userId, $workspaceId, 'exam.take');
+        $query = $this->database->prepare(<<<'SQL'
+SELECT attempt.id AS attempt_id, attempt.mode, attempt.submitted_at,
+       result.correct_count, result.question_count, result.score_basis_points
+FROM exam_attempts attempt
+JOIN exam_attempt_results result ON result.attempt_id = attempt.id AND result.workspace_id = attempt.workspace_id
+WHERE attempt.workspace_id = :workspace AND attempt.assessment_id = :assessment
+  AND attempt.user_id = :user AND attempt.status = 'scored'
+ORDER BY attempt.submitted_at DESC
+SQL);
+        $query->execute(['workspace' => $workspaceId, 'assessment' => $assessmentId, 'user' => $userId]);
+
+        $attempts = [];
+        while (($row = $query->fetch()) !== false) {
+            $attempts[] = [
+                'attempt_id' => (string) $row['attempt_id'],
+                'mode' => (string) $row['mode'],
+                'submitted_at' => $this->isoTimestamp($row['submitted_at']),
+                'correct_count' => (int) $row['correct_count'],
+                'question_count' => (int) $row['question_count'],
+                'score_basis_points' => (int) $row['score_basis_points'],
+            ];
+        }
+
+        return $attempts;
+    }
+
     /** @return array{assessment_id:string,attempt_count:int,average_score_basis_points:int,min_score_basis_points:int,max_score_basis_points:int} */
     public function analytics(string $actorUserId, string $workspaceId, string $assessmentId): array
     {
