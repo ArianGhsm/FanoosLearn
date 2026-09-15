@@ -1,4 +1,10 @@
--- Learning mode, and the retirement of the stored CSRF digest.
+-- fanoos:rollback-compatible=expand
+--
+-- Expand-only: both columns are added with a default and a nullable JSON, so
+-- the release running before this migration keeps working unchanged against
+-- the new schema -- which is what lets the updater apply it unattended and
+-- roll back to the previous release without a reverse migration.
+-- Learning mode.
 --
 -- Learning mode lets a student reveal the answer and explanation for the
 -- question they are on, before submitting, the way the legacy exam did. It
