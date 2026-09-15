@@ -44,11 +44,13 @@ final class WebRouter
         }
 
         if ($path === '/recovery') {
-            // The token lives in the query string and is read client-side;
-            // a signed-in visitor has nothing to redeem here.
-            return $viewer === null
-                ? $this->page(200, (new RecoveryPage($this->renderer))->render())
-                : $this->redirect('/app');
+            // Always render, session or not. Someone recovering access
+            // usually *does* have a session -- for the wrong account, or a
+            // stale one -- and that is exactly why they were sent a link.
+            // Redirecting them to /app bounced the link to the home page and
+            // did nothing, which is what it did in production. Redeeming
+            // replaces whatever session the browser was holding.
+            return $this->page(200, (new RecoveryPage($this->renderer))->render());
         }
 
         if ($path === '/app') {
