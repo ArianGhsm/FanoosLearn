@@ -15,11 +15,3 @@ ALTER TABLE exam_attempts
     ADD COLUMN mode VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL DEFAULT 'assessment' AFTER status,
     ADD COLUMN revealed_json JSON NULL AFTER answers_json,
     ADD CONSTRAINT chk_exam_attempts_mode CHECK (mode IN ('assessment', 'learning'));
-
--- iam_sessions.csrf_token_digest has had no readers since the CSRF token
--- became a derivation of the session token (SessionCsrf). A column nothing
--- writes and nothing reads is a trap: the next person to find it will
--- reasonably assume it is authoritative. Dropping it is safe because the
--- value it held can no longer be compared against anything.
-ALTER TABLE iam_sessions
-    DROP COLUMN csrf_token_digest;

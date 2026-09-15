@@ -118,6 +118,11 @@ SQL);
         $sessionId = Uuid::v7();
         $expiresAt = gmdate('Y-m-d H:i:s.u', time() + $this->sessionLifetimeSeconds);
         // csrf_token_digest is no longer written -- see SessionCsrf's
+        // derivation. The column still exists: migrations in this project
+        // deliberately carry no destructive DDL (SchemaContractTest enforces
+        // it), because they run automatically on deploy and an automated
+        // column drop is irreversible. Retiring it is an operator step taken
+        // after a verified backup, not something a release does on its own.
         // docblock. The column stays in the schema (this project's
         // migration preflight refuses any pending migration containing a
         // destructive ALTER/DROP for unattended update, so it cannot be
