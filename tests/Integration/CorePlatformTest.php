@@ -176,10 +176,19 @@ final class CorePlatformTest
         self::assert($name !== '', 'This fixture must give the student a display name for the test to mean anything.');
 
         $renderer = new PageRenderer(new AssetVersioner(dirname(__DIR__, 2) . '/apps/platform/public'));
-        $response = (new WebRouter($auth, $renderer))->handle('/app', ['fanoos_session' => $token]);
+        $router = new WebRouter($auth, $renderer);
+        $response = $router->handle('/app', ['fanoos_session' => $token]);
 
         self::assert($response['status'] === 200, 'A live session must render the app, not redirect to sign-in.');
         self::assert(str_contains($response['body'], $name), 'The rendered page did not greet the person the session belongs to.');
+
+        // A recovery link must work in the browser the owner actually has
+        // open, which usually already holds a session -- for the wrong
+        // account, or a stale one. Redirecting that browser to /app made the
+        // link a no-op in production.
+        $recovery = $router->handle('/recovery', ['fanoos_session' => $token], ['token' => 'whatever']);
+        self::assert($recovery['status'] === 200, 'A recovery link must render even when the browser already has a session.');
+        self::assert(str_contains($recovery['body'], 'recovery-checking'), 'The recovery link did not reach the page that redeems it.');
 
         $this->database->prepare('UPDATE iam_sessions SET revoked_at = UTC_TIMESTAMP(6) WHERE id = :id')->execute(['id' => 'router-probe']);
     }
