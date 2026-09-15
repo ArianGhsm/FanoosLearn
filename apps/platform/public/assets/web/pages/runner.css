@@ -145,6 +145,26 @@ body.x-focus .f-page {
     color: var(--text-tertiary);
 }
 
+.x-bar__timer {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-pill);
+    background: var(--surface-muted);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    flex: none;
+}
+
+/* آزمون زمان‌دار: warns before the deadline, not only after it. */
+.x-bar__timer.is-critical {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
 .x-bar__save {
     font-size: 0.75rem;
     color: var(--text-tertiary);

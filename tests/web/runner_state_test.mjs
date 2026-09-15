@@ -138,6 +138,38 @@ test('an explanation stays hidden until the student asks for it', () => {
     assert.equal(S.isExplanationShown(state, 2), false);
 });
 
+test('remaining time counts down from the server-fixed deadline and never goes negative', () => {
+    const state = S.createAttemptState({
+        attemptId: 'a1', assessmentId: 'x1', title: 'آزمون', questionCount: 5, revision: 1,
+        deadlineAt: '2026-01-01T00:05:00.000Z',
+    });
+    const start = Date.parse('2026-01-01T00:00:00.000Z');
+    assert.equal(S.remainingSeconds(state, start), 300);
+    assert.equal(S.remainingSeconds(state, start + 250_000), 50);
+    // Past the deadline -- never negative, and treated as expired.
+    assert.equal(S.remainingSeconds(state, start + 400_000), 0);
+    assert.equal(S.isTimeExpired(state, start + 400_000), true);
+    assert.equal(S.isTimeExpired(state, start), false);
+});
+
+test('the timer turns critical inside the warning window, not before it', () => {
+    const state = S.createAttemptState({
+        attemptId: 'a1', assessmentId: 'x1', title: 'آزمون', questionCount: 5, revision: 1,
+        deadlineAt: '2026-01-01T00:05:00.000Z',
+    });
+    const deadline = Date.parse(state.deadlineAt);
+    assert.equal(S.isTimeCritical(state, deadline - (S.TIME_WARNING_SECONDS + 1) * 1000), false);
+    assert.equal(S.isTimeCritical(state, deadline - S.TIME_WARNING_SECONDS * 1000), true);
+});
+
+test('an untimed attempt reports no remaining time at all', () => {
+    const state = fresh();
+    assert.equal(state.deadlineAt, null);
+    assert.equal(S.remainingSeconds(state), null);
+    assert.equal(S.isTimeCritical(state), false);
+    assert.equal(S.isTimeExpired(state), false);
+});
+
 test('resuming with answers already saved starts with nothing pending', () => {
     // A resumed attempt arrives with the server's answers. Treating them as
     // unsaved would fire a pointless write on every resume.

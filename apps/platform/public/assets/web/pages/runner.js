@@ -8,7 +8,8 @@
 import { ApiError, describeError, watchConnection } from '../foundation/api.js';
 import {
     afterAnswer, clampPosition, clearAnswer, createAttemptState, hasUnsavedAnswers,
-    nextUnanswered, setAnswer, showExplanation as markExplanationShown, toggleFlag, toggleStrike, unansweredPositions,
+    nextUnanswered, remainingSeconds, setAnswer, showExplanation as markExplanationShown,
+    toggleFlag, toggleStrike, unansweredPositions,
 } from './runner-state.js';
 import { AnswerSync, ExamTransport, QuestionWindow, TurboRevealer } from './runner-transport.js';
 import {
@@ -38,6 +39,7 @@ let questions = null;
 let sync = null;
 let turbo = null;
 let autoAdvanceTimer = null;
+let deadlineTimer = null;
 let summary = null;
 let reviewPosition = 1;
 let reviewEntry = null;
@@ -139,6 +141,7 @@ async function start(mode) {
             revision: Number(attempt.revision || 1),
             answers: attempt.answers || {},
             mode: attempt.mode || 'assessment',
+            deadlineAt: attempt.deadline_at ?? null,
         });
         questions = new QuestionWindow(transport, state.attemptId, state.questionCount);
         sync = new AnswerSync(transport, state, { onStateChange: () => { if (phase === 'question') draw(); } });
@@ -147,6 +150,7 @@ async function start(mode) {
         // the student actually stopped.
         state.position = nextUnanswered(state) ?? 1;
         phase = 'question';
+        startDeadlineTimer();
         draw();
         await showQuestion(state.position);
     } catch (error) {
@@ -209,6 +213,61 @@ function scheduleAutoAdvance() {
         if (target.kind === 'review') { openSubmit(); return; }
         showQuestion(target.position);
     }, 900);
+}
+
+/* ----------------------------------------------------------------- timer */
+
+/**
+ * آزمون زمان‌دار: the countdown in the bar. This is a display, not a rule --
+ * the deadline it mirrors was already fixed server-side when the attempt
+ * started, and the server refuses/closes a late submission on its own even
+ * if this timer never ran at all (ExamService::isExpired). Ticking is
+ * skipped while a dialog is open so it never steals focus from one.
+ */
+function startDeadlineTimer() {
+    stopDeadlineTimer();
+    if (!state.deadlineAt) return;
+    deadlineTimer = setInterval(() => {
+        if (phase !== 'question' || !state) return;
+        const remaining = remainingSeconds(state);
+        if (remaining === 0) {
+            stopDeadlineTimer();
+            autoSubmitOnTimeout();
+            return;
+        }
+        if (dialog === null) draw();
+    }, 1000);
+}
+
+function stopDeadlineTimer() {
+    if (deadlineTimer === null) return;
+    clearInterval(deadlineTimer);
+    deadlineTimer = null;
+}
+
+/** The client's mirror of the deadline hit zero: submit whatever is saved rather than making the student click through, since every extra second is now server-refused anyway. */
+async function autoSubmitOnTimeout() {
+    if (!state || state.submitting || state.submitted) return;
+    cancelAutoAdvance();
+    state.submitting = true;
+    dialog = null;
+    dialogKind = null;
+    draw();
+    try {
+        if (hasUnsavedAnswers(state)) await sync.flush().catch(() => {});
+        summary = await transport.submit(state.attemptId, state.revision, state.answers);
+        state.submitted = true;
+        phase = 'report';
+        pageError = notice('warning', 'زمان آزمون تمام شد', 'آزمون به‌صورت خودکار با آخرین پاسخ‌های ذخیره‌شده ثبت شد.');
+    } catch (error) {
+        // Most likely the server had already refused a save near the end
+        // (attempt_deadline_passed) and closed the attempt itself -- show
+        // whatever it says rather than failing silently.
+        showError(error, null);
+    } finally {
+        state.submitting = false;
+        draw();
+    }
 }
 
 /* --------------------------------------------------------------- question */
@@ -365,6 +424,7 @@ const submitActions = {
             dialog = null;
             dialogKind = null;
             phase = 'report';
+            stopDeadlineTimer();
             clearError();
         } catch (error) {
             showError(error, null);

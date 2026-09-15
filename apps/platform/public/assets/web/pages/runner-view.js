@@ -7,8 +7,8 @@
  * choice text is written through textContent, always.
  */
 import {
-    ATTEMPT_FILTERS, answeredCount, isAnswered, isExplanationShown, isFlagged, isStruck,
-    progressPercent, unansweredPositions, visiblePositions,
+    ATTEMPT_FILTERS, answeredCount, isAnswered, isExplanationShown, isFlagged, isStruck, isTimeCritical,
+    progressPercent, remainingSeconds, unansweredPositions, visiblePositions,
 } from './runner-state.js';
 import { renderMarkdown } from './markdown.js';
 
@@ -116,6 +116,7 @@ const ICONS = {
     // A hex nut with a hole -- reads as "settings/tools" without relying on
     // U+2699, which the note above already explains gets substituted.
     settings: 'M18.93 16L12 20L5.07 16L5.07 8L12 4L18.93 8ZM12 9a3 3 0 100 6 3 3 0 000-6z',
+    clock: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v5l4 2',
 };
 
 export function icon(name, { filled = false } = {}) {
@@ -161,6 +162,7 @@ export function renderIntro(assessment, actions) {
     if (assessment.course_title) addFact('درس', String(assessment.course_title));
     if (assessment.term_name) addFact('ترم', String(assessment.term_name));
     if (max > 0) addFact('تلاش', `${faDigits(used)} از ${faDigits(max)}`);
+    if (Number(assessment.time_limit_minutes || 0) > 0) addFact('زمان', `${faDigits(assessment.time_limit_minutes)} دقیقه`);
 
     return el('div', { className: 'f-card x-intro' },
         el('div', { className: 'x-intro__head-row' },
@@ -212,9 +214,17 @@ export function kindLabel(kind) {
     return 'آزمون';
 }
 
+/** mm:ss, Persian digits, seconds zero-padded. */
+function formatRemaining(totalSeconds) {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${faDigits(minutes)}:${faDigits(String(seconds).padStart(2, '0'))}`;
+}
+
 /** The bar pinned to the top of a running attempt. */
 function renderTopBar(state, saveStatus, actions) {
     const percent = progressPercent(state);
+    const remaining = remainingSeconds(state);
     return el('div', { className: 'x-bar' },
         el('button', {
             className: 'x-bar__map', type: 'button',
@@ -232,6 +242,10 @@ function renderTopBar(state, saveStatus, actions) {
                 text: `${faDigits(answeredCount(state))} از ${faDigits(state.questionCount)} پاسخ‌داده`,
                 attrs: { role: 'status' },
             })),
+        remaining === null ? null : el('span', {
+            className: `x-bar__timer${isTimeCritical(state) ? ' is-critical' : ''}`,
+            attrs: { role: 'timer', 'aria-live': 'polite', 'aria-label': 'زمان باقی‌مانده' },
+        }, icon('clock'), el('span', { text: formatRemaining(remaining) })),
         el('span', { className: `x-bar__save is-${saveStatus}`, text: saveLabel(saveStatus), attrs: { role: 'status' } }),
         el('button', {
             className: 'x-bar__settings', type: 'button',

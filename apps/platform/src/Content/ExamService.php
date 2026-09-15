@@ -55,13 +55,14 @@ final class ExamService
         if ($maxAttempts === false || $maxAttempts < 1 || $maxAttempts > 100) {
             throw new PlatformException('max_attempts_invalid', 'Maximum attempts must be between 1 and 100.', 422);
         }
+        $timeLimitMinutes = $this->timeLimitMinutes($metadata['time_limit_minutes'] ?? null);
         $assessmentId = Uuid::v7();
         $versionId = Uuid::v7();
         $assessmentScopeId = Uuid::v7();
 
         Transaction::run($this->database, function () use (
             $actorUserId, $workspaceId, $title, $kind, $variant, $definitionJson, $academic,
-            $scopeId, $maxAttempts, $assessmentId, $versionId, $assessmentScopeId, $metadata,
+            $scopeId, $maxAttempts, $timeLimitMinutes, $assessmentId, $versionId, $assessmentScopeId, $metadata,
         ): void {
             $this->execute(<<<'SQL'
 INSERT INTO exam_assessments (
@@ -79,12 +80,12 @@ SQL, [
             ]);
             $this->execute(<<<'SQL'
 INSERT INTO exam_access_policies (
-    workspace_id, assessment_id, target_scope_id, requires_entitlement, max_attempts, updated_at
-) VALUES (:workspace, :assessment, :scope, :entitled, :max_attempts, UTC_TIMESTAMP(6))
+    workspace_id, assessment_id, target_scope_id, requires_entitlement, max_attempts, time_limit_minutes, updated_at
+) VALUES (:workspace, :assessment, :scope, :entitled, :max_attempts, :time_limit_minutes, UTC_TIMESTAMP(6))
 SQL, [
                 'workspace' => $workspaceId, 'assessment' => $assessmentId, 'scope' => $scopeId,
                 'entitled' => (bool) ($metadata['requires_entitlement'] ?? false) ? 1 : 0,
-                'max_attempts' => $maxAttempts,
+                'max_attempts' => $maxAttempts, 'time_limit_minutes' => $timeLimitMinutes,
             ]);
             $workspaceScope = $this->workspaceScope($workspaceId);
             $this->execute(<<<'SQL'
@@ -220,7 +221,7 @@ SELECT assessment.id, assessment.title, assessment.current_version_no,
        metadata.course_id, metadata.source_resource_id,
        course.course_code, course.title AS course_title,
        term.id AS term_id, term.term_key, term.name AS term_name,
-       policy.requires_entitlement, policy.max_attempts,
+       policy.requires_entitlement, policy.max_attempts, policy.time_limit_minutes,
        (SELECT COUNT(*) FROM exam_attempts attempt_count
         WHERE attempt_count.workspace_id = assessment.workspace_id
           AND attempt_count.assessment_id = assessment.id
@@ -292,7 +293,7 @@ SQL, implode(' AND ', $where)));
             throw new PlatformException('assessment_not_found', 'Published assessment was not found.', 404);
         }
         $existing = $this->database->prepare(<<<'SQL'
-SELECT attempt.id, attempt.revision, attempt.status, attempt.mode, attempt.answers_json,
+SELECT attempt.id, attempt.revision, attempt.status, attempt.mode, attempt.answers_json, attempt.deadline_at,
        version.definition_json
 FROM exam_attempts attempt
 JOIN exam_assessment_versions version ON version.id = attempt.assessment_version_id
@@ -316,8 +317,11 @@ SQL);
                 'answers' => json_decode((string) ($existingAttempt['answers_json'] ?? '{}'), true, 64, JSON_THROW_ON_ERROR),
                 'resumed' => true, 'question_count' => count($definition['questions']),
                 // The mode is fixed when the attempt starts; resuming never
-                // silently promotes a practice run into a real sitting.
+                // silently promotes a practice run into a real sitting. The
+                // deadline is exactly as fixed: it was set once, when this
+                // attempt first started, and resuming never extends it.
                 'mode' => (string) $existingAttempt['mode'],
+                'deadline_at' => $this->isoTimestamp($existingAttempt['deadline_at']),
             ];
         }
         $attempts = $this->database->prepare("SELECT COUNT(*) FROM exam_attempts WHERE workspace_id = :workspace AND assessment_id = :assessment AND user_id = :user AND status IN ('submitted', 'scored')");
@@ -326,18 +330,26 @@ SQL);
             throw new PlatformException('attempt_limit_reached', 'Assessment attempt limit has been reached.', 409);
         }
         $attemptId = Uuid::v7();
-        $this->execute(<<<'SQL'
+        // Computed in the same INSERT, from the same UTC_TIMESTAMP(6) as
+        // started_at, so the deadline can never drift from when the attempt
+        // actually began -- a PHP-side "now" could skew against it under
+        // clock difference or query latency.
+        $timeLimitMinutes = $assessment['time_limit_minutes'] === null ? null : (int) $assessment['time_limit_minutes'];
+        $deadlineExpression = $timeLimitMinutes === null ? 'NULL' : ('UTC_TIMESTAMP(6) + INTERVAL ' . $timeLimitMinutes . ' MINUTE');
+        $this->execute(<<<SQL
 INSERT INTO exam_attempts (
     id, workspace_id, assessment_id, assessment_version_id, user_id,
-    status, mode, revision, answers_json, revealed_json, started_at
+    status, mode, revision, answers_json, revealed_json, started_at, deadline_at
 ) VALUES (
     :id, :workspace, :assessment, :version, :user,
-    'in_progress', :mode, 1, JSON_OBJECT(), JSON_ARRAY(), UTC_TIMESTAMP(6)
+    'in_progress', :mode, 1, JSON_OBJECT(), JSON_ARRAY(), UTC_TIMESTAMP(6), {$deadlineExpression}
 )
 SQL, [
             'id' => $attemptId, 'workspace' => $workspaceId, 'assessment' => $assessmentId,
             'version' => $assessment['version_id'], 'user' => $userId, 'mode' => $mode,
         ]);
+        $deadline = $this->database->prepare('SELECT deadline_at FROM exam_attempts WHERE id = :attempt AND workspace_id = :workspace');
+        $deadline->execute(['attempt' => $attemptId, 'workspace' => $workspaceId]);
         $definition = json_decode((string) $assessment['definition_json'], true, 64, JSON_THROW_ON_ERROR);
         $this->audit->record($workspaceId, $userId, 'exam.attempt.started', 'exam_attempt', $attemptId, 'success', ['assessment_id' => $assessmentId, 'version_id' => $assessment['version_id']]);
 
@@ -346,6 +358,7 @@ SQL, [
             'assessment_id' => $assessmentId, 'title' => (string) $assessment['title'],
             'answers' => [], 'resumed' => false, 'mode' => $mode,
             'question_count' => count($definition['questions']),
+            'deadline_at' => $this->isoTimestamp($deadline->fetchColumn()),
         ];
         });
     }
@@ -510,13 +523,23 @@ SQL, [
         return $outcome;
     }
 
-    /** @param array<string, mixed> $answers @return array{attempt_id:string,revision:int,status:string} */
-    public function saveProgress(string $userId, string $workspaceId, string $attemptId, int $expectedRevision, array $answers): array
+    /**
+     * @param array<string, mixed> $answers
+     * @return array{attempt_id:string,revision:int,status:string}
+     */
+    public function saveProgress(string $userId, string $workspaceId, string $attemptId, int $expectedRevision, array $answers, ?int $now = null): array
     {
-        return Transaction::run($this->database, function () use ($userId, $workspaceId, $attemptId, $expectedRevision, $answers): array {
+        return Transaction::run($this->database, function () use ($userId, $workspaceId, $attemptId, $expectedRevision, $answers, $now): array {
             $attempt = $this->attempt($userId, $workspaceId, $attemptId, true);
             if ($attempt['status'] !== 'in_progress') {
                 throw new PlatformException('attempt_state_conflict', 'Only an in-progress attempt can be saved.', 409);
+            }
+            if ($this->isExpired($attempt, $now)) {
+                // Pencils down: a browser timer is a display, not a rule, so
+                // the refusal to accept further edits is enforced here, from
+                // the deadline this same attempt was given when it started
+                // -- not from whatever the client's own clock claims.
+                throw new PlatformException('attempt_deadline_passed', 'The time limit for this attempt has passed.', 409);
             }
             if ((int) $attempt['revision'] !== $expectedRevision) {
                 throw new PlatformException('attempt_revision_conflict', 'Attempt revision is stale.', 409);
@@ -537,56 +560,136 @@ SQL, [
         });
     }
 
-    /** @param array<string, mixed> $answers @return array<string, mixed> */
-    public function submitAttempt(string $userId, string $workspaceId, string $attemptId, int $expectedRevision, array $answers): array
+    /**
+     * @param array<string, mixed> $answers
+     * @return array<string, mixed>
+     */
+    public function submitAttempt(string $userId, string $workspaceId, string $attemptId, int $expectedRevision, array $answers, ?int $now = null): array
     {
-        return Transaction::run($this->database, function () use ($userId, $workspaceId, $attemptId, $expectedRevision, $answers): array {
+        $outcome = Transaction::run($this->database, function () use ($userId, $workspaceId, $attemptId, $expectedRevision, $answers, $now): array {
             $attempt = $this->attempt($userId, $workspaceId, $attemptId, true);
             if ($attempt['status'] !== 'in_progress') {
                 throw new PlatformException('attempt_state_conflict', 'Attempt is not open for submission.', 409);
             }
+            if ($this->isExpired($attempt, $now)) {
+                // The deadline already passed before this request arrived.
+                // The attempt is closed honestly, using the answers already
+                // saved while it was still open -- never the ones in this
+                // late request, which the student had no right to still be
+                // changing (saveProgress already refused them). The refusal
+                // is thrown only after this transaction returns/commits; see
+                // ExamQuestionRateGuard's docblock for why throwing from
+                // inside would be wrong here.
+                $lastAnswers = json_decode((string) ($attempt['answers_json'] ?? '{}'), true, 64, JSON_THROW_ON_ERROR);
+                $this->scoreAndClose($workspaceId, $userId, $attemptId, $attempt, is_array($lastAnswers) ? $lastAnswers : [], true);
+
+                return ['late' => true, 'result' => null];
+            }
             if ((int) $attempt['revision'] !== $expectedRevision) {
                 throw new PlatformException('attempt_revision_conflict', 'Attempt revision is stale.', 409);
             }
-            $definition = json_decode((string) $attempt['definition_json'], true, 64, JSON_THROW_ON_ERROR);
-            $normalized = $this->answers($definition, $answers);
-            $review = [];
-            $correct = 0;
-            foreach ($definition['questions'] as $question) {
-                $id = (string) $question['id'];
-                $selected = $normalized[$id] ?? null;
-                $isCorrect = $selected !== null && $selected === $question['answer'];
-                $correct += $isCorrect ? 1 : 0;
-                $review[] = [
-                    'id' => $id, 'selected' => $selected, 'correct' => $question['answer'],
-                    'is_correct' => $isCorrect, 'explanation' => $question['explanation'] ?? null,
-                ];
-            }
-            $questionCount = count($definition['questions']);
-            $score = $questionCount === 0 ? 0 : (int) round(($correct / $questionCount) * 10000);
-            $revision = $expectedRevision + 1;
-            $this->execute(<<<'SQL'
+
+            return ['late' => false, 'result' => $this->scoreAndClose($workspaceId, $userId, $attemptId, $attempt, $answers, false)];
+        });
+
+        if ($outcome['late']) {
+            throw new PlatformException('attempt_deadline_passed', 'The time limit for this attempt passed before this submission arrived; it was closed using your last saved answers.', 409);
+        }
+
+        return $outcome['result'];
+    }
+
+    /**
+     * Scores an attempt and closes it, shared by an on-time submission and a
+     * late one that submitAttempt() closes using the last saved answers
+     * instead of the (refused) request's own. The attempt's own current
+     * revision is always used for the write, never a caller-supplied one --
+     * for the late path there is no caller-supplied revision to trust.
+     *
+     * @param array<string, mixed> $attempt
+     * @param array<string, mixed> $answers
+     * @return array<string, mixed>
+     */
+    private function scoreAndClose(string $workspaceId, string $userId, string $attemptId, array $attempt, array $answers, bool $late): array
+    {
+        $definition = json_decode((string) $attempt['definition_json'], true, 64, JSON_THROW_ON_ERROR);
+        $normalized = $this->answers($definition, $answers);
+        $review = [];
+        $correct = 0;
+        foreach ($definition['questions'] as $question) {
+            $id = (string) $question['id'];
+            $selected = $normalized[$id] ?? null;
+            $isCorrect = $selected !== null && $selected === $question['answer'];
+            $correct += $isCorrect ? 1 : 0;
+            $review[] = [
+                'id' => $id, 'selected' => $selected, 'correct' => $question['answer'],
+                'is_correct' => $isCorrect, 'explanation' => $question['explanation'] ?? null,
+            ];
+        }
+        $questionCount = count($definition['questions']);
+        $score = $questionCount === 0 ? 0 : (int) round(($correct / $questionCount) * 10000);
+        $currentRevision = (int) $attempt['revision'];
+        $revision = $currentRevision + 1;
+        $this->execute(<<<'SQL'
 UPDATE exam_attempts
 SET answers_json = :answers, revision = :revision, status = 'scored', submitted_at = UTC_TIMESTAMP(6)
 WHERE id = :attempt AND workspace_id = :workspace AND user_id = :user AND revision = :expected
 SQL, [
-                'answers' => json_encode($normalized, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
-                'revision' => $revision, 'attempt' => $attemptId, 'workspace' => $workspaceId,
-                'user' => $userId, 'expected' => $expectedRevision,
-            ]);
-            $this->execute(<<<'SQL'
+            'answers' => json_encode($normalized, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+            'revision' => $revision, 'attempt' => $attemptId, 'workspace' => $workspaceId,
+            'user' => $userId, 'expected' => $currentRevision,
+        ]);
+        $this->execute(<<<'SQL'
 INSERT INTO exam_attempt_results (
     workspace_id, attempt_id, correct_count, question_count, score_basis_points, review_json, computed_at
 ) VALUES (:workspace, :attempt, :correct, :questions, :score, :review, UTC_TIMESTAMP(6))
 SQL, [
-                'workspace' => $workspaceId, 'attempt' => $attemptId, 'correct' => $correct,
-                'questions' => $questionCount, 'score' => $score,
-                'review' => json_encode($review, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
-            ]);
-            $this->audit->record($workspaceId, $userId, 'exam.attempt.scored', 'exam_attempt', $attemptId, 'success', ['assessment_id' => $attempt['assessment_id'], 'score_basis_points' => $score]);
+            'workspace' => $workspaceId, 'attempt' => $attemptId, 'correct' => $correct,
+            'questions' => $questionCount, 'score' => $score,
+            'review' => json_encode($review, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+        ]);
+        $this->audit->record($workspaceId, $userId, 'exam.attempt.scored', 'exam_attempt', $attemptId, 'success', [
+            'assessment_id' => $attempt['assessment_id'], 'score_basis_points' => $score, 'late' => $late,
+        ]);
 
-            return ['attempt_id' => $attemptId, 'revision' => $revision, 'status' => 'scored', 'correct_count' => $correct, 'question_count' => $questionCount, 'score_basis_points' => $score];
-        });
+        return ['attempt_id' => $attemptId, 'revision' => $revision, 'status' => 'scored', 'correct_count' => $correct, 'question_count' => $questionCount, 'score_basis_points' => $score];
+    }
+
+    /** @param array<string, mixed> $attempt */
+    private function isExpired(array $attempt, ?int $now): bool
+    {
+        if ($attempt['deadline_at'] === null) {
+            return false;
+        }
+        $deadline = strtotime((string) $attempt['deadline_at'] . ' UTC');
+        if ($deadline === false) {
+            return false;
+        }
+
+        return ($now ?? time()) >= $deadline;
+    }
+
+    private function isoTimestamp(mixed $mysqlDatetime): ?string
+    {
+        if ($mysqlDatetime === null) {
+            return null;
+        }
+        $timestamp = strtotime((string) $mysqlDatetime . ' UTC');
+
+        return $timestamp === false ? null : gmdate(DATE_ATOM, $timestamp);
+    }
+
+    private function timeLimitMinutes(mixed $value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        $minutes = filter_var($value, FILTER_VALIDATE_INT);
+        if ($minutes === false || $minutes < 1 || $minutes > 600) {
+            throw new PlatformException('time_limit_invalid', 'Time limit must be between 1 and 600 minutes.', 422);
+        }
+
+        return $minutes;
     }
 
     /**
@@ -722,7 +825,8 @@ SQL);
     {
         $query = $this->database->prepare(<<<'SQL'
 SELECT assessment.id, assessment.title, version.id AS version_id, version.definition_json,
-       scope.id AS scope_id, policy.target_scope_id, policy.requires_entitlement, policy.max_attempts
+       scope.id AS scope_id, policy.target_scope_id, policy.requires_entitlement, policy.max_attempts,
+       policy.time_limit_minutes
 FROM exam_assessments assessment
 JOIN exam_assessment_versions version ON version.assessment_id = assessment.id
  AND version.workspace_id = assessment.workspace_id AND version.version_no = assessment.current_version_no
@@ -757,7 +861,7 @@ SQL);
         $lockClause = $lock ? 'FOR UPDATE' : '';
         $query = $this->database->prepare(<<<SQL
 SELECT attempt.id, attempt.assessment_id, attempt.status, attempt.mode, attempt.revision,
-       attempt.answers_json, attempt.revealed_json, version.definition_json
+       attempt.answers_json, attempt.revealed_json, attempt.deadline_at, version.definition_json
 FROM exam_attempts attempt
 JOIN exam_assessment_versions version ON version.id = attempt.assessment_version_id
  AND version.assessment_id = attempt.assessment_id AND version.workspace_id = attempt.workspace_id

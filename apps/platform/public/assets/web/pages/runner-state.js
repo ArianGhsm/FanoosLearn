@@ -12,13 +12,15 @@
  */
 
 /** Positions are 1-based everywhere, matching the API's question positions. */
-export function createAttemptState({ attemptId, assessmentId, title, questionCount, revision, answers = {}, mode = 'assessment' }) {
+export function createAttemptState({ attemptId, assessmentId, title, questionCount, revision, answers = {}, mode = 'assessment', deadlineAt = null }) {
     return {
         attemptId,
         assessmentId,
         title,
         questionCount,
         revision,
+        /** ISO timestamp fixed by the server when the attempt started, or null for an untimed assessment. A browser timer only mirrors this. */
+        deadlineAt,
         /**
          * 'assessment' (a real sitting, no feedback until submitted),
          * 'practice' (right/wrong shown at once, explanation on demand) or
@@ -190,4 +192,24 @@ export function unansweredPositions(state) {
 export function progressPercent(state) {
     if (state.questionCount === 0) return 0;
     return Math.round((answeredCount(state) / state.questionCount) * 100);
+}
+
+/** Seconds until state.deadlineAt, floored and never negative; null for an untimed attempt. */
+export function remainingSeconds(state, nowMs = Date.now()) {
+    if (!state.deadlineAt) return null;
+    const deadlineMs = Date.parse(state.deadlineAt);
+    if (Number.isNaN(deadlineMs)) return null;
+    return Math.max(0, Math.floor((deadlineMs - nowMs) / 1000));
+}
+
+/** The runner bar switches to a warning style at or under this much time left. */
+export const TIME_WARNING_SECONDS = 120;
+
+export function isTimeCritical(state, nowMs = Date.now()) {
+    const remaining = remainingSeconds(state, nowMs);
+    return remaining !== null && remaining <= TIME_WARNING_SECONDS;
+}
+
+export function isTimeExpired(state, nowMs = Date.now()) {
+    return remainingSeconds(state, nowMs) === 0;
 }

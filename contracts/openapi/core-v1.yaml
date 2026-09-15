@@ -296,7 +296,7 @@ components:
       additionalProperties: false
     AssessmentAttemptStarted:
       type: object
-      required: [attempt_id, revision, status, assessment_id, title, answers, resumed, question_count]
+      required: [attempt_id, revision, status, assessment_id, title, answers, resumed, question_count, mode, deadline_at]
       properties:
         attempt_id: { $ref: '#/components/schemas/Uuid' }
         revision: { type: integer, minimum: 1 }
@@ -306,6 +306,8 @@ components:
         answers: { type: object, description: 'Question id -> previously-saved displayed choice index.', additionalProperties: { type: integer } }
         resumed: { type: boolean }
         question_count: { type: integer, minimum: 1 }
+        mode: { type: string, enum: [assessment, learning, practice], description: 'Fixed for the life of the attempt; resuming never changes it.' }
+        deadline_at: { type: [string, 'null'], format: date-time, description: 'Fixed once, when the attempt first started; resuming never extends it. Null for an untimed assessment. A client timer only mirrors this -- the server enforces it independently on save/submit.' }
       additionalProperties: false
     AssessmentQuestion:
       type: object

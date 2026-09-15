@@ -17,6 +17,7 @@ use Fanoos\Tests\Integration\CorePlatformTest;
 use Fanoos\Tests\Integration\ContentEngineTest;
 use Fanoos\Tests\Integration\ExamAttemptModeTest;
 use Fanoos\Tests\Integration\ExamQuestionPacingTest;
+use Fanoos\Tests\Integration\ExamTimedAttemptTest;
 use Fanoos\Tests\Integration\OwnerRecoveryTest;
 use Fanoos\Tests\Integration\SessionCsrfTest;
 use Fanoos\Tests\Integration\Stage7PlatformTest;
@@ -84,6 +85,8 @@ try {
         echo "PASS exam question read pacing scenarios\n";
         $assertions += (new ExamAttemptModeTest($database))->run();
         echo "PASS exam attempt mode scenarios\n";
+        $assertions += (new ExamTimedAttemptTest($database))->run();
+        echo "PASS exam timed attempt scenarios\n";
         $assertions += (new OwnerRecoveryTest($database))->run();
         echo "PASS owner sign-in recovery scenarios\n";
         $assertions += (new SessionCsrfTest($database))->run();
