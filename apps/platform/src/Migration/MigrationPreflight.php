@@ -42,11 +42,12 @@ final class MigrationPreflight
             if ($bootstrap) {
                 throw new RuntimeException('Automatic update control may not bootstrap a fresh database. Use the supervised bootstrap runbook.');
             }
-            if (!preg_match('/^\s*--\s*fanoos:rollback-compatible=expand\s*$/mi', $sql)) {
+            if (!MigrationSafety::declaresExpandCompatible($sql)) {
                 throw new RuntimeException("Pending migration {$name} is not marked expand-compatible for unattended update.");
             }
-            if (preg_match('/\b(?:DROP|TRUNCATE)\b|\bRENAME\s+TABLE\b|\bALTER\s+TABLE\b[\s\S]*?\b(?:DROP|MODIFY|CHANGE|RENAME)\b/i', $sql)) {
-                throw new RuntimeException("Pending migration {$name} contains a destructive or contract-changing operation.");
+            $unsafe = MigrationSafety::unsafeReason($sql);
+            if ($unsafe !== null) {
+                throw new RuntimeException("Pending migration {$name} {$unsafe}.");
             }
         }
 
