@@ -117,9 +117,11 @@ final class PageRenderer
             . '</a>'
             . '<span class="f-header__spacer"></span>'
             . '<nav class="f-nav" aria-label="بخش‌های اصلی">' . $items . '</nav>'
+            // The account link lives in the navigation, so the header shows
+            // only who you are -- a second button to the same place was just
+            // noise beside it.
             . '<div class="f-account">'
             . '<span class="f-account__name">' . $this->escape($viewer->displayName) . '</span>'
-            . '<a class="f-btn f-btn--ghost" href="/account">حساب</a>'
             . '</div>'
             . '</header>';
     }

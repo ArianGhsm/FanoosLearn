@@ -8,6 +8,7 @@ use Fanoos\Platform\Web\AssetVersioner;
 use Fanoos\Platform\Web\LandingPage;
 use Fanoos\Platform\Web\LoginPage;
 use Fanoos\Platform\Web\HomePage;
+use Fanoos\Platform\Web\AccountPage;
 use Fanoos\Platform\Web\ExamAttemptPage;
 use Fanoos\Platform\Web\ExamsPage;
 use Fanoos\Platform\Web\NotFoundPage;
@@ -48,6 +49,7 @@ final class WebRenderingTest
         $this->notFoundSaysTheAddressIsWrong($renderer);
         $this->everyPageIsRightToLeftPersian($renderer);
         $this->examPagesCarryTheWorkspaceButNoQuestionContent($renderer);
+        $this->everySignedInPageOffersAWayOut($renderer);
         $this->recoveryPageChecksTheLinkClientSideAndCarriesNoToken($renderer);
         $this->noPageReferencesTheRemovedDisplayFace($renderer);
 
@@ -93,7 +95,12 @@ final class WebRenderingTest
         $without = new ViewerContext('u1', 'آرین', 'c', null, null);
         $with = new ViewerContext('u1', 'آرین', 'c', 'w1', 'کلاس من');
 
-        $this->assert(count($without->navigation()) === 1, 'Only home is reachable before a workspace is chosen.');
+        // Asserts the intent, not a count: workspace-scoped areas stay hidden
+        // until there is a workspace, while areas that need none -- the
+        // account, and with it signing out -- are always reachable.
+        $keysWithout = array_column($without->navigation(), 'key');
+        $this->assert(!in_array('exams', $keysWithout, true), 'A workspace-scoped area must be hidden before a workspace is chosen.');
+        $this->assert(in_array('account', $keysWithout, true), 'The account area must be reachable even before a workspace is chosen.');
         $this->assert(
             !str_contains((new HomePage($renderer))->render($without), '/app/exams'),
             'A workspace-scoped area must not be linked before a workspace is selected: the link could only fail.',
@@ -216,6 +223,31 @@ final class WebRenderingTest
         $this->assert(!is_dir($this->root . '/apps/platform/public/assets/fonts/abarhigh'), 'AbarHigh font files were not removed.');
         $this->assert(is_dir($this->root . '/apps/platform/public/assets/fonts/yekanbakh'), 'Yekan Bakh must stay -- it is the protected-media worker\'s watermark font, unrelated to this change.');
     }
+
+    /**
+     * Signing out has to be reachable, from every signed-in page, on every
+     * screen size. Its absence is a security problem rather than a missing
+     * convenience: on a borrowed or shared device it is the only way to end
+     * a session. The site shipped without one, and the header's only button
+     * pointed at a route that did not exist.
+     */
+    private function everySignedInPageOffersAWayOut(PageRenderer $renderer): void
+    {
+        $viewer = new ViewerContext('u1', 'آرین', 'csrf', 'w1', 'کلاس من');
+
+        $navKeys = array_column($viewer->navigation(), 'key');
+        $this->assert(in_array('account', $navKeys, true), 'The account area must be in the navigation, which is the only chrome on a phone.');
+
+        foreach ([(new HomePage($renderer))->render($viewer), (new ExamsPage($renderer))->render($viewer)] as $html) {
+            $this->assert(str_contains($html, 'href="/account"'), 'Every signed-in page must link to the account area.');
+        }
+
+        $account = (new AccountPage($renderer))->render($viewer);
+        $this->assert(str_contains($account, 'id="signout"'), 'The account page must offer a way to sign out.');
+        $this->assert(str_contains($account, 'id="password-form"'), 'The account page must let the owner change their own password.');
+        $this->assert(str_contains($account, 'href="/app?switch=1"'), 'The account page must let the viewer change workspace.');
+    }
+
 
     private function assert(bool $condition, string $message): void
     {
