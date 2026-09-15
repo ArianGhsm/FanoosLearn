@@ -156,6 +156,17 @@ const questionActions = {
     choose(index) {
         setAnswer(state, state.position, index);
         sync.schedule();
+
+        // Learning mode answers immediately: choosing shows whether it was
+        // right, with the explanation, and stays put so it can be read.
+        // Auto-advancing here would sweep the student past the one thing
+        // they came for.
+        if (state.mode === 'learning') {
+            draw();
+            questionActions.reveal();
+            return;
+        }
+
         const target = afterAnswer(state, state.position);
         if (target.kind === 'review') {
             openSubmit();

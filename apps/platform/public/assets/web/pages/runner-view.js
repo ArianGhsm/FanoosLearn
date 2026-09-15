@@ -33,37 +33,58 @@ export function faDigits(value) {
  * explanation.
  *
  * Not the same job as faDigits. Imported banks write Persian prose with
- * Latin digits ("خانم 40 ساله"), which reads as foreign, but the same text
- * also carries Latin terminology where the digits belong to the term and
- * must stay Latin: T2, COVID-19, B12. Converting everything mangles the
- * terminology; converting nothing leaves the prose looking wrong. Measured
- * against the first imported bank: 118 digit runs standing alone in Persian
- * text, 27 attached to a Latin term.
+ * Latin digits ("خانم 40 ساله"), which reads as foreign to this audience,
+ * so the site converts them rather than anyone editing content by hand.
  *
- * So: convert a digit run only when no Latin letter touches either side.
+ * One narrow exception, narrower than it first looks. A Latin letter
+ * *before* the digits makes an identifier -- B12, T2, COVID-19 -- where the
+ * digits are part of the name and converting mangles it. A Latin letter
+ * *after* the digits is a unit: in "AST: 100IU/L" or "Bili T: 6.2mg/dl" the
+ * number is a measurement that belongs in Persian while the unit stays
+ * Latin.
+ *
+ * An earlier version treated both sides alike and so left every lab value in
+ * Latin -- 66 of them in the first imported bank, which is every such case
+ * in it, against not one real identifier. Guarding a hypothesis at the cost
+ * of the actual content.
  */
 export function faText(value) {
     const text = String(value ?? '');
     return text.replace(/[0-9]+/g, (digits, index) =>
-        touchesLatinTerm(text, index, index + digits.length) ? digits : faDigits(digits));
+        precededByLatinIdentifier(text, index) ? digits : faDigits(digits));
 }
 
 /**
- * Whether a digit run belongs to a Latin term rather than to Persian prose.
- *
- * Scans outward past the characters that join a term together, so the digits
- * in COVID-19 and B-12 are recognised as part of the term even though the
- * character immediately beside them is a hyphen rather than a letter.
+ * Whether a Latin letter runs into the digits from the left, allowing for
+ * the characters that join an identifier together (B-12, COVID-19).
  */
-function touchesLatinTerm(text, start, end) {
-    const JOINERS = '-_.';
-    let before = start - 1;
-    while (before >= 0 && JOINERS.includes(text[before])) before--;
-    let after = end;
-    while (after < text.length && JOINERS.includes(text[after])) after++;
+function precededByLatinIdentifier(text, start) {
+    let index = start - 1;
+    while (index >= 0 && '-_.'.includes(text[index])) index--;
 
-    return (before >= 0 && /[A-Za-z]/.test(text[before]))
-        || (after < text.length && /[A-Za-z]/.test(text[after]));
+    return index >= 0 && /[A-Za-z]/.test(text[index]);
+}
+
+const OPTION_LETTER_FA = { A: 'الف', B: 'ب', C: 'ج', D: 'د', E: 'ه' };
+
+/**
+ * Rewrites "گزینه C" to "گزینه ج" in authored text.
+ *
+ * Explanations name the option they are about using the Latin letter the
+ * bank was authored with, while the interface labels choices الف/ب/ج/د as
+ * Iranian exams do. Left alone the two contradict each other on screen --
+ * the page marks ج correct while the explanation underneath argues for C --
+ * and the student has to work out that they are the same thing.
+ *
+ * Rewriting the label is safe where replacing every stray Latin letter would
+ * not be: it only fires after the word گزینه, so a Latin letter that is part
+ * of the medicine (vitamin B, hepatitis C) is never touched.
+ */
+export function faOptionLetters(value) {
+    return String(value ?? '').replace(
+        /(گزینه[‌\s]*(?:ی[‌\s]*)?)([A-E])\b/gu,
+        (whole, prefix, letter) => prefix + (OPTION_LETTER_FA[letter] ?? letter),
+    );
 }
 
 export function el(tag, options = {}, ...children) {
@@ -223,12 +244,13 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
         const struck = isStruck(state, position, index);
         const isSelected = selected === index;
         const shownCorrect = reveal !== null && reveal.answer === index;
+        const shownWrong = reveal !== null && isSelected && reveal.answer !== index;
         choices.append(el('li', { className: 'x-choices__item' },
             el('button', {
-                className: `x-choice${isSelected ? ' is-selected' : ''}${struck ? ' is-struck' : ''}${shownCorrect ? ' is-correct' : ''}`,
+                className: `x-choice${isSelected ? ' is-selected' : ''}${struck ? ' is-struck' : ''}${shownCorrect ? ' is-correct' : ''}${shownWrong ? ' is-wrong' : ''}`,
                 type: 'button',
                 attrs: { role: 'radio', 'aria-checked': isSelected ? 'true' : 'false' },
-                on: { click: () => actions.choose(index) },
+                on: { click: () => (reveal === null ? actions.choose(index) : undefined) },
             },
                 el('span', { className: 'x-choice__letter', text: CHOICE_LETTERS[index] ?? faDigits(index + 1) }),
                 el('span', { className: 'x-choice__text', text: faText(choice) })),
@@ -265,10 +287,10 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
                     on: { click: actions.clear },
                 }),
                 state.mode !== 'learning' || reveal ? null : el('button', {
-                    className: 'f-btn f-btn--ghost x-question__reveal', type: 'button', text: 'پاسخ را نشانم بده',
+                    className: 'f-btn f-btn--ghost x-question__reveal', type: 'button', text: 'بلد نیستم، پاسخ را نشانم بده',
                     on: { click: actions.reveal },
                 })),
-            reveal ? renderReveal(reveal, question) : null),
+            reveal ? renderReveal(reveal, question, selected) : null),
         el('nav', { className: 'x-nav', attrs: { 'aria-label': 'پیمایش سؤال‌ها' } },
             el('button', {
                 className: 'f-btn f-btn--ghost', type: 'button', text: '→ قبلی',
@@ -291,10 +313,14 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
  * attempt. It says plainly that this one was seen, because the report will
  * say so too and the student should not be surprised by that later.
  */
-function renderReveal(reveal, question) {
+function renderReveal(reveal, question, chosen) {
     const letter = CHOICE_LETTERS[reveal.answer] ?? faDigits(reveal.answer + 1);
-    return el('section', { className: 'x-revealed' },
-        el('p', { className: 'x-revealed__head', text: `پاسخ درست: گزینه ${letter}` }),
+    const verdict = chosen === null || chosen === undefined
+        ? `پاسخ درست: گزینه ${letter}`
+        : (chosen === reveal.answer ? `درست گفتی — گزینه ${letter}` : `نادرست. پاسخ درست گزینه ${letter} است.`);
+
+    return el('section', { className: `x-revealed${chosen === reveal.answer ? ' is-right' : ''}` },
+        el('p', { className: 'x-revealed__head', text: verdict }),
         reveal.explanation
             ? el('div', {}, renderMarkdown(reveal.explanation),
                 el('p', { className: 'x-explanation__origin', text: 'این توضیح با کمک هوش مصنوعی نوشته شده و بازبینی انسانی نشده است.' }))

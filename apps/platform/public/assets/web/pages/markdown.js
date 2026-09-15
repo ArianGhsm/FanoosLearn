@@ -1,4 +1,4 @@
-import { faText } from './runner-view.js';
+import { faOptionLetters, faText } from './runner-view.js';
 
 /*
  * A deliberately tiny Markdown renderer for explanation text.
@@ -22,15 +22,15 @@ function inline(target, text) {
     let match;
     while ((match = pattern.exec(text)) !== null) {
         if (match.index > index) {
-            target.append(document.createTextNode(faText(text.slice(index, match.index))));
+            target.append(document.createTextNode(faText(faOptionLetters(text.slice(index, match.index)))));
         }
         const strong = document.createElement('strong');
-        strong.textContent = faText(match[1]);
+        strong.textContent = faText(faOptionLetters(match[1]));
         target.append(strong);
         index = match.index + match[0].length;
     }
     if (index < text.length) {
-        target.append(document.createTextNode(faText(text.slice(index))));
+        target.append(document.createTextNode(faText(faOptionLetters(text.slice(index)))));
     }
     return target;
 }
