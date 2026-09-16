@@ -1,3 +1,8 @@
+# Apache fallback only. Production serves this application through nginx,
+# which never reads .htaccess -- the compression and caching rules below
+# apply to no deployment we currently run. The live rules are in
+# ops/nginx/fanoos-performance.conf.
+
 Options -Indexes
 RewriteEngine On
 
