@@ -25,6 +25,7 @@ use Fanoos\Tests\Integration\SessionCsrfTest;
 use Fanoos\Tests\Integration\Stage7PlatformTest;
 use Fanoos\Tests\Integration\ServiceAuthLinkTest;
 use Fanoos\Tests\Integration\DeploymentControlTest;
+use Fanoos\Tests\Integration\DeploymentFailureDetailTest;
 use Fanoos\Tests\Integration\BotPlatformHandoffTest;
 use Fanoos\Tests\Integration\ProtectedMediaForensicTest;
 use Fanoos\Tests\Integration\Stage8FinalClosureTest;
@@ -103,6 +104,8 @@ try {
         echo "PASS Stage 7 service authentication and messaging link scenarios\n";
         $assertions += (new DeploymentControlTest($database))->run();
         echo "PASS Stage 7 deployment control-plane scenarios\n";
+        $assertions += (new DeploymentFailureDetailTest($database))->run();
+        echo "PASS deployment failure detail capture and redaction scenarios\n";
         $assertions += (new ClassProvisioningTest($database))->run();
         echo "PASS owner class provisioning scenarios\n";
         $assertions += (new OnboardingDirectoryTest($database, $root))->run();
