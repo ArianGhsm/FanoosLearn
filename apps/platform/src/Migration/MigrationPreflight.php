@@ -43,6 +43,10 @@ final class MigrationPreflight
                 throw new RuntimeException('Automatic update control may not bootstrap a fresh database. Use the supervised bootstrap runbook.');
             }
             if (!MigrationSafety::declaresExpandCompatible($sql)) {
+                $unsafe = MigrationSafety::unsafeReason($sql);
+                if (MigrationSafety::isDeclaredContract($sql) && $unsafe !== null) {
+                    throw new RuntimeException("Pending migration {$name} is declared contract-mode (destructive) and must be applied by the supervised operator path (scripts/ops/apply-contract-migration.php), not the unattended updater.");
+                }
                 throw new RuntimeException("Pending migration {$name} is not marked expand-compatible for unattended update.");
             }
             $unsafe = MigrationSafety::unsafeReason($sql);

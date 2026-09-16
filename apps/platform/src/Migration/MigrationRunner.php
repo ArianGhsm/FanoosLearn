@@ -16,8 +16,20 @@ final class MigrationRunner
     ) {
     }
 
-    /** @return array{applied: list<string>, skipped: list<string>} */
-    public function run(): array
+    /**
+     * @param string|null $onlySupervised When given, the basename of the one
+     *     migration a supervised operator run is authorized to apply -- every
+     *     other pending file is skipped entirely, and the named file must be
+     *     declared contract-mode (MigrationSafety::isDeclaredContract) or the
+     *     run refuses it. When null (the normal, unattended path), every
+     *     pending file is considered and any migration MigrationSafety::
+     *     unsafeReason() flags as destructive is refused before it is ever
+     *     executed -- this is the runner's own safety net, independent of
+     *     MigrationPreflight, so invoking this class directly can no longer
+     *     silently apply a destructive migration.
+     * @return array{applied: list<string>, skipped: list<string>}
+     */
+    public function run(?string $onlySupervised = null): array
     {
         $this->ensureLedger();
         $lock = $this->database->query("SELECT GET_LOCK('fanoos_schema_migrations', 30)")->fetchColumn();
@@ -34,6 +46,9 @@ final class MigrationRunner
 
             foreach ($files as $path) {
                 $name = basename($path);
+                if ($onlySupervised !== null && $name !== $onlySupervised) {
+                    continue;
+                }
                 $sql = file_get_contents($path);
                 if ($sql === false) {
                     throw new RuntimeException("Cannot read migration {$name}.");
@@ -47,6 +62,15 @@ final class MigrationRunner
                     }
                     $result['skipped'][] = $name;
                     continue;
+                }
+
+                if ($onlySupervised === null) {
+                    $unsafe = MigrationSafety::unsafeReason($sql);
+                    if ($unsafe !== null) {
+                        throw new RuntimeException("Pending migration {$name} {$unsafe}. The unattended updater refuses to apply it; use the supervised operator path (scripts/ops/apply-contract-migration.php) if it is genuinely a declared contract-mode change.");
+                    }
+                } elseif (!MigrationSafety::isDeclaredContract($sql)) {
+                    throw new RuntimeException("Migration {$name} is not declared contract-mode; the supervised path refuses to apply it.");
                 }
 
                 foreach (SqlStatementSplitter::split($sql) as $statement) {
