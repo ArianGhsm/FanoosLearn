@@ -203,9 +203,8 @@ SQL, ['version_no' => $state['version_no'], 'assessment' => $assessmentId, 'work
     /** @return list<array<string, mixed>> */
     public function catalog(string $actorUserId, string $workspaceId, ?string $courseId = null, ?string $kind = null): array
     {
-        $this->access->requireWorkspace($actorUserId, $workspaceId, 'exam.take');
-        $where = ["assessment.workspace_id = :workspace", "assessment.status = 'published'", 'assessment.archived_at IS NULL'];
-        $parameters = ['workspace' => $workspaceId];
+        $where = [];
+        $parameters = [];
         if ($courseId !== null && $courseId !== '') {
             $where[] = 'metadata.course_id = :course';
             $parameters['course'] = $courseId;
@@ -214,6 +213,44 @@ SQL, ['version_no' => $state['version_no'], 'assessment' => $assessmentId, 'work
             $where[] = 'COALESCE(metadata.assessment_variant, metadata.assessment_kind) = :kind';
             $parameters['kind'] = $kind;
         }
+
+        return $this->catalogRows($actorUserId, $workspaceId, $where, $parameters, 100);
+    }
+
+    /**
+     * One assessment's catalogue-shaped row, for the exam page to embed
+     * server-side instead of the runner fetching the whole catalogue just to
+     * find the one it already knows the id of (see ExamAttemptPage). Reuses
+     * catalog()'s own query/authorization/row-shape rather than fetching
+     * every assessment and filtering in PHP, which would just move the same
+     * inefficiency server-side.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function catalogEntry(string $userId, string $workspaceId, string $assessmentId): ?array
+    {
+        $rows = $this->catalogRows($userId, $workspaceId, ['assessment.id = :entry_assessment'], ['entry_assessment' => $assessmentId], 1);
+
+        return $rows[0] ?? null;
+    }
+
+    /**
+     * Shared catalogue query behind catalog() and catalogEntry(): same
+     * authorization, shape and row-mapping, scoped by whichever extra WHERE
+     * clauses and row limit the caller adds.
+     *
+     * @param list<string> $extraWhere
+     * @param array<string, mixed> $extraParameters
+     * @return list<array<string, mixed>>
+     */
+    private function catalogRows(string $actorUserId, string $workspaceId, array $extraWhere, array $extraParameters, int $limit): array
+    {
+        $this->access->requireWorkspace($actorUserId, $workspaceId, 'exam.take');
+        $where = array_merge(
+            ["assessment.workspace_id = :workspace", "assessment.status = 'published'", 'assessment.archived_at IS NULL'],
+            $extraWhere,
+        );
+        $parameters = array_merge(['workspace' => $workspaceId], $extraParameters);
         $query = $this->database->prepare(sprintf(<<<'SQL'
 SELECT assessment.id, assessment.title, assessment.current_version_no,
        COALESCE(metadata.assessment_variant, metadata.assessment_kind) AS assessment_kind,
@@ -259,8 +296,8 @@ WHERE %s
   AND (assessment.offering_id IS NULL OR (term.status <> 'archived' AND term.archived_at IS NULL))
   AND (metadata.course_id IS NULL OR (course.status = 'active' AND course.archived_at IS NULL))
 ORDER BY assessment.updated_at DESC
-LIMIT 100
-SQL, implode(' AND ', $where)));
+LIMIT %d
+SQL, implode(' AND ', $where), $limit));
         $parameters['catalog_user_count'] = $actorUserId;
         $parameters['catalog_user_active'] = $actorUserId;
         $parameters['catalog_user_revision'] = $actorUserId;
@@ -356,7 +393,7 @@ SQL);
     }
 
     /** @return array<string, mixed> */
-    public function startAttempt(string $userId, string $workspaceId, string $assessmentId, string $mode = 'assessment'): array
+    public function startAttempt(string $userId, string $workspaceId, string $assessmentId, string $mode = 'assessment', ?int $now = null): array
     {
         if (!in_array($mode, ['assessment', 'learning', 'practice'], true)) {
             throw new PlatformException('attempt_mode_invalid', 'Attempt mode is invalid.', 422);
@@ -369,7 +406,7 @@ SQL);
         if ((bool) $assessment['requires_entitlement'] && !$this->entitlements->has($userId, $workspaceId, (string) $assessment['target_scope_id'])) {
             throw new PlatformException('entitlement_required', 'An active entitlement is required for this assessment.', 403);
         }
-        return Transaction::run($this->database, function () use ($userId, $workspaceId, $assessmentId, $assessment, $mode): array {
+        return Transaction::run($this->database, function () use ($userId, $workspaceId, $assessmentId, $assessment, $mode, $now): array {
         // Serialize starts per assessment so two concurrent clicks cannot create
         // two open attempts for the same published version.
         $lock = $this->database->prepare('SELECT id FROM exam_assessments WHERE id = :assessment AND workspace_id = :workspace FOR UPDATE');
@@ -438,13 +475,34 @@ SQL, [
         $definition = json_decode((string) $assessment['definition_json'], true, 64, JSON_THROW_ON_ERROR);
         $this->audit->record($workspaceId, $userId, 'exam.attempt.started', 'exam_attempt', $attemptId, 'success', ['assessment_id' => $assessmentId, 'version_id' => $assessment['version_id']]);
 
-        return [
+        $response = [
             'attempt_id' => $attemptId, 'revision' => 1, 'status' => 'in_progress',
             'assessment_id' => $assessmentId, 'title' => (string) $assessment['title'],
             'answers' => [], 'resumed' => false, 'mode' => $mode,
             'question_count' => count($definition['questions']),
             'deadline_at' => $this->isoTimestamp($deadline->fetchColumn()),
         ];
+
+        // Bonus: collapse the client's start-then-read round trip into this
+        // one response by handing back position 1 already shaped, on the
+        // same pacing budget as any other question read -- one token, spent
+        // only for a genuinely new attempt (never on the idempotent-resume
+        // branch above, which returns before this point). A refused guard
+        // must not fail attempt creation: the client already falls back to
+        // its normal GET .../questions/1 when `first_question` is absent, so
+        // this degrades to exactly today's two-request behaviour rather than
+        // an error.
+        if ($this->questionRateGuard->consume($userId, $now)) {
+            $questionIds = array_map(static fn (array $question): string => (string) $question['id'], $definition['questions']);
+            $order = ExamAttemptShuffle::questionOrder($attemptId, $questionIds);
+            $firstQuestionId = $order[0];
+            $this->audit->record($workspaceId, $userId, 'exam.question.read', 'exam_attempt', $attemptId, 'success', [
+                'question_id' => $firstQuestionId, 'position' => 1,
+            ]);
+            $response['first_question'] = $this->safeQuestion($this->questionById($definition, $firstQuestionId));
+        }
+
+        return $response;
         });
     }
 
@@ -590,14 +648,7 @@ SQL, [
                 'question_id' => $questionId, 'position' => $position,
             ]);
 
-            $safe = ['id' => $question['id'], 'prompt' => $question['prompt'], 'choices' => $question['choices']];
-            foreach (['topic', 'tags', 'difficulty', 'provenance'] as $key) {
-                if (array_key_exists($key, $question)) {
-                    $safe[$key] = $question[$key];
-                }
-            }
-
-            return ['allowed' => true, 'position' => $position, 'question_count' => $questionCount, 'question' => $safe];
+            return ['allowed' => true, 'position' => $position, 'question_count' => $questionCount, 'question' => $this->safeQuestion($question)];
         });
 
         if ($outcome['allowed'] === false) {
@@ -1126,6 +1177,29 @@ SQL, ['workspace' => $workspaceId, 'assessment' => $assessmentId, 'version' => $
         $definition['questions'] = $questions;
 
         return ContentPayload::encode($definition);
+    }
+
+    /**
+     * The never-answer-before-submission shape (AGENTS.md §8): id, prompt,
+     * choices, and whichever optional descriptive fields the question
+     * carries -- never `answer` or `explanation`. This is the one place that
+     * builds it; readQuestion() and startAttempt()'s bonus first-question
+     * both call it rather than each shaping their own copy, so the guarantee
+     * cannot drift between the two call sites.
+     *
+     * @param array<string, mixed> $question
+     * @return array<string, mixed>
+     */
+    private function safeQuestion(array $question): array
+    {
+        $safe = ['id' => $question['id'], 'prompt' => $question['prompt'], 'choices' => $question['choices']];
+        foreach (['topic', 'tags', 'difficulty', 'provenance'] as $key) {
+            if (array_key_exists($key, $question)) {
+                $safe[$key] = $question[$key];
+            }
+        }
+
+        return $safe;
     }
 
     /** @param array<string, mixed> $definition @return array<string, mixed> */

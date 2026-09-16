@@ -41,10 +41,20 @@ final class PlatformFactory
         $database = DatabaseConnection::fromEnvironment();
         $config = RuntimeConfig::load();
         $release = $config->optionalString('FANOOS_ASSET_VERSION');
+        $audit = new AuditLogger($database);
+        // Same dependency chain as api()'s $exams, built separately because
+        // web() and api() are different front controllers/processes with no
+        // shared instance to reuse -- see ExamService::catalogEntry(), which
+        // is all the exam attempt page actually calls.
+        $authorizer = new ScopeAuthorizer($database);
+        $access = new AccessGate($database, $authorizer);
+        $entitlements = new EntitlementService($database, $access, $audit);
+        $exams = new ExamService($database, $access, $authorizer, $entitlements, $audit, new ExamQuestionRateGuard($database));
 
         return new WebRouter(
-            new AuthService($database, new PasswordHasher(), new AuditLogger($database)),
+            new AuthService($database, new PasswordHasher(), $audit),
             new PageRenderer(new AssetVersioner(__DIR__ . '/../../public', $release)),
+            $exams,
         );
     }
 
