@@ -13,6 +13,10 @@ import {
 } from './runner-state.js';
 import { AnswerSync, ExamTransport, QuestionWindow, TurboRevealer } from './runner-transport.js';
 import {
+    clearPersistedAttempt, clearQueuedSubmission, loadPersistedAttempt, loadQueuedSubmission,
+    reconcileAnswers, saveQueuedSubmission, savePersistedAttempt,
+} from './runner-persistence.js';
+import {
     notice, renderHistory, renderIntro, renderMap, renderQuestion, renderReport,
     renderReviewQuestion, renderSubmitDialog,
 } from './runner-view.js';
@@ -155,16 +159,37 @@ async function start(mode) {
     clearError();
     try {
         const attempt = await transport.start(assessmentId, mode);
+        const serverAnswers = attempt.answers || {};
+        const serverRevision = Number(attempt.revision || 1);
+        // Reload/resume: merge whatever this browser had saved locally back
+        // on top of the server's own answers before anything is drawn. See
+        // runner-persistence.js's reconcileAnswers() doc comment for why
+        // local always wins here.
+        const persisted = loadPersistedAttempt(attempt.attempt_id);
+        const reconciled = reconcileAnswers(
+            { answers: serverAnswers, revision: serverRevision, attemptId: attempt.attempt_id },
+            persisted,
+        );
         state = createAttemptState({
             attemptId: attempt.attempt_id,
             assessmentId,
             title: attempt.title,
             questionCount: Number(attempt.question_count || 0),
-            revision: Number(attempt.revision || 1),
-            answers: attempt.answers || {},
+            revision: serverRevision,
+            answers: reconciled.answers,
             mode: attempt.mode || 'assessment',
             deadlineAt: attempt.deadline_at ?? null,
         });
+        // createAttemptState seeded savedAnswers from the (merged) answers it
+        // was given; pin it back to what the server actually confirmed, so
+        // pendingAnswers()/hasUnsavedAnswers() correctly see any local-only
+        // edit the merge introduced as still needing a save.
+        state.savedAnswers = { ...serverAnswers };
+        state.flagged = new Set(reconciled.flagged);
+        state.struck = new Map(Object.entries(reconciled.struck).map(([position, indices]) => [
+            Number(position), new Set(Array.isArray(indices) ? indices : []),
+        ]));
+
         questions = new QuestionWindow(transport, state.attemptId, state.questionCount);
         // start-attempt collapses the old start-then-read round trip by
         // returning position 1 already shaped (ExamService::startAttempt()'s
@@ -175,24 +200,54 @@ async function start(mode) {
         if (attempt.first_question) {
             questions.cache.set(1, attempt.first_question);
         }
-        sync = new AnswerSync(transport, state, { onStateChange: () => { if (phase === 'question') draw(); } });
+        sync = new AnswerSync(transport, state, {
+            onStateChange: (status) => {
+                if (status === 'saved') persistNow();
+                if (phase === 'question') draw();
+            },
+        });
         turbo = new TurboRevealer(transport);
         // Resuming lands on the first gap, not on question one: that is where
-        // the student actually stopped.
-        state.position = nextUnanswered(state) ?? 1;
+        // the student actually stopped -- unless the local snapshot recorded
+        // exactly where the student was, which is more precise than "first
+        // gap" whenever the answers happened to be complete around it.
+        state.position = Number.isFinite(reconciled.position)
+            ? clampPosition(state, reconciled.position)
+            : (nextUnanswered(state) ?? 1);
         phase = 'question';
         startDeadlineTimer();
+        persistNow();
+        // The merge above may have introduced answers the server has not
+        // seen yet (a local edit whose earlier save response never arrived).
+        // Fire the normal save machinery now rather than waiting for the
+        // student's next keystroke.
+        if (hasUnsavedAnswers(state)) sync.schedule();
         draw();
         await showQuestion(state.position);
+        await checkQueuedSubmission();
     } catch (error) {
         showError(error, start);
         draw();
     }
 }
 
+/** Writes the current answers/position/flags/struck to local storage. Content (questions, choices, explanations) never passes through here -- see runner-persistence.js. */
+function persistNow() {
+    if (!state) return;
+    savePersistedAttempt(state.attemptId, {
+        revision: state.revision,
+        answers: state.answers,
+        position: state.position,
+        flagged: [...state.flagged],
+        struck: Object.fromEntries([...state.struck].map(([position, indices]) => [position, [...indices]])),
+        savedAt: Date.now(),
+    });
+}
+
 async function showQuestion(position) {
     cancelAutoAdvance();
     state.position = clampPosition(state, position);
+    persistNow();
     draw();
     arriveForTurbo(state.position);
     if (questions.has(state.position)) return;
@@ -297,6 +352,11 @@ async function recoverFromDeadlineClosure(error) {
         return false; // the server's own account could not be fetched either; fall through to the generic error.
     }
     state.submitted = true;
+    state.submitQueued = false;
+    // The attempt is closed server-side either way; nothing local is left
+    // to resume or retry.
+    clearPersistedAttempt(state.attemptId);
+    clearQueuedSubmission(state.attemptId);
     dialog = null;
     dialogKind = null;
     phase = 'report';
@@ -306,6 +366,72 @@ async function recoverFromDeadlineClosure(error) {
         'پیش از آن‌که این درخواست به سرور برسد، زمان آزمون تمام شده و آزمون با آخرین پاسخ‌های ذخیره‌شده بسته و نمره‌گذاری شده بود.',
     );
     return true;
+}
+
+/** Records that a submit could not reach the server because the connection is down, so it can be retried without the student having to notice or act. */
+function queueOfflineSubmission() {
+    saveQueuedSubmission(state.attemptId, {
+        revision: state.revision,
+        answers: state.answers,
+        queuedAt: Date.now(),
+    });
+    state.submitQueued = true;
+}
+
+/**
+ * Retries a submission that was queued while offline. Mirrors
+ * AnswerSync.flush()'s "offline is not a failure to act on" rule: a fresh
+ * offline error here just leaves the queue marker in place for the next
+ * reconnect or page load. A genuine server rejection (deadline passed,
+ * revision conflict, ...) is surfaced the same way an ordinary submit
+ * failure already is -- recoverFromDeadlineClosure/showError -- and the
+ * queue marker is dropped, since retrying an already-rejected payload again
+ * on every future reconnect would not help.
+ */
+async function attemptQueuedSubmit(queued) {
+    try {
+        summary = await transport.submit(state.attemptId, queued.revision, queued.answers);
+        state.submitted = true;
+        state.submitQueued = false;
+        clearPersistedAttempt(state.attemptId);
+        clearQueuedSubmission(state.attemptId);
+        dialog = null;
+        dialogKind = null;
+        phase = 'report';
+        stopDeadlineTimer();
+        clearError();
+    } catch (error) {
+        if (error instanceof ApiError && error.isOffline) return;
+        if (await recoverFromDeadlineClosure(error)) return;
+        state.submitQueued = false;
+        clearQueuedSubmission(state.attemptId);
+        showError(error, null);
+    } finally {
+        draw();
+    }
+}
+
+/**
+ * Checked once right after start() resolves, covering the case the
+ * in-memory-only reconnect handler below cannot: the whole tab reloaded
+ * while a submission was queued offline.
+ */
+async function checkQueuedSubmission() {
+    if (!state) return;
+    const queued = loadQueuedSubmission(state.attemptId);
+    if (!queued) return;
+    state.submitQueued = true;
+    draw();
+    if (hasUnsavedAnswers(state)) {
+        try {
+            await sync.flush();
+        } catch {
+            // Still offline (or another failure) -- attemptQueuedSubmit
+            // below will find the same condition and leave the queue marker
+            // in place rather than doing anything drastic.
+        }
+    }
+    await attemptQueuedSubmit(queued);
 }
 
 /** The client's mirror of the deadline hit zero: submit whatever is saved rather than making the student click through, since every extra second is now server-refused anyway. */
@@ -322,10 +448,21 @@ async function autoSubmitOnTimeout() {
         state.submitted = true;
         phase = 'report';
         pageError = notice('warning', 'زمان آزمون تمام شد', 'آزمون به‌صورت خودکار با آخرین پاسخ‌های ذخیره‌شده ثبت شد.');
+        clearPersistedAttempt(state.attemptId);
+        clearQueuedSubmission(state.attemptId);
     } catch (error) {
-        if (!(await recoverFromDeadlineClosure(error))) {
-            // Most likely a genuine failure (offline, etc); show it rather
-            // than failing silently.
+        if (error instanceof ApiError && error.isOffline) {
+            // The deadline hit while offline: do not lie about having
+            // submitted. Queue it so it goes out the moment the connection
+            // returns, same as a student-initiated submit would.
+            queueOfflineSubmission();
+            pageError = notice(
+                'warning', 'زمان آزمون تمام شد',
+                'اتصال اینترنت قطع است. ثبت خودکار آزمون در صف ماند و به‌محض وصل شدن انجام می‌شود.',
+            );
+        } else if (!(await recoverFromDeadlineClosure(error))) {
+            // Most likely a genuine failure; show it rather than failing
+            // silently.
             showError(error, null);
         }
     } finally {
@@ -340,6 +477,7 @@ const questionActions = {
     choose(index) {
         setAnswer(state, state.position, index);
         sync.schedule();
+        persistNow();
 
         // Learning and practice both answer immediately: choosing shows
         // whether it was right and stays put so it can be read (learning
@@ -362,15 +500,18 @@ const questionActions = {
     strike(index) {
         toggleStrike(state, state.position, index);
         sync.schedule();
+        persistNow();
         draw();
     },
     clear() {
         clearAnswer(state, state.position);
         sync.schedule();
+        persistNow();
         draw();
     },
     toggleFlag() {
         toggleFlag(state, state.position);
+        persistNow();
         draw();
     },
     previous() {
@@ -490,8 +631,20 @@ const submitActions = {
             phase = 'report';
             stopDeadlineTimer();
             clearError();
+            clearPersistedAttempt(state.attemptId);
+            clearQueuedSubmission(state.attemptId);
         } catch (error) {
-            if (!(await recoverFromDeadlineClosure(error))) {
+            if (error instanceof ApiError && error.isOffline) {
+                // Not a failure to dismiss and retry by hand: the answers are
+                // safe (saved locally and, once a connection exists again,
+                // to the server) and the submission itself is queued rather
+                // than lost. Saying "submitted" here would be a lie the
+                // report screen could never take back.
+                queueOfflineSubmission();
+                dialog = null;
+                dialogKind = null;
+                clearError();
+            } else if (!(await recoverFromDeadlineClosure(error))) {
                 showError(error, null);
             }
         } finally {
@@ -778,6 +931,12 @@ watchConnection((online) => {
         banner = null;
         // Answers written while offline are still in memory; push them now.
         if (state && hasUnsavedAnswers(state)) sync.flush().catch(() => {});
+        // A submission queued while offline gets the same treatment.
+        if (state && state.submitQueued) {
+            const queued = loadQueuedSubmission(state.attemptId);
+            if (queued) attemptQueuedSubmit(queued);
+            else state.submitQueued = false;
+        }
     } else {
         const node = document.createElement('div');
         node.className = 'f-offline-banner';
