@@ -77,7 +77,7 @@ try {
         $database = DatabaseConnection::fromEnvironment();
         $assertions += (new TenantIsolationTest($database, $root, $hmacKey))->run();
         echo "PASS database tenant isolation and rerun scenarios\n";
-        $assertions += (new MigrationSafetyTest($database))->run();
+        $assertions += (new MigrationSafetyTest($database, $root))->run();
         echo "PASS interrupted migration recovery scenarios\n";
         $assertions += (new CorePlatformTest($database))->run();
         echo "PASS core platform adaptation scenarios\n";

@@ -26,6 +26,17 @@ final class SchemaContractTest
      * showed up mid-deployment. Running the updater's own predicate over the
      * migrations on disk is what makes "CI passed" mean "the updater will
      * accept it".
+     *
+     * There are now two lawful shapes rather than one. A migration declared
+     * `expand` must be something the unattended updater would accept, so it
+     * must be unsafeReason()-clean exactly as before. A migration declared
+     * `contract` is *not* accepted by the unattended updater by design -- it
+     * is only ever applied by an operator through
+     * scripts/ops/apply-contract-migration.php -- so this asserts the
+     * opposite for it: it must genuinely be unsafe, the same thing that
+     * script itself refuses to proceed without. A contract-declared
+     * migration that unsafeReason() calls clean is a sign the header is
+     * wrong, not a reason to let it through.
      */
     private function assertTheUpdaterWouldAcceptEveryMigration(array $migrationPaths): void
     {
@@ -34,10 +45,18 @@ final class SchemaContractTest
                 continue;
             }
             $sql = (string) file_get_contents($path);
+            $mode = MigrationSafety::declaredRollbackMode($sql);
             $this->assert(
-                MigrationSafety::declaresExpandCompatible($sql),
+                $mode !== null,
                 'The updater would refuse this migration as undeclared: ' . basename($path),
             );
+            if ($mode === 'contract') {
+                $this->assert(
+                    MigrationSafety::unsafeReason($sql) !== null,
+                    'A migration declared contract-mode must actually be destructive, or it belongs on the unattended (expand) path: ' . basename($path),
+                );
+                continue;
+            }
             $this->assert(
                 MigrationSafety::unsafeReason($sql) === null,
                 'The updater would refuse this migration as unsafe: ' . basename($path),
@@ -79,14 +98,17 @@ final class SchemaContractTest
             $contents = file_get_contents($path);
             $this->assert($contents !== false, 'Migration could not be read: ' . basename($path));
             $sql .= "\n" . $contents;
-            // One rule, stated once, in Fanoos\Platform\Migration\MigrationSafety:
-            // the updater refuses an unsafe migration at deploy time and this
-            // refuses one into the repository, and they must not drift. They
-            // did once -- this test learned about paired CHECK widening and
-            // the updater did not, so CI went green and the deployment stopped
-            // after a backup had been taken and the release staged.
-            $unsafe = MigrationSafety::unsafeReason($contents);
-            $this->assert($unsafe === null, basename($path) . ' ' . (string) $unsafe);
+            // The "every migration the updater will run must be
+            // unsafeReason()-clean, unless it is declared contract-mode and
+            // genuinely destructive" rule is asserted once, mode-aware, in
+            // assertTheUpdaterWouldAcceptEveryMigration() above -- stating it
+            // a second time here, unconditionally, is exactly the kind of
+            // duplicate this class's own docblock warns against: two copies
+            // of the same rule that can silently drift apart. A plain
+            // unsafeReason() === null check lived here once and did drift,
+            // in the other direction -- it went stale the moment a
+            // contract-mode migration became a legitimate, intentional
+            // exception.
             $this->assert(!preg_match('/Dentistry|IntegratedDent|TUMS|1402/i', $contents), 'Legacy product identifier found in a migration.');
             // The updater refuses to apply a migration that has not declared
             // how it behaves on rollback. Nothing checked that here, so an

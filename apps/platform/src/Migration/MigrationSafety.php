@@ -61,9 +61,42 @@ final class MigrationSafety
         return null;
     }
 
+    /**
+     * The full rollback-compatibility vocabulary a migration header may
+     * declare, or null if it declares none.
+     *
+     * `expand` means the release running before this migration keeps working
+     * against the new schema -- the unattended updater may apply it.
+     * `contract` means it cannot -- the migration is destructive or
+     * contract-changing on purpose, and may only be applied by an operator
+     * through the supervised path, after a verified, restore-rehearsed
+     * backup. `manual` is reserved for a change unattended tooling should
+     * never even attempt to reason about; nothing acts on it yet.
+     */
+    public static function declaredRollbackMode(string $sql): ?string
+    {
+        if (preg_match('/^\s*--\s*fanoos:rollback-compatible=(expand|contract|manual)\s*$/mi', $sql, $match) === 1) {
+            return strtolower($match[1]);
+        }
+
+        return null;
+    }
+
     /** Whether the migration declares how it behaves on a rollback. */
     public static function declaresExpandCompatible(string $sql): bool
     {
-        return preg_match('/^\s*--\s*fanoos:rollback-compatible=expand\s*$/mi', $sql) === 1;
+        return self::declaredRollbackMode($sql) === 'expand';
+    }
+
+    /**
+     * Whether the migration declares itself contract-mode -- destructive on
+     * purpose, and excluded from the unattended updater by design rather
+     * than by accident. Only the supervised operator path
+     * (scripts/ops/apply-contract-migration.php) may apply a migration for
+     * which this is true.
+     */
+    public static function isDeclaredContract(string $sql): bool
+    {
+        return self::declaredRollbackMode($sql) === 'contract';
     }
 }

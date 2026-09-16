@@ -11,6 +11,7 @@ use Fanoos\Platform\Identity\AuthService;
 use Fanoos\Platform\Identity\PasswordHasher;
 use Fanoos\Platform\Migration\LegacyIdMap;
 use Fanoos\Platform\Migration\MigrationRunner;
+use Fanoos\Platform\Migration\MigrationSafety;
 use Fanoos\Platform\Migration\SeedRunner;
 use Fanoos\Platform\Support\Uuid;
 use PDO;
@@ -29,10 +30,36 @@ final class TenantIsolationTest
     public function run(): int
     {
         $migrationRunner = new MigrationRunner($this->database, $this->root . '/database/migrations');
+        $migrationFiles = glob($this->root . '/database/migrations/*.sql') ?: [];
+        sort($migrationFiles, SORT_STRING);
+        $migrationFileCount = count($migrationFiles);
+
+        // A fresh database is exactly what the unattended path must not
+        // finish bootstrapping on its own once a declared-contract migration
+        // exists: it applies every expand-compatible file first (they sort
+        // ahead of 0023 lexically) and then refuses the contract one,
+        // pointing at the supervised script rather than silently skipping
+        // or silently applying it.
+        $unattendedRefusedContractMigration = false;
+        try {
+            $migrationRunner->run();
+        } catch (RuntimeException $refusal) {
+            $unattendedRefusedContractMigration = str_contains($refusal->getMessage(), 'supervised operator path');
+        }
+        self::assert($unattendedRefusedContractMigration, 'Unattended bootstrap must refuse the declared-contract migration, not silently apply or skip it.');
+
+        // What scripts/ops/apply-contract-migration.php does for each
+        // declared-contract migration the unattended path would not touch.
+        foreach ($migrationFiles as $path) {
+            $sql = (string) file_get_contents($path);
+            if (MigrationSafety::isDeclaredContract($sql)) {
+                $migrationRunner->run(basename($path));
+            }
+        }
+
         $firstMigrationRun = $migrationRunner->run();
         $secondMigrationRun = $migrationRunner->run();
-        $migrationFileCount = count(glob($this->root . '/database/migrations/*.sql') ?: []);
-        self::assert(count($firstMigrationRun['applied']) + count($firstMigrationRun['skipped']) === $migrationFileCount, 'First migration run did not account for every file.');
+        self::assert(count($firstMigrationRun['skipped']) === $migrationFileCount, 'First full unattended run after the supervised contract migration was applied was not a total no-op.');
         self::assert(count($secondMigrationRun['skipped']) === $migrationFileCount, 'Second migration run was not a no-op.');
         self::assert((int) $this->database->query('SELECT COUNT(*) FROM schema_migrations')->fetchColumn() === $migrationFileCount, 'Migration ledger count is incorrect.');
 
@@ -60,7 +87,7 @@ final class TenantIsolationTest
         $this->assertDatabaseIsolation($fixture);
         $this->assertLegacyMapping($fixture);
 
-        return 16;
+        return 17;
     }
 
     /** @param array<string, string> $fixture */

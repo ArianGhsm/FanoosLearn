@@ -168,8 +168,8 @@ final class CorePlatformTest
     {
         $token = 'router-probe-token';
         $this->insert(
-            'INSERT INTO iam_sessions (id, user_id, token_digest, csrf_token_digest, client_json, created_at, last_seen_at, expires_at) VALUES (:id, :user, :token, :csrf, JSON_OBJECT(), UTC_TIMESTAMP(6), UTC_TIMESTAMP(6), DATE_ADD(UTC_TIMESTAMP(6), INTERVAL 1 HOUR))',
-            ['id' => 'router-probe', 'user' => $fixture['student'], 'token' => hash('sha256', $token, true), 'csrf' => hash('sha256', 'router-probe-csrf', true)],
+            'INSERT INTO iam_sessions (id, user_id, token_digest, client_json, created_at, last_seen_at, expires_at) VALUES (:id, :user, :token, JSON_OBJECT(), UTC_TIMESTAMP(6), UTC_TIMESTAMP(6), DATE_ADD(UTC_TIMESTAMP(6), INTERVAL 1 HOUR))',
+            ['id' => 'router-probe', 'user' => $fixture['student'], 'token' => hash('sha256', $token, true)],
         );
 
         $name = (string) $this->database->query('SELECT display_name FROM iam_users WHERE id = ' . $this->database->quote($fixture['student']))->fetchColumn();
