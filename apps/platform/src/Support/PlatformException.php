@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fanoos\Platform\Support;
 
 use RuntimeException;
+use Throwable;
 
 final class PlatformException extends RuntimeException
 {
@@ -12,7 +13,8 @@ final class PlatformException extends RuntimeException
         public readonly string $errorCode,
         string $message,
         public readonly int $httpStatus = 400,
+        ?Throwable $previous = null,
     ) {
-        parent::__construct($message);
+        parent::__construct($message, 0, $previous);
     }
 }

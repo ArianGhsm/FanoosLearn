@@ -54,8 +54,8 @@ final class CanonicalMainUpdateExecutor implements DeploymentExecutor
         if (!hash_equals($current, $candidate)) {
             try {
                 ProcessRunner::run(['git', '-C', $this->repoRoot, 'merge-base', '--is-ancestor', $current, $candidate]);
-            } catch (Throwable) {
-                throw new PlatformException('deployment_non_fast_forward', 'Canonical main is not a fast-forward from the active release.', 409);
+            } catch (Throwable $previous) {
+                throw new PlatformException('deployment_non_fast_forward', 'Canonical main is not a fast-forward from the active release.', 409, $previous);
             }
         }
         $this->ci->assertGreen($candidate);
@@ -86,8 +86,8 @@ final class CanonicalMainUpdateExecutor implements DeploymentExecutor
             }
             ProcessRunner::run(['php', $this->currentPath() . '/scripts/ops/verify-backup.php', $path]);
             return ['backup_id' => basename($path)];
-        } catch (Throwable) {
-            throw new PlatformException('backup_verification_failed', 'Verified production backup failed.', 500);
+        } catch (Throwable $previous) {
+            throw new PlatformException('backup_verification_failed', 'Verified production backup failed.', 500, $previous);
         }
     }
 
@@ -98,8 +98,8 @@ final class CanonicalMainUpdateExecutor implements DeploymentExecutor
         try {
             ProcessRunner::run(['php', $stage . '/scripts/db/check.php']);
             ProcessRunner::run(['php', $stage . '/scripts/db/preflight.php']);
-        } catch (Throwable) {
-            throw new PlatformException('deployment_tests_failed', 'Candidate tests or migration preflight failed.', 500);
+        } catch (Throwable $previous) {
+            throw new PlatformException('deployment_tests_failed', 'Candidate tests or migration preflight failed.', 500, $previous);
         }
     }
 
@@ -111,8 +111,8 @@ final class CanonicalMainUpdateExecutor implements DeploymentExecutor
             ProcessRunner::run(['php', $stage . '/scripts/db/preflight.php']);
             ProcessRunner::run(['php', $stage . '/scripts/db/migrate.php']);
             ProcessRunner::run(['php', $stage . '/scripts/db/seed.php']);
-        } catch (Throwable) {
-            throw new PlatformException('deployment_migration_failed', 'Forward-compatible migration failed.', 500);
+        } catch (Throwable $previous) {
+            throw new PlatformException('deployment_migration_failed', 'Forward-compatible migration failed.', 500, $previous);
         }
     }
 
@@ -160,8 +160,8 @@ final class CanonicalMainUpdateExecutor implements DeploymentExecutor
             if (is_file($smoke)) {
                 ProcessRunner::run(['php', $smoke]);
             }
-        } catch (Throwable) {
-            throw new PlatformException('post_health_failed', 'Post-activation health or smoke check failed.', 500);
+        } catch (Throwable $previous) {
+            throw new PlatformException('post_health_failed', 'Post-activation health or smoke check failed.', 500, $previous);
         }
     }
 

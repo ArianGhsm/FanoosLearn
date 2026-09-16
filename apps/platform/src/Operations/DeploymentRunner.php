@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fanoos\Platform\Operations;
 
+use Fanoos\Platform\Support\JsonLogger;
 use Fanoos\Platform\Support\PlatformException;
 use Fanoos\Platform\Support\Transaction;
 use Fanoos\Platform\Support\Uuid;
@@ -14,6 +15,15 @@ final class DeploymentRunner
 {
     private const TERMINAL = ['SUCCEEDED', 'FAILED', 'ROLLED_BACK'];
     private const POST_ACTIVATION = ['ACTIVATING', 'RESTARTING', 'HEALTHCHECK'];
+    private const MAX_DETAIL_CHARS = 4000;
+
+    /** Content-shaped secrets that JsonLogger's key-based redaction would miss inside a free-text message. */
+    private const SECRET_PATTERNS = [
+        '/[a-z][a-z0-9+.\-]*:\/\/[^\s\'"]*@[^\s\'"]+/i',
+        '/\bmysql:[^\s\'"]*=[^\s\'"]*/i',
+        '/\b(?:password|pwd|secret|token|api[_-]?key)\s*=\s*[^\s\'";,)]+/i',
+        '/\/etc\/fanoos\/[^\s\'";,)]*/i',
+    ];
 
     public function __construct(
         private readonly PDO $database,
@@ -121,15 +131,16 @@ final class DeploymentRunner
             }
         } catch (Throwable $error) {
             $failureCode = $error instanceof PlatformException ? $error->errorCode : 'deployment_step_failed';
+            $detail = self::failureDetail($error);
             if (in_array($state, self::POST_ACTIVATION, true) && $rollbackSha !== null) {
                 try {
                     $this->executor->rollback($requestId, $targetKey, $this->sha($rollbackSha));
-                    $state = $this->terminal($requestId, 'ROLLED_BACK', $failureCode, 'deployment.rolled_back');
-                } catch (Throwable) {
-                    $state = $this->terminal($requestId, 'FAILED', 'rollback_failed', 'deployment.rollback_failed');
+                    $state = $this->terminal($requestId, 'ROLLED_BACK', $failureCode, 'deployment.rolled_back', $detail);
+                } catch (Throwable $rollbackError) {
+                    $state = $this->terminal($requestId, 'FAILED', 'rollback_failed', 'deployment.rollback_failed', self::failureDetail($rollbackError));
                 }
             } else {
-                $state = $this->terminal($requestId, 'FAILED', $failureCode, 'deployment.failed');
+                $state = $this->terminal($requestId, 'FAILED', $failureCode, 'deployment.failed', $detail);
             }
         }
 
@@ -180,7 +191,7 @@ SQL);
         return $state;
     }
 
-    private function terminal(string $requestId, string $state, ?string $failureCode, string $eventCode): string
+    private function terminal(string $requestId, string $state, ?string $failureCode, string $eventCode, ?string $detail = null): string
     {
         $this->database->prepare(<<<'SQL'
 UPDATE release_update_requests
@@ -188,8 +199,58 @@ SET state = :state, safe_failure_code = :failure_code, lease_token_digest = NULL
     finished_at = UTC_TIMESTAMP(6), updated_at = UTC_TIMESTAMP(6)
 WHERE id = :id
 SQL)->execute(['state' => $state, 'failure_code' => $failureCode, 'id' => $requestId]);
-        $this->event($requestId, $state, $eventCode, $failureCode === null ? [] : ['failure_code' => $failureCode]);
+
+        $eventDetail = [];
+        if ($failureCode !== null) {
+            $eventDetail['failure_code'] = $failureCode;
+        }
+        if ($detail !== null) {
+            $eventDetail['detail'] = $detail;
+        }
+        $this->event($requestId, $state, $eventCode, $eventDetail);
+
+        if ($detail !== null) {
+            JsonLogger::write('error', $eventCode, [
+                'request_id' => $requestId,
+                'state' => $state,
+                'failure_code' => $failureCode ?? '',
+                'detail' => $detail,
+            ]);
+        }
+
         return $state;
+    }
+
+    /**
+     * Operator-facing failure detail for the event journal: the deepest exception in the
+     * chain carries the real cause, since a PlatformException's own message is deliberately
+     * vague (safe_failure_code is what reaches users; this never is).
+     */
+    private static function failureDetail(Throwable $error): ?string
+    {
+        $root = $error;
+        while ($root->getPrevious() !== null) {
+            $root = $root->getPrevious();
+        }
+        $message = trim($root->getMessage());
+        if ($message === '') {
+            return null;
+        }
+        return self::capDetail(self::redactSecrets($message));
+    }
+
+    private static function redactSecrets(string $message): string
+    {
+        $redacted = preg_replace(self::SECRET_PATTERNS, '[redacted]', $message);
+        return $redacted ?? '[redacted]';
+    }
+
+    private static function capDetail(string $message): string
+    {
+        if (strlen($message) <= self::MAX_DETAIL_CHARS) {
+            return $message;
+        }
+        return substr($message, 0, self::MAX_DETAIL_CHARS) . '… [truncated]';
     }
 
     /** @param array<string,scalar|bool|null> $detail */
