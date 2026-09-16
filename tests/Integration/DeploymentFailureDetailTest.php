@@ -66,7 +66,7 @@ final class DeploymentFailureDetailTest
         $this->assert($status['failure_code'] === 'deployment_migration_failed', 'safe_failure_code changed shape or value.');
         $statusKeys = array_keys($status);
         sort($statusKeys);
-        $this->assert($statusKeys === ['candidate_sha', 'correlation_id', 'created_at', 'failure_code', 'finished_at', 'request_id', 'rollback_sha', 'state', 'target', 'updated_at'], 'DeploymentControlService::status() response shape changed.');
+        $this->assert($statusKeys === ['candidate_sha', 'correlation_id', 'created_at', 'current_sha', 'failure_code', 'finished_at', 'request_id', 'rollback_sha', 'state', 'target', 'updated_at'], 'DeploymentControlService::status() response shape changed.');
         $statusJson = json_encode($status, JSON_THROW_ON_ERROR);
         $this->assert(!str_contains($statusJson, '0099_example.sql'), 'DeploymentControlService leaked raw failure detail to a caller.');
         $ownerView = $overview->overview($operator, $target2);
@@ -108,6 +108,31 @@ final class DeploymentFailureDetailTest
         $this->assert(in_array('rollback', $rollbackExecutor->calls, true), 'Rollback was not invoked for a post-activation failure.');
         $detail6 = $this->latestDetail((string) $request6, 'deployment.rolled_back');
         $this->assert(str_contains($detail6, 'stale symlink'), 'Rollback path did not record the originating failure detail.');
+
+        // 7. A subprocess's stderr is raw bytes, not guaranteed UTF-8, and the failure event
+        //    must survive it. json_encode throws on a malformed sequence under
+        //    JSON_THROW_ON_ERROR alone -- and it is called from inside the failure handler,
+        //    so that exception would escape and abandon the write, losing the whole event
+        //    including the failure_code that was recorded before any of this existed.
+        $malformed = "Operational process failed: \xC3\x28 and \xFF at the end.";
+        $malformedFailure = new PlatformException('deployment_tests_failed', 'Candidate tests or migration preflight failed.', 500, new RuntimeException($malformed));
+        $target7 = $this->target('stage7-detail-t7');
+        $request7 = $control->request($operator, 'telegram', $target7, 'detail-t7')['request_id'];
+        $result7 = (new DeploymentRunner($this->database, new DetailFakeExecutor('test', $malformedFailure), 120))->runNext($target7);
+        $this->assert(($result7['state'] ?? null) === 'FAILED', 'A malformed-UTF-8 failure message broke the deployment state machine.');
+        $detail7 = $this->latestDetail((string) $request7, 'deployment.failed');
+        $this->assert(str_contains($detail7, 'Operational process failed'), 'Malformed-UTF-8 detail lost the readable part of the message.');
+
+        // And capDetail() can manufacture the same malformed tail on its own, by cutting a
+        // multi-byte character in half exactly at the cap.
+        $straddling = str_repeat('Q', 3999) . 'سلام دنیا';
+        $straddlingFailure = new PlatformException('deployment_tests_failed', 'Candidate tests or migration preflight failed.', 500, new RuntimeException($straddling));
+        $target8 = $this->target('stage7-detail-t8');
+        $request8 = $control->request($operator, 'telegram', $target8, 'detail-t8')['request_id'];
+        $result8 = (new DeploymentRunner($this->database, new DetailFakeExecutor('test', $straddlingFailure), 120))->runNext($target8);
+        $this->assert(($result8['state'] ?? null) === 'FAILED', 'Capping mid-character broke the deployment state machine.');
+        $detail8 = $this->latestDetail((string) $request8, 'deployment.failed');
+        $this->assert(str_contains($detail8, 'truncated'), 'Capped multi-byte detail was not recorded as truncated.');
 
         return $this->assertions;
     }

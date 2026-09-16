@@ -26,6 +26,10 @@ final class JsonLogger
             'event' => $event,
             'context' => $safe,
         ];
-        file_put_contents('php://stderr', json_encode($record, JSON_UNESCAPED_SLASHES) . PHP_EOL);
+        // Callers now pass through text that originated outside PHP -- a failed
+        // subprocess's stderr, for one -- and json_encode returns false on a
+        // malformed UTF-8 sequence, which would write a bare newline and lose
+        // the line silently. Substituting the bad bytes keeps the log entry.
+        file_put_contents('php://stderr', json_encode($record, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE) . PHP_EOL);
     }
 }

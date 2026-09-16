@@ -253,7 +253,23 @@ SQL)->execute(['state' => $state, 'failure_code' => $failureCode, 'id' => $reque
         return substr($message, 0, self::MAX_DETAIL_CHARS) . '… [truncated]';
     }
 
-    /** @param array<string,scalar|bool|null> $detail */
+    /**
+     * @param array<string,scalar|bool|null> $detail
+     *
+     * JSON_INVALID_UTF8_SUBSTITUTE matters here now that `detail` can carry a
+     * subprocess's stderr verbatim. Those are raw bytes: one malformed sequence
+     * and json_encode throws JsonException on JSON_THROW_ON_ERROR alone. This
+     * method is called from inside the failure handler, so that exception would
+     * escape the handler and abandon the write -- losing the failure event
+     * entirely, including the failure_code that used to be recorded before any
+     * of this existed. The feature would destroy exactly the record it was
+     * added to keep, and only for the messages strange enough to be worth
+     * reading. capDetail() can produce the same malformed tail on its own by
+     * cutting a multi-byte character in half at the cap.
+     *
+     * Substituting the bad bytes keeps both throw-on-error (a genuine encoding
+     * bug still surfaces) and the event row.
+     */
     private function event(string $requestId, string $state, string $eventCode, array $detail = []): void
     {
         $this->database->prepare(<<<'SQL'
@@ -261,7 +277,7 @@ INSERT INTO release_update_events (id, request_id, state, event_code, detail_jso
 VALUES (:id, :request, :state, :event_code, :detail, UTC_TIMESTAMP(6))
 SQL)->execute([
             'id' => Uuid::v7(), 'request' => $requestId, 'state' => $state, 'event_code' => $eventCode,
-            'detail' => json_encode($detail, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
+            'detail' => json_encode($detail, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE),
         ]);
     }
 
