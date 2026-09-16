@@ -50,7 +50,13 @@ final class ExamQuestionPacingTest
     private function assertRateLimitEngagesAndCounterSurvivesRefusal(): void
     {
         $fixture = $this->fixture('rate-' . $this->suffix(), 5);
-        $exams = $this->exams(burstCapacity: 2.0, refillSecondsPerToken: 1000.0);
+        // Burst is 3, not 2: startAttempt() itself now spends one token on
+        // its own bonus first_question (perf/exam-load-time) before either
+        // explicit readQuestion() call below runs, so the budget for what
+        // this test actually means to exhaust -- two further reads -- has to
+        // account for that spend, or the second read below would refuse
+        // instead of the third.
+        $exams = $this->exams(burstCapacity: 3.0, refillSecondsPerToken: 1000.0);
         $attempt = $exams->startAttempt($fixture['student'], $fixture['workspace'], $fixture['assessment_id']);
 
         // Re-reading a question already seen (e.g. paging back) still spends a
