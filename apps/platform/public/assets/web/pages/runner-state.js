@@ -45,6 +45,8 @@ export function createAttemptState({ attemptId, assessmentId, title, questionCou
         savedAnswers: { ...answers },
         submitting: false,
         submitted: false,
+        /** A submit was attempted while offline and is waiting to go out on reconnect. No server-side meaning; purely local bookkeeping. */
+        submitQueued: false,
     };
 }
 
