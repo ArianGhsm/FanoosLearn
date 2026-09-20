@@ -230,9 +230,45 @@ body.x-focus .f-page {
 
 /* ----------------------------------------------------------- question */
 
+/*
+ * The question card.
+ *
+ * It was a uniform slab: one padding, one background, everything inside it
+ * stacked at the same visual weight, so the eye had nowhere to land and the
+ * page read as a form rather than as a question. It is now a sequence of
+ * sections with their own rhythm -- a header strip, the facts, the stem, the
+ * choices -- separated by hairlines rather than by guesswork.
+ */
 .x-question__card {
-    padding: var(--space-6) var(--space-5);
+    position: relative;
+    padding: 0;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
 }
+
+/* A hairline of accent along the top edge. One line is enough to stop the
+   card reading as an undifferentiated rectangle, and it costs no space. */
+.x-question__card::before {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 3px;
+    background: var(--accent-gradient);
+}
+
+/* Every section shares one inline padding so their edges line up down the
+   card; only the vertical rhythm differs. */
+.x-question__head,
+.x-question__meta,
+.x-question__prompt,
+.x-choices,
+.x-question__foot,
+.x-study,
+.x-revealed {
+    padding-inline: var(--space-5);
+}
+
 
 /*
  * The card enters from the side the student came from, so moving through a
@@ -287,18 +323,24 @@ body.x-focus .f-page {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* A header strip rather than a line of small grey text: it is the one thing
+   telling the student where they are in the paper, and it was styled like a
+   footnote. */
 .x-question__head {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: var(--space-3);
-    margin-bottom: var(--space-4);
+    margin-bottom: 0;
+    padding-block: var(--space-4);
+    background: var(--surface-muted);
+    border-bottom: 1px solid var(--border);
 }
 
 .x-question__index {
-    font-size: 0.85rem;
+    font-size: 1rem;
     font-weight: 700;
-    color: var(--text-tertiary);
+    color: var(--text-primary);
 }
 
 .x-flag {
@@ -331,31 +373,56 @@ body.x-focus .f-page {
  * identical accent-coloured pills, which meant the row had to be read
  * word by word to be understood at all.
  */
+/* Two columns where there is room, one where there is not. `auto-fit` with a
+   min track means a single fact still fills the width instead of sitting in a
+   lonely half. */
 .x-question__meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    margin-bottom: var(--space-4);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-2) var(--space-5);
+    margin-bottom: var(--space-5);
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--border);
 }
 
 .x-meta {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: var(--space-2);
-    min-height: 28px;
-    padding: 0 var(--space-3);
-    border-radius: var(--radius-pill);
-    font-size: 0.78rem;
-    font-weight: 600;
-    /* Both the icon (stroke: currentColor) and the label take the hue; only
-       the fill is softened, so the text stays at full contrast. */
+    min-height: 30px;
+    font-size: 0.85rem;
+}
+
+/* The icon is the only thing carrying the hue at full strength. The label
+   stays secondary and the value stays primary, so the row reads
+   icon → what → what it is, rather than as a block of coloured text. */
+.x-meta__icon {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--radius-sm);
     color: var(--x-meta-hue);
     background: var(--x-meta-fill);
 }
 
-.x-meta svg {
-    flex: none;
-    opacity: 0.9;
+.x-meta__label {
+    color: var(--text-tertiary);
+}
+
+.x-meta__label::after {
+    content: ':';
+    margin-inline-start: 1px;
+}
+
+.x-meta__value {
+    color: var(--text-primary);
+    font-weight: 600;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .x-meta--subject { --x-meta-hue: var(--hue-subject); --x-meta-fill: var(--hue-subject-soft); }
@@ -376,7 +443,7 @@ body.x-focus .f-page {
 .x-choices {
     list-style: none;
     margin: 0;
-    padding: 0;
+    padding-block: 0 var(--space-5);
     display: grid;
     gap: var(--space-3);
 }

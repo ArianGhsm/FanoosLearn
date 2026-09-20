@@ -554,10 +554,21 @@ function renderStudy(question, study, actions) {
  * not defined anywhere in this repository, so a chip reading «۳» would be
  * inventing a meaning; «سختی: ۳» states exactly what is known.
  */
-function metaItem(kind, iconName, text) {
-    return el('span', { className: `x-meta x-meta--${kind}` },
-        icon(iconName),
-        el('span', { className: 'x-meta__text', text }));
+/*
+ * One fact about the question: a coloured icon, a label, and the value.
+ *
+ * Rows in a grid rather than pills in a line. A pill row has to be read
+ * left to right to be understood at all -- every pill looks the same shape
+ * and the label is buried inside it. In a grid the eye lands on the icon,
+ * then the label, then the value, and two facts can be compared by looking
+ * down a column. It is the difference between a tag cloud and a spec sheet,
+ * and a question's facts are a spec sheet.
+ */
+function metaItem(kind, iconName, label, value) {
+    return el('div', { className: `x-meta x-meta--${kind}` },
+        el('span', { className: 'x-meta__icon' }, icon(iconName)),
+        el('span', { className: 'x-meta__label', text: label }),
+        el('span', { className: 'x-meta__value', text: value }));
 }
 
 function renderQuestionMeta(question) {
@@ -565,22 +576,23 @@ function renderQuestionMeta(question) {
 
     const topic = typeof question.topic === 'string' ? question.topic.trim() : '';
     if (topic !== '') {
-        items.push(metaItem('subject', 'book', faText(topic)));
+        items.push(metaItem('subject', 'book', 'مبحث', faText(topic)));
     }
 
     const difficulty = question.difficulty;
     if (difficulty !== undefined && difficulty !== null && String(difficulty).trim() !== '') {
-        items.push(metaItem('difficulty', 'gauge', `سختی: ${faText(String(difficulty).trim())}`));
+        items.push(metaItem('difficulty', 'gauge', 'سطح دشواری', faText(String(difficulty).trim())));
     }
 
     if (Array.isArray(question.tags)) {
         // Capped: a question carrying a dozen tags would push the stem off
         // the first screen, and the stem is what the student came for.
-        for (const tag of question.tags.slice(0, 3)) {
-            const label = typeof tag === 'string' ? tag.trim() : '';
-            if (label !== '') {
-                items.push(metaItem('tag', 'tag', faText(label)));
-            }
+        const tags = question.tags
+            .map((tag) => (typeof tag === 'string' ? tag.trim() : ''))
+            .filter((tag) => tag !== '')
+            .slice(0, 3);
+        if (tags.length > 0) {
+            items.push(metaItem('tag', 'tag', 'برچسب', tags.map(faText).join(' · ')));
         }
     }
 

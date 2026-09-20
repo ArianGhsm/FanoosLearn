@@ -76,6 +76,10 @@
     --aura-2: rgba(43, 109, 243, 0.11);
     --aura-3: rgba(56, 189, 248, 0.10);
 
+    /* The hairline of the background weave. Any stronger and it stops
+       being a texture and starts being graph paper. */
+    --weave: rgba(19, 52, 120, 0.035);
+
     /*
      * Information hues.
      *
@@ -179,6 +183,10 @@
         --aura-2: rgba(50, 130, 255, 0.12);
         --aura-3: rgba(56, 189, 248, 0.08);
 
+        /* Lighter than the ground rather than darker: on a dark surface a
+           darker line reads as a crack, not a weave. */
+        --weave: rgba(160, 190, 235, 0.035);
+
         /* Lifted and desaturated for a dark ground: the light values are mud
            at this lightness, and the soft fills need more alpha to show at
            all. Same four kinds of fact, same order. */
@@ -238,6 +246,10 @@
     --aura-1: rgba(91, 145, 255, 0.16);
     --aura-2: rgba(50, 130, 255, 0.12);
     --aura-3: rgba(56, 189, 248, 0.08);
+
+    /* Lighter than the ground rather than darker: on a dark surface a
+       darker line reads as a crack, not a weave. */
+    --weave: rgba(160, 190, 235, 0.035);
 
     /* Lifted and desaturated for a dark ground: the light values are mud
        at this lightness, and the soft fills need more alpha to show at

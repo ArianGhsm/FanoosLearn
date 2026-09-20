@@ -25,6 +25,14 @@ body {
      * than centred: a single symmetrical glow reads as a gradient, three
      * off-centre ones read as light coming from somewhere. */
     background:
+        /* A brick-lattice texture, drawn with gradients rather than shipped as
+         * an image: two offset rows of hairlines. It is barely visible on its
+         * own -- which is the point. A flat ground reads as a blank canvas
+         * with boxes dropped on it; a ground with a weave reads as a surface
+         * the cards are resting on, and that is most of the difference
+         * between a page that feels made and one that feels defaulted. */
+        repeating-linear-gradient(0deg, var(--weave) 0 1px, transparent 1px 34px),
+        repeating-linear-gradient(90deg, var(--weave) 0 1px, transparent 1px 68px),
         radial-gradient(circle at 12% 8%, var(--aura-1), transparent 26%),
         radial-gradient(circle at 88% 12%, var(--aura-2), transparent 20%),
         radial-gradient(circle at 52% 62%, var(--aura-3), transparent 34%),
