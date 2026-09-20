@@ -234,6 +234,59 @@ body.x-focus .f-page {
     padding: var(--space-6) var(--space-5);
 }
 
+/*
+ * The card enters from the side the student came from, so moving through a
+ * paper feels like moving rather than like the text being replaced in place.
+ *
+ * This is an RTL page: forward is leftward, so a forward card arrives from
+ * the left. Short and slight on purpose -- a long or far travel is charming
+ * once and irritating by question nine.
+ *
+ * base.css collapses this under prefers-reduced-motion.
+ */
+@keyframes x-card-enter-forward {
+    from { opacity: 0; transform: translateX(-14px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes x-card-enter-back {
+    from { opacity: 0; transform: translateX(14px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.x-question__card.is-entering.is-forward {
+    animation: x-card-enter-forward var(--motion-base) var(--ease);
+}
+
+.x-question__card.is-entering.is-back {
+    animation: x-card-enter-back var(--motion-base) var(--ease);
+}
+
+/* The meta row and the stem follow the card in, a beat later, so the card
+   does not arrive as one solid slab. `backwards` holds them hidden through
+   the delay rather than letting them flash at full opacity first. */
+.x-question__card.is-entering .x-question__meta,
+.x-question__card.is-entering .x-question__prompt {
+    animation: x-fade-rise var(--motion-base) var(--ease) 60ms backwards;
+}
+
+.x-question__card.is-entering .x-choices__item {
+    animation: x-fade-rise var(--motion-base) var(--ease) backwards;
+}
+
+/* Choices arrive in order. Five steps is as far as this is worth taking;
+   beyond that the last option waits noticeably longer than the first. */
+.x-question__card.is-entering .x-choices__item:nth-child(1) { animation-delay: 90ms; }
+.x-question__card.is-entering .x-choices__item:nth-child(2) { animation-delay: 120ms; }
+.x-question__card.is-entering .x-choices__item:nth-child(3) { animation-delay: 150ms; }
+.x-question__card.is-entering .x-choices__item:nth-child(4) { animation-delay: 180ms; }
+.x-question__card.is-entering .x-choices__item:nth-child(n+5) { animation-delay: 210ms; }
+
+@keyframes x-fade-rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 .x-question__head {
     display: flex;
     align-items: center;
@@ -270,16 +323,45 @@ body.x-focus .f-page {
     color: var(--warning);
 }
 
-/* Chips between the head and the stem. `.x-chip--static` comes from
-   exams.css, which ExamAttemptPage already loads alongside this file -- the
-   chip is the same object here as on the exam list, so it is reused rather
-   than redefined. */
+/*
+ * The facts about a question, between the head and the stem.
+ *
+ * Each kind of fact carries its own hue and its own icon, so "which subject"
+ * and "how hard" are distinguishable before either is read. They were four
+ * identical accent-coloured pills, which meant the row had to be read
+ * word by word to be understood at all.
+ */
 .x-question__meta {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2);
     margin-bottom: var(--space-4);
 }
+
+.x-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 28px;
+    padding: 0 var(--space-3);
+    border-radius: var(--radius-pill);
+    font-size: 0.78rem;
+    font-weight: 600;
+    /* Both the icon (stroke: currentColor) and the label take the hue; only
+       the fill is softened, so the text stays at full contrast. */
+    color: var(--x-meta-hue);
+    background: var(--x-meta-fill);
+}
+
+.x-meta svg {
+    flex: none;
+    opacity: 0.9;
+}
+
+.x-meta--subject { --x-meta-hue: var(--hue-subject); --x-meta-fill: var(--hue-subject-soft); }
+.x-meta--difficulty { --x-meta-hue: var(--hue-difficulty); --x-meta-fill: var(--hue-difficulty-soft); }
+.x-meta--tag { --x-meta-hue: var(--hue-tag); --x-meta-fill: var(--hue-tag-soft); }
+.x-meta--source { --x-meta-hue: var(--hue-source); --x-meta-fill: var(--hue-source-soft); }
 
 .x-question__prompt {
     /* اندازه فونت (سؤال) writes --x-question-font-scale on the root; every

@@ -118,6 +118,12 @@ const ICONS = {
     // U+2699, which the note above already explains gets substituted.
     settings: 'M18.93 16L12 20L5.07 16L5.07 8L12 4L18.93 8ZM12 9a3 3 0 100 6 3 3 0 000-6z',
     clock: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v5l4 2',
+    // An open book: the subject a question belongs to.
+    book: 'M3 5h6a3 3 0 013 3v11a3 3 0 00-3-3H3zM21 5h-6a3 3 0 00-3 3v11a3 3 0 013-3h6z',
+    // A gauge needle: how hard the question is.
+    gauge: 'M12 21a9 9 0 119-9M12 21a9 9 0 01-9-9M12 12l5-4',
+    // A tag.
+    tag: 'M4 11V4h7l9 9-7 7-9-9zM7.5 7.5h.01',
 };
 
 export function icon(name, { filled = false } = {}) {
@@ -310,7 +316,7 @@ function saveLabel(status) {
 }
 
 /** One question with its choices. */
-export function renderQuestion(state, question, saveStatus, actions, reveal = null, study = null) {
+export function renderQuestion(state, question, saveStatus, actions, reveal = null, study = null, enter = null) {
     const position = state.position;
     const selected = state.answers[String(position)];
 
@@ -344,8 +350,12 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
 
     const flagged = isFlagged(state, position);
 
+    // `enter` is 'forward' | 'back' | null, decided by the controller, which
+    // is the only thing that knows whether the position actually changed.
+    // Animating on every draw() would make the card jump when the student
+    // merely answered or opened the study drawer.
     const card = el('article', {
-        className: 'f-card x-question__card',
+        className: `f-card x-question__card${enter ? ` is-entering is-${enter}` : ''}`,
         on: {
             wheel: actions.cardWheel,
             touchstart: actions.cardTouchStart,
@@ -544,20 +554,23 @@ function renderStudy(question, study, actions) {
  * not defined anywhere in this repository, so a chip reading «۳» would be
  * inventing a meaning; «سختی: ۳» states exactly what is known.
  */
+function metaItem(kind, iconName, text) {
+    return el('span', { className: `x-meta x-meta--${kind}` },
+        icon(iconName),
+        el('span', { className: 'x-meta__text', text }));
+}
+
 function renderQuestionMeta(question) {
-    const chips = [];
+    const items = [];
 
     const topic = typeof question.topic === 'string' ? question.topic.trim() : '';
     if (topic !== '') {
-        chips.push(el('span', { className: 'x-chip x-chip--static', text: faText(topic) }));
+        items.push(metaItem('subject', 'book', faText(topic)));
     }
 
     const difficulty = question.difficulty;
     if (difficulty !== undefined && difficulty !== null && String(difficulty).trim() !== '') {
-        chips.push(el('span', {
-            className: 'x-chip x-chip--static',
-            text: `سختی: ${faText(String(difficulty).trim())}`,
-        }));
+        items.push(metaItem('difficulty', 'gauge', `سختی: ${faText(String(difficulty).trim())}`));
     }
 
     if (Array.isArray(question.tags)) {
@@ -566,16 +579,16 @@ function renderQuestionMeta(question) {
         for (const tag of question.tags.slice(0, 3)) {
             const label = typeof tag === 'string' ? tag.trim() : '';
             if (label !== '') {
-                chips.push(el('span', { className: 'x-chip x-chip--static', text: faText(label) }));
+                items.push(metaItem('tag', 'tag', faText(label)));
             }
         }
     }
 
-    if (chips.length === 0) {
+    if (items.length === 0) {
         return null;
     }
 
-    return el('div', { className: 'x-question__meta' }, ...chips);
+    return el('div', { className: 'x-question__meta' }, ...items);
 }
 
 /*
