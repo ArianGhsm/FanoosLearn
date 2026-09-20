@@ -788,7 +788,15 @@ SQL, [
             'assessment_id' => $attempt['assessment_id'], 'score_basis_points' => $score, 'late' => $late,
         ]);
 
-        return ['attempt_id' => $attemptId, 'revision' => $revision, 'status' => 'scored', 'correct_count' => $correct, 'question_count' => $questionCount, 'score_basis_points' => $score];
+        // answered_count is what lets a report tell "answered and wrong" apart
+        // from "never answered". Both were previously folded into the same
+        // "not correct" remainder, so a student who ran out of time and one who
+        // guessed everything wrong saw the identical card. It is derived here
+        // rather than in the client because the client has only its own local
+        // answers, which an expiry-triggered scoring path never sees.
+        $answered = count($normalized);
+
+        return ['attempt_id' => $attemptId, 'revision' => $revision, 'status' => 'scored', 'correct_count' => $correct, 'answered_count' => $answered, 'question_count' => $questionCount, 'score_basis_points' => $score];
     }
 
     /** @param array<string, mixed> $attempt */

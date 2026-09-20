@@ -359,6 +359,7 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
                 attrs: { 'aria-pressed': flagged ? 'true' : 'false' },
                 on: { click: actions.toggleFlag },
             }, icon('flag', { filled: flagged }), el('span', { text: flagged ? 'نشان‌دار' : 'نشان‌دار کن' }))),
+        renderQuestionMeta(question),
         el('p', { className: 'x-question__prompt', text: faText(question.prompt) }),
         choices,
         el('div', { className: 'x-question__foot' },
@@ -431,6 +432,54 @@ function renderReveal(reveal, question, chosen, { explanationVisible = true, onS
         el('p', { className: 'x-revealed__head', text: verdict }),
         explanationBody,
         el('p', { className: 'f-tiny', text: 'این سؤال در کارنامه به‌عنوان «پاسخ دیده‌شده» علامت می‌خورد.' }));
+}
+
+/*
+ * The chips above a question's stem: what it is about, and how hard.
+ *
+ * `topic`, `tags` and `difficulty` have been travelling in every question
+ * payload since ExamService::safeQuestion() was written (it copies each one
+ * through when present) and the runner discarded all three. This renders
+ * whatever actually arrived and nothing when none did -- today's imported
+ * bank carries `topic` alone, because import-question-bank.php maps the
+ * chapter to it and sets neither of the others.
+ *
+ * Difficulty is shown with its label rather than bare. The value's scale is
+ * not defined anywhere in this repository, so a chip reading «۳» would be
+ * inventing a meaning; «سختی: ۳» states exactly what is known.
+ */
+function renderQuestionMeta(question) {
+    const chips = [];
+
+    const topic = typeof question.topic === 'string' ? question.topic.trim() : '';
+    if (topic !== '') {
+        chips.push(el('span', { className: 'x-chip x-chip--static', text: faText(topic) }));
+    }
+
+    const difficulty = question.difficulty;
+    if (difficulty !== undefined && difficulty !== null && String(difficulty).trim() !== '') {
+        chips.push(el('span', {
+            className: 'x-chip x-chip--static',
+            text: `سختی: ${faText(String(difficulty).trim())}`,
+        }));
+    }
+
+    if (Array.isArray(question.tags)) {
+        // Capped: a question carrying a dozen tags would push the stem off
+        // the first screen, and the stem is what the student came for.
+        for (const tag of question.tags.slice(0, 3)) {
+            const label = typeof tag === 'string' ? tag.trim() : '';
+            if (label !== '') {
+                chips.push(el('span', { className: 'x-chip x-chip--static', text: faText(label) }));
+            }
+        }
+    }
+
+    if (chips.length === 0) {
+        return null;
+    }
+
+    return el('div', { className: 'x-question__meta' }, ...chips);
 }
 
 /*
@@ -559,6 +608,7 @@ export function renderReport(summary, actions) {
                 attrs: { style: `--percent:${percent}`, role: 'img', 'aria-label': `نمره ${faDigits(percent)} از ۱۰۰` },
             }, el('span', { className: 'x-report__percent', text: `٪${faDigits(percent)}` })),
             el('p', { className: 'x-report__line', text: `${faDigits(correct)} پاسخ درست از ${faDigits(total)} سؤال` }),
+            renderReportStats(summary, total, correct),
             Number(summary.revealed_count || 0) === 0 ? null : notice(
                 'warning',
                 `${faDigits(summary.revealed_count)} پاسخ را قبل از جواب دادن دیدی`,
@@ -567,6 +617,43 @@ export function renderReport(summary, actions) {
             el('div', { className: 'x-report__actions' },
                 el('button', { className: 'f-btn f-btn--primary', type: 'button', text: 'مرور پاسخ‌ها', on: { click: actions.review } }),
                 el('a', { className: 'f-btn f-btn--ghost', attrs: { href: '/app/exams' }, text: 'فهرست آزمون‌ها' }))));
+}
+
+/*
+ * The report's four tiles. The card used to say one sentence -- "N correct
+ * out of M" -- which folded two different outcomes into the same remainder:
+ * a student who answered and got it wrong and one who never reached the
+ * question at all read identically, and those call for opposite next steps.
+ *
+ * `answered_count` is served by ExamService::scoreAndClose(). An older
+ * attempt scored before that field existed has no value for it, so the two
+ * tiles that depend on it are omitted rather than guessed at -- showing
+ * «بی‌پاسخ: ۰» for an attempt where the truth is unknown would be a lie in
+ * the exact direction a student would not question.
+ */
+function renderReportStats(summary, total, correct) {
+    const tiles = [el('div', { className: 'x-stat is-correct' },
+        el('span', { className: 'x-stat__value', text: faDigits(correct) }),
+        el('span', { className: 'x-stat__label', text: 'درست' }))];
+
+    const answered = Number(summary.answered_count);
+    if (Number.isFinite(answered)) {
+        tiles.push(el('div', { className: 'x-stat is-wrong' },
+            el('span', { className: 'x-stat__value', text: faDigits(Math.max(0, answered - correct)) }),
+            el('span', { className: 'x-stat__label', text: 'نادرست' })));
+        tiles.push(el('div', { className: 'x-stat' },
+            el('span', { className: 'x-stat__value', text: faDigits(Math.max(0, total - answered)) }),
+            el('span', { className: 'x-stat__label', text: 'بی‌پاسخ' })));
+    }
+
+    const revealed = Number(summary.revealed_count || 0);
+    if (revealed > 0) {
+        tiles.push(el('div', { className: 'x-stat is-revealed' },
+            el('span', { className: 'x-stat__value', text: faDigits(revealed) }),
+            el('span', { className: 'x-stat__label', text: 'پاسخ دیده‌شده' })));
+    }
+
+    return el('div', { className: 'x-stats' }, ...tiles);
 }
 
 /** One reviewed question: what was chosen, what was right, and why. */

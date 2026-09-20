@@ -35,8 +35,40 @@ final class ExamAttemptHistoryTest
         $this->assertInProgressAttemptIsExcluded();
         $this->assertAnotherStudentsAttemptsDoNotLeak();
         $this->assertAnotherAssessmentsAttemptsDoNotLeak();
+        $this->assertScoringDistinguishesWrongFromUnanswered();
 
         return $this->assertions;
+    }
+
+    /**
+     * A report that only knows "correct" folds two different outcomes into one
+     * remainder: a student who answered and was wrong, and a student who never
+     * reached the question. Those call for opposite next steps, so scoring has
+     * to report them separately.
+     */
+    private function assertScoringDistinguishesWrongFromUnanswered(): void
+    {
+        $suffix = $this->suffix();
+        $workspace = $this->workspace('answered-' . $suffix);
+        $exams = $this->exams();
+        $assessmentId = $this->assessment($workspace, 'Answered-' . $suffix, [
+            ['id' => 'q1', 'prompt' => 'دو بعلاوه دو؟', 'choices' => ['سه', 'چهار'], 'answer' => 1],
+            ['id' => 'q2', 'prompt' => 'اول را انتخاب کن.', 'choices' => ['اول', 'دوم'], 'answer' => 0],
+            ['id' => 'q3', 'prompt' => 'دوم را انتخاب کن.', 'choices' => ['اول', 'دوم'], 'answer' => 1],
+        ], maxAttempts: 5);
+
+        // One right, one wrong, one never answered -- three different states
+        // that must not collapse into each other.
+        $attempt = $exams->startAttempt($workspace['student'], $workspace['workspace'], $assessmentId, 'assessment');
+        $scored = $exams->submitAttempt($workspace['student'], $workspace['workspace'], $attempt['attempt_id'], 1, ['q1' => 1, 'q2' => 1]);
+
+        $this->assert($scored['question_count'] === 3, 'Scoring lost the question count.');
+        $this->assert($scored['correct_count'] === 1, 'Scoring did not count exactly the correct answer.');
+        $this->assert($scored['answered_count'] === 2, 'Scoring did not report the number of questions actually answered.');
+        // The two numbers a report derives from this, spelled out so a change
+        // to either field cannot quietly make them disagree.
+        $this->assert($scored['answered_count'] - $scored['correct_count'] === 1, 'Wrong count derived from the summary is not 1.');
+        $this->assert($scored['question_count'] - $scored['answered_count'] === 1, 'Unanswered count derived from the summary is not 1.');
     }
 
     private function assertHistoryListsOwnScoredAttemptsNewestFirst(): void
