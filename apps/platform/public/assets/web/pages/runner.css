@@ -584,6 +584,90 @@ body.x-focus .f-page {
     margin-bottom: var(--space-5);
 }
 
+/* ------------------------------------------------------ study tools */
+
+/* The student's own highlight over the stem. `color: inherit` because a
+   <mark> defaults to black-on-yellow in every browser, which is unreadable
+   on the dark theme. */
+.x-highlight {
+    background: var(--warning-soft);
+    color: inherit;
+    border-radius: 3px;
+    padding: 0 2px;
+    box-shadow: inset 0 -2px 0 var(--warning);
+}
+
+.x-study {
+    margin-top: var(--space-5);
+    border-top: 1px solid var(--border);
+    padding-top: var(--space-3);
+}
+
+.x-study__summary {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    list-style-position: inside;
+}
+
+.x-study__summary:hover {
+    color: var(--text-primary);
+}
+
+/* Says the drawer holds something without making the student open it. */
+.x-study__badge {
+    padding: 2px var(--space-3);
+    border-radius: var(--radius-pill);
+    background: var(--warning-soft);
+    color: var(--warning);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.x-study__body {
+    display: grid;
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+}
+
+.x-study__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.x-study__note {
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-inset);
+    color: var(--text-primary);
+    font: inherit;
+    line-height: 1.8;
+    resize: vertical;
+}
+
+.x-study__note:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.x-study__hint {
+    margin: 0;
+}
+
+/* The one hint that is answering something the student just did. */
+.x-study__hint.is-nudge {
+    color: var(--warning);
+    font-weight: 600;
+}
+
 /* -------------------------------------------------------------- stat tiles */
 
 .x-stats {

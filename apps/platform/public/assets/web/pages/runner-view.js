@@ -11,6 +11,7 @@ import {
     progressPercent, remainingSeconds, unansweredPositions, visiblePositions,
 } from './runner-state.js';
 import { renderMarkdown } from './markdown.js';
+import { highlightSegments } from './runner-study.js';
 
 const CHOICE_LETTERS = ['الف', 'ب', 'ج', 'د', 'ه', 'و', 'ز', 'ح', 'ط', 'ی'];
 
@@ -309,7 +310,7 @@ function saveLabel(status) {
 }
 
 /** One question with its choices. */
-export function renderQuestion(state, question, saveStatus, actions, reveal = null) {
+export function renderQuestion(state, question, saveStatus, actions, reveal = null, study = null) {
     const position = state.position;
     const selected = state.answers[String(position)];
 
@@ -360,7 +361,7 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
                 on: { click: actions.toggleFlag },
             }, icon('flag', { filled: flagged }), el('span', { text: flagged ? 'نشان‌دار' : 'نشان‌دار کن' }))),
         renderQuestionMeta(question),
-        el('p', { className: 'x-question__prompt', text: faText(question.prompt) }),
+        renderStem(question, study),
         choices,
         el('div', { className: 'x-question__foot' },
             selected === undefined ? null : el('button', {
@@ -378,7 +379,8 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
             // mode.
             explanationVisible: state.mode !== 'practice' || isExplanationShown(state, position),
             onShowExplanation: actions.showExplanation,
-        }) : null);
+        }) : null,
+        renderStudy(question, study, actions));
 
     // The end gutter stays empty: اسکرول عمودی کنار سؤال. There is nothing
     // else to scroll in it, so a vertical wheel there always navigates --
@@ -432,6 +434,100 @@ function renderReveal(reveal, question, chosen, { explanationVisible = true, onS
         el('p', { className: 'x-revealed__head', text: verdict }),
         explanationBody,
         el('p', { className: 'f-tiny', text: 'این سؤال در کارنامه به‌عنوان «پاسخ دیده‌شده» علامت می‌خورد.' }));
+}
+
+/*
+ * The stem, with the student's highlights drawn into it.
+ *
+ * The offsets are taken against the faText()-normalised string, which is
+ * what the student actually sees and selects from -- taking them against
+ * question.prompt would put every highlight in a Persian-digit question a
+ * few characters out, and only in questions containing numbers, which is
+ * the sort of bug that looks like a rendering glitch for months.
+ *
+ * Built as text nodes and <mark> elements. This could be one innerHTML
+ * assignment; it is not, because the stem is API text and this file does
+ * not put API text through innerHTML -- a question containing anything
+ * angle-bracketed would otherwise be parsed as markup.
+ */
+function renderStem(question, study) {
+    const text = faText(question.prompt);
+    const ranges = study && Array.isArray(study.ranges) ? study.ranges : [];
+    const paragraph = el('p', { className: 'x-question__prompt' });
+
+    for (const segment of highlightSegments(text, ranges)) {
+        paragraph.append(segment.highlighted
+            ? el('mark', { className: 'x-highlight', text: segment.text })
+            : document.createTextNode(segment.text));
+    }
+
+    return paragraph;
+}
+
+/*
+ * The study drawer: a note on this question, and the highlight controls.
+ *
+ * Collapsed by default behind <details>. A student sitting a timed paper
+ * should not have a textarea competing with the choices for attention, and
+ * the browser's own disclosure gives keyboard and screen-reader behaviour
+ * that a hand-rolled toggle would have to reimplement.
+ *
+ * The note is saved on input rather than behind a save button: a note the
+ * student typed and lost because they navigated away is worse than no note
+ * feature at all, and there is no server round trip to debounce for.
+ */
+function renderStudy(question, study, actions) {
+    if (!study) return null;
+
+    const note = typeof study.note === 'string' ? study.note : '';
+    const hasHighlights = Array.isArray(study.ranges) && study.ranges.length > 0;
+
+    const editor = el('textarea', {
+        className: 'x-study__note',
+        attrs: {
+            rows: '3',
+            placeholder: 'یادداشت تو برای این سؤال…',
+            'aria-label': 'یادداشت این سؤال',
+            maxlength: '2000',
+        },
+        on: { input: (event) => actions.saveNote(question.id, event.target.value) },
+    });
+    editor.value = note;
+
+    const summaryBits = [];
+    if (note !== '') summaryBits.push('یادداشت');
+    if (hasHighlights) summaryBits.push('هایلایت');
+
+    // `open` is driven by the caller, not by the element. draw() rebuilds the
+    // whole card, so a <details> left to its own state would snap shut every
+    // time the student added a highlight -- from inside the very drawer the
+    // button lives in.
+    return el('details', {
+        className: `x-study${summaryBits.length > 0 ? ' has-content' : ''}`,
+        attrs: { open: study.open === true },
+        on: { toggle: (event) => actions.setStudyOpen(event.target.open) },
+    },
+        el('summary', { className: 'x-study__summary' },
+            el('span', { text: 'ابزار مطالعه' }),
+            summaryBits.length === 0
+                ? null
+                : el('span', { className: 'x-study__badge', text: summaryBits.join(' · ') })),
+        el('div', { className: 'x-study__body' },
+            el('div', { className: 'x-study__actions' },
+                el('button', {
+                    className: 'f-btn f-btn--ghost', type: 'button', text: 'هایلایت متنِ انتخاب‌شده',
+                    on: { click: () => actions.highlightSelection(question.id) },
+                }),
+                !hasHighlights ? null : el('button', {
+                    className: 'f-btn f-btn--ghost', type: 'button', text: 'پاک کردن هایلایت‌ها',
+                    on: { click: () => actions.clearHighlights(question.id) },
+                })),
+            el('p', {
+                className: `f-tiny x-study__hint${study.hint ? ' is-nudge' : ''}`,
+                text: study.hint || 'بخشی از صورت سؤال را انتخاب کن، بعد «هایلایت» را بزن.',
+            }),
+            editor,
+            el('p', { className: 'f-tiny x-study__hint', text: 'یادداشت‌ها و هایلایت‌ها فقط در همین مرورگر ذخیره می‌شوند و در تلاش‌های بعدی همین سؤال هم می‌مانند.' })));
 }
 
 /*
