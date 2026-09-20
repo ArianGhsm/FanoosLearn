@@ -26,6 +26,7 @@ import {
     setSound as setSettingsSound, setSpeed as setSettingsSpeed, setTheme as setSettingsTheme,
     shortcutsAreLive, stepFontSize,
 } from './runner-settings.js';
+import { addHighlight, clearHighlights, loadHighlights, loadNotes, saveNote } from './runner-study.js';
 import { applyFontSize, applyTheme, playFeedbackTone } from './runner-settings-effects.js';
 import { renderSettings } from './runner-settings-view.js';
 
@@ -53,6 +54,16 @@ let dialogKind = null;
 let banner = null;
 let pageError = null;
 
+/*
+ * Study tools, keyed by question id so they survive into the next attempt --
+ * see runner-study.js on why position-keying would silently reattach a note
+ * to a different question once the paper is shuffled.
+ */
+let studyNotes = {};
+let studyHighlights = {};
+let studyHint = '';
+let studyOpen = false;
+
 let settings = loadSettings();
 let settingsUi = { tab: 'general', rebinding: null };
 applyFontSize(settings);
@@ -68,7 +79,12 @@ function draw() {
     } else if (phase === 'question' && state) {
         const question = questions.get(state.position);
         frame.append(question
-            ? renderQuestion(state, question, sync.status, questionActions, state.reveals.get(state.position) ?? null)
+            ? renderQuestion(state, question, sync.status, questionActions, state.reveals.get(state.position) ?? null, {
+                note: studyNotes[question.id] ?? '',
+                ranges: studyHighlights[question.id] ?? [],
+                hint: studyHint,
+                open: studyOpen,
+            })
             : loading('در حال گرفتن سؤال…'));
     } else if (phase === 'report' && summary) {
         frame.append(renderReport(summary, { review: startReview }));
@@ -227,6 +243,13 @@ async function start(mode) {
             ? clampPosition(state, reconciled.position)
             : (nextUnanswered(state) ?? 1);
         phase = 'question';
+        // Notes and highlights belong to the assessment, not to this attempt,
+        // so they are read once here and carry whatever the student wrote in
+        // earlier attempts at the same questions.
+        studyNotes = loadNotes(state.assessmentId);
+        studyHighlights = loadHighlights(state.assessmentId);
+        studyHint = '';
+        studyOpen = false;
         startDeadlineTimer();
         persistNow();
         // The merge above may have introduced answers the server has not
@@ -486,6 +509,73 @@ async function autoSubmitOnTimeout() {
 /* --------------------------------------------------------------- question */
 
 const questionActions = {
+    setStudyOpen(open) {
+        studyOpen = open === true;
+    },
+
+    saveNote(questionId, text) {
+        saveNote(state.assessmentId, questionId, text);
+        studyNotes[questionId] = typeof text === 'string' ? text.trim() : '';
+        if (studyNotes[questionId] === '') delete studyNotes[questionId];
+        // Deliberately no draw(): redrawing on every keystroke would rebuild
+        // the textarea and drop the caret to the end of the note.
+    },
+
+    /*
+     * Turns the browser's current selection into a pair of offsets.
+     *
+     * The offsets have to be measured against the *whole* stem, but a
+     * selection reports its position within whichever text node it happens
+     * to start in -- and once a question has highlights, the stem is several
+     * nodes rather than one. Walking the paragraph's child nodes and
+     * accumulating their lengths converts the node-local offsets into
+     * stem-wide ones, so highlighting works the same on the second highlight
+     * as on the first.
+     */
+    highlightSelection(questionId) {
+        const selection = window.getSelection ? window.getSelection() : null;
+        const paragraph = document.querySelector('.x-question__prompt');
+        if (!selection || selection.rangeCount === 0 || !paragraph) return;
+
+        const range = selection.getRangeAt(0);
+        if (range.collapsed || !paragraph.contains(range.commonAncestorContainer)) {
+            // Says so in the drawer rather than raising a page-level banner:
+            // this is a nudge about how the control works, not a failure, and
+            // the answer is two lines below the button that was just pressed.
+            studyHint = 'اول بخشی از صورت سؤال را انتخاب کن، بعد این دکمه را بزن.';
+            draw();
+            return;
+        }
+        studyHint = '';
+
+        const offsetOf = (node, offset) => {
+            let total = 0;
+            const walker = document.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT);
+            let current = walker.nextNode();
+            while (current) {
+                if (current === node) return total + offset;
+                total += current.textContent.length;
+                current = walker.nextNode();
+            }
+            return total;
+        };
+
+        const start = offsetOf(range.startContainer, range.startOffset);
+        const end = offsetOf(range.endContainer, range.endOffset);
+        if (end <= start) return;
+
+        addHighlight(state.assessmentId, questionId, { start, end }, paragraph.textContent.length);
+        studyHighlights = loadHighlights(state.assessmentId);
+        selection.removeAllRanges();
+        draw();
+    },
+
+    clearHighlights(questionId) {
+        clearHighlights(state.assessmentId, questionId);
+        studyHighlights = loadHighlights(state.assessmentId);
+        draw();
+    },
+
     choose(index) {
         setAnswer(state, state.position, index);
         sync.schedule();
