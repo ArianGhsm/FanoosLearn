@@ -12,7 +12,7 @@
     margin-inline: auto;
     margin-bottom: var(--space-5);
     color: var(--text-secondary);
-    font-size: 1.05rem;
+    font-size: var(--text-lg);
 }
 
 .f-landing__points {
@@ -22,7 +22,7 @@
 }
 
 .f-landing__points h2 {
-    font-size: 1.05rem;
+    font-size: var(--text-lg);
 }
 
 .f-landing__points p:last-child {

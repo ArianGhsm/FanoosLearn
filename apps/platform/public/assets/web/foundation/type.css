@@ -56,6 +56,52 @@
     /* Reading text -- questions, choices, explanations. */
     --reading-size: 1.05rem;
     --reading-leading: 2;
+
+    /*
+     * One scale, ~1.15 between steps.
+     *
+     * The exam stylesheet had nine unrelated font sizes -- 0.75, 0.78, 0.8,
+     * 0.82, 0.85, 0.88, 0.9, 1 and 1.05rem -- none of which referred to each
+     * other. That is not a scale, it is nine decisions taken separately, and
+     * it is why the interface read as flat: sizes one hundredth of a rem
+     * apart cannot express a hierarchy, they only blur one.
+     *
+     * A literal rem in a page stylesheet is now a bug, the same way a
+     * literal colour is.
+     */
+    --text-2xs: 0.72rem;
+    --text-xs: 0.8rem;
+    --text-sm: 0.875rem;
+    --text-base: 0.95rem;
+    --text-lg: 1.05rem;
+    --text-xl: 1.2rem;
+    --text-2xl: 1.45rem;
+    --text-3xl: 1.75rem;
+
+    /*
+     * Weight roles. Three faces ship, and before this two of them did almost
+     * nothing: the interface was 400 with occasional 700, and 600 was
+     * essentially unused. Hierarchy carried by weight survives at a glance
+     * and at any size, which is what size alone was failing to do.
+     */
+    --weight-body: 400;
+    --weight-medium: 600;
+    --weight-strong: 700;
+}
+
+/*
+ * Anything numeric that changes in place -- a timer, a counter, a score, a
+ * question number -- must not resize the layout as it ticks. Persian digits
+ * are proportional in Vazirmatn, so without this the bar twitches on every
+ * second.
+ */
+.f-tnum,
+.x-bar__timer,
+.x-question__index,
+.x-rail__pill,
+.x-stat__value,
+.x-report__percent {
+    font-variant-numeric: tabular-nums;
 }
 
 h1, h2, h3, h4 {

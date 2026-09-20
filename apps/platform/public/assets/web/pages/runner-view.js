@@ -124,6 +124,12 @@ const ICONS = {
     gauge: 'M12 21a9 9 0 119-9M12 21a9 9 0 01-9-9M12 12l5-4',
     // A tag.
     tag: 'M4 11V4h7l9 9-7 7-9-9zM7.5 7.5h.01',
+    // Bars: how a question has gone for everyone.
+    chart: 'M4 20V10M10 20V4M16 20v-7M22 20H2',
+    // A loop: how many times this student has attempted it.
+    repeat: 'M4 9a5 5 0 015-5h11M20 15a5 5 0 01-5 5H4M17 1l3 3-3 3M7 17l-3 3 3 3',
+    check: 'M4 12l5 5L20 6',
+    calendar: 'M4 6h16v15H4zM4 10h16M9 3v4M15 3v4',
 };
 
 export function icon(name, { filled = false } = {}) {
@@ -373,6 +379,7 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
         renderQuestionMeta(question),
         renderStem(question, study),
         choices,
+        renderQuestionStats(question.stats ?? null),
         el('div', { className: 'x-question__foot' },
             selected === undefined ? null : el('button', {
                 className: 'x-question__clear', type: 'button', text: 'پاک کردن پاسخ',
@@ -444,6 +451,47 @@ function renderReveal(reveal, question, chosen, { explanationVisible = true, onS
         el('p', { className: 'x-revealed__head', text: verdict }),
         explanationBody,
         el('p', { className: 'f-tiny', text: 'این سؤال در کارنامه به‌عنوان «پاسخ دیده‌شده» علامت می‌خورد.' }));
+}
+
+/*
+ * The titled statistics block: how this question has gone, for everyone and
+ * for this student.
+ *
+ * Placed *after* the choices, where the reference puts it before them. On a
+ * 375px screen four stat rows plus the facts grid push the stem below the
+ * fold, and a student in حالت آزمون is being timed: the question has to be
+ * the first thing on screen. These numbers are retrospective -- they mean
+ * something once you have committed to an answer, not while you are choosing
+ * one.
+ *
+ * Every value is unknown today, and the block is here anyway. That is the
+ * owner's instruction and it matches the reference: signed out, medofast
+ * draws this whole section with «؟ بار» in every slot, so the page does not
+ * change shape when the numbers arrive.
+ *
+ * The data is closer than it looks. exam_attempt_results.review_json already
+ * stores per-question is_correct for every scored attempt, so both columns
+ * are an aggregation away rather than a new thing to collect -- the share of
+ * students who answered correctly across the workspace, and this student's
+ * own record on this question across their attempts.
+ *
+ * Until then every row reads "—". Never a zero: "answered correctly 0 times"
+ * is a claim about the student, and we would be making it up.
+ */
+function renderQuestionStats(stats) {
+    const value = (key) => {
+        const raw = stats && stats[key];
+        return typeof raw === 'string' && raw !== '' ? raw : null;
+    };
+
+    return el('section', { className: 'x-qstats' },
+        el('h3', { className: 'x-qstats__title', text: 'آمار این سؤال' }),
+        el('div', { className: 'x-qstats__grid' },
+            metaItem('source', 'chart', 'پاسخ درست دیگران', value('peer_correct_share')),
+            metaItem('subject', 'repeat', 'تو چند بار زده‌ای', value('attempts')),
+            metaItem('difficulty', 'check', 'چند بار درست', value('correct')),
+            metaItem('tag', 'calendar', 'آخرین بار', value('last_answered'))),
+        el('p', { className: 'f-tiny x-qstats__note', text: 'این آمار هنوز جمع‌آوری نمی‌شود و به‌زودی پر می‌شود.' }));
 }
 
 /*
@@ -557,6 +605,13 @@ function renderStudy(question, study, actions) {
 /*
  * One fact about the question: a coloured icon, a label, and the value.
  *
+ * A fact we expect to carry eventually renders even when we do not have it
+ * yet -- icon, label and an em dash. The owner's instruction, and medofast
+ * does the same thing: signed out, its per-question statistics read «؟ بار»
+ * with the rows fully drawn, so the page does not change shape when the data
+ * arrives. An em dash says *unknown*; a zero would say *none*, and those are
+ * different claims about the same question.
+ *
  * Rows in a grid rather than pills in a line. A pill row has to be read
  * left to right to be understood at all -- every pill looks the same shape
  * and the label is buried inside it. In a grid the eye lands on the icon,
@@ -565,40 +620,30 @@ function renderStudy(question, study, actions) {
  * and a question's facts are a spec sheet.
  */
 function metaItem(kind, iconName, label, value) {
-    return el('div', { className: `x-meta x-meta--${kind}` },
+    const known = typeof value === 'string' && value !== '';
+    return el('div', { className: `x-meta x-meta--${kind}${known ? '' : ' is-unknown'}` },
         el('span', { className: 'x-meta__icon' }, icon(iconName)),
         el('span', { className: 'x-meta__label', text: label }),
-        el('span', { className: 'x-meta__value', text: value }));
+        el('span', { className: 'x-meta__value', text: known ? value : '—' }));
 }
 
 function renderQuestionMeta(question) {
     const items = [];
 
     const topic = typeof question.topic === 'string' ? question.topic.trim() : '';
-    if (topic !== '') {
-        items.push(metaItem('subject', 'book', 'مبحث', faText(topic)));
-    }
+    items.push(metaItem('subject', 'book', 'مبحث', topic === '' ? null : faText(topic)));
 
     const difficulty = question.difficulty;
-    if (difficulty !== undefined && difficulty !== null && String(difficulty).trim() !== '') {
-        items.push(metaItem('difficulty', 'gauge', 'سطح دشواری', faText(String(difficulty).trim())));
-    }
+    const hasDifficulty = difficulty !== undefined && difficulty !== null && String(difficulty).trim() !== '';
+    items.push(metaItem('difficulty', 'gauge', 'سطح دشواری', hasDifficulty ? faText(String(difficulty).trim()) : null));
 
-    if (Array.isArray(question.tags)) {
+    const tags = (Array.isArray(question.tags) ? question.tags : [])
+        .map((tag) => (typeof tag === 'string' ? tag.trim() : ''))
+        .filter((tag) => tag !== '')
         // Capped: a question carrying a dozen tags would push the stem off
         // the first screen, and the stem is what the student came for.
-        const tags = question.tags
-            .map((tag) => (typeof tag === 'string' ? tag.trim() : ''))
-            .filter((tag) => tag !== '')
-            .slice(0, 3);
-        if (tags.length > 0) {
-            items.push(metaItem('tag', 'tag', 'برچسب', tags.map(faText).join(' · ')));
-        }
-    }
-
-    if (items.length === 0) {
-        return null;
-    }
+        .slice(0, 3);
+    items.push(metaItem('tag', 'tag', 'برچسب', tags.length === 0 ? null : tags.map(faText).join(' · ')));
 
     return el('div', { className: 'x-question__meta' }, ...items);
 }
