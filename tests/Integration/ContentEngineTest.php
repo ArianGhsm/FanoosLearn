@@ -201,6 +201,7 @@ final class ContentEngineTest
         self::assert(($activeCatalog['source_resource_id'] ?? '') === $questionBank['resource_id'], 'Assessment catalog lost source-resource provenance.');
         $scored = $exams->submitAttempt($fixture['student'], $fixture['workspace_a'], $attempt['attempt_id'], 2, ['q1' => $q1DisplayedCorrect, 'q2' => $q2DisplayedCorrect]);
         self::assert($scored['status'] === 'scored' && $scored['score_basis_points'] === 10000, 'Server-side assessment scoring failed for a shuffled attempt with the objectively correct choices.');
+        self::assert($scored['answered_count'] === 2, 'Scoring did not report how many questions were actually answered.');
         $reviewSummary = $exams->attemptReview($fixture['student'], $fixture['workspace_a'], $attempt['attempt_id']);
         self::assert(!array_key_exists('review', $reviewSummary) && $reviewSummary['question_count'] === 2 && $reviewSummary['score_basis_points'] === 10000, 'Attempt review must be a summary only, not the whole per-question set.');
         $q1Review = $exams->attemptReviewQuestion($fixture['student'], $fixture['workspace_a'], $attempt['attempt_id'], $q1Position);

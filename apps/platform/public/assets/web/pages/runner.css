@@ -270,6 +270,17 @@ body.x-focus .f-page {
     color: var(--warning);
 }
 
+/* Chips between the head and the stem. `.x-chip--static` comes from
+   exams.css, which ExamAttemptPage already loads alongside this file -- the
+   chip is the same object here as on the exam list, so it is reused rather
+   than redefined. */
+.x-question__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+}
+
 .x-question__prompt {
     /* اندازه فونت (سؤال) writes --x-question-font-scale on the root; every
        reader of it multiplies rather than restyling itself, per the task. */
@@ -572,6 +583,45 @@ body.x-focus .f-page {
     font-size: 1.05rem;
     margin-bottom: var(--space-5);
 }
+
+/* -------------------------------------------------------------- stat tiles */
+
+.x-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+    gap: var(--space-3);
+    margin: var(--space-5) 0;
+}
+
+.x-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-4) var(--space-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+    box-shadow: var(--shadow-soft);
+}
+
+.x-stat__value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text-primary);
+}
+
+.x-stat__label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* The verdict colours carry on the number only. Tinting a whole tile red for
+   "نادرست" makes a normal result look like a failure notice. */
+.x-stat.is-correct .x-stat__value { color: var(--success); }
+.x-stat.is-wrong .x-stat__value { color: var(--danger); }
+.x-stat.is-revealed .x-stat__value { color: var(--warning); }
 
 .x-report__actions {
     display: flex;
