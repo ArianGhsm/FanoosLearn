@@ -64,6 +64,14 @@ let studyHighlights = {};
 let studyHint = '';
 let studyOpen = false;
 
+/*
+ * The position the card was last drawn at, so draw() can tell "the student
+ * moved to another question" from "the same question was redrawn". Only the
+ * first deserves an entrance animation; animating the second would make the
+ * card jump every time an answer was recorded.
+ */
+let lastDrawnPosition = null;
+
 let settings = loadSettings();
 let settingsUi = { tab: 'general', rebinding: null };
 applyFontSize(settings);
@@ -78,13 +86,17 @@ function draw() {
         frame.append(renderIntro(assessment, { start, openSettings, openHistory }));
     } else if (phase === 'question' && state) {
         const question = questions.get(state.position);
+        const enter = lastDrawnPosition === null || lastDrawnPosition === state.position
+            ? null
+            : (state.position > lastDrawnPosition ? 'forward' : 'back');
+        lastDrawnPosition = state.position;
         frame.append(question
             ? renderQuestion(state, question, sync.status, questionActions, state.reveals.get(state.position) ?? null, {
                 note: studyNotes[question.id] ?? '',
                 ranges: studyHighlights[question.id] ?? [],
                 hint: studyHint,
                 open: studyOpen,
-            })
+            }, enter)
             : loading('در حال گرفتن سؤال…'));
     } else if (phase === 'report' && summary) {
         frame.append(renderReport(summary, { review: startReview }));
