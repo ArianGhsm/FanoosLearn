@@ -100,3 +100,43 @@ test('motion tokens are theme-independent and defined once, in the light root', 
         assert.ok(!explicitDark.has(name), `--${name} should not be redefined per theme`);
     }
 });
+
+/*
+ * The type scale, guarded the same way the colours are.
+ *
+ * docs/design/exam-launcher-ui.md §2: the exam stylesheet had nine unrelated
+ * font sizes, none of which referred to each other. Sizes a hundredth of a
+ * rem apart cannot express a hierarchy, they only blur one -- and they come
+ * back one convenient literal at a time unless something objects.
+ */
+const PAGE_STYLESHEETS = [
+    'runner.css', 'exams.css', 'account.css', 'home.css', 'landing.css', 'login.css',
+];
+
+test('no page stylesheet hard-codes a font size', () => {
+    const offenders = [];
+    for (const name of PAGE_STYLESHEETS) {
+        const url = new URL(`../../apps/platform/public/assets/web/pages/${name}`, import.meta.url);
+        let source;
+        try {
+            source = readFileSync(url, 'utf8');
+        } catch {
+            continue; // A page stylesheet that no longer exists is not a failure.
+        }
+        for (const match of source.matchAll(/font-size:\s*([0-9.]+(?:rem|px|em))/g)) {
+            offenders.push(`${name}: ${match[1]}`);
+        }
+    }
+    assert.deepEqual(offenders, [], 'use a --text-* token instead of a literal size');
+});
+
+test('the type scale and weight roles are defined once, in type.css', () => {
+    const type = readFileSync(new URL('../../apps/platform/public/assets/web/foundation/type.css', import.meta.url), 'utf8');
+    const declared = declarationsIn(blockAt(type, type.indexOf('{', type.indexOf(':root'))));
+    for (const name of ['text-2xs', 'text-xs', 'text-sm', 'text-base', 'text-lg', 'text-xl', 'text-2xl', 'text-3xl']) {
+        assert.ok(declared.has(name), `--${name} is missing from the scale`);
+    }
+    for (const name of ['weight-body', 'weight-medium', 'weight-strong']) {
+        assert.ok(declared.has(name), `--${name} is missing`);
+    }
+});

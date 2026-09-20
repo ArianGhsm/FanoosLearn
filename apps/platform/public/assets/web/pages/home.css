@@ -56,7 +56,7 @@
 }
 
 .f-home__area-icon {
-    font-size: 1.6rem;
+    font-size: var(--text-3xl);
     line-height: 1;
 }
 

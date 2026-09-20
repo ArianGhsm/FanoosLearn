@@ -34,7 +34,7 @@ body.x-focus .f-page {
 .x-intro__eyebrow {
     color: var(--accent);
     font-weight: 700;
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
     margin-bottom: var(--space-2);
 }
 
@@ -58,7 +58,7 @@ body.x-focus .f-page {
 }
 
 .x-intro__facts dt {
-    font-size: 0.78rem;
+    font-size: var(--text-2xs);
     color: var(--text-tertiary);
 }
 
@@ -68,7 +68,7 @@ body.x-focus .f-page {
 }
 
 .x-intro__notes p {
-    font-size: 0.9rem;
+    font-size: var(--text-base);
 }
 
 .x-intro__start {
@@ -78,7 +78,7 @@ body.x-focus .f-page {
 
 .x-intro__back {
     margin: var(--space-5) 0 0;
-    font-size: 0.88rem;
+    font-size: var(--text-sm);
 }
 
 .x-intro__history {
@@ -111,7 +111,7 @@ body.x-focus .f-page {
     min-width: 56px;
     text-align: center;
     font-weight: 700;
-    font-size: 1.05rem;
+    font-size: var(--text-lg);
     color: var(--accent);
 }
 
@@ -150,7 +150,7 @@ body.x-focus .f-page {
     color: var(--text-primary);
     font: inherit;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
     cursor: pointer;
     flex: none;
 }
@@ -181,7 +181,7 @@ body.x-focus .f-page {
 .x-bar__progress-label {
     display: block;
     margin-top: 2px;
-    font-size: 0.75rem;
+    font-size: var(--text-2xs);
     color: var(--text-tertiary);
 }
 
@@ -193,7 +193,7 @@ body.x-focus .f-page {
     border-radius: var(--radius-pill);
     background: var(--surface-muted);
     color: var(--text-secondary);
-    font-size: 0.8rem;
+    font-size: var(--text-xs);
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     flex: none;
@@ -206,7 +206,7 @@ body.x-focus .f-page {
 }
 
 .x-bar__save {
-    font-size: 0.75rem;
+    font-size: var(--text-2xs);
     color: var(--text-tertiary);
     flex: none;
 }
@@ -338,7 +338,7 @@ body.x-focus .f-page {
 }
 
 .x-question__index {
-    font-size: 1rem;
+    font-size: var(--text-lg);
     font-weight: 700;
     color: var(--text-primary);
 }
@@ -354,7 +354,7 @@ body.x-focus .f-page {
     background: transparent;
     color: var(--text-secondary);
     font: inherit;
-    font-size: 0.82rem;
+    font-size: var(--text-xs);
     font-weight: 600;
     cursor: pointer;
 }
@@ -391,7 +391,7 @@ body.x-focus .f-page {
     align-items: center;
     gap: var(--space-2);
     min-height: 30px;
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
 }
 
 /* The icon is the only thing carrying the hue at full strength. The label
@@ -420,9 +420,20 @@ body.x-focus .f-page {
 
 .x-meta__value {
     color: var(--text-primary);
-    font-weight: 600;
+    font-weight: var(--weight-medium);
     min-width: 0;
     overflow-wrap: anywhere;
+}
+
+/* A slot we expect to fill later: the row keeps its place and its label, and
+   says plainly that nothing is recorded rather than pretending a value. */
+.x-meta.is-unknown .x-meta__icon {
+    opacity: 0.45;
+}
+
+.x-meta.is-unknown .x-meta__value {
+    color: var(--text-tertiary);
+    font-weight: var(--weight-body);
 }
 
 .x-meta--subject { --x-meta-hue: var(--hue-subject); --x-meta-fill: var(--hue-subject-soft); }
@@ -436,6 +447,11 @@ body.x-focus .f-page {
     font-size: calc(var(--reading-size) * var(--x-question-font-scale, 1));
     line-height: var(--reading-leading);
     margin-bottom: var(--space-5);
+    /* The stem is the question; the choices are answers to it. They were the
+       same weight and the same colour, so the two read as one block of
+       Persian and the eye had to parse the punctuation to tell them apart. */
+    font-weight: var(--weight-strong);
+    color: var(--text-primary);
 }
 
 /* ------------------------------------------------------------ choices */
@@ -454,6 +470,18 @@ body.x-focus .f-page {
     gap: var(--space-2);
 }
 
+/*
+ * Quiet until chosen.
+ *
+ * These were 2px-bordered, filled, shadowed boxes: five call-to-action
+ * buttons stacked directly above the actual call to action, all competing
+ * with the stem they are answers to. A choice is a list item until the
+ * student does something to it -- selection, a strike, a verdict -- and only
+ * then may it take weight.
+ *
+ * The row keeps its height and padding regardless: that is the touch target,
+ * and it is the one thing a lighter style must not give up.
+ */
 .x-choice {
     flex: 1;
     display: flex;
@@ -461,16 +489,15 @@ body.x-focus .f-page {
     gap: var(--space-3);
     min-height: 56px;
     padding: var(--space-3) var(--space-4);
-    border: 2px solid var(--border);
+    border: 1px solid transparent;
     border-radius: var(--radius-md);
-    background: var(--surface-muted);
+    background: transparent;
     color: var(--text-primary);
     font: inherit;
     font-size: calc(var(--reading-size) * var(--x-question-font-scale, 1));
     line-height: 1.8;
     text-align: start;
     cursor: pointer;
-    box-shadow: var(--shadow-soft);
     transition:
         border-color var(--motion-fast) var(--ease),
         background var(--motion-fast) var(--ease),
@@ -483,16 +510,22 @@ body.x-focus .f-page {
  * to answer back -- a border that merely changes colour reads as a static
  * diagram of a question rather than something being answered. */
 .x-choice:hover:not(.is-struck) {
-    border-color: var(--accent);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lift);
+    border-color: var(--border);
+    background: var(--surface-muted);
 }
 
 .x-choice:active:not(.is-struck) {
-    transform: translateY(0);
-    box-shadow: var(--shadow-soft);
+    background: var(--surface-strong);
 }
 
+.x-choice.is-selected .x-choice__text,
+.x-choice.is-correct .x-choice__text,
+.x-choice.is-wrong .x-choice__text {
+    color: var(--text-primary);
+    font-weight: var(--weight-medium);
+}
+
+/* Chosen is the one state that earns full weight. */
 .x-choice.is-selected {
     border-color: var(--accent);
     background: var(--accent-soft);
@@ -519,7 +552,7 @@ body.x-focus .f-page {
     background: var(--surface);
     border: 1px solid var(--border);
     font-weight: 700;
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
 }
 
 .x-choice.is-selected .x-choice__letter {
@@ -529,6 +562,8 @@ body.x-focus .f-page {
 }
 
 .x-choice__text {
+    color: var(--text-secondary);
+    font-weight: var(--weight-body);
     flex: 1;
 }
 
@@ -555,7 +590,7 @@ body.x-focus .f-page {
     padding: 0;
     color: var(--text-tertiary);
     font: inherit;
-    font-size: 0.82rem;
+    font-size: var(--text-xs);
     text-decoration: underline;
     cursor: pointer;
 }
@@ -724,12 +759,12 @@ body.x-focus .f-page {
 .x-report__percent {
     grid-area: 1 / 1;
     font-family: var(--font-body);
-    font-size: 2rem;
+    font-size: var(--text-3xl);
     font-weight: 700;
 }
 
 .x-report__line {
-    font-size: 1.05rem;
+    font-size: var(--text-lg);
     margin-bottom: var(--space-5);
 }
 
@@ -758,7 +793,7 @@ body.x-focus .f-page {
     gap: var(--space-2);
     cursor: pointer;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: var(--text-base);
     color: var(--text-secondary);
     list-style-position: inside;
 }
@@ -773,7 +808,7 @@ body.x-focus .f-page {
     border-radius: var(--radius-pill);
     background: var(--warning-soft);
     color: var(--warning);
-    font-size: 0.75rem;
+    font-size: var(--text-2xs);
     font-weight: 700;
 }
 
@@ -839,14 +874,14 @@ body.x-focus .f-page {
 }
 
 .x-stat__value {
-    font-size: 1.5rem;
+    font-size: var(--text-2xl);
     font-weight: 700;
     line-height: 1.2;
     color: var(--text-primary);
 }
 
 .x-stat__label {
-    font-size: 0.8rem;
+    font-size: var(--text-xs);
     color: var(--text-secondary);
 }
 
@@ -876,7 +911,7 @@ body.x-focus .f-page {
     flex: 1;
     text-align: center;
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: var(--text-base);
     color: var(--text-tertiary);
 }
 
@@ -886,7 +921,7 @@ body.x-focus .f-page {
     padding: var(--space-1) var(--space-4);
     border-radius: var(--radius-pill);
     font-weight: 700;
-    font-size: 0.82rem;
+    font-size: var(--text-xs);
 }
 
 .x-verdict.is-success { background: var(--success-soft); color: var(--success); }
@@ -910,7 +945,7 @@ body.x-focus .f-page {
 .x-choice__mark {
     flex: none;
     align-self: center;
-    font-size: 0.78rem;
+    font-size: var(--text-2xs);
     font-weight: 700;
 }
 
@@ -926,7 +961,7 @@ body.x-focus .f-page {
 
 .x-md h4, .x-md h5, .x-md h6 {
     margin: var(--space-4) 0 var(--space-2);
-    font-size: 0.95rem;
+    font-size: var(--text-base);
 }
 
 .x-md p,
@@ -947,13 +982,13 @@ body.x-focus .f-page {
     border-radius: var(--radius-sm);
     background: var(--warning-soft);
     color: var(--text-secondary);
-    font-size: 0.8rem;
+    font-size: var(--text-xs);
 }
 
 .x-review__done {
     margin-top: var(--space-5);
     text-align: center;
-    font-size: 0.9rem;
+    font-size: var(--text-base);
 }
 
 /* ------------------------------------------------------- mode choice */
@@ -984,11 +1019,11 @@ body.x-focus .f-page {
 }
 
 .x-mode strong {
-    font-size: 1.05rem;
+    font-size: var(--text-lg);
 }
 
 .x-mode span {
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
     line-height: 1.7;
 }
 
@@ -1078,8 +1113,7 @@ body.x-focus .f-page {
 .x-choice.x-choice--review:hover,
 .x-choice.is-correct:hover,
 .x-choice.is-wrong:hover {
-    transform: none;
-    box-shadow: var(--shadow-soft);
+    background: inherit;
 }
 
 .x-choice.is-wrong {
@@ -1119,7 +1153,7 @@ body.x-focus .f-page {
     background: var(--surface-muted);
     color: var(--text-secondary);
     font: inherit;
-    font-size: 0.8rem;
+    font-size: var(--text-xs);
     cursor: pointer;
 }
 
@@ -1225,7 +1259,7 @@ body.x-focus .f-page {
     background: var(--surface);
     color: var(--text-tertiary);
     font: inherit;
-    font-size: 0.8rem;
+    font-size: var(--text-xs);
     font-weight: 600;
     cursor: pointer;
     transition:
@@ -1321,7 +1355,7 @@ body.x-focus .f-page {
 
 .x-settings__section h3 {
     margin: 0 0 var(--space-3);
-    font-size: 0.95rem;
+    font-size: var(--text-base);
 }
 
 .x-settings__section-head {
@@ -1349,7 +1383,7 @@ body.x-focus .f-page {
     align-items: center;
     justify-content: space-between;
     margin-bottom: var(--space-2);
-    font-size: 0.9rem;
+    font-size: var(--text-base);
 }
 
 .x-settings__value {
@@ -1380,7 +1414,7 @@ body.x-focus .f-page {
     background: var(--surface-muted);
     color: var(--text-primary);
     font: inherit;
-    font-size: 1.1rem;
+    font-size: var(--text-xl);
     line-height: 1;
     cursor: pointer;
 }
@@ -1405,7 +1439,7 @@ body.x-focus .f-page {
     background: transparent;
     color: var(--text-secondary);
     font: inherit;
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
     font-weight: 600;
     cursor: pointer;
 }
@@ -1482,7 +1516,7 @@ body.x-focus .f-page {
 }
 
 .x-shortcuts__label {
-    font-size: 0.88rem;
+    font-size: var(--text-sm);
 }
 
 .x-shortcuts__key {
@@ -1493,7 +1527,7 @@ body.x-focus .f-page {
     background: var(--surface);
     color: var(--text-primary);
     font: inherit;
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
     font-weight: 700;
     text-align: center;
     cursor: pointer;
@@ -1509,7 +1543,7 @@ body.x-focus .f-page {
     background: transparent;
     color: var(--text-tertiary);
     font: inherit;
-    font-size: 0.8rem;
+    font-size: var(--text-xs);
     cursor: pointer;
 }
 
@@ -1525,5 +1559,149 @@ body.x-focus .f-page {
     .x-shortcuts__clear-slot {
         grid-column: 1 / -1;
         justify-self: end;
+    }
+}
+
+/* ==========================================================================
+   Mobile: a different layout, not a narrower one
+   --------------------------------------------------------------------------
+   See docs/design/exam-launcher-ui.md §9. On a phone the student holds the
+   device one-handed and reads with the screen mostly full of question, so
+   navigation moves to a fixed bar within thumb reach and the card goes
+   nearly full-bleed. Nothing is hidden -- it moves.
+   ========================================================================== */
+
+@media (max-width: 720px) {
+    /* Full-bleed card. At this width a 20px gutter on each side costs a tenth
+       of the line, and Persian at reading size needs the measure. */
+    body.x-focus .f-page {
+        padding-inline: var(--space-2);
+        /* Clear the fixed bar plus the phone's own home indicator. */
+        padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .x-question__card {
+        border-radius: var(--radius-md);
+    }
+
+    .x-question__head,
+    .x-question__meta,
+    .x-question__prompt,
+    .x-choices,
+    .x-question__foot,
+    .x-study,
+    .x-revealed {
+        padding-inline: var(--space-4);
+    }
+
+    /* Two columns of facts survive the phone, as they do on the reference:
+       these are short label/value pairs, and stacking them turns six compact
+       rows into six full-width ones and pushes the stem off the screen. */
+    .x-question__meta {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-2) var(--space-3);
+    }
+
+    .x-meta {
+        font-size: var(--text-xs);
+        gap: var(--space-1);
+    }
+
+    .x-meta__icon {
+        width: 22px;
+        height: 22px;
+    }
+
+    /* The top bar keeps the progress and the timer -- what the student
+       glances at -- and sheds the rest to the fixed bar below. */
+    .x-bar {
+        border-radius: var(--radius-md);
+        margin-inline: 0;
+    }
+
+    /*
+     * The navigation becomes a fixed bar at the bottom of the screen.
+     *
+     * It is the same .x-nav element and the same buttons: on a phone they sit
+     * where the thumb already is, and the student never scrolls a long
+     * clinical stem to the end just to press "next".
+     */
+    .x-nav {
+        position: fixed;
+        inset-inline: 0;
+        bottom: 0;
+        z-index: 30;
+        margin: 0;
+        padding: var(--space-2) var(--space-3);
+        padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        /* Upward, because this bar sits above the content it shadows. */
+        box-shadow: 0 -10px 24px -18px rgba(19, 52, 120, 0.35);
+    }
+
+    .x-nav .f-btn {
+        min-height: 46px;
+    }
+
+    /* Tapping a choice must not feel like tapping a link: the whole row is
+       the target, and it should be comfortably tall on a phone. */
+    .x-choice {
+        min-height: 60px;
+    }
+
+    .x-study__actions .f-btn {
+        flex: 1;
+    }
+}
+
+/* Between phone and the width where the rail appears, the card still wants
+   its breathing room back. */
+@media (min-width: 721px) and (max-width: 900px) {
+    .x-question__meta {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* ------------------------------------------------- per-question statistics */
+
+/*
+ * A titled section rather than more loose rows: a heading is what tells the
+ * student these four numbers are about *this question* and not about the
+ * paper. See docs/design/exam-launcher-ui.md §5.
+ */
+.x-qstats {
+    padding-inline: var(--space-5);
+    padding-block: var(--space-4);
+    border-top: 1px solid var(--border);
+    background: var(--surface-muted);
+}
+
+.x-qstats__title {
+    margin: 0 0 var(--space-3);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-strong);
+    color: var(--text-secondary);
+}
+
+.x-qstats__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-2) var(--space-5);
+}
+
+.x-qstats__note {
+    margin: var(--space-3) 0 0;
+    color: var(--text-tertiary);
+}
+
+@media (max-width: 720px) {
+    .x-qstats {
+        padding-inline: var(--space-4);
+    }
+
+    .x-qstats__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-2) var(--space-3);
     }
 }
