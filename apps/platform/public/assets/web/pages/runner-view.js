@@ -379,16 +379,16 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
             onShowExplanation: actions.showExplanation,
         }) : null);
 
-    // Empty gutters flank the card: اسکرول عمودی کنار سؤال. There is nothing
-    // else to scroll in them, so a vertical wheel there always navigates --
-    // CSS hides them below the width where there is no real margin to put
-    // them in.
-    const marginStart = el('div', { className: 'x-question__margin', attrs: { 'aria-hidden': 'true' }, on: { wheel: actions.marginWheel } });
+    // The end gutter stays empty: اسکرول عمودی کنار سؤال. There is nothing
+    // else to scroll in it, so a vertical wheel there always navigates --
+    // CSS hides it below the width where there is no real margin to put it
+    // in. The start gutter is now the rail, which scrolls itself, so the
+    // wheel binding cannot live there without the two fighting.
     const marginEnd = el('div', { className: 'x-question__margin', attrs: { 'aria-hidden': 'true' }, on: { wheel: actions.marginWheel } });
 
     return el('div', { className: 'x-question' },
         renderTopBar(state, saveStatus, actions),
-        el('div', { className: 'x-question__stage' }, marginStart, card, marginEnd),
+        el('div', { className: 'x-question__stage' }, renderRail(state, actions), card, marginEnd),
         el('nav', { className: 'x-nav', attrs: { 'aria-label': 'پیمایش سؤال‌ها' } },
             el('button', {
                 className: 'f-btn f-btn--ghost', type: 'button', text: '→ قبلی',
@@ -431,6 +431,51 @@ function renderReveal(reveal, question, chosen, { explanationVisible = true, onS
         el('p', { className: 'x-revealed__head', text: verdict }),
         explanationBody,
         el('p', { className: 'f-tiny', text: 'این سؤال در کارنامه به‌عنوان «پاسخ دیده‌شده» علامت می‌خورد.' }));
+}
+
+/*
+ * The question rail: every question, always visible beside the card.
+ *
+ * This replaces an empty 44px gutter that existed only to catch a wheel
+ * event. The whole paper was otherwise reachable only through a dialog, so
+ * the runner read as one card floating alone -- a student could not see how
+ * far along they were without opening something.
+ *
+ * It deliberately shows *every* question rather than obeying state.filter:
+ * the filter belongs to the map, where the student went looking for a subset
+ * on purpose. A rail that silently hid questions would make the paper look
+ * shorter than it is, which is the one thing a progress surface must never
+ * do. Answered/flagged/current come from the same state helpers the map
+ * uses, so the two can never disagree about a question.
+ */
+function renderRail(state, actions) {
+    const rail = el('nav', { className: 'x-rail', attrs: { 'aria-label': 'فهرست سؤال‌ها' } });
+    const list = el('ol', { className: 'x-rail__list' });
+
+    for (let position = 1; position <= state.questionCount; position += 1) {
+        const answered = isAnswered(state, position);
+        const flagged = isFlagged(state, position);
+        const current = position === state.position;
+        const classes = ['x-rail__pill'];
+        if (answered) classes.push('is-answered');
+        if (flagged) classes.push('is-flagged');
+        if (current) classes.push('is-current');
+
+        list.append(el('li', {},
+            el('button', {
+                className: classes.join(' '),
+                type: 'button',
+                text: faDigits(position),
+                attrs: {
+                    'aria-label': `سؤال ${faDigits(position)}، ${answered ? 'پاسخ‌داده‌شده' : 'بی‌پاسخ'}${flagged ? '، نشان‌دار' : ''}`,
+                    'aria-current': current ? 'true' : null,
+                },
+                on: { click: () => actions.goTo(position) },
+            })));
+    }
+
+    rail.append(list);
+    return rail;
 }
 
 /** The question map: a grid of every question with its state. */
