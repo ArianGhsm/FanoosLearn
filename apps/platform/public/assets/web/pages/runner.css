@@ -879,14 +879,119 @@ body.x-focus .f-page {
 
 /* اسکرول عمودی کنار سؤال: an empty gutter with nothing of its own to
    scroll, so a vertical wheel there navigates instead of doing nothing.
-   Hidden where there is no real margin to place it in. */
+   Hidden where there is no real margin to place it in. Only the end gutter
+   is empty now -- the start one is the rail, which scrolls itself. */
 .x-question__margin {
     flex: none;
     width: 44px;
 }
 
+/* ------------------------------------------------------------------- rail */
+
+/*
+ * Every question, always beside the card. Sticky so it stays put while the
+ * student scrolls a long clinical stem, and scrollable on its own so a
+ * forty-question paper does not stretch the page.
+ */
+.x-rail {
+    flex: none;
+    width: 52px;
+    position: sticky;
+    top: calc(var(--header-height) + var(--space-4));
+    align-self: start;
+    max-height: calc(100vh - var(--header-height) - var(--space-7));
+    overflow-y: auto;
+    /* The rail is beside a long clinical stem: reaching its end must not
+       start scrolling the page out from under the student. */
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+}
+
+.x-rail::-webkit-scrollbar {
+    width: 4px;
+}
+
+.x-rail::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: var(--radius-pill);
+}
+
+.x-rail::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.x-rail__list {
+    list-style: none;
+    margin: 0;
+    padding: var(--space-1) var(--space-1) var(--space-1) 0;
+    display: grid;
+    gap: var(--space-1);
+}
+
+.x-rail__pill {
+    width: 100%;
+    min-height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text-tertiary);
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background var(--motion-fast) var(--ease),
+        border-color var(--motion-fast) var(--ease),
+        color var(--motion-fast) var(--ease),
+        box-shadow var(--motion-base) var(--ease),
+        transform var(--motion-fast) var(--ease);
+}
+
+.x-rail__pill:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+    transform: translateX(-2px);
+}
+
+/* Answered reads as filled-in rather than merely coloured -- at this size a
+   border tint is not legible, and the whole point of the rail is being
+   readable out of the corner of the eye. */
+.x-rail__pill.is-answered {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--text-primary);
+}
+
+.x-rail__pill.is-current {
+    background: var(--accent-gradient);
+    border-color: var(--accent);
+    color: var(--text-on-accent);
+    box-shadow: var(--shadow-accent);
+}
+
+/* Flagged is a marker, not a colour: a student can flag a question they have
+   also answered, so the two states have to be readable at the same time. */
+.x-rail__pill.is-flagged::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    inset-inline-end: 3px;
+    width: 6px;
+    height: 6px;
+    border-radius: var(--radius-pill);
+    background: var(--warning);
+}
+
 @media (max-width: 900px) {
-    .x-question__margin {
+    /* No real margin to put either in; the map dialog covers this width. */
+    .x-question__margin,
+    .x-rail {
         display: none;
     }
 }

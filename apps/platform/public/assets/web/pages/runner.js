@@ -90,6 +90,18 @@ function draw() {
         const panel = root.querySelector('.x-dialog');
         if (panel) panel.focus({ preventScroll: true });
     }
+
+    // draw() rebuilds the whole tree, so the rail's scroll position is gone
+    // every time -- on a forty-question paper it would sit at question one
+    // while the student worked in the thirties. Bring the current pill back
+    // into view, scrolling only the rail itself: `block: 'nearest'` leaves it
+    // alone when the pill is already visible, and preventing the page from
+    // scrolling matters because the rail is sticky beside a card the student
+    // may have scrolled down inside.
+    const currentPill = root.querySelector('.x-rail__pill.is-current');
+    if (currentPill && typeof currentPill.scrollIntoView === 'function') {
+        currentPill.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
 }
 
 function loading(message) {
