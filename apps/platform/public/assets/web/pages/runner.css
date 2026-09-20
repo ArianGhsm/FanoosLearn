@@ -310,16 +310,33 @@ body.x-focus .f-page {
     line-height: 1.8;
     text-align: start;
     cursor: pointer;
-    transition: border-color 0.15s ease, background 0.15s ease;
+    box-shadow: var(--shadow-soft);
+    transition:
+        border-color var(--motion-fast) var(--ease),
+        background var(--motion-fast) var(--ease),
+        box-shadow var(--motion-base) var(--ease),
+        transform var(--motion-fast) var(--ease);
 }
 
+/* A choice rises toward the pointer and settles when chosen. This is the
+ * surface a student looks at for two hours, so it is the one that most needs
+ * to answer back -- a border that merely changes colour reads as a static
+ * diagram of a question rather than something being answered. */
 .x-choice:hover:not(.is-struck) {
     border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift);
+}
+
+.x-choice:active:not(.is-struck) {
+    transform: translateY(0);
+    box-shadow: var(--shadow-soft);
 }
 
 .x-choice.is-selected {
     border-color: var(--accent);
     background: var(--accent-soft);
+    box-shadow: var(--shadow-accent);
 }
 
 .x-choice.is-struck {
@@ -346,7 +363,7 @@ body.x-focus .f-page {
 }
 
 .x-choice.is-selected .x-choice__letter {
-    background: var(--accent);
+    background: var(--accent-gradient);
     border-color: var(--accent);
     color: var(--text-on-accent);
 }
@@ -711,16 +728,40 @@ body.x-focus .f-page {
     margin-inline-start: auto;
 }
 
+/*
+ * The moment the verdict lands is the only genuinely emotional beat in the
+ * runner, and it used to happen with no acknowledgement at all -- colours
+ * simply were different on the next paint. These two are deliberately
+ * asymmetric: being right settles upward and is over quickly; being wrong
+ * does not shake, flash or scold, it just arrives. A student in حالت تمرین
+ * sees this several hundred times an evening, and anything that punishes
+ * gets exhausting long before it gets motivating.
+ *
+ * base.css collapses both to nothing under prefers-reduced-motion.
+ */
+@keyframes x-verdict-right {
+    from { transform: scale(0.985); }
+    60%  { transform: scale(1.012); }
+    to   { transform: scale(1); }
+}
+
+@keyframes x-verdict-wrong {
+    from { opacity: 0.45; }
+    to   { opacity: 1; }
+}
+
 /* The revealed correct choice, marked in place while answering. */
 .x-choice.is-correct {
     border-color: var(--success);
     background: var(--success-soft);
+    animation: x-verdict-right var(--motion-base) var(--ease);
 }
 
 .x-revealed {
     margin-top: var(--space-5);
     padding-top: var(--space-4);
     border-top: 2px dashed var(--border-strong);
+    animation: x-verdict-right var(--motion-base) var(--ease);
 }
 
 .x-revealed__head {
@@ -735,16 +776,33 @@ body.x-focus .f-page {
     color: var(--text-secondary);
 }
 
-/* A revealed question is settled: the pointer no longer invites a change. */
+/* A revealed question is settled: the pointer no longer invites a change.
+ * The lift has to be withdrawn here too, not only the cursor -- a choice that
+ * still rises under the pointer is offering something the runner will refuse,
+ * which is worse than no feedback at all. Same selector list as the cursor
+ * rule on purpose: these are one statement about what "settled" means. */
 .x-revealed ~ * .x-choice,
+.x-choice--review,
 .x-choice.is-correct,
 .x-choice.is-wrong {
     cursor: default;
 }
 
+/* `.x-choice` is repeated in the review selector so all four match the lift
+ * rule's specificity (0,3,0) and win on source order -- written as
+ * `.x-choice--review:hover` alone it would be one class short and lose. */
+.x-revealed ~ * .x-choice:hover,
+.x-choice.x-choice--review:hover,
+.x-choice.is-correct:hover,
+.x-choice.is-wrong:hover {
+    transform: none;
+    box-shadow: var(--shadow-soft);
+}
+
 .x-choice.is-wrong {
     border-color: var(--danger);
     background: var(--danger-soft);
+    animation: x-verdict-wrong var(--motion-base) var(--ease);
 }
 
 .x-revealed.is-right .x-revealed__head {

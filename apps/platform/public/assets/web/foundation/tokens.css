@@ -44,8 +44,47 @@
     --border-strong: rgba(102, 122, 148, 0.34);
 
     --focus-ring: rgba(43, 109, 243, 0.35);
-    --shadow-soft: 0 16px 40px -30px rgba(19, 35, 62, 0.22);
-    --shadow-strong: 0 22px 50px -34px rgba(17, 30, 54, 0.28);
+
+    /*
+     * Shadows are tinted toward the accent rather than neutral grey, and the
+     * blur is allowed to actually show. The previous values were grey at 0.22
+     * alpha with a -30px spread, which on a light ground is invisible: nothing
+     * on the page appeared to sit *above* anything else, and the whole site
+     * read as flat. A shadow that cannot be seen is not restraint, it is a
+     * shadow that is not there.
+     */
+    /* The negative spread is the number that matters. At -28px on a 38px blur
+     * almost nothing reaches the page, which is how the first attempt at this
+     * still looked flat next to the old values despite tripling the alpha. */
+    --shadow-soft: 0 14px 30px -18px rgba(19, 52, 120, 0.30);
+    --shadow-strong: 0 22px 40px -20px rgba(19, 52, 120, 0.38);
+    /* For a surface that has lifted under the pointer. */
+    --shadow-lift: 0 18px 30px -16px rgba(43, 109, 243, 0.45);
+    /* For a surface that is itself accent-coloured, so the shadow it casts is its own colour. */
+    --shadow-accent: 0 14px 24px -14px rgba(43, 109, 243, 0.50);
+
+    /* Accent surfaces are a gradient, not a flat fill -- the cheapest way for
+     * a primary action to look lit from somewhere rather than painted on. */
+    --accent-gradient: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+
+    /*
+     * Light placed in the page, rather than one flat body colour. Three soft
+     * pools at fixed points read as a room with windows; the page beneath them
+     * stays calm enough to read a clinical stem on for two hours.
+     */
+    --aura-1: rgba(43, 109, 243, 0.16);
+    --aura-2: rgba(43, 109, 243, 0.11);
+    --aura-3: rgba(56, 189, 248, 0.10);
+
+    /*
+     * Motion vocabulary. There was none: the site had one animation in two
+     * thousand lines, so nothing ever acknowledged being touched. Durations
+     * stay short -- this is feedback, not decoration -- and base.css already
+     * collapses all of it under prefers-reduced-motion.
+     */
+    --ease: cubic-bezier(0.2, 0.8, 0.3, 1);
+    --motion-fast: 120ms;
+    --motion-base: 200ms;
 
     --radius-sm: 8px;
     --radius-md: 14px;
@@ -102,8 +141,21 @@
         --border-strong: rgba(170, 190, 215, 0.3);
 
         --focus-ring: rgba(91, 145, 255, 0.45);
-        --shadow-soft: 0 16px 40px -30px rgba(0, 0, 0, 0.7);
-        --shadow-strong: 0 22px 50px -34px rgba(0, 0, 0, 0.8);
+
+        /* Kept byte-for-byte in step with the :root[data-theme="dark"] block
+         * below. A value that lands in only one of the two is not a missing
+         * colour -- it silently inherits the *light* value, so the bug shows
+         * up only for a viewer on system-dark who never touched the toggle. */
+        --shadow-soft: 0 18px 38px -26px rgba(0, 0, 0, 0.75);
+        --shadow-strong: 0 24px 48px -24px rgba(0, 0, 0, 0.85);
+        --shadow-lift: 0 20px 34px -20px rgba(91, 145, 255, 0.4);
+        --shadow-accent: 0 16px 28px -16px rgba(91, 145, 255, 0.45);
+
+        --accent-gradient: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+
+        --aura-1: rgba(91, 145, 255, 0.16);
+        --aura-2: rgba(50, 130, 255, 0.12);
+        --aura-3: rgba(56, 189, 248, 0.08);
     }
 }
 
@@ -138,6 +190,18 @@
     --border-strong: rgba(170, 190, 215, 0.3);
 
     --focus-ring: rgba(91, 145, 255, 0.45);
-    --shadow-soft: 0 16px 40px -30px rgba(0, 0, 0, 0.7);
-    --shadow-strong: 0 22px 50px -34px rgba(0, 0, 0, 0.8);
+
+    /* On a dark ground the depth has to come from black, but anything the
+     * accent colours still casts its own light -- so lift and accent stay
+     * blue while the ambient shadows go deeper. */
+    --shadow-soft: 0 18px 38px -26px rgba(0, 0, 0, 0.75);
+    --shadow-strong: 0 24px 48px -24px rgba(0, 0, 0, 0.85);
+    --shadow-lift: 0 20px 34px -20px rgba(91, 145, 255, 0.4);
+    --shadow-accent: 0 16px 28px -16px rgba(91, 145, 255, 0.45);
+
+    --accent-gradient: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+
+    --aura-1: rgba(91, 145, 255, 0.16);
+    --aura-2: rgba(50, 130, 255, 0.12);
+    --aura-3: rgba(56, 189, 248, 0.08);
 }
