@@ -21,7 +21,13 @@ body {
     font-size: 15px;
     line-height: 1.75;
     color: var(--text-primary);
+    /* Three light pools at fixed points, over the vertical wash. Placed rather
+     * than centred: a single symmetrical glow reads as a gradient, three
+     * off-centre ones read as light coming from somewhere. */
     background:
+        radial-gradient(circle at 12% 8%, var(--aura-1), transparent 26%),
+        radial-gradient(circle at 88% 12%, var(--aura-2), transparent 20%),
+        radial-gradient(circle at 52% 62%, var(--aura-3), transparent 34%),
         radial-gradient(120% 80% at 50% 0%, var(--bg-aura-start), transparent 60%),
         linear-gradient(180deg, var(--bg-aura-end), var(--bg-body) 40%);
     background-attachment: fixed;
@@ -125,12 +131,23 @@ img {
     cursor: pointer;
     background: var(--surface-strong);
     color: var(--text-primary);
-    transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+    transition:
+        background var(--motion-fast) var(--ease),
+        border-color var(--motion-fast) var(--ease),
+        box-shadow var(--motion-base) var(--ease),
+        transform var(--motion-fast) var(--ease),
+        opacity var(--motion-fast) var(--ease);
 }
 
 .f-btn:hover:not(:disabled) {
     background: var(--surface-inset);
     text-decoration: none;
+}
+
+/* A button that acknowledges being pressed. One pixel is enough -- the point
+ * is that something happened, not that it moved. */
+.f-btn:active:not(:disabled) {
+    transform: translateY(1px);
 }
 
 .f-btn:disabled,
@@ -140,12 +157,24 @@ img {
 }
 
 .f-btn--primary {
-    background: var(--accent);
+    background: var(--accent-gradient);
     color: var(--text-on-accent);
+    box-shadow: var(--shadow-accent);
 }
 
 .f-btn--primary:hover:not(:disabled) {
-    background: var(--accent-strong);
+    background: var(--accent-gradient);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lift);
+}
+
+/* A press always happens while hovering, and `.f-btn--primary:hover` above
+ * has the same specificity as the generic `.f-btn:active` lift -- so without
+ * restating the transform here, source order would let hover win and a primary
+ * button would never appear to depress. */
+.f-btn--primary:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: var(--shadow-accent);
 }
 
 .f-btn--ghost {
