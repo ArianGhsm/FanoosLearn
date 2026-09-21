@@ -130,6 +130,9 @@ const ICONS = {
     repeat: 'M4 9a5 5 0 015-5h11M20 15a5 5 0 01-5 5H4M17 1l3 3-3 3M7 17l-3 3 3 3',
     check: 'M4 12l5 5L20 6',
     calendar: 'M4 6h16v15H4zM4 10h16M9 3v4M15 3v4',
+    // RTL: forward is leftward, so "next" points left and "previous" right.
+    next: 'M15 5l-7 7 7 7',
+    previous: 'M9 5l7 7-7 7',
 };
 
 export function icon(name, { filled = false } = {}) {
@@ -275,6 +278,17 @@ function renderTopBar(state, saveStatus, actions) {
     const percent = progressPercent(state);
     const remaining = remainingSeconds(state);
     return el('div', { className: 'x-bar' },
+        el('div', { className: 'x-bar__step', attrs: { role: 'group', 'aria-label': 'پیمایش سؤال‌ها' } },
+            el('button', {
+                className: 'x-bar__nav', type: 'button',
+                attrs: { disabled: state.position <= 1, 'aria-label': 'سؤال قبلی', title: 'سؤال قبلی' },
+                on: { click: actions.previous },
+            }, icon('previous')),
+            el('button', {
+                className: 'x-bar__nav', type: 'button',
+                attrs: { disabled: state.position >= state.questionCount, 'aria-label': 'سؤال بعدی', title: 'سؤال بعدی' },
+                on: { click: actions.next },
+            }, icon('next'))),
         el('button', {
             className: 'x-bar__map', type: 'button',
             attrs: { 'aria-label': 'نقشه سؤال‌ها' },
@@ -409,12 +423,11 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
     return el('div', { className: 'x-question' },
         renderTopBar(state, saveStatus, actions),
         el('div', { className: 'x-question__stage' }, renderRail(state, actions), card, marginEnd),
-        el('nav', { className: 'x-nav', attrs: { 'aria-label': 'پیمایش سؤال‌ها' } },
-            el('button', {
-                className: 'f-btn f-btn--ghost', type: 'button', text: '→ قبلی',
-                attrs: { disabled: position <= 1 },
-                on: { click: actions.previous },
-            }),
+        // Stepping between questions lives in the sticky bar now -- the owner
+        // found it wrong that moving to the next question meant scrolling a
+        // long clinical stem to its end first. What is left here is not
+        // stepping: jumping to the first gap, and finishing.
+        el('nav', { className: 'x-nav', attrs: { 'aria-label': 'پایان آزمون' } },
             el('button', {
                 className: 'f-btn f-btn--ghost x-nav__gap', type: 'button', text: 'اولین بی‌پاسخ',
                 attrs: { disabled: unansweredPositions(state).length === 0 },
