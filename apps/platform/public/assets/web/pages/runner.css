@@ -246,17 +246,6 @@ body.x-focus .f-page {
     overflow: hidden;
 }
 
-/* A hairline of accent along the top edge. One line is enough to stop the
-   card reading as an undifferentiated rectangle, and it costs no space. */
-.x-question__card::before {
-    content: '';
-    position: absolute;
-    inset-inline: 0;
-    top: 0;
-    height: 3px;
-    background: var(--accent-gradient);
-}
-
 /* Every section shares one inline padding so their edges line up down the
    card; only the vertical rhythm differs. */
 .x-question__head,
@@ -521,8 +510,7 @@ body.x-focus .f-page {
 .x-choice.is-selected .x-choice__text,
 .x-choice.is-correct .x-choice__text,
 .x-choice.is-wrong .x-choice__text {
-    color: var(--text-primary);
-    font-weight: var(--weight-medium);
+    opacity: 1;
 }
 
 /* Chosen is the one state that earns full weight. */
@@ -562,8 +550,11 @@ body.x-focus .f-page {
 }
 
 .x-choice__text {
-    color: var(--text-secondary);
+    /* Near-primary, not secondary: an option a student is reading should not
+       be dimmer than one they have picked by more than a shade. */
+    color: var(--text-primary);
     font-weight: var(--weight-body);
+    opacity: 0.86;
     flex: 1;
 }
 
@@ -611,9 +602,13 @@ body.x-focus .f-page {
     flex: 0 0 auto;
 }
 
+/* "اولین بی‌پاسخ" used to be dropped on small screens because the row also
+   held prev/next and three buttons did not fit. Stepping has moved to the
+   sticky bar, so there is room -- and this is now the only way to reach the
+   first gap without opening the map. */
 @media (max-width: 480px) {
     .x-nav__gap {
-        display: none;
+        flex: 1;
     }
 }
 
@@ -1210,9 +1205,19 @@ body.x-focus .f-page {
  * student scrolls a long clinical stem, and scrollable on its own so a
  * forty-question paper does not stretch the page.
  */
+/*
+ * One column, one surface.
+ *
+ * The first version was forty bordered boxes floating on the page ground:
+ * forty separate objects, each with its own outline, which is a lot of
+ * drawing for what is really one control. It now reads as a single inset
+ * strip with markers inside it -- the container carries the frame, the
+ * pills carry only their state, and the ground behind them belongs to the
+ * rail rather than showing through it.
+ */
 .x-rail {
     flex: none;
-    width: 52px;
+    width: 46px;
     position: sticky;
     top: calc(var(--header-height) + var(--space-4));
     align-self: start;
@@ -1221,75 +1226,69 @@ body.x-focus .f-page {
     /* The rail is beside a long clinical stem: reaching its end must not
        start scrolling the page out from under the student. */
     overscroll-behavior: contain;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-strong) transparent;
-}
-
-.x-rail::-webkit-scrollbar {
-    width: 4px;
-}
-
-.x-rail::-webkit-scrollbar-thumb {
-    background: var(--border-strong);
+    padding: var(--space-2) 0;
     border-radius: var(--radius-pill);
+    background: var(--surface-muted);
+    border: 1px solid var(--border);
+    scrollbar-width: none;
 }
 
-.x-rail::-webkit-scrollbar-track {
-    background: transparent;
+/* No scrollbar at this width: a 4px track inside a 46px strip is most of a
+   digit's worth of the pill, and the rail scrolls itself to the current
+   question anyway. */
+.x-rail::-webkit-scrollbar {
+    width: 0;
+    height: 0;
 }
 
 .x-rail__list {
     list-style: none;
     margin: 0;
-    padding: var(--space-1) var(--space-1) var(--space-1) 0;
+    padding: 0;
     display: grid;
-    gap: var(--space-1);
+    justify-items: center;
+    gap: 2px;
 }
 
 .x-rail__pill {
-    width: 100%;
-    min-height: 30px;
+    width: 30px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
     padding: 0;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
     color: var(--text-tertiary);
     font: inherit;
-    font-size: var(--text-xs);
-    font-weight: 600;
+    font-size: var(--text-2xs);
+    font-weight: var(--weight-medium);
     cursor: pointer;
     transition:
         background var(--motion-fast) var(--ease),
-        border-color var(--motion-fast) var(--ease),
         color var(--motion-fast) var(--ease),
-        box-shadow var(--motion-base) var(--ease),
         transform var(--motion-fast) var(--ease);
 }
 
 .x-rail__pill:hover {
-    border-color: var(--accent);
+    background: var(--surface-strong);
     color: var(--text-primary);
-    transform: translateX(-2px);
 }
 
-/* Answered reads as filled-in rather than merely coloured -- at this size a
-   border tint is not legible, and the whole point of the rail is being
-   readable out of the corner of the eye. */
+/* Answered is a filled dot behind the number rather than an outline: at
+   30px an outline is mostly the outline. */
 .x-rail__pill.is-answered {
     background: var(--accent-soft);
-    border-color: var(--accent);
     color: var(--text-primary);
 }
 
 .x-rail__pill.is-current {
-    background: var(--accent-gradient);
-    border-color: var(--accent);
+    background: var(--accent);
     color: var(--text-on-accent);
-    box-shadow: var(--shadow-accent);
+    font-weight: var(--weight-strong);
+    transform: scale(1.06);
 }
 
 /* Flagged is a marker, not a colour: a student can flag a question they have
@@ -1297,12 +1296,48 @@ body.x-focus .f-page {
 .x-rail__pill.is-flagged::after {
     content: '';
     position: absolute;
-    top: 3px;
-    inset-inline-end: 3px;
-    width: 6px;
-    height: 6px;
+    top: 2px;
+    inset-inline-end: 2px;
+    width: 5px;
+    height: 5px;
     border-radius: var(--radius-pill);
     background: var(--warning);
+}
+
+/* ------------------------------------------------- stepping, in the bar */
+
+.x-bar__step {
+    display: inline-flex;
+    gap: 2px;
+    flex: none;
+}
+
+.x-bar__nav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    background: var(--surface-muted);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition:
+        background var(--motion-fast) var(--ease),
+        border-color var(--motion-fast) var(--ease),
+        opacity var(--motion-fast) var(--ease);
+}
+
+.x-bar__nav:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: var(--surface);
+}
+
+.x-bar__nav:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 @media (max-width: 900px) {
@@ -1612,11 +1647,50 @@ body.x-focus .f-page {
         height: 22px;
     }
 
-    /* The top bar keeps the progress and the timer -- what the student
-       glances at -- and sheds the rest to the fixed bar below. */
+    /*
+     * The bar now carries stepping as well, and at 375px it was overflowing:
+     * the progress track collapsed to nothing and خروج ran off the edge.
+     * Labels go, icons stay -- every control is still here, and every one of
+     * them is still a 38px target.
+     */
     .x-bar {
         border-radius: var(--radius-md);
         margin-inline: 0;
+        gap: var(--space-2);
+        padding-inline: var(--space-2);
+    }
+
+    .x-bar__map span {
+        /* Not display:none -- the label is what a screen reader reads out.
+           The timer's span is deliberately NOT in this rule: it holds the
+           remaining time itself, not a label for it. */
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    .x-bar__map {
+        width: 38px;
+        padding: 0;
+        justify-content: center;
+    }
+
+    .x-bar__timer {
+        padding-inline: var(--space-2);
+    }
+
+    /* Keeps the track from being squeezed out of existence by its siblings. */
+    .x-bar__progress {
+        min-width: 48px;
+    }
+
+    .x-bar__leave {
+        min-height: 38px;
+        padding-inline: var(--space-3);
+        font-size: var(--text-xs);
     }
 
     /*
