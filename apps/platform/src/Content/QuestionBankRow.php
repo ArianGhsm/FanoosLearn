@@ -22,6 +22,7 @@ final class QuestionBankRow
     public const SKIP_TOO_FEW_OPTIONS = 'too_few_options';
     public const SKIP_AMBIGUOUS_ANSWER = 'ambiguous_answer';
     public const SKIP_NEEDS_IMAGE = 'needs_image';
+    public const SKIP_BLANK_ANSWER = 'blank_answer';
 
     private const PERSIAN_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
 
@@ -51,30 +52,51 @@ final class QuestionBankRow
             return ['skip' => self::SKIP_NEEDS_IMAGE];
         }
 
-        $options = array_values(array_filter((array) ($row['options'] ?? []), 'is_array'));
-        if (count($options) < 2) {
-            return ['skip' => self::SKIP_TOO_FEW_OPTIONS];
-        }
-
         $correctIds = array_values(array_filter((array) ($row['correct_option_ids'] ?? [])));
         if (count($correctIds) !== 1) {
             // No answer, or several: neither can be scored against a
             // single-choice model without inventing a verdict.
             return ['skip' => self::SKIP_AMBIGUOUS_ANSWER];
         }
+        $correctId = (string) $correctIds[0];
+
+        $options = array_values(array_filter((array) ($row['options'] ?? []), 'is_array'));
         $optionIds = array_map(static fn (array $option): string => (string) ($option['id'] ?? ''), $options);
-        $answerIndex = array_search((string) $correctIds[0], $optionIds, true);
-        if ($answerIndex === false) {
+        if (!in_array($correctId, $optionIds, true)) {
             return ['skip' => self::SKIP_AMBIGUOUS_ANSWER];
         }
+
+        // Options whose text is empty once the letter prefix is gone. The
+        // export has two kinds: a trailing blank slot the extractor left
+        // behind (an empty «ه» on a four-option question), which is safe to
+        // drop; and a question whose options are nothing but their letters,
+        // because the real choices were never extracted. ExamService refuses
+        // an empty choice -- and refuses the whole assessment with it, so one
+        // such row used to cost an entire past exam.
+        $kept = [];
+        foreach ($options as $option) {
+            $text = self::stripLeadingLetter((string) ($option['text'] ?? ''));
+            if ($text === '') {
+                if ((string) ($option['id'] ?? '') === $correctId) {
+                    // The right answer has no text: there is nothing for the
+                    // student to choose.
+                    return ['skip' => self::SKIP_BLANK_ANSWER];
+                }
+                continue;
+            }
+            $kept[] = ['id' => (string) ($option['id'] ?? ''), 'text' => $text];
+        }
+        if (count($kept) < 2) {
+            return ['skip' => self::SKIP_TOO_FEW_OPTIONS];
+        }
+        // Recomputed after dropping blanks: a blank before the answer shifts
+        // its position, and a stale index would mark the wrong option right.
+        $answerIndex = array_search($correctId, array_column($kept, 'id'), true);
 
         $question = [
             'id' => 'q' . substr(str_replace('-', '', (string) ($row['id'] ?? '')), 0, 32),
             'prompt' => trim((string) ($row['question'] ?? '')),
-            'choices' => array_map(
-                static fn (array $option): string => self::stripLeadingLetter((string) ($option['text'] ?? '')),
-                $options,
-            ),
+            'choices' => array_column($kept, 'text'),
             'answer' => (int) $answerIndex,
         ];
 
