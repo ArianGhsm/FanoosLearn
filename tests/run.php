@@ -30,6 +30,7 @@ use Fanoos\Tests\Integration\BotPlatformHandoffTest;
 use Fanoos\Tests\Integration\ProtectedMediaForensicTest;
 use Fanoos\Tests\Integration\Stage8FinalClosureTest;
 use Fanoos\Tests\Operations\BackupContractTest;
+use Fanoos\Tests\Operations\QuestionBankRowTest;
 use Fanoos\Tests\Operations\GitHubCiVerifierContractTest;
 use Fanoos\Tests\Operations\OwnerBootstrapTest;
 use Fanoos\Tests\Schema\SchemaContractTest;
@@ -57,6 +58,8 @@ try {
     echo "PASS storage security contracts\n";
     $assertions += (new BackupContractTest())->run();
     echo "PASS backup integrity contracts\n";
+    $assertions += (new QuestionBankRowTest())->run();
+    echo "PASS question bank row mapping\n";
     $assertions += (new GitHubCiVerifierContractTest())->run();
     echo "PASS GitHub Actions CI verifier contracts\n";
     $assertions += (new WebRenderingTest($root))->run();

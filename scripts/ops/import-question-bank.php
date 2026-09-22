@@ -8,6 +8,7 @@ use Fanoos\Platform\Authorization\ScopeAuthorizer;
 use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Content\ExamQuestionRateGuard;
 use Fanoos\Platform\Content\ExamService;
+use Fanoos\Platform\Content\QuestionBankRow;
 use Fanoos\Platform\Support\DatabaseConnection;
 
 /**
@@ -31,9 +32,9 @@ use Fanoos\Platform\Support\DatabaseConnection;
  * separation is worth honouring for an import too -- it is the only check
  * standing between a bad bank and a published one.
  *
- * A row is skipped, and counted, when it cannot be scored or rendered:
- * a non-multiple-choice question, a deleted one, a missing or ambiguous
- * answer key, or fewer than two options. Importing an unscorable question
+ * A row is skipped, and counted, when it cannot be scored or rendered --
+ * see Fanoos\Platform\Content\QuestionBankRow, which holds those rules for
+ * this importer and the bulk one alike. Importing an unscorable question
  * would mark a student wrong for a question that has no right answer.
  */
 
@@ -60,15 +61,6 @@ function argument(string $name, ?string $default = null): ?string
     return $default;
 }
 
-/**
- * Option text often already carries its own letter prefix ("الف) ..."), and
- * the interface supplies the letter itself. Left in, every choice renders
- * with two letters.
- */
-function stripLeadingLetter(string $text): string
-{
-    return trim(preg_replace('/^\s*(?:الف|ب|ج|د|ه|[A-Ea-e]|[۱-۵1-5])\s*[).\-]\s*/u', '', $text) ?? $text);
-}
 
 try {
     $file = (string) argument('file', '');
@@ -101,7 +93,7 @@ try {
         throw new RuntimeException('Export must be a JSON array of questions.');
     }
 
-    $skipped = ['subject' => 0, 'not_multiple_choice' => 0, 'deleted' => 0, 'no_answer_key' => 0, 'too_few_options' => 0, 'ambiguous_answer' => 0];
+    $skipped = ['subject' => 0];
     $questions = [];
 
     foreach ($rows as $row) {
@@ -123,51 +115,15 @@ try {
                 continue;
             }
         }
-        if ((string) ($row['question_type'] ?? '') !== 'multiple_choice') {
-            $skipped['not_multiple_choice']++;
+        $mapped = QuestionBankRow::map($row);
+        if (isset($mapped['skip'])) {
+            $skipped[$mapped['skip']] = ($skipped[$mapped['skip']] ?? 0) + 1;
             continue;
         }
-        if ((string) ($row['answer_status'] ?? '') === 'deleted') {
-            $skipped['deleted']++;
-            continue;
-        }
-        if ((string) ($row['answer_key_status'] ?? '') !== 'valid') {
-            $skipped['no_answer_key']++;
-            continue;
-        }
-        $options = array_values(array_filter((array) ($row['options'] ?? []), 'is_array'));
-        if (count($options) < 2) {
-            $skipped['too_few_options']++;
-            continue;
-        }
-        $correctIds = array_values(array_filter((array) ($row['correct_option_ids'] ?? [])));
-        if (count($correctIds) !== 1) {
-            // A question with no answer, or with several, cannot be scored
-            // against a single-choice model without inventing a verdict.
-            $skipped['ambiguous_answer']++;
-            continue;
-        }
-        $optionIds = array_map(static fn (array $option): string => (string) ($option['id'] ?? ''), $options);
-        $answerIndex = array_search((string) $correctIds[0], $optionIds, true);
-        if ($answerIndex === false) {
-            $skipped['ambiguous_answer']++;
-            continue;
-        }
-
-        $question = [
-            'id' => 'q' . substr(str_replace('-', '', (string) ($row['id'] ?? '')), 0, 32),
-            'prompt' => trim((string) ($row['question'] ?? '')),
-            'choices' => array_map(
-                static fn (array $option): string => stripLeadingLetter((string) ($option['text'] ?? '')),
-                $options,
-            ),
-            'answer' => (int) $answerIndex,
-        ];
-        $explanation = trim((string) ($row['explanation'] ?? '')) ?: trim((string) ($row['ai_explanation_md'] ?? ''));
-        if ($explanation !== '') {
-            $question['explanation'] = mb_substr($explanation, 0, 4000);
-        }
+        $question = $mapped['question'];
         if ($chapter !== '') {
+            // Filtering by chapter means every question here is that chapter,
+            // whatever its first assignment happens to be.
             $question['topic'] = $chapter;
         }
         $questions[] = $question;
