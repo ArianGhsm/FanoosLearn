@@ -139,3 +139,106 @@
     from { background-position: 200% 0; }
     to { background-position: -200% 0; }
 }
+
+/* ------------------------------------------------------------ course index */
+
+/*
+ * The catalogue's first level once a workspace holds more than one course.
+ * Tiles rather than rows: a course is a place to go into, and fifty of them
+ * read as a grid of destinations far better than as a list of links.
+ */
+.x-catalog__tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.x-catalog__search {
+    flex: 1;
+    min-width: 200px;
+    min-height: 42px;
+    padding: 0 var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: var(--text-sm);
+}
+
+.x-catalog__search:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.x-catalog__crumbs {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+}
+
+.x-catalog__back::after {
+    content: '‹';
+    margin-inline-start: var(--space-2);
+    color: var(--text-tertiary);
+}
+
+.x-catalog__course {
+    font-weight: var(--weight-strong);
+    color: var(--text-primary);
+}
+
+.x-courses {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: var(--space-3);
+}
+
+.x-course {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: var(--space-3);
+    min-height: 96px;
+    padding: var(--space-4);
+    color: var(--text-primary);
+    text-decoration: none;
+    transition:
+        border-color var(--motion-fast) var(--ease),
+        box-shadow var(--motion-base) var(--ease),
+        transform var(--motion-fast) var(--ease);
+}
+
+.x-course:hover {
+    text-decoration: none;
+    border-color: var(--accent);
+    box-shadow: var(--shadow-lift);
+    transform: translateY(-2px);
+}
+
+.x-course__title {
+    font-weight: var(--weight-strong);
+    font-size: var(--text-base);
+    line-height: 1.6;
+}
+
+.x-course__count {
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 480px) {
+    .x-courses {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .x-course {
+        min-height: 84px;
+        padding: var(--space-3);
+    }
+}

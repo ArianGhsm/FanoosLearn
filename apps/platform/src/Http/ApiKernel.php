@@ -325,6 +325,9 @@ final class ApiKernel
             );
             return new BinaryResponse(200, $download['stream'], $download['mime'], $download['size']);
         }
+        if ($request->method === 'GET' && $suffix === '/assessment-courses') {
+            return ['status' => 200, 'data' => $this->requireExams()->catalogCourses($session->userId, $workspaceId)];
+        }
         if ($request->method === 'GET' && $suffix === '/assessments') {
             return ['status' => 200, 'data' => $this->requireExams()->catalog(
                 $session->userId, $workspaceId,

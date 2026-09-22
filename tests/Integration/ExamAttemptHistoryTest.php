@@ -36,6 +36,7 @@ final class ExamAttemptHistoryTest
         $this->assertAnotherStudentsAttemptsDoNotLeak();
         $this->assertAnotherAssessmentsAttemptsDoNotLeak();
         $this->assertScoringDistinguishesWrongFromUnanswered();
+        $this->assertCourseIndexCountsExactlyWhatTheCatalogueShows();
 
         return $this->assertions;
     }
@@ -147,6 +148,51 @@ final class ExamAttemptHistoryTest
         $this->assert($historyForB === [], "Assessment A's attempt leaked into assessment B's history.");
     }
 
+    /**
+     * The course index a large catalogue is browsed by. The catalogue itself
+     * returns at most 100 rows, so an imported bank of hundreds of exams is
+     * only reachable course by course -- which makes it essential that a
+     * course's count and the catalogue filtered to that course agree
+     * exactly: an unpublished assessment in neither, an uncoursed one still
+     * reachable rather than lost.
+     */
+    private function assertCourseIndexCountsExactlyWhatTheCatalogueShows(): void
+    {
+        $suffix = $this->suffix();
+        $workspace = $this->workspace('courses-' . $suffix);
+        $exams = $this->exams();
+        $course = function (string $title) use ($workspace, $suffix): string {
+            $id = Uuid::v7();
+            $this->database->prepare("INSERT INTO academic_courses (id, workspace_id, course_code, title, status, version, created_at, updated_at) VALUES (:id, :workspace, :code, :title, 'active', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))")
+                ->execute(['id' => $id, 'workspace' => $workspace['workspace'], 'code' => 'fx-' . substr(md5($title . $suffix), 0, 12), 'title' => $title]);
+            return $id;
+        };
+        $ortho = $course('ارتوپدی — استاجری');
+        $obgyn = $course('زنان — استاجری');
+        $question = [['id' => 'q1', 'prompt' => 'دو بعلاوه دو؟', 'choices' => ['سه', 'چهار'], 'answer' => 1]];
+
+        $orthoA = $this->assessment($workspace, 'OrthoA-' . $suffix, $question, courseId: $ortho);
+        $orthoB = $this->assessment($workspace, 'OrthoB-' . $suffix, $question, courseId: $ortho);
+        $this->assessment($workspace, 'Obgyn-' . $suffix, $question, courseId: $obgyn);
+        // A draft in the same course must be counted nowhere.
+        $this->assessment($workspace, 'ObgynDraft-' . $suffix, $question, courseId: $obgyn, publish: false);
+        $this->assessment($workspace, 'Loose-' . $suffix, $question);
+
+        $index = [];
+        foreach ($exams->catalogCourses($workspace['student'], $workspace['workspace']) as $row) {
+            $index[$row['course_id'] ?? 'none'] = $row['exam_count'];
+        }
+        $this->assert(($index[$ortho] ?? null) === 2, 'The course index miscounted a course with two published exams.');
+        $this->assert(($index[$obgyn] ?? null) === 1, 'The course index counted an unpublished draft.');
+        $this->assert(($index['none'] ?? null) === 1, 'An assessment without a course was dropped from the index instead of listed under none.');
+
+        $listed = array_map(static fn (array $row): string => (string) $row['id'], $exams->catalog($workspace['student'], $workspace['workspace'], $ortho));
+        sort($listed);
+        $expected = [$orthoA, $orthoB];
+        sort($expected);
+        $this->assert($listed === $expected, "The catalogue filtered to a course disagrees with that course's count in the index.");
+    }
+
     // -- fixtures and small helpers ------------------------------------------
 
     private function suffix(): string
@@ -198,10 +244,13 @@ final class ExamAttemptHistoryTest
      * @param array<string, mixed> $workspace
      * @param list<array<string, mixed>> $questions
      */
-    private function assessment(array $workspace, string $title, array $questions, int $maxAttempts = 10): string
+    private function assessment(array $workspace, string $title, array $questions, int $maxAttempts = 10, ?string $courseId = null, bool $publish = true): string
     {
         $exams = $this->exams();
-        $assessment = $exams->createAssessment($workspace['manager'], $workspace['workspace'], 'آزمون ' . $title, ['questions' => $questions], ['max_attempts' => $maxAttempts]);
+        $assessment = $exams->createAssessment($workspace['manager'], $workspace['workspace'], 'آزمون ' . $title, ['questions' => $questions], ['max_attempts' => $maxAttempts, 'course_id' => $courseId]);
+        if (!$publish) {
+            return $assessment['assessment_id'];
+        }
         $exams->submitForReview($workspace['manager'], $workspace['workspace'], $assessment['assessment_id'], $assessment['version_id']);
         $exams->reviewVersion($workspace['reviewer'], $workspace['workspace'], $assessment['assessment_id'], $assessment['version_id'], 'approved');
         $exams->publishVersion($workspace['manager'], $workspace['workspace'], $assessment['assessment_id'], $assessment['version_id']);

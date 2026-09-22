@@ -212,6 +212,13 @@ paths:
             application/octet-stream: { schema: { type: string, format: binary } }
         '403': { $ref: '#/components/responses/Error' }
         '404': { $ref: '#/components/responses/Error' }
+  /workspaces/{workspaceId}/assessment-courses:
+    get:
+      operationId: listAssessmentCourses
+      description: The courses the published catalogue can be browsed by, each with its count of visible assessments, read through the same visibility rule as listPublishedAssessments. That listing returns at most 100 rows, so a workspace holding an imported bank of hundreds of exams must be browsed course first and then filtered with course_id. Assessments without a course appear under a null course_id rather than being dropped.
+      parameters:
+        - { $ref: '#/components/parameters/WorkspaceId' }
+      responses: { '200': { $ref: '#/components/responses/Success' } }
   /workspaces/{workspaceId}/assessments:
     get:
       operationId: listPublishedAssessments

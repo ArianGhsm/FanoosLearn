@@ -200,6 +200,69 @@ SQL, ['version_no' => $state['version_no'], 'assessment' => $assessmentId, 'work
         });
     }
 
+    /**
+     * The published, unarchived assessments a catalogue may show. Shared by the
+     * catalogue itself and by catalogCourses(), so a course's count and the
+     * list behind it can never disagree about what is visible.
+     */
+    private const CATALOG_BASE_WHERE = [
+        'assessment.workspace_id = :workspace',
+        "assessment.status = 'published'",
+        'assessment.archived_at IS NULL',
+    ];
+
+    /** @param list<string> $where */
+    private function catalogVisibleFrom(array $where): string
+    {
+        return sprintf(<<<'SQL'
+FROM exam_assessments assessment
+JOIN exam_assessment_metadata metadata ON metadata.assessment_id = assessment.id AND metadata.workspace_id = assessment.workspace_id
+JOIN exam_access_policies policy ON policy.assessment_id = assessment.id AND policy.workspace_id = assessment.workspace_id
+LEFT JOIN academic_course_offerings offering ON offering.id = assessment.offering_id AND offering.workspace_id = assessment.workspace_id
+LEFT JOIN academic_terms term ON term.id = offering.term_id AND term.workspace_id = offering.workspace_id
+LEFT JOIN academic_courses course ON course.id = metadata.course_id AND course.workspace_id = assessment.workspace_id
+WHERE %s
+  AND (assessment.offering_id IS NULL OR (offering.status <> 'archived' AND offering.archived_at IS NULL))
+  AND (assessment.offering_id IS NULL OR (term.status <> 'archived' AND term.archived_at IS NULL))
+  AND (metadata.course_id IS NULL OR (course.status = 'active' AND course.archived_at IS NULL))
+SQL, implode(' AND ', $where));
+    }
+
+    /**
+     * The courses a catalogue can be browsed by, with how many visible
+     * assessments each holds.
+     *
+     * The catalogue returns at most 100 rows, newest first. That was plenty
+     * for a class that published a handful of exams by hand and it silently
+     * hides most of an imported bank: with 865 past exams, a student would
+     * have seen the 100 most recently touched and had no way to know the
+     * other 765 existed. Browsing course first, then the catalogue filtered
+     * to that course, keeps every exam reachable -- the largest course in the
+     * first medical bank holds 35.
+     *
+     * Assessments without a course are counted under a null course_id rather
+     * than dropped, so they stay reachable too.
+     *
+     * @return list<array{course_id: ?string, course_title: ?string, exam_count: int}>
+     */
+    public function catalogCourses(string $actorUserId, string $workspaceId): array
+    {
+        $this->access->requireWorkspace($actorUserId, $workspaceId, 'exam.take');
+        $query = $this->database->prepare(sprintf(<<<'SQL'
+SELECT metadata.course_id, course.title AS course_title, COUNT(*) AS exam_count
+%s
+GROUP BY metadata.course_id, course.title
+ORDER BY course.title IS NULL, course.title
+SQL, $this->catalogVisibleFrom(self::CATALOG_BASE_WHERE)));
+        $query->execute(['workspace' => $workspaceId]);
+
+        return array_map(static fn (array $row): array => [
+            'course_id' => $row['course_id'] === null ? null : (string) $row['course_id'],
+            'course_title' => $row['course_title'] === null ? null : (string) $row['course_title'],
+            'exam_count' => (int) $row['exam_count'],
+        ], $query->fetchAll());
+    }
+
     /** @return list<array<string, mixed>> */
     public function catalog(string $actorUserId, string $workspaceId, ?string $courseId = null, ?string $kind = null): array
     {
@@ -246,10 +309,7 @@ SQL, ['version_no' => $state['version_no'], 'assessment' => $assessmentId, 'work
     private function catalogRows(string $actorUserId, string $workspaceId, array $extraWhere, array $extraParameters, int $limit): array
     {
         $this->access->requireWorkspace($actorUserId, $workspaceId, 'exam.take');
-        $where = array_merge(
-            ["assessment.workspace_id = :workspace", "assessment.status = 'published'", 'assessment.archived_at IS NULL'],
-            $extraWhere,
-        );
+        $where = array_merge(self::CATALOG_BASE_WHERE, $extraWhere);
         $parameters = array_merge(['workspace' => $workspaceId], $extraParameters);
         $query = $this->database->prepare(sprintf(<<<'SQL'
 SELECT assessment.id, assessment.title, assessment.current_version_no,
@@ -285,19 +345,10 @@ SELECT assessment.id, assessment.title, assessment.current_version_no,
           AND active_attempt.status = 'in_progress'
         ORDER BY active_attempt.started_at DESC
         LIMIT 1) AS active_attempt_status
-FROM exam_assessments assessment
-JOIN exam_assessment_metadata metadata ON metadata.assessment_id = assessment.id AND metadata.workspace_id = assessment.workspace_id
-JOIN exam_access_policies policy ON policy.assessment_id = assessment.id AND policy.workspace_id = assessment.workspace_id
-LEFT JOIN academic_course_offerings offering ON offering.id = assessment.offering_id AND offering.workspace_id = assessment.workspace_id
-LEFT JOIN academic_terms term ON term.id = offering.term_id AND term.workspace_id = offering.workspace_id
-LEFT JOIN academic_courses course ON course.id = metadata.course_id AND course.workspace_id = assessment.workspace_id
-WHERE %s
-  AND (assessment.offering_id IS NULL OR (offering.status <> 'archived' AND offering.archived_at IS NULL))
-  AND (assessment.offering_id IS NULL OR (term.status <> 'archived' AND term.archived_at IS NULL))
-  AND (metadata.course_id IS NULL OR (course.status = 'active' AND course.archived_at IS NULL))
+%s
 ORDER BY assessment.updated_at DESC
 LIMIT %d
-SQL, implode(' AND ', $where), $limit));
+SQL, $this->catalogVisibleFrom($where), $limit));
         $parameters['catalog_user_count'] = $actorUserId;
         $parameters['catalog_user_active'] = $actorUserId;
         $parameters['catalog_user_revision'] = $actorUserId;
