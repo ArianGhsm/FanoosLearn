@@ -26,6 +26,7 @@ final class QuestionBankRowTest
         $this->assertAValidRowBecomesAQuestion();
         $this->assertEveryUnscorableShapeIsSkippedWithItsReason();
         $this->assertImageDependentQuestionsAreSkipped();
+        $this->assertBlankOptionsAreDroppedWithoutMovingTheAnswer();
         $this->assertExamTitlesCarrySubjectYearAndGroup();
         $this->assertCourseCodesAreStableAsciiAndStageSpecific();
 
@@ -105,6 +106,57 @@ final class QuestionBankRowTest
         $this->assert(
             isset(QuestionBankRow::map($this->row(['question_image_path' => '', 'option_image_paths' => [null, '', '  ']]))['question']),
             'Empty image fields were treated as an image.',
+        );
+    }
+
+    /**
+     * The export carries blank options: a trailing empty slot the extractor
+     * left behind, or options that are nothing but their letter. ExamService
+     * refuses an empty choice and, with it, the whole assessment -- which in
+     * the first import cost four entire past exams for four bad rows.
+     */
+    private function assertBlankOptionsAreDroppedWithoutMovingTheAnswer(): void
+    {
+        $trailing = QuestionBankRow::map($this->row([
+            'options' => [
+                ['id' => 'A', 'text' => 'الف) یک'], ['id' => 'B', 'text' => 'ب) دو'],
+                ['id' => 'C', 'text' => 'ج) سه'], ['id' => 'E', 'text' => ''],
+            ],
+            'correct_option_ids' => ['C'],
+        ]));
+        $this->assert(($trailing['question']['choices'] ?? null) === ['یک', 'دو', 'سه'], 'A trailing blank option was kept.');
+        $this->assert(($trailing['question']['answer'] ?? null) === 2, 'Dropping a trailing blank moved the answer.');
+
+        // A blank *before* the answer shifts its position: the index must be
+        // recomputed, or the review marks the wrong option correct.
+        $leading = QuestionBankRow::map($this->row([
+            'options' => [
+                ['id' => 'A', 'text' => 'الف)'], ['id' => 'B', 'text' => 'ب) دو'],
+                ['id' => 'C', 'text' => 'ج) سه'], ['id' => 'D', 'text' => 'د) چهار'],
+            ],
+            'correct_option_ids' => ['C'],
+        ]));
+        $this->assert(($leading['question']['choices'] ?? null) === ['دو', 'سه', 'چهار'], 'A letter-only option was kept.');
+        $this->assert(
+            ($leading['question']['choices'][$leading['question']['answer'] ?? -1] ?? null) === 'سه',
+            'After dropping a blank, the answer index no longer points at the correct text.',
+        );
+
+        // Every option is only its letter: the real choices were never extracted.
+        $this->assert(
+            QuestionBankRow::map($this->row([
+                'options' => [['id' => 'A', 'text' => 'الف)'], ['id' => 'B', 'text' => 'ب)'], ['id' => 'C', 'text' => 'ج)']],
+                'correct_option_ids' => ['A'],
+            ])) === ['skip' => QuestionBankRow::SKIP_BLANK_ANSWER],
+            'A question whose options are only letters was imported.',
+        );
+        // The correct option alone is blank.
+        $this->assert(
+            QuestionBankRow::map($this->row([
+                'options' => [['id' => 'A', 'text' => 'الف) یک'], ['id' => 'B', 'text' => ''], ['id' => 'C', 'text' => 'ج) سه']],
+                'correct_option_ids' => ['B'],
+            ])) === ['skip' => QuestionBankRow::SKIP_BLANK_ANSWER],
+            'A question whose correct option is blank was imported.',
         );
     }
 
