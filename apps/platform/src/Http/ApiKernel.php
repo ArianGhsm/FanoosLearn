@@ -16,6 +16,8 @@ use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Identity\AuthService;
 use Fanoos\Platform\Identity\AuthenticatedSession;
 use Fanoos\Platform\Identity\OwnerRecoveryService;
+use Fanoos\Platform\Identity\StudentRegistrationService;
+use Fanoos\Platform\Onboarding\DirectoryReadService;
 use Fanoos\Platform\Support\JsonLogger;
 use Fanoos\Platform\Support\PlatformException;
 use Throwable;
@@ -35,6 +37,8 @@ final class ApiKernel
         private readonly ?SecureObjectDownloadService $downloads = null,
         private readonly ?ScheduleProjectionService $schedule = null,
         private readonly ?OwnerRecoveryService $ownerRecovery = null,
+        private readonly ?StudentRegistrationService $registration = null,
+        private readonly ?DirectoryReadService $directory = null,
     ) {
     }
 
@@ -80,12 +84,45 @@ final class ApiKernel
                 $request->source,
                 ['user_agent' => substr($request->header('user-agent'), 0, 300)],
             );
+            $this->selectOnlyWorkspace($session);
             return [
                 'status' => 200,
                 'data' => [
                     'token' => $session->token, 'csrf_token' => $session->csrfToken,
                     'expires_at' => $session->expiresAt, 'account' => $this->auth->account($session),
                 ],
+                'headers' => ['Set-Cookie: fanoos_session=' . rawurlencode($session->token) . '; Path=/; HttpOnly; Secure; SameSite=Lax'],
+            ];
+        }
+
+        // Sign-up and the lists its form is built from. Public: a visitor
+        // has no session yet, and directory names are not private.
+        if ($request->method === 'GET' && $request->path === '/api/v1/signup/options') {
+            return ['status' => 200, 'data' => [
+                'disciplines' => $this->requireRegistration()->disciplines(),
+                'entry_terms' => StudentRegistrationService::ENTRY_TERMS,
+                'course_types' => StudentRegistrationService::COURSE_TYPES,
+            ], 'headers' => ['Cache-Control: public, max-age=300']];
+        }
+        if ($request->method === 'GET' && $request->path === '/api/v1/directory/provinces') {
+            return ['status' => 200, 'data' => ['items' => $this->allPages(
+                fn (?string $cursor): array => $this->requireDirectory()->provinces(50, $cursor),
+            )], 'headers' => ['Cache-Control: public, max-age=3600']];
+        }
+        if ($request->method === 'GET' && preg_match('#^/api/v1/directory/provinces/([0-9a-f-]{36})/institutions$#', $request->path, $match)) {
+            return ['status' => 200, 'data' => ['items' => $this->allPages(
+                fn (?string $cursor): array => $this->requireDirectory()->institutionsByProvince($match[1], 50, $cursor),
+            )], 'headers' => ['Cache-Control: public, max-age=3600']];
+        }
+        if ($request->method === 'POST' && $request->path === '/api/v1/auth/register') {
+            $session = $this->requireRegistration()->register(
+                $request->body,
+                $request->source,
+                ['user_agent' => substr($request->header('user-agent'), 0, 300)],
+            );
+            return [
+                'status' => 201,
+                'data' => ['csrf_token' => $session->csrfToken, 'expires_at' => $session->expiresAt],
                 'headers' => ['Set-Cookie: fanoos_session=' . rawurlencode($session->token) . '; Path=/; HttpOnly; Secure; SameSite=Lax'],
             ];
         }
@@ -123,6 +160,9 @@ final class ApiKernel
         if ($request->method === 'POST' && $request->path === '/api/v1/auth/password') {
             $this->auth->setPassword($session, (string) ($request->body['new_password'] ?? ''));
             return ['status' => 200, 'data' => ['password_set' => true]];
+        }
+        if ($request->method === 'GET' && $request->path === '/api/v1/profile') {
+            return ['status' => 200, 'data' => ['profile' => $this->requireRegistration()->profile($session->userId)]];
         }
         if ($request->method === 'GET' && in_array($request->path, ['/api/v1/account', '/api/v1/workspaces'], true)) {
             return ['status' => 200, 'data' => $this->auth->account($session)];
@@ -417,6 +457,58 @@ final class ApiKernel
             throw new PlatformException('workspace_context_mismatch', 'Route does not match the selected workspace.', 409);
         }
         return [$match[1], $match[2]];
+    }
+
+    /**
+     * A student with exactly one workspace -- their discipline library, for
+     * everyone who signed up on the website -- has nothing to choose, so
+     * sign-in lands them in it instead of on a chooser with one entry.
+     */
+    private function selectOnlyWorkspace(AuthenticatedSession $session): void
+    {
+        $workspaces = $this->auth->account($session)['workspaces'] ?? [];
+        if (count($workspaces) === 1 && is_string($workspaces[0]['id'] ?? null)) {
+            $this->auth->selectWorkspace($session, $workspaces[0]['id']);
+        }
+    }
+
+    /**
+     * Follows DirectoryReadService's cursor to the end. Its pages are capped
+     * at 50 for the bot's keyboards; a form select wants the whole list.
+     *
+     * @param callable(?string): array{items:list<array<string,mixed>>,next_cursor:?string} $page
+     * @return list<array<string,mixed>>
+     */
+    private function allPages(callable $page): array
+    {
+        $items = [];
+        $cursor = null;
+        for ($i = 0; $i < 20; $i++) {
+            $result = $page($cursor);
+            array_push($items, ...$result['items']);
+            $cursor = $result['next_cursor'];
+            if ($cursor === null) {
+                break;
+            }
+        }
+
+        return $items;
+    }
+
+    private function requireRegistration(): StudentRegistrationService
+    {
+        if ($this->registration === null) {
+            throw new PlatformException('registration_unavailable', 'Sign-up is not available.', 503);
+        }
+        return $this->registration;
+    }
+
+    private function requireDirectory(): DirectoryReadService
+    {
+        if ($this->directory === null) {
+            throw new PlatformException('directory_unavailable', 'The directory is not available.', 503);
+        }
+        return $this->directory;
     }
 
     private function requirePayments(): void

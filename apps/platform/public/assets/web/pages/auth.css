@@ -1,0 +1,544 @@
+/*
+ * Sign-in and sign-up. One frame for both: a lit panel that says where you
+ * are, beside the form. On a phone the panel folds into a short band above
+ * the form, so the fields are what the thumb reaches first.
+ */
+
+.f-auth-page .f-page {
+    padding-block: var(--space-5) var(--space-7);
+}
+
+.f-auth {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    width: min(100%, 940px);
+    margin-inline: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius-lg) + 4px);
+    box-shadow: var(--shadow-strong);
+    overflow: hidden;
+    animation: f-rise 520ms var(--ease) both;
+}
+
+.f-auth--narrow {
+    width: min(100%, 820px);
+}
+
+/* The panel */
+
+.f-auth__panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding: var(--space-6) var(--space-5);
+    color: var(--text-on-accent);
+    background: var(--accent-gradient);
+    overflow: hidden;
+}
+
+.f-auth__panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 85% 12%, rgba(255, 255, 255, 0.22), transparent 38%),
+        radial-gradient(circle at 10% 95%, rgba(56, 189, 248, 0.35), transparent 45%),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 34px),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 68px);
+    pointer-events: none;
+}
+
+.f-auth__panel > * {
+    position: relative;
+}
+
+.f-auth__panel .f-lantern {
+    width: 56px;
+    height: 56px;
+    color: var(--text-on-accent);
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.18));
+}
+
+.f-auth__panel h1 {
+    margin: 0;
+    font-size: var(--text-3xl);
+    line-height: 1.3;
+}
+
+.f-auth__panel p {
+    margin: 0;
+    opacity: 0.9;
+}
+
+.f-auth__perks {
+    display: grid;
+    gap: var(--space-3);
+    margin: auto 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--text-sm);
+}
+
+.f-auth__perks li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.f-auth__perks li::before {
+    content: "✓";
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 22px;
+    height: 22px;
+    font-size: var(--text-2xs);
+    font-weight: var(--weight-strong);
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* The vertical progress of the sign-up wizard, shown in the panel. */
+.f-auth__track {
+    display: grid;
+    gap: 0;
+    margin: var(--space-3) 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.f-auth__track li {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding-block: var(--space-2);
+    font-size: var(--text-sm);
+    opacity: 0.65;
+    transition: opacity var(--motion-base) var(--ease);
+}
+
+.f-auth__track li:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    inset-inline-start: 14px;
+    top: 38px;
+    width: 2px;
+    height: calc(100% - 30px);
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.f-auth__track span {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    flex: none;
+    font-weight: var(--weight-strong);
+    border: 2px solid rgba(255, 255, 255, 0.55);
+    border-radius: var(--radius-pill);
+    transition: background var(--motion-base) var(--ease), color var(--motion-base) var(--ease);
+}
+
+.f-auth__track li.is-current,
+.f-auth__track li.is-done {
+    opacity: 1;
+}
+
+.f-auth__track li.is-current span {
+    color: var(--accent-strong);
+    background: var(--text-on-accent);
+    border-color: var(--text-on-accent);
+    box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.22);
+}
+
+.f-auth__track li.is-done span {
+    color: var(--accent-strong);
+    background: rgba(255, 255, 255, 0.85);
+    border-color: transparent;
+}
+
+/* The form side */
+
+.f-auth__body {
+    padding: var(--space-6);
+}
+
+.f-auth__title {
+    margin-bottom: var(--space-1);
+    font-size: var(--text-2xl);
+}
+
+.f-auth__sub {
+    margin-bottom: var(--space-5);
+    color: var(--text-secondary);
+}
+
+.f-auth__foot {
+    margin: var(--space-5) 0 0;
+    text-align: center;
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.f-auth .f-notice {
+    margin-bottom: var(--space-4);
+    animation: f-shake 360ms var(--ease);
+}
+
+@keyframes f-shake {
+    0%, 100% { transform: none; }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.f-auth .f-input {
+    min-height: 48px;
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+    transition: border-color var(--motion-fast) var(--ease), box-shadow var(--motion-fast) var(--ease), background var(--motion-fast) var(--ease);
+}
+
+.f-auth .f-input:focus {
+    background: var(--surface);
+    box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+/* Usernames and passwords are Latin: typed left to right even on an RTL page. */
+.f-input--ltr {
+    direction: ltr;
+    text-align: left;
+}
+
+.f-auth__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+}
+
+.f-field__error {
+    display: block;
+    margin-top: var(--space-1);
+    font-size: var(--text-xs);
+    color: var(--danger);
+}
+
+/* Password with a show/hide control inside it. */
+.f-secret {
+    position: relative;
+}
+
+.f-secret .f-input {
+    padding-inline-start: 48px;
+}
+
+.f-secret__toggle {
+    position: absolute;
+    inset-inline-start: 6px;
+    top: 50%;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    color: var(--text-tertiary);
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transform: translateY(-50%);
+}
+
+.f-secret__toggle:hover {
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.f-secret__toggle svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* How strong the chosen password is: four segments, filling in colour. */
+.f-strength {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    margin-top: var(--space-2);
+}
+
+.f-strength span {
+    height: 4px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-strong);
+    transition: background var(--motion-base) var(--ease);
+}
+
+.f-strength[data-level="1"] span:nth-child(-n+1) { background: var(--danger); }
+.f-strength[data-level="2"] span:nth-child(-n+2) { background: var(--warning); }
+.f-strength[data-level="3"] span:nth-child(-n+3) { background: var(--accent); }
+.f-strength[data-level="4"] span:nth-child(-n+4) { background: var(--success); }
+
+/* The wizard */
+
+.f-wizard__step {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+}
+
+.f-wizard__step[data-active] {
+    animation: f-step-in 360ms var(--ease) both;
+}
+
+@keyframes f-step-in {
+    from { opacity: 0; transform: translateX(-14px); }
+    to { opacity: 1; transform: none; }
+}
+
+.f-wizard__legend {
+    margin-bottom: var(--space-1);
+    padding: 0;
+    font-size: var(--text-xl);
+    font-weight: var(--weight-strong);
+}
+
+.f-wizard__nav {
+    display: flex;
+    gap: var(--space-3);
+    margin-top: var(--space-5);
+}
+
+.f-wizard__nav .f-btn--primary {
+    flex: 1;
+}
+
+/* Disciplines as large tiles, one tap each. */
+.f-tiles {
+    display: grid;
+    gap: var(--space-3);
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+
+.f-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    cursor: pointer;
+    background: var(--surface-muted);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    transition: border-color var(--motion-fast) var(--ease), background var(--motion-fast) var(--ease), transform var(--motion-fast) var(--ease), box-shadow var(--motion-fast) var(--ease);
+}
+
+.f-tile:hover {
+    transform: translateY(-2px);
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-soft);
+}
+
+.f-tile input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.f-tile__mark {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    color: var(--tile-hue, var(--accent-strong));
+    background: var(--tile-soft, var(--accent-soft));
+    border-radius: var(--radius-md);
+    transition: background var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+}
+
+.f-tile__mark svg {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.f-tile__name {
+    font-weight: var(--weight-medium);
+}
+
+.f-tile__hint {
+    font-size: var(--text-2xs);
+    color: var(--text-tertiary);
+}
+
+.f-tile:has(input:checked) {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.f-tile:has(input:checked) .f-tile__mark {
+    color: var(--text-on-accent);
+    background: var(--tile-hue, var(--accent));
+}
+
+.f-tile:has(input:focus-visible) {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+/* A short choice between two or three words: a segmented control. */
+.f-segment {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: var(--surface-inset);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+
+.f-segment label {
+    flex: 1;
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 40px;
+    padding-inline: var(--space-2);
+    font-size: var(--text-sm);
+    text-align: center;
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+}
+
+.f-segment input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.f-segment label:has(input:checked) {
+    color: var(--text-primary);
+    font-weight: var(--weight-medium);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+}
+
+.f-segment label:has(input:focus-visible) {
+    outline: 3px solid var(--focus-ring);
+}
+
+.f-select {
+    appearance: none;
+    background-image:
+        linear-gradient(45deg, transparent 50%, var(--text-tertiary) 50%),
+        linear-gradient(135deg, var(--text-tertiary) 50%, transparent 50%);
+    background-position: left 18px center, left 13px center;
+    background-size: 5px 5px;
+    background-repeat: no-repeat;
+    padding-inline-end: var(--space-4);
+    padding-inline-start: 36px;
+}
+
+.f-optional {
+    font-weight: var(--weight-body);
+    font-size: var(--text-2xs);
+    color: var(--text-tertiary);
+}
+
+/* The last step's recap of what will be created. */
+.f-recap {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-1) var(--space-4);
+    margin: var(--space-4) 0 0;
+    padding: var(--space-4);
+    font-size: var(--text-sm);
+    background: var(--surface-inset);
+    border-radius: var(--radius-md);
+}
+
+.f-recap dt {
+    color: var(--text-tertiary);
+}
+
+.f-recap dd {
+    margin: 0;
+    font-weight: var(--weight-medium);
+}
+
+@media (max-width: 760px) {
+    .f-auth {
+        grid-template-columns: 1fr;
+        border-radius: var(--radius-lg);
+    }
+
+    .f-auth__panel {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-3);
+        padding: var(--space-4) var(--space-5);
+    }
+
+    .f-auth__panel .f-lantern {
+        width: 40px;
+        height: 40px;
+    }
+
+    .f-auth__panel h1 {
+        font-size: var(--text-xl);
+    }
+
+    .f-auth__panel p,
+    .f-auth__perks {
+        display: none;
+    }
+
+    /* The step track turns into a row of dots under the heading. */
+    .f-auth__track {
+        display: flex;
+        gap: var(--space-2);
+        width: 100%;
+        margin: 0;
+    }
+
+    .f-auth__track li {
+        padding: 0;
+    }
+
+    .f-auth__track li::after,
+    .f-auth__track em {
+        display: none;
+    }
+
+    .f-auth__track span {
+        width: 26px;
+        height: 26px;
+        font-size: var(--text-xs);
+    }
+
+    .f-auth__body {
+        padding: var(--space-5) var(--space-4);
+    }
+}
+
+@media (max-width: 420px) {
+    .f-auth__row {
+        grid-template-columns: 1fr;
+    }
+}

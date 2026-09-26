@@ -11,6 +11,7 @@ use Fanoos\Tests\Core\InstitutionTermServiceTest;
 use Fanoos\Tests\Core\OnboardingDirectoryTest;
 use Fanoos\Tests\Core\OnboardingPhoneVerificationTest;
 use Fanoos\Tests\Core\RepresentativeApprovalTest;
+use Fanoos\Tests\Core\StudentRegistrationTest;
 use Fanoos\Tests\Integration\TenantIsolationTest;
 use Fanoos\Tests\Integration\MigrationSafetyTest;
 use Fanoos\Tests\Integration\CorePlatformTest;
@@ -120,6 +121,8 @@ try {
         echo "PASS onboarding phone verification scenarios\n";
         $assertions += (new ClassMembershipTest($database))->run();
         echo "PASS join wizard membership and upgrade-request scenarios\n";
+        $assertions += (new StudentRegistrationTest($database))->run();
+        echo "PASS website sign-up and discipline library scenarios\n";
         $assertions += (new RepresentativeApprovalTest($database))->run();
         echo "PASS representative appointment and approval scenarios\n";
         $assertions += (new AnnouncementPublishTest($database))->run();

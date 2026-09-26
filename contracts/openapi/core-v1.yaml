@@ -14,6 +14,21 @@ paths:
       operationId: login
       requestBody: { required: true, content: { application/json: { schema: { type: object, required: [identifier, password], properties: { identifier: { type: string }, password: { type: string } }, additionalProperties: false } } } }
       responses: { '200': { $ref: '#/components/responses/Success' }, '401': { $ref: '#/components/responses/Error' }, '429': { $ref: '#/components/responses/Error' } }
+  /auth/register:
+    post:
+      security: []
+      operationId: registerStudent
+      description: Website sign-up with a username and password -- no phone required -- plus the profile the bot's join wizard asks for. Creates the account, signs it in (session cookie, 201), and makes it a member of its discipline's library workspace so that field's exams are open immediately. Throttled per source network.
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [username, password, first_name, last_name, discipline_id], properties: { username: { type: string, pattern: '^[a-z][a-z0-9_.]{2,31}$' }, password: { type: string, minLength: 8, maxLength: 128 }, first_name: { type: string }, last_name: { type: string }, discipline_id: { $ref: '#/components/schemas/Uuid' }, institution_id: { $ref: '#/components/schemas/Uuid' }, entry_year: { type: string }, entry_term: { type: string, enum: [first, second] }, course_type: { type: string, enum: [daily, tuition, international] }, student_number: { type: string } }, additionalProperties: false } } } }
+      responses: { '201': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' }, '429': { $ref: '#/components/responses/Error' } }
+  /signup/options:
+    get: { security: [], operationId: getSignupOptions, description: 'Active disciplines (with whether each has a library yet), entry terms and course types for the sign-up form.', responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /directory/provinces:
+    get: { security: [], operationId: listDirectoryProvinces, responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /directory/provinces/{provinceId}/institutions:
+    get: { security: [], operationId: listDirectoryInstitutions, parameters: [{ name: provinceId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }], responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' } } }
+  /profile:
+    get: { operationId: getStudentProfile, description: 'The signed-in student profile with discipline and university names, or null for an account that never signed up on the website.', responses: { '200': { $ref: '#/components/responses/Success' } } }
   /auth/logout:
     post:
       operationId: logout

@@ -23,6 +23,8 @@ use Fanoos\Platform\Web\AssetVersioner;
 use Fanoos\Platform\Web\PageRenderer;
 use Fanoos\Platform\Web\WebRouter;
 use Fanoos\Platform\Identity\PasswordHasher;
+use Fanoos\Platform\Identity\StudentRegistrationService;
+use Fanoos\Platform\Onboarding\DirectoryReadService;
 use Fanoos\Platform\Storage\FilesystemObjectStore;
 use Fanoos\Platform\Storage\SignedDownloadToken;
 use Fanoos\Platform\Support\DatabaseConnection;
@@ -51,10 +53,13 @@ final class PlatformFactory
         $entitlements = new EntitlementService($database, $access, $audit);
         $exams = new ExamService($database, $access, $authorizer, $entitlements, $audit, new ExamQuestionRateGuard($database));
 
+        $auth = new AuthService($database, new PasswordHasher(), $audit);
+
         return new WebRouter(
-            new AuthService($database, new PasswordHasher(), $audit),
+            $auth,
             new PageRenderer(new AssetVersioner(__DIR__ . '/../../public', $release)),
             $exams,
+            new StudentRegistrationService($database, $auth, new PasswordHasher(), $audit),
         );
     }
 
@@ -105,6 +110,8 @@ final class PlatformFactory
             $downloads,
             $schedule,
             new OwnerRecoveryService($database, $auth, $audit),
+            new StudentRegistrationService($database, $auth, new PasswordHasher(), $audit),
+            new DirectoryReadService($database),
         );
     }
 }

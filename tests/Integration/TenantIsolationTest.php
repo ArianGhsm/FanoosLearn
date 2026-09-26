@@ -36,10 +36,9 @@ final class TenantIsolationTest
 
         // A fresh database is exactly what the unattended path must not
         // finish bootstrapping on its own once a declared-contract migration
-        // exists: it applies every expand-compatible file first (they sort
-        // ahead of 0023 lexically) and then refuses the contract one,
-        // pointing at the supervised script rather than silently skipping
-        // or silently applying it.
+        // exists: it applies the expand-compatible files that sort ahead of
+        // the contract one and then refuses it, pointing at the supervised
+        // script rather than silently skipping or silently applying it.
         $unattendedRefusedContractMigration = false;
         try {
             $migrationRunner->run();
@@ -57,9 +56,25 @@ final class TenantIsolationTest
             }
         }
 
+        // The unattended bootstrap stopped at the contract migration, so the
+        // expand migrations that sort after it are still pending: the first
+        // run after the supervised step applies exactly those and nothing
+        // else, and only the run after that is a total no-op.
+        $lastContractIndex = -1;
+        foreach ($migrationFiles as $index => $path) {
+            if (MigrationSafety::isDeclaredContract((string) file_get_contents($path))) {
+                $lastContractIndex = $index;
+            }
+        }
+        $pendingAfterContract = array_map('basename', array_slice($migrationFiles, $lastContractIndex + 1));
+
         $firstMigrationRun = $migrationRunner->run();
         $secondMigrationRun = $migrationRunner->run();
-        self::assert(count($firstMigrationRun['skipped']) === $migrationFileCount, 'First full unattended run after the supervised contract migration was applied was not a total no-op.');
+        self::assert(
+            $firstMigrationRun['applied'] === $pendingAfterContract
+                && count($firstMigrationRun['skipped']) === $migrationFileCount - count($pendingAfterContract),
+            'First unattended run after the supervised contract migration re-applied or skipped the wrong migrations.',
+        );
         self::assert(count($secondMigrationRun['skipped']) === $migrationFileCount, 'Second migration run was not a no-op.');
         self::assert((int) $this->database->query('SELECT COUNT(*) FROM schema_migrations')->fetchColumn() === $migrationFileCount, 'Migration ledger count is incorrect.');
 

@@ -6,6 +6,7 @@ namespace Fanoos\Platform\Web;
 
 use Fanoos\Platform\Content\ExamService;
 use Fanoos\Platform\Identity\AuthService;
+use Fanoos\Platform\Identity\StudentRegistrationService;
 use Throwable;
 
 /**
@@ -23,6 +24,7 @@ final class WebRouter
         private readonly AuthService $auth,
         private readonly PageRenderer $renderer,
         private readonly ?ExamService $exams = null,
+        private readonly ?StudentRegistrationService $registration = null,
     ) {
     }
 
@@ -46,6 +48,12 @@ final class WebRouter
                 : $this->redirect('/app');
         }
 
+        if ($path === '/register') {
+            return $viewer === null
+                ? $this->page(200, (new RegisterPage($this->renderer))->render())
+                : $this->redirect('/app');
+        }
+
         if ($path === '/recovery') {
             // Always render, session or not. Someone recovering access
             // usually *does* have a session -- for the wrong account, or a
@@ -65,7 +73,12 @@ final class WebRouter
         if ($path === '/app') {
             return $viewer === null
                 ? $this->redirect('/login')
-                : $this->page(200, (new HomePage($this->renderer))->render($viewer, isset($query['switch'])));
+                : $this->page(200, (new HomePage($this->renderer))->render(
+                    $viewer,
+                    isset($query['switch']),
+                    $this->profile($viewer->userId),
+                    isset($query['welcome']),
+                ));
         }
 
         if ($path === '/app/exams') {
@@ -171,6 +184,24 @@ final class WebRouter
         }
         try {
             return $this->exams->catalogEntry($userId, $workspaceId, $assessmentId);
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * The sign-up profile for the greeting, or null. A profile is decoration
+     * on the home page: failing to read one must never cost the page.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function profile(string $userId): ?array
+    {
+        if ($this->registration === null) {
+            return null;
+        }
+        try {
+            return $this->registration->profile($userId);
         } catch (Throwable) {
             return null;
         }

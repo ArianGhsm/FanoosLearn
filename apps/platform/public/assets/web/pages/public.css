@@ -1,0 +1,119 @@
+/*
+ * The frame shared by the pages a signed-out visitor sees: landing, sign-in
+ * and sign-up. The signed-in shell (shell.css) is never loaded on them.
+ */
+
+.f-lantern {
+    width: 30px;
+    height: 30px;
+    color: var(--accent);
+    flex: none;
+}
+
+/* The flame breathes. Slowly: this is a lamp, not a notification. */
+.f-lantern__flame {
+    transform-origin: 16px 21px;
+    animation: f-flame 3.2s var(--ease) infinite;
+}
+
+@keyframes f-flame {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(0.9, 1.06); opacity: 0.82; }
+}
+
+.f-pub {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    width: min(100% - 2 * var(--space-4), var(--content-width));
+    margin: var(--space-4) auto 0;
+    padding: var(--space-2) var(--space-3);
+    background: color-mix(in srgb, var(--surface) 72%, transparent);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    position: sticky;
+    top: var(--space-3);
+    z-index: 20;
+}
+
+.f-pub__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding-inline: var(--space-2);
+    color: var(--text-primary);
+    font-size: var(--text-lg);
+    font-weight: var(--weight-strong);
+}
+
+.f-pub__brand:hover {
+    text-decoration: none;
+}
+
+.f-pub__spacer {
+    flex: 1;
+}
+
+.f-pub__link {
+    min-height: 38px;
+    padding-inline: var(--space-4);
+    border-radius: var(--radius-pill);
+}
+
+.f-btn--lg {
+    min-height: 50px;
+    padding-inline: var(--space-6);
+    font-size: var(--text-lg);
+    border-radius: var(--radius-md);
+}
+
+/* A button that sits on an accent-coloured band. */
+.f-btn--light {
+    background: var(--surface);
+    color: var(--accent-strong);
+    border-color: transparent;
+    box-shadow: var(--shadow-soft);
+}
+
+.f-btn--light:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-strong);
+    text-decoration: none;
+}
+
+.f-section-title {
+    text-align: center;
+    font-size: var(--text-2xl);
+    margin-bottom: var(--space-5);
+}
+
+/* Things arrive rather than appear. One short rise, staggered by order. */
+.f-rise {
+    animation: f-rise 520ms var(--ease) both;
+}
+
+@keyframes f-rise {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 560px) {
+    .f-pub {
+        border-radius: var(--radius-lg);
+    }
+
+    .f-pub__link {
+        padding-inline: var(--space-3);
+    }
+}
+
+/* shell.css styles the footer for signed-in pages; these pages do not load it. */
+.f-public .f-footer {
+    padding: var(--space-5) var(--space-4) var(--space-6);
+    text-align: center;
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+}

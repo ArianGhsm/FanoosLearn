@@ -6,14 +6,21 @@
  * lose what was typed.
  */
 import { api, ApiError, describeError } from '../foundation/api.js';
+import { wireRevealToggles } from './auth-shared.js';
 
 const form = document.getElementById('login-form');
 const submit = document.getElementById('login-submit');
 const errorBox = document.getElementById('login-error');
 const errorText = document.getElementById('login-error-text');
 
+wireRevealToggles(form);
+
 function showError(message) {
     errorText.textContent = message;
+    // Re-trigger the shake: an error that is already showing and gets
+    // replaced by the same error should still visibly react.
+    errorBox.hidden = true;
+    void errorBox.offsetWidth;
     errorBox.hidden = false;
     // Move focus to the message: a sighted user sees it appear, but a screen
     // reader user would otherwise be left at the submit button with no idea
@@ -35,7 +42,7 @@ form.addEventListener('submit', async (event) => {
     const password = form.elements.password.value;
 
     if (identifier === '' || password === '') {
-        showError('شناسه و گذرواژه را وارد کن.');
+        showError('نام کاربری و رمز را وارد کن.');
         return;
     }
 
@@ -54,7 +61,11 @@ form.addEventListener('submit', async (event) => {
         if (error instanceof ApiError && error.status === 401) {
             // Never say which half was wrong: that tells an attacker whether
             // an identifier exists.
-            showError('شناسه یا گذرواژه درست نیست.');
+            showError('نام کاربری یا رمز درست نیست.');
+            return;
+        }
+        if (error instanceof ApiError && error.status === 429) {
+            showError('چند بار پشت سر هم اشتباه وارد شد. چند دقیقه صبر کن و دوباره امتحان کن.');
             return;
         }
         showError(describeError(error));
