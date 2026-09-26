@@ -234,6 +234,16 @@ paths:
       parameters:
         - { $ref: '#/components/parameters/WorkspaceId' }
       responses: { '200': { $ref: '#/components/responses/Success' } }
+  /workspaces/{workspaceId}/assessments/{assessmentId}/questions/{questionId}/images/{slot}:
+    get:
+      operationId: getQuestionImage
+      description: One image of one question -- the stem ('stem') or an option ('choice-<0-based index>') -- for a student with an attempt of this assessment whose version holds the question, which covers the runner, the post-submit review and the mistakes review. Questions only carry which parts have an image (images.stem, images.choices as booleans); storage keys never leave the server. Served inline as image/jpeg, image/png or image/webp with private caching.
+      parameters:
+        - { $ref: '#/components/parameters/WorkspaceId' }
+        - { $ref: '#/components/parameters/AssessmentId' }
+        - { name: questionId, in: path, required: true, schema: { type: string, pattern: '^[a-zA-Z0-9_-]{1,64}$' } }
+        - { name: slot, in: path, required: true, schema: { type: string, pattern: '^(stem|choice-[0-9]{1,2})$' } }
+      responses: { '200': { description: The image bytes. }, '404': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/assessments:
     get:
       operationId: listPublishedAssessments

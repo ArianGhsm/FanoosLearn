@@ -15,6 +15,73 @@ import { highlightSegments } from './runner-study.js';
 
 const CHOICE_LETTERS = ['الف', 'ب', 'ج', 'د', 'ه', 'و', 'ز', 'ح', 'ط', 'ی'];
 
+/*
+ * Question images.
+ *
+ * A question says only *whether* its stem or an option has an image
+ * (`question.images`); the picture itself is fetched from the API by
+ * assessment, question and slot, and the server decides whether this student
+ * may see it. Nothing here ever holds a storage key.
+ */
+export function questionImageUrl(assessmentId, questionId, slot) {
+    const workspaceId = document.querySelector('meta[name="fanoos-workspace"]')?.content ?? '';
+    return `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/assessments/${encodeURIComponent(assessmentId)}`
+        + `/questions/${encodeURIComponent(questionId)}/images/${slot}`;
+}
+
+/**
+ * A figure for one image. Tapping it opens it full size: a clinical photo
+ * is read for detail, and a phone-width card is too small for that.
+ */
+export function renderFigure(src, alt, { compact = false } = {}) {
+    const image = el('img', {
+        className: 'x-figure__img',
+        attrs: { src, alt, loading: 'lazy', decoding: 'async', draggable: 'false' },
+    });
+    const figure = el('figure', { className: `x-figure${compact ? ' x-figure--compact' : ''}` },
+        image,
+        el('button', {
+            className: 'x-figure__zoom', type: 'button',
+            attrs: { 'aria-label': 'نمایش تصویر در اندازه‌ی کامل', title: 'بزرگ‌نمایی' },
+            on: { click: (event) => { event.stopPropagation(); openLightbox(src, alt); } },
+        }, icon('zoom')));
+    image.addEventListener('error', () => figure.classList.add('is-broken'), { once: true });
+    if (!compact) {
+        image.addEventListener('click', () => openLightbox(src, alt));
+    }
+    return figure;
+}
+
+function openLightbox(src, alt) {
+    const dialog = el('dialog', { className: 'x-lightbox', attrs: { 'aria-label': alt } },
+        el('img', { className: 'x-lightbox__img', attrs: { src, alt } }),
+        el('button', {
+            className: 'x-lightbox__close', type: 'button', text: '✕',
+            attrs: { 'aria-label': 'بستن' },
+            on: { click: () => dialog.close() },
+        }));
+    dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
+    dialog.addEventListener('close', () => dialog.remove(), { once: true });
+    document.body.append(dialog);
+    dialog.showModal();
+}
+
+function stemFigure(assessmentId, question) {
+    if (!assessmentId || !question.images?.stem) return null;
+    return renderFigure(questionImageUrl(assessmentId, question.id ?? question.question_id, 'stem'), 'تصویر سؤال');
+}
+
+function choiceImageUrl(assessmentId, question, index) {
+    if (!assessmentId || !question.images?.choices?.[index]) return '';
+    return questionImageUrl(assessmentId, question.id ?? question.question_id, `choice-${index}`);
+}
+
+function choiceFigure(assessmentId, question, index) {
+    const url = choiceImageUrl(assessmentId, question, index);
+    if (!url) return null;
+    return renderFigure(url, `تصویر گزینه‌ی ${CHOICE_LETTERS[index] ?? faDigits(index + 1)}`, { compact: true });
+}
+
 const FILTER_LABELS = {
     all: 'همه',
     answered: 'پاسخ‌داده',
@@ -133,6 +200,8 @@ const ICONS = {
     // RTL: forward is leftward, so "next" points left and "previous" right.
     next: 'M15 5l-7 7 7 7',
     previous: 'M9 5l7 7-7 7',
+    // A magnifier: open an image full size.
+    zoom: 'M11 4a7 7 0 100 14 7 7 0 000-14zM20 20l-4-4M11 8v6M8 11h6',
 };
 
 export function icon(name, { filled = false } = {}) {
@@ -354,7 +423,22 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
                 on: { click: () => (reveal === null ? actions.choose(index) : undefined) },
             },
                 el('span', { className: 'x-choice__letter', text: CHOICE_LETTERS[index] ?? faDigits(index + 1) }),
-                el('span', { className: 'x-choice__text', text: faText(choice) })),
+                el('span', { className: 'x-choice__text', text: faText(choice) },
+                    // A bare picture: the whole choice is one button, and a
+                    // tap on its image chooses it like a tap on its words.
+                    choiceImageUrl(state.assessmentId, question, index)
+                        ? el('img', {
+                            className: 'x-choice__img',
+                            attrs: { src: choiceImageUrl(state.assessmentId, question, index), alt: `تصویر گزینه‌ی ${CHOICE_LETTERS[index] ?? faDigits(index + 1)}`, loading: 'lazy', decoding: 'async', draggable: 'false' },
+                        })
+                        : null)),
+            choiceImageUrl(state.assessmentId, question, index)
+                ? el('button', {
+                    className: 'x-choice__zoom', type: 'button',
+                    attrs: { 'aria-label': `بزرگ‌نمایی تصویر گزینه‌ی ${CHOICE_LETTERS[index] ?? faDigits(index + 1)}`, title: 'بزرگ‌نمایی' },
+                    on: { click: () => openLightbox(choiceImageUrl(state.assessmentId, question, index), `تصویر گزینه‌ی ${CHOICE_LETTERS[index] ?? faDigits(index + 1)}`) },
+                }, icon('zoom'))
+                : null,
             el('button', {
                 className: 'x-choice__strike', type: 'button',
                 text: struck ? '↺' : '✕',
@@ -392,6 +476,7 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
             }, icon('flag', { filled: flagged }), el('span', { text: flagged ? 'نشان‌دار' : 'نشان‌دار کن' }))),
         renderQuestionMeta(question),
         renderStem(question, study),
+        stemFigure(state.assessmentId, question),
         choices,
         renderQuestionStats(question.stats ?? null),
         el('div', { className: 'x-question__foot' },
@@ -836,7 +921,7 @@ function renderReportStats(summary, total, correct) {
 }
 
 /** One reviewed question: what was chosen, what was right, and why. */
-export function renderReviewQuestion(entry, position, questionCount, actions) {
+export function renderReviewQuestion(entry, position, questionCount, actions, assessmentId = '') {
     const choices = el('ul', { className: 'x-choices x-choices--review' });
     (entry.choices || []).forEach((choice, index) => {
         const isCorrect = index === entry.correct;
@@ -847,7 +932,8 @@ export function renderReviewQuestion(entry, position, questionCount, actions) {
         choices.append(el('li', { className: 'x-choices__item' },
             el('div', { className: classes.join(' ') },
                 el('span', { className: 'x-choice__letter', text: CHOICE_LETTERS[index] ?? faDigits(index + 1) }),
-                el('span', { className: 'x-choice__text', text: faText(choice) }),
+                el('span', { className: 'x-choice__text', text: faText(choice) },
+                    choiceFigure(assessmentId, entry, index)),
                 el('span', {
                     className: 'x-choice__mark',
                     text: isCorrect ? '✓ پاسخ درست' : (isChosen ? '✕ انتخاب تو' : ''),
@@ -877,6 +963,7 @@ export function renderReviewQuestion(entry, position, questionCount, actions) {
             el('span', { className: `x-verdict is-${verdict.kind}`, text: verdict.text }),
             seenFirst ? el('span', { className: 'x-verdict is-revealed', text: 'پاسخ را قبل از جواب دادن دیدی' }) : null,
             el('p', { className: 'x-question__prompt', text: faText(entry.prompt) }),
+            stemFigure(assessmentId, entry),
             choices,
             entry.explanation
                 ? el('section', { className: 'x-explanation' },

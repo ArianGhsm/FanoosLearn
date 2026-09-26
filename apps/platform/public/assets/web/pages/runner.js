@@ -102,7 +102,7 @@ function draw() {
         frame.append(renderReport(summary, { review: startReview }));
     } else if (phase === 'review') {
         frame.append(reviewEntry
-            ? renderReviewQuestion(reviewEntry, reviewPosition, summary.question_count, reviewActions)
+            ? renderReviewQuestion(reviewEntry, reviewPosition, summary.question_count, reviewActions, assessmentId)
             : loading('در حال گرفتن پاسخ تشریحی…'));
     } else {
         frame.append(loading('در حال آماده‌سازی آزمون…'));

@@ -28,9 +28,13 @@ final class QuestionBankRow
 
     /**
      * @param array<string, mixed> $row
+     * @param (callable(string): ?string)|null $storeImage takes the image's
+     *     path inside the export and returns its ExamImageStore key, or null
+     *     if the file is not there. Without it, a question that needs an
+     *     image is skipped, as it has to be when there is nowhere to put one.
      * @return array{question: array<string, mixed>}|array{skip: string}
      */
-    public static function map(array $row): array
+    public static function map(array $row, ?callable $storeImage = null): array
     {
         if ((string) ($row['question_type'] ?? '') !== 'multiple_choice') {
             return ['skip' => self::SKIP_NOT_MULTIPLE_CHOICE];
@@ -48,8 +52,36 @@ final class QuestionBankRow
         // and a right answer the student has no way to reach -- they would be
         // marked wrong for a question that was never really put to them. The
         // first importer did not check this, which is exactly how that happens.
+        $stemImage = null;
+        $optionImages = [];
         if (self::needsImage($row)) {
-            return ['skip' => self::SKIP_NEEDS_IMAGE];
+            if ($storeImage === null) {
+                return ['skip' => self::SKIP_NEEDS_IMAGE];
+            }
+            // Every image the question has must be stored, or the question is
+            // not imported: a stem photo that went missing leaves exactly the
+            // unanswerable question this rule exists to keep out.
+            $stemPath = self::imagePath($row, 'question_image_local', 'question_image_path');
+            if ($stemPath !== null) {
+                $stemImage = $storeImage($stemPath);
+                if ($stemImage === null) {
+                    return ['skip' => self::SKIP_NEEDS_IMAGE];
+                }
+            }
+            $locals = array_values((array) ($row['option_image_locals'] ?? []));
+            $remotes = array_values((array) ($row['option_image_paths'] ?? []));
+            foreach (array_values(array_filter((array) ($row['options'] ?? []), 'is_array')) as $index => $option) {
+                $path = self::firstPath([$locals[$index] ?? null, $remotes[$index] ?? null]);
+                if ($path === null) {
+                    $optionImages[(string) ($option['id'] ?? '')] = null;
+                    continue;
+                }
+                $key = $storeImage($path);
+                if ($key === null) {
+                    return ['skip' => self::SKIP_NEEDS_IMAGE];
+                }
+                $optionImages[(string) ($option['id'] ?? '')] = $key;
+            }
         }
 
         $correctIds = array_values(array_filter((array) ($row['correct_option_ids'] ?? [])));
@@ -75,16 +107,19 @@ final class QuestionBankRow
         // such row used to cost an entire past exam.
         $kept = [];
         foreach ($options as $option) {
+            $optionId = (string) ($option['id'] ?? '');
             $text = self::stripLeadingLetter((string) ($option['text'] ?? ''));
-            if ($text === '') {
-                if ((string) ($option['id'] ?? '') === $correctId) {
+            $image = $optionImages[$optionId] ?? null;
+            // An option that is only a picture is not blank.
+            if ($text === '' && $image === null) {
+                if ($optionId === $correctId) {
                     // The right answer has no text: there is nothing for the
                     // student to choose.
                     return ['skip' => self::SKIP_BLANK_ANSWER];
                 }
                 continue;
             }
-            $kept[] = ['id' => (string) ($option['id'] ?? ''), 'text' => $text];
+            $kept[] = ['id' => $optionId, 'text' => $text, 'image' => $image];
         }
         if (count($kept) < 2) {
             return ['skip' => self::SKIP_TOO_FEW_OPTIONS];
@@ -93,12 +128,20 @@ final class QuestionBankRow
         // its position, and a stale index would mark the wrong option right.
         $answerIndex = array_search($correctId, array_column($kept, 'id'), true);
 
+        $prompt = trim((string) ($row['question'] ?? ''));
+        if ($prompt === '' && $stemImage === null) {
+            return ['skip' => self::SKIP_BLANK_ANSWER];
+        }
         $question = [
             'id' => 'q' . substr(str_replace('-', '', (string) ($row['id'] ?? '')), 0, 32),
-            'prompt' => trim((string) ($row['question'] ?? '')),
+            'prompt' => $prompt,
             'choices' => array_column($kept, 'text'),
             'answer' => (int) $answerIndex,
         ];
+        $choiceImages = array_column($kept, 'image');
+        if ($stemImage !== null || array_filter($choiceImages) !== []) {
+            $question['images'] = ['stem' => $stemImage, 'choices' => $choiceImages];
+        }
 
         $explanation = trim((string) ($row['explanation'] ?? '')) ?: trim((string) ($row['ai_explanation_md'] ?? ''));
         if ($explanation !== '') {
@@ -133,6 +176,24 @@ final class QuestionBankRow
         }
 
         return false;
+    }
+
+    /** @param array<string, mixed> $row */
+    private static function imagePath(array $row, string ...$keys): ?string
+    {
+        return self::firstPath(array_map(static fn (string $key): mixed => $row[$key] ?? null, $keys));
+    }
+
+    /** @param list<mixed> $candidates */
+    private static function firstPath(array $candidates): ?string
+    {
+        foreach ($candidates as $candidate) {
+            if (is_string($candidate) && trim($candidate) !== '') {
+                return trim($candidate);
+            }
+        }
+
+        return null;
     }
 
     /** @param array<string, mixed> $row */

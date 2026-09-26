@@ -434,6 +434,7 @@ SQL);
                     'question_id' => (string) $entry['id'],
                     'prompt' => $question['prompt'],
                     'choices' => $question['choices'],
+                    'images' => self::imageFlags($question),
                     'correct' => $question['answer'],
                     'explanation' => $question['explanation'] ?? null,
                 ];
@@ -971,6 +972,7 @@ SQL);
                 'allowed' => true, 'position' => $position, 'question_count' => $questionCount,
                 'question_id' => $questionId, 'prompt' => $question['prompt'],
                 'choices' => $question['choices'],
+                'images' => self::imageFlags($question),
                 'selected' => $entry['selected'], 'correct' => $entry['correct'],
                 'is_correct' => $entry['is_correct'], 'explanation' => $entry['explanation'],
                 'was_revealed' => in_array($position, $revealed, true),
@@ -1171,19 +1173,30 @@ SQL, ['workspace' => $workspaceId, 'assessment' => $assessmentId, 'version' => $
                 throw new PlatformException('question_id_invalid', 'Question identifiers must be unique stable keys.', 422);
             }
             $ids[$id] = true;
-            $normalized = [
-                'id' => $id,
-                'prompt' => $this->text((string) ($question['prompt'] ?? ''), 4000, 'question_prompt_invalid'),
-            ];
             $choices = $question['choices'] ?? null;
             if (!is_array($choices) || !array_is_list($choices) || count($choices) < 2 || count($choices) > 10) {
                 throw new PlatformException('question_choices_invalid', 'Each question must contain between 2 and 10 choices.', 422);
             }
+            $images = $this->questionImages($question['images'] ?? null, count($choices));
+            // An image can stand in for words: a stem that is only a photo,
+            // an option that is only a picture. Text is optional exactly
+            // where an image is there instead, and nowhere else.
+            $normalized = [
+                'id' => $id,
+                'prompt' => $images !== null && $images['stem'] !== null
+                    ? $this->optionalText((string) ($question['prompt'] ?? ''), 4000, 'question_prompt_invalid')
+                    : $this->text((string) ($question['prompt'] ?? ''), 4000, 'question_prompt_invalid'),
+            ];
             foreach ($choices as $choiceIndex => $choice) {
                 if (!is_string($choice)) {
                     throw new PlatformException('question_choice_invalid', 'Question choices must be text.', 422);
                 }
-                $normalized['choices'][$choiceIndex] = $this->text($choice, 1000, 'question_choice_invalid');
+                $normalized['choices'][$choiceIndex] = $images !== null && $images['choices'][$choiceIndex] !== null
+                    ? $this->optionalText($choice, 1000, 'question_choice_invalid')
+                    : $this->text($choice, 1000, 'question_choice_invalid');
+            }
+            if ($images !== null) {
+                $normalized['images'] = $images;
             }
             $answer = filter_var($question['answer'] ?? null, FILTER_VALIDATE_INT);
             if ($answer === false || $answer < 0 || $answer >= count($choices)) {
@@ -1257,8 +1270,114 @@ SQL, ['workspace' => $workspaceId, 'assessment' => $assessmentId, 'version' => $
                 $safe[$key] = $question[$key];
             }
         }
+        $images = self::imageFlags($question);
+        if ($images !== null) {
+            $safe['images'] = $images;
+        }
 
         return $safe;
+    }
+
+    /**
+     * Which parts of a question have an image -- as booleans, never the
+     * storage keys. The page fetches each through questionImage(), which is
+     * where access is decided.
+     *
+     * @param array<string, mixed> $question
+     * @return array{stem: bool, choices: list<bool>}|null
+     */
+    private static function imageFlags(array $question): ?array
+    {
+        $images = $question['images'] ?? null;
+        if (!is_array($images)) {
+            return null;
+        }
+
+        return [
+            'stem' => ($images['stem'] ?? null) !== null,
+            'choices' => array_map(static fn (mixed $key): bool => $key !== null, (array) ($images['choices'] ?? [])),
+        ];
+    }
+
+    /**
+     * The storage key of one image of one question, for a student who has
+     * sat (or is sitting) an attempt of that assessment whose version holds
+     * the question. That covers every place a question is shown -- the
+     * runner, the post-submit review, the mistakes review -- without handing
+     * out images of an assessment the student has never opened.
+     *
+     * @param string $slot 'stem' or 'choice-<0-based index>'
+     */
+    public function questionImage(string $userId, string $workspaceId, string $assessmentId, string $questionId, string $slot): string
+    {
+        $this->access->requireWorkspace($userId, $workspaceId, 'exam.take');
+        if (preg_match('/^(stem|choice-(\d{1,2}))$/', $slot, $slotMatch) !== 1) {
+            throw new PlatformException('exam_image_not_found', 'Image was not found.', 404);
+        }
+        $query = $this->database->prepare(<<<'SQL'
+SELECT version.definition_json
+FROM exam_assessment_versions version
+WHERE version.workspace_id = :workspace AND version.assessment_id = :assessment
+  AND version.id IN (
+      SELECT attempt.assessment_version_id FROM exam_attempts attempt
+      WHERE attempt.workspace_id = :attempt_workspace AND attempt.assessment_id = :attempt_assessment
+        AND attempt.user_id = :user
+  )
+ORDER BY version.version_no DESC
+LIMIT 10
+SQL);
+        $query->execute([
+            'workspace' => $workspaceId, 'assessment' => $assessmentId,
+            'attempt_workspace' => $workspaceId, 'attempt_assessment' => $assessmentId, 'user' => $userId,
+        ]);
+        foreach ($query->fetchAll(PDO::FETCH_COLUMN) as $definitionJson) {
+            $definition = json_decode((string) $definitionJson, true, 64, JSON_THROW_ON_ERROR);
+            foreach ($definition['questions'] ?? [] as $question) {
+                if ((string) ($question['id'] ?? '') !== $questionId) {
+                    continue;
+                }
+                $images = $question['images'] ?? null;
+                $key = $slotMatch[1] === 'stem'
+                    ? ($images['stem'] ?? null)
+                    : ($images['choices'][(int) $slotMatch[2]] ?? null);
+                if (is_string($key) && $key !== '') {
+                    return $key;
+                }
+            }
+        }
+
+        throw new PlatformException('exam_image_not_found', 'Image was not found.', 404);
+    }
+
+    /**
+     * @return array{stem: ?string, choices: list<?string>}|null
+     */
+    private function questionImages(mixed $images, int $choiceCount): ?array
+    {
+        if ($images === null) {
+            return null;
+        }
+        if (!is_array($images)) {
+            throw new PlatformException('question_images_invalid', 'Question images are invalid.', 422);
+        }
+        $stem = $images['stem'] ?? null;
+        if ($stem !== null && (!is_string($stem) || preg_match(ExamImageStore::KEY_PATTERN, $stem) !== 1)) {
+            throw new PlatformException('question_images_invalid', 'Question stem image is invalid.', 422);
+        }
+        $choiceImages = $images['choices'] ?? array_fill(0, $choiceCount, null);
+        if (!is_array($choiceImages) || !array_is_list($choiceImages) || count($choiceImages) !== $choiceCount) {
+            throw new PlatformException('question_images_invalid', 'Choice images must line up with the choices.', 422);
+        }
+        foreach ($choiceImages as $key) {
+            if ($key !== null && (!is_string($key) || preg_match(ExamImageStore::KEY_PATTERN, $key) !== 1)) {
+                throw new PlatformException('question_images_invalid', 'A choice image is invalid.', 422);
+            }
+        }
+        if ($stem === null && !array_filter($choiceImages, static fn (?string $key): bool => $key !== null)) {
+            return null;
+        }
+
+        return ['stem' => $stem, 'choices' => $choiceImages];
     }
 
     /** @param array<string, mixed> $definition @return array<string, mixed> */
@@ -1402,6 +1521,12 @@ SQL, [
         }
 
         return $value;
+    }
+
+    /** text(), but an empty value is allowed -- for words an image stands in for. */
+    private function optionalText(string $value, int $maximum, string $errorCode): string
+    {
+        return trim($value) === '' ? '' : $this->text($value, $maximum, $errorCode);
     }
 
     private function uuid(mixed $value, string $errorCode): ?string

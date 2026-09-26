@@ -15,6 +15,11 @@ final class BinaryResponse
         public readonly string $mime,
         public readonly int $length,
         public readonly array $headers = [],
+        // Protected media is a download nobody should cache; a question image
+        // is shown inline, and caching it privately for a while keeps the
+        // runner from re-fetching it every time it redraws the question.
+        public readonly string $disposition = 'attachment; filename="fanoos-protected.pdf"',
+        public readonly string $cacheControl = 'no-store, private',
     ) {
         if (!is_resource($stream) || $length < 0 || !preg_match('#^[a-z0-9.+-]+/[a-z0-9.+-]+$#i', $mime)) {
             throw new RuntimeException('Binary response is invalid.');
@@ -26,9 +31,9 @@ final class BinaryResponse
         http_response_code($this->status);
         header('Content-Type: ' . $this->mime);
         header('Content-Length: ' . $this->length);
-        header('Cache-Control: no-store, private');
+        header('Cache-Control: ' . $this->cacheControl);
         header('X-Content-Type-Options: nosniff');
-        header('Content-Disposition: attachment; filename="fanoos-protected.pdf"');
+        header('Content-Disposition: ' . $this->disposition);
         foreach ($this->headers as $header) {
             header($header, false);
         }
