@@ -1779,3 +1779,150 @@ body.x-focus .f-page {
         gap: var(--space-2) var(--space-3);
     }
 }
+
+/* ------------------------------------------------------------ images */
+
+/*
+ * A question's picture sits between the stem and the choices, on a quiet
+ * inset so a dark clinical photo and a white diagram both have an edge. It
+ * never grows past the card or past most of the screen's height: a tall
+ * radiograph must not push the choices out of reach.
+ */
+.x-figure {
+    position: relative;
+    margin: 0 0 var(--space-5);
+    padding: var(--space-2);
+    display: flex;
+    justify-content: center;
+    background: var(--surface-inset);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+
+.x-figure__img {
+    display: block;
+    max-width: 100%;
+    max-height: min(56vh, 480px);
+    object-fit: contain;
+    border-radius: var(--radius-sm);
+    cursor: zoom-in;
+}
+
+.x-figure--compact {
+    margin: var(--space-2) 0 0;
+    justify-content: flex-start;
+}
+
+.x-figure--compact .x-figure__img {
+    max-height: 180px;
+}
+
+.x-figure__zoom,
+.x-choice__zoom {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    color: var(--text-secondary);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: color var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease);
+}
+
+.x-figure__zoom {
+    position: absolute;
+    inset-block-start: var(--space-3);
+    inset-inline-end: var(--space-3);
+    box-shadow: var(--shadow-soft);
+}
+
+.x-choice__zoom {
+    flex: none;
+    align-self: center;
+}
+
+.x-figure__zoom:hover,
+.x-choice__zoom:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+/* An image that did not load says so rather than leaving a broken icon. */
+.x-figure.is-broken .x-figure__img {
+    display: none;
+}
+
+.x-figure.is-broken::before {
+    content: "تصویر بارگذاری نشد";
+    padding: var(--space-4);
+    font-size: var(--text-sm);
+    color: var(--text-tertiary);
+}
+
+.x-choice__img {
+    display: block;
+    max-width: min(100%, 320px);
+    max-height: 180px;
+    margin-top: var(--space-2);
+    object-fit: contain;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface-inset);
+}
+
+/* A photo-only stem has no words to show. */
+.x-question__prompt:empty {
+    display: none;
+}
+
+.x-lightbox {
+    width: min(96vw, 1200px);
+    max-width: none;
+    max-height: 94vh;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-lg);
+    background: transparent;
+    overflow: visible;
+}
+
+.x-lightbox::backdrop {
+    background: rgba(8, 14, 28, 0.82);
+    backdrop-filter: blur(4px);
+}
+
+.x-lightbox__img {
+    display: block;
+    /* Scaled up, not only down: the source figures are often small scans,
+       and a zoom that shows them at their own size has zoomed nothing. */
+    width: min(96vw, 900px);
+    height: auto;
+    max-width: 100%;
+    max-height: 94vh;
+    margin-inline: auto;
+    object-fit: contain;
+    border-radius: var(--radius-md);
+    animation: f-lightbox-in var(--motion-base) var(--ease);
+}
+
+@keyframes f-lightbox-in {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: none; }
+}
+
+.x-lightbox__close {
+    position: fixed;
+    inset-block-start: var(--space-4);
+    inset-inline-end: var(--space-4);
+    width: 44px;
+    height: 44px;
+    font-size: var(--text-lg);
+    color: var(--text-on-accent);
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+}

@@ -7,6 +7,7 @@ namespace Fanoos\Platform\Http;
 use Fanoos\Platform\Commerce\CommerceService;
 use Fanoos\Platform\Content\ProtectedResourceAuthorizer;
 use Fanoos\Platform\Content\ContentService;
+use Fanoos\Platform\Content\ExamImageStore;
 use Fanoos\Platform\Content\ExamService;
 use Fanoos\Platform\Content\SecureDeliveryService;
 use Fanoos\Platform\Content\SecureObjectDownloadService;
@@ -39,6 +40,7 @@ final class ApiKernel
         private readonly ?OwnerRecoveryService $ownerRecovery = null,
         private readonly ?StudentRegistrationService $registration = null,
         private readonly ?DirectoryReadService $directory = null,
+        private readonly ?ExamImageStore $examImages = null,
     ) {
     }
 
@@ -418,6 +420,14 @@ final class ApiKernel
         }
         if ($request->method === 'GET' && preg_match('#^/assessments/([0-9a-f-]+)/attempts/history$#', $suffix, $match)) {
             return ['status' => 200, 'data' => $this->requireExams()->attemptHistory($session->userId, $workspaceId, $match[1])];
+        }
+        if ($request->method === 'GET' && preg_match('#^/assessments/([0-9a-f-]{36})/questions/([a-zA-Z0-9_-]{1,64})/images/(stem|choice-[0-9]{1,2})$#', $suffix, $match)) {
+            if ($this->examImages === null) {
+                throw new PlatformException('exam_image_not_found', 'Image was not found.', 404);
+            }
+            $key = $this->requireExams()->questionImage($session->userId, $workspaceId, $match[1], $match[2], $match[3]);
+            $image = $this->examImages->open($key);
+            return new BinaryResponse(200, $image['stream'], $image['mime'], $image['length'], [], 'inline', 'private, max-age=86400');
         }
         if ($request->method === 'GET' && $suffix === '/mistakes-review') {
             return ['status' => 200, 'data' => $this->requireExams()->mistakesReview($session->userId, $workspaceId)];

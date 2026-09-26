@@ -26,6 +26,7 @@ final class QuestionBankRowTest
         $this->assertAValidRowBecomesAQuestion();
         $this->assertEveryUnscorableShapeIsSkippedWithItsReason();
         $this->assertImageDependentQuestionsAreSkipped();
+        $this->assertImagesAreAttachedWhenThereIsAStore();
         $this->assertBlankOptionsAreDroppedWithoutMovingTheAnswer();
         $this->assertExamTitlesCarrySubjectYearAndGroup();
         $this->assertCourseCodesAreStableAsciiAndStageSpecific();
@@ -106,6 +107,46 @@ final class QuestionBankRowTest
         $this->assert(
             isset(QuestionBankRow::map($this->row(['question_image_path' => '', 'option_image_paths' => [null, '', '  ']]))['question']),
             'Empty image fields were treated as an image.',
+        );
+    }
+
+    /**
+     * With somewhere to put them, image questions come in with their images
+     * instead of being skipped -- but only whole: one missing file and the
+     * question stays out, exactly as if there were no store at all.
+     */
+    private function assertImagesAreAttachedWhenThereIsAStore(): void
+    {
+        $key = static fn (string $path): string => hash('sha256', $path) . '.jpg';
+        $store = static fn (string $path): ?string => str_contains($path, 'missing') ? null : $key($path);
+
+        $stem = QuestionBankRow::map($this->row(['question_image_local' => 'assets/q/1.jpg', 'question' => '']), $store);
+        $this->assert(($stem['question']['images']['stem'] ?? null) === $key('assets/q/1.jpg'), 'The stem image was not attached.');
+        $this->assert(($stem['question']['prompt'] ?? null) === '', 'A photo-only stem should import with an empty prompt.');
+        $this->assert(($stem['question']['images']['choices'] ?? null) === [null, null, null], 'Choice images must line up with the choices.');
+
+        // An option that is only a picture is kept, and the answer still points at it.
+        $options = QuestionBankRow::map($this->row([
+            'options' => [
+                ['id' => 'A', 'text' => 'الف)'], ['id' => 'B', 'text' => 'ب) دو'], ['id' => 'C', 'text' => 'ج)'],
+            ],
+            'option_image_locals' => ['assets/o/a.jpg', '', 'assets/o/c.jpg'],
+            'correct_option_ids' => ['C'],
+        ]), $store);
+        $this->assert(($options['question']['choices'] ?? null) === ['', 'دو', ''], 'Picture-only options were dropped as blank.');
+        $this->assert(($options['question']['answer'] ?? null) === 2, 'The answer moved off the picture option.');
+        $this->assert(
+            ($options['question']['images']['choices'] ?? null) === [$key('assets/o/a.jpg'), null, $key('assets/o/c.jpg')],
+            'Option images were not attached in order.',
+        );
+
+        $this->assert(
+            QuestionBankRow::map($this->row(['question_image_local' => 'assets/q/missing.jpg']), $store) === ['skip' => QuestionBankRow::SKIP_NEEDS_IMAGE],
+            'A question whose image file is missing was imported without it.',
+        );
+        $this->assert(
+            !isset(QuestionBankRow::map($this->row(), $store)['question']['images']),
+            'A question without images was given an images entry.',
         );
     }
 

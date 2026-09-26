@@ -12,6 +12,7 @@ use Fanoos\Platform\Commerce\FakePaymentGateway;
 use Fanoos\Platform\Content\ProtectedResourceAuthorizer;
 use Fanoos\Platform\Content\ContentService;
 use Fanoos\Platform\Content\ExamQuestionRateGuard;
+use Fanoos\Platform\Content\ExamImageStore;
 use Fanoos\Platform\Content\ExamService;
 use Fanoos\Platform\Content\SecureDeliveryService;
 use Fanoos\Platform\Content\SecureObjectDownloadService;
@@ -112,6 +113,9 @@ final class PlatformFactory
             new OwnerRecoveryService($database, $auth, $audit),
             new StudentRegistrationService($database, $auth, new PasswordHasher(), $audit),
             new DirectoryReadService($database),
+            is_string($objectRoot = $config->optionalString('FANOOS_STORAGE_ROOT')) && trim($objectRoot) !== ''
+                ? new ExamImageStore($objectRoot)
+                : null,
         );
     }
 }
