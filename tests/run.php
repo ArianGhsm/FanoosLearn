@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Fanoos\Platform\Support\DatabaseConnection;
+use Fanoos\Tests\Core\AccountPhoneTest;
 use Fanoos\Tests\Core\AnnouncementPublishTest;
 use Fanoos\Tests\Core\ClassCreationRequestServiceTest;
 use Fanoos\Tests\Core\ClassMembershipTest;
@@ -126,6 +127,8 @@ try {
         echo "PASS join wizard membership and upgrade-request scenarios\n";
         $assertions += (new StudentRegistrationTest($database))->run();
         echo "PASS website sign-up and discipline library scenarios\n";
+        $assertions += (new AccountPhoneTest($database))->run();
+        echo "PASS account phone scenarios\n";
         $assertions += (new RepresentativeApprovalTest($database))->run();
         echo "PASS representative appointment and approval scenarios\n";
         $assertions += (new AnnouncementPublishTest($database))->run();

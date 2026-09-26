@@ -39,6 +39,36 @@ final class AccountPage
     <p><a class="f-btn f-btn--ghost" href="/app?switch=1">تغییر فضای آموزشی</a></p>
 </section>
 
+<section class="f-card a-account" aria-labelledby="phone-title">
+    <h2 id="phone-title">شماره موبایل</h2>
+    <p class="a-account__value" id="phone-value">…</p>
+    <p class="f-muted">اختیاری است. با آن می‌توانی بعداً همین حساب را به ربات فانوس هم وصل کنی.</p>
+
+    <div class="f-notice f-notice--error" id="phone-error" hidden>
+        <div class="f-notice__body"><p id="phone-error-text"></p></div>
+    </div>
+    <div class="f-notice f-notice--success" id="phone-done" hidden>
+        <div class="f-notice__body"><p>شماره ثبت شد.</p></div>
+    </div>
+
+    <form id="phone-form" class="a-account__inline" novalidate>
+        <label class="f-field" for="phone">
+            <span class="f-field__label">شماره‌ی تازه</span>
+            <input class="f-input" id="phone" name="phone" type="tel" inputmode="numeric"
+                   autocomplete="tel" placeholder="۰۹۱۲۳۴۵۶۷۸۹" dir="ltr" required>
+        </label>
+        <button class="f-btn f-btn--ghost" type="submit">فرستادن کد</button>
+    </form>
+    <form id="phone-code-form" class="a-account__inline" novalidate hidden>
+        <label class="f-field" for="phone-code">
+            <span class="f-field__label">کدی که پیامک شد</span>
+            <input class="f-input" id="phone-code" name="code" type="text" inputmode="numeric"
+                   autocomplete="one-time-code" maxlength="6" dir="ltr" required>
+        </label>
+        <button class="f-btn f-btn--primary" type="submit">تأیید</button>
+    </form>
+</section>
+
 <section class="f-card a-account">
     <h2>گذرواژه</h2>
     <p class="f-muted">گذرواژه‌ات را همین‌جا عوض کن. گذرواژه‌ی فعلی لازم نیست جایی ثبت شود جز همین فرم.</p>
@@ -55,7 +85,7 @@ final class AccountPage
             <span class="f-field__label">گذرواژه تازه</span>
             <input class="f-input" id="new-password" name="new_password" type="password"
                    autocomplete="new-password" required>
-            <span class="f-field__hint">دست‌کم ۱۲ نویسه.</span>
+            <span class="f-field__hint">دست‌کم ۸ نویسه.</span>
         </label>
         <label class="f-field" for="repeat-password">
             <span class="f-field__label">تکرار گذرواژه تازه</span>

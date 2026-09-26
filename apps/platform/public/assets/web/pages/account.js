@@ -45,8 +45,10 @@ form?.addEventListener('submit', async (event) => {
         fail('دو گذرواژه یکی نیستند.');
         return;
     }
-    if (next.length < 12) {
-        fail('گذرواژه باید دست‌کم ۱۲ نویسه باشد.');
+    // The server's rule, and the one sign-up uses: a stricter rule here than
+    // at sign-up would refuse a student the very password they signed up with.
+    if (next.length < 8) {
+        fail('گذرواژه باید دست‌کم ۸ نویسه باشد.');
         return;
     }
 
@@ -87,3 +89,85 @@ signout?.addEventListener('click', async () => {
     }
     window.location.assign('/');
 });
+
+/*
+ * The account's phone number: optional at sign-up, added here. A code goes to
+ * the number by SMS and the number is attached once the code is entered.
+ */
+const phoneValue = document.getElementById('phone-value');
+const phoneForm = document.getElementById('phone-form');
+const codeForm = document.getElementById('phone-code-form');
+const phoneError = document.getElementById('phone-error');
+const phoneErrorText = document.getElementById('phone-error-text');
+const phoneDone = document.getElementById('phone-done');
+let challengeToken = '';
+
+const PHONE_ERRORS = {
+    onboarding_phone_invalid: 'شماره‌ی موبایل درست نیست؛ به شکل ۰۹۱۲۳۴۵۶۷۸۹ بنویس.',
+    account_phone_in_use: 'این شماره به حساب دیگری وصل است.',
+    onboarding_otp_send_failed: 'پیامک فرستاده نشد. کمی بعد دوباره امتحان کن.',
+    onboarding_otp_cooldown: 'کد تازه همین الان فرستاده شد؛ یک دقیقه صبر کن.',
+    onboarding_otp_rate_limited: 'چند بار پشت سر هم کد خواستی؛ کمی بعد دوباره امتحان کن.',
+    onboarding_challenge_not_found: 'درخواست تأیید پیدا نشد؛ دوباره کد بگیر.',
+    onboarding_challenge_used: 'این کد قبلاً استفاده شده؛ دوباره کد بگیر.',
+    onboarding_otp_code_invalid: 'کد درست نیست.',
+    onboarding_otp_code_expired: 'کد منقضی شده؛ دوباره کد بگیر.',
+    onboarding_otp_attempts_exceeded: 'چند بار کد اشتباه وارد شد؛ دوباره کد بگیر.',
+    onboarding_challenge_expired: 'زمان تأیید تمام شد؛ دوباره کد بگیر.',
+};
+
+function phoneFail(error) {
+    phoneDone.hidden = true;
+    phoneErrorText.textContent = (error instanceof ApiError && PHONE_ERRORS[error.code]) || describeError(error);
+    phoneError.hidden = false;
+}
+
+async function loadPhone() {
+    if (!phoneValue) return;
+    try {
+        const current = await api.get('/account/phone');
+        phoneValue.textContent = current?.phone_masked
+            ? current.phone_masked.replace(/^\+98/, '0')
+            : 'ثبت نشده';
+    } catch {
+        phoneValue.textContent = '—';
+    }
+}
+
+phoneForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    phoneError.hidden = true;
+    const button = phoneForm.querySelector('button');
+    button.disabled = true;
+    try {
+        const result = await api.post('/account/phone/code', { phone: phoneForm.elements.phone.value.trim() });
+        challengeToken = result.challenge_token;
+        codeForm.hidden = false;
+        codeForm.elements.code.value = '';
+        codeForm.elements.code.focus();
+    } catch (error) {
+        phoneFail(error);
+    } finally {
+        button.disabled = false;
+    }
+});
+
+codeForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    phoneError.hidden = true;
+    const button = codeForm.querySelector('button');
+    button.disabled = true;
+    try {
+        await api.post('/account/phone/verify', { challenge_token: challengeToken, code: codeForm.elements.code.value.trim() });
+        codeForm.hidden = true;
+        phoneForm.reset();
+        phoneDone.hidden = false;
+        await loadPhone();
+    } catch (error) {
+        phoneFail(error);
+    } finally {
+        button.disabled = false;
+    }
+});
+
+loadPhone();

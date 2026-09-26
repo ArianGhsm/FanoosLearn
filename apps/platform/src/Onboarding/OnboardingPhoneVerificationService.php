@@ -31,7 +31,9 @@ use PDO;
  */
 final class OnboardingPhoneVerificationService
 {
-    private const PLATFORMS = ['telegram', 'bale'];
+    // 'web' is a website account adding a phone after sign-up; its subject is
+    // the account id (AccountPhoneService).
+    private const PLATFORMS = ['telegram', 'bale', 'web'];
     private const TOKEN_TTL_SECONDS = 600;
     private const CODE_TTL_SECONDS = 180;
     private const COOLDOWN_SECONDS = 60;
@@ -273,6 +275,23 @@ SQL);
         ]);
 
         return ['verified' => true, 'phone_masked' => $outcome['phone_masked']];
+    }
+
+    /**
+     * The verified phone itself, normalised (+98...), or null. For the one
+     * caller that has to record it somewhere -- a website account adding its
+     * phone -- rather than just knowing that it was verified.
+     */
+    public function verifiedPhone(string $platform, string $subject): ?string
+    {
+        $platform = $this->platform($platform);
+        $query = $this->database->prepare('SELECT phone_ciphertext FROM onboarding_verified_phones WHERE platform = :platform AND subject_digest = :digest');
+        $query->bindValue(':platform', $platform);
+        $query->bindValue(':digest', $this->subjects->digest('onboarding:' . $platform, $subject), PDO::PARAM_LOB);
+        $query->execute();
+        $ciphertext = $query->fetchColumn();
+
+        return $ciphertext === false ? null : $this->subjects->decrypt('phone', (string) $ciphertext);
     }
 
     /** @return array{verified:bool,phone_masked:?string,verified_at:?string} */

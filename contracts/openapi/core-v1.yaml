@@ -27,6 +27,22 @@ paths:
     get: { security: [], operationId: listDirectoryProvinces, responses: { '200': { $ref: '#/components/responses/Success' } } }
   /directory/provinces/{provinceId}/institutions:
     get: { security: [], operationId: listDirectoryInstitutions, parameters: [{ name: provinceId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }], responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' } } }
+  /account/phone:
+    get: { operationId: getAccountPhone, description: 'The account phone number, masked, or null. Optional: sign-up asks for none.', responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /account/phone/code:
+    post:
+      operationId: requestAccountPhoneCode
+      description: Sends a verification code by SMS to a number the account wants to add, through the same OTP engine and throttle the bots use (platform 'web', subject = account id). A number another account holds is refused before any SMS is sent.
+      parameters: [{ $ref: '#/components/parameters/Csrf' }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [phone], properties: { phone: { type: string } }, additionalProperties: false } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' }, '429': { $ref: '#/components/responses/Error' }, '502': { $ref: '#/components/responses/Error' } }
+  /account/phone/verify:
+    post:
+      operationId: verifyAccountPhone
+      description: Checks the code and attaches the number to the account as its one verified phone, retiring any earlier one.
+      parameters: [{ $ref: '#/components/parameters/Csrf' }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [challenge_token, code], properties: { challenge_token: { type: string }, code: { type: string } }, additionalProperties: false } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' }, '429': { $ref: '#/components/responses/Error' } }
   /profile:
     get: { operationId: getStudentProfile, description: 'The signed-in student profile with discipline and university names, or null for an account that never signed up on the website.', responses: { '200': { $ref: '#/components/responses/Success' } } }
   /auth/logout:
