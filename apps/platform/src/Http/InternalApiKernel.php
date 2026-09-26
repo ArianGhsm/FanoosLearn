@@ -27,6 +27,7 @@ use Fanoos\Platform\Onboarding\DirectoryReadService;
 use Fanoos\Platform\Onboarding\OnboardingPhoneVerificationService;
 use Fanoos\Platform\Operations\DeploymentControlService;
 use Fanoos\Platform\Operations\OwnerControlPlaneService;
+use Fanoos\Platform\Support\JsonLogger;
 use Fanoos\Platform\Support\PlatformException;
 use Throwable;
 
@@ -72,12 +73,16 @@ final class InternalApiKernel
             }
             return new Response(200, ['ok' => true, 'data' => $data, 'meta' => ['api_version' => 'internal-v1', 'request_id' => $requestId]]);
         } catch (PlatformException $error) {
+            if ($error->httpStatus >= 500) {
+                JsonLogger::requestFailure('internal-v1', $requestId, $request->method, $request->path, $error);
+            }
             return new Response($error->httpStatus, [
                 'ok' => false,
                 'error' => ['code' => $error->errorCode, 'message' => $error->getMessage()],
                 'meta' => ['api_version' => 'internal-v1', 'request_id' => $requestId],
             ]);
-        } catch (Throwable) {
+        } catch (Throwable $error) {
+            JsonLogger::requestFailure('internal-v1', $requestId, $request->method, $request->path, $error);
             return new Response(500, [
                 'ok' => false,
                 'error' => ['code' => 'internal_error', 'message' => 'An unexpected error occurred.'],

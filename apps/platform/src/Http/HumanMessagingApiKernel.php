@@ -6,6 +6,7 @@ namespace Fanoos\Platform\Http;
 
 use Fanoos\Platform\Identity\AuthService;
 use Fanoos\Platform\Messaging\MessagingLinkService;
+use Fanoos\Platform\Support\JsonLogger;
 use Fanoos\Platform\Support\PlatformException;
 use Throwable;
 
@@ -35,12 +36,16 @@ final class HumanMessagingApiKernel
             }
             throw new PlatformException('route_not_found', 'API route was not found.', 404);
         } catch (PlatformException $error) {
+            if ($error->httpStatus >= 500) {
+                JsonLogger::requestFailure('messaging-v1', $requestId, $request->method, $request->path, $error);
+            }
             return new Response($error->httpStatus, [
                 'ok' => false,
                 'error' => ['code' => $error->errorCode, 'message' => $error->getMessage()],
                 'meta' => ['api_version' => 'v1', 'request_id' => $requestId],
             ]);
-        } catch (Throwable) {
+        } catch (Throwable $error) {
+            JsonLogger::requestFailure('messaging-v1', $requestId, $request->method, $request->path, $error);
             return new Response(500, [
                 'ok' => false,
                 'error' => ['code' => 'internal_error', 'message' => 'An unexpected error occurred.'],
