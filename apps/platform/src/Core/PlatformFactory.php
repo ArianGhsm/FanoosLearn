@@ -23,6 +23,8 @@ use Fanoos\Platform\Web\AssetVersioner;
 use Fanoos\Platform\Web\PageRenderer;
 use Fanoos\Platform\Web\WebRouter;
 use Fanoos\Platform\Identity\PasswordHasher;
+use Fanoos\Platform\Identity\StudentRegistrationService;
+use Fanoos\Platform\Onboarding\DirectoryReadService;
 use Fanoos\Platform\Storage\FilesystemObjectStore;
 use Fanoos\Platform\Storage\SignedDownloadToken;
 use Fanoos\Platform\Support\DatabaseConnection;
@@ -105,6 +107,8 @@ final class PlatformFactory
             $downloads,
             $schedule,
             new OwnerRecoveryService($database, $auth, $audit),
+            new StudentRegistrationService($database, $auth, new PasswordHasher(), $audit),
+            new DirectoryReadService($database),
         );
     }
 }

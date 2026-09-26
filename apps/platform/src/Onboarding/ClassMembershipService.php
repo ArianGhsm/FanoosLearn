@@ -88,6 +88,8 @@ JOIN tenant_workspaces workspace ON workspace.cohort_id = cohort.id
  AND workspace.status = 'active' AND workspace.archived_at IS NULL
 WHERE cohort.program_id = :program AND cohort.entry_year = :year
  AND cohort.status = 'active' AND cohort.archived_at IS NULL
+ -- A discipline library is joined by signing up in its field, never as a class.
+AND NOT EXISTS (SELECT 1 FROM academic_disciplines library WHERE library.library_workspace_id = workspace.id)
 LIMIT 1
 SQL);
             $workspace->execute(['program' => $programId, 'year' => $entryYear]);
