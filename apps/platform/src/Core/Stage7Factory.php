@@ -107,7 +107,13 @@ final class Stage7Factory
         $ownerRecovery = new OwnerRecoveryService($database, new AuthService($database, new PasswordHasher(), $audit), $audit);
 
         return new InternalApiKernel(
-            new ServiceAuthenticator($database),
+            // Environment first (RuntimeConfig checks it before the file), then
+            // the platform config: the default resolver read only getenv(), so a
+            // secret provisioned in the config file authenticated nothing.
+            new ServiceAuthenticator($database, static function (string $name) use ($config): ?string {
+                $value = $config->optionalString($name);
+                return $value !== null && $value !== '' ? $value : null;
+            }),
             $links,
             new MessagingUnlinkService($database, $audit, $subjectProtector),
             new BotReadProjectionService($database, $access, $resources),

@@ -6,6 +6,30 @@ namespace Fanoos\Platform\Support;
 
 final class JsonLogger
 {
+    /**
+     * An exception a request handler caught and turned into a bare 500. The
+     * caller still answers "internal_error" -- the detail must never reach
+     * the client -- but without this line the only trace of the failure was
+     * the status code in the access log, which is how a missing service
+     * secret went unexplained for a whole bot deployment.
+     */
+    public static function requestFailure(string $surface, string $requestId, string $method, string $path, \Throwable $error): void
+    {
+        $chain = [];
+        for ($current = $error; $current !== null && count($chain) < 4; $current = $current->getPrevious()) {
+            $chain[] = $current::class . ': ' . $current->getMessage()
+                . ' @ ' . basename($current->getFile()) . ':' . $current->getLine();
+        }
+        self::write('error', 'http.request_failed', [
+            'surface' => $surface,
+            'request_id' => $requestId,
+            'method' => $method,
+            // Paths carry ids, never credentials; query strings are dropped.
+            'path' => strtok($path, '?') ?: $path,
+            'error' => implode(' <- ', $chain),
+        ]);
+    }
+
     /** @param array<string, scalar|null> $context */
     public static function write(string $level, string $event, array $context = []): void
     {

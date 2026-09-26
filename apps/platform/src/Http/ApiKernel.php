@@ -16,6 +16,7 @@ use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Identity\AuthService;
 use Fanoos\Platform\Identity\AuthenticatedSession;
 use Fanoos\Platform\Identity\OwnerRecoveryService;
+use Fanoos\Platform\Support\JsonLogger;
 use Fanoos\Platform\Support\PlatformException;
 use Throwable;
 
@@ -51,12 +52,16 @@ final class ApiKernel
                 'meta' => ['api_version' => 'v1', 'request_id' => $requestId],
             ], $result['headers'] ?? []);
         } catch (PlatformException $error) {
+            if ($error->httpStatus >= 500) {
+                JsonLogger::requestFailure('api-v1', $requestId, $request->method, $request->path, $error);
+            }
             return new Response($error->httpStatus, [
                 'ok' => false,
                 'error' => ['code' => $error->errorCode, 'message' => $error->getMessage()],
                 'meta' => ['api_version' => 'v1', 'request_id' => $requestId],
             ]);
-        } catch (Throwable) {
+        } catch (Throwable $error) {
+            JsonLogger::requestFailure('api-v1', $requestId, $request->method, $request->path, $error);
             return new Response(500, [
                 'ok' => false,
                 'error' => ['code' => 'internal_error', 'message' => 'An unexpected error occurred.'],
