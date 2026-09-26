@@ -31,7 +31,8 @@ final class PageRenderer
      *     stylesheets?: list<string>,
      *     modules?: list<string>,
      *     viewer?: ViewerContext|null,
-     *     activeNav?: string
+     *     activeNav?: string,
+     *     publicHeader?: string
      * } $page
      */
     public function render(array $page, string $mainHtml): string
@@ -78,7 +79,9 @@ final class PageRenderer
             $scripts[] = '<script type="module" src="' . $this->escape($this->assets->url($module)) . '"></script>';
         }
 
-        $chrome = $viewer === null ? '' : $this->chrome($viewer, $page['activeNav'] ?? '');
+        // A signed-out page may bring its own header (PublicChrome); the
+        // signed-in chrome is only ever built from a viewer.
+        $chrome = $viewer === null ? ($page['publicHeader'] ?? '') : $this->chrome($viewer, $page['activeNav'] ?? '');
 
         return '<!doctype html>' . "\n"
             . '<html lang="fa" dir="rtl">' . "\n"

@@ -7,6 +7,7 @@ namespace Fanoos\Tests\Website;
 use Fanoos\Platform\Web\AssetVersioner;
 use Fanoos\Platform\Web\LandingPage;
 use Fanoos\Platform\Web\LoginPage;
+use Fanoos\Platform\Web\RegisterPage;
 use Fanoos\Platform\Web\HomePage;
 use Fanoos\Platform\Web\AccountPage;
 use Fanoos\Platform\Web\ExamAttemptPage;
@@ -47,6 +48,8 @@ final class WebRenderingTest
         $this->displayNamesAreEscapedNotInterpolated($renderer);
         $this->homeShowsTheChooserWhenAskedToSwitch($renderer);
         $this->notFoundSaysTheAddressIsWrong($renderer);
+        $this->signUpAsksForNoPhoneAndLeadsBothWays($renderer);
+        $this->homeGreetsWithTheProfileWhenThereIsOne($renderer);
         $this->everyPageIsRightToLeftPersian($renderer);
         $this->examPagesCarryTheWorkspaceButNoQuestionContent($renderer);
         $this->everySignedInPageOffersAWayOut($renderer);
@@ -71,10 +74,39 @@ final class WebRenderingTest
 
     private function signedOutPagesCarryNoCsrfToken(PageRenderer $renderer): void
     {
-        foreach ([(new LandingPage($renderer))->render(), (new LoginPage($renderer))->render()] as $html) {
+        foreach ([(new LandingPage($renderer))->render(), (new LoginPage($renderer))->render(), (new RegisterPage($renderer))->render()] as $html) {
             $this->assert(!str_contains($html, 'fanoos-csrf'), 'A signed-out page must not carry a CSRF token.');
             $this->assert(!str_contains($html, 'f-header'), 'A signed-out page must not render the signed-in chrome.');
         }
+    }
+
+    /**
+     * The owner's decision: sign-up must not depend on an SMS, so the form
+     * has no phone field at all. And the two doors lead to each other.
+     */
+    private function signUpAsksForNoPhoneAndLeadsBothWays(PageRenderer $renderer): void
+    {
+        $register = (new RegisterPage($renderer))->render();
+        $this->assert(str_contains($register, 'id="register-form"'), 'The sign-up page must carry its form.');
+        foreach (['name="username"', 'name="password"', 'name="first_name"', 'name="last_name"', 'discipline-options'] as $needed) {
+            $this->assert(str_contains($register, $needed), "The sign-up form is missing {$needed}.");
+        }
+        $this->assert(!preg_match('/type="tel"|name="phone/', $register), 'Sign-up must not ask for a phone number.');
+        $this->assert(str_contains($register, 'href="/login"'), 'Sign-up must link to sign-in.');
+        $this->assert(str_contains((new LoginPage($renderer))->render(), 'href="/register"'), 'Sign-in must link to sign-up.');
+        $this->assert(str_contains((new LandingPage($renderer))->render(), 'href="/register"'), 'The landing page must offer sign-up.');
+    }
+
+    private function homeGreetsWithTheProfileWhenThereIsOne(PageRenderer $renderer): void
+    {
+        $viewer = new ViewerContext('u1', 'نام نمایشی', 'c', 'w1', 'بانک');
+        $html = (new HomePage($renderer))->render($viewer, false, [
+            'first_name' => '<b>سارا</b>', 'discipline_name' => 'رشته‌ی آزمایشی', 'institution_name' => null,
+        ], true);
+        $this->assert(str_contains($html, '&lt;b&gt;سارا'), 'The greeting must use the profile first name, escaped.');
+        $this->assert(str_contains($html, 'رشته‌ی آزمایشی'), 'The greeting must name the field of study.');
+        $this->assert(str_contains($html, 'حسابت ساخته شد'), 'A just-created account must be welcomed.');
+        $this->assert(str_contains($html, 'id="home-courses"'), 'Home must have the course grid when a workspace is selected.');
     }
 
     private function signedInPagesCarryTheCsrfTokenAndTheChrome(PageRenderer $renderer): void

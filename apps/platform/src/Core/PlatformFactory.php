@@ -53,10 +53,13 @@ final class PlatformFactory
         $entitlements = new EntitlementService($database, $access, $audit);
         $exams = new ExamService($database, $access, $authorizer, $entitlements, $audit, new ExamQuestionRateGuard($database));
 
+        $auth = new AuthService($database, new PasswordHasher(), $audit);
+
         return new WebRouter(
-            new AuthService($database, new PasswordHasher(), $audit),
+            $auth,
             new PageRenderer(new AssetVersioner(__DIR__ . '/../../public', $release)),
             $exams,
+            new StudentRegistrationService($database, $auth, new PasswordHasher(), $audit),
         );
     }
 
