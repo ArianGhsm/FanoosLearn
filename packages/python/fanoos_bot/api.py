@@ -131,6 +131,8 @@ class FanoosApiClient:
     def onboarding_otp_resend(self,platform,subject,challenge_token):return self.post('/api/internal/v1/onboarding/otp/resend',{'platform':platform,'subject':str(subject),'challenge_token':challenge_token},safe_to_retry=False)
     def onboarding_otp_verify(self,platform,subject,challenge_token,code):return self.post('/api/internal/v1/onboarding/otp/verify',{'platform':platform,'subject':str(subject),'challenge_token':challenge_token,'code':code},safe_to_retry=False)
     def onboarding_otp_status(self,platform,subject):return self.post('/api/internal/v1/onboarding/otp/status',{'platform':platform,'subject':str(subject)},safe_to_retry=True)
+    def onboarding_disciplines(self,platform):return self.post('/api/internal/v1/onboarding/disciplines',{'platform':platform},safe_to_retry=True)
+    def onboarding_register(self,platform,subject,profile:dict):return self.post('/api/internal/v1/onboarding/register',{'platform':platform,'subject':str(subject),**profile},safe_to_retry=True)
     def onboarding_join(self,platform,subject,program_id,entry_year):return self.post('/api/internal/v1/onboarding/join',{'platform':platform,'subject':str(subject),'program_id':program_id,'entry_year':int(entry_year)},safe_to_retry=False)
     def onboarding_upgrade_request(self,platform,subject,workspace_id):return self.post('/api/internal/v1/onboarding/upgrade-request',{'platform':platform,'subject':str(subject),'workspace_id':workspace_id},safe_to_retry=True)
     def onboarding_class_creation_request(self,platform,subject,program_id,entry_year):return self.post('/api/internal/v1/onboarding/class-creation-requests',{'platform':platform,'subject':str(subject),'program_id':program_id,'entry_year':int(entry_year)},safe_to_retry=True)

@@ -22,19 +22,23 @@ class JoinWizardBackend:
         self.institutions = {
             "prov-1": [{"id": "inst-1", "name": "دانشگاه علوم پزشکی تهران", "institution_type": "state"}],
         }
-        self.faculties = {"inst-1": [{"id": "fac-1", "name": "دانشکده دندانپزشکی"}]}
-        self.programs = {"fac-1": [{"id": "prog-1", "name": "دندانپزشکی عمومی"}]}
+        self.disciplines = [
+            {"id": "disc-1", "code": "medicine", "name": "پزشکی", "has_library": True},
+            {"id": "disc-2", "code": "dentistry", "name": "دندانپزشکی", "has_library": False},
+        ]
 
         self.otp_request_calls: list[tuple] = []
         self.otp_verify_calls: list[tuple] = []
         self.otp_verify_error: FanoosApiError | None = None
-        self.join_calls: list[tuple] = []
-        self.join_result: dict = {
-            "status": "joined",
-            "workspace_id": "ws-1",
-            "workspace_name": "دندانپزشکی ۱۴۰۲",
-            "already_member": False,
+        self.register_calls: list[tuple] = []
+        self.register_result: dict = {
+            "status": "registered",
+            "discipline_name": "پزشکی",
+            "has_library": True,
+            "workspace_id": "ws-lib",
+            "workspace_name": "بانک سؤالات پزشکی",
         }
+        self.select_calls: list[tuple] = []
         self.creation_request_calls: list[tuple] = []
         self.upgrade_request_calls: list[tuple] = []
 
@@ -48,11 +52,8 @@ class JoinWizardBackend:
     def directory_institutions(self, platform, province_id, limit=10, cursor=None):
         return {"items": self.institutions.get(province_id, []), "next_cursor": None}
 
-    def directory_faculties(self, platform, institution_id, limit=10, cursor=None):
-        return {"items": self.faculties.get(institution_id, []), "next_cursor": None}
-
-    def directory_programs(self, platform, faculty_id, limit=10, cursor=None):
-        return {"items": self.programs.get(faculty_id, []), "next_cursor": None}
+    def onboarding_disciplines(self, platform):
+        return {"items": list(self.disciplines)}
 
     # -- otp / join ---------------------------------------------------------
     def onboarding_otp_request(self, platform, subject, phone_number):
@@ -68,9 +69,9 @@ class JoinWizardBackend:
             raise self.otp_verify_error
         return {}
 
-    def onboarding_join(self, platform, subject, program_id, entry_year):
-        self.join_calls.append((platform, subject, program_id, entry_year))
-        return dict(self.join_result)
+    def onboarding_register(self, platform, subject, profile):
+        self.register_calls.append((platform, subject, dict(profile)))
+        return dict(self.register_result)
 
     def onboarding_class_creation_request(self, platform, subject, program_id, entry_year):
         self.creation_request_calls.append((platform, subject, program_id, entry_year))
@@ -85,6 +86,7 @@ class JoinWizardBackend:
         return dict(self.workspaces_result)
 
     def select_workspace(self, platform, subject, workspace_id):
+        self.select_calls.append((platform, subject, workspace_id))
         return {}
 
     def grades(self, platform, subject, workspace_id, limit, cursor):
@@ -96,10 +98,9 @@ class JoinWizardBackend:
 FULL_ANSWERS = [
     "آرین",  # first-name
     "قاسمی",  # last-name
+    "پزشکی",  # discipline
     "تهران",  # province
     "دانشگاه علوم پزشکی تهران",  # institution
-    "دانشکده دندانپزشکی",  # faculty
-    "دندانپزشکی عمومی",  # program
     "۱۴۰۲",  # entry-year
     "نیمسال اول",  # entry-term
     "روزانه یا تعهدی",  # course-type
@@ -140,21 +141,26 @@ class _BaseJoinWizardTest:
     def _verify_otp(self, subject="student", code="123456"):
         return self.app.join_wizard_text(subject, code, True)
 
-    # 1) Full walkthrough sends exactly the identity picked to onboarding_join.
-    def test_full_walkthrough_sends_exact_identity_to_backend(self):
+    # 1) Full walkthrough sends exactly the profile picked to onboarding_register,
+    # in the same codes website sign-up stores, and lands in the library.
+    def test_full_walkthrough_sends_exact_profile_to_backend(self):
         otp_screen = self._walk_to_otp()
         self.assertIsInstance(otp_screen, RawKeyboardSend)
         self.assertIn("کد تأیید", otp_screen.screen.html)
 
         finished = self._verify_otp()
         self.assertIsInstance(finished, RawKeyboardHandoff)
-        self.assertEqual(len(self.backend.join_calls), 1)
-        platform, subject, program_id, entry_year = self.backend.join_calls[0]
+        self.assertEqual(len(self.backend.register_calls), 1)
+        platform, subject, profile = self.backend.register_calls[0]
         self.assertEqual(platform, "telegram")
         self.assertEqual(subject, "student")
-        self.assertEqual(program_id, "prog-1")
-        self.assertEqual(entry_year, 1402)
-        # The wizard is fully cleared once membership is created.
+        self.assertEqual(profile, {
+            "first_name": "آرین", "last_name": "قاسمی", "discipline_id": "disc-1",
+            "institution_id": "inst-1", "entry_year": 1402, "entry_term": "first",
+            "course_type": "daily", "student_number": "",
+        })
+        self.assertEqual(self.backend.select_calls, [("telegram", "student", "ws-lib")])
+        # The wizard is fully cleared once the profile is saved.
         self.assertIsNone(self.state.join_wizard("telegram", "student"))
 
     # 2) The step counter adapts for آزاد institutions and the course-type
@@ -163,18 +169,16 @@ class _BaseJoinWizardTest:
         self.backend.institutions["prov-1"] = [
             {"id": "inst-azad", "name": "دانشگاه آزاد واحد تهران", "institution_type": "azad_university"},
         ]
-        self.backend.faculties["inst-azad"] = [{"id": "fac-1", "name": "دانشکده دندانپزشکی"}]
         subject = "azad-student"
         self.app.join_wizard_begin(subject, True)
         first = self.app.join_wizard_text(subject, "آرین", True)
-        self.assertIn("از ۱۳", first.screen.html)  # step 1/13 before institution type is known
+        self.assertIn("از ۱۲", first.screen.html)  # 12 steps before institution type is known
         self.app.join_wizard_text(subject, "قاسمی", True)
+        self.app.join_wizard_text(subject, "پزشکی", True)
         self.app.join_wizard_text(subject, "تهران", True)
-        institution = self.app.join_wizard_text(subject, "دانشگاه آزاد واحد تهران", True)
-        self.assertIn("از ۱۲", institution.screen.html)  # total drops once azad is known
-        self.app.join_wizard_text(subject, "دانشکده دندانپزشکی", True)
-        entry_year = self.app.join_wizard_text(subject, "دندانپزشکی عمومی", True)
+        entry_year = self.app.join_wizard_text(subject, "دانشگاه آزاد واحد تهران", True)
         self.assertIn("سال ورود", entry_year.screen.html)
+        self.assertIn("از ۱۱", entry_year.screen.html)  # total drops once azad is known
         entry_term = self.app.join_wizard_text(subject, "۱۴۰۲", True)
         self.assertIn("نیمسال ورودی", entry_term.screen.html)
         # course-type is skipped entirely: the very next screen after
@@ -188,7 +192,8 @@ class _BaseJoinWizardTest:
         subject = "pager"
         self.app.join_wizard_begin(subject, True)
         self.app.join_wizard_text(subject, "آرین", True)
-        first_page = self.app.join_wizard_text(subject, "قاسمی", True)
+        self.app.join_wizard_text(subject, "قاسمی", True)
+        first_page = self.app.join_wizard_text(subject, "پزشکی", True)
         self.assertNotIn("▶️ صفحه قبل", str(first_page.screen.keyboard))
 
     def test_province_pagination_does_not_advance_the_step(self):
@@ -196,6 +201,7 @@ class _BaseJoinWizardTest:
         self.app.join_wizard_begin(subject, True)
         self.app.join_wizard_text(subject, "آرین", True)
         self.app.join_wizard_text(subject, "قاسمی", True)
+        self.app.join_wizard_text(subject, "پزشکی", True)
         result = self.app.join_wizard_text(subject, "صفحه بعد ◀️", True)
         self.assertIsInstance(result, RawKeyboardSend)
         wizard = self.state.join_wizard("telegram", subject)
@@ -208,6 +214,7 @@ class _BaseJoinWizardTest:
         self.app.join_wizard_begin(subject, True)
         self.app.join_wizard_text(subject, "آرین", True)
         self.app.join_wizard_text(subject, "قاسمی", True)
+        self.app.join_wizard_text(subject, "پزشکی", True)
         result = self.app.join_wizard_text(subject, "اصفهان", True)
         labels = {item["text"] for row in result.screen.keyboard for item in row}
         self.assertIn("دانشگاه اصفهان", labels)
@@ -246,7 +253,7 @@ class _BaseJoinWizardTest:
     def test_student_number_skip_escape_works(self):
         subject = "skipper"
         self.app.join_wizard_begin(subject, True)
-        for answer in FULL_ANSWERS[:9]:  # up to and including course-type
+        for answer in FULL_ANSWERS[:8]:  # up to and including course-type
             self.app.join_wizard_text(subject, answer, True)
         review = self.app.join_wizard_text(subject, "شماره دانشجویی ندارم", True)
         self.assertIn("ثبت نشده", review.screen.html)
@@ -289,51 +296,53 @@ class _BaseJoinWizardTest:
         self.assertIn("تعداد تلاش‌های اشتباه بیش از حد مجاز شد", rejected.screen.html)
         self.assertNotIn("کد تایید صحیح نیست", rejected.screen.html)
 
-    # 10) Completing the wizard yields exactly one onboarding_join call; the
-    # wizard cannot be replayed afterwards since its state is gone.
-    def test_completing_wizard_calls_join_exactly_once_and_cannot_replay(self):
+    # 10) Completing the wizard yields exactly one onboarding_register call;
+    # the wizard cannot be replayed afterwards since its state is gone.
+    def test_completing_wizard_registers_exactly_once_and_cannot_replay(self):
         self._walk_to_otp("onceonly")
         self._verify_otp("onceonly")
-        self.assertEqual(len(self.backend.join_calls), 1)
+        self.assertEqual(len(self.backend.register_calls), 1)
         # No active wizard remains, so a stray follow-up message is not
-        # swallowed and does not call join again.
+        # swallowed and does not register again.
         self.assertIsNone(self.app.join_wizard_text("onceonly", "123456", True))
-        self.assertEqual(len(self.backend.join_calls), 1)
+        self.assertEqual(len(self.backend.register_calls), 1)
 
-    # 11) Class-not-found still creates/finds the account (join is always
-    # attempted), and offers a durable, idempotent creation request instead
-    # of a bare refusal.
-    def test_class_not_found_offers_creation_request_without_membership(self):
-        self.backend.join_result = {"status": "class_not_found"}
-        result = self._walk_to_otp("nomatch")
-        finished = self._verify_otp("nomatch")
-        self.assertIsInstance(finished, RawKeyboardSend)
-        self.assertIn("کلاسی پیدا نشد", finished.screen.html)
-        wizard = self.state.join_wizard("telegram", "nomatch")
-        self.assertEqual(wizard["step"], "awaiting-creation-decision")
+    # 11) The field list is the platform's, not a hardcoded one, and a
+    # field without a library yet still registers -- the student is told
+    # its exams are coming rather than being refused.
+    def test_discipline_choices_come_from_the_backend(self):
+        subject = "fields"
+        self.app.join_wizard_begin(subject, True)
+        self.app.join_wizard_text(subject, "آرین", True)
+        fields = self.app.join_wizard_text(subject, "قاسمی", True)
+        labels = {item["text"] for row in fields.screen.keyboard for item in row}
+        self.assertTrue({"پزشکی", "دندانپزشکی"} <= labels)
+        # Free text that is not a listed field does not advance.
+        again = self.app.join_wizard_text(subject, "مهندسی", True)
+        self.assertEqual(self.state.join_wizard("telegram", subject)["step"], "discipline")
+        self.assertIsInstance(again, RawKeyboardSend)
 
-        recorded = self.app.join_wizard_text("nomatch", "📝 درخواست ساخت کلاس", True)
-        self.assertIsInstance(recorded, RawKeyboardHandoff)
-        self.assertEqual(len(self.backend.creation_request_calls), 1)
-        _, _, program_id, entry_year = self.backend.creation_request_calls[0]
-        self.assertEqual(program_id, "prog-1")
-        self.assertEqual(entry_year, 1402)
-        self.assertIsNone(self.state.join_wizard("telegram", "nomatch"))
+    def test_field_without_library_registers_and_says_exams_are_coming(self):
+        self.backend.register_result = {
+            "status": "registered", "discipline_name": "دندانپزشکی", "has_library": False,
+            "workspace_id": None, "workspace_name": None,
+        }
+        answers = list(FULL_ANSWERS)
+        answers[2] = "دندانپزشکی"
+        self._walk_to_otp("nolib", answers)
+        finished = self._verify_otp("nolib")
+        self.assertIsInstance(finished, RawKeyboardHandoff)
+        self.assertEqual(self.backend.register_calls[0][2]["discipline_id"], "disc-2")
+        self.assertEqual(self.backend.select_calls, [])
 
-    # 12) A faculty with zero programs offered gets the "nothing here yet"
-    # screen, distinct from class-not-found (no creation-request offer,
-    # since there is no program_id to attach one to).
-    def test_empty_program_list_offers_no_creation_request(self):
-        self.backend.programs["fac-1"] = []
+    # 12) No field defined at all is a plain "nothing here yet" screen.
+    def test_empty_discipline_list_says_so(self):
+        self.backend.disciplines = []
         subject = "emptylist"
         self.app.join_wizard_begin(subject, True)
         self.app.join_wizard_text(subject, "آرین", True)
-        self.app.join_wizard_text(subject, "قاسمی", True)
-        self.app.join_wizard_text(subject, "تهران", True)
-        self.app.join_wizard_text(subject, "دانشگاه علوم پزشکی تهران", True)
-        empty = self.app.join_wizard_text(subject, "دانشکده دندانپزشکی", True)
+        empty = self.app.join_wizard_text(subject, "قاسمی", True)
         self.assertIn("موردی پیدا نشد", empty.screen.html)
-        self.assertNotIn("درخواست ساخت کلاس", empty.screen.html)
 
     # 13) Two subjects (and the same subject on two platforms) never see
     # each other's wizard state -- LocalState keys wizards by (platform,

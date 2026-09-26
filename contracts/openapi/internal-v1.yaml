@@ -315,6 +315,42 @@ paths:
       x-required-service-action: onboarding.otp.status
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LinkedSubject' } } } }
       responses: { '200': { $ref: '#/components/responses/Success' } }
+  /onboarding/disciplines:
+    post:
+      operationId: listOnboardingDisciplines
+      x-required-service-action: onboarding.directory.read
+      description: The platform's fields of study, for the join wizard's discipline step -- the same list website sign-up offers, each with whether it has a library yet.
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [platform], properties: { platform: { type: string, enum: [telegram, bale] } }, additionalProperties: false } } } }
+      responses: { '200': { description: 'data.items: [{id, code, name, has_library}]' } }
+  /onboarding/register:
+    post:
+      operationId: registerFromOnboarding
+      x-required-service-action: onboarding.join
+      description: >-
+        The discipline-first join wizard's last step. Requires a phone already verified for this (platform, subject);
+        finds or creates that phone's account, links the subject to it, records the same profile website sign-up
+        records (iam_student_profiles, replaced on a re-run) and makes the account a member of its discipline's library
+        with the student role. data: {status: 'registered', discipline_name, has_library, workspace_id, workspace_name}.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [platform, subject, first_name, last_name, discipline_id]
+              properties:
+                platform: { type: string, enum: [telegram, bale] }
+                subject: { type: string }
+                first_name: { type: string }
+                last_name: { type: string }
+                discipline_id: { type: string }
+                institution_id: { type: string }
+                entry_year: { oneOf: [{ type: integer }, { type: string }] }
+                entry_term: { type: string, enum: [first, second, ''] }
+                course_type: { type: string, enum: [daily, tuition, international, ''] }
+                student_number: { type: string }
+              additionalProperties: false
+      responses: { '200': { description: registered }, '403': { description: phone not verified }, '422': { description: invalid profile } }
   /onboarding/join:
     post:
       operationId: joinClassFromOnboarding

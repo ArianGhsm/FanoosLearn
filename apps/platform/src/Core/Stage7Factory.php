@@ -26,6 +26,7 @@ use Fanoos\Platform\Http\InternalApiKernel;
 use Fanoos\Platform\Identity\AuthService;
 use Fanoos\Platform\Identity\OwnerRecoveryService;
 use Fanoos\Platform\Identity\PasswordHasher;
+use Fanoos\Platform\Identity\StudentRegistrationService;
 use Fanoos\Platform\Integration\ServiceAuthenticator;
 use Fanoos\Platform\Messaging\ChannelSubjectProtector;
 use Fanoos\Platform\Messaging\MessagingLinkService;
@@ -136,6 +137,7 @@ final class Stage7Factory
             $mediaForensics,
             $paymentsEnabled,
             $ownerRecovery,
+            new StudentRegistrationService($database, new AuthService($database, new PasswordHasher(), $audit), new PasswordHasher(), $audit),
         );
     }
 

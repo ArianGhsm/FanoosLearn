@@ -11,14 +11,14 @@ called out where they matter below:
    دندانپزشکی تهران هستم" shortcut beside the generic wizard because one
    cohort was special. In FANOOS no class is special, so there is exactly
    one wizard and it starts directly at first-name.
-3. A "faculty" step that legacy never had. Legacy picked "major" (a global,
-   hardcoded 3-item list) before province/institution, because one project
-   only ever offered three fields. FANOOS's directory is per-institution
-   (institution -> faculty -> program), and AGENTS.md #1 forbids hardcoding
-   program identity into application logic, so "major" is replaced by a
-   directory-driven "faculty" then "program" step, positioned after
-   institution rather than before province. This makes the total step count
-   13 (12 for آزاد) where legacy had 12 (11 for آزاد).
+3. The field of study ("discipline") is asked right after the name, as
+   legacy asked "major" -- but from the platform's discipline list
+   (academic_disciplines, served by the backend), not a hardcoded one. An
+   earlier FANOOS version asked faculty then program per institution
+   instead; the owner moved FANOOS to discipline-wide exam access
+   (2026-09-26), under which the field is what opens a student's exams and
+   the per-institution directory below it is mostly empty. 12 steps (11 for
+   آزاد), as in legacy.
 
 Entry year, entry term and course type stay legacy's own static lists
 (۱۳۹۹-۱۴۰۵, نیمسال اول/دوم, and the three course types) rather than becoming
@@ -54,6 +54,11 @@ ENTRY_YEARS: tuple[str, ...] = ("۱۳۹۹", "۱۴۰۰", "۱۴۰۱", "۱۴۰۲", 
 ENTRY_TERMS: tuple[str, ...] = ("نیمسال اول", "نیمسال دوم")
 COURSE_TYPES: tuple[str, ...] = ("روزانه یا تعهدی", "شهریه پرداز", "بین الملل")
 
+# What the backend stores for each label (StudentRegistrationService's
+# ENTRY_TERMS / COURSE_TYPES), so the bot and the website record the same values.
+ENTRY_TERM_CODES: dict[str, str] = {"نیمسال اول": "first", "نیمسال دوم": "second"}
+COURSE_TYPE_CODES: dict[str, str] = {"روزانه یا تعهدی": "daily", "شهریه پرداز": "tuition", "بین الملل": "international"}
+
 _PERSIAN_DIGITS = str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹")
 _ASCII_DIGITS = str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩", "01234567890123456789")
 
@@ -61,7 +66,7 @@ _ASCII_DIGITS = str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩", "01234
 # آزاد institutions (institution_type == 'azad_university'), matching
 # legacy's own azad-skip -- just generalized to this longer base sequence.
 STEP_ORDER: tuple[str, ...] = (
-    "first-name", "last-name", "province", "institution", "faculty", "program",
+    "first-name", "last-name", "discipline", "province", "institution",
     "entry-year", "entry-term", "course-type", "student-number",
     "review", "contact", "otp",
 )
@@ -201,38 +206,14 @@ def institution_screen(page: ListPage, province_name: str) -> WizardScreen:
     )
 
 
-def faculty_screen(page: ListPage, institution_name: str, *, azad: bool) -> WizardScreen:
-    names = [str(item["name"]) for item in page.items]
-    rows = [[name] for name in names]
-    nav = []
-    if page.has_previous:
-        nav.append(PREVIOUS_PAGE)
-    if page.has_next:
-        nav.append(NEXT_PAGE)
-    if nav:
-        rows.append(nav)
+def discipline_screen(items: list[dict]) -> WizardScreen:
+    names = [str(item["name"]) for item in items]
+    rows = [names[i:i + 2] for i in range(0, len(names), 2)]
     rows.append([BACK_STEP, CANCEL])
     return WizardScreen(
-        f"{_step_title('faculty', '🏢', 'دانشکده', azad=azad)}\n\n"
-        f"🏢 دانشکده یا گروه آموزشی خودت را در <b>{html.escape(institution_name)}</b> انتخاب کن.",
-        reply_keyboard(*rows),
-    )
-
-
-def program_screen(page: ListPage, faculty_name: str, *, azad: bool) -> WizardScreen:
-    names = [str(item["name"]) for item in page.items]
-    rows = [[name] for name in names]
-    nav = []
-    if page.has_previous:
-        nav.append(PREVIOUS_PAGE)
-    if page.has_next:
-        nav.append(NEXT_PAGE)
-    if nav:
-        rows.append(nav)
-    rows.append([BACK_STEP, CANCEL])
-    return WizardScreen(
-        f"{_step_title('program', '🎓', 'رشته تحصیلی', azad=azad)}\n\n"
-        f"📚 رشته‌ات را در <b>{html.escape(faculty_name)}</b> انتخاب کن.",
+        f"{_step_title('discipline', '🎓', 'رشته تحصیلی', azad=False)}\n\n"
+        "📚 رشته‌ات را انتخاب کن.\n"
+        "<blockquote>آزمون‌های رشته‌ات، از هر دانشگاه و هر ورودی، برایت باز می‌شود.</blockquote>",
         reply_keyboard(*rows),
     )
 
@@ -283,9 +264,8 @@ def review_screen(answers: dict, *, azad: bool) -> WizardScreen:
     text = (
         f"{_step_title('review', '✅', 'بررسی نهایی اطلاعات', azad=azad)}\n\n"
         f"نام: <b>{html.escape(str(answers.get('first_name') or ''))} {html.escape(str(answers.get('last_name') or ''))}</b>\n"
+        f"رشته: {html.escape(str(answers.get('discipline_name') or ''))}\n"
         f"دانشگاه: {html.escape(str(answers.get('institution_name') or ''))}\n"
-        f"دانشکده: {html.escape(str(answers.get('faculty_name') or ''))}\n"
-        f"رشته: {html.escape(str(answers.get('program_name') or ''))}\n"
         f"سال ورود: {html.escape(str(answers.get('entry_year_fa') or ''))}\n"
         f"نیمسال/نوع پذیرش: {html.escape(admission)}\n"
         f"شماره دانشجویی: <code>{student_number}</code>\n\n"
@@ -314,14 +294,14 @@ def otp_screen(phone_masked: str, *, error: str = "") -> WizardScreen:
     )
 
 
-def success_notice(workspace_name: str) -> str:
+def success_notice(discipline_name: str, has_library: bool) -> str:
     """Plain text (no HTML) meant for a normal ui_v3 screen's `notice`
     parameter, since the handoff after the wizard ends goes through the
     regular pipeline, not the reply-keyboard one."""
-    return (
-        f"✅ عضویت تو در «{workspace_name}» ثبت شد. "
-        "می‌تونی از خدماتی مثل خرید و اطلاعیه‌ها استفاده کنی؛ برای دسترسی به برنامه کلاسی، نمرات و آزمون‌ها باید نماینده کلاست تأییدت کنه."
-    )
+    if has_library:
+        return f"✅ ثبت‌نامت کامل شد. آزمون‌های رشته‌ی «{discipline_name}» برایت باز شد."
+    return f"✅ ثبت‌نامت کامل شد. آزمون‌های رشته‌ی «{discipline_name}» به‌زودی اضافه می‌شود و همین‌جا می‌بینی‌شان."
+
 
 
 def empty_list_screen(message: str) -> WizardScreen:
