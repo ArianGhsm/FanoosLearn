@@ -19,6 +19,9 @@ use Fanoos\Platform\Content\SecureObjectDownloadService;
 use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Http\ApiKernel;
 use Fanoos\Platform\Identity\AuthService;
+use Fanoos\Platform\Onboarding\OnboardingPhoneVerificationService;
+use Fanoos\Platform\Messaging\ChannelSubjectProtector;
+use Fanoos\Platform\Identity\AccountPhoneService;
 use Fanoos\Platform\Identity\OwnerRecoveryService;
 use Fanoos\Platform\Web\AssetVersioner;
 use Fanoos\Platform\Web\PageRenderer;
@@ -39,6 +42,27 @@ final class PlatformFactory
      * cookie and then render, while every piece of data on them still comes
      * from the same public API the browser would call.
      */
+    /**
+     * Adding a phone to a website account uses the bots' OTP engine and SMS
+     * gateway. Without the subject key that engine cannot run at all, and
+     * the routes answer 503 rather than the whole API failing to boot.
+     */
+    private static function accountPhone(\PDO $database, RuntimeConfig $config, AuditLogger $audit): ?AccountPhoneService
+    {
+        $subjectKey = (string) $config->optionalString('FANOOS_MESSAGING_SUBJECT_KEY', '');
+        if (strlen($subjectKey) < 32) {
+            return null;
+        }
+        $verification = new OnboardingPhoneVerificationService(
+            $database,
+            $audit,
+            new ChannelSubjectProtector($subjectKey),
+            Stage7Factory::smsGateway($config),
+        );
+
+        return new AccountPhoneService($database, $verification, $audit);
+    }
+
     public static function web(): WebRouter
     {
         $database = DatabaseConnection::fromEnvironment();
@@ -116,6 +140,7 @@ final class PlatformFactory
             is_string($objectRoot = $config->optionalString('FANOOS_STORAGE_ROOT')) && trim($objectRoot) !== ''
                 ? new ExamImageStore($objectRoot)
                 : null,
+            self::accountPhone($database, $config, $audit),
         );
     }
 }

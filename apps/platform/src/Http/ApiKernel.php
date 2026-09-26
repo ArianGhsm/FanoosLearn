@@ -14,6 +14,7 @@ use Fanoos\Platform\Content\SecureObjectDownloadService;
 use Fanoos\Platform\Core\ScheduleProjectionService;
 use Fanoos\Platform\Core\WorkspacePlatformService;
 use Fanoos\Platform\Entitlements\EntitlementService;
+use Fanoos\Platform\Identity\AccountPhoneService;
 use Fanoos\Platform\Identity\AuthService;
 use Fanoos\Platform\Identity\AuthenticatedSession;
 use Fanoos\Platform\Identity\OwnerRecoveryService;
@@ -41,6 +42,7 @@ final class ApiKernel
         private readonly ?StudentRegistrationService $registration = null,
         private readonly ?DirectoryReadService $directory = null,
         private readonly ?ExamImageStore $examImages = null,
+        private readonly ?AccountPhoneService $accountPhone = null,
     ) {
     }
 
@@ -162,6 +164,19 @@ final class ApiKernel
         if ($request->method === 'POST' && $request->path === '/api/v1/auth/password') {
             $this->auth->setPassword($session, (string) ($request->body['new_password'] ?? ''));
             return ['status' => 200, 'data' => ['password_set' => true]];
+        }
+        if ($request->method === 'GET' && $request->path === '/api/v1/account/phone') {
+            return ['status' => 200, 'data' => $this->requireAccountPhone()->current($session->userId)];
+        }
+        if ($request->method === 'POST' && $request->path === '/api/v1/account/phone/code') {
+            return ['status' => 200, 'data' => $this->requireAccountPhone()->requestCode($session->userId, (string) ($request->body['phone'] ?? ''))];
+        }
+        if ($request->method === 'POST' && $request->path === '/api/v1/account/phone/verify') {
+            return ['status' => 200, 'data' => $this->requireAccountPhone()->confirm(
+                $session->userId,
+                (string) ($request->body['challenge_token'] ?? ''),
+                (string) ($request->body['code'] ?? ''),
+            )];
         }
         if ($request->method === 'GET' && $request->path === '/api/v1/profile') {
             return ['status' => 200, 'data' => ['profile' => $this->requireRegistration()->profile($session->userId)]];
@@ -511,6 +526,14 @@ final class ApiKernel
             throw new PlatformException('registration_unavailable', 'Sign-up is not available.', 503);
         }
         return $this->registration;
+    }
+
+    private function requireAccountPhone(): AccountPhoneService
+    {
+        if ($this->accountPhone === null) {
+            throw new PlatformException('account_phone_unavailable', 'Adding a phone number is not available.', 503);
+        }
+        return $this->accountPhone;
     }
 
     private function requireDirectory(): DirectoryReadService

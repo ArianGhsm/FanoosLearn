@@ -50,3 +50,26 @@ All public except `GET /profile`:
 
 After a successful password login, an account with exactly one workspace is
 placed in it directly instead of being shown a chooser.
+
+## Adding a phone later
+
+The account page can attach a phone to an account after sign-up
+(`AccountPhoneService`):
+
+- The code is sent through the bots' OTP engine and SMS gateway, under
+  platform `web` with the account id as the subject (migration 0025 widened
+  the platform CHECKs).
+- The verified number becomes the account's single `phone` identifier; any
+  earlier number is retired.
+- A number another account already holds is refused before any SMS is sent.
+  That account may be the same student's bot account, and merging the two is
+  a deliberate, separate step.
+
+## Question images
+
+Image questions from the imported banks live in `ExamImageStore` under
+`FANOOS_STORAGE_ROOT/exam-images/`:
+
+- The files are content-addressed.
+- The directory must keep the `fanoosrt` group (setgid), so the backup, which
+  runs as `fanoosupd`, can read them.
