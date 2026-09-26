@@ -33,7 +33,9 @@ use Fanoos\Platform\Messaging\MessagingUnlinkService;
 use Fanoos\Platform\Notifications\NotificationDeliveryService;
 use Fanoos\Platform\Onboarding\ClassMembershipService;
 use Fanoos\Platform\Onboarding\DirectoryReadService;
+use Fanoos\Platform\Onboarding\FarazSmsGateway;
 use Fanoos\Platform\Onboarding\OnboardingPhoneVerificationService;
+use Fanoos\Platform\Onboarding\SmsGateway;
 use Fanoos\Platform\Onboarding\UnconfiguredSmsGateway;
 use Fanoos\Platform\Operations\DeploymentControlService;
 use Fanoos\Platform\Operations\DeploymentSnapshotStore;
@@ -120,7 +122,7 @@ final class Stage7Factory
             new OwnerControlPlaneService($database, $access, $snapshots),
             $classProvisioning,
             new DirectoryReadService($database),
-            new OnboardingPhoneVerificationService($database, $audit, $subjectProtector, new UnconfiguredSmsGateway()),
+            new OnboardingPhoneVerificationService($database, $audit, $subjectProtector, self::smsGateway($config)),
             new ClassMembershipService($database, $audit, $subjectProtector, $links, $access),
             new WorkspacePlatformService($database, $access, $audit),
             new ClassCreationRequestService($database, $access, $audit, $classProvisioning, $institutionTerms),
@@ -128,6 +130,33 @@ final class Stage7Factory
             $mediaForensics,
             $paymentsEnabled,
             $ownerRecovery,
+        );
+    }
+
+    /**
+     * The OTP sender for this environment. FANOOS_SMS_PROVIDER picks it; an
+     * unset provider, or one missing any of its settings, gets the gateway that
+     * refuses every send -- an OTP request then fails visibly instead of
+     * telling a student a code is on its way when none is.
+     */
+    public static function smsGateway(RuntimeConfig $config): SmsGateway
+    {
+        if ($config->optionalString('FANOOS_SMS_PROVIDER', '') !== 'farazsms') {
+            return new UnconfiguredSmsGateway();
+        }
+        $apiKey = (string) $config->optionalString('FANOOS_SMS_API_KEY', '');
+        $pattern = (string) $config->optionalString('FANOOS_SMS_PATTERN_CODE', '');
+        $sender = preg_replace('/\D+/', '', (string) $config->optionalString('FANOOS_SMS_SENDER_LINE', '')) ?? '';
+        if ($apiKey === '' || $pattern === '' || $sender === '') {
+            return new UnconfiguredSmsGateway();
+        }
+
+        return new FarazSmsGateway(
+            $apiKey,
+            $pattern,
+            $sender,
+            (string) ($config->optionalString('FANOOS_SMS_CODE_PARAM', 'code') ?: 'code'),
+            trim((string) $config->optionalString('FANOOS_SMS_DOMAIN', ''), " /"),
         );
     }
 }
