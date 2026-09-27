@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Fanoos\Platform\Web;
 
+use Fanoos\Platform\Commerce\CommerceService;
 use Fanoos\Platform\Content\ExamService;
+use Fanoos\Platform\Support\PlatformException;
 use Fanoos\Platform\Identity\AuthService;
 use Fanoos\Platform\Identity\StudentRegistrationService;
 use Throwable;
@@ -25,6 +27,7 @@ final class WebRouter
         private readonly PageRenderer $renderer,
         private readonly ?ExamService $exams = null,
         private readonly ?StudentRegistrationService $registration = null,
+        private readonly ?CommerceService $commerce = null,
     ) {
     }
 
@@ -52,6 +55,19 @@ final class WebRouter
             return $viewer === null
                 ? $this->page(200, (new RegisterPage($this->renderer))->render())
                 : $this->redirect('/app');
+        }
+
+        if ($path === '/pay/return') {
+            return $this->page(200, (new PaymentReturnPage($this->renderer))->render($viewer, ...$this->settlePayment($query)));
+        }
+
+        if ($path === '/app/store') {
+            if ($viewer === null) {
+                return $this->redirect('/login');
+            }
+            return $viewer->workspaceId === null
+                ? $this->redirect('/app')
+                : $this->page(200, (new StorePage($this->renderer))->render($viewer));
         }
 
         if ($path === '/recovery') {
@@ -187,6 +203,43 @@ final class WebRouter
         } catch (Throwable) {
             return null;
         }
+    }
+
+    /**
+     * Settles a payment the gateway has just returned the payer from. The
+     * token identifies the order and the trackId the gateway's attempt;
+     * whether it was paid is asked of the gateway itself, never read from
+     * the query string. Anything that stops that check -- the gateway not
+     * answering -- leaves the payment pending for reconciliation rather
+     * than calling it failed.
+     *
+     * @param array<string, mixed> $query
+     * @return array{0: string, 1: ?string}
+     */
+    private function settlePayment(array $query): array
+    {
+        $token = is_string($query['token'] ?? null) ? $query['token'] : '';
+        $trackId = is_string($query['trackId'] ?? null) ? $query['trackId'] : '';
+        if ($this->commerce === null || $token === '' || $trackId === '') {
+            return [PaymentReturnPage::FAILED, null];
+        }
+        try {
+            $result = $this->commerce->handleCallback($token, $trackId, [
+                'success' => is_string($query['success'] ?? null) ? $query['success'] : null,
+                'status' => is_string($query['status'] ?? null) ? $query['status'] : null,
+            ]);
+        } catch (PlatformException $error) {
+            return [$error->httpStatus >= 500 ? PaymentReturnPage::PENDING : PaymentReturnPage::FAILED, null];
+        } catch (Throwable) {
+            return [PaymentReturnPage::PENDING, null];
+        }
+        $outcome = match ((string) ($result['status'] ?? '')) {
+            'paid' => PaymentReturnPage::PAID,
+            'failed' => PaymentReturnPage::FAILED,
+            default => PaymentReturnPage::PENDING,
+        };
+
+        return [$outcome, isset($result['order_id']) ? (string) $result['order_id'] : null];
     }
 
     /**

@@ -110,7 +110,7 @@ test('motion tokens are theme-independent and defined once, in the light root', 
  * back one convenient literal at a time unless something objects.
  */
 const PAGE_STYLESHEETS = [
-    'runner.css', 'exams.css', 'account.css', 'home.css', 'landing.css', 'login.css', 'auth.css', 'public.css',
+    'runner.css', 'exams.css', 'account.css', 'home.css', 'landing.css', 'login.css', 'auth.css', 'public.css', 'store.css',
 ];
 
 test('no page stylesheet hard-codes a font size', () => {

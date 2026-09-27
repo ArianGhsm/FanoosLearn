@@ -37,6 +37,7 @@ final class ViewerContext
         ];
         if ($this->workspaceId !== null) {
             $items[] = ['key' => 'exams', 'href' => '/app/exams', 'label' => 'آزمون‌ها', 'icon' => '📝'];
+            $items[] = ['key' => 'store', 'href' => '/app/store', 'label' => 'فروشگاه', 'icon' => '🛒'];
         }
         // On a phone the header collapses and this bar is the only chrome, so
         // the account -- and with it the only way to sign out -- has to be

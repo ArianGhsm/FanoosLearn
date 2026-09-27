@@ -44,7 +44,7 @@ final class FakePaymentGateway implements PaymentGateway
         ];
     }
 
-    public function reconcile(string $orderId, int $amountMinor, string $currency): array
+    public function reconcile(string $orderId, ?string $authority, int $amountMinor, string $currency): array
     {
         return $this->verify('fake-' . str_replace('-', '', $orderId), $amountMinor, $currency, ['status' => 'success']);
     }
