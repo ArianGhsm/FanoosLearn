@@ -6,7 +6,7 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 User=fanoosupd
-Group=fanoosupd
+Group=fanoosrt
 WorkingDirectory=/srv/fanoos/updater-checkout
 Environment=FANOOS_CONFIG_FILE=/etc/fanoos/updater-config.php
 ExecStart=/usr/bin/php /srv/fanoos/updater-checkout/scripts/ops/refresh-update-status.php

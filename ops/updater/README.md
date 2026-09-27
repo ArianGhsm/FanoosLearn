@@ -20,7 +20,13 @@ bot shows the owner.
 
 ## What it needs
 
-- It runs as `fanoosupd` with `FANOOS_CONFIG_FILE=/etc/fanoos/updater-config.php`.
+- It runs as `fanoosupd` **in group `fanoosrt`**, with
+  `FANOOS_CONFIG_FILE=/etc/fanoos/updater-config.php`. The group matters:
+  everything it unpacks gets that group, and nginx, php-fpm and the bots read
+  releases through it. Under its own group, the first unattended deploy
+  produced a release nobody else could read: a 404 site and both bots in a
+  restart loop until the group was fixed by hand. `/srv/fanoos/releases` and
+  `/srv/fanoos/staging` are `fanoosrt` with setgid for the same reason.
   The config holds the migrator database identity plus these keys:
 
   | Key | Value |
@@ -31,6 +37,7 @@ bot shows the owner.
   | `FANOOS_UPDATER_REPO_ROOT` | `/srv/fanoos/updater-checkout` |
   | `FANOOS_GITHUB_UPDATER_TOKEN` | `anonymous` while the repository is public; otherwise a read-only token |
   | `FANOOS_UPDATER_RESTART_UNITS` | `php8.3-fpm.service,fanoos-bale-bot.service,fanoos-telegram-bot.service` |
+  | `FANOOS_PUBLIC_ORIGIN` | `https://fanooslearn.ir`, which `scripts/ops/update-smoke.php` requests after the swap; a failure rolls back |
 
 - `/srv/fanoos` is owned by `fanoosupd` so it can swap the pointers, and the
   live release carries a `READY` file containing its SHA.
