@@ -7,6 +7,9 @@ Wants=network-online.target
 Type=oneshot
 User=fanoosupd
 Group=fanoosrt
+# Its own config and database credentials are root:fanoosupd; Group= replaces
+# the primary group, so the user's own group has to be added back.
+SupplementaryGroups=fanoosupd
 WorkingDirectory=/srv/fanoos/updater-checkout
 Environment=FANOOS_CONFIG_FILE=/etc/fanoos/updater-config.php
 ExecStart=/usr/bin/php /srv/fanoos/updater-checkout/scripts/ops/update-runner.php
