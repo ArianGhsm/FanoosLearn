@@ -1,0 +1,11 @@
+[Unit]
+Description=FANOOS daily database backup to the owner on Bale
+
+[Timer]
+# 04:00 Tehran: after midnight activity, before the morning.
+OnCalendar=*-*-* 04:00:00 Asia/Tehran
+RandomizedDelaySec=10min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

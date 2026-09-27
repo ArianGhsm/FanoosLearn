@@ -1,0 +1,16 @@
+[Unit]
+Description=FANOOS daily database backup, sent to the owner on Bale
+After=network-online.target mysql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=fanoosupd
+Group=fanoosupd
+EnvironmentFile=/etc/fanoos/backup-bale.env
+ExecStart=/srv/fanoos/current/ops/backup/fanoos-db-to-bale.sh
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/backups/fanoos
