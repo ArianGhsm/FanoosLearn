@@ -28,7 +28,12 @@ final class HealthCheck
                 && is_writable($storageRoot);
         }
 
-        $release = $config->optionalString('FANOOS_RELEASE_SHA', 'unknown') ?? 'unknown';
+        // The release's own READY marker, written by the updater when it
+        // activated this code, is the truth; a SHA in a config file is only
+        // what someone last remembered to type there.
+        $ready = dirname(__DIR__, 4) . '/READY';
+        $marker = is_file($ready) ? trim((string) file_get_contents($ready)) : '';
+        $release = $marker !== '' ? $marker : ($config->optionalString('FANOOS_RELEASE_SHA', 'unknown') ?? 'unknown');
         if (!preg_match('/^(?:[a-f0-9]{7,40}|local|unknown)$/', $release)) {
             $release = 'unknown';
         }
