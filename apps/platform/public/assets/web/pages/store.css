@@ -1,0 +1,77 @@
+/* The store and the page the payment gateway returns the payer to. */
+
+.f-store {
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    margin-top: var(--space-4);
+}
+
+.f-product {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.f-product__name {
+    margin: 0;
+    font-size: var(--text-lg);
+}
+
+.f-product__scope {
+    margin: 0;
+    font-size: var(--text-sm);
+}
+
+.f-product__price {
+    margin: var(--space-2) 0;
+    font-size: var(--text-xl);
+    font-weight: var(--weight-strong);
+    font-variant-numeric: tabular-nums;
+}
+
+.f-product .f-btn {
+    margin-top: auto;
+}
+
+.f-product.is-owned {
+    border-color: color-mix(in srgb, var(--success) 45%, transparent);
+}
+
+.f-pay {
+    width: min(100%, 520px);
+    margin: var(--space-6) auto;
+    text-align: center;
+    animation: f-rise 520ms var(--ease) both;
+}
+
+.f-pay__icon {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto var(--space-4);
+    font-size: var(--text-3xl);
+    font-weight: var(--weight-strong);
+    border-radius: var(--radius-pill);
+}
+
+.f-pay--success .f-pay__icon { color: var(--success); background: var(--success-soft); }
+.f-pay--warning .f-pay__icon { color: var(--warning); background: var(--warning-soft); }
+.f-pay--error .f-pay__icon { color: var(--danger); background: var(--danger-soft); }
+
+.f-pay__title {
+    font-size: var(--text-2xl);
+}
+
+.f-pay__text {
+    color: var(--text-secondary);
+}
+
+.f-pay__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-3);
+    margin-top: var(--space-5);
+}

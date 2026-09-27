@@ -8,6 +8,7 @@ use Fanoos\Platform\Web\AssetVersioner;
 use Fanoos\Platform\Web\LandingPage;
 use Fanoos\Platform\Web\LoginPage;
 use Fanoos\Platform\Web\RegisterPage;
+use Fanoos\Platform\Web\PaymentReturnPage;
 use Fanoos\Platform\Web\HomePage;
 use Fanoos\Platform\Web\AccountPage;
 use Fanoos\Platform\Web\ExamAttemptPage;
@@ -49,6 +50,7 @@ final class WebRenderingTest
         $this->homeShowsTheChooserWhenAskedToSwitch($renderer);
         $this->notFoundSaysTheAddressIsWrong($renderer);
         $this->signUpAsksForNoPhoneAndLeadsBothWays($renderer);
+        $this->paymentReturnSaysWhatTheServerDecided($renderer);
         $this->homeGreetsWithTheProfileWhenThereIsOne($renderer);
         $this->everyPageIsRightToLeftPersian($renderer);
         $this->examPagesCarryTheWorkspaceButNoQuestionContent($renderer);
@@ -95,6 +97,22 @@ final class WebRenderingTest
         $this->assert(str_contains($register, 'href="/login"'), 'Sign-up must link to sign-in.');
         $this->assert(str_contains((new LoginPage($renderer))->render(), 'href="/register"'), 'Sign-in must link to sign-up.');
         $this->assert(str_contains((new LandingPage($renderer))->render(), 'href="/register"'), 'The landing page must offer sign-up.');
+    }
+
+    /**
+     * The return page states the server's verdict, and a payment that could
+     * not be checked yet is "being checked" -- never "failed", which would
+     * tell someone whose money was taken that it was not.
+     */
+    private function paymentReturnSaysWhatTheServerDecided(PageRenderer $renderer): void
+    {
+        $page = new PaymentReturnPage($renderer);
+        $this->assert(str_contains($page->render(null, PaymentReturnPage::PAID), 'پرداخت انجام شد'), 'A paid order must say so.');
+        $pending = $page->render(null, PaymentReturnPage::PENDING);
+        $this->assert(str_contains($pending, 'در حال بررسی') && !str_contains($pending, 'پرداخت انجام نشد'), 'An unchecked payment must not be called failed.');
+        $this->assert(!str_contains($pending, 'fanoos-csrf'), 'A signed-out return page must carry no CSRF token.');
+        $signedIn = $page->render(new ViewerContext('u1', 'آرین', 'c', 'w1', 'بانک'), PaymentReturnPage::FAILED);
+        $this->assert(str_contains($signedIn, 'href="/app/store"'), 'A signed-in payer must be offered the store again.');
     }
 
     private function homeGreetsWithTheProfileWhenThereIsOne(PageRenderer $renderer): void

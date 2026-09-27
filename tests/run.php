@@ -35,6 +35,7 @@ use Fanoos\Tests\Integration\Stage8FinalClosureTest;
 use Fanoos\Tests\Operations\BackupContractTest;
 use Fanoos\Tests\Operations\FarazSmsGatewayTest;
 use Fanoos\Tests\Operations\QuestionBankRowTest;
+use Fanoos\Tests\Operations\ZibalPaymentGatewayTest;
 use Fanoos\Tests\Operations\GitHubCiVerifierContractTest;
 use Fanoos\Tests\Operations\OwnerBootstrapTest;
 use Fanoos\Tests\Schema\SchemaContractTest;
@@ -66,6 +67,8 @@ try {
     echo "PASS question bank row mapping\n";
     $assertions += (new FarazSmsGatewayTest())->run();
     echo "PASS FarazSMS OTP gateway\n";
+    $assertions += (new ZibalPaymentGatewayTest())->run();
+    echo "PASS Zibal payment gateway\n";
     $assertions += (new GitHubCiVerifierContractTest())->run();
     echo "PASS GitHub Actions CI verifier contracts\n";
     $assertions += (new WebRenderingTest($root))->run();

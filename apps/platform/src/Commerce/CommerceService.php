@@ -178,7 +178,7 @@ SQL);
     {
         $this->access->requireWorkspace($actorUserId, $workspaceId, 'payment.reconcile');
         $query = $this->database->prepare(<<<'SQL'
-SELECT attempt.id AS attempt_id, attempt.status, attempt.provider_key,
+SELECT attempt.id AS attempt_id, attempt.status, attempt.provider_key, attempt.provider_reference,
        orders.id AS order_id, orders.workspace_id, orders.buyer_user_id,
        orders.status AS order_status, orders.total_minor, orders.currency
 FROM commerce_payment_attempts attempt
@@ -194,7 +194,12 @@ SQL);
             $result = ['order_id' => $row['order_id'], 'status' => 'paid', 'duplicate' => true];
             $resultCode = 'unchanged';
         } else {
-            $verification = $this->gateway->reconcile((string) $row['order_id'], (int) $row['total_minor'], (string) $row['currency']);
+            $verification = $this->gateway->reconcile(
+                (string) $row['order_id'],
+                $row['provider_reference'] !== null ? (string) $row['provider_reference'] : null,
+                (int) $row['total_minor'],
+                (string) $row['currency'],
+            );
             $result = $this->finalize($row, $verification, $actorUserId);
             $resultCode = $verification['verified'] ? 'verified' : 'failed';
         }

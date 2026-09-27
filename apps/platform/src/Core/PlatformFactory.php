@@ -8,7 +8,7 @@ use Fanoos\Platform\Audit\AuditLogger;
 use Fanoos\Platform\Authorization\AccessGate;
 use Fanoos\Platform\Authorization\ScopeAuthorizer;
 use Fanoos\Platform\Commerce\CommerceService;
-use Fanoos\Platform\Commerce\FakePaymentGateway;
+use Fanoos\Platform\Commerce\PaymentGatewayFactory;
 use Fanoos\Platform\Content\ProtectedResourceAuthorizer;
 use Fanoos\Platform\Content\ContentService;
 use Fanoos\Platform\Content\ExamQuestionRateGuard;
@@ -85,6 +85,14 @@ final class PlatformFactory
             new PageRenderer(new AssetVersioner(__DIR__ . '/../../public', $release)),
             $exams,
             new StudentRegistrationService($database, $auth, new PasswordHasher(), $audit),
+            new CommerceService(
+                $database,
+                $access,
+                $entitlements,
+                $audit,
+                PaymentGatewayFactory::fromConfig($config)['gateway'],
+                $config->optionalString('FANOOS_PAYMENT_CALLBACK_KEY', 'disabled-payment-callback-key-000000') ?? '',
+            ),
         );
     }
 
@@ -96,9 +104,8 @@ final class PlatformFactory
         $authorizer = new ScopeAuthorizer($database);
         $access = new AccessGate($database, $authorizer);
         $entitlements = new EntitlementService($database, $access, $audit);
-        $environment = $config->optionalString('FANOOS_ENV', 'production');
-        $gatewayKey = $config->optionalString('FANOOS_PAYMENT_GATEWAY', 'disabled');
-        $paymentsEnabled = $gatewayKey === 'fake' && in_array($environment, ['development', 'test'], true);
+        $payments = PaymentGatewayFactory::fromConfig($config);
+        $paymentsEnabled = $payments['enabled'];
         $callbackKey = $config->optionalString('FANOOS_PAYMENT_CALLBACK_KEY', 'disabled-payment-callback-key-000000') ?? '';
         $resources = new ProtectedResourceAuthorizer($database, $authorizer, $entitlements);
         $content = new ContentService($database, $access, $resources, $audit);
@@ -125,7 +132,7 @@ final class PlatformFactory
         return new ApiKernel(
             $auth,
             new WorkspacePlatformService($database, $access, $audit, $resources),
-            new CommerceService($database, $access, $entitlements, $audit, new FakePaymentGateway(), $callbackKey),
+            new CommerceService($database, $access, $entitlements, $audit, $payments['gateway'], $callbackKey),
             $entitlements,
             $resources,
             $paymentsEnabled,

@@ -1,0 +1,40 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Fanoos\Platform\Web;
+
+/**
+ * What the selected workspace sells, and a way to buy it. The list and the
+ * purchase both come from the commerce API (catalog, orders), so the page
+ * shows exactly what the backend would sell and at the price it would charge.
+ */
+final class StorePage
+{
+    public function __construct(private readonly PageRenderer $renderer)
+    {
+    }
+
+    public function render(ViewerContext $viewer): string
+    {
+        $main = <<<'HTML'
+<h1>فروشگاه</h1>
+<p class="f-muted">پرداخت از طریق درگاه امن بانکی انجام می‌شود و دسترسی بلافاصله بعد از پرداخت فعال می‌شود.</p>
+<div class="f-notice f-notice--error" id="store-error" hidden>
+    <div class="f-notice__body"><p id="store-error-text"></p></div>
+</div>
+<div class="f-store" id="store" aria-busy="true">
+    <p class="f-muted">در حال خواندن…</p>
+</div>
+HTML;
+
+        return $this->renderer->render([
+            'title' => 'فروشگاه | فانوس',
+            'description' => 'خرید دسترسی در فانوس.',
+            'stylesheets' => ['/assets/web/pages/store.css'],
+            'modules' => ['/assets/web/pages/store.js'],
+            'viewer' => $viewer,
+            'activeNav' => 'store',
+        ], $main);
+    }
+}
