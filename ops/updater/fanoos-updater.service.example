@@ -5,11 +5,10 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-User=fanoos-updater
-Group=fanoos-updater
+User=fanoosupd
+Group=fanoosupd
 WorkingDirectory=/srv/fanoos/updater-checkout
 Environment=FANOOS_CONFIG_FILE=/etc/fanoos/updater-config.php
-EnvironmentFile=/etc/fanoos/updater-secrets.env
 ExecStart=/usr/bin/php /srv/fanoos/updater-checkout/scripts/ops/update-runner.php
 NoNewPrivileges=true
 PrivateTmp=true

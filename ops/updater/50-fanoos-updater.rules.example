@@ -1,0 +1,22 @@
+// /etc/polkit-1/rules.d/50-fanoos-updater.rules
+//
+// The updater runs unprivileged (fanoosupd) and ends every deploy with
+// `systemctl reload-or-restart` of FANOOS_UPDATER_RESTART_UNITS. This lets it
+// do exactly that, for exactly those units, and nothing else: no start/stop
+// of anything else, no unit files, no other user.
+//
+// php8.3-fpm is shared with another site on this host; a reload is graceful
+// (workers finish their requests), which is why reload -- not restart -- is
+// what reload-or-restart does for it.
+polkit.addRule(function (action, subject) {
+    if (action.id !== "org.freedesktop.systemd1.manage-units" || subject.user !== "fanoosupd") {
+        return polkit.Result.NOT_HANDLED;
+    }
+    var units = ["php8.3-fpm.service", "fanoos-bale-bot.service", "fanoos-telegram-bot.service"];
+    var verb = action.lookup("verb");
+    if (units.indexOf(action.lookup("unit")) !== -1
+        && (verb === "restart" || verb === "reload" || verb === "try-restart" || verb === "reload-or-restart")) {
+        return polkit.Result.YES;
+    }
+    return polkit.Result.NOT_HANDLED;
+});

@@ -5,13 +5,13 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-User=fanoos-updater
-Group=fanoos-updater
-WorkingDirectory=/absolute/private/path/fanoos/current
-EnvironmentFile=/absolute/private/path/fanoos-updater.env
-ExecStart=/usr/bin/php /absolute/private/path/fanoos/current/scripts/ops/refresh-update-status.php
+User=fanoosupd
+Group=fanoosupd
+WorkingDirectory=/srv/fanoos/updater-checkout
+Environment=FANOOS_CONFIG_FILE=/etc/fanoos/updater-config.php
+ExecStart=/usr/bin/php /srv/fanoos/updater-checkout/scripts/ops/refresh-update-status.php
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/absolute/private/path/fanoos-updater-checkout /absolute/private/path/fanoos
+ReadWritePaths=/srv/fanoos /var/lib/fanoos

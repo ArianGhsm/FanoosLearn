@@ -20,12 +20,21 @@ final class GitHubCiVerifier
         'mysql-integration',
     ];
 
+    /**
+     * The credential value that means "no credential": the repository is
+     * public, and GitHub serves its Actions runs without authentication
+     * (at 60 requests an hour per address, several times what the updater
+     * uses). Explicit rather than an empty value, so a token that went
+     * missing still fails closed instead of silently turning anonymous.
+     */
+    public const ANONYMOUS = 'anonymous';
+
     /** @var Closure(string): array<string, mixed> */
     private Closure $fetchJson;
 
     public function __construct(private readonly string $token, ?Closure $fetchJson = null)
     {
-        if (strlen($token) < 20) {
+        if ($token !== self::ANONYMOUS && strlen($token) < 20) {
             throw new RuntimeException('GitHub updater credential is unavailable.');
         }
 
@@ -99,16 +108,19 @@ final class GitHubCiVerifier
     /** @return array<string, mixed> */
     private function requestJson(string $url): array
     {
+        $headers = [
+            'Accept: application/vnd.github+json',
+            'X-GitHub-Api-Version: 2022-11-28',
+            'User-Agent: fanoos-updater',
+        ];
+        if ($this->token !== self::ANONYMOUS) {
+            $headers[] = 'Authorization: Bearer ' . $this->token;
+        }
         $context = stream_context_create(['http' => [
             'method' => 'GET',
             'timeout' => 20,
             'ignore_errors' => true,
-            'header' => implode("\r\n", [
-                'Accept: application/vnd.github+json',
-                'Authorization: Bearer ' . $this->token,
-                'X-GitHub-Api-Version: 2022-11-28',
-                'User-Agent: fanoos-updater',
-            ]),
+            'header' => implode("\r\n", $headers),
         ]]);
         $body = @file_get_contents($url, false, $context);
         $status = 0;
