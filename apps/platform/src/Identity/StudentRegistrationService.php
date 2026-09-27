@@ -165,6 +165,85 @@ SQL)->execute([
     }
 
     /**
+     * Records the join-wizard profile for an account that already exists --
+     * the bot's, found or created from a verified phone -- and opens its
+     * discipline library, exactly as website sign-up does. Re-running
+     * replaces the profile: a student who goes through the wizard again has
+     * changed their answers.
+     *
+     * @param array<string, mixed> $input
+     * @return array{discipline_name:string,has_library:bool,workspace_id:?string,workspace_name:?string}
+     */
+    public function saveProfile(string $userId, array $input): array
+    {
+        $fields = $this->validateProfile($input);
+
+        return Transaction::run($this->database, function () use ($userId, $fields): array {
+            $discipline = $this->database->prepare(<<<'SQL'
+SELECT discipline.id, discipline.name, discipline.library_workspace_id, workspace.name AS workspace_name
+FROM academic_disciplines discipline
+LEFT JOIN tenant_workspaces workspace ON workspace.id = discipline.library_workspace_id
+WHERE discipline.id = :id AND discipline.status = 'active'
+SQL);
+            $discipline->execute(['id' => $fields['discipline_id']]);
+            $row = $discipline->fetch();
+            if ($row === false) {
+                throw new PlatformException('discipline_not_found', 'The chosen field of study was not found.', 422);
+            }
+            if ($fields['institution_id'] !== null) {
+                $institution = $this->database->prepare("SELECT 1 FROM directory_institutions WHERE id = :id AND status = 'active' AND archived_at IS NULL");
+                $institution->execute(['id' => $fields['institution_id']]);
+                if ($institution->fetchColumn() === false) {
+                    throw new PlatformException('institution_not_found', 'The chosen university was not found.', 422);
+                }
+            }
+
+            $this->database->prepare(<<<'SQL'
+INSERT INTO iam_student_profiles (
+    user_id, first_name, last_name, discipline_id, institution_id, entry_year,
+    entry_term, course_type, student_number, created_at, updated_at
+) VALUES (
+    :user, :first, :last, :discipline, :institution, :year,
+    :term, :course, :number, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+)
+ON DUPLICATE KEY UPDATE
+    first_name = VALUES(first_name), last_name = VALUES(last_name), discipline_id = VALUES(discipline_id),
+    institution_id = VALUES(institution_id), entry_year = VALUES(entry_year), entry_term = VALUES(entry_term),
+    course_type = VALUES(course_type), student_number = VALUES(student_number), updated_at = UTC_TIMESTAMP(6)
+SQL)->execute([
+                'user' => $userId,
+                'first' => $fields['first_name'],
+                'last' => $fields['last_name'],
+                'discipline' => $fields['discipline_id'],
+                'institution' => $fields['institution_id'],
+                'year' => $fields['entry_year'],
+                'term' => $fields['entry_term'],
+                'course' => $fields['course_type'],
+                'number' => $fields['student_number'],
+            ]);
+            // The bot creates accounts named «دانشجو»; the profile has the real name.
+            $this->database->prepare('UPDATE iam_users SET display_name = :name, updated_at = UTC_TIMESTAMP(6) WHERE id = :id')
+                ->execute(['name' => mb_substr($fields['first_name'] . ' ' . $fields['last_name'], 0, 160), 'id' => $userId]);
+
+            $libraryId = $row['library_workspace_id'] !== null ? (string) $row['library_workspace_id'] : null;
+            if ($libraryId !== null) {
+                $this->enrol($userId, $libraryId);
+            }
+            $this->audit->record($libraryId, $userId, 'onboarding.profile.saved', 'iam_user', $userId, 'success', [
+                'discipline_id' => $fields['discipline_id'],
+                'library_joined' => $libraryId !== null,
+            ]);
+
+            return [
+                'discipline_name' => (string) $row['name'],
+                'has_library' => $libraryId !== null,
+                'workspace_id' => $libraryId,
+                'workspace_name' => $row['workspace_name'] !== null ? (string) $row['workspace_name'] : null,
+            ];
+        });
+    }
+
+    /**
      * The signed-in student's profile, or null for an account that never
      * signed up on the website (the owner, a bot-only account).
      *
@@ -270,6 +349,18 @@ SQL)->execute(['id' => Uuid::v7(), 'user' => $userId, 'role' => $roleId, 'scope'
             throw new PlatformException('password_invalid', 'Password must be between 8 and 128 characters.', 422);
         }
 
+        return ['username' => $username, 'password' => $password] + $this->validateProfile($input);
+    }
+
+    /**
+     * The profile questions both front doors ask -- the website's sign-up and
+     * the bot's join wizard -- checked by the same rules.
+     *
+     * @param array<string, mixed> $input
+     * @return array{first_name:string,last_name:string,discipline_id:string,institution_id:?string,entry_year:?int,entry_term:?string,course_type:?string,student_number:?string}
+     */
+    private function validateProfile(array $input): array
+    {
         $first = self::cleanName($input['first_name'] ?? '');
         $last = self::cleanName($input['last_name'] ?? '');
         if ($first === '' || $last === '') {
@@ -308,8 +399,6 @@ SQL)->execute(['id' => Uuid::v7(), 'user' => $userId, 'role' => $roleId, 'scope'
         }
 
         return [
-            'username' => $username,
-            'password' => $password,
             'first_name' => $first,
             'last_name' => $last,
             'discipline_id' => $disciplineId,

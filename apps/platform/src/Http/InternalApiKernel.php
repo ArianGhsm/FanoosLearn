@@ -27,6 +27,7 @@ use Fanoos\Platform\Onboarding\DirectoryReadService;
 use Fanoos\Platform\Onboarding\OnboardingPhoneVerificationService;
 use Fanoos\Platform\Operations\DeploymentControlService;
 use Fanoos\Platform\Operations\OwnerControlPlaneService;
+use Fanoos\Platform\Identity\StudentRegistrationService;
 use Fanoos\Platform\Support\JsonLogger;
 use Fanoos\Platform\Support\PlatformException;
 use Throwable;
@@ -57,6 +58,7 @@ final class InternalApiKernel
         private readonly ProtectedMediaForensicService $forensic,
         private readonly bool $paymentsEnabled,
         private readonly OwnerRecoveryService $ownerRecovery,
+        private readonly ?StudentRegistrationService $registration = null,
     ) {
     }
 
@@ -416,6 +418,25 @@ final class InternalApiKernel
             $platform = $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
             return $this->onboardingPhones->status($platform, (string) ($request->body['subject'] ?? ''));
         }
+        if ($path === '/api/internal/v1/onboarding/disciplines') {
+            $this->assertKeys($request->body, ['platform']);
+            $principal = $this->serviceAuth->authenticate($request, 'onboarding.directory.read');
+            $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
+            return ['items' => $this->requireRegistration()->disciplines()];
+        }
+        // The join wizard's last step, discipline-first: the verified phone's
+        // account gets the same profile website sign-up records, and its
+        // field's library. Same permission as the class join it replaces.
+        if ($path === '/api/internal/v1/onboarding/register') {
+            $this->assertKeys($request->body, [
+                'platform', 'subject', 'first_name', 'last_name', 'discipline_id', 'institution_id',
+                'entry_year', 'entry_term', 'course_type', 'student_number',
+            ]);
+            $principal = $this->serviceAuth->authenticate($request, 'onboarding.join');
+            $platform = $this->adapterPlatform($principal, (string) ($request->body['platform'] ?? ''));
+            $userId = $this->membership->verifiedAccount($platform, (string) ($request->body['subject'] ?? ''));
+            return ['status' => 'registered'] + $this->requireRegistration()->saveProfile($userId, $request->body);
+        }
         if ($path === '/api/internal/v1/onboarding/join') {
             $this->assertKeys($request->body, ['platform', 'subject', 'program_id', 'entry_year']);
             $principal = $this->serviceAuth->authenticate($request, 'onboarding.join');
@@ -636,6 +657,14 @@ final class InternalApiKernel
         if ($unknown !== []) {
             throw new PlatformException('unexpected_request_field', 'Request contains a field that is not allowed by this contract.', 422);
         }
+    }
+
+    private function requireRegistration(): StudentRegistrationService
+    {
+        if ($this->registration === null) {
+            throw new PlatformException('registration_unavailable', 'Registration is not available.', 503);
+        }
+        return $this->registration;
     }
 
     private function requirePayments(): void

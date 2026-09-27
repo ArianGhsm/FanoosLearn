@@ -41,6 +41,7 @@ final class StudentRegistrationTest
         $this->assertStudentsWhoSignedUpBeforeTheLibraryAreEnrolledLater();
         $this->assertALibraryIsNeverOfferedAsAClass();
         $this->assertSignUpIsThrottledPerSource();
+        $this->assertTheBotWizardSavesTheSameProfileForAVerifiedPhone();
 
         return $this->assertions;
     }
@@ -167,6 +168,48 @@ SQL);
         // Another network is unaffected.
         $this->service()->register(array_replace($this->input($suffix, $discipline), ['username' => 'other_' . $suffix]), 'elsewhere-' . $suffix);
         ++$this->assertions;
+    }
+
+    /**
+     * The bot asks the same questions: once the phone is verified, the
+     * account behind it gets the same profile and the same library as a
+     * website sign-up, and going through the wizard again updates it.
+     */
+    private function assertTheBotWizardSavesTheSameProfileForAVerifiedPhone(): void
+    {
+        $suffix = $this->suffix();
+        $library = $this->fixtureClass($suffix, 1405)['workspace_id'];
+        $discipline = $this->discipline($suffix, $library);
+
+        $protector = new ChannelSubjectProtector(str_repeat('r', 32));
+        $subject = 'bale-reg-' . $suffix;
+        $phone = '+989124' . substr(preg_replace('/\D/', '', $suffix) . '000000', 0, 6);
+        $statement = $this->database->prepare(<<<'SQL'
+INSERT INTO onboarding_verified_phones (platform, subject_digest, phone_digest, phone_ciphertext, verified_at, updated_at)
+VALUES ('bale', :subject, :digest, :cipher, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))
+SQL);
+        $statement->bindValue(':subject', $protector->digest('onboarding:bale', $subject), PDO::PARAM_LOB);
+        $statement->bindValue(':digest', $protector->digest('phone', $phone), PDO::PARAM_LOB);
+        $statement->bindValue(':cipher', $protector->encrypt('phone', $phone), PDO::PARAM_LOB);
+        $statement->execute();
+        $links = new MessagingLinkService($this->database, new AuditLogger($this->database), $protector);
+        $membership = new ClassMembershipService($this->database, new AuditLogger($this->database), $protector, $links, $this->access());
+
+        $userId = $membership->verifiedAccount('bale', $subject);
+        $profile = ['first_name' => 'سارا', 'last_name' => 'احمدی', 'discipline_id' => $discipline, 'institution_id' => '',
+            'entry_year' => 1402, 'entry_term' => 'second', 'course_type' => 'tuition', 'student_number' => ''];
+        $saved = $this->service()->saveProfile($userId, $profile);
+        $this->assert($saved['has_library'] === true && $saved['workspace_id'] === $library, 'The bot registration did not open the library.');
+        $this->assert($this->hasRole($userId, $library, 'student'), 'The bot registration did not grant the student role.');
+        $name = $this->database->prepare('SELECT display_name FROM iam_users WHERE id = :id');
+        $name->execute(['id' => $userId]);
+        $this->assert($name->fetchColumn() === 'سارا احمدی', 'The account kept its placeholder name.');
+
+        $this->service()->saveProfile($userId, array_replace($profile, ['entry_year' => 1403]));
+        $again = $this->service()->profile($userId);
+        $this->assert(($again['entry_year'] ?? null) == 1403, 'Going through the wizard again did not update the profile.');
+        $this->assert($membership->verifiedAccount('bale', $subject) === $userId, 'The same verified subject resolved to a different account.');
+        $this->expectCode('onboarding_phone_not_verified', fn () => $membership->verifiedAccount('bale', 'nobody-' . $suffix));
     }
 
     /** @return array<string, string> */

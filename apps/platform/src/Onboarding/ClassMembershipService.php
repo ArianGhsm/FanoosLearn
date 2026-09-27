@@ -371,6 +371,16 @@ SQL);
         });
     }
 
+    /**
+     * The account behind a messaging subject whose phone is verified --
+     * found by that phone or created, and linked to the subject. What the
+     * join wizard's last step needs before it can save a profile.
+     */
+    public function verifiedAccount(string $platform, string $subject): string
+    {
+        return $this->requireVerifiedAccount($this->platform($platform), $subject);
+    }
+
     private function requireVerifiedAccount(string $platform, string $subject): string
     {
         $subjectDigest = $this->subjects->digest('onboarding:' . $platform, $subject);
