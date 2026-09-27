@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Fanoos\Platform\Support\DatabaseConnection;
+use Fanoos\Tests\Core\AccountMergePlannerTest;
 use Fanoos\Tests\Core\AccountPhoneTest;
 use Fanoos\Tests\Core\AnnouncementPublishTest;
 use Fanoos\Tests\Core\ClassCreationRequestServiceTest;
@@ -38,6 +39,7 @@ use Fanoos\Tests\Operations\QuestionBankRowTest;
 use Fanoos\Tests\Operations\ZibalPaymentGatewayTest;
 use Fanoos\Tests\Operations\GitHubCiVerifierContractTest;
 use Fanoos\Tests\Operations\OwnerBootstrapTest;
+use Fanoos\Tests\Schema\AccountMergePlanTest;
 use Fanoos\Tests\Schema\SchemaContractTest;
 use Fanoos\Tests\Storage\StorageSecurityTest;
 use Fanoos\Tests\Website\WebRenderingTest;
@@ -59,6 +61,8 @@ spl_autoload_register(static function (string $class) use ($root): void {
 try {
     $assertions = (new SchemaContractTest($root))->run();
     echo "PASS schema contracts\n";
+    $assertions += (new AccountMergePlanTest($root))->run();
+    echo "PASS account merge plan covers every user column\n";
     $assertions += (new StorageSecurityTest())->run();
     echo "PASS storage security contracts\n";
     $assertions += (new BackupContractTest())->run();
@@ -132,6 +136,8 @@ try {
         echo "PASS website sign-up and discipline library scenarios\n";
         $assertions += (new AccountPhoneTest($database))->run();
         echo "PASS account phone scenarios\n";
+        $assertions += (new AccountMergePlannerTest($database))->run();
+        echo "PASS account merge planner scenarios\n";
         $assertions += (new RepresentativeApprovalTest($database))->run();
         echo "PASS representative appointment and approval scenarios\n";
         $assertions += (new AnnouncementPublishTest($database))->run();
