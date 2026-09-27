@@ -15,8 +15,17 @@ final class GitHubCiVerifierContractTest
         $this->greenWorkflowIsAccepted($sha);
         $this->missingRequiredJobFailsClosed($sha);
         $this->wrongWorkflowShaFailsClosed($sha);
+        $this->onlyAnExplicitAnonymousSkipsTheCredential($sha);
 
-        return 3;
+        return 6;
+    }
+
+    private function onlyAnExplicitAnonymousSkipsTheCredential(string $sha): void
+    {
+        (new GitHubCiVerifier(GitHubCiVerifier::ANONYMOUS, $this->fixtureFetcher($sha)))->assertGreen($sha);
+        // A credential that went missing must not quietly become anonymous.
+        $this->expectRuntimeException(fn () => new GitHubCiVerifier('', $this->fixtureFetcher($sha)));
+        $this->expectRuntimeException(fn () => new GitHubCiVerifier('short', $this->fixtureFetcher($sha)));
     }
 
     private function greenWorkflowIsAccepted(string $sha): void
