@@ -225,7 +225,7 @@ SQL);
     {
         $placeholders = implode(',', array_map(static fn (int $i): string => ':course' . $i, array_keys($courseIds)));
         $query = $this->database->prepare(<<<SQL
-SELECT version.definition_json, policy.requires_entitlement, policy.target_scope_id
+SELECT version.definition_json, policy.requires_entitlement, policy.target_scope_id, metadata.course_id
 FROM exam_assessments assessment
 JOIN exam_assessment_metadata metadata ON metadata.assessment_id = assessment.id AND metadata.workspace_id = assessment.workspace_id
 JOIN exam_access_policies policy ON policy.assessment_id = assessment.id AND policy.workspace_id = assessment.workspace_id
@@ -253,6 +253,9 @@ SQL);
             }
             $definition = json_decode((string) $row['definition_json'], true, 64, JSON_THROW_ON_ERROR);
             foreach ($definition['questions'] ?? [] as $question) {
+                // Remembered so the progress dashboard can file an answer in
+                // a custom exam under the course the question came from.
+                $question['course_id'] = (string) $row['course_id'];
                 $questions[(string) $question['id']] ??= $question;
             }
         }

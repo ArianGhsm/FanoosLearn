@@ -64,7 +64,7 @@ Both refusals are where a merge will be offered.
 |---|---|---|
 | `tenant_workspace_memberships` | `user_id` | **move**; a workspace both belong to keeps the target's row |
 | `rbac_role_assignments` | `user_id` | **move**; a duplicate role at the same scope is dropped |
-| `exam_attempts` (results follow by attempt id) | `user_id` | **move**; `exam_question_read_rate_guards` for the source is dropped |
+| `exam_attempts` (results follow by attempt id) | `user_id` | **move**; `exam_question_read_rate_guards` for the source is dropped; `exam_question_user_stats` for the source is dropped and rebuilt for the target from the moved attempts (`QuestionStatsRecorder::rebuild`) |
 | `entitlement_grants` | `subject_user_id` | **move** (purchases stay the person's) |
 | `commerce_orders` | `buyer_user_id` | **move** |
 | `content_delivery_issuances`, `protected_media_artifacts` | `user_id` | **move** (forensic marks keep pointing at the same person) |

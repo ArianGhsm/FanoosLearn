@@ -15,6 +15,8 @@ use PDO;
 
 final class ExamService
 {
+    private readonly QuestionStatsRecorder $questionStats;
+
     public function __construct(
         private readonly PDO $database,
         private readonly AccessGate $access,
@@ -23,6 +25,7 @@ final class ExamService
         private readonly AuditLogger $audit,
         private readonly ExamQuestionRateGuard $questionRateGuard,
     ) {
+        $this->questionStats = new QuestionStatsRecorder($database);
     }
 
     /**
@@ -719,7 +722,10 @@ SQL, [
                 'question_id' => $questionId, 'position' => $position,
             ]);
 
-            return ['allowed' => true, 'position' => $position, 'question_count' => $questionCount, 'question' => $this->safeQuestion($question)];
+            $safe = $this->safeQuestion($question);
+            $safe['stats'] = $this->questionStats->forQuestion($workspaceId, $userId, $questionId);
+
+            return ['allowed' => true, 'position' => $position, 'question_count' => $questionCount, 'question' => $safe];
         });
 
         if ($outcome['allowed'] === false) {
@@ -855,6 +861,12 @@ SQL, [
             'questions' => $questionCount, 'score' => $score,
             'review' => json_encode($review, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
         ]);
+        $revealed = json_decode((string) ($attempt['revealed_json'] ?? '[]'), true, 16, JSON_THROW_ON_ERROR);
+        $this->questionStats->record(
+            $workspaceId, $userId, $attemptId, $this->assessmentCourse($workspaceId, (string) $attempt['assessment_id']),
+            $definition, $review, QuestionStatsRecorder::seenFirst((string) $attempt['mode'], $revealed),
+            (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s.u'),
+        );
         $this->audit->record($workspaceId, $userId, 'exam.attempt.scored', 'exam_attempt', $attemptId, 'success', [
             'assessment_id' => $attempt['assessment_id'], 'score_basis_points' => $score, 'late' => $late,
         ]);
@@ -995,6 +1007,8 @@ SQL);
                 'selected' => $entry['selected'], 'correct' => $entry['correct'],
                 'is_correct' => $entry['is_correct'], 'explanation' => $entry['explanation'],
                 'was_revealed' => in_array($position, $revealed, true),
+                'stats' => $this->questionStats->forQuestion($workspaceId, $userId, $questionId),
+                'choice_shares' => $this->questionStats->choiceShares($workspaceId, $questionId, count($question['choices'])),
             ];
         });
 
@@ -1072,6 +1086,15 @@ SQL);
             'min_score_basis_points' => (int) ($row['minimum_score'] ?? 0),
             'max_score_basis_points' => (int) ($row['maximum_score'] ?? 0),
         ];
+    }
+
+    private function assessmentCourse(string $workspaceId, string $assessmentId): ?string
+    {
+        $query = $this->database->prepare('SELECT course_id FROM exam_assessment_metadata WHERE assessment_id = :assessment AND workspace_id = :workspace');
+        $query->execute(['assessment' => $assessmentId, 'workspace' => $workspaceId]);
+        $course = $query->fetchColumn();
+
+        return $course === false || $course === null ? null : (string) $course;
     }
 
     /** @return array<string, mixed> */

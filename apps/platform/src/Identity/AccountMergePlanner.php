@@ -46,6 +46,9 @@ final class AccountMergePlanner
         'exam_attempts' => [['user_id', self::MOVE, null]],
         'exam_assessments' => [['created_for_user_id', self::MOVE, null]],
         'exam_question_read_rate_guards' => [['user_id', self::DROP, null]],
+        // Derived counters: dropped, then rebuilt for the target from the
+        // attempts that moved (QuestionStatsRecorder::rebuild).
+        'exam_question_user_stats' => [['user_id', self::DROP, null]],
         'entitlement_grants' => [['subject_user_id', self::MOVE, null]],
         'commerce_orders' => [['buyer_user_id', self::MOVE, null]],
         'content_delivery_issuances' => [['user_id', self::MOVE, null]],
