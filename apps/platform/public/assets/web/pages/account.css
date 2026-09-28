@@ -41,3 +41,52 @@
 .a-account__inline + .a-account__inline {
     margin-top: var(--space-3);
 }
+
+/* The bots this account is connected to. */
+.a-bots {
+    display: grid;
+    gap: var(--space-3);
+}
+
+.a-bot {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: var(--surface-inset);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+
+.a-bot.is-linked {
+    border-color: color-mix(in srgb, var(--success) 40%, transparent);
+    background: var(--success-soft);
+}
+
+.a-bot__label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.a-bot__help {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: var(--space-2);
+    justify-items: start;
+}
+
+.a-bot__help p {
+    margin: 0;
+}
+
+.a-bot__code {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-sm);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    user-select: all;
+    word-break: break-all;
+}

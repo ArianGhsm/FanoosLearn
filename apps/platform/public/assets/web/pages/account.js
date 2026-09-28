@@ -171,3 +171,97 @@ codeForm?.addEventListener('submit', async (event) => {
 });
 
 loadPhone();
+
+/*
+ * Connecting the bots to this account. "Connect" asks for a one-time link
+ * code and opens the bot with it (a start link); the bot takes the code and
+ * ties that chat to this account. The code is also shown as a /link command,
+ * for when the start link does not open the app.
+ */
+const botsBox = document.getElementById('bots');
+const botsList = document.getElementById('bots-list');
+const botsError = document.getElementById('bots-error');
+const botsErrorText = document.getElementById('bots-error-text');
+const BOT_NAMES = { bale: 'بله', telegram: 'تلگرام' };
+const BOT_LINKS = {
+    bale: (bot, token) => `https://ble.ir/${bot}?start=${encodeURIComponent(token)}`,
+    telegram: (bot, token) => `https://t.me/${bot}?start=${encodeURIComponent(token)}`,
+};
+
+function botsFail(error) {
+    botsErrorText.textContent = describeError(error);
+    botsError.hidden = false;
+}
+
+function node(tag, className, text) {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    if (text !== undefined) element.textContent = text;
+    return element;
+}
+
+function botRow(link) {
+    const bot = botsBox.dataset[`${link.platform}Bot`] || '';
+    const row = node('div', `a-bot${link.linked ? ' is-linked' : ''}`);
+    const label = node('div', 'a-bot__label');
+    label.append(node('strong', '', `ربات ${BOT_NAMES[link.platform] ?? link.platform}`),
+        node('span', 'f-muted', link.linked ? '✓ وصل است' : (bot ? `@${bot}` : 'در دسترس نیست')));
+    row.append(label);
+
+    const action = node('button', `f-btn ${link.linked ? 'f-btn--ghost' : 'f-btn--primary'}`, link.linked ? 'قطع اتصال' : 'اتصال');
+    action.type = 'button';
+    action.disabled = !link.linked && !bot;
+    action.addEventListener('click', async () => {
+        botsError.hidden = true;
+        action.disabled = true;
+        try {
+            if (link.linked) {
+                if (!window.confirm(`اتصال ربات ${BOT_NAMES[link.platform]} به این حساب قطع شود؟`)) {
+                    action.disabled = false;
+                    return;
+                }
+                await api.post(`/messaging/links/${link.platform}/revoke`, { reason: 'user_unlink' });
+                await loadBots();
+                return;
+            }
+            const challenge = await api.post('/messaging/link-challenges', { platform: link.platform });
+            const url = BOT_LINKS[link.platform](bot, challenge.challenge_token);
+            window.open(url, '_blank', 'noopener');
+            const help = node('div', 'a-bot__help');
+            const open = node('a', 'f-btn f-btn--ghost', 'باز کردن ربات');
+            open.href = url;
+            open.target = '_blank';
+            open.rel = 'noopener';
+            const command = node('code', 'a-bot__code', `/link ${challenge.challenge_token}`);
+            command.dir = 'ltr';
+            help.append(
+                node('p', 'f-tiny', 'ربات باز شد؟ دکمه‌ی «شروع» را بزن. اگر باز نشد، این را در ربات بفرست (تا چند دقیقه معتبر است):'),
+                command, open,
+                node('p', 'f-tiny', 'بعد از وصل شدن، همین صفحه را تازه کن.'),
+            );
+            row.querySelector('.a-bot__help')?.remove();
+            row.append(help);
+            action.disabled = false;
+        } catch (error) {
+            botsFail(error);
+            action.disabled = false;
+        }
+    });
+    row.insertBefore(action, row.children[1] ?? null);
+    return row;
+}
+
+async function loadBots() {
+    if (!botsList) return;
+    try {
+        const result = await api.get('/messaging/links');
+        botsList.replaceChildren(...(result?.links ?? []).map(botRow));
+    } catch (error) {
+        botsList.replaceChildren(node('p', 'f-muted', 'وضعیت اتصال خوانده نشد.'));
+        botsFail(error);
+    } finally {
+        botsList.setAttribute('aria-busy', 'false');
+    }
+}
+
+loadBots();

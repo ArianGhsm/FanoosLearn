@@ -94,6 +94,10 @@ final class PlatformFactory
                 PaymentGatewayFactory::fromConfig($config)['gateway'],
                 $config->optionalString('FANOOS_PAYMENT_CALLBACK_KEY', 'disabled-payment-callback-key-000000') ?? '',
             ),
+            [
+                'bale' => (string) $config->optionalString('FANOOS_BALE_BOT_USERNAME', ''),
+                'telegram' => (string) $config->optionalString('FANOOS_TELEGRAM_BOT_USERNAME', ''),
+            ],
         );
     }
 

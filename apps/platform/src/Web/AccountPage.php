@@ -20,8 +20,20 @@ final class AccountPage
     {
     }
 
-    public function render(ViewerContext $viewer): string
+    /**
+     * @param array<string, string> $bots platform => bot username, for the
+     *     connect buttons' deep links; a platform without one gets no button
+     */
+    public function render(ViewerContext $viewer, array $bots = []): string
     {
+        $botAttributes = '';
+        foreach (['bale', 'telegram'] as $platform) {
+            $username = (string) ($bots[$platform] ?? '');
+            if (preg_match('/^[A-Za-z][A-Za-z0-9_]{3,31}$/', $username) === 1) {
+                $botAttributes .= ' data-' . $platform . '-bot="' . $this->renderer->escape($username) . '"';
+            }
+        }
+
         $name = $this->renderer->escape($viewer->displayName);
         $workspace = $viewer->workspaceName === null
             ? '<p class="f-muted">هنوز فضای آموزشی‌ای انتخاب نکرده‌ای.</p>'
@@ -37,6 +49,15 @@ final class AccountPage
     <h2>فضای آموزشی</h2>
     {$workspace}
     <p><a class="f-btn f-btn--ghost" href="/app?switch=1">تغییر فضای آموزشی</a></p>
+</section>
+
+<section class="f-card a-account" aria-labelledby="bots-title" id="bots"{$botAttributes}>
+    <h2 id="bots-title">اتصال به ربات</h2>
+    <p class="f-muted">با اتصال، همین حساب در ربات هم باز است: همان آزمون‌ها، همان پیشرفت، همان خریدها.</p>
+    <div class="f-notice f-notice--error" id="bots-error" hidden>
+        <div class="f-notice__body"><p id="bots-error-text"></p></div>
+    </div>
+    <div class="a-bots" id="bots-list" aria-busy="true"><p class="f-muted">در حال خواندن…</p></div>
 </section>
 
 <section class="f-card a-account" aria-labelledby="phone-title">

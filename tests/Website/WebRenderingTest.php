@@ -298,6 +298,9 @@ final class WebRenderingTest
         $account = (new AccountPage($renderer))->render($viewer);
         $this->assert(str_contains($account, 'id="signout"'), 'The account page must offer a way to sign out.');
         $this->assert(str_contains($account, 'id="password-form"'), 'The account page must let the owner change their own password.');
+        $withBots = (new AccountPage($renderer))->render(new ViewerContext('u1', 'آرین', 'c', 'w1', 'کلاس'), ['bale' => 'fanooslearnbot', 'telegram' => '<bad name>']);
+        $this->assert(str_contains($withBots, 'data-bale-bot="fanooslearnbot"'), 'The account page must know the Bale bot to open.');
+        $this->assert(!str_contains($withBots, 'data-telegram-bot'), 'A malformed bot username must not reach a link.');
         $this->assert(str_contains($account, 'href="/app?switch=1"'), 'The account page must let the viewer change workspace.');
     }
 

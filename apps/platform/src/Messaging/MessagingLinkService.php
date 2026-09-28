@@ -223,6 +223,28 @@ SQL);
     }
 
     /** @return array{link_id:string,user_id:string}|null */
+    /**
+     * Which messengers the account is connected to, for the account page.
+     * Says only whether and since when -- never the chat it is linked to.
+     *
+     * @return list<array{platform:string,linked:bool,linked_at:?string}>
+     */
+    public function status(string $userId): array
+    {
+        $query = $this->database->prepare("SELECT platform, linked_at FROM messaging_links WHERE user_id = :user AND status = 'active'");
+        $query->execute(['user' => $userId]);
+        $linked = [];
+        foreach ($query->fetchAll() as $row) {
+            $linked[(string) $row['platform']] = gmdate(DATE_ATOM, (int) strtotime($row['linked_at'] . ' UTC'));
+        }
+
+        return array_map(static fn (string $platform): array => [
+            'platform' => $platform,
+            'linked' => isset($linked[$platform]),
+            'linked_at' => $linked[$platform] ?? null,
+        ], self::PLATFORMS);
+    }
+
     public function resolve(string $platform, string $platformSubject): ?array
     {
         $platform = $this->platform($platform);

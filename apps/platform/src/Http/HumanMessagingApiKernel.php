@@ -27,6 +27,9 @@ final class HumanMessagingApiKernel
                 $this->auth->requireCsrf($session, $request->header('x-csrf-token'));
             }
 
+            if ($request->method === 'GET' && $request->path === '/api/v1/messaging/links') {
+                return $this->success(200, ['links' => $this->links->status($session->userId)], $requestId);
+            }
             if ($request->method === 'POST' && $request->path === '/api/v1/messaging/link-challenges') {
                 return $this->success(201, $this->links->createChallenge($session->userId, (string) ($request->body['platform'] ?? '')), $requestId);
             }
