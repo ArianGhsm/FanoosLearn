@@ -8,6 +8,7 @@ use Fanoos\Platform\Commerce\CatalogAdminService;
 use Fanoos\Platform\Commerce\CommerceService;
 use Fanoos\Platform\Content\ProtectedResourceAuthorizer;
 use Fanoos\Platform\Content\ContentService;
+use Fanoos\Platform\Content\CustomPracticeService;
 use Fanoos\Platform\Content\ExamImageStore;
 use Fanoos\Platform\Content\ExamService;
 use Fanoos\Platform\Content\SecureDeliveryService;
@@ -45,6 +46,7 @@ final class ApiKernel
         private readonly ?ExamImageStore $examImages = null,
         private readonly ?AccountPhoneService $accountPhone = null,
         private readonly ?CatalogAdminService $catalogAdmin = null,
+        private readonly ?CustomPracticeService $customPractice = null,
     ) {
     }
 
@@ -460,6 +462,16 @@ final class ApiKernel
             $image = $this->examImages->open($key);
             return new BinaryResponse(200, $image['stream'], $image['mime'], $image['length'], [], 'inline', 'private, max-age=86400');
         }
+        if ($suffix === '/custom-practice' && in_array($request->method, ['GET', 'POST'], true)) {
+            $custom = $this->requireCustomPractice();
+            return $request->method === 'GET'
+                ? ['status' => 200, 'data' => $custom->mine($session->userId, $workspaceId)]
+                : ['status' => 201, 'data' => $custom->create($session->userId, $workspaceId, $request->body)];
+        }
+        if ($request->method === 'GET' && $suffix === '/custom-practice/options') {
+            $courses = array_filter(explode(',', (string) ($request->query['course_ids'] ?? '')));
+            return ['status' => 200, 'data' => $this->requireCustomPractice()->options($session->userId, $workspaceId, array_values($courses))];
+        }
         if ($request->method === 'GET' && $suffix === '/mistakes-review') {
             return ['status' => 200, 'data' => $this->requireExams()->mistakesReview($session->userId, $workspaceId)];
         }
@@ -542,6 +554,14 @@ final class ApiKernel
             throw new PlatformException('registration_unavailable', 'Sign-up is not available.', 503);
         }
         return $this->registration;
+    }
+
+    private function requireCustomPractice(): CustomPracticeService
+    {
+        if ($this->customPractice === null) {
+            throw new PlatformException('custom_practice_unavailable', 'Custom practice is not available.', 503);
+        }
+        return $this->customPractice;
     }
 
     private function requireCatalogAdmin(): CatalogAdminService

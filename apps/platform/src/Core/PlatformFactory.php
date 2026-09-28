@@ -12,6 +12,7 @@ use Fanoos\Platform\Commerce\CommerceService;
 use Fanoos\Platform\Commerce\PaymentGatewayFactory;
 use Fanoos\Platform\Content\ProtectedResourceAuthorizer;
 use Fanoos\Platform\Content\ContentService;
+use Fanoos\Platform\Content\CustomPracticeService;
 use Fanoos\Platform\Content\ExamQuestionRateGuard;
 use Fanoos\Platform\Content\ExamImageStore;
 use Fanoos\Platform\Content\ExamService;
@@ -154,6 +155,7 @@ final class PlatformFactory
                 : null,
             self::accountPhone($database, $config, $audit),
             new CatalogAdminService($database, $access, $audit),
+            new CustomPracticeService($database, $access, $entitlements, $audit),
         );
     }
 }

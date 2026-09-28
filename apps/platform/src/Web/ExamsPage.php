@@ -27,7 +27,10 @@ final class ExamsPage
             <h1>آزمون‌ها</h1>
             <p class="f-muted">تمرین کن، و بعد از ثبت برای هر سؤال ببین چرا گزینه‌ی درست، درست است.</p>
         </div>
-        <a class="f-btn f-btn--ghost" href="/app/exams/mistakes">مرور اشتباه‌ها</a>
+        <div class="x-catalog__actions">
+            <a class="f-btn f-btn--primary" href="/app/exams/custom">آزمون دلخواه بساز</a>
+            <a class="f-btn f-btn--ghost" href="/app/exams/mistakes">مرور اشتباه‌ها</a>
+        </div>
     </div>
 </header>
 

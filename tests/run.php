@@ -20,6 +20,7 @@ use Fanoos\Tests\Integration\TenantIsolationTest;
 use Fanoos\Tests\Integration\MigrationSafetyTest;
 use Fanoos\Tests\Integration\CorePlatformTest;
 use Fanoos\Tests\Integration\ContentEngineTest;
+use Fanoos\Tests\Integration\CustomPracticeTest;
 use Fanoos\Tests\Integration\ExamAttemptHistoryTest;
 use Fanoos\Tests\Integration\ExamAttemptModeTest;
 use Fanoos\Tests\Integration\ExamMistakesReviewTest;
@@ -112,6 +113,8 @@ try {
         echo "PASS exam mistakes review scenarios\n";
         $assertions += (new ExamQuestionImageTest($database))->run();
         echo "PASS exam question image scenarios\n";
+        $assertions += (new CustomPracticeTest($database))->run();
+        echo "PASS custom practice exam scenarios\n";
         $assertions += (new ExamAttemptHistoryTest($database))->run();
         echo "PASS exam attempt history scenarios\n";
         $assertions += (new OwnerRecoveryTest($database))->run();

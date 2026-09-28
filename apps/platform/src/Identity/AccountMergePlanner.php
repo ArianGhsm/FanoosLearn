@@ -44,6 +44,7 @@ final class AccountMergePlanner
         'tenant_workspace_memberships' => [['user_id', self::MOVE_DEDUPE, 'workspace_id']],
         'rbac_role_assignments' => [['user_id', self::MOVE_DEDUPE, 'role_template_id,scope_id'], ['granted_by_user_id', self::HISTORY, null]],
         'exam_attempts' => [['user_id', self::MOVE, null]],
+        'exam_assessments' => [['created_for_user_id', self::MOVE, null]],
         'exam_question_read_rate_guards' => [['user_id', self::DROP, null]],
         'entitlement_grants' => [['subject_user_id', self::MOVE, null]],
         'commerce_orders' => [['buyer_user_id', self::MOVE, null]],

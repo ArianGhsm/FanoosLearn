@@ -123,6 +123,15 @@ final class WebRouter
                 : $this->page(200, (new ExamsPage($this->renderer))->render($viewer));
         }
 
+        if ($path === '/app/exams/custom') {
+            if ($viewer === null) {
+                return $this->redirect('/login');
+            }
+            return $viewer->workspaceId === null
+                ? $this->redirect('/app')
+                : $this->page(200, (new CustomPracticePage($this->renderer))->render($viewer));
+        }
+
         if ($path === '/app/exams/mistakes') {
             if ($viewer === null) {
                 return $this->redirect('/login');

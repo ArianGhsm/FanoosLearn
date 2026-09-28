@@ -78,6 +78,11 @@ HTML
         <span class="f-action__body"><strong>آزمون‌ها</strong><span>درس را انتخاب کن و تمرین را شروع کن</span></span>
         <span class="f-action__go" aria-hidden="true">←</span>
     </a>
+    <a class="f-action" href="/app/exams/custom">
+        <span class="f-action__icon f-action__icon--custom" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h10M4 12h16M4 18h7"/><circle cx="17" cy="6" r="2"/><circle cx="14" cy="18" r="2"/></svg></span>
+        <span class="f-action__body"><strong>آزمون دلخواه</strong><span>درس، مبحث و تعداد را خودت انتخاب کن</span></span>
+        <span class="f-action__go" aria-hidden="true">←</span>
+    </a>
     <a class="f-action" href="/app/exams/mistakes">
         <span class="f-action__icon f-action__icon--review" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/><path d="M12 8v4l3 2"/></svg></span>
         <span class="f-action__body"><strong>مرور اشتباه‌ها</strong><span>فقط سؤال‌هایی که غلط زده‌ای</span></span>
