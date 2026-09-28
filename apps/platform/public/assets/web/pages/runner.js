@@ -146,9 +146,13 @@ function loading(message) {
 }
 
 function showError(error, retry) {
-    if (error instanceof ApiError && error.isRateLimited) {
-        const seconds = error.retryAfterSeconds ?? 20;
-        pageError = notice('warning', 'کمی آهسته‌تر', `چند لحظه صبر کن و دوباره تلاش کن (حدود ${seconds} ثانیه).`, retry ? { label: 'تلاش دوباره', onClick: retry } : null);
+    if (error instanceof ApiError && error.code === 'question_daily_limit') {
+        pageError = notice('warning', 'سقف امروز پر شد',
+            'امروز به سقف سؤال‌های تازه‌ی هر حساب رسیدی. سؤال‌هایی که امروز باز کرده‌ای هنوز در دسترس‌اند؛ سؤال‌های تازه از فردا.',
+            null);
+    } else if (error instanceof ApiError && error.isRateLimited) {
+        const seconds = error.retryAfterSeconds ?? 2;
+        pageError = notice('warning', 'کمی آهسته‌تر', `چند ثانیه صبر کن و دوباره تلاش کن (حدود ${seconds} ثانیه).`, retry ? { label: 'تلاش دوباره', onClick: retry } : null);
     } else {
         pageError = notice('error', 'انجام نشد', describeError(error), retry ? { label: 'تلاش دوباره', onClick: retry } : null);
     }

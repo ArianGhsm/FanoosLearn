@@ -566,10 +566,9 @@ SQL, [
         // its normal GET .../questions/1 when `first_question` is absent, so
         // this degrades to exactly today's two-request behaviour rather than
         // an error.
-        if ($this->questionRateGuard->consume($userId, $now)) {
-            $questionIds = array_map(static fn (array $question): string => (string) $question['id'], $definition['questions']);
-            $order = ExamAttemptShuffle::questionOrder($attemptId, $questionIds);
-            $firstQuestionId = $order[0];
+        $questionIds = array_map(static fn (array $question): string => (string) $question['id'], $definition['questions']);
+        $firstQuestionId = ExamAttemptShuffle::questionOrder($attemptId, $questionIds)[0];
+        if ($this->questionRateGuard->admit($userId, $firstQuestionId, $now) === null) {
             $this->audit->record($workspaceId, $userId, 'exam.question.read', 'exam_attempt', $attemptId, 'success', [
                 'question_id' => $firstQuestionId, 'position' => 1,
             ]);
@@ -633,12 +632,12 @@ SQL, [
             // Everything above is a pure read. From here a refusal must not
             // throw until after this transaction commits -- see
             // ExamQuestionRateGuard's docblock.
-            if (!$this->questionRateGuard->consume($userId, $now)) {
-                return ['allowed' => false];
-            }
-
             $order = ExamAttemptShuffle::questionOrder($attemptId, $questionIds);
             $questionId = $order[$position - 1];
+            $refusal = $this->questionRateGuard->admit($userId, $questionId, $now);
+            if ($refusal !== null) {
+                return ['allowed' => false, 'refusal' => $refusal];
+            }
             $question = $this->questionById($definition, $questionId);
 
             $revealed = json_decode((string) ($attempt['revealed_json'] ?? '[]'), true, 16, JSON_THROW_ON_ERROR);
@@ -664,7 +663,7 @@ SQL, [
         });
 
         if ($outcome['allowed'] === false) {
-            throw new PlatformException('question_read_rate_limited', 'Slow down before revealing the next answer.', 429);
+            throw self::readRefusal($outcome['refusal'], 'Slow down before revealing the next answer.');
         }
         unset($outcome['allowed']);
 
@@ -710,12 +709,12 @@ SQL, [
             // so throwing from any of those checks is safe. From here on a
             // refusal must not throw until after this transaction commits --
             // see ExamQuestionRateGuard's docblock.
-            if (!$this->questionRateGuard->consume($userId, $now)) {
-                return ['allowed' => false];
-            }
-
             $order = ExamAttemptShuffle::questionOrder($attemptId, $questionIds);
             $questionId = $order[$position - 1];
+            $refusal = $this->questionRateGuard->admit($userId, $questionId, $now);
+            if ($refusal !== null) {
+                return ['allowed' => false, 'refusal' => $refusal];
+            }
             $question = $this->questionById($definition, $questionId);
 
             $this->audit->record($workspaceId, $userId, 'exam.question.read', 'exam_attempt', $attemptId, 'success', [
@@ -726,7 +725,7 @@ SQL, [
         });
 
         if ($outcome['allowed'] === false) {
-            throw new PlatformException('question_read_rate_limited', 'Slow down before reading the next question.', 429);
+            throw self::readRefusal($outcome['refusal'], 'Slow down before reading the next question.');
         }
         unset($outcome['allowed']);
 
@@ -965,14 +964,14 @@ SQL);
                 throw new PlatformException('question_position_invalid', 'Question position is out of range.', 422);
             }
 
-            if (!$this->questionRateGuard->consume($userId, $now)) {
-                return ['allowed' => false];
-            }
-
             $definition = json_decode((string) $scored['definition_json'], true, 64, JSON_THROW_ON_ERROR);
             $questionIds = array_map(static fn (array $question): string => (string) $question['id'], $definition['questions']);
             $order = ExamAttemptShuffle::questionOrder($attemptId, $questionIds);
             $questionId = $order[$position - 1];
+            $refusal = $this->questionRateGuard->admit($userId, $questionId, $now);
+            if ($refusal !== null) {
+                return ['allowed' => false, 'refusal' => $refusal];
+            }
             $byId = array_column($review, null, 'id');
             $entry = $byId[$questionId] ?? null;
             if ($entry === null) {
@@ -1010,7 +1009,7 @@ SQL);
         });
 
         if ($outcome['allowed'] === false) {
-            throw new PlatformException('question_read_rate_limited', 'Slow down before reading the next explanation.', 429);
+            throw self::readRefusal($outcome['refusal'], 'Slow down before reading the next explanation.');
         }
         unset($outcome['allowed']);
 
@@ -1092,6 +1091,13 @@ SQL);
         $course = $query->fetchColumn();
 
         return $course === false || $course === null ? null : (string) $course;
+    }
+
+    private static function readRefusal(string $code, string $slowDown): PlatformException
+    {
+        return $code === 'question_daily_limit'
+            ? new PlatformException($code, 'The daily limit of new questions for this account has been reached; questions already opened today stay available.', 429)
+            : new PlatformException('question_read_rate_limited', $slowDown, 429);
     }
 
     /** @return array<string, mixed> */

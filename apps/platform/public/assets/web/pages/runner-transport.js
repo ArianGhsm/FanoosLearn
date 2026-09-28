@@ -140,7 +140,7 @@ export class QuestionWindow {
                     // Backing off here is what keeps read-ahead from eating
                     // the pacing budget the student needs to move forward.
                     if (error instanceof ApiError && error.isRateLimited) {
-                        const wait = (error.retryAfterSeconds ?? 20) * 1000;
+                        const wait = (error.retryAfterSeconds ?? 5) * 1000;
                         this.rateLimitedUntil = Date.now() + wait;
                     }
                 },
