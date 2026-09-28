@@ -1,5 +1,14 @@
 # Joining a student's bot account and website account
 
+> **The everyday path is connecting, not merging.** A student with a website
+> account connects the bots from **حساب → اتصال به ربات**. The site issues a
+> one-time link code and opens the bot with it (`t.me/<bot>?start=…`,
+> `ble.ir/<bot>?start=…`, or `/link <code>`), and that chat then uses the
+> same account, with the same exams, progress and purchases. A merge is only
+> for the leftover case below: someone who already made a second account in
+> the bot before connecting. As of 2026-09-28 the owner reports only two
+> users, so the merge executor stays unbuilt until it is needed.
+
 **Status:** the structure is laid out. The schema and a read-only planner
 exist; the merge itself is not built yet. Owner request, 2026-09-27.
 

@@ -196,6 +196,8 @@ SQL);
         $membership = new ClassMembershipService($this->database, new AuditLogger($this->database), $protector, $links, $this->access());
 
         $userId = $membership->verifiedAccount('bale', $subject);
+        $status = array_column($links->status($userId), 'linked', 'platform');
+        $this->assert($status === ['telegram' => false, 'bale' => true], 'The account page would not show the bot this account is linked to.');
         $profile = ['first_name' => 'سارا', 'last_name' => 'احمدی', 'discipline_id' => $discipline, 'institution_id' => '',
             'entry_year' => 1402, 'entry_term' => 'second', 'course_type' => 'tuition', 'student_number' => ''];
         $saved = $this->service()->saveProfile($userId, $profile);

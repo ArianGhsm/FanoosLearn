@@ -28,6 +28,8 @@ final class WebRouter
         private readonly ?ExamService $exams = null,
         private readonly ?StudentRegistrationService $registration = null,
         private readonly ?CommerceService $commerce = null,
+        /** @var array<string, string> platform => bot username */
+        private readonly array $botUsernames = [],
     ) {
     }
 
@@ -95,7 +97,7 @@ final class WebRouter
         if ($path === '/account') {
             return $viewer === null
                 ? $this->redirect('/login')
-                : $this->page(200, (new AccountPage($this->renderer))->render($viewer));
+                : $this->page(200, (new AccountPage($this->renderer))->render($viewer, $this->botUsernames));
         }
 
         if ($path === '/app') {
