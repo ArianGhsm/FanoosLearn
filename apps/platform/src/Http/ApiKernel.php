@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fanoos\Platform\Http;
 
+use Fanoos\Platform\Commerce\CatalogAdminService;
 use Fanoos\Platform\Commerce\CommerceService;
 use Fanoos\Platform\Content\ProtectedResourceAuthorizer;
 use Fanoos\Platform\Content\ContentService;
@@ -43,6 +44,7 @@ final class ApiKernel
         private readonly ?DirectoryReadService $directory = null,
         private readonly ?ExamImageStore $examImages = null,
         private readonly ?AccountPhoneService $accountPhone = null,
+        private readonly ?CatalogAdminService $catalogAdmin = null,
     ) {
     }
 
@@ -280,6 +282,20 @@ final class ApiKernel
                 $session->userId, $workspaceId,
                 (string) ($request->body['product_id'] ?? ''),
                 (string) ($request->body['idempotency_key'] ?? ''),
+            )];
+        }
+        if ($suffix === '/admin/products' && in_array($request->method, ['GET', 'POST'], true)) {
+            $admin = $this->requireCatalogAdmin();
+            return $request->method === 'GET'
+                ? ['status' => 200, 'data' => $admin->products($session->userId, $workspaceId)]
+                : ['status' => 201, 'data' => $admin->save($session->userId, $workspaceId, null, $request->body)];
+        }
+        if ($request->method === 'PATCH' && preg_match('#^/admin/products/([0-9a-f-]{36})$#', $suffix, $match)) {
+            return ['status' => 200, 'data' => $this->requireCatalogAdmin()->save($session->userId, $workspaceId, $match[1], $request->body)];
+        }
+        if ($request->method === 'POST' && preg_match('#^/admin/products/([0-9a-f-]{36})/exam-lock$#', $suffix, $match)) {
+            return ['status' => 200, 'data' => $this->requireCatalogAdmin()->setExamLock(
+                $session->userId, $workspaceId, $match[1], ($request->body['locked'] ?? false) === true,
             )];
         }
         if ($request->method === 'GET' && $suffix === '/catalog') {
@@ -526,6 +542,14 @@ final class ApiKernel
             throw new PlatformException('registration_unavailable', 'Sign-up is not available.', 503);
         }
         return $this->registration;
+    }
+
+    private function requireCatalogAdmin(): CatalogAdminService
+    {
+        if ($this->catalogAdmin === null) {
+            throw new PlatformException('catalog_admin_unavailable', 'Product management is not available.', 503);
+        }
+        return $this->catalogAdmin;
     }
 
     private function requireAccountPhone(): AccountPhoneService

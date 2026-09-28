@@ -260,6 +260,28 @@ paths:
         - { name: questionId, in: path, required: true, schema: { type: string, pattern: '^[a-zA-Z0-9_-]{1,64}$' } }
         - { name: slot, in: path, required: true, schema: { type: string, pattern: '^(stem|choice-[0-9]{1,2})$' } }
       responses: { '200': { description: The image bytes. }, '404': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/admin/products:
+    get: { operationId: listCatalogProducts, description: 'Every product in the workspace (any status) with its current price in Rials, price history, paid-order count and how many assessments behind its scope are locked. Needs commerce.manage_catalog.', parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } } }
+    post:
+      operationId: createCatalogProduct
+      description: Creates a product (default target scope - the workspace scope) with its first price. Needs commerce.manage_catalog.
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [name, amount_rial], properties: { name: { type: string }, amount_rial: { type: integer, minimum: 1000 }, status: { type: string, enum: [draft, active, archived] }, key: { type: string }, scope_id: { $ref: '#/components/schemas/Uuid' } }, additionalProperties: false } } } }
+      responses: { '201': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/admin/products/{productId}:
+    patch:
+      operationId: updateCatalogProduct
+      description: Renames, changes the status of, and reprices a product. A price different from the current one closes the current price version and opens a new one from now; history is kept and placed orders keep their price.
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: productId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }, { $ref: '#/components/parameters/Csrf' }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [name, amount_rial, status], properties: { name: { type: string }, amount_rial: { type: integer, minimum: 1000 }, status: { type: string, enum: [draft, active, archived] } }, additionalProperties: false } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/admin/products/{productId}/exam-lock:
+    post:
+      operationId: setCatalogProductExamLock
+      description: Locks (requires_entitlement) or frees every assessment whose access policy targets the product's scope.
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: productId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }, { $ref: '#/components/parameters/Csrf' }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [locked], properties: { locked: { type: boolean } }, additionalProperties: false } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/assessments:
     get:
       operationId: listPublishedAssessments

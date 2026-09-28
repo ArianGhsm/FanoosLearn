@@ -150,6 +150,9 @@ final class WebRenderingTest
         // account, and with it signing out -- are always reachable.
         $keysWithout = array_column($without->navigation(), 'key');
         $this->assert(!in_array('exams', $keysWithout, true), 'A workspace-scoped area must be hidden before a workspace is chosen.');
+        $this->assert(!in_array('products', array_column($with->navigation(), 'key'), true), 'Only a catalog manager is shown the products page.');
+        $manager = new ViewerContext('u1', 'آرین', 'c', 'w1', 'کلاس من', true);
+        $this->assert(in_array('products', array_column($manager->navigation(), 'key'), true), 'A catalog manager must be shown the products page.');
         $this->assert(in_array('account', $keysWithout, true), 'The account area must be reachable even before a workspace is chosen.');
         $this->assert(
             !str_contains((new HomePage($renderer))->render($without), '/app/exams'),

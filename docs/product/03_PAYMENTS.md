@@ -33,18 +33,22 @@ These keys go in the platform config (`FANOOS_PAYMENT_*`):
 Payments are off unless all of these are present. Amounts are stored in
 Rials (`IRR`) and shown in Tomans.
 
-## Products
+## Products and prices
 
-Until there is a management screen, products are created with:
+The owner manages products at **محصولات و قیمت** (`/app/admin/products`).
+The page appears for anyone holding `commerce.manage_catalog` in the selected
+workspace, and every call checks that permission again.
 
-```
-php scripts/ops/create-product.php --workspace=<uuid> --key=<key> --name=<title> \
-    --rial=<price> [--scope=<uuid>] [--activate] [--gate-exams]
-```
-
-- The default scope is the workspace's own, which covers a whole discipline
+- **Create** a product with a name and a price in Tomans. It starts as a
+  draft and targets the workspace's own scope, which covers a whole discipline
   library.
-- `--gate-exams` also marks that scope's assessments as requiring the
-  purchase. Without it, the product is only on offer and nothing is locked.
-- Running the command again with a new price starts that price now; orders
-  already placed keep theirs.
+- **Change the price at any time.** The current price version closes and a
+  new one starts at the same instant. The page shows the history. Orders
+  already placed keep the price they were placed at.
+- **Status:** draft, on sale, or archived. Only products on sale are offered.
+- **Lock the exams** behind a product, or free them again. This sets
+  `requires_entitlement` on every assessment that points at the product's
+  scope. Selling a product does not lock anything by itself.
+
+`CatalogAdminService` holds these rules, behind `GET/POST /admin/products`,
+`PATCH /admin/products/{id}` and `POST /admin/products/{id}/exam-lock`.
