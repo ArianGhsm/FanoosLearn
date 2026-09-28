@@ -12,6 +12,7 @@ import {
 } from './runner-state.js';
 import { renderMarkdown } from './markdown.js';
 import { highlightSegments } from './runner-study.js';
+import { choiceShareLabel, statsLines } from './question-stats.js';
 
 const CHOICE_LETTERS = ['الف', 'ب', 'ج', 'د', 'ه', 'و', 'ز', 'ح', 'ط', 'ی'];
 
@@ -563,34 +564,23 @@ function renderReveal(reveal, question, chosen, { explanationVisible = true, onS
  * something once you have committed to an answer, not while you are choosing
  * one.
  *
- * Every value is unknown today, and the block is here anyway. That is the
- * owner's instruction and it matches the reference: signed out, medofast
- * draws this whole section with «؟ بار» in every slot, so the page does not
- * change shape when the numbers arrive.
- *
- * The data is closer than it looks. exam_attempt_results.review_json already
- * stores per-question is_correct for every scored attempt, so both columns
- * are an aggregation away rather than a new thing to collect -- the share of
- * students who answered correctly across the workspace, and this student's
- * own record on this question across their attempts.
- *
- * Until then every row reads "—". Never a zero: "answered correctly 0 times"
- * is a claim about the student, and we would be making it up.
+ * The numbers come with the question (QuestionStatsRecorder on the server):
+ * everyone else's share of right answers, and this student's own record.
+ * question-stats.js words them; anything unknown reads "—", never a zero.
  */
 function renderQuestionStats(stats) {
-    const value = (key) => {
-        const raw = stats && stats[key];
-        return typeof raw === 'string' && raw !== '' ? raw : null;
-    };
+    const lines = statsLines(stats);
 
     return el('section', { className: 'x-qstats' },
         el('h3', { className: 'x-qstats__title', text: 'آمار این سؤال' }),
         el('div', { className: 'x-qstats__grid' },
-            metaItem('source', 'chart', 'پاسخ درست دیگران', value('peer_correct_share')),
-            metaItem('subject', 'repeat', 'تو چند بار زده‌ای', value('attempts')),
-            metaItem('difficulty', 'check', 'چند بار درست', value('correct')),
-            metaItem('tag', 'calendar', 'آخرین بار', value('last_answered'))),
-        el('p', { className: 'f-tiny x-qstats__note', text: 'این آمار هنوز جمع‌آوری نمی‌شود و به‌زودی پر می‌شود.' }));
+            metaItem('source', 'chart', 'پاسخ درست دیگران', lines.peer),
+            metaItem('subject', 'repeat', 'تو چند بار زده‌ای', lines.attempts),
+            metaItem('difficulty', 'check', 'چند بار درست', lines.correct),
+            metaItem('tag', 'calendar', 'آخرین بار', lines.last)),
+        lines.peer === null
+            ? el('p', { className: 'f-tiny x-qstats__note', text: 'درصد دیگران وقتی نشان داده می‌شود که دست‌کم سه پاسخ از دیگران ثبت شده باشد.' })
+            : null);
 }
 
 /*
@@ -930,15 +920,24 @@ export function renderReviewQuestion(entry, position, questionCount, actions, as
         const classes = ['x-choice', 'x-choice--review'];
         if (isCorrect) classes.push('is-correct');
         if (isChosen && !isCorrect) classes.push('is-wrong');
-        choices.append(el('li', { className: 'x-choices__item' },
-            el('div', { className: classes.join(' ') },
-                el('span', { className: 'x-choice__letter', text: CHOICE_LETTERS[index] ?? faDigits(index + 1) }),
-                el('span', { className: 'x-choice__text', text: faText(choice) },
-                    choiceFigure(assessmentId, entry, index)),
-                el('span', {
-                    className: 'x-choice__mark',
-                    text: isCorrect ? '✓ پاسخ درست' : (isChosen ? '✕ انتخاب تو' : ''),
-                }))));
+        // How many people picked this choice, drawn as a quiet bar behind it:
+        // a wrong answer most people also chose is a different lesson from
+        // one nobody else fell for.
+        const share = choiceShareLabel(entry.choice_shares, index);
+        const row = el('div', { className: classes.join(' ') + (share === null ? '' : ' has-share') },
+            el('span', { className: 'x-choice__letter', text: CHOICE_LETTERS[index] ?? faDigits(index + 1) }),
+            el('span', { className: 'x-choice__text', text: faText(choice) },
+                choiceFigure(assessmentId, entry, index)),
+            el('span', {
+                className: 'x-choice__mark',
+                text: isCorrect ? '✓ پاسخ درست' : (isChosen ? '✕ انتخاب تو' : ''),
+            }),
+            share === null ? null : el('span', {
+                className: 'x-choice__share', text: share,
+                attrs: { title: 'چند درصد از همه این گزینه را انتخاب کرده‌اند' },
+            }));
+        if (share !== null) row.style.setProperty('--x-share', `${entry.choice_shares.percent[index]}%`);
+        choices.append(el('li', { className: 'x-choices__item' }, row));
     });
 
     const verdict = entry.selected === null || entry.selected === undefined
@@ -966,12 +965,16 @@ export function renderReviewQuestion(entry, position, questionCount, actions, as
             el('p', { className: 'x-question__prompt', text: faText(entry.prompt) }),
             stemFigure(assessmentId, entry),
             choices,
+            entry.choice_shares
+                ? el('p', { className: 'f-tiny x-review__shares', text: `درصد کنار هر گزینه: چند نفر از ${faDigits(entry.choice_shares.answered)} پاسخ آن را انتخاب کرده‌اند.` })
+                : null,
             entry.explanation
                 ? el('section', { className: 'x-explanation' },
                     el('h3', { text: 'چرا؟' }),
                     renderMarkdown(entry.explanation),
                     el('p', { className: 'x-explanation__origin', text: 'این توضیح با کمک هوش مصنوعی نوشته شده و بازبینی انسانی نشده است.' }))
-                : el('p', { className: 'f-tiny', text: 'برای این سؤال توضیحی ثبت نشده است.' })),
+                : el('p', { className: 'f-tiny', text: 'برای این سؤال توضیحی ثبت نشده است.' }),
+            renderQuestionStats(entry.stats ?? null)),
         el('p', { className: 'x-review__done' },
             el('a', { attrs: { href: '/app/exams' }, text: 'پایان مرور و بازگشت به فهرست آزمون‌ها' })));
 }

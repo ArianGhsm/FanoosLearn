@@ -43,6 +43,10 @@ const collator = new Intl.Collator('fa', { numeric: true });
 
 const state = { courses: new Map(), selected: new Set(), topics: new Set(), options: null, request: 0 };
 
+// "تمرین همین مبحث" on the progress page arrives as ?course=…&topic=…
+const params = new URLSearchParams(window.location.search);
+const preset = { course: params.get('course'), topic: params.get('topic') };
+
 function el(tag, className, text) {
     const node = document.createElement(tag);
     if (className) node.className = className;
@@ -137,6 +141,10 @@ async function loadOptions() {
         const options = await api.get(`${base}/custom-practice/options?course_ids=${encodeURIComponent(ids)}`);
         if (ticket !== state.request) return; // a later choice already asked again
         state.options = options;
+        if (preset.topic !== null && options.topics.some((topic) => topic.topic === preset.topic)) {
+            state.topics.add(preset.topic);
+        }
+        preset.topic = null;
         for (const step of [topicsStep, sourceStep, sizeStep, bar]) step.hidden = false;
         drawTopics();
         drawSize();
@@ -154,6 +162,11 @@ async function loadCourses() {
         }
         state.courses = new Map([...state.courses.entries()].sort((a, b) => collator.compare(a[1].title, b[1].title)));
         drawCourses();
+        if (preset.course !== null && state.courses.has(preset.course)) {
+            state.selected.add(preset.course);
+            drawCourses();
+            loadOptions();
+        }
     } catch (error) {
         coursesBox.replaceChildren(el('p', 'f-muted', `درس‌ها خوانده نشد: ${describeError(error)}`));
     } finally {

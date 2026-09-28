@@ -40,6 +40,7 @@ final class ViewerContext
         ];
         if ($this->workspaceId !== null) {
             $items[] = ['key' => 'exams', 'href' => '/app/exams', 'label' => 'آزمون‌ها', 'icon' => '📝'];
+            $items[] = ['key' => 'progress', 'href' => '/app/progress', 'label' => 'پیشرفت', 'icon' => '📈'];
             $items[] = ['key' => 'store', 'href' => '/app/store', 'label' => 'فروشگاه', 'icon' => '🛒'];
             if ($this->canManageCatalog) {
                 $items[] = ['key' => 'products', 'href' => '/app/admin/products', 'label' => 'محصولات و قیمت', 'icon' => '🏷'];

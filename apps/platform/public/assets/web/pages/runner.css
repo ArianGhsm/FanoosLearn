@@ -1780,6 +1780,47 @@ body.x-focus .f-page {
     }
 }
 
+/*
+ * In the review, how many people picked each choice: a bar filled to that
+ * share behind the row, and the number at its end. Quiet on purpose -- the
+ * right/wrong colouring stays the loudest thing on the row.
+ */
+.x-choice--review.has-share {
+    position: relative;
+    isolation: isolate;
+}
+
+.x-choice--review.has-share::before {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: -1;
+    width: var(--x-share, 0%);
+    border-radius: inherit;
+    background: var(--surface-muted);
+}
+
+.x-choice__share {
+    flex: none;
+    min-width: 3.5ch;
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
+    color: var(--text-tertiary);
+    text-align: end;
+}
+
+.x-review__shares {
+    margin: var(--space-2) 0 0;
+    color: var(--text-tertiary);
+}
+
+.x-review__card .x-qstats {
+    margin-top: var(--space-4);
+    margin-inline: calc(-1 * var(--space-5));
+    margin-bottom: calc(-1 * var(--space-5));
+}
+
 /* ------------------------------------------------------------ images */
 
 /*

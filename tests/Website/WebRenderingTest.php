@@ -16,6 +16,7 @@ use Fanoos\Platform\Web\CustomPracticePage;
 use Fanoos\Platform\Web\ExamsPage;
 use Fanoos\Platform\Web\NotFoundPage;
 use Fanoos\Platform\Web\PageRenderer;
+use Fanoos\Platform\Web\ProgressPage;
 use Fanoos\Platform\Web\RecoveryPage;
 use Fanoos\Platform\Web\ViewerContext;
 use RuntimeException;
@@ -144,6 +145,13 @@ final class WebRenderingTest
         $this->assert(
             str_contains($custom, 'id="custom-form"') && str_contains($custom, '/assets/web/pages/custom-practice.js'),
             'The custom practice page must render its builder and load its script.',
+        );
+        $this->assert(str_contains($html, 'href="/app/progress"'), 'The navigation must offer the progress dashboard once a workspace is chosen.');
+        $progress = (new ProgressPage($renderer))->render($viewer);
+        $this->assert(
+            str_contains($progress, 'id="progress-board"') && str_contains($progress, '/assets/web/pages/progress.js')
+                && str_contains($progress, 'href="/app/progress" aria-current="page"'),
+            'The progress page must render its board, load its script and mark its navigation item.',
         );
     }
 

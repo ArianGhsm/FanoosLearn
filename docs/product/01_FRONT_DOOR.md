@@ -456,3 +456,41 @@ wrong), a size (5–100) and an optional time limit at `/app/exams/custom`, and
   in `AccountMergePlanner::PLAN`, so a merge moves the exams with the person.
 - API: `GET/POST /workspaces/{ws}/custom-practice`,
   `GET /workspaces/{ws}/custom-practice/options?course_ids=…` (core-v1.yaml).
+
+## 15. آمار هر سؤال و داشبورد پیشرفت
+
+Requested by the owner on 2026-09-28, right after آزمون دلخواه.
+
+- **Counters (migration 0028, expand-only).** `QuestionStatsRecorder::record`
+  runs inside `ExamService::scoreAndClose` and increments, per answered
+  question:
+  - `exam_question_stats` (everyone's answered/correct);
+  - `exam_question_choice_stats` (picks per authored choice index);
+  - `exam_question_user_stats` (the student's own count, last verdict and
+    time, filed under the course and topic the question was asked in; a
+    custom exam carries each question's source `course_id` for this).
+
+  Blanks are not counted. Answers revealed first in a *learning* attempt are
+  not counted either. Practice-mode reveals are counted, because they come
+  after the choice is locked. The counters are keyed by the stable question
+  id, as in the mistakes review and custom practice. They are derived data:
+  `scripts/ops/rebuild-question-stats.php` recomputes them from
+  `exam_attempt_results`, and was run once after 0028 so earlier answers
+  count.
+- **In the runner.** The «آمار این سؤال» block under each question now shows
+  other people's correct share, along with the student's own attempts,
+  correct count and last answer. Other people's numbers stay hidden below
+  three answers from others: too few to mean anything, and too few to stay
+  anonymous. The post-submit review adds, beside each choice, the share of
+  everyone who picked it.
+- **داشبورد پیشرفت** (`/app/progress`, nav «پیشرفت»; `ProgressService`,
+  `GET /workspaces/{ws}/progress`) is read fresh on each visit and shows:
+  - summary tiles;
+  - a 12-week activity grid (Saturday-first, in the workspace timezone) and
+    the streak;
+  - the score trend;
+  - per-course correct share and coverage;
+  - the weakest topics (at least 5 answers), each with «تمرین همین مبحث»,
+    which opens آزمون دلخواه preset to that course and topic
+    (`?course=…&topic=…`);
+  - the latest exams.
