@@ -1,5 +1,10 @@
 # Payments
 
+**Status (2026-09-28):** the owner has put the gateway aside. The Zibal code
+stays in the repository, `FANOOS_PAYMENT_GATEWAY` is `disabled` in production,
+and no merchant is configured. Everything below applies once a gateway is
+configured.
+
 The owner decided on 2026-09-27 that FANOOS takes payments through Zibal, the
 same gateway the Dent1402 site uses.
 
@@ -17,9 +22,20 @@ same gateway the Dent1402 site uses.
 4. A verified payment grants an entitlement on the product's target scope.
    Any assessment whose access policy requires that entitlement opens.
 5. If the gateway cannot be reached, the page says the payment is being
-   checked and the attempt stays open for reconciliation
-   (`POST .../payments/{attempt}/reconcile`, which asks Zibal again). Such a
-   payment is never marked failed.
+   checked and the attempt stays open. Such a payment is never marked
+   failed.
+6. **Automatic settlement.** Every five minutes, `fanoos-reconcile-payments.timer`
+   runs `scripts/ops/reconcile-payments.php` (`CommerceService::reconcileStale`).
+   It asks the gateway about every attempt that is still open and has been
+   quiet for 20 minutes, whether the payer never came back or came back while
+   the gateway was down:
+   - paid: marked paid, and what was bought opens;
+   - refused: marked failed;
+   - no answer: left open for the next run.
+
+   Attempts older than two days are left to a person
+   (`POST .../payments/{attempt}/reconcile`). With payments off, the timer does
+   nothing.
 
 ## Configuration
 

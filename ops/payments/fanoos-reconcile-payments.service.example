@@ -1,0 +1,15 @@
+[Unit]
+Description=FANOOS: settle payments whose payer never came back
+After=network-online.target mysql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=fanoosweb
+Group=fanoosweb
+Environment=FANOOS_CONFIG_FILE=/etc/fanoos/platform-config.php
+ExecStart=/usr/bin/php /srv/fanoos/current/scripts/ops/reconcile-payments.php
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
