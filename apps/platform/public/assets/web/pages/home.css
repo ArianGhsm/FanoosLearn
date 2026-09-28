@@ -88,7 +88,7 @@
 
 .f-actions {
     display: grid;
-    grid-template-columns: 1.3fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--space-4);
     margin-bottom: var(--space-6);
 }
@@ -128,6 +128,12 @@
     background: var(--accent-gradient);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-accent);
+}
+
+.f-action__icon--custom {
+    color: var(--hue-tag);
+    background: var(--hue-tag-soft);
+    box-shadow: none;
 }
 
 .f-action__icon--review {

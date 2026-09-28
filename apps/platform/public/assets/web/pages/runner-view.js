@@ -300,6 +300,7 @@ export function kindLabel(kind) {
     if (kind === 'practice') return 'تمرین';
     if (kind === 'mock_exam') return 'آزمون آزمایشی';
     if (kind === 'past_exam') return 'آزمون گذشته';
+    if (kind === 'custom') return 'آزمون دلخواه';
     return 'آزمون';
 }
 

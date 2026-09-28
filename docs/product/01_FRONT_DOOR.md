@@ -435,3 +435,24 @@ Decide that before building the upload surface, because it determines the storag
 
 Related: section 12 notes that `exams` at 815 files is a project rather than a task, and
 needs its own planning pass. This requirement belongs inside that pass.
+
+## 14. آزمون دلخواه (custom practice)
+
+The owner chose this first among the exam-side options (2026-09-28). A student
+picks courses, optionally topics, a source (all / never answered / last answer
+wrong), a size (5–100) and an optional time limit at `/app/exams/custom`, and
+`CustomPracticeService` builds an ordinary assessment from it:
+
+- Questions are drawn at random from published exams of those courses that the
+  student may already open; exams behind an entitlement they lack are skipped,
+  so a custom exam never unlocks paid content. Duplicates are removed by
+  question id.
+- "Unseen" and "wrong" come from the student's own scored attempts in the
+  workspace (the last answer to each question wins, as in مرور اشتباه‌ها).
+- The result is a real assessment (kind practice, variant `custom`) with
+  `exam_assessments.created_for_user_id` set (migration 0027, expand-only). The
+  catalogue queries exclude every personal assessment; `catalogEntry` shows it
+  only to its owner and `startAttempt` answers 404 to anyone else. The column is
+  in `AccountMergePlanner::PLAN`, so a merge moves the exams with the person.
+- API: `GET/POST /workspaces/{ws}/custom-practice`,
+  `GET /workspaces/{ws}/custom-practice/options?course_ids=…` (core-v1.yaml).

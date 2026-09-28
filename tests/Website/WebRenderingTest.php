@@ -12,6 +12,7 @@ use Fanoos\Platform\Web\PaymentReturnPage;
 use Fanoos\Platform\Web\HomePage;
 use Fanoos\Platform\Web\AccountPage;
 use Fanoos\Platform\Web\ExamAttemptPage;
+use Fanoos\Platform\Web\CustomPracticePage;
 use Fanoos\Platform\Web\ExamsPage;
 use Fanoos\Platform\Web\NotFoundPage;
 use Fanoos\Platform\Web\PageRenderer;
@@ -138,6 +139,12 @@ final class WebRenderingTest
         );
         $this->assert(str_contains($html, 'f-header'), 'A signed-in page must render the shared chrome.');
         $this->assert(str_contains($html, 'دندانپزشکی ۱۴۰۲'), 'The chrome must name the selected workspace.');
+        $this->assert(str_contains($html, 'href="/app/exams/custom"'), 'Home must offer the custom practice builder.');
+        $custom = (new CustomPracticePage($renderer))->render($viewer);
+        $this->assert(
+            str_contains($custom, 'id="custom-form"') && str_contains($custom, '/assets/web/pages/custom-practice.js'),
+            'The custom practice page must render its builder and load its script.',
+        );
     }
 
     private function navigationHidesWorkspaceAreasUntilOneIsSelected(PageRenderer $renderer): void

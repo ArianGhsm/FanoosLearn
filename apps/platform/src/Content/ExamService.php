@@ -209,7 +209,12 @@ SQL, ['version_no' => $state['version_no'], 'assessment' => $assessmentId, 'work
         'assessment.workspace_id = :workspace',
         "assessment.status = 'published'",
         'assessment.archived_at IS NULL',
+        // A student's own custom practice exam (created_for_user_id) is
+        // listed as theirs by CustomPracticeService, never in a catalogue.
+        self::NOT_PERSONAL,
     ];
+
+    private const NOT_PERSONAL = 'assessment.created_for_user_id IS NULL';
 
     /** @param list<string> $where */
     private function catalogVisibleFrom(array $where): string
@@ -292,7 +297,7 @@ SQL, $this->catalogVisibleFrom(self::CATALOG_BASE_WHERE)));
      */
     public function catalogEntry(string $userId, string $workspaceId, string $assessmentId): ?array
     {
-        $rows = $this->catalogRows($userId, $workspaceId, ['assessment.id = :entry_assessment'], ['entry_assessment' => $assessmentId], 1);
+        $rows = $this->catalogRows($userId, $workspaceId, ['assessment.id = :entry_assessment'], ['entry_assessment' => $assessmentId], 1, true);
 
         return $rows[0] ?? null;
     }
@@ -306,11 +311,20 @@ SQL, $this->catalogVisibleFrom(self::CATALOG_BASE_WHERE)));
      * @param array<string, mixed> $extraParameters
      * @return list<array<string, mixed>>
      */
-    private function catalogRows(string $actorUserId, string $workspaceId, array $extraWhere, array $extraParameters, int $limit): array
+    private function catalogRows(string $actorUserId, string $workspaceId, array $extraWhere, array $extraParameters, int $limit, bool $includeOwnPersonal = false): array
     {
         $this->access->requireWorkspace($actorUserId, $workspaceId, 'exam.take');
-        $where = array_merge(self::CATALOG_BASE_WHERE, $extraWhere);
+        $base = self::CATALOG_BASE_WHERE;
         $parameters = array_merge(['workspace' => $workspaceId], $extraParameters);
+        if ($includeOwnPersonal) {
+            // One exam by id (the runner's intro): the viewer's own custom
+            // practice exam is theirs to open; anyone else's still is not.
+            $base = array_map(static fn (string $clause): string => $clause === self::NOT_PERSONAL
+                ? '(assessment.created_for_user_id IS NULL OR assessment.created_for_user_id = :catalog_owner)'
+                : $clause, $base);
+            $parameters['catalog_owner'] = $actorUserId;
+        }
+        $where = array_merge($base, $extraWhere);
         $query = $this->database->prepare(sprintf(<<<'SQL'
 SELECT assessment.id, assessment.title, assessment.current_version_no,
        COALESCE(metadata.assessment_variant, metadata.assessment_kind) AS assessment_kind,
@@ -451,6 +465,11 @@ SQL);
             throw new PlatformException('attempt_mode_invalid', 'Attempt mode is invalid.', 422);
         }
         $assessment = $this->publishedAssessment($workspaceId, $assessmentId);
+        // Someone else's custom practice exam does not exist, as far as this
+        // student can tell -- the same answer as an id that was never used.
+        if ($assessment['created_for_user_id'] !== null && $assessment['created_for_user_id'] !== $userId) {
+            throw new PlatformException('assessment_not_found', 'Published assessment was not found.', 404);
+        }
         $decision = $this->authorizer->decide($userId, 'exam.take', 'assessment', (string) $assessment['scope_id'], $workspaceId);
         if (!$decision->allowed) {
             throw new PlatformException('assessment_access_denied', 'Assessment access was denied.', 403);
@@ -1059,7 +1078,7 @@ SQL);
     private function publishedAssessment(string $workspaceId, string $assessmentId): array
     {
         $query = $this->database->prepare(<<<'SQL'
-SELECT assessment.id, assessment.title, version.id AS version_id, version.definition_json,
+SELECT assessment.id, assessment.title, assessment.created_for_user_id, version.id AS version_id, version.definition_json,
        scope.id AS scope_id, policy.target_scope_id, policy.requires_entitlement, policy.max_attempts,
        policy.time_limit_minutes
 FROM exam_assessments assessment
