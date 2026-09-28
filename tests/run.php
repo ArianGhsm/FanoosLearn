@@ -6,6 +6,7 @@ use Fanoos\Platform\Support\DatabaseConnection;
 use Fanoos\Tests\Core\AccountMergePlannerTest;
 use Fanoos\Tests\Core\AccountPhoneTest;
 use Fanoos\Tests\Core\AnnouncementPublishTest;
+use Fanoos\Tests\Core\CatalogAdminServiceTest;
 use Fanoos\Tests\Core\ClassCreationRequestServiceTest;
 use Fanoos\Tests\Core\ClassMembershipTest;
 use Fanoos\Tests\Core\ClassProvisioningTest;
@@ -138,6 +139,8 @@ try {
         echo "PASS account phone scenarios\n";
         $assertions += (new AccountMergePlannerTest($database))->run();
         echo "PASS account merge planner scenarios\n";
+        $assertions += (new CatalogAdminServiceTest($database))->run();
+        echo "PASS owner products and prices scenarios\n";
         $assertions += (new RepresentativeApprovalTest($database))->run();
         echo "PASS representative appointment and approval scenarios\n";
         $assertions += (new AnnouncementPublishTest($database))->run();

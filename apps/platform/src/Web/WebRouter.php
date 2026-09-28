@@ -61,6 +61,18 @@ final class WebRouter
             return $this->page(200, (new PaymentReturnPage($this->renderer))->render($viewer, ...$this->settlePayment($query)));
         }
 
+        if ($path === '/app/admin/products') {
+            if ($viewer === null) {
+                return $this->redirect('/login');
+            }
+            if ($viewer->workspaceId === null) {
+                return $this->redirect('/app');
+            }
+            return $viewer->canManageCatalog
+                ? $this->page(200, (new ProductsAdminPage($this->renderer))->render($viewer))
+                : $this->page(404, (new NotFoundPage($this->renderer))->render($viewer));
+        }
+
         if ($path === '/app/store') {
             if ($viewer === null) {
                 return $this->redirect('/login');
@@ -154,10 +166,12 @@ final class WebRouter
         }
 
         $workspaceName = null;
+        $canManageCatalog = false;
         if ($session->selectedWorkspaceId !== null) {
             foreach ($account['workspaces'] ?? [] as $workspace) {
                 if (($workspace['id'] ?? null) === $session->selectedWorkspaceId) {
                     $workspaceName = (string) ($workspace['name'] ?? '');
+                    $canManageCatalog = in_array('commerce.manage_catalog', (array) ($workspace['permission_keys'] ?? []), true);
                     break;
                 }
             }
@@ -175,6 +189,7 @@ final class WebRouter
             $session->csrfToken,
             $session->selectedWorkspaceId,
             $workspaceName === '' ? null : $workspaceName,
+            $canManageCatalog,
         );
     }
 

@@ -7,6 +7,7 @@ namespace Fanoos\Platform\Core;
 use Fanoos\Platform\Audit\AuditLogger;
 use Fanoos\Platform\Authorization\AccessGate;
 use Fanoos\Platform\Authorization\ScopeAuthorizer;
+use Fanoos\Platform\Commerce\CatalogAdminService;
 use Fanoos\Platform\Commerce\CommerceService;
 use Fanoos\Platform\Commerce\PaymentGatewayFactory;
 use Fanoos\Platform\Content\ProtectedResourceAuthorizer;
@@ -148,6 +149,7 @@ final class PlatformFactory
                 ? new ExamImageStore($objectRoot)
                 : null,
             self::accountPhone($database, $config, $audit),
+            new CatalogAdminService($database, $access, $audit),
         );
     }
 }

@@ -20,6 +20,9 @@ final class ViewerContext
         public readonly string $csrfToken,
         public readonly ?string $workspaceId,
         public readonly ?string $workspaceName,
+        // Only decides whether the products link is shown; the API checks
+        // commerce.manage_catalog on every request regardless.
+        public readonly bool $canManageCatalog = false,
     ) {
     }
 
@@ -38,6 +41,9 @@ final class ViewerContext
         if ($this->workspaceId !== null) {
             $items[] = ['key' => 'exams', 'href' => '/app/exams', 'label' => 'آزمون‌ها', 'icon' => '📝'];
             $items[] = ['key' => 'store', 'href' => '/app/store', 'label' => 'فروشگاه', 'icon' => '🛒'];
+            if ($this->canManageCatalog) {
+                $items[] = ['key' => 'products', 'href' => '/app/admin/products', 'label' => 'محصولات و قیمت', 'icon' => '🏷'];
+            }
         }
         // On a phone the header collapses and this bar is the only chrome, so
         // the account -- and with it the only way to sign out -- has to be
