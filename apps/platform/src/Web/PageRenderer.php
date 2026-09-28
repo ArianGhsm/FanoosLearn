@@ -98,13 +98,23 @@ final class PageRenderer
             . '</body>' . "\n" . '</html>' . "\n";
     }
 
+    /** Line icons for the navigation, drawn in the text colour. They replaced emoji, which rendered differently on every device. */
+    private const NAV_ICONS = [
+        'home' => '<svg viewBox="0 0 24 24"><path d="M3.5 10.5 12 3.5l8.5 7V20a1 1 0 0 1-1 1H15v-6H9v6H4.5a1 1 0 0 1-1-1z"/></svg>',
+        'exams' => '<svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>',
+        'progress' => '<svg viewBox="0 0 24 24"><path d="M4 4v16h16"/><path d="m7.5 14.5 3.5-3.5 3 3 5-5.5"/></svg>',
+        'store' => '<svg viewBox="0 0 24 24"><path d="M5 8h14l-1.1 11.1a1 1 0 0 1-1 .9H7.1a1 1 0 0 1-1-.9z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>',
+        'tag' => '<svg viewBox="0 0 24 24"><path d="M3.5 12V4.5a1 1 0 0 1 1-1H12l8.5 8.5-8.5 8.5z"/><circle cx="8" cy="8" r="1.4"/></svg>',
+        'account' => '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg>',
+    ];
+
     private function chrome(ViewerContext $viewer, string $activeNav): string
     {
         $items = '';
         foreach ($viewer->navigation() as $item) {
             $current = $item['key'] === $activeNav ? ' aria-current="page"' : '';
             $items .= '<a class="f-nav__link" href="' . $this->escape($item['href']) . '"' . $current . '>'
-                . '<span class="f-nav__icon" aria-hidden="true">' . $this->escape($item['icon']) . '</span>'
+                . '<span class="f-nav__icon" aria-hidden="true">' . (self::NAV_ICONS[$item['icon']] ?? '') . '</span>'
                 . '<span>' . $this->escape($item['label']) . '</span>'
                 . '</a>';
         }

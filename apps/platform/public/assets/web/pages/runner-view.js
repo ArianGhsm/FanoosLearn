@@ -14,6 +14,7 @@ import { renderMarkdown } from './markdown.js';
 import { highlightSegments } from './runner-study.js';
 import { choiceShareLabel, statsLines } from './question-stats.js';
 
+const DIFFICULTY_LABELS = { easy: 'آسان', medium: 'متوسط', hard: 'دشوار' };
 const CHOICE_LETTERS = ['الف', 'ب', 'ج', 'د', 'ه', 'و', 'ز', 'ح', 'ط', 'ی'];
 
 /*
@@ -260,9 +261,7 @@ export function renderIntro(assessment, actions) {
             }, icon('settings'), el('span', { text: 'تنظیمات' }))),
         el('h1', { className: 'x-intro__title', text: String(assessment.title || 'آزمون') }),
         facts,
-        el('div', { className: 'x-intro__notes' },
-            el('p', { className: 'f-muted', text: 'سؤال‌ها یکی‌یکی از سرور می‌آیند. پاسخ‌هایت خودکار ذخیره می‌شود، پس اگر اینترنت لحظه‌ای قطع شود چیزی از دست نمی‌رود.' }),
-            el('p', { className: 'f-muted', text: 'پاسخ درست و توضیح هر سؤال فقط بعد از ثبت نهایی نشان داده می‌شود.' })),
+        el('p', { className: 'x-intro__notes f-muted', text: 'حالت را انتخاب کن. پاسخ‌ها خودکار ذخیره می‌شوند.' }),
         exhausted
             ? notice('warning', 'سقف تلاش‌ها استفاده شده است', 'برای این آزمون تلاش تازه‌ای باقی نمانده.')
             : (resumable
@@ -480,7 +479,6 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
         renderStem(question, study),
         stemFigure(state.assessmentId, question),
         choices,
-        renderQuestionStats(question.stats ?? null),
         el('div', { className: 'x-question__foot' },
             selected === undefined ? null : el('button', {
                 className: 'x-question__clear', type: 'button', text: 'پاک کردن پاسخ',
@@ -498,6 +496,7 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
             explanationVisible: state.mode !== 'practice' || isExplanationShown(state, position),
             onShowExplanation: actions.showExplanation,
         }) : null,
+        renderQuestionStats(question.stats ?? null),
         renderStudy(question, study, actions));
 
     // The end gutter stays empty: اسکرول عمودی کنار سؤال. There is nothing
@@ -507,22 +506,27 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
     // wheel binding cannot live there without the two fighting.
     const marginEnd = el('div', { className: 'x-question__margin', attrs: { 'aria-hidden': 'true' }, on: { wheel: actions.marginWheel } });
 
+    // Stepping between questions lives in the sticky bar -- the owner found
+    // it wrong that moving on meant scrolling a long clinical stem to its end
+    // first. What is left here is not stepping: jumping to the first gap, and
+    // finishing. It sits under the sheet, in the sheet's own column, so the
+    // question list beside it never pushes it down.
+    const finish = el('nav', { className: 'x-nav', attrs: { 'aria-label': 'پایان آزمون' } },
+        el('button', {
+            className: 'f-btn f-btn--ghost x-nav__gap', type: 'button', text: 'اولین بی‌پاسخ',
+            attrs: { disabled: unansweredPositions(state).length === 0 },
+            on: { click: actions.firstUnanswered },
+        }),
+        position >= state.questionCount
+            ? el('button', { className: 'f-btn f-btn--primary', type: 'button', text: 'پایان و ثبت', on: { click: actions.requestSubmit } })
+            : el('button', { className: 'f-btn f-btn--primary', type: 'button', text: 'بعدی ←', on: { click: actions.next } }));
+
     return el('div', { className: 'x-question' },
         renderTopBar(state, saveStatus, actions),
-        el('div', { className: 'x-question__stage' }, renderRail(state, actions), card, marginEnd),
-        // Stepping between questions lives in the sticky bar now -- the owner
-        // found it wrong that moving to the next question meant scrolling a
-        // long clinical stem to its end first. What is left here is not
-        // stepping: jumping to the first gap, and finishing.
-        el('nav', { className: 'x-nav', attrs: { 'aria-label': 'پایان آزمون' } },
-            el('button', {
-                className: 'f-btn f-btn--ghost x-nav__gap', type: 'button', text: 'اولین بی‌پاسخ',
-                attrs: { disabled: unansweredPositions(state).length === 0 },
-                on: { click: actions.firstUnanswered },
-            }),
-            position >= state.questionCount
-                ? el('button', { className: 'f-btn f-btn--primary', type: 'button', text: 'پایان و ثبت', on: { click: actions.requestSubmit } })
-                : el('button', { className: 'f-btn f-btn--primary', type: 'button', text: 'بعدی ←', on: { click: actions.next } })));
+        el('div', { className: 'x-question__stage' },
+            renderRail(state, actions),
+            el('div', { className: 'x-question__col' }, card, finish),
+            marginEnd));
 }
 
 
@@ -724,7 +728,8 @@ function renderQuestionMeta(question) {
 
     const difficulty = question.difficulty;
     const hasDifficulty = difficulty !== undefined && difficulty !== null && String(difficulty).trim() !== '';
-    items.push(metaItem('difficulty', 'gauge', 'سطح دشواری', hasDifficulty ? faText(String(difficulty).trim()) : null));
+    const level = hasDifficulty ? String(difficulty).trim() : '';
+    items.push(metaItem('difficulty', 'gauge', 'سطح دشواری', hasDifficulty ? (DIFFICULTY_LABELS[level.toLowerCase()] ?? faText(level)) : null));
 
     const tags = (Array.isArray(question.tags) ? question.tags : [])
         .map((tag) => (typeof tag === 'string' ? tag.trim() : ''))

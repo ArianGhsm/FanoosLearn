@@ -50,7 +50,7 @@ HTML;
             'title' => 'آزمون | فانوس',
             'description' => 'شرکت در آزمون.',
             'bodyClass' => 'x-runner-page',
-            'stylesheets' => ['/assets/web/pages/exams.css', '/assets/web/pages/runner.css'],
+            'stylesheets' => ['/assets/web/pages/exams.css', '/assets/web/pages/runner.css', '/assets/web/pages/runner-skin.css'],
             'modules' => ['/assets/web/pages/runner.js'],
             'viewer' => $viewer,
             'activeNav' => 'exams',
