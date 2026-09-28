@@ -13,6 +13,7 @@ use Fanoos\Tests\Core\ClassProvisioningTest;
 use Fanoos\Tests\Core\InstitutionTermServiceTest;
 use Fanoos\Tests\Core\OnboardingDirectoryTest;
 use Fanoos\Tests\Core\OnboardingPhoneVerificationTest;
+use Fanoos\Tests\Core\PaymentReconcileTest;
 use Fanoos\Tests\Core\RepresentativeApprovalTest;
 use Fanoos\Tests\Core\StudentRegistrationTest;
 use Fanoos\Tests\Integration\TenantIsolationTest;
@@ -141,6 +142,8 @@ try {
         echo "PASS account merge planner scenarios\n";
         $assertions += (new CatalogAdminServiceTest($database))->run();
         echo "PASS owner products and prices scenarios\n";
+        $assertions += (new PaymentReconcileTest($database))->run();
+        echo "PASS automatic payment settlement scenarios\n";
         $assertions += (new RepresentativeApprovalTest($database))->run();
         echo "PASS representative appointment and approval scenarios\n";
         $assertions += (new AnnouncementPublishTest($database))->run();

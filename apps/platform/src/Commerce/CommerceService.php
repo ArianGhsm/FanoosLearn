@@ -216,6 +216,70 @@ SQL);
         return $result;
     }
 
+    /**
+     * Settles payments nobody came back to settle.
+     *
+     * A payer can pay and never return to /pay/return: the tab closed, the
+     * phone lost signal, the bank's page hung. Or they came back while the
+     * gateway could not be reached, which leaves the attempt 'verifying'.
+     * Either way the bank may have taken the money while FANOOS still says
+     * pending. This asks the gateway about every such attempt that has been
+     * quiet for $quietSeconds -- long enough that the payer is no longer on
+     * the gateway's page -- and settles it exactly as a return would: paid,
+     * with its entitlement granted, or failed. Attempts older than
+     * $maxAgeSeconds are left to a person. Run from a timer
+     * (scripts/ops/reconcile-payments.php).
+     *
+     * @return array{checked:int,paid:int,failed:int,unreachable:int}
+     */
+    public function reconcileStale(int $quietSeconds = 1200, int $maxAgeSeconds = 172800, int $limit = 50): array
+    {
+        $query = $this->database->prepare(<<<'SQL'
+SELECT attempt.id AS attempt_id, attempt.status, attempt.provider_key, attempt.provider_reference,
+       orders.id AS order_id, orders.workspace_id, orders.buyer_user_id,
+       orders.status AS order_status, orders.total_minor, orders.currency
+FROM commerce_payment_attempts attempt
+JOIN commerce_orders orders ON orders.id = attempt.order_id AND orders.workspace_id = attempt.workspace_id
+WHERE attempt.provider_key = :provider
+  AND attempt.status IN ('redirected', 'verifying')
+  AND orders.status IN ('pending', 'payment_pending')
+  AND attempt.updated_at < UTC_TIMESTAMP(6) - INTERVAL :quiet SECOND
+  AND attempt.created_at > UTC_TIMESTAMP(6) - INTERVAL :max_age SECOND
+ORDER BY attempt.updated_at
+LIMIT :limit
+SQL);
+        $query->bindValue(':provider', $this->gateway->key());
+        $query->bindValue(':quiet', $quietSeconds, PDO::PARAM_INT);
+        $query->bindValue(':max_age', $maxAgeSeconds, PDO::PARAM_INT);
+        $query->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $query->execute();
+
+        $summary = ['checked' => 0, 'paid' => 0, 'failed' => 0, 'unreachable' => 0];
+        foreach ($query->fetchAll() as $row) {
+            ++$summary['checked'];
+            try {
+                $verification = $this->gateway->reconcile(
+                    (string) $row['order_id'],
+                    $row['provider_reference'] !== null ? (string) $row['provider_reference'] : null,
+                    (int) $row['total_minor'],
+                    (string) $row['currency'],
+                );
+            } catch (\Throwable) {
+                // The gateway did not answer: nothing is known, so nothing
+                // is decided. The next run asks again.
+                ++$summary['unreachable'];
+                continue;
+            }
+            $result = $this->finalize($row, $verification, null);
+            ++$summary[$result['status'] === 'paid' ? 'paid' : 'failed'];
+            $this->audit->record((string) $row['workspace_id'], null, 'commerce.payment.auto_reconcile', 'commerce_payment_attempt', (string) $row['attempt_id'], 'success', [
+                'order_id' => (string) $row['order_id'], 'result' => $result['status'],
+            ]);
+        }
+
+        return $summary;
+    }
+
     /** @return list<array<string, mixed>> */
     public function history(string $actorUserId, string $workspaceId): array
     {
