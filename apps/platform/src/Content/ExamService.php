@@ -573,7 +573,7 @@ SQL, [
             $this->audit->record($workspaceId, $userId, 'exam.question.read', 'exam_attempt', $attemptId, 'success', [
                 'question_id' => $firstQuestionId, 'position' => 1,
             ]);
-            $response['first_question'] = $this->safeQuestion($this->questionById($definition, $firstQuestionId));
+            $response['first_question'] = $this->studentQuestion($workspaceId, $userId, $this->questionById($definition, $firstQuestionId));
         }
 
         return $response;
@@ -722,10 +722,7 @@ SQL, [
                 'question_id' => $questionId, 'position' => $position,
             ]);
 
-            $safe = $this->safeQuestion($question);
-            $safe['stats'] = $this->questionStats->forQuestion($workspaceId, $userId, $questionId);
-
-            return ['allowed' => true, 'position' => $position, 'question_count' => $questionCount, 'question' => $safe];
+            return ['allowed' => true, 'position' => $position, 'question_count' => $questionCount, 'question' => $this->studentQuestion($workspaceId, $userId, $question)];
         });
 
         if ($outcome['allowed'] === false) {
@@ -1291,6 +1288,22 @@ SQL, ['workspace' => $workspaceId, 'assessment' => $assessmentId, 'version' => $
         $definition['questions'] = $questions;
 
         return ContentPayload::encode($definition);
+    }
+
+    /**
+     * A question as a student in an attempt receives it: safeQuestion() plus
+     * how it has gone (QuestionStatsRecorder) -- the one shape both
+     * startAttempt()'s first question and readQuestion() return.
+     *
+     * @param array<string, mixed> $question
+     * @return array<string, mixed>
+     */
+    private function studentQuestion(string $workspaceId, string $userId, array $question): array
+    {
+        $safe = $this->safeQuestion($question);
+        $safe['stats'] = $this->questionStats->forQuestion($workspaceId, $userId, (string) $question['id']);
+
+        return $safe;
     }
 
     /**
