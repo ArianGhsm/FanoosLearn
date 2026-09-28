@@ -7,6 +7,23 @@ namespace Fanoos\Platform\Content;
 use PDO;
 
 /**
+ * What stands between the question bank and a bulk export, without slowing
+ * a real student down. admit() is the entry point; it applies, in order:
+ *
+ * 1. A question this account already opened today is free to open again --
+ *    going back, reloading, the map, the review. Re-reading is what real
+ *    students do most, and it gives an exporter nothing new.
+ * 2. A daily cap on *different* questions per account (exam_question_daily_reads,
+ *    migration 0029): far above a heavy day of study, far below the bank, so
+ *    the bank cannot be taken in one go.
+ * 3. The token bucket below, now sized for speed rather than volume: a large
+ *    burst and about one new question a second, which no person reading
+ *    questions reaches and which stops a script from racing to the cap.
+ *
+ * Until 2026-09-28 the bucket alone was the protection -- six reads, then one
+ * every twenty seconds, re-reads included -- and ordinary use kept running
+ * into it (owner: "الکی سرعتو کم کرده").
+ *
  * Per-user token bucket pacing exam question/explanation reads
  * (docs/product/01_FRONT_DOOR.md question-bank export protection). One row
  * per user, read with FOR UPDATE and upserted with ON DUPLICATE KEY UPDATE --
@@ -33,11 +50,54 @@ use PDO;
  */
 final class ExamQuestionRateGuard
 {
+    public const DAILY_NEW_QUESTIONS = 1500;
+
     public function __construct(
         private readonly PDO $database,
-        private readonly float $burstCapacity = 6.0,
-        private readonly float $refillSecondsPerToken = 20.0,
+        private readonly float $burstCapacity = 120.0,
+        private readonly float $refillSecondsPerToken = 1.0,
+        private readonly int $dailyNewQuestions = self::DAILY_NEW_QUESTIONS,
     ) {
+    }
+
+    /**
+     * Null when the read may go ahead; otherwise the refusal's error code
+     * (`question_daily_limit` or `question_read_rate_limited`). Same contract
+     * as consume(): run it inside the caller's transaction and throw only
+     * after that transaction returns.
+     */
+    public function admit(string $userId, string $questionKey, ?int $now = null): ?string
+    {
+        $now ??= time();
+        $today = gmdate('Y-m-d', $now);
+        $seen = $this->database->prepare('SELECT 1 FROM exam_question_daily_reads WHERE user_id = :user AND read_on = :day AND question_key = :question');
+        $seen->execute(['user' => $userId, 'day' => $today, 'question' => $questionKey]);
+        if ($seen->fetchColumn() !== false) {
+            return null;
+        }
+
+        $count = $this->database->prepare('SELECT COUNT(*) FROM exam_question_daily_reads WHERE user_id = :user AND read_on = :day');
+        $count->execute(['user' => $userId, 'day' => $today]);
+        $opened = (int) $count->fetchColumn();
+        if ($opened >= $this->dailyNewQuestions) {
+            return 'question_daily_limit';
+        }
+        if (!$this->consume($userId, $now)) {
+            return 'question_read_rate_limited';
+        }
+
+        if ($opened === 0) {
+            // The account's first new question today: yesterday's list is
+            // kept (a day boundary mid-session), anything older is not needed.
+            $this->database->prepare('DELETE FROM exam_question_daily_reads WHERE user_id = :user AND read_on < :cutoff')
+                ->execute(['user' => $userId, 'cutoff' => gmdate('Y-m-d', $now - 86400)]);
+        }
+        $this->database->prepare(<<<'SQL'
+INSERT IGNORE INTO exam_question_daily_reads (user_id, read_on, question_key, first_read_at)
+VALUES (:user, :day, :question, :at)
+SQL)->execute(['user' => $userId, 'day' => $today, 'question' => $questionKey, 'at' => gmdate('Y-m-d H:i:s', $now)]);
+
+        return null;
     }
 
     public function consume(string $userId, ?int $now = null): bool

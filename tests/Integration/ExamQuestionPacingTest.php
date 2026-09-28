@@ -39,6 +39,7 @@ final class ExamQuestionPacingTest
     public function run(): int
     {
         $this->assertRateLimitEngagesAndCounterSurvivesRefusal();
+        $this->assertDailyCapOnNewQuestions();
         $this->assertAuditRecordsReadsWithoutQuestionOrExplanationText();
         $this->assertEntitlementIsRecheckedOnEveryRead();
         $this->assertStartAttemptReturnsExactlyOneQuestionAndConsumesAPacingToken();
@@ -50,25 +51,20 @@ final class ExamQuestionPacingTest
     private function assertRateLimitEngagesAndCounterSurvivesRefusal(): void
     {
         $fixture = $this->fixture('rate-' . $this->suffix(), 5);
-        // Burst is 3, not 2: startAttempt() itself now spends one token on
-        // its own bonus first_question (perf/exam-load-time) before either
-        // explicit readQuestion() call below runs, so the budget for what
-        // this test actually means to exhaust -- two further reads -- has to
-        // account for that spend, or the second read below would refuse
-        // instead of the third.
-        $exams = $this->exams(burstCapacity: 3.0, refillSecondsPerToken: 1000.0);
-        $attempt = $exams->startAttempt($fixture['student'], $fixture['workspace'], $fixture['assessment_id']);
-
-        // Re-reading a question already seen (e.g. paging back) still spends a
-        // token -- there is no "already read" exemption -- so exhausting the
-        // burst only needs valid, in-range positions, never an out-of-range
-        // one (which would refuse with question_position_invalid before the
-        // rate guard is even consulted).
+        // 1.5 tokens: startAttempt() spends one on its bonus first question,
+        // leaving half a token -- enough for nothing new.
+        $exams = $this->exams(burstCapacity: 1.5, refillSecondsPerToken: 1000.0);
         $now = 1_700_000_000;
-        $exams->readQuestion($fixture['student'], $fixture['workspace'], $attempt['attempt_id'], 1, $now);
-        $exams->readQuestion($fixture['student'], $fixture['workspace'], $attempt['attempt_id'], 2, $now);
+        $attempt = $exams->startAttempt($fixture['student'], $fixture['workspace'], $fixture['assessment_id'], 'assessment', $now);
 
-        $this->expectCode('question_read_rate_limited', fn () => $exams->readQuestion($fixture['student'], $fixture['workspace'], $attempt['attempt_id'], 1, $now));
+        // Opening the same question again (going back, reloading) is free:
+        // it gives nothing new, and it is most of what a real student does.
+        $again = $exams->readQuestion($fixture['student'], $fixture['workspace'], $attempt['attempt_id'], 1, $now);
+        $this->assert($again['question']['id'] === $attempt['first_question']['id'], 'Re-reading position 1 returned a different question.');
+        $this->assert(abs($this->tokensRemaining($fixture['student']) - 0.5) < 0.0001, 'Re-reading a question already opened today spent a token.');
+
+        // A question not yet opened needs a token, and there is none.
+        $this->expectCode('question_read_rate_limited', fn () => $exams->readQuestion($fixture['student'], $fixture['workspace'], $attempt['attempt_id'], 2, $now));
         $tokensAfterFirstRefusal = $this->tokensRemaining($fixture['student']);
         $this->assert($tokensAfterFirstRefusal < 1.0, 'Burst was not exhausted after the configured number of reads.');
 
@@ -77,10 +73,40 @@ final class ExamQuestionPacingTest
         // second call would recompute from a stale/unwritten row and could
         // wrongly succeed. It must refuse again, and the persisted counter
         // must not have silently reset to the full burst.
-        $this->expectCode('question_read_rate_limited', fn () => $exams->readQuestion($fixture['student'], $fixture['workspace'], $attempt['attempt_id'], 1, $now));
+        $this->expectCode('question_read_rate_limited', fn () => $exams->readQuestion($fixture['student'], $fixture['workspace'], $attempt['attempt_id'], 2, $now));
         $tokensAfterSecondRefusal = $this->tokensRemaining($fixture['student']);
         $this->assert($tokensAfterSecondRefusal < 1.0, 'The rate-limit counter was reset by a refusal instead of surviving it.');
         $this->assert(abs($tokensAfterSecondRefusal - $tokensAfterFirstRefusal) < 0.0001, 'The rate-limit counter drifted across refusals at the same instant instead of staying stable.');
+
+        // The default guard is sized for speed, not volume: nobody reading
+        // questions reaches it.
+        $defaults = new \ReflectionClass(ExamQuestionRateGuard::class);
+        $parameters = array_column(array_map(static fn (\ReflectionParameter $p): array => [$p->getName(), $p->isDefaultValueAvailable() ? $p->getDefaultValue() : null], $defaults->getConstructor()->getParameters()), 1, 0);
+        $this->assert($parameters['burstCapacity'] >= 60.0 && $parameters['refillSecondsPerToken'] <= 2.0, 'The default pacing is back to slowing ordinary use.');
+    }
+
+    /**
+     * The cap on different questions per account per day is what keeps the
+     * bank from being taken in one go; questions already opened that day
+     * stay open, and the next day starts a new count.
+     */
+    private function assertDailyCapOnNewQuestions(): void
+    {
+        $fixture = $this->fixture('daily-' . $this->suffix(), 5);
+        $exams = $this->exams(burstCapacity: 1000.0, refillSecondsPerToken: 1.0, dailyNewQuestions: 1);
+        $now = 1_700_000_500;
+        $attempt = $exams->startAttempt($fixture['student'], $fixture['workspace'], $fixture['assessment_id'], 'assessment', $now);
+        $this->assert(array_key_exists('first_question', $attempt), 'The first question of the day was refused.');
+
+        $exams->readQuestion($fixture['student'], $fixture['workspace'], $attempt['attempt_id'], 1, $now + 5);
+        $this->expectCode('question_daily_limit', fn () => $exams->readQuestion($fixture['student'], $fixture['workspace'], $attempt['attempt_id'], 2, $now + 5));
+
+        $tomorrow = $now + 86400;
+        $read = $exams->readQuestion($fixture['student'], $fixture['workspace'], $attempt['attempt_id'], 2, $tomorrow);
+        $this->assert($read['position'] === 2, 'A new day did not start a new count.');
+        $old = $this->database->prepare('SELECT COUNT(*) FROM exam_question_daily_reads WHERE user_id = :user');
+        $old->execute(['user' => $fixture['student']]);
+        $this->assert((int) $old->fetchColumn() === 2, 'The daily list did not keep exactly yesterday\'s and today\'s question.');
     }
 
     private function assertAuditRecordsReadsWithoutQuestionOrExplanationText(): void
@@ -219,14 +245,14 @@ final class ExamQuestionPacingTest
         return new AccessGate($this->database, new ScopeAuthorizer($this->database));
     }
 
-    private function exams(float $burstCapacity = 6.0, float $refillSecondsPerToken = 20.0): ExamService
+    private function exams(float $burstCapacity = 6.0, float $refillSecondsPerToken = 20.0, int $dailyNewQuestions = ExamQuestionRateGuard::DAILY_NEW_QUESTIONS): ExamService
     {
         $audit = new AuditLogger($this->database);
         $authorizer = new ScopeAuthorizer($this->database);
         $access = new AccessGate($this->database, $authorizer);
         $entitlements = new EntitlementService($this->database, $access, $audit);
 
-        return new ExamService($this->database, $access, $authorizer, $entitlements, $audit, new ExamQuestionRateGuard($this->database, $burstCapacity, $refillSecondsPerToken));
+        return new ExamService($this->database, $access, $authorizer, $entitlements, $audit, new ExamQuestionRateGuard($this->database, $burstCapacity, $refillSecondsPerToken, $dailyNewQuestions));
     }
 
     private function promptText(string $questionId): string
