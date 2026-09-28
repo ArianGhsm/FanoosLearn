@@ -45,7 +45,7 @@ final class ProgressPage
         <span class="p-skel"></span><span class="p-skel"></span><span class="p-skel"></span><span class="p-skel"></span>
     </section>
 
-    <section class="f-card p-panel p-panel--wide" aria-labelledby="activity-title">
+    <section class="f-card p-panel" aria-labelledby="activity-title">
         <div class="p-panel__head">
             <h2 id="activity-title">دوازده هفته‌ی اخیر</h2>
             <span class="p-panel__hint" id="streak"></span>
@@ -56,7 +56,7 @@ final class ProgressPage
         </div>
     </section>
 
-    <section class="f-card p-panel p-panel--wide" aria-labelledby="trend-title">
+    <section class="f-card p-panel" aria-labelledby="trend-title">
         <div class="p-panel__head">
             <h2 id="trend-title">روند نمره</h2>
             <span class="p-panel__hint" id="trend-hint"></span>
