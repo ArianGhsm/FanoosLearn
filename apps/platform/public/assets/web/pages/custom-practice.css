@@ -40,11 +40,11 @@
     width: 30px;
     height: 30px;
     flex: none;
+    font-size: var(--text-sm);
     font-weight: var(--weight-strong);
-    color: var(--text-on-accent);
-    background: var(--accent-gradient);
-    border-radius: var(--radius-pill);
-    box-shadow: var(--shadow-accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-radius: var(--radius-sm);
 }
 
 .c-step__hint {
@@ -82,21 +82,20 @@
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
-    min-height: 38px;
+    min-height: 36px;
     padding: var(--space-1) var(--space-3);
     font: inherit;
     font-size: var(--text-sm);
     color: var(--text-primary);
-    background: var(--surface-muted);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-pill);
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: background var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease), transform var(--motion-fast) var(--ease);
+    transition: background var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease);
 }
 
 .c-chip:hover {
-    border-color: var(--border-strong);
-    transform: translateY(-1px);
+    background: var(--surface-muted);
 }
 
 .c-chip.is-on {
@@ -110,15 +109,7 @@
     padding: 0 var(--space-2);
     font-size: var(--text-2xs);
     font-variant-numeric: tabular-nums;
-    color: var(--text-secondary);
-    background: var(--surface);
-    border-radius: var(--radius-pill);
-}
-
-.c-chips--topics .c-chip.is-on {
-    color: var(--hue-subject);
-    background: var(--hue-subject-soft);
-    border-color: var(--hue-subject);
+    color: var(--text-tertiary);
 }
 
 .c-sources {
@@ -202,12 +193,10 @@
     justify-content: space-between;
     gap: var(--space-4);
     padding: var(--space-3) var(--space-4);
-    background: color-mix(in srgb, var(--surface) 88%, transparent);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
     box-shadow: var(--shadow-strong);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
 }
 
 .c-bar__summary {
@@ -226,10 +215,17 @@
 
 .c-mine__list {
     display: grid;
-    gap: var(--space-2);
     margin: 0;
     padding: 0;
     list-style: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.c-mine__list li + li {
+    border-top: 1px solid var(--border);
 }
 
 .c-mine__item {
@@ -239,15 +235,12 @@
     gap: var(--space-3);
     padding: var(--space-3) var(--space-4);
     color: inherit;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    transition: border-color var(--motion-fast) var(--ease);
+    transition: background var(--motion-fast) var(--ease);
 }
 
 .c-mine__item:hover {
     text-decoration: none;
-    border-color: var(--accent);
+    background: var(--surface-muted);
 }
 
 .c-mine__item strong {
@@ -259,8 +252,8 @@
     padding: 2px var(--space-3);
     font-size: var(--text-xs);
     color: var(--text-secondary);
-    background: var(--surface-strong);
-    border-radius: var(--radius-pill);
+    background: var(--surface-muted);
+    border-radius: var(--radius-sm);
     font-variant-numeric: tabular-nums;
 }
 
@@ -274,7 +267,7 @@
     }
 
     .c-bar {
-        bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+        bottom: calc(68px + env(safe-area-inset-bottom, 0px));
         flex-direction: column;
         align-items: stretch;
         text-align: center;

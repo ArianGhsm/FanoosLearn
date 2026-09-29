@@ -48,16 +48,14 @@ final class HomePage
             : 'امروز سراغ کدام درس برویم؟';
 
         $chooser = $viewer->workspaceId === null || $forceChooser;
-        $lantern = PublicChrome::LANTERN;
 
         $hello = <<<HTML
 <section class="f-hello">
     <div class="f-hello__text">
         <h1 class="f-hello__title">سلام، {$name}</h1>
         <p class="f-hello__lede">{$lede}</p>
-        {$factsHtml}
     </div>
-    <div class="f-hello__mark" aria-hidden="true">{$lantern}</div>
+    {$factsHtml}
 </section>
 HTML;
 

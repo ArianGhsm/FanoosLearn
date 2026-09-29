@@ -285,6 +285,7 @@ paths:
   /workspaces/{workspaceId}/assessments:
     get:
       operationId: listPublishedAssessments
+      description: Published assessments the caller may take, at most 100, newest first. Each row carries its kind, course and term, max_attempts, time_limit_minutes, question_count (of the current version), attempts_used and any in-progress attempt.
       parameters:
         - { $ref: '#/components/parameters/WorkspaceId' }
         - { name: course_id, in: query, required: false, schema: { $ref: '#/components/schemas/Uuid' } }
