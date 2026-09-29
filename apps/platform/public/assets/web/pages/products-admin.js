@@ -55,7 +55,13 @@ function fail(error) {
     errorBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-function card(product) {
+/*
+ * One product is one row of the list: what it is, whether it sells, what it
+ * costs, how often it sold and what it locks. The row opens in place into
+ * its editor -- the list stays a list, and only the product being changed
+ * shows its fields.
+ */
+function card(product, open = false) {
     const name = el('input', { className: 'f-input', value: product.name, maxlength: '200', 'aria-label': 'نام محصول' });
     const price = el('input', {
         className: 'f-input p-price', inputmode: 'numeric', 'aria-label': 'قیمت به تومان',
@@ -78,7 +84,7 @@ function card(product) {
         save.disabled = true;
         try {
             const updated = await api.patch(`${base}/${product.id}`, { name: name.value.trim(), amount_rial: rial, status: chosen });
-            article.replaceWith(card(updated));
+            article.replaceWith(card(updated, true));
         } catch (error) {
             fail(error);
             save.disabled = false;
@@ -99,7 +105,7 @@ function card(product) {
         lock.disabled = true;
         try {
             const updated = await api.post(`${base}/${product.id}/exam-lock`, { locked: !locked });
-            article.replaceWith(card(updated));
+            article.replaceWith(card(updated, true));
         } catch (error) {
             fail(error);
             lock.disabled = false;
@@ -112,21 +118,28 @@ function card(product) {
             el('strong', { text: tomanText(entry.amount_rial) }),
             el('span', { className: 'f-muted', text: ` از ${shamsi(entry.valid_from)}${entry.valid_until ? ` تا ${shamsi(entry.valid_until)}` : ' تا حالا'}` })))));
 
-    const article = el('article', { className: `f-card p-card is-${product.status}` },
-        el('div', { className: 'p-card__top' },
+    const lockLabel = product.exams_total === 0
+        ? 'بدون آزمون'
+        : (locked ? `${faDigits(product.exams_locked)} آزمون قفل` : 'آزمون‌ها آزاد');
+    const article = el('details', { className: `p-row is-${product.status}`, open: open === true },
+        el('summary', { className: 'p-row__summary' },
+            el('span', { className: 'p-row__name', text: product.name }),
             el('span', { className: `p-badge p-badge--${product.status}`, text: STATUS[product.status] ?? product.status }),
-            el('span', { className: 'p-meta', text: `${faDigits(product.paid_orders)} فروش` })),
-        el('div', { className: 'p-grid' },
-            el('label', { className: 'f-field' }, el('span', { className: 'f-field__label', text: 'نام' }), name),
-            el('label', { className: 'f-field' }, el('span', { className: 'f-field__label', text: 'قیمت (تومان)' }), price)),
-        status,
-        el('div', { className: 'p-actions' }, save),
-        el('div', { className: 'p-lockbox' },
-            el('p', { className: 'f-muted', text: product.exams_total === 0
-                ? 'هیچ آزمونی به این محصول وصل نیست.'
-                : `${faDigits(product.exams_locked)} از ${faDigits(product.exams_total)} آزمونِ این فضا فقط با خرید این محصول باز می‌شود.` }),
-            lock),
-        history);
+            el('span', { className: 'p-row__price', text: product.amount_rial === null ? '—' : tomanText(product.amount_rial) }),
+            el('span', { className: 'p-row__meta', text: `${faDigits(product.paid_orders)} فروش` }),
+            el('span', { className: `p-row__meta${locked ? ' is-locked' : ''}`, text: lockLabel }),
+            el('span', { className: 'p-row__edit', 'aria-hidden': 'true', text: 'ویرایش' })),
+        el('div', { className: 'p-row__body' },
+            el('div', { className: 'p-grid' },
+                el('label', { className: 'f-field' }, el('span', { className: 'f-field__label', text: 'نام' }), name),
+                el('label', { className: 'f-field' }, el('span', { className: 'f-field__label', text: 'قیمت (تومان)' }), price)),
+            el('div', { className: 'p-actions' }, status, save),
+            el('div', { className: 'p-lockbox' },
+                el('p', { className: 'f-muted', text: product.exams_total === 0
+                    ? 'هیچ آزمونی به این محصول وصل نیست.'
+                    : `${faDigits(product.exams_locked)} از ${faDigits(product.exams_total)} آزمونِ این فضا فقط با خرید این محصول باز می‌شود.` }),
+                lock),
+            history));
     return article;
 }
 
@@ -135,7 +148,7 @@ async function load() {
     try {
         const products = await api.get(base);
         list.replaceChildren(...(products.length
-            ? products.map(card)
+            ? products.map((product) => card(product))
             : [el('p', { className: 'f-muted', text: 'هنوز محصولی نساخته‌ای.' })]));
     } catch (error) {
         list.replaceChildren(el('p', { className: 'f-muted', text: `خوانده نشد: ${describeError(error)}` }));
