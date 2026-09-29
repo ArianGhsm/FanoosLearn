@@ -542,3 +542,67 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ------------------------------------------------------------ sheet language */
+
+/*
+ * The panel is paper, not a lit gradient: the lantern carries the colour,
+ * the words stay ink, and the steps are marked in the accent.
+ */
+.f-auth {
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+}
+
+.f-auth__panel {
+    color: var(--text-primary);
+    background: var(--surface-muted);
+    border-inline-start: 1px solid var(--border);
+}
+
+.f-auth__panel::before {
+    content: none;
+}
+
+.f-auth__panel .f-lantern {
+    width: 44px;
+    height: 44px;
+    color: var(--accent);
+    filter: none;
+}
+
+.f-auth__panel h1 {
+    font-size: var(--text-2xl);
+}
+
+.f-auth__panel p {
+    color: var(--text-secondary);
+    opacity: 1;
+}
+
+.f-auth__perks li::before {
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.f-auth__track li:not(:last-child)::after {
+    background: var(--border-strong);
+}
+
+.f-auth__track span {
+    border: 1px solid var(--border-strong);
+    color: var(--text-secondary);
+}
+
+.f-auth__track li.is-current span {
+    color: var(--text-on-accent);
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.f-auth__track li.is-done span {
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-color: transparent;
+}

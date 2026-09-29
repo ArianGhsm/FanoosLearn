@@ -521,3 +521,81 @@
         width: 100%;
     }
 }
+
+/* ------------------------------------------------------------ sheet language */
+
+/* No glow behind the demo, no blobs in the cards, no lit band: the page
+   is set on the paper like the rest of FANOOS. */
+.f-hero__stage::before {
+    content: none;
+}
+
+.f-demo-rail .is-current {
+    background: var(--accent);
+    box-shadow: none;
+}
+
+.f-feature {
+    --hue: var(--accent);
+    --hue-soft: var(--accent-soft);
+    border-radius: var(--radius-md);
+    box-shadow: none;
+    transition: border-color var(--motion-fast) var(--ease);
+}
+
+.f-feature--subject,
+.f-feature--tag,
+.f-feature--difficulty,
+.f-feature--source {
+    --hue: var(--accent);
+    --hue-soft: var(--accent-soft);
+}
+
+.f-feature::after {
+    content: none;
+}
+
+.f-feature:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: var(--border-strong);
+}
+
+.f-step__num {
+    width: 40px;
+    height: 40px;
+    font-size: var(--text-base);
+    color: var(--accent);
+    background: var(--bg-body);
+    border: 1px solid var(--accent);
+    box-shadow: none;
+}
+
+.f-cta {
+    color: var(--text-primary);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: none;
+}
+
+.f-cta::before {
+    content: none;
+}
+
+.f-cta p {
+    color: var(--text-secondary);
+    opacity: 1;
+}
+
+.f-cta .f-btn--light {
+    background: var(--accent);
+    color: var(--text-on-accent);
+    box-shadow: none;
+}
+
+.f-cta .f-btn--light:hover:not(:disabled) {
+    background: var(--accent-strong);
+    transform: none;
+    box-shadow: none;
+}
