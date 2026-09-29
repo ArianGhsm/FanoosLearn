@@ -45,7 +45,9 @@
 /* The bots this account is connected to. */
 .a-bots {
     display: grid;
-    gap: var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
 }
 
 .a-bot {
@@ -54,14 +56,20 @@
     align-items: center;
     gap: var(--space-3);
     padding: var(--space-3) var(--space-4);
-    background: var(--surface-inset);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
 }
 
-.a-bot.is-linked {
-    border-color: color-mix(in srgb, var(--success) 40%, transparent);
-    background: var(--success-soft);
+.a-bot + .a-bot {
+    border-top: 1px solid var(--border);
+}
+
+/* Connected is a green dot before the status, not a green row. */
+.a-bot.is-linked .a-bot__label span {
+    color: var(--success);
+}
+
+.a-bot .f-btn {
+    min-height: 36px;
+    font-size: var(--text-sm);
 }
 
 .a-bot__label {
@@ -89,4 +97,10 @@
     border-radius: var(--radius-sm);
     user-select: all;
     word-break: break-all;
+}
+
+/* The account reads as one column of settings, not a stack of slabs. */
+.a-account {
+    max-width: 760px;
+    box-shadow: none;
 }

@@ -36,7 +36,9 @@ HTML;
         return $this->renderer->render([
             'title' => 'مرور اشتباه‌ها | فانوس',
             'description' => 'سؤال‌هایی که پیش‌تر غلط پاسخ داده‌ای.',
-            'stylesheets' => ['/assets/web/pages/exams.css', '/assets/web/pages/runner.css'],
+            // The same sheet the questions were answered on.
+            'bodyClass' => 'x-runner-page',
+            'stylesheets' => ['/assets/web/pages/exams.css', '/assets/web/pages/runner.css', '/assets/web/pages/runner-skin.css'],
             'modules' => ['/assets/web/pages/mistakes-review.js'],
             'viewer' => $viewer,
             'activeNav' => 'exams',
