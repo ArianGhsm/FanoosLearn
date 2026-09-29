@@ -4,111 +4,17 @@
  * Warm paper and ink with one lantern-amber accent. Flat surfaces, no glow,
  * no gradients, no floating shadows. Hairlines separate things instead of
  * boxes, facts are small and quiet, and the question and its choices are the
- * only large things on screen. Loaded after runner.css; the tokens are
- * redefined for this page only, so everything else in runner.css follows.
+ * only large things on screen. Loaded after runner.css.
  */
 
+/* The palette is the site's own (tokens.css); the exam sheet only tightens
+   the corners and drops the shadows, so nothing floats above the paper. */
 body.x-runner-page {
-    --bg-body: #f5f3ee;
-    --bg-aura-start: #f5f3ee;
-    --bg-aura-end: #f5f3ee;
-    --aura-1: transparent;
-    --aura-2: transparent;
-    --aura-3: transparent;
-    --weave: transparent;
-
-    --surface: #fffdf9;
-    --surface-muted: #f3f0e9;
-    --surface-strong: #e9e4da;
-    --surface-inset: #efebe3;
-
-    --text-primary: #1f1d1a;
-    --text-secondary: #625d55;
-    --text-tertiary: #8f897e;
-    --text-on-accent: #ffffff;
-
-    --accent: #a4600d;
-    --accent-strong: #8a4f08;
-    --accent-soft: rgba(164, 96, 13, 0.09);
-    --accent-gradient: var(--accent);
-
-    --success: #2e7a4d;
-    --success-soft: rgba(46, 122, 77, 0.10);
-    --warning: #a8700f;
-    --warning-soft: rgba(168, 112, 15, 0.12);
-    --danger: #b0413a;
-    --danger-soft: rgba(176, 65, 58, 0.09);
-
-    --border: rgba(31, 29, 26, 0.11);
-    --border-strong: rgba(31, 29, 26, 0.22);
-    --focus-ring: rgba(164, 96, 13, 0.35);
-
     --shadow-soft: none;
-    --shadow-strong: 0 12px 32px -12px rgba(31, 29, 26, 0.25);
     --shadow-lift: none;
-    --shadow-accent: none;
-
     --radius-sm: 6px;
     --radius-md: 10px;
     --radius-lg: 14px;
-
-    background: var(--bg-body);
-}
-
-@media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) body.x-runner-page {
-        --bg-body: #151412;
-        --bg-aura-start: #151412;
-        --bg-aura-end: #151412;
-        --surface: #1c1b18;
-        --surface-muted: #23211e;
-        --surface-strong: #2c2a26;
-        --surface-inset: #211f1c;
-        --text-primary: #ece7de;
-        --text-secondary: #aaa396;
-        --text-tertiary: #7d776c;
-        --text-on-accent: #1a1408;
-        --accent: #eda948;
-        --accent-strong: #f5bd66;
-        --accent-soft: rgba(237, 169, 72, 0.11);
-        --success: #6cc08f;
-        --success-soft: rgba(108, 192, 143, 0.12);
-        --warning: #e5b25a;
-        --warning-soft: rgba(229, 178, 90, 0.12);
-        --danger: #e27d74;
-        --danger-soft: rgba(226, 125, 116, 0.11);
-        --border: rgba(236, 231, 222, 0.10);
-        --border-strong: rgba(236, 231, 222, 0.20);
-        --focus-ring: rgba(237, 169, 72, 0.40);
-        --shadow-strong: 0 16px 40px -12px rgba(0, 0, 0, 0.6);
-    }
-}
-
-:root[data-theme="dark"] body.x-runner-page {
-    --bg-body: #151412;
-    --bg-aura-start: #151412;
-    --bg-aura-end: #151412;
-    --surface: #1c1b18;
-    --surface-muted: #23211e;
-    --surface-strong: #2c2a26;
-    --surface-inset: #211f1c;
-    --text-primary: #ece7de;
-    --text-secondary: #aaa396;
-    --text-tertiary: #7d776c;
-    --text-on-accent: #1a1408;
-    --accent: #eda948;
-    --accent-strong: #f5bd66;
-    --accent-soft: rgba(237, 169, 72, 0.11);
-    --success: #6cc08f;
-    --success-soft: rgba(108, 192, 143, 0.12);
-    --warning: #e5b25a;
-    --warning-soft: rgba(229, 178, 90, 0.12);
-    --danger: #e27d74;
-    --danger-soft: rgba(226, 125, 116, 0.11);
-    --border: rgba(236, 231, 222, 0.10);
-    --border-strong: rgba(236, 231, 222, 0.20);
-    --focus-ring: rgba(237, 169, 72, 0.40);
-    --shadow-strong: 0 16px 40px -12px rgba(0, 0, 0, 0.6);
 }
 
 /* ------------------------------------------------------------ general */
