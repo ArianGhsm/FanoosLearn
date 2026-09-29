@@ -336,6 +336,9 @@ SELECT assessment.id, assessment.title, assessment.current_version_no,
        course.course_code, course.title AS course_title,
        term.id AS term_id, term.term_key, term.name AS term_name,
        policy.requires_entitlement, policy.max_attempts, policy.time_limit_minutes,
+       (SELECT JSON_LENGTH(current_version.definition_json, '$.questions') FROM exam_assessment_versions current_version
+        WHERE current_version.assessment_id = assessment.id AND current_version.workspace_id = assessment.workspace_id
+          AND current_version.version_no = assessment.current_version_no) AS question_count,
        (SELECT COUNT(*) FROM exam_attempts attempt_count
         WHERE attempt_count.workspace_id = assessment.workspace_id
           AND attempt_count.assessment_id = assessment.id

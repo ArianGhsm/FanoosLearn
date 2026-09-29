@@ -53,6 +53,8 @@ function card(row) {
 
     const meta = el('div', { className: 'x-card__meta' },
         el('span', { className: 'x-chip x-chip--static', text: kindLabel(row.assessment_kind) }),
+        Number(row.question_count) > 0 ? el('span', { className: 'f-tiny', text: `${faDigits(row.question_count)} سؤال` }) : null,
+        Number(row.time_limit_minutes) > 0 ? el('span', { className: 'f-tiny', text: `${faDigits(row.time_limit_minutes)} دقیقه` }) : null,
         // Inside a course the course name is the page heading; repeating it on
         // every card is noise. It stays on the flat list, where it is not.
         row.course_title && course === null ? el('span', { className: 'f-tiny', text: String(row.course_title) }) : null,
@@ -60,14 +62,14 @@ function card(row) {
 
     const status = active
         ? el('span', { className: 'x-card__status is-active', text: 'در جریان' })
-        : (max > 0
+        : (max > 0 && !exhausted
             ? el('span', { className: 'x-card__status', text: `${faDigits(Math.max(0, max - used))} تلاش باقی‌مانده` })
             : null);
 
     const action = exhausted
         ? el('span', { className: 'f-tiny', text: 'تلاشی باقی نمانده' })
         : el('a', {
-            className: 'f-btn f-btn--primary',
+            className: active ? 'f-btn f-btn--primary' : 'f-btn f-btn--ghost',
             attrs: { href: `/app/exams/${encodeURIComponent(row.id)}` },
             text: active ? 'ادامه' : 'شروع',
         });
