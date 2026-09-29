@@ -75,3 +75,15 @@
     gap: var(--space-3);
     margin-top: var(--space-5);
 }
+
+/* The return from the gateway: one quiet sheet, the verdict and the way on. */
+.f-pay {
+    box-shadow: none;
+    padding-block: var(--space-6);
+}
+
+.f-pay__icon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-md);
+}
