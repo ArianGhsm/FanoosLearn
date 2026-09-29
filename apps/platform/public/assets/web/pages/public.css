@@ -3,13 +3,6 @@
  * and sign-up. The signed-in shell (shell.css) is never loaded on them.
  */
 
-.f-lantern {
-    width: 30px;
-    height: 30px;
-    color: var(--accent);
-    flex: none;
-}
-
 /* The flame breathes. Slowly: this is a lamp, not a notification. */
 .f-lantern__flame {
     transform-origin: 16px 21px;
@@ -21,32 +14,36 @@
     50% { transform: scale(0.9, 1.06); opacity: 0.82; }
 }
 
+/* The public header: the same flat strip as the signed-in one. */
 .f-pub {
+    position: sticky;
+    top: 0;
+    z-index: 20;
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    width: min(100% - 2 * var(--space-4), var(--content-width));
-    margin: var(--space-4) auto 0;
-    padding: var(--space-2) var(--space-3);
-    background: color-mix(in srgb, var(--surface) 72%, transparent);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-pill);
-    box-shadow: var(--shadow-soft);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    position: sticky;
-    top: var(--space-3);
-    z-index: 20;
+    width: 100%;
+    min-height: var(--header-height);
+    padding-inline: max(var(--space-4), calc((100% - var(--content-width)) / 2));
+    background: color-mix(in srgb, var(--bg-body) 92%, transparent);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: saturate(1.2) blur(8px);
+    -webkit-backdrop-filter: saturate(1.2) blur(8px);
+    box-sizing: border-box;
 }
 
 .f-pub__brand {
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
-    padding-inline: var(--space-2);
     color: var(--text-primary);
     font-size: var(--text-lg);
     font-weight: var(--weight-strong);
+}
+
+.f-pub__brand .f-lantern {
+    width: 28px;
+    height: 28px;
 }
 
 .f-pub__brand:hover {
@@ -57,10 +54,11 @@
     flex: 1;
 }
 
-.f-pub__link {
-    min-height: 38px;
-    padding-inline: var(--space-4);
-    border-radius: var(--radius-pill);
+.f-pub .f-pub__link {
+    min-height: 36px;
+    padding: 0 var(--space-4);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
 }
 
 .f-btn--lg {
@@ -101,19 +99,7 @@
 }
 
 @media (max-width: 560px) {
-    .f-pub {
-        border-radius: var(--radius-lg);
-    }
-
     .f-pub__link {
         padding-inline: var(--space-3);
     }
-}
-
-/* shell.css styles the footer for signed-in pages; these pages do not load it. */
-.f-public .f-footer {
-    padding: var(--space-5) var(--space-4) var(--space-6);
-    text-align: center;
-    font-size: var(--text-xs);
-    color: var(--text-tertiary);
 }

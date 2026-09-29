@@ -46,7 +46,7 @@ final class PageRenderer
             '<meta charset="utf-8">',
             '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">',
             '<meta name="description" content="' . $description . '">',
-            '<meta name="theme-color" content="#f4f7fb">',
+            '<meta name="theme-color" content="#f5f3ee">',
             '<title>' . $title . '</title>',
         ];
 
@@ -90,7 +90,7 @@ final class PageRenderer
             . '<a class="f-skip" href="#main">رفتن به محتوای اصلی</a>' . "\n"
             . $chrome
             . '<main id="main" class="f-page">' . "\n" . $mainHtml . "\n" . '</main>' . "\n"
-            . '<footer class="f-footer">فانوس — فضای آموزشی دانشجو</footer>' . "\n"
+            . $this->footer($viewer) . "\n"
             . implode("\n", $scripts) . "\n"
             . '<noscript><div class="f-notice f-notice--warning"><div class="f-notice__body">'
             . 'بعضی بخش‌های فانوس بدون JavaScript کار نمی‌کنند. لطفاً آن را روشن کنید.'
@@ -98,35 +98,71 @@ final class PageRenderer
             . '</body>' . "\n" . '</html>' . "\n";
     }
 
+    /** Line icons for the navigation, drawn in the text colour. They replaced emoji, which rendered differently on every device. */
+    private const NAV_ICONS = [
+        'home' => '<svg viewBox="0 0 24 24"><path d="M3.5 10.5 12 3.5l8.5 7V20a1 1 0 0 1-1 1H15v-6H9v6H4.5a1 1 0 0 1-1-1z"/></svg>',
+        'exams' => '<svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>',
+        'progress' => '<svg viewBox="0 0 24 24"><path d="M4 4v16h16"/><path d="m7.5 14.5 3.5-3.5 3 3 5-5.5"/></svg>',
+        'store' => '<svg viewBox="0 0 24 24"><path d="M5 8h14l-1.1 11.1a1 1 0 0 1-1 .9H7.1a1 1 0 0 1-1-.9z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>',
+        'tag' => '<svg viewBox="0 0 24 24"><path d="M3.5 12V4.5a1 1 0 0 1 1-1H12l8.5 8.5-8.5 8.5z"/><circle cx="8" cy="8" r="1.4"/></svg>',
+        'account' => '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg>',
+    ];
+
     private function chrome(ViewerContext $viewer, string $activeNav): string
     {
         $items = '';
         foreach ($viewer->navigation() as $item) {
             $current = $item['key'] === $activeNav ? ' aria-current="page"' : '';
-            $items .= '<a class="f-nav__link" href="' . $this->escape($item['href']) . '"' . $current . '>'
-                . '<span class="f-nav__icon" aria-hidden="true">' . $this->escape($item['icon']) . '</span>'
+            $items .= '<a class="f-nav__link" data-key="' . $this->escape($item['key']) . '" href="' . $this->escape($item['href']) . '"' . $current . '>'
+                . '<span class="f-nav__icon" aria-hidden="true">' . (self::NAV_ICONS[$item['icon']] ?? '') . '</span>'
                 . '<span>' . $this->escape($item['label']) . '</span>'
                 . '</a>';
         }
 
-        $workspaceLine = $viewer->workspaceName === null
+        // The workspace is where the student is working, and choosing another
+        // one is the only thing to do with it -- so it is the switch.
+        $workspace = $viewer->workspaceName === null
             ? ''
-            : '<span class="f-brand__workspace">' . $this->escape($viewer->workspaceName) . '</span>';
+            : '<a class="f-header__workspace" href="/app?switch=1" title="عوض کردن فضای آموزشی">'
+                . '<span>' . $this->escape($viewer->workspaceName) . '</span>'
+                . '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>'
+                . '</a>';
 
-        return '<header class="f-header">'
-            . '<a class="f-brand" href="/app">'
-            . '<span class="f-brand__mark" aria-hidden="true"></span>'
-            . '<span>فانوس</span>' . $workspaceLine
-            . '</a>'
-            . '<span class="f-header__spacer"></span>'
+        $name = trim($viewer->displayName);
+        $initial = preg_match('/^./us', $name, $first) === 1 ? $first[0] : '؟';
+        $current = $activeNav === 'account' ? ' aria-current="page"' : '';
+
+        return '<header class="f-header"><div class="f-header__inner">'
+            . '<a class="f-brand" href="/app">' . PublicChrome::LANTERN . '<span class="f-brand__name">فانوس</span></a>'
+            . $workspace
             . '<nav class="f-nav" aria-label="بخش‌های اصلی">' . $items . '</nav>'
-            // The account link lives in the navigation, so the header shows
-            // only who you are -- a second button to the same place was just
-            // noise beside it.
-            . '<div class="f-account">'
-            . '<span class="f-account__name">' . $this->escape($viewer->displayName) . '</span>'
-            . '</div>'
-            . '</header>';
+            // On a wide screen the account is the person, at the end of the
+            // bar; on a phone it is the last tab of the bottom bar instead.
+            . '<a class="f-account" href="/account"' . $current . '>'
+            . '<span class="f-account__avatar" aria-hidden="true">' . $this->escape($initial) . '</span>'
+            . '<span class="f-account__name">' . $this->escape($name) . '</span>'
+            . '</a>'
+            . '</div></header>';
+    }
+
+    /** The foot of every page: the mark, what FANOOS is, and the ways around it. */
+    private function footer(?ViewerContext $viewer): string
+    {
+        $links = $viewer === null
+            ? [['/', 'فانوس'], ['/login', 'ورود'], ['/register', 'ساخت حساب']]
+            : ($viewer->workspaceId === null
+                ? [['/app', 'خانه'], ['/account', 'حساب']]
+                : [['/app/exams', 'آزمون‌ها'], ['/app/exams/custom', 'آزمون دلخواه'], ['/app/exams/mistakes', 'مرور اشتباه‌ها'], ['/app/progress', 'پیشرفت'], ['/account', 'حساب']]);
+        $nav = '';
+        foreach ($links as [$href, $label]) {
+            $nav .= '<a href="' . $this->escape($href) . '">' . $this->escape($label) . '</a>';
+        }
+
+        return '<footer class="f-footer"><div class="f-footer__inner">'
+            . '<div class="f-footer__brand">' . PublicChrome::LANTERN
+            . '<span><strong>فانوس</strong><small>فضای آموزشی دانشجو</small></span></div>'
+            . '<nav class="f-footer__links" aria-label="پیوندهای پایین صفحه">' . $nav . '</nav>'
+            . '</div></footer>';
     }
 
     public function escape(string $value): string

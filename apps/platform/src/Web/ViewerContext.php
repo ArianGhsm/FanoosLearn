@@ -36,20 +36,20 @@ final class ViewerContext
     public function navigation(): array
     {
         $items = [
-            ['key' => 'home', 'href' => '/app', 'label' => 'خانه', 'icon' => '🏠'],
+            ['key' => 'home', 'href' => '/app', 'label' => 'خانه', 'icon' => 'home'],
         ];
         if ($this->workspaceId !== null) {
-            $items[] = ['key' => 'exams', 'href' => '/app/exams', 'label' => 'آزمون‌ها', 'icon' => '📝'];
-            $items[] = ['key' => 'progress', 'href' => '/app/progress', 'label' => 'پیشرفت', 'icon' => '📈'];
-            $items[] = ['key' => 'store', 'href' => '/app/store', 'label' => 'فروشگاه', 'icon' => '🛒'];
+            $items[] = ['key' => 'exams', 'href' => '/app/exams', 'label' => 'آزمون‌ها', 'icon' => 'exams'];
+            $items[] = ['key' => 'progress', 'href' => '/app/progress', 'label' => 'پیشرفت', 'icon' => 'progress'];
+            $items[] = ['key' => 'store', 'href' => '/app/store', 'label' => 'فروشگاه', 'icon' => 'store'];
             if ($this->canManageCatalog) {
-                $items[] = ['key' => 'products', 'href' => '/app/admin/products', 'label' => 'محصولات و قیمت', 'icon' => '🏷'];
+                $items[] = ['key' => 'products', 'href' => '/app/admin/products', 'label' => 'محصولات و قیمت', 'icon' => 'tag'];
             }
         }
         // On a phone the header collapses and this bar is the only chrome, so
         // the account -- and with it the only way to sign out -- has to be
         // reachable from here rather than only from the header.
-        $items[] = ['key' => 'account', 'href' => '/account', 'label' => 'حساب', 'icon' => '👤'];
+        $items[] = ['key' => 'account', 'href' => '/account', 'label' => 'حساب', 'icon' => 'account'];
 
         return $items;
     }

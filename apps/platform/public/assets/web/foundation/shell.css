@@ -4,24 +4,35 @@
  * between areas never waits for JavaScript to draw the frame.
  */
 
+/*
+ * One flat strip on the paper: the lantern and the name, where you are
+ * working (which is also how you change it), the sections, and you. The
+ * current section is marked by a line on the header's own edge rather than
+ * a filled pill, so the bar stays quiet and the page stays the loud thing.
+ */
 .f-header {
     position: sticky;
     top: 0;
     z-index: 20;
-    min-height: var(--header-height);
-    display: flex;
-    align-items: center;
-    gap: var(--space-4);
-    padding-inline: var(--space-4);
-    background: var(--surface);
+    background: color-mix(in srgb, var(--bg-body) 92%, transparent);
     border-bottom: 1px solid var(--border);
+    backdrop-filter: saturate(1.2) blur(8px);
+    -webkit-backdrop-filter: saturate(1.2) blur(8px);
+}
+
+.f-header__inner {
+    display: flex;
+    align-items: stretch;
+    gap: var(--space-4);
+    width: min(100% - 2 * var(--space-4), var(--content-width));
+    min-height: var(--header-height);
+    margin-inline: auto;
 }
 
 .f-brand {
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
-    font-weight: 700;
     color: var(--text-primary);
     white-space: nowrap;
 }
@@ -30,22 +41,49 @@
     text-decoration: none;
 }
 
-.f-brand__mark {
+.f-brand .f-lantern {
     width: 28px;
     height: 28px;
-    border-radius: var(--radius-sm);
-    background: linear-gradient(140deg, var(--accent), var(--accent-strong));
-    flex: none;
 }
 
-.f-brand__workspace {
-    font-size: 0.82rem;
-    font-weight: 500;
+.f-brand__name {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-strong);
+}
+
+.f-header__workspace {
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    max-width: 220px;
+    min-height: 28px;
+    padding-inline: var(--space-3) var(--space-1);
+    border-inline-start: 1px solid var(--border-strong);
     color: var(--text-secondary);
+    font-size: var(--text-sm);
+    white-space: nowrap;
 }
 
-.f-header__spacer {
-    flex: 1;
+.f-header__workspace span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.f-header__workspace svg {
+    width: 14px;
+    height: 14px;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.f-header__workspace:hover {
+    color: var(--text-primary);
+    text-decoration: none;
 }
 
 /* Primary navigation. On a phone it becomes a bottom bar, because the top of
@@ -53,50 +91,122 @@
 
 .f-nav {
     display: flex;
+    align-items: stretch;
     gap: var(--space-1);
-    align-items: center;
+    margin-inline-start: auto;
 }
 
 .f-nav__link {
+    position: relative;
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
-    min-height: 40px;
-    padding: 0 var(--space-4);
-    border-radius: var(--radius-pill);
+    padding: 0 var(--space-3);
     color: var(--text-secondary);
-    font-weight: 600;
-    font-size: 0.92rem;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    transition: color var(--motion-fast) var(--ease);
 }
 
 .f-nav__link:hover {
-    background: var(--surface-strong);
+    color: var(--text-primary);
     text-decoration: none;
 }
 
 .f-nav__link[aria-current="page"] {
+    color: var(--text-primary);
+}
+
+.f-nav__link[aria-current="page"] .f-nav__icon {
+    color: var(--accent);
+}
+
+.f-nav__link[aria-current="page"]::after {
+    content: "";
+    position: absolute;
+    inset-inline: var(--space-3);
+    bottom: -1px;
+    height: 2px;
+    border-radius: 2px 2px 0 0;
     background: var(--accent);
-    color: var(--text-on-accent);
+}
+
+/* The account is the avatar at the end of the bar on a wide screen. */
+.f-nav__link[data-key="account"] {
+    display: none;
 }
 
 .f-account {
+    align-self: center;
     display: inline-flex;
     align-items: center;
-    gap: var(--space-3);
+    gap: var(--space-2);
+    padding: var(--space-1);
+    padding-inline-end: var(--space-3);
+    border-radius: var(--radius-pill);
+    color: var(--text-primary);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    white-space: nowrap;
+}
+
+.f-account:hover,
+.f-account[aria-current="page"] {
+    background: var(--surface-muted);
+    text-decoration: none;
+}
+
+.f-account__avatar {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-pill);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: var(--weight-strong);
 }
 
 .f-account__name {
-    font-weight: 600;
-    font-size: 0.9rem;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 960px) {
+    .f-nav__link > span:not(.f-nav__icon),
+    .f-account__name {
+        display: none;
+    }
+
+    .f-account {
+        padding-inline-end: var(--space-1);
+    }
 }
 
 @media (max-width: 720px) {
+    /* A backdrop filter makes the header the containing block of anything
+       fixed inside it -- the bottom bar would sit on the header, not the
+       screen. On a phone the header is solid instead. */
     .f-header {
-        padding-inline: var(--space-3);
+        background: var(--bg-body);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
     }
 
-    .f-account__name {
+    .f-header__inner {
+        width: calc(100% - 2 * var(--space-3));
+        min-height: 56px;
+    }
+
+    .f-account {
         display: none;
+    }
+
+    .f-header__workspace {
+        max-width: none;
+        min-width: 0;
+        margin-inline-start: auto;
     }
 
     .f-nav {
@@ -106,26 +216,40 @@
         z-index: 20;
         justify-content: space-around;
         gap: 0;
-        padding: var(--space-1) var(--space-2);
-        padding-bottom: calc(var(--space-1) + env(safe-area-inset-bottom, 0px));
-        background: var(--surface);
+        margin: 0;
+        padding: 0 var(--space-2) env(safe-area-inset-bottom, 0px);
+        background: color-mix(in srgb, var(--bg-body) 94%, transparent);
         border-top: 1px solid var(--border);
+        backdrop-filter: saturate(1.2) blur(8px);
+        -webkit-backdrop-filter: saturate(1.2) blur(8px);
     }
 
-    .f-nav__link {
+    .f-nav__link,
+    .f-nav__link[data-key="account"] {
+        display: inline-flex;
         flex-direction: column;
-        gap: 2px;
-        flex: 1;
-        padding: var(--space-1);
-        font-size: 0.7rem;
-        border-radius: var(--radius-md);
-        min-height: 48px;
         justify-content: center;
+        gap: 3px;
+        flex: 1;
+        min-height: 58px;
+        padding: var(--space-1);
+        font-size: var(--text-2xs);
+    }
+
+    .f-nav__link > span:not(.f-nav__icon) {
+        display: inline;
     }
 
     .f-nav__link[aria-current="page"] {
-        background: var(--accent-soft);
         color: var(--accent);
+    }
+
+    /* On the bottom bar the mark sits on the top edge, facing the page. */
+    .f-nav__link[aria-current="page"]::after {
+        top: -1px;
+        bottom: auto;
+        inset-inline: 30%;
+        border-radius: 0 0 2px 2px;
     }
 
     body.f-has-nav .f-page {
@@ -135,13 +259,23 @@
     /* The bottom bar is fixed, so the last thing on the page must clear it or
      * it is permanently unreadable on a page long enough to scroll. */
     body.f-has-nav .f-footer {
-        margin-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+        margin-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
     }
 }
 
 .f-nav__icon {
-    font-size: 1.15rem;
+    display: inline-flex;
     line-height: 1;
+}
+
+.f-nav__icon svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 /* The connection banner. Hidden until the page tells it otherwise, so a
@@ -158,13 +292,4 @@
     background: var(--warning-soft);
     color: var(--text-primary);
     border-bottom: 1px solid var(--warning);
-}
-
-.f-footer {
-    margin-top: var(--space-7);
-    padding: var(--space-5) var(--space-4);
-    border-top: 1px solid var(--border);
-    text-align: center;
-    color: var(--text-tertiary);
-    font-size: 0.85rem;
 }
