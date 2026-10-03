@@ -177,6 +177,15 @@ final class WebRouter
             return $this->page(200, $path === '/app/saved' ? $page->saved($viewer) : $page->reports($viewer));
         }
 
+        if ($path === '/app/timer') {
+            if ($viewer === null) {
+                return $this->redirect('/login');
+            }
+            return $viewer->workspaceId === null
+                ? $this->redirect('/app')
+                : $this->page(200, (new StudyTimerPage($this->renderer))->render($viewer));
+        }
+
         if ($path === '/app/exams/mistakes') {
             if ($viewer === null) {
                 return $this->redirect('/login');

@@ -13,6 +13,7 @@ use Fanoos\Platform\Content\CustomPracticeService;
 use Fanoos\Platform\Content\ExamRankingService;
 use Fanoos\Platform\Content\ProgressService;
 use Fanoos\Platform\Content\QuestionToolsService;
+use Fanoos\Platform\Content\StudyService;
 use Fanoos\Platform\Content\ExamImageStore;
 use Fanoos\Platform\Content\ExamService;
 use Fanoos\Platform\Content\SecureDeliveryService;
@@ -54,6 +55,7 @@ final class ApiKernel
         private readonly ?ProgressService $progress = null,
         private readonly ?BankBrowseService $bank = null,
         private readonly ?QuestionToolsService $tools = null,
+        private readonly ?StudyService $study = null,
         private readonly ?ExamRankingService $ranking = null,
     ) {
     }
@@ -539,6 +541,20 @@ final class ApiKernel
             }
             if ($request->method === 'POST' && preg_match('#^/question-reports/([0-9a-f-]{36})$#', $suffix, $match)) {
                 return ['status' => 200, 'data' => $this->tools->resolveReport($session->userId, $workspaceId, $match[1], (string) ($body['status'] ?? ''), (string) ($body['resolution'] ?? ''))];
+            }
+        }
+        if ($suffix === '/review' || $suffix === '/review/start' || $suffix === '/study-sessions') {
+            if ($this->study === null) {
+                throw new PlatformException('study_unavailable', 'Study tools are not available.', 503);
+            }
+            if ($request->method === 'GET' && $suffix === '/review') {
+                return ['status' => 200, 'data' => $this->study->review($session->userId, $workspaceId)];
+            }
+            if ($request->method === 'POST' && $suffix === '/review/start') {
+                return ['status' => 201, 'data' => $this->study->startReview($session->userId, $workspaceId, isset($request->body['topic']) ? (string) $request->body['topic'] : null)];
+            }
+            if ($request->method === 'POST' && $suffix === '/study-sessions') {
+                return ['status' => 201, 'data' => $this->study->logSession($session->userId, $workspaceId, (int) ($request->body['minutes'] ?? 0), isset($request->body['label']) ? (string) $request->body['label'] : null)];
             }
         }
         if ($request->method === 'GET' && $suffix === '/mistakes-review') {

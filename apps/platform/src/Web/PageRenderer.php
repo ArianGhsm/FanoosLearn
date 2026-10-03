@@ -157,7 +157,7 @@ final class PageRenderer
             ? [['/', 'فانوس'], ['/login', 'ورود'], ['/register', 'ساخت حساب']]
             : ($viewer->workspaceId === null
                 ? [['/app', 'خانه'], ['/account', 'حساب']]
-                : [['/app/bank', 'بانک سؤال'], ['/app/references', 'منابع آزمون'], ['/app/exams', 'آزمون‌ها'], ['/app/exams/custom', 'آزمون دلخواه'], ['/app/exams/mistakes', 'مرور اشتباه‌ها'], ['/app/saved', 'ذخیره‌ها و یادداشت‌ها'], ['/app/progress', 'پیشرفت'], ['/account', 'حساب']]);
+                : [['/app/bank', 'بانک سؤال'], ['/app/references', 'منابع آزمون'], ['/app/exams', 'آزمون‌ها'], ['/app/exams/custom', 'آزمون دلخواه'], ['/app/exams/mistakes', 'مرور اشتباه‌ها'], ['/app/saved', 'ذخیره‌ها و یادداشت‌ها'], ['/app/timer', 'تایمر مطالعه'], ['/app/progress', 'پیشرفت'], ['/account', 'حساب']]);
         $nav = '';
         foreach ($links as [$href, $label]) {
             $nav .= '<a href="' . $this->escape($href) . '">' . $this->escape($label) . '</a>';

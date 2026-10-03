@@ -1,0 +1,43 @@
+/* تایمر مطالعه. */
+
+.t-timer {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-3);
+    max-width: 520px;
+    margin-inline: auto;
+    padding-block: var(--space-6);
+    text-align: center;
+}
+
+.t-phase {
+    margin: 0;
+    color: var(--accent);
+    font-weight: var(--weight-strong);
+}
+
+.t-resting .t-phase {
+    color: var(--success);
+}
+
+.t-clock {
+    margin: 0;
+    font-size: var(--text-3xl);
+    font-weight: var(--weight-strong);
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+    transform: scale(1.8);
+    padding-block: var(--space-5);
+}
+
+.t-presets,
+.t-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2);
+}
+
+.t-today {
+    margin: var(--space-2) 0 0;
+}

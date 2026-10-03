@@ -43,6 +43,7 @@ use Fanoos\Tests\Operations\BackupContractTest;
 use Fanoos\Tests\Operations\FarazSmsGatewayTest;
 use Fanoos\Tests\Operations\ExamRankingTest;
 use Fanoos\Tests\Operations\QuestionBankRowTest;
+use Fanoos\Tests\Operations\StudyScheduleTest;
 use Fanoos\Tests\Operations\ZibalPaymentGatewayTest;
 use Fanoos\Tests\Operations\GitHubCiVerifierContractTest;
 use Fanoos\Tests\Operations\OwnerBootstrapTest;
@@ -78,6 +79,8 @@ try {
     echo "PASS question bank row mapping\n";
     $assertions += (new ExamRankingTest())->run();
     echo "PASS exam ranking arithmetic\n";
+    $assertions += (new StudyScheduleTest())->run();
+    echo "PASS study review schedule and study time\n";
     $assertions += (new FarazSmsGatewayTest())->run();
     echo "PASS FarazSMS OTP gateway\n";
     $assertions += (new ZibalPaymentGatewayTest())->run();

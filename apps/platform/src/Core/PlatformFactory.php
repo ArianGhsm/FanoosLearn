@@ -17,6 +17,7 @@ use Fanoos\Platform\Content\CustomPracticeService;
 use Fanoos\Platform\Content\ExamRankingService;
 use Fanoos\Platform\Content\ProgressService;
 use Fanoos\Platform\Content\QuestionToolsService;
+use Fanoos\Platform\Content\StudyService;
 use Fanoos\Platform\Content\ExamQuestionRateGuard;
 use Fanoos\Platform\Content\ExamImageStore;
 use Fanoos\Platform\Content\ExamService;
@@ -163,6 +164,7 @@ final class PlatformFactory
             new ProgressService($database, $access),
             new BankBrowseService($database, $access, $customPractice),
             new QuestionToolsService($database, $access, $audit, $customPractice),
+            new StudyService($database, $access, $customPractice),
             new ExamRankingService($database, $access),
         );
     }

@@ -56,15 +56,15 @@ of the counted rows at ✅.
 |---|---|---|---|
 | 25 | Exam builder by subject and topic (آزمون‌ساز هوشمند) | M | ✅ آزمون دلخواه |
 | 26 | Builder modes: unseen only, wrong only (مروری) | M | ✅ |
-| 27 | Review assistant that resurfaces what you got wrong on a schedule (مرور هوشمند) | M P | 🟡 mistakes review, no schedule |
+| 27 | Review assistant that resurfaces what you got wrong on a schedule (مرور هوشمند) | M P | ✅ «مرور هوشمند» on the progress page: wrong answers come back at 1, 3, 7, 14, 30 days |
 | 28 | Bookmarks page grouped by topic (بوکمارک‌های من) | M | ✅ /app/saved, grouped by topic, each topic one tap from a study set |
 | 29 | Notes page (یادداشت‌های من) | M | ✅ /app/saved, notes tab |
 | 30 | Highlights / flashcards page (هایلایت‌ها) | M | ❌ |
 | 31 | Performance report by subject and day (گزارشات) | M | ✅ progress dashboard |
-| 32 | Study time per day (محاسبه ساعت مطالعه) | M | ❌ |
+| 32 | Study time per day (محاسبه ساعت مطالعه) | M | ✅ minutes per day and in total, from exams and the timer |
 | 33 | Daily streak / score (امتیاز روزانه) | M | ✅ streak |
 | 34 | Day-by-day study plan with "done" ticks (برنامه روزانه) | M P | ❌ |
-| 35 | Study timer (تایمر مطالعه) | M | ❌ |
+| 35 | Study timer (تایمر مطالعه) | M | ✅ /app/timer: 25/5, 50/10, 90/15 focus blocks, recorded as study time |
 | 36 | Timed full-exam simulation | M P | ✅ timed exams |
 | 37 | Calendar of scheduled exams with deadlines and participant counts | M | ❌ |
 | 38 | Report card with rank / percentile among participants (کارنامه) | M P | ✅ after each exam: rank, better-than %, average, top, score histogram (first exam-mode attempt; withheld under 5 people) |
@@ -90,4 +90,4 @@ plans. They can come back as their own decisions.
 
 ## Score
 
-Counted rows: 44. ✅ today: 33 (75 %). Target: 36 (≥ 80 %).
+Counted rows: 44. ✅ today: 36 (82 %). Target: 36 (≥ 80 %).
