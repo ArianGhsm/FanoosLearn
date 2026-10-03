@@ -50,7 +50,7 @@ final class QuestionStatsRecorder
         }
         $revealed = [];
         if ($revealedPositions !== []) {
-            $order = ExamAttemptShuffle::questionOrder($attemptId, array_keys($questions));
+            $order = ExamAttemptShuffle::forDefinition($attemptId, $definition);
             foreach ($revealedPositions as $position) {
                 if (isset($order[$position - 1])) {
                     $revealed[$order[$position - 1]] = true;

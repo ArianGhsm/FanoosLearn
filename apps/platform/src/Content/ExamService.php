@@ -570,7 +570,7 @@ SQL, [
         // this degrades to exactly today's two-request behaviour rather than
         // an error.
         $questionIds = array_map(static fn (array $question): string => (string) $question['id'], $definition['questions']);
-        $firstQuestionId = ExamAttemptShuffle::questionOrder($attemptId, $questionIds)[0];
+        $firstQuestionId = ExamAttemptShuffle::forDefinition($attemptId, $definition)[0];
         if ($this->questionRateGuard->admit($userId, $firstQuestionId, $now) === null) {
             $this->audit->record($workspaceId, $userId, 'exam.question.read', 'exam_attempt', $attemptId, 'success', [
                 'question_id' => $firstQuestionId, 'position' => 1,
@@ -635,7 +635,7 @@ SQL, [
             // Everything above is a pure read. From here a refusal must not
             // throw until after this transaction commits -- see
             // ExamQuestionRateGuard's docblock.
-            $order = ExamAttemptShuffle::questionOrder($attemptId, $questionIds);
+            $order = ExamAttemptShuffle::forDefinition($attemptId, $definition);
             $questionId = $order[$position - 1];
             $refusal = $this->questionRateGuard->admit($userId, $questionId, $now);
             if ($refusal !== null) {
@@ -712,7 +712,7 @@ SQL, [
             // so throwing from any of those checks is safe. From here on a
             // refusal must not throw until after this transaction commits --
             // see ExamQuestionRateGuard's docblock.
-            $order = ExamAttemptShuffle::questionOrder($attemptId, $questionIds);
+            $order = ExamAttemptShuffle::forDefinition($attemptId, $definition);
             $questionId = $order[$position - 1];
             $refusal = $this->questionRateGuard->admit($userId, $questionId, $now);
             if ($refusal !== null) {
@@ -969,7 +969,7 @@ SQL);
 
             $definition = json_decode((string) $scored['definition_json'], true, 64, JSON_THROW_ON_ERROR);
             $questionIds = array_map(static fn (array $question): string => (string) $question['id'], $definition['questions']);
-            $order = ExamAttemptShuffle::questionOrder($attemptId, $questionIds);
+            $order = ExamAttemptShuffle::forDefinition($attemptId, $definition);
             $questionId = $order[$position - 1];
             $refusal = $this->questionRateGuard->admit($userId, $questionId, $now);
             if ($refusal !== null) {

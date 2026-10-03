@@ -34,6 +34,22 @@ final class ExamAttemptShuffle
     }
 
     /**
+     * The order an attempt shows its exam's questions in. Shuffled, unless
+     * the definition says `"ordered": true` -- a study set the student asked
+     * for in a meaningful order (a subject's questions newest year first),
+     * where shuffling would lose the point of the set.
+     *
+     * @param array<string, mixed> $definition
+     * @return list<string>
+     */
+    public static function forDefinition(string $attemptId, array $definition): array
+    {
+        $ids = array_map(static fn (array $question): string => (string) $question['id'], $definition['questions'] ?? []);
+
+        return ($definition['ordered'] ?? false) === true ? $ids : self::questionOrder($attemptId, $ids);
+    }
+
+    /**
      * @param list<mixed> $items
      * @return list<mixed>
      */
