@@ -21,8 +21,12 @@ use Fanoos\Platform\Support\RuntimeConfig;
  * foreign key in the schema for rows left pointing at nothing; if any are
  * found it rolls everything back.
  *
+ * The image files belong to the web user; when the database step runs as
+ * another user, run the image step on its own as the web user afterwards.
+ *
  * Usage:
  *   php scripts/ops/purge-workspace.php --workspace=<uuid> --confirm=<same uuid> [--execute]
+ *   php scripts/ops/purge-workspace.php --images-only [--execute]
  */
 
 $root = dirname(__DIR__, 2);
@@ -31,8 +35,11 @@ require $root . '/apps/platform/bootstrap.php';
 try {
     $workspace = $confirm = '';
     $execute = false;
+    $imagesOnly = false;
     foreach (array_slice($argv, 1) as $argument) {
-        if (str_starts_with($argument, '--workspace=')) {
+        if ($argument === '--images-only') {
+            $imagesOnly = true;
+        } elseif (str_starts_with($argument, '--workspace=')) {
             $workspace = substr($argument, 12);
         } elseif (str_starts_with($argument, '--confirm=')) {
             $confirm = substr($argument, 10);
@@ -42,12 +49,17 @@ try {
             throw new RuntimeException("Unknown argument: {$argument}");
         }
     }
-    if (preg_match('/^[0-9a-f-]{36}$/', $workspace) !== 1 || $workspace !== $confirm) {
-        throw new RuntimeException('Usage: --workspace=<uuid> --confirm=<the same uuid> [--execute]');
-    }
-
     $config = RuntimeConfig::load();
     $database = DatabaseConnection::fromEnvironment();
+    if ($imagesOnly) {
+        $result = purgeUnreferencedImages($database, $config, $execute);
+        echo json_encode($result) . PHP_EOL;
+        exit($result['failed'] === 0 ? 0 : 1);
+    }
+    if (preg_match('/^[0-9a-f-]{36}$/', $workspace) !== 1 || $workspace !== $confirm) {
+        throw new RuntimeException('Usage: --workspace=<uuid> --confirm=<the same uuid> [--execute], or --images-only [--execute]');
+    }
+
     $schema = (string) $database->query('SELECT DATABASE()')->fetchColumn();
 
     $exists = $database->prepare('SELECT name FROM tenant_workspaces WHERE id = :workspace');
@@ -133,7 +145,7 @@ SQL);
             $constraints["{$child}.{$constraint}"]['pairs'][] = [$column, $parentColumn];
         }
         $orphans = [];
-        foreach ($constraints as $name => $key) {
+        foreach ($constraints as $constraintName => $key) {
             $on = implode(' AND ', array_map(static fn (array $pair): string => "p.`{$pair[1]}` = c.`{$pair[0]}`", $key['pairs']));
             $bound = implode(' AND ', array_map(static fn (array $pair): string => "c.`{$pair[0]}` IS NOT NULL", $key['pairs']));
             $first = $key['pairs'][0][1];
@@ -142,7 +154,7 @@ SQL);
                 . " WHERE {$bound} AND p.`{$first}` IS NULL",
             )->fetchColumn();
             if ($n > 0) {
-                $orphans[$name] = $n;
+                $orphans[$constraintName] = $n;
             }
         }
         if ($orphans !== []) {
@@ -155,33 +167,49 @@ SQL);
         throw $error;
     }
 
-    // Image files: keep only those some remaining exam version still names.
-    $removed = 0;
-    $storage = $config->optionalString('FANOOS_STORAGE_ROOT');
-    $images = is_string($storage) && trim($storage) !== '' ? rtrim($storage, '/') . '/exam-images' : null;
-    if ($images !== null && is_dir($images)) {
-        $referenced = [];
-        $versions = $database->query('SELECT definition_json FROM exam_assessment_versions');
-        while (($definition = $versions->fetchColumn()) !== false) {
-            preg_match_all('/[a-f0-9]{64}\.(?:jpg|png|webp)/', (string) $definition, $match);
-            foreach ($match[0] as $key) {
-                $referenced[$key] = true;
-            }
-        }
-        $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($images, FilesystemIterator::SKIP_DOTS));
-        foreach ($files as $file) {
-            if ($file->isFile() && preg_match('/^[a-f0-9]{64}\.(jpg|png|webp)$/', $file->getFilename()) === 1 && !isset($referenced[$file->getFilename()])) {
-                if (unlink($file->getPathname())) {
-                    ++$removed;
-                }
-            }
-        }
-    }
+    $images = purgeUnreferencedImages($database, $config, true);
 
-    $summary = ['workspace' => $workspace, 'name' => $name, 'rows' => $plan, 'image_files_removed' => $removed];
+    $summary = ['workspace' => $workspace, 'name' => $name, 'rows' => $plan, 'images' => $images];
     JsonLogger::write('warning', 'ops.workspace_purged', $summary);
     echo json_encode($summary, JSON_UNESCAPED_UNICODE) . PHP_EOL;
 } catch (Throwable $error) {
     fwrite(STDERR, 'Purge failed: ' . $error->getMessage() . PHP_EOL);
     exit(1);
+}
+
+/**
+ * Exam image files no remaining exam version names, removed (or, without
+ * $execute, only counted). Files that cannot be removed are counted, never
+ * silently skipped.
+ *
+ * @return array{images_dir:?string,unreferenced:int,removed:int,failed:int}
+ */
+function purgeUnreferencedImages(PDO $database, RuntimeConfig $config, bool $execute): array
+{
+    $storage = $config->optionalString('FANOOS_STORAGE_ROOT');
+    $images = is_string($storage) && trim($storage) !== '' ? rtrim($storage, '/') . '/exam-images' : null;
+    $result = ['images_dir' => $images, 'unreferenced' => 0, 'removed' => 0, 'failed' => 0];
+    if ($images === null || !is_dir($images)) {
+        return $result;
+    }
+    $referenced = [];
+    $versions = $database->query('SELECT definition_json FROM exam_assessment_versions');
+    while (($definition = $versions->fetchColumn()) !== false) {
+        preg_match_all('/[a-f0-9]{64}\.(?:jpg|png|webp)/', (string) $definition, $match);
+        foreach ($match[0] as $key) {
+            $referenced[$key] = true;
+        }
+    }
+    $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($images, FilesystemIterator::SKIP_DOTS));
+    foreach ($files as $file) {
+        if (!$file->isFile() || preg_match('/^[a-f0-9]{64}\.(jpg|png|webp)$/', $file->getFilename()) !== 1 || isset($referenced[$file->getFilename()])) {
+            continue;
+        }
+        ++$result['unreferenced'];
+        if ($execute) {
+            @unlink($file->getPathname()) ? ++$result['removed'] : ++$result['failed'];
+        }
+    }
+
+    return $result;
 }
