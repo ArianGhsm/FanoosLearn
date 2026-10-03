@@ -1,0 +1,94 @@
+{
+  "format": "fanoos.bank.catalog/1",
+  "notes": "Illustrative example of the catalog format. Titles, editions, chapters and pages here are placeholders, not a verified reference list.",
+  "exam_types": [
+    { "key": "residency", "name": "دستیاری", "active": true },
+    { "key": "board", "name": "بورد", "active": false },
+    { "key": "promotion", "name": "ارتقا", "active": false }
+  ],
+  "subjects": [
+    { "key": "endodontics", "name": "اندودانتیکس", "name_en": "Endodontics" },
+    { "key": "periodontics", "name": "پریودانتیکس", "name_en": "Periodontics" }
+  ],
+  "concepts": [
+    {
+      "key": "endodontics/cleaning-and-shaping",
+      "subject": "endodontics",
+      "level": "topic",
+      "name": "پاکسازی و شکل‌دهی",
+      "name_en": "Cleaning and shaping",
+      "children": [
+        {
+          "key": "endodontics/cleaning-and-shaping/working-length",
+          "level": "subtopic",
+          "name": "طول کارکرد",
+          "name_en": "Working length",
+          "children": [
+            {
+              "key": "endodontics/cleaning-and-shaping/working-length/apical-constriction",
+              "level": "concept",
+              "name": "تنگی اپیکالی",
+              "name_en": "Apical constriction"
+            },
+            {
+              "key": "endodontics/cleaning-and-shaping/working-length/electronic-apex-locator",
+              "level": "concept",
+              "name": "اپکس‌یاب الکترونیکی",
+              "name_en": "Electronic apex locator"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "key": "torabinejad",
+      "title": "Endodontics: Principles and Practice",
+      "authors": "Torabinejad, Fouad, Shabahang",
+      "subject": "endodontics",
+      "editions": [
+        {
+          "key": "6e",
+          "label": "6th edition",
+          "year": 2021,
+          "nodes": [
+            {
+              "key": "ch14",
+              "kind": "chapter",
+              "number": "14",
+              "title": "Cleaning and Shaping",
+              "pages": [250, 290],
+              "children": [
+                {
+                  "key": "ch14.working-length",
+                  "kind": "section",
+                  "title": "Working Length Determination",
+                  "pages": [255, 260],
+                  "concepts": [
+                    "endodontics/cleaning-and-shaping/working-length/apical-constriction",
+                    "endodontics/cleaning-and-shaping/working-length/electronic-apex-locator"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "5e",
+          "label": "5th edition",
+          "year": 2014,
+          "nodes": [
+            { "key": "ch13", "kind": "chapter", "number": "13", "title": "Cleaning and Shaping" }
+          ]
+        }
+      ]
+    }
+  ],
+  "validity": [
+    { "exam_type": "residency", "year": 1404, "subject": "endodontics", "edition": "torabinejad@6e", "official": true, "source_document": "منابع اعلام‌شده‌ی آزمون دستیاری ۱۴۰۴ (نمونه)" }
+  ],
+  "edition_mappings": [
+    { "from": "torabinejad@5e#ch13", "to": "torabinejad@6e#ch14", "relation": "equivalent", "origin": "human" }
+  ]
+}

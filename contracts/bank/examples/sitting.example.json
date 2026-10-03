@@ -1,0 +1,116 @@
+{
+  "format": "fanoos.bank.sitting/1",
+  "notes": "Illustrative example of the sitting format: two sample questions, not real exam content.",
+  "exam_type": "residency",
+  "year": 1404,
+  "round": 1,
+  "answer_key_status": "final",
+  "questions": [
+    {
+      "number": 1,
+      "subject": "endodontics",
+      "stem": "ایده‌آل‌ترین محل خاتمه‌ی طول کارکرد در درمان ریشه‌ی دندان با پالپ نکروتیک کدام است؟",
+      "choices": [
+        "آپکس رادیوگرافیک",
+        "تنگی اپیکالی (minor diameter)",
+        "۲ میلی‌متر کوتاه‌تر از آپکس رادیوگرافیک",
+        "فورامن اپیکالی (major diameter)"
+      ],
+      "answer": {
+        "choice": 2,
+        "status": "final",
+        "source": "کلید نهایی (نمونه)"
+      },
+      "type": "recall",
+      "cognitive_level": "recall",
+      "difficulty": 2,
+      "sources": [
+        {
+          "ref": "torabinejad@6e#ch14.working-length",
+          "page": "256",
+          "anchor": "Working Length Determination",
+          "primary": true,
+          "confidence": {
+            "source": 0.97,
+            "node": 0.92,
+            "page": 0.71
+          },
+          "origin": "ai"
+        }
+      ],
+      "concepts": [
+        {
+          "key": "endodontics/cleaning-and-shaping/working-length/apical-constriction",
+          "primary": true,
+          "confidence": 0.94,
+          "origin": "ai"
+        }
+      ],
+      "explanation": {
+        "short": "تنگی اپیکالی باریک‌ترین بخش کانال است و محل ایده‌آل پایان آماده‌سازی و پرکردن کانال.",
+        "reference": "تنگی اپیکالی معمولاً حدود ۰٫۵ تا ۱ میلی‌متر کوتاه‌تر از فورامن اپیکالی است و انتهای آماده‌سازی در آن، تماس مواد با بافت پری‌اپیکال را به حداقل می‌رساند.",
+        "location": "Torabinejad 6e · فصل ۱۴ · Working Length Determination",
+        "why_wrong": {
+          "1": "آپکس رادیوگرافیک همیشه بر محل خروج کانال منطبق نیست و کار تا آن، خطر آماده‌سازی بیش از حد دارد.",
+          "3": "عدد ثابت ۲ میلی‌متر جای تشخیص محل واقعی تنگی را نمی‌گیرد.",
+          "4": "کار تا فورامن، بافت پری‌اپیکال را آسیب می‌زند و آب‌بندی اپیکالی را از بین می‌برد."
+        },
+        "tip": "در سؤال‌های طول کارکرد، دنبال «minor diameter» بگرد.",
+        "trap": "آپکس رادیوگرافیک و فورامن اپیکالی را با تنگی اپیکالی یکی نگیر.",
+        "confidence": 0.86,
+        "origin": "ai"
+      },
+      "currency": [
+        {
+          "against": "torabinejad@6e",
+          "status": "current",
+          "confidence": 0.9,
+          "origin": "ai"
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "subject": "endodontics",
+      "stem": "کدام مورد به‌طور شایع باعث خطای اپکس‌یاب الکترونیکی و نشان دادن طول کوتاه‌تر از واقع می‌شود؟",
+      "choices": [
+        "استفاده از فایل با سایز کوچک",
+        "تماس فایل با ترمیم فلزی (اتصال کوتاه)",
+        "وجود مقدار کمی نرمال سالین در کانال",
+        "دندان تک‌کاناله"
+      ],
+      "answer": {
+        "choice": 2,
+        "status": "final"
+      },
+      "type": "conceptual",
+      "negative_stem": false,
+      "cognitive_level": "understanding",
+      "difficulty": 3,
+      "sources": [
+        {
+          "ref": "torabinejad@6e#ch14.working-length",
+          "confidence": {
+            "source": 0.93,
+            "node": 0.84
+          },
+          "origin": "ai"
+        }
+      ],
+      "concepts": [
+        {
+          "key": "endodontics/cleaning-and-shaping/working-length/electronic-apex-locator",
+          "primary": true,
+          "confidence": 0.9,
+          "origin": "ai"
+        }
+      ],
+      "explanation": {
+        "short": "تماس فایل با ترمیم فلزی یا لثه، مدار را زودتر از رسیدن به اپکس می‌بندد و اپکس‌یاب طول را کوتاه‌تر نشان می‌دهد.",
+        "tip": "پیش از اندازه‌گیری، ترمیم‌های فلزی و پوسیدگی را بردار و حفره را از مایع زیادی خشک کن.",
+        "origin": "ai",
+        "confidence": 0.82
+      }
+    }
+  ]
+}

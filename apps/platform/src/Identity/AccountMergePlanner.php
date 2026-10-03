@@ -47,6 +47,13 @@ final class AccountMergePlanner
         'exam_assessments' => [['created_for_user_id', self::MOVE, null]],
         'exam_question_read_rate_guards' => [['user_id', self::DROP, null]],
         'exam_question_daily_reads' => [['user_id', self::DROP, null]],
+        // Who reviewed a bank classification is a record of who did it.
+        'bank_edition_mappings' => [['reviewed_by_user_id', self::HISTORY, null]],
+        'bank_question_sources' => [['reviewed_by_user_id', self::HISTORY, null]],
+        'bank_question_concepts' => [['reviewed_by_user_id', self::HISTORY, null]],
+        'bank_question_similarity' => [['reviewed_by_user_id', self::HISTORY, null]],
+        'bank_question_currency' => [['reviewed_by_user_id', self::HISTORY, null]],
+        'bank_explanations' => [['reviewed_by_user_id', self::HISTORY, null]],
         // Derived counters: dropped, then rebuilt for the target from the
         // attempts that moved (QuestionStatsRecorder::rebuild).
         'exam_question_user_stats' => [['user_id', self::DROP, null]],
