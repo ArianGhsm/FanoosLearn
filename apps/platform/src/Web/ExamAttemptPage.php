@@ -33,9 +33,12 @@ final class ExamAttemptPage
     {
         $id = $this->renderer->escape($assessmentId);
         $intro = $assessment === null ? '' : $this->renderer->embedJson('assessment-intro', $assessment);
+        // A faint mark of who is reading, across the question card: a
+        // screenshot of a question carries the account it came from.
+        $mark = $this->renderer->escape(mb_substr(trim($viewer->displayName), 0, 24) . ' · ' . substr($viewer->userId, -6));
 
         $main = <<<HTML
-<div class="x-runner" data-assessment="{$id}">
+<div class="x-runner" data-assessment="{$id}" data-watermark="{$mark}">
     {$intro}
     <div id="runner" aria-live="polite">
         <div class="f-card x-runner__loading">

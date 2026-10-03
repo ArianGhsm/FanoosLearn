@@ -48,7 +48,7 @@ of the counted rows at ✅.
 | 21 | Highlight part of the answer to review later (هایلایت → فلش‌کارت) | M | ✅ highlights over the stem (kept in the browser, by design: offsets, never text) |
 | 22 | Question list, next / previous | M | ✅ |
 | 23 | Protection against copying the bank | M | ✅ paced reading (burst + daily cap) |
-| 24 | Watermark on the question | M | ❌ |
+| 24 | Watermark on the question | M | ✅ the reader's name and account fragment, tiled faintly over the question card |
 
 ## Studying
 
@@ -77,7 +77,7 @@ of the counted rows at ✅.
 | 40 | Dark mode | M | ✅ |
 | 41 | Installable app (اپلیکیشن) | M P | ✅ installable (manifest, icons, a worker that caches only versioned assets) |
 | 42 | Announcement board (تابلو اعلانات / اخبار) | M P | 🟡 the platform has announcements, no page |
-| 43 | Support contact | M P | 🟡 the bots; no link on the site |
+| 43 | Support contact | M P | ✅ /support with the bot contacts and FAQ; linked in every footer |
 | 44 | Lessons and summaries next to the bank (درسنامه، خلاصه، مایندمپ) | M P | 🟡 protected files exist; no lesson page |
 
 ## Left out on purpose
@@ -90,4 +90,4 @@ plans. They can come back as their own decisions.
 
 ## Score
 
-Counted rows: 44. ✅ today: 36 (82 %). Target: 36 (≥ 80 %).
+Counted rows: 44. ✅ today: 38 (86 %). Target: 36 (≥ 80 %).

@@ -71,3 +71,23 @@
     width: 100%;
     resize: vertical;
 }
+
+/* پشتیبانی: questions students ask first. */
+.s-faq {
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.s-faq:last-child {
+    border-bottom: 0;
+}
+
+.s-faq summary {
+    cursor: pointer;
+    font-weight: var(--weight-medium);
+}
+
+.s-faq p {
+    margin: var(--space-2) 0 0;
+    color: var(--text-secondary);
+}
