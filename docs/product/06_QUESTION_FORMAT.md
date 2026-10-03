@@ -32,6 +32,25 @@ written, both safe to apply again (rows are matched by stable keys):
 The catalog is imported first; a sitting may only name subjects, concepts
 and editions the catalog already has.
 
+**The real catalog** is `data/bank/catalog.json`. It is generated, not
+edited by hand: `python scripts/import/reference_map_to_catalog.py` reads
+the research workbook `docs/research/dental-residency-reference-map-1396-1405.xlsx`
+(official reference lists, 1396–1405), matches every book against an explicit
+table of references and editions in the script, and writes:
+
+- 13 subjects, the three exam types (دستیاری active; بورد and ارتقا present
+  but inactive);
+- 31 references with 48 editions;
+- one validity row per exam year, subject and edition, carrying the
+  announced chapter scope (`scope`, e.g. «تمام فصول به جز ۴، ۸، ۱۸») and where
+  the announcement came from (`evidence`);
+- `review_notes`: every judgement the script made (an edition inferred from
+  a year, a label that disagrees with its year, a row that is a scope
+  statement rather than a book, a partial notice), for the owner to confirm.
+
+Chapter trees and concepts are not in the workbook; they are added as
+questions are classified.
+
 ## 2. One question in the sitting file
 
 ```json
@@ -111,7 +130,7 @@ Migration `0030_dental_bank.sql`:
 | still correct under an edition? | `bank_question_currency` |
 | related questions | `bank_question_similarity` |
 | the exam it was set in | `bank_exam_sittings` → `bank_exam_types` |
-| the catalog | `bank_subjects`, `bank_concepts`, `bank_references`, `bank_reference_editions`, `bank_reference_nodes`, `bank_node_concepts`, `bank_reference_validity`, `bank_edition_mappings` |
+| the catalog | `bank_subjects`, `bank_concepts`, `bank_references`, `bank_reference_editions`, `bank_reference_nodes`, `bank_node_concepts`, `bank_reference_validity` (with the year's announced `scope` and its `evidence`, migration 0031), `bank_edition_mappings` |
 
 Re-importing a file updates in place. A changed stem or choice raises the
 question's `version`; a changed explanation becomes a new explanation

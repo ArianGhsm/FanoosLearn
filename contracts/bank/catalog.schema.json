@@ -4,44 +4,125 @@
   "title": "FANOOS bank — catalog",
   "description": "Exam types, subjects, concepts, references with editions and chapter trees, official references per exam year, and edition mappings. See docs/product/06_QUESTION_FORMAT.md.",
   "type": "object",
-  "required": ["format"],
+  "required": [
+    "format"
+  ],
   "properties": {
-    "format": { "const": "fanoos.bank.catalog/1" },
-    "notes": { "type": "string" },
+    "format": {
+      "const": "fanoos.bank.catalog/1"
+    },
+    "notes": {
+      "type": "string"
+    },
     "exam_types": {
       "type": "array",
       "items": {
-        "type": "object", "required": ["key", "name"],
-        "properties": { "key": { "$ref": "#/$defs/key" }, "name": { "type": "string" }, "active": { "type": "boolean", "default": true }, "order": { "type": "integer" } }
+        "type": "object",
+        "required": [
+          "key",
+          "name"
+        ],
+        "properties": {
+          "key": {
+            "$ref": "#/$defs/key"
+          },
+          "name": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean",
+            "default": true
+          },
+          "order": {
+            "type": "integer"
+          }
+        }
       }
     },
     "subjects": {
       "type": "array",
       "items": {
-        "type": "object", "required": ["key", "name"],
-        "properties": { "key": { "$ref": "#/$defs/key" }, "name": { "type": "string" }, "name_en": { "type": "string" }, "parent": { "type": "string" }, "order": { "type": "integer" } }
+        "type": "object",
+        "required": [
+          "key",
+          "name"
+        ],
+        "properties": {
+          "key": {
+            "$ref": "#/$defs/key"
+          },
+          "name": {
+            "type": "string"
+          },
+          "name_en": {
+            "type": "string"
+          },
+          "parent": {
+            "type": "string"
+          },
+          "order": {
+            "type": "integer"
+          }
+        }
       }
     },
-    "concepts": { "type": "array", "items": { "$ref": "#/$defs/concept" } },
+    "concepts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/concept"
+      }
+    },
     "references": {
       "type": "array",
       "items": {
-        "type": "object", "required": ["key", "title"],
+        "type": "object",
+        "required": [
+          "key",
+          "title"
+        ],
         "properties": {
-          "key": { "$ref": "#/$defs/key" },
-          "title": { "type": "string" },
-          "authors": { "type": "string" },
-          "subject": { "type": "string" },
+          "key": {
+            "$ref": "#/$defs/key"
+          },
+          "title": {
+            "type": "string"
+          },
+          "authors": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
           "editions": {
             "type": "array",
             "items": {
-              "type": "object", "required": ["key", "label"],
+              "type": "object",
+              "required": [
+                "key",
+                "label"
+              ],
               "properties": {
-                "key": { "$ref": "#/$defs/key" },
-                "label": { "type": "string" },
-                "year": { "type": "integer" },
-                "isbn": { "type": ["string", "null"] },
-                "nodes": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+                "key": {
+                  "$ref": "#/$defs/key"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "year": {
+                  "type": "integer"
+                },
+                "isbn": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "nodes": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/node"
+                  }
+                }
               }
             }
           }
@@ -51,55 +132,202 @@
     "validity": {
       "type": "array",
       "items": {
-        "type": "object", "required": ["exam_type", "year", "subject", "edition"],
+        "type": "object",
+        "required": [
+          "exam_type",
+          "year",
+          "subject",
+          "edition"
+        ],
         "properties": {
-          "exam_type": { "type": "string" },
-          "year": { "type": "integer", "minimum": 1350, "maximum": 1500 },
-          "subject": { "type": "string" },
-          "edition": { "type": "string", "description": "reference@edition" },
-          "official": { "type": "boolean", "default": true },
-          "source_document": { "type": "string" }
+          "exam_type": {
+            "type": "string"
+          },
+          "year": {
+            "type": "integer",
+            "minimum": 1350,
+            "maximum": 1500
+          },
+          "subject": {
+            "type": "string"
+          },
+          "edition": {
+            "type": "string",
+            "description": "reference@edition"
+          },
+          "official": {
+            "type": "boolean",
+            "default": true
+          },
+          "source_document": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scope": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000,
+            "description": "The chapters/pages named for that year, as announced."
+          },
+          "evidence": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 400,
+            "description": "Where the announcement was found and how trustworthy it is."
+          }
         }
       }
     },
     "edition_mappings": {
       "type": "array",
       "items": {
-        "type": "object", "required": ["from", "relation"],
+        "type": "object",
+        "required": [
+          "from",
+          "relation"
+        ],
         "properties": {
-          "from": { "type": "string", "description": "reference@edition#node" },
-          "to": { "type": ["string", "null"], "description": "reference@edition#node; null when removed" },
-          "relation": { "enum": ["equivalent", "partial", "removed"] },
-          "note": { "type": "string" },
-          "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
-          "origin": { "enum": ["ai", "human"] }
+          "from": {
+            "type": "string",
+            "description": "reference@edition#node"
+          },
+          "to": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "reference@edition#node; null when removed"
+          },
+          "relation": {
+            "enum": [
+              "equivalent",
+              "partial",
+              "removed"
+            ]
+          },
+          "note": {
+            "type": "string"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "origin": {
+            "enum": [
+              "ai",
+              "human"
+            ]
+          }
         }
       }
+    },
+    "review_notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Judgement calls made while building the file, for the owner to confirm. Not imported."
     }
   },
   "$defs": {
-    "key": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_.-]{0,59}$" },
+    "key": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_.-]{0,59}$"
+    },
     "concept": {
-      "type": "object", "required": ["key", "level", "name"],
+      "type": "object",
+      "required": [
+        "key",
+        "level",
+        "name"
+      ],
       "properties": {
-        "key": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_./-]{0,159}$", "description": "A path, e.g. endodontics/cleaning-and-shaping/working-length." },
-        "subject": { "type": "string", "description": "Required on top-level concepts; inherited by children." },
-        "level": { "enum": ["topic", "subtopic", "concept"] },
-        "name": { "type": "string" },
-        "name_en": { "type": "string" },
-        "children": { "type": "array", "items": { "$ref": "#/$defs/concept" } }
+        "key": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_./-]{0,159}$",
+          "description": "A path, e.g. endodontics/cleaning-and-shaping/working-length."
+        },
+        "subject": {
+          "type": "string",
+          "description": "Required on top-level concepts; inherited by children."
+        },
+        "level": {
+          "enum": [
+            "topic",
+            "subtopic",
+            "concept"
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "name_en": {
+          "type": "string"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/concept"
+          }
+        }
       }
     },
     "node": {
-      "type": "object", "required": ["key", "kind", "title"],
+      "type": "object",
+      "required": [
+        "key",
+        "kind",
+        "title"
+      ],
       "properties": {
-        "key": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_.-]{0,79}$" },
-        "kind": { "enum": ["part", "chapter", "section", "subsection"] },
-        "number": { "type": ["string", "integer"] },
-        "title": { "type": "string" },
-        "pages": { "type": "array", "items": { "type": "integer" }, "minItems": 2, "maxItems": 2 },
-        "concepts": { "type": "array", "items": { "type": "string" } },
-        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+        "key": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_.-]{0,79}$"
+        },
+        "kind": {
+          "enum": [
+            "part",
+            "chapter",
+            "section",
+            "subsection"
+          ]
+        },
+        "number": {
+          "type": [
+            "string",
+            "integer"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "pages": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "concepts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        }
       }
     }
   }
