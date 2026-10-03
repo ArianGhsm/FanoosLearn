@@ -11,6 +11,8 @@
 
 - [`product/05_DENTAL_RESIDENCY_DATA_MODEL.md`](product/05_DENTAL_RESIDENCY_DATA_MODEL.md)
   — the question bank's design and build order. **Current direction.**
+- [`product/07_COMPETITOR_FEATURES.md`](product/07_COMPETITOR_FEATURES.md)
+  — every option MedoFast and Parseh offer, and which ones FANOOS has.
 - `product/01`–`04` — features built before the dental pivot that still run
   (exam runner, sign-up and disciplines, payments, account merge). They
   describe the code as it is; where they speak of medical banks or
