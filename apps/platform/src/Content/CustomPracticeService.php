@@ -33,6 +33,8 @@ final class CustomPracticeService
     public const MIN_QUESTIONS = 5;
     public const MAX_QUESTIONS = 100;
     private const MAX_COURSES = 20;
+    /** A study set (a whole subject in year order) may be longer than a built exam. */
+    public const MAX_STUDY_SET = 500;
 
     public function __construct(
         private readonly PDO $database,
@@ -126,11 +128,67 @@ final class CustomPracticeService
 
         $courseTitles = $this->courseTitles($workspaceId, $courseIds);
         $label = implode('، ', array_slice($courseTitles, 0, 3)) . (count($courseTitles) > 3 ? '، …' : '');
-        $title = mb_substr('آزمون دلخواه · ' . $label . ' · ' . self::faDigits((string) count($questions)) . ' سؤال', 0, 200);
-        $definitionJson = ContentPayload::encode(['questions' => $questions]);
+        $title = 'آزمون دلخواه · ' . $label . ' · ' . self::faDigits((string) count($questions)) . ' سؤال';
+
+        return $this->store($userId, $workspaceId, $title, ['questions' => $questions], 'custom', $timeLimit, [
+            'source' => $source, 'requested' => $count,
+        ]);
+    }
+
+    /**
+     * Builds a study set from exact questions, in the order given -- a
+     * subject's questions newest year first, a bookmark list, a review box.
+     * Only questions the student may already open are kept (the same pool
+     * the builder draws from); the rest are dropped silently, because the
+     * caller asked for "these, where allowed".
+     *
+     * @param list<string> $questionIds
+     * @return array{assessment_id:string,title:string,question_count:int}
+     */
+    public function createFromQuestions(string $userId, string $workspaceId, array $questionIds, string $title, string $variant, bool $ordered = true): array
+    {
+        $this->access->requireWorkspace($userId, $workspaceId, 'exam.take');
+        $pool = [];
+        foreach ($this->pool($userId, $workspaceId, null) as $question) {
+            $pool[(string) $question['id']] = $question;
+        }
+        $questions = [];
+        foreach (array_unique($questionIds) as $id) {
+            if (isset($pool[$id])) {
+                $questions[] = $pool[$id];
+            }
+            if (count($questions) >= self::MAX_STUDY_SET) {
+                break;
+            }
+        }
+        if ($questions === []) {
+            throw new PlatformException('custom_practice_too_few', 'None of these questions can be opened yet.', 422);
+        }
+        $definition = ['questions' => $questions];
+        if ($ordered) {
+            $definition['ordered'] = true;
+        }
+
+        return $this->store($userId, $workspaceId, $title . ' · ' . self::faDigits((string) count($questions)) . ' سؤال', $definition, $variant, null, [
+            'requested' => count($questionIds),
+        ]);
+    }
+
+    /**
+     * Stores a set as an ordinary published assessment, marked as the
+     * student's own.
+     *
+     * @param array<string, mixed> $definition
+     * @param array<string, mixed> $auditContext
+     * @return array{assessment_id:string,title:string,question_count:int}
+     */
+    private function store(string $userId, string $workspaceId, string $title, array $definition, string $variant, ?int $timeLimit, array $auditContext): array
+    {
+        $title = mb_substr($title, 0, 200);
+        $definitionJson = ContentPayload::encode($definition);
 
         $assessmentId = Uuid::v7();
-        Transaction::run($this->database, function () use ($userId, $workspaceId, $assessmentId, $title, $definitionJson, $timeLimit, $source, $count): void {
+        Transaction::run($this->database, function () use ($userId, $workspaceId, $assessmentId, $title, $definitionJson, $timeLimit, $variant, $auditContext): void {
             $versionId = Uuid::v7();
             $workspaceScope = $this->database->prepare("SELECT id FROM rbac_scopes WHERE scope_type = 'workspace' AND entity_id = :workspace AND workspace_id = :workspace_check");
             $workspaceScope->execute(['workspace' => $workspaceId, 'workspace_check' => $workspaceId]);
@@ -155,8 +213,8 @@ VALUES (:workspace, :assessment, :version, 'approved', UTC_TIMESTAMP(6))
 SQL)->execute(['workspace' => $workspaceId, 'assessment' => $assessmentId, 'version' => $versionId]);
             $this->database->prepare(<<<'SQL'
 INSERT INTO exam_assessment_metadata (workspace_id, assessment_id, assessment_kind, assessment_variant, course_id, source_resource_id, created_at, updated_at)
-VALUES (:workspace, :assessment, 'practice', 'custom', NULL, NULL, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))
-SQL)->execute(['workspace' => $workspaceId, 'assessment' => $assessmentId]);
+VALUES (:workspace, :assessment, 'practice', :variant, NULL, NULL, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))
+SQL)->execute(['workspace' => $workspaceId, 'assessment' => $assessmentId, 'variant' => $variant]);
             $this->database->prepare(<<<'SQL'
 INSERT INTO exam_access_policies (workspace_id, assessment_id, target_scope_id, requires_entitlement, max_attempts, time_limit_minutes, updated_at)
 VALUES (:workspace, :assessment, :scope, FALSE, 20, :time_limit, UTC_TIMESTAMP(6))
@@ -165,12 +223,10 @@ SQL)->execute(['workspace' => $workspaceId, 'assessment' => $assessmentId, 'scop
 INSERT INTO rbac_scopes (id, scope_type, entity_id, workspace_id, parent_scope_id, created_at)
 VALUES (:id, 'assessment', :assessment, :workspace, :parent, UTC_TIMESTAMP(6))
 SQL)->execute(['id' => Uuid::v7(), 'assessment' => $assessmentId, 'workspace' => $workspaceId, 'parent' => $workspaceScopeId]);
-            $this->audit->record($workspaceId, $userId, 'exam.custom_practice.created', 'exam_assessment', $assessmentId, 'success', [
-                'source' => $source, 'requested' => $count,
-            ]);
+            $this->audit->record($workspaceId, $userId, 'exam.custom_practice.created', 'exam_assessment', $assessmentId, 'success', $auditContext + ['variant' => $variant]);
         });
 
-        return ['assessment_id' => $assessmentId, 'title' => $title, 'question_count' => count($questions)];
+        return ['assessment_id' => $assessmentId, 'title' => $title, 'question_count' => count($definition['questions'])];
     }
 
     /**
@@ -218,12 +274,12 @@ SQL);
      * Every question of every exam in these courses that this student may
      * take, once each (the same question id in two exams counts once).
      *
-     * @param list<string> $courseIds
+     * @param ?list<string> $courseIds null for every course
      * @return list<array<string, mixed>>
      */
-    private function pool(string $userId, string $workspaceId, array $courseIds): array
+    private function pool(string $userId, string $workspaceId, ?array $courseIds): array
     {
-        $placeholders = implode(',', array_map(static fn (int $i): string => ':course' . $i, array_keys($courseIds)));
+        $courseFilter = $courseIds === null ? '' : 'AND metadata.course_id IN (' . implode(',', array_map(static fn (int $i): string => ':course' . $i, array_keys($courseIds))) . ')';
         $query = $this->database->prepare(<<<SQL
 SELECT version.definition_json, policy.requires_entitlement, policy.target_scope_id, metadata.course_id
 FROM exam_assessments assessment
@@ -233,10 +289,10 @@ JOIN exam_assessment_versions version ON version.assessment_id = assessment.id
  AND version.workspace_id = assessment.workspace_id AND version.version_no = assessment.current_version_no
 WHERE assessment.workspace_id = :workspace AND assessment.status = 'published' AND assessment.archived_at IS NULL
   AND assessment.created_for_user_id IS NULL
-  AND metadata.course_id IN ({$placeholders})
+  {$courseFilter}
 SQL);
         $parameters = ['workspace' => $workspaceId];
-        foreach ($courseIds as $i => $courseId) {
+        foreach (($courseIds ?? []) as $i => $courseId) {
             $parameters['course' . $i] = $courseId;
         }
         $query->execute($parameters);
@@ -255,7 +311,7 @@ SQL);
             foreach ($definition['questions'] ?? [] as $question) {
                 // Remembered so the progress dashboard can file an answer in
                 // a custom exam under the course the question came from.
-                $question['course_id'] = (string) $row['course_id'];
+                $question['course_id'] = $row['course_id'] === null ? null : (string) $row['course_id'];
                 $questions[(string) $question['id']] ??= $question;
             }
         }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fanoos\Platform\Http;
 
+use Fanoos\Platform\Bank\BankBrowseService;
 use Fanoos\Platform\Commerce\CatalogAdminService;
 use Fanoos\Platform\Commerce\CommerceService;
 use Fanoos\Platform\Content\ProtectedResourceAuthorizer;
@@ -49,6 +50,7 @@ final class ApiKernel
         private readonly ?CatalogAdminService $catalogAdmin = null,
         private readonly ?CustomPracticeService $customPractice = null,
         private readonly ?ProgressService $progress = null,
+        private readonly ?BankBrowseService $bank = null,
     ) {
     }
 
@@ -479,6 +481,23 @@ final class ApiKernel
                 throw new PlatformException('progress_unavailable', 'Progress is not available.', 503);
             }
             return ['status' => 200, 'data' => $this->progress->progress($session->userId, $workspaceId)];
+        }
+        if (str_starts_with($suffix, '/bank')) {
+            if ($this->bank === null) {
+                throw new PlatformException('bank_unavailable', 'The bank is not available.', 503);
+            }
+            if ($request->method === 'GET' && $suffix === '/bank') {
+                return ['status' => 200, 'data' => $this->bank->overview($session->userId, $workspaceId)];
+            }
+            if ($request->method === 'GET' && $suffix === '/bank/references') {
+                return ['status' => 200, 'data' => $this->bank->references($session->userId, $workspaceId)];
+            }
+            if ($request->method === 'GET' && preg_match('#^/bank/subjects/([a-z0-9_-]{1,60})$#', $suffix, $match)) {
+                return ['status' => 200, 'data' => $this->bank->subject($session->userId, $workspaceId, $match[1])];
+            }
+            if ($request->method === 'POST' && $suffix === '/bank/study') {
+                return ['status' => 201, 'data' => $this->bank->study($session->userId, $workspaceId, $request->body)];
+            }
         }
         if ($request->method === 'GET' && $suffix === '/mistakes-review') {
             return ['status' => 200, 'data' => $this->requireExams()->mistakesReview($session->userId, $workspaceId)];

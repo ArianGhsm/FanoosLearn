@@ -141,6 +141,21 @@ final class WebRouter
                 : $this->page(200, (new CustomPracticePage($this->renderer))->render($viewer));
         }
 
+        if ($path === '/app/bank' || $path === '/app/references' || preg_match('#^/app/bank/[a-z0-9_-]{1,60}$#', $path) === 1) {
+            if ($viewer === null) {
+                return $this->redirect('/login');
+            }
+            if ($viewer->workspaceId === null) {
+                return $this->redirect('/app');
+            }
+            $page = new BankPage($this->renderer);
+            return $this->page(200, match (true) {
+                $path === '/app/bank' => $page->overview($viewer),
+                $path === '/app/references' => $page->references($viewer),
+                default => $page->subject($viewer, substr($path, strlen('/app/bank/'))),
+            });
+        }
+
         if ($path === '/app/exams/mistakes') {
             if ($viewer === null) {
                 return $this->redirect('/login');

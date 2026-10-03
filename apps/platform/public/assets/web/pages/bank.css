@@ -1,0 +1,232 @@
+/* بانک سؤال: overview, subject and references. Shares chips and skeletons with exams.css. */
+
+.b-head {
+    margin-bottom: var(--space-5);
+}
+
+.b-head h1 {
+    margin: 0 0 var(--space-1);
+}
+
+.b-head__tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+}
+
+.b-search {
+    flex: 1 1 260px;
+    min-width: 0;
+}
+
+.b-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+}
+
+.b-note {
+    margin: 0 0 var(--space-4);
+}
+
+.b-pad {
+    padding: var(--space-4) var(--space-5);
+}
+
+/* One sheet, one row per subject / sitting / topic. */
+.b-sheet {
+    display: grid;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.b-row,
+.b-topic,
+.b-refrow {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--border);
+    color: inherit;
+    text-decoration: none;
+}
+
+.b-row:last-child,
+.b-topic:last-child,
+.b-refrow:last-child {
+    border-bottom: 0;
+}
+
+a.b-row:hover {
+    background: var(--surface-muted);
+}
+
+.b-row.is-empty {
+    opacity: 0.6;
+}
+
+.b-row__body {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.b-row__title {
+    display: block;
+    font-size: var(--text-base);
+    margin-bottom: var(--space-1);
+    color: var(--text-primary);
+}
+
+.b-row__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.b-row__go {
+    color: var(--text-tertiary);
+}
+
+.b-old {
+    color: var(--warning);
+}
+
+/* A topic row carries a faint bar the width of its share of the subject. */
+.b-topic::before {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: var(--share, 0%);
+    background: var(--accent-soft);
+    opacity: 0.55;
+}
+
+.b-start {
+    position: relative;
+    min-height: 36px;
+    padding-inline: var(--space-4);
+    font-size: var(--text-sm);
+    flex: none;
+}
+
+/* ------------------------------------------------------------- subject */
+
+.b-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1px;
+    margin: var(--space-4) 0 0;
+    padding: 0;
+    list-style: none;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.b-facts li {
+    display: grid;
+    gap: var(--space-1);
+    padding: var(--space-3) var(--space-4);
+    background: var(--surface);
+}
+
+.b-facts span {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.b-facts strong {
+    font-size: var(--text-lg);
+}
+
+.b-panel {
+    margin-bottom: var(--space-5);
+}
+
+.b-panel h2 {
+    margin: 0 0 var(--space-1);
+    font-size: var(--text-lg);
+}
+
+.b-panel > .f-muted {
+    margin: 0 0 var(--space-4);
+}
+
+.b-actions,
+.b-years {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.b-years {
+    margin-top: var(--space-2);
+}
+
+.b-empty {
+    margin-bottom: var(--space-5);
+}
+
+.b-empty h2 {
+    margin: 0 0 var(--space-1);
+    font-size: var(--text-lg);
+}
+
+/* ---------------------------------------------------------- references */
+
+.b-ref__year {
+    margin: var(--space-4) 0 var(--space-2);
+    font-size: var(--text-base);
+}
+
+.b-refs {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0 0 var(--space-3);
+    padding: 0;
+    list-style: none;
+}
+
+.b-ref {
+    display: grid;
+    gap: var(--space-1);
+}
+
+.b-ref .f-muted,
+.b-ref__scope {
+    font-size: var(--text-sm);
+}
+
+.b-ref__scope {
+    color: var(--text-secondary);
+}
+
+.b-refrow {
+    display: grid;
+    gap: var(--space-2);
+}
+
+.b-refrow .b-refs {
+    margin: 0;
+}
+
+@media (max-width: 560px) {
+    .b-topic {
+        flex-wrap: wrap;
+    }
+
+    .b-topic .b-start {
+        width: 100%;
+    }
+}

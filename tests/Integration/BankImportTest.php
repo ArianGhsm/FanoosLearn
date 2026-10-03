@@ -7,9 +7,11 @@ namespace Fanoos\Tests\Integration;
 use Fanoos\Platform\Audit\AuditLogger;
 use Fanoos\Platform\Authorization\AccessGate;
 use Fanoos\Platform\Authorization\ScopeAuthorizer;
+use Fanoos\Platform\Bank\BankBrowseService;
 use Fanoos\Platform\Bank\BankImporter;
 use Fanoos\Platform\Bank\BankImportException;
 use Fanoos\Platform\Bank\BankPublisher;
+use Fanoos\Platform\Content\CustomPracticeService;
 use Fanoos\Platform\Content\ExamQuestionRateGuard;
 use Fanoos\Platform\Content\ExamService;
 use Fanoos\Platform\Core\ClassProvisioningService;
@@ -138,6 +140,24 @@ SQL);
         }
         $explanation = (string) ($review['explanation'] ?? '');
         $this->assert(str_contains($explanation, 'پاسخ: گزینه‌ی ج') && str_contains($explanation, 'چرا بقیه نه') && str_contains($explanation, 'منبع'), 'The review does not carry the structured explanation: ' . $explanation);
+
+        // The bank browser: by subject, topics most-asked first, and a study set in year order.
+        $access = new AccessGate($this->database, new ScopeAuthorizer($this->database));
+        $audit = new AuditLogger($this->database);
+        $browse = new BankBrowseService($this->database, $access, new CustomPracticeService($this->database, $access, new EntitlementService($this->database, $access, $audit), $audit));
+        $overview = $browse->overview($f['student'], $ws);
+        $endodontics = array_values(array_filter($overview['subjects'], static fn (array $s): bool => $s['key'] === 'endodontics'))[0] ?? null;
+        $this->assert($overview['total'] === 2 && $endodontics !== null && $endodontics['total'] === 2 && $endodontics['per_exam'] === 2 && $endodontics['first_year'] === 1404, 'Overview: ' . json_encode($overview, JSON_UNESCAPED_UNICODE));
+        $this->assert(count($overview['sittings']) === 1 && $overview['sittings'][0]['assessment_id'] === $published['assessment_id'], 'The published sitting is not listed by year.');
+        $subject = $browse->subject($f['student'], $ws, 'endodontics');
+        $this->assert($subject['topics'][0]['key'] === 'endodontics/cleaning-and-shaping' && $subject['topics'][0]['total'] === 2 && count($subject['high_yield']) === 2, 'Subject topics: ' . json_encode($subject['topics'], JSON_UNESCAPED_UNICODE));
+        $this->assert($subject['references'] !== [], 'The subject page lists no references.');
+        $this->assert($browse->references($f['student'], $ws)[0]['year'] >= 1405, 'References are not newest year first.');
+        $set = $browse->study($f['student'], $ws, ['subject' => 'endodontics', 'topic' => 'endodontics/cleaning-and-shaping']);
+        $this->assert($set['question_count'] === 2, 'The study set does not hold the topic: ' . json_encode($set, JSON_UNESCAPED_UNICODE));
+        $studyAttempt = $exams->startAttempt($f['student'], $ws, $set['assessment_id']);
+        $first = (string) $exams->readQuestion($f['student'], $ws, $studyAttempt['attempt_id'], 1)['question']['id'];
+        $this->assert($first === $key, 'A study set is not shown in paper order.');
 
         // A voided question leaves the next version; the exam stays the same exam.
         $voided = $amended;
