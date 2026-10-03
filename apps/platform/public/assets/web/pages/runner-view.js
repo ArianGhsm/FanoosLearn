@@ -504,7 +504,8 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
             onShowExplanation: actions.showExplanation,
         }) : null,
         renderQuestionStats(question.stats ?? null),
-        renderStudy(question, study, actions));
+        renderStudy(question, study, actions),
+        renderWatermark());
 
     // The end gutter stays empty: اسکرول عمودی کنار سؤال. There is nothing
     // else to scroll in it, so a vertical wheel there always navigates --
@@ -875,6 +876,25 @@ export function renderMap(state, actions) {
             filters,
             grid,
             el('p', { className: 'f-tiny x-map__legend', text: 'پررنگ: پاسخ‌داده‌شده · با نشان: علامت‌زده' })));
+}
+
+/*
+ * واترمارک: the reader's name and a fragment of their account id, tiled
+ * faintly and diagonally over the question card, so a screenshot of a
+ * question names the account it was taken from. Drawn as an SVG background
+ * on a layer that ignores the pointer, so it never gets in the way of a
+ * choice or a selection.
+ */
+export function watermarkImage(mark) {
+    const text = String(mark).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180"><text x="160" y="90" text-anchor="middle" transform="rotate(-24 160 90)" font-family="sans-serif" font-size="15" fill="#888">${text}</text></svg>`;
+    return `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}")`;
+}
+
+function renderWatermark() {
+    const mark = document.querySelector('.x-runner')?.dataset.watermark ?? '';
+    if (mark.trim() === '') return null;
+    return el('div', { className: 'x-watermark', attrs: { 'aria-hidden': 'true', style: `background-image:${watermarkImage(mark)}` } });
 }
 
 /** The confirmation before scoring, with the honest unanswered count. */

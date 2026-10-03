@@ -54,6 +54,10 @@ final class WebRouter
             return Pwa::worker();
         }
 
+        if ($path === '/support') {
+            return $this->page(200, (new SupportPage($this->renderer))->render($viewer, $this->botUsernames));
+        }
+
         if ($path === '/login') {
             return $viewer === null
                 ? $this->page(200, (new LoginPage($this->renderer))->render())

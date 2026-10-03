@@ -2051,3 +2051,19 @@ body.x-focus .f-page {
 .x-rank__bar.is-mine {
     background: var(--accent);
 }
+
+/* واترمارک over the question card (see renderWatermark). */
+.x-watermark {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.09;
+    background-repeat: repeat;
+    z-index: 1;
+}
+
+@media print {
+    .x-watermark {
+        opacity: 0.25;
+    }
+}

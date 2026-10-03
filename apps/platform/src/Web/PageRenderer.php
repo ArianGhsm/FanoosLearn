@@ -154,10 +154,10 @@ final class PageRenderer
     private function footer(?ViewerContext $viewer): string
     {
         $links = $viewer === null
-            ? [['/', 'فانوس'], ['/login', 'ورود'], ['/register', 'ساخت حساب']]
+            ? [['/', 'فانوس'], ['/login', 'ورود'], ['/register', 'ساخت حساب'], ['/support', 'پشتیبانی']]
             : ($viewer->workspaceId === null
-                ? [['/app', 'خانه'], ['/account', 'حساب']]
-                : [['/app/bank', 'بانک سؤال'], ['/app/references', 'منابع آزمون'], ['/app/exams', 'آزمون‌ها'], ['/app/exams/custom', 'آزمون دلخواه'], ['/app/exams/mistakes', 'مرور اشتباه‌ها'], ['/app/saved', 'ذخیره‌ها و یادداشت‌ها'], ['/app/timer', 'تایمر مطالعه'], ['/app/progress', 'پیشرفت'], ['/account', 'حساب']]);
+                ? [['/app', 'خانه'], ['/account', 'حساب'], ['/support', 'پشتیبانی']]
+                : [['/app/bank', 'بانک سؤال'], ['/app/references', 'منابع آزمون'], ['/app/exams', 'آزمون‌ها'], ['/app/exams/custom', 'آزمون دلخواه'], ['/app/exams/mistakes', 'مرور اشتباه‌ها'], ['/app/saved', 'ذخیره‌ها و یادداشت‌ها'], ['/app/timer', 'تایمر مطالعه'], ['/app/progress', 'پیشرفت'], ['/account', 'حساب'], ['/support', 'پشتیبانی']]);
         $nav = '';
         foreach ($links as [$href, $label]) {
             $nav .= '<a href="' . $this->escape($href) . '">' . $this->escape($label) . '</a>';
