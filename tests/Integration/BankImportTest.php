@@ -82,6 +82,23 @@ final class BankImportTest
         $again = $importer->import($ws, $sitting);
         $this->assert($again['answers_recorded'] === 0 && $again['questions_changed'] === 0 && $again['explanations'] === 0, 'Re-importing an unchanged sitting changed something: ' . json_encode($again));
 
+        // The real catalog built from the reference workbook imports cleanly.
+        $real = json_decode((string) file_get_contents($this->root . '/data/bank/catalog.json'), true, 64, JSON_THROW_ON_ERROR);
+        $problems = $importer->validate($ws, $real);
+        $this->assert($problems === [], 'data/bank/catalog.json does not import: ' . json_encode(array_slice($problems, 0, 5), JSON_UNESCAPED_UNICODE));
+        $importer->import($ws, $real);
+        $endo = $this->database->prepare(<<<'SQL'
+SELECT edition.edition_key, validity.scope FROM bank_reference_validity validity
+JOIN bank_subjects subject ON subject.id = validity.subject_id
+JOIN bank_reference_editions edition ON edition.id = validity.edition_id
+JOIN bank_references reference ON reference.id = edition.reference_id
+WHERE validity.workspace_id = :ws AND validity.exam_year = 1405 AND subject.subject_key = 'endodontics' AND reference.reference_key = 'torabinejad-endodontics'
+SQL);
+        $endo->execute(['ws' => $ws]);
+        $row = $endo->fetch();
+        $this->assert($row !== false && $row['edition_key'] === '6e' && $row['scope'] !== null, 'The 1405 endodontics reference is not Torabinejad 6e with its scope.');
+        $this->assert($this->count('bank_reference_validity', $ws) >= 150, 'The real catalog lost its year-by-year references.');
+
         // A reviewed source survives a later AI pass.
         $this->database->prepare("UPDATE bank_question_sources s JOIN bank_questions q ON q.id = s.question_id SET s.reviewed_by_user_id = :user, s.reviewed_at = UTC_TIMESTAMP(6), s.page = '257' WHERE q.question_key = :key")
             ->execute(['user' => $f['reviewer'], 'key' => $key]);

@@ -444,7 +444,13 @@ final class BankImporter
                 'exam_year' => $row['year'],
                 'subject_id' => $this->lookup($workspaceId, 'bank_subjects', 'subject_key', (string) $row['subject']),
                 'edition_id' => $this->resolveEdition($workspaceId, (string) $row['edition']),
-            ], ['is_official' => ($row['official'] ?? true) ? 1 : 0, 'source_document' => $row['source_document'] ?? null, 'recorded_at' => $this->now()], false);
+            ], [
+                'is_official' => ($row['official'] ?? true) ? 1 : 0,
+                'scope' => isset($row['scope']) ? mb_substr((string) $row['scope'], 0, 1000) : null,
+                'evidence' => isset($row['evidence']) ? mb_substr((string) $row['evidence'], 0, 400) : null,
+                'source_document' => isset($row['source_document']) ? mb_substr((string) $row['source_document'], 0, 400) : null,
+                'recorded_at' => $this->now(),
+            ], false);
             ++$counts['validity'];
         }
 
