@@ -42,10 +42,10 @@ of the counted rows at ✅.
 | 15 | Your history on this question (answered / right / wrong / blank / last time) | M | 🟡 answered, right and last time; blanks not counted |
 | 16 | Descriptive answer (پاسخ تشریحی) | M P | ✅ |
 | 17 | Where in the reference the answer comes from | P | ✅ source line in every bank explanation |
-| 18 | Bookmark a question (بوکمارک) | M | ❌ |
-| 19 | Personal note on a question (یادداشت شخصی) | M | ❌ |
-| 20 | Report a mistake in a question or answer (گزارش اشکال) | M | ❌ |
-| 21 | Highlight part of the answer to review later (هایلایت → فلش‌کارت) | M | ❌ |
+| 18 | Bookmark a question (بوکمارک) | M | ✅ «ذخیره» in the question head; kept across exams |
+| 19 | Personal note on a question (یادداشت شخصی) | M | ✅ in the study drawer; saved on the account, every device |
+| 20 | Report a mistake in a question or answer (گزارش اشکال) | M | ✅ in the study drawer; reviewers resolve them at /app/admin/reports |
+| 21 | Highlight part of the answer to review later (هایلایت → فلش‌کارت) | M | ✅ highlights over the stem (kept in the browser, by design: offsets, never text) |
 | 22 | Question list, next / previous | M | ✅ |
 | 23 | Protection against copying the bank | M | ✅ paced reading (burst + daily cap) |
 | 24 | Watermark on the question | M | ❌ |
@@ -57,8 +57,8 @@ of the counted rows at ✅.
 | 25 | Exam builder by subject and topic (آزمون‌ساز هوشمند) | M | ✅ آزمون دلخواه |
 | 26 | Builder modes: unseen only, wrong only (مروری) | M | ✅ |
 | 27 | Review assistant that resurfaces what you got wrong on a schedule (مرور هوشمند) | M P | 🟡 mistakes review, no schedule |
-| 28 | Bookmarks page grouped by topic (بوکمارک‌های من) | M | ❌ |
-| 29 | Notes page (یادداشت‌های من) | M | ❌ |
+| 28 | Bookmarks page grouped by topic (بوکمارک‌های من) | M | ✅ /app/saved, grouped by topic, each topic one tap from a study set |
+| 29 | Notes page (یادداشت‌های من) | M | ✅ /app/saved, notes tab |
 | 30 | Highlights / flashcards page (هایلایت‌ها) | M | ❌ |
 | 31 | Performance report by subject and day (گزارشات) | M | ✅ progress dashboard |
 | 32 | Study time per day (محاسبه ساعت مطالعه) | M | ❌ |
@@ -90,4 +90,4 @@ plans. They can come back as their own decisions.
 
 ## Score
 
-Counted rows: 44. ✅ today: 25 (57 %). Target: 36 (≥ 80 %).
+Counted rows: 44. ✅ today: 31 (70 %). Target: 36 (≥ 80 %).

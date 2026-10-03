@@ -102,6 +102,7 @@ final class PageRenderer
     private const NAV_ICONS = [
         'home' => '<svg viewBox="0 0 24 24"><path d="M3.5 10.5 12 3.5l8.5 7V20a1 1 0 0 1-1 1H15v-6H9v6H4.5a1 1 0 0 1-1-1z"/></svg>',
         'bank' => '<svg viewBox="0 0 24 24"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H10v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M10 4h4v16h-4z"/><path d="m14.5 4.6 3.9-1 2.6 15.4-3.9 1z"/></svg>',
+        'flag' => '<svg viewBox="0 0 24 24"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg>',
         'exams' => '<svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>',
         'progress' => '<svg viewBox="0 0 24 24"><path d="M4 4v16h16"/><path d="m7.5 14.5 3.5-3.5 3 3 5-5.5"/></svg>',
         'store' => '<svg viewBox="0 0 24 24"><path d="M5 8h14l-1.1 11.1a1 1 0 0 1-1 .9H7.1a1 1 0 0 1-1-.9z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>',
@@ -153,7 +154,7 @@ final class PageRenderer
             ? [['/', 'فانوس'], ['/login', 'ورود'], ['/register', 'ساخت حساب']]
             : ($viewer->workspaceId === null
                 ? [['/app', 'خانه'], ['/account', 'حساب']]
-                : [['/app/bank', 'بانک سؤال'], ['/app/references', 'منابع آزمون'], ['/app/exams', 'آزمون‌ها'], ['/app/exams/custom', 'آزمون دلخواه'], ['/app/exams/mistakes', 'مرور اشتباه‌ها'], ['/app/progress', 'پیشرفت'], ['/account', 'حساب']]);
+                : [['/app/bank', 'بانک سؤال'], ['/app/references', 'منابع آزمون'], ['/app/exams', 'آزمون‌ها'], ['/app/exams/custom', 'آزمون دلخواه'], ['/app/exams/mistakes', 'مرور اشتباه‌ها'], ['/app/saved', 'ذخیره‌ها و یادداشت‌ها'], ['/app/progress', 'پیشرفت'], ['/account', 'حساب']]);
         $nav = '';
         foreach ($links as [$href, $label]) {
             $nav .= '<a href="' . $this->escape($href) . '">' . $this->escape($label) . '</a>';

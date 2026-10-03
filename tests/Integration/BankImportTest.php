@@ -14,8 +14,10 @@ use Fanoos\Platform\Bank\BankPublisher;
 use Fanoos\Platform\Content\CustomPracticeService;
 use Fanoos\Platform\Content\ExamQuestionRateGuard;
 use Fanoos\Platform\Content\ExamService;
+use Fanoos\Platform\Content\QuestionToolsService;
 use Fanoos\Platform\Core\ClassProvisioningService;
 use Fanoos\Platform\Entitlements\EntitlementService;
+use Fanoos\Platform\Support\PlatformException;
 use Fanoos\Platform\Support\Uuid;
 use PDO;
 use RuntimeException;
@@ -158,6 +160,38 @@ SQL);
         $studyAttempt = $exams->startAttempt($f['student'], $ws, $set['assessment_id']);
         $first = (string) $exams->readQuestion($f['student'], $ws, $studyAttempt['attempt_id'], 1)['question']['id'];
         $this->assert($first === $key, 'A study set is not shown in paper order.');
+
+        // A student's tools on a question: bookmark, note, report; the reviewers' queue.
+        $practice = new CustomPracticeService($this->database, $access, new EntitlementService($this->database, $access, $audit), $audit);
+        $tools = new QuestionToolsService($this->database, $access, $audit, $practice);
+        $examId = $published['assessment_id'];
+        $tools->setBookmark($f['student'], $ws, $examId, $key, true);
+        $tools->setBookmark($f['student'], $ws, $examId, $key, true); // idempotent
+        $tools->saveNote($f['student'], $ws, $examId, $key, '  طول کارکرد با آپکس‌یاب  ');
+        $state = $tools->forAssessment($f['student'], $ws, $examId);
+        $this->assert($state['bookmarks'] === [$key] && ($state['notes'][$key] ?? null) === 'طول کارکرد با آپکس‌یاب', 'Tools state: ' . json_encode($state, JSON_UNESCAPED_UNICODE));
+        $saved = $tools->saved($f['student'], $ws);
+        $this->assert(count($saved['bookmarks']) === 1 && $saved['bookmarks'][0]['topic'] !== null && !array_key_exists('answer', $saved['bookmarks'][0]), 'Saved list: ' . json_encode($saved, JSON_UNESCAPED_UNICODE));
+        $this->assert($tools->studyBookmarks($f['student'], $ws)['question_count'] === 1, 'Bookmarks did not open as a study set.');
+        try {
+            $tools->setBookmark($f['student'], $ws, $examId, 'residency-1300-1-999', true);
+            throw new RuntimeException('A question outside the exam was bookmarked.');
+        } catch (PlatformException $error) {
+            $this->assert($error->errorCode === 'question_not_found', 'Unexpected error: ' . $error->errorCode);
+        }
+        $reportId = $tools->report($f['student'], $ws, $examId, $key, 'answer', 'کلید اشتباه است.')['report_id'];
+        try {
+            $tools->reports($f['student'], $ws);
+            throw new RuntimeException('A student read the reports queue.');
+        } catch (PlatformException) {
+            ++$this->assertions;
+        }
+        $queue = $tools->reports($f['reviewer'], $ws);
+        $this->assert(count($queue) === 1 && $queue[0]['id'] === $reportId && $queue[0]['answer'] !== null, 'Reports queue: ' . json_encode($queue, JSON_UNESCAPED_UNICODE));
+        $tools->resolveReport($f['reviewer'], $ws, $reportId, 'resolved', 'اصلاح شد');
+        $this->assert($tools->reports($f['reviewer'], $ws) === [] && count($tools->reports($f['reviewer'], $ws, 'resolved')) === 1, 'A resolved report stayed open.');
+        $tools->saveNote($f['student'], $ws, $examId, $key, '');
+        $this->assert($tools->forAssessment($f['student'], $ws, $examId)['notes'] === [], 'An emptied note was kept.');
 
         // A voided question leaves the next version; the exam stays the same exam.
         $voided = $amended;

@@ -1967,3 +1967,44 @@ body.x-focus .f-page {
     border-radius: var(--radius-pill);
     cursor: pointer;
 }
+
+/* ذخیره beside نشان‌دار: the two sit together at the end of the head. */
+.x-question__head {
+    gap: var(--space-2);
+}
+
+.x-question__head .x-flag:not(.x-bookmark) {
+    margin-inline-start: auto;
+}
+
+.x-bookmark.is-on {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent-strong);
+}
+
+/* گزارش اشکال, at the foot of the study drawer. */
+.x-report {
+    display: grid;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border);
+}
+
+.x-report .x-question__clear {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    justify-self: start;
+}
+
+.x-report__kinds {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+}
+
+.x-report__error {
+    color: var(--danger);
+}

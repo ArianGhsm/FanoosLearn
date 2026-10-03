@@ -183,6 +183,8 @@ export function el(tag, options = {}, ...children) {
 const ICONS = {
     grid: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',
     flag: 'M5 3v18M5 4h11l-2 3 2 3H5',
+    bookmark: 'M6 3h12v18l-6-4-6 4z',
+    alert: 'M12 3l10 18H2zM12 10v5M12 18h.01',
     // A hex nut with a hole -- reads as "settings/tools" without relying on
     // U+2699, which the note above already explains gets substituted.
     settings: 'M18.93 16L12 20L5.07 16L5.07 8L12 4L18.93 8ZM12 9a3 3 0 100 6 3 3 0 000-6z',
@@ -474,7 +476,12 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
                 className: `x-flag${flagged ? ' is-on' : ''}`, type: 'button',
                 attrs: { 'aria-pressed': flagged ? 'true' : 'false' },
                 on: { click: actions.toggleFlag },
-            }, icon('flag', { filled: flagged }), el('span', { text: flagged ? 'نشان‌دار' : 'نشان‌دار کن' }))),
+            }, icon('flag', { filled: flagged }), el('span', { text: flagged ? 'نشان‌دار' : 'نشان‌دار کن' })),
+            !study ? null : el('button', {
+                className: `x-flag x-bookmark${study.bookmarked ? ' is-on' : ''}`, type: 'button',
+                attrs: { 'aria-pressed': study.bookmarked ? 'true' : 'false', title: 'برای مرور بعدی در «ذخیره‌ها» نگهش دار' },
+                on: { click: () => actions.toggleBookmark(question.id) },
+            }, icon('bookmark', { filled: study.bookmarked === true }), el('span', { text: study.bookmarked ? 'ذخیره شد' : 'ذخیره' }))),
         renderQuestionMeta(question),
         renderStem(question, study),
         stemFigure(state.assessmentId, question),
@@ -678,7 +685,46 @@ function renderStudy(question, study, actions) {
                 text: study.hint || 'بخشی از صورت سؤال را انتخاب کن، بعد «هایلایت» را بزن.',
             }),
             editor,
-            el('p', { className: 'f-tiny x-study__hint', text: 'یادداشت‌ها و هایلایت‌ها فقط در همین مرورگر ذخیره می‌شوند و در تلاش‌های بعدی همین سؤال هم می‌مانند.' })));
+            el('p', { className: 'f-tiny x-study__hint', text: 'یادداشت روی حسابت هم ذخیره می‌شود و در «ذخیره‌ها و یادداشت‌ها» پیدایش می‌کنی؛ هایلایت‌ها فقط در همین مرورگر می‌مانند.' }),
+            renderReportForm(question, study.report ?? null, actions)));
+}
+
+const REPORT_KINDS = [['answer', 'پاسخ (کلید)'], ['explanation', 'پاسخ تشریحی'], ['question', 'متن سؤال'], ['other', 'سایر']];
+
+/*
+ * گزارش اشکال: "this question or its answer is wrong", sent to the
+ * workspace's reviewers. Inside the study drawer, so it never competes with
+ * the choices while the student is answering.
+ */
+function renderReportForm(question, report, actions) {
+    if (!report || !actions.setReport) return null;
+    if (!report.open) {
+        return el('div', { className: 'x-report' },
+            el('button', {
+                className: 'x-question__clear', type: 'button',
+                on: { click: () => actions.setReport({ open: true, sent: false, error: '' }) },
+            }, icon('alert'), el('span', { text: report.sent ? 'گزارش رسید، ممنون. گزارش دیگری داری؟' : 'گزارش اشکال در این سؤال' })));
+    }
+    const text = el('textarea', { className: 'x-study__note', attrs: { rows: '2', maxlength: '1000', placeholder: 'اشکال چیست؟ اگر منبعی داری بنویس.', 'aria-label': 'شرح اشکال' } });
+    const kinds = el('div', { className: 'x-report__kinds', attrs: { role: 'radiogroup', 'aria-label': 'اشکال در' } },
+        ...REPORT_KINDS.map(([value, label]) => el('button', {
+            className: `x-chip${report.kind === value ? ' is-active' : ''}`, type: 'button',
+            attrs: { role: 'radio', 'aria-checked': report.kind === value ? 'true' : 'false' },
+            text: label,
+            on: { click: () => actions.setReport({ kind: value }) },
+        })));
+    return el('div', { className: 'x-report is-open' },
+        el('p', { className: 'f-tiny', text: 'اشکال در:' }),
+        kinds,
+        text,
+        report.error ? el('p', { className: 'f-tiny x-report__error', text: report.error }) : null,
+        el('div', { className: 'x-study__actions' },
+            el('button', {
+                className: 'f-btn f-btn--primary', type: 'button', text: report.sending ? 'در حال ارسال…' : 'ارسال گزارش',
+                attrs: { disabled: report.sending === true },
+                on: { click: () => { if (text.value.trim() !== '') actions.sendReport(question.id, text.value); } },
+            }),
+            el('button', { className: 'f-btn f-btn--ghost', type: 'button', text: 'انصراف', on: { click: () => actions.setReport({ open: false }) } })));
 }
 
 /*

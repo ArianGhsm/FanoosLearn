@@ -11,6 +11,7 @@ use Fanoos\Platform\Content\ProtectedResourceAuthorizer;
 use Fanoos\Platform\Content\ContentService;
 use Fanoos\Platform\Content\CustomPracticeService;
 use Fanoos\Platform\Content\ProgressService;
+use Fanoos\Platform\Content\QuestionToolsService;
 use Fanoos\Platform\Content\ExamImageStore;
 use Fanoos\Platform\Content\ExamService;
 use Fanoos\Platform\Content\SecureDeliveryService;
@@ -51,6 +52,7 @@ final class ApiKernel
         private readonly ?CustomPracticeService $customPractice = null,
         private readonly ?ProgressService $progress = null,
         private readonly ?BankBrowseService $bank = null,
+        private readonly ?QuestionToolsService $tools = null,
     ) {
     }
 
@@ -497,6 +499,38 @@ final class ApiKernel
             }
             if ($request->method === 'POST' && $suffix === '/bank/study') {
                 return ['status' => 201, 'data' => $this->bank->study($session->userId, $workspaceId, $request->body)];
+            }
+        }
+        if (str_starts_with($suffix, '/question-tools') || str_starts_with($suffix, '/saved') || str_starts_with($suffix, '/question-reports')) {
+            if ($this->tools === null) {
+                throw new PlatformException('question_tools_unavailable', 'Question tools are not available.', 503);
+            }
+            $body = $request->body;
+            $assessment = (string) ($body['assessment_id'] ?? $request->query['assessment_id'] ?? '');
+            $question = (string) ($body['question_id'] ?? '');
+            if ($request->method === 'GET' && $suffix === '/question-tools') {
+                return ['status' => 200, 'data' => $this->tools->forAssessment($session->userId, $workspaceId, $assessment)];
+            }
+            if ($request->method === 'POST' && $suffix === '/question-tools/bookmark') {
+                return ['status' => 200, 'data' => $this->tools->setBookmark($session->userId, $workspaceId, $assessment, $question, ($body['on'] ?? false) === true)];
+            }
+            if ($request->method === 'POST' && $suffix === '/question-tools/note') {
+                return ['status' => 200, 'data' => $this->tools->saveNote($session->userId, $workspaceId, $assessment, $question, (string) ($body['body'] ?? ''))];
+            }
+            if ($request->method === 'POST' && $suffix === '/question-tools/report') {
+                return ['status' => 201, 'data' => $this->tools->report($session->userId, $workspaceId, $assessment, $question, (string) ($body['kind'] ?? ''), (string) ($body['body'] ?? ''))];
+            }
+            if ($request->method === 'GET' && $suffix === '/saved') {
+                return ['status' => 200, 'data' => $this->tools->saved($session->userId, $workspaceId)];
+            }
+            if ($request->method === 'POST' && $suffix === '/saved/study') {
+                return ['status' => 201, 'data' => $this->tools->studyBookmarks($session->userId, $workspaceId, isset($body['topic']) ? (string) $body['topic'] : null)];
+            }
+            if ($request->method === 'GET' && $suffix === '/question-reports') {
+                return ['status' => 200, 'data' => $this->tools->reports($session->userId, $workspaceId, (string) ($request->query['status'] ?? 'open'))];
+            }
+            if ($request->method === 'POST' && preg_match('#^/question-reports/([0-9a-f-]{36})$#', $suffix, $match)) {
+                return ['status' => 200, 'data' => $this->tools->resolveReport($session->userId, $workspaceId, $match[1], (string) ($body['status'] ?? ''), (string) ($body['resolution'] ?? ''))];
             }
         }
         if ($request->method === 'GET' && $suffix === '/mistakes-review') {

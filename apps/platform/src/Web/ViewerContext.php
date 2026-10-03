@@ -23,6 +23,8 @@ final class ViewerContext
         // Only decides whether the products link is shown; the API checks
         // commerce.manage_catalog on every request regardless.
         public readonly bool $canManageCatalog = false,
+        // Only decides whether the reports queue is linked; the API checks exam.review.
+        public readonly bool $canReviewContent = false,
     ) {
     }
 
@@ -43,6 +45,9 @@ final class ViewerContext
             $items[] = ['key' => 'exams', 'href' => '/app/exams', 'label' => 'آزمون‌ها', 'icon' => 'exams'];
             $items[] = ['key' => 'progress', 'href' => '/app/progress', 'label' => 'پیشرفت', 'icon' => 'progress'];
             $items[] = ['key' => 'store', 'href' => '/app/store', 'label' => 'فروشگاه', 'icon' => 'store'];
+            if ($this->canReviewContent) {
+                $items[] = ['key' => 'reports', 'href' => '/app/admin/reports', 'label' => 'گزارش‌های اشکال', 'icon' => 'flag'];
+            }
             if ($this->canManageCatalog) {
                 $items[] = ['key' => 'products', 'href' => '/app/admin/products', 'label' => 'محصولات و قیمت', 'icon' => 'tag'];
             }
