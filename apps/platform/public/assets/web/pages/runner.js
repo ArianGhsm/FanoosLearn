@@ -52,6 +52,19 @@ let dialog = null;
 /** 'map' | 'submit' | 'settings' | null -- which dialog `dialog` currently holds, so Escape and the shortcut guard know what they are closing. */
 let dialogKind = null;
 let banner = null;
+/** کارنامه: undefined until asked for, null while loading or unavailable. */
+let ranking;
+
+async function loadRanking() {
+    const workspace = document.querySelector('meta[name="fanoos-workspace"]')?.content ?? '';
+    try {
+        ranking = await api.get(`/workspaces/${encodeURIComponent(workspace)}/assessments/${encodeURIComponent(assessmentId)}/ranking`);
+    } catch {
+        ranking = null;
+        return;
+    }
+    if (phase === 'report') draw();
+}
 let pageError = null;
 
 /*
@@ -126,7 +139,11 @@ function draw() {
             }, enter)
             : loading('در حال گرفتن سؤال…'));
     } else if (phase === 'report' && summary) {
-        frame.append(renderReport(summary, { review: startReview }));
+        if (ranking === undefined) {
+            ranking = null;
+            loadRanking();
+        }
+        frame.append(renderReport(summary, { review: startReview }, ranking));
     } else if (phase === 'review') {
         frame.append(reviewEntry
             ? renderReviewQuestion(reviewEntry, reviewPosition, summary.question_count, reviewActions, assessmentId)

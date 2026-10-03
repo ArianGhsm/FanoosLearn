@@ -67,7 +67,7 @@ of the counted rows at ✅.
 | 35 | Study timer (تایمر مطالعه) | M | ❌ |
 | 36 | Timed full-exam simulation | M P | ✅ timed exams |
 | 37 | Calendar of scheduled exams with deadlines and participant counts | M | ❌ |
-| 38 | Report card with rank / percentile among participants (کارنامه) | M P | ❌ |
+| 38 | Report card with rank / percentile among participants (کارنامه) | M P | ✅ after each exam: rank, better-than %, average, top, score histogram (first exam-mode attempt; withheld under 5 people) |
 
 ## Around the bank
 
@@ -75,7 +75,7 @@ of the counted rows at ✅.
 |---|---|---|---|
 | 39 | Plans and purchase (اشتراک) | M P | ✅ store and products (payments switched off for now) |
 | 40 | Dark mode | M | ✅ |
-| 41 | Installable app (اپلیکیشن) | M P | ❌ |
+| 41 | Installable app (اپلیکیشن) | M P | ✅ installable (manifest, icons, a worker that caches only versioned assets) |
 | 42 | Announcement board (تابلو اعلانات / اخبار) | M P | 🟡 the platform has announcements, no page |
 | 43 | Support contact | M P | 🟡 the bots; no link on the site |
 | 44 | Lessons and summaries next to the bank (درسنامه، خلاصه، مایندمپ) | M P | 🟡 protected files exist; no lesson page |
@@ -90,4 +90,4 @@ plans. They can come back as their own decisions.
 
 ## Score
 
-Counted rows: 44. ✅ today: 31 (70 %). Target: 36 (≥ 80 %).
+Counted rows: 44. ✅ today: 33 (75 %). Target: 36 (≥ 80 %).

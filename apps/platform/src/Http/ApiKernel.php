@@ -10,6 +10,7 @@ use Fanoos\Platform\Commerce\CommerceService;
 use Fanoos\Platform\Content\ProtectedResourceAuthorizer;
 use Fanoos\Platform\Content\ContentService;
 use Fanoos\Platform\Content\CustomPracticeService;
+use Fanoos\Platform\Content\ExamRankingService;
 use Fanoos\Platform\Content\ProgressService;
 use Fanoos\Platform\Content\QuestionToolsService;
 use Fanoos\Platform\Content\ExamImageStore;
@@ -53,6 +54,7 @@ final class ApiKernel
         private readonly ?ProgressService $progress = null,
         private readonly ?BankBrowseService $bank = null,
         private readonly ?QuestionToolsService $tools = null,
+        private readonly ?ExamRankingService $ranking = null,
     ) {
     }
 
@@ -456,6 +458,12 @@ final class ApiKernel
         }
         if ($request->method === 'GET' && preg_match('#^/assessments/([0-9a-f-]+)/analytics$#', $suffix, $match)) {
             return ['status' => 200, 'data' => $this->requireExams()->analytics($session->userId, $workspaceId, $match[1])];
+        }
+        if ($request->method === 'GET' && preg_match('#^/assessments/([0-9a-f-]{36})/ranking$#', $suffix, $match)) {
+            if ($this->ranking === null) {
+                throw new PlatformException('ranking_unavailable', 'Ranking is not available.', 503);
+            }
+            return ['status' => 200, 'data' => $this->ranking->ranking($session->userId, $workspaceId, $match[1])];
         }
         if ($request->method === 'GET' && preg_match('#^/assessments/([0-9a-f-]+)/attempts/history$#', $suffix, $match)) {
             return ['status' => 200, 'data' => $this->requireExams()->attemptHistory($session->userId, $workspaceId, $match[1])];

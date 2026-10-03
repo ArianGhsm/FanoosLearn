@@ -48,6 +48,9 @@ final class PageRenderer
             '<meta name="description" content="' . $description . '">',
             '<meta name="theme-color" content="#f5f3ee">',
             '<title>' . $title . '</title>',
+            '<link rel="manifest" href="' . Pwa::MANIFEST_PATH . '">',
+            '<link rel="icon" type="image/png" sizes="192x192" href="' . $this->escape($this->assets->url('/assets/web/icons/icon-192.png')) . '">',
+            '<link rel="apple-touch-icon" href="' . $this->escape($this->assets->url('/assets/web/icons/apple-touch-icon.png')) . '">',
         ];
 
         // The CSRF token is embedded per page rather than fetched, so a
@@ -74,7 +77,7 @@ final class PageRenderer
             $head[] = '<link rel="stylesheet" href="' . $this->escape($this->assets->url($sheet)) . '">';
         }
 
-        $scripts = [];
+        $scripts = ['<script type="module" src="' . $this->escape($this->assets->url('/assets/web/foundation/pwa.js')) . '"></script>'];
         foreach ($page['modules'] ?? [] as $module) {
             $scripts[] = '<script type="module" src="' . $this->escape($this->assets->url($module)) . '"></script>';
         }

@@ -901,8 +901,37 @@ export function renderSubmitDialog(state, actions) {
                 }))));
 }
 
+/*
+ * کارنامه: where this student stands among everyone who sat the exam --
+ * their first exam-mode attempt against everyone's first. Withheld below
+ * five participants, where a rank would reveal the others' scores.
+ */
+function renderRanking(ranking) {
+    if (!ranking || ranking.participants === 0) return null;
+    if (!ranking.ranked) {
+        if (ranking.reason === 'too_few') {
+            return el('p', { className: 'f-tiny x-rank__note', text: `تا این‌جا ${faDigits(ranking.participants)} نفر این آزمون را داده‌اند؛ از پنج نفر به بعد رتبه‌ات را می‌بینی.` });
+        }
+        if (ranking.reason === 'no_exam_attempt') {
+            return el('p', { className: 'f-tiny x-rank__note', text: `${faDigits(ranking.participants)} نفر این آزمون را در حالت «آزمون» داده‌اند؛ رتبه فقط برای اولین تلاش در همین حالت حساب می‌شود.` });
+        }
+        return null;
+    }
+    const max = Math.max(1, ...ranking.distribution);
+    const bars = el('div', { className: 'x-rank__bars', attrs: { role: 'img', 'aria-label': 'پراکندگی نمره‌ی شرکت‌کننده‌ها' } },
+        ...ranking.distribution.map((count, index) => el('i', {
+            className: `x-rank__bar${index === ranking.my_bucket ? ' is-mine' : ''}`,
+            attrs: { style: `--h:${Math.round((count / max) * 100)}%`, title: `٪${faDigits(index * 10)}–${faDigits(index * 10 + 10)}: ${faDigits(count)} نفر` },
+        })));
+    return el('section', { className: 'x-rank', attrs: { 'aria-label': 'کارنامه' } },
+        el('p', { className: 'x-rank__headline', text: `رتبه‌ی ${faDigits(ranking.rank)} از ${faDigits(ranking.participants)} نفر` }),
+        el('p', { className: 'f-muted x-rank__line', text: `بهتر از ٪${faDigits(ranking.better_than_percent)} شرکت‌کننده‌ها · میانگین ٪${faDigits(ranking.average_percent)} · بالاترین ٪${faDigits(ranking.top_percent)}` }),
+        bars,
+        el('p', { className: 'f-tiny x-rank__note', text: 'اولین تلاش هر نفر در حالت «آزمون» حساب می‌شود.' }));
+}
+
 /** The score summary after submitting. */
-export function renderReport(summary, actions) {
+export function renderReport(summary, actions, ranking = null) {
     const total = Number(summary.question_count || 0);
     const correct = Number(summary.correct_count || 0);
     const percent = total === 0 ? 0 : Math.round((correct / total) * 100);
@@ -915,6 +944,7 @@ export function renderReport(summary, actions) {
             }, el('span', { className: 'x-report__percent', text: `٪${faDigits(percent)}` })),
             el('p', { className: 'x-report__line', text: `${faDigits(correct)} پاسخ درست از ${faDigits(total)} سؤال` }),
             renderReportStats(summary, total, correct),
+            renderRanking(ranking),
             Number(summary.revealed_count || 0) === 0 ? null : notice(
                 'warning',
                 `${faDigits(summary.revealed_count)} پاسخ را قبل از جواب دادن دیدی`,
