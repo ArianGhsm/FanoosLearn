@@ -283,7 +283,7 @@ final class MigrationSafetyTest
      * can target it for real. Writing a second, throwaway contract
      * migration into the real database/migrations/ directory just to
      * reach this gate was rejected: that directory is integration-only
-     * (docs/workflow/INTEGRATION_ONLY_PATHS.md) and SchemaContractTest
+     * (docs/archive/workflow/INTEGRATION_ONLY_PATHS.md) and SchemaContractTest
      * enforces the numbered-with-no-gaps invariant over it, so mutating it
      * from a test -- even temporarily -- is the wrong tool. (c) is
      * therefore verified below by asserting, from the script's own source,

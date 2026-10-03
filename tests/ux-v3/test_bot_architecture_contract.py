@@ -18,8 +18,8 @@ ROOT = Path(__file__).resolve().parents[2]
 
 class ArchitectureContractTest(unittest.TestCase):
     def test_stage_documents_describe_one_shared_layer_and_screen_map(self):
-        architecture = (ROOT / "docs/rebuild/bots/01_BOT_ARCHITECTURE.md").read_text(encoding="utf-8")
-        screen_map = (ROOT / "docs/rebuild/bots/01_SCREEN_MAP.md").read_text(encoding="utf-8")
+        architecture = (ROOT / "docs/archive/rebuild/bots/01_BOT_ARCHITECTURE.md").read_text(encoding="utf-8")
+        screen_map = (ROOT / "docs/archive/rebuild/bots/01_SCREEN_MAP.md").read_text(encoding="utf-8")
         for phrase in ("provider-neutral", "INTENT_REGISTRY", "LocalState", "Telegram", "Bale", "canonical backend"):
             self.assertIn(phrase, architecture)
         for phrase in ("onboarding.unlinked", "home.active", "learning.resource_hub", "deployment_confirmation", "state.empty"):
