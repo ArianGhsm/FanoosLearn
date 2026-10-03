@@ -39,6 +39,7 @@ final class ViewerContext
             ['key' => 'home', 'href' => '/app', 'label' => 'خانه', 'icon' => 'home'],
         ];
         if ($this->workspaceId !== null) {
+            $items[] = ['key' => 'bank', 'href' => '/app/bank', 'label' => 'بانک سؤال', 'icon' => 'bank'];
             $items[] = ['key' => 'exams', 'href' => '/app/exams', 'label' => 'آزمون‌ها', 'icon' => 'exams'];
             $items[] = ['key' => 'progress', 'href' => '/app/progress', 'label' => 'پیشرفت', 'icon' => 'progress'];
             $items[] = ['key' => 'store', 'href' => '/app/store', 'label' => 'فروشگاه', 'icon' => 'store'];

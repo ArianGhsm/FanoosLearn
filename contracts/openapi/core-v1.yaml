@@ -332,6 +332,31 @@ paths:
       description: 'What the chosen courses hold for the caller: total, unseen and wrong question counts, overall and per topic.'
       parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: course_ids, in: query, required: true, description: Comma-separated course ids (1-20)., schema: { type: string } }]
       responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/bank:
+    get:
+      operationId: readBankOverview
+      description: 'بانک سؤال: the workspace bank by subject (top-level bank_subjects with total published questions, per_exam average, first_year, last_year, topics, old_reference) and its published sittings by year. Counts only published questions; machine classification only when reviewed or at confidence >= 0.85. Needs exam.take.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/bank/subjects/{subjectKey}:
+    get:
+      operationId: readBankSubject
+      description: 'One subject: totals, years, recent_from (latest year minus 4), topics (top-level concepts) most-asked first with total/recent/old_reference, high_yield concepts, and the references named for it in the two latest years.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: subjectKey, in: path, required: true, schema: { type: string, pattern: '^[a-z0-9_-]{1,60}$' } }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/bank/study:
+    post:
+      operationId: createBankStudySet
+      description: 'Opens a slice of a subject as the caller''s own study set, newest year first and kept in that order (definition ordered=true, not shuffled): the whole subject, one topic or concept key, one year, or only the recent years. Only questions the caller may already open are included (CustomPracticeService::createFromQuestions), at most 500.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [subject], properties: { subject: { type: string }, topic: { type: string }, year: { type: integer }, recent: { type: boolean } } } } } }
+      responses: { '201': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/bank/references:
+    get:
+      operationId: readBankReferences
+      description: 'منابع آزمون: the references named for each exam year of the active exam types, newest year first, subject by subject, with edition, authors, chapter scope and whether the announcement is official.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/progress:
     get:
       operationId: readProgress

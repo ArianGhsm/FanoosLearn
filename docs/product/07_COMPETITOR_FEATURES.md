@@ -21,15 +21,15 @@ of the counted rows at ✅.
 | # | Option | Who | FANOOS |
 |---|---|---|---|
 | 1 | Past exams by year and sitting (به تفکیک دوره و سال) | M P | ✅ each bank sitting is published as an exam |
-| 2 | Bank by subject (به تفکیک درس), one page per subject | M P | ❌ |
-| 3 | Topics inside a subject with question counts, most-asked first (مطالعه مبحثی) | M P | ❌ |
-| 4 | High-yield topics with "since year X" counts (شایع‌ترین میکرومبحث‌ها) | M | ❌ |
-| 5 | Subject header: questions per exam, questions in the bank, years covered | M | ❌ |
-| 6 | Comprehensive mode: every question of a subject in year order (مطالعه جامع) | M | ❌ |
-| 7 | Reference awareness: questions marked when their reference is old (رفرنس قدیم) | M P | 🟡 in the data model, not shown |
-| 8 | Exam references by year (منابع آزمون دستیاری ۱۳۹۷–۱۴۰۵) | P | ❌ the catalog is imported but not shown |
+| 2 | Bank by subject (به تفکیک درس), one page per subject | M P | ✅ /app/bank, به تفکیک درس |
+| 3 | Topics inside a subject with question counts, most-asked first (مطالعه مبحثی) | M P | ✅ topics with counts, most-asked first, one-tap study of a topic |
+| 4 | High-yield topics with "since year X" counts (شایع‌ترین میکرومبحث‌ها) | M | ✅ most-asked concepts, with counts since the last five years |
+| 5 | Subject header: questions per exam, questions in the bank, years covered | M | ✅ questions in the bank, per exam, years, old-reference count |
+| 6 | Comprehensive mode: every question of a subject in year order (مطالعه جامع) | M | ✅ the whole subject newest year first, or only recent years, or one year |
+| 7 | Reference awareness: questions marked when their reference is old (رفرنس قدیم) | M P | ✅ «رفرنس قدیم» counted per subject and topic (from reviewed currency) |
+| 8 | Exam references by year (منابع آزمون دستیاری ۱۳۹۷–۱۴۰۵) | P | ✅ /app/references, year by year, subject by subject, with chapter scope |
 | 9 | Authored questions and authored exams (تالیفی) | M P | ✅ any exam kind can be authored and published |
-| 10 | Search across subjects, topics and exams (جستجو) | M | ❌ |
+| 10 | Search across subjects, topics and exams (جستجو) | M | ✅ search on the bank page across subjects and years |
 
 ## The question page
 
@@ -90,4 +90,4 @@ plans. They can come back as their own decisions.
 
 ## Score
 
-Counted rows: 44. ✅ today: 17 (39 %). Target: 36 (≥ 80 %).
+Counted rows: 44. ✅ today: 25 (57 %). Target: 36 (≥ 80 %).
