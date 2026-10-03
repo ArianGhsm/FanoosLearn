@@ -6,7 +6,7 @@
  */
 import { api, describeError } from '../foundation/api.js';
 import { faDigits } from './question-stats.js';
-import { direction, heatLevel, recentAverage, trendPoints, weekColumns } from './progress-rules.js';
+import { direction, heatLevel, recentAverage, studyTime, trendPoints, weekColumns } from './progress-rules.js';
 
 const workspaceId = document.querySelector('meta[name="fanoos-workspace"]')?.content ?? '';
 const board = document.getElementById('progress-board');
@@ -41,7 +41,7 @@ function drawTiles(data) {
     const t = data.totals;
     const s = data.streak;
     document.getElementById('tiles').replaceChildren(
-        tile('آزمون تمام‌شده', faDigits(t.attempts), `${faDigits(t.study_days)} روز مطالعه`),
+        tile('ساعت مطالعه', t.study_minutes >= 600 ? `${faDigits(Math.round(t.study_minutes / 60))} ساعت` : studyTime(t.study_minutes, faDigits), `امروز ${studyTime(t.today_minutes, faDigits)} · ${faDigits(t.attempts)} آزمون در ${faDigits(t.study_days)} روز`),
         tile('سؤال پاسخ‌داده', faDigits(t.answers), `${faDigits(t.questions_seen)} سؤال متفاوت`),
         tile('درصد پاسخ درست', percent(t.correct_percent), `${faDigits(t.questions_mastered)} سؤال را آخرین بار درست زده‌ای`, 'accent'),
         tile('روزهای پشت‌سرهم', faDigits(s.current), s.best > 0 ? `بیشترین: ${faDigits(s.best)} روز` : null, s.current > 0 ? 'warm' : ''),
@@ -66,8 +66,8 @@ function drawHeat(days) {
                 cell.dataset.level = String(heatLevel(day.answered, max));
                 const when = dayFormat.format(new Date(`${day.date}T12:00:00Z`));
                 cell.title = day.answered > 0
-                    ? `${when}: ${faDigits(day.answered)} سؤال، ${faDigits(day.correct)} درست`
-                    : `${when}: —`;
+                    ? `${when}: ${faDigits(day.answered)} سؤال، ${faDigits(day.correct)} درست، ${studyTime(day.minutes, faDigits)}`
+                    : (day.minutes > 0 ? `${when}: ${studyTime(day.minutes, faDigits)} مطالعه` : `${when}: —`);
             }
             col.append(cell);
         }
@@ -206,4 +206,48 @@ async function load() {
     }
 }
 
-if (workspaceId) load();
+async function loadReview() {
+    const box = document.getElementById('review');
+    try {
+        const review = await api.get(`/workspaces/${encodeURIComponent(workspaceId)}/review`);
+        if (review.in_review === 0) return;
+        box.hidden = false;
+        document.getElementById('review-line').textContent = review.due > 0
+            ? `امروز ${faDigits(review.due)} سؤال برای مرور داری: سؤال‌هایی که قبلاً غلط زده‌ای و وقت دوباره دیدنشان رسیده.`
+            : 'امروز سؤالی برای مرور نمانده.';
+        const topics = document.getElementById('review-topics');
+        const start = (button, topic) => async () => {
+            button.disabled = true;
+            try {
+                const created = await api.post(`/workspaces/${encodeURIComponent(workspaceId)}/review/start`, topic ? { topic } : {});
+                window.location.assign(`/app/exams/${encodeURIComponent(created.assessment_id)}`);
+            } catch (error) {
+                button.disabled = false;
+                document.getElementById('review-line').textContent = describeError(error);
+            }
+        };
+        if (review.due > 0) {
+            const all = el('button', 'f-btn f-btn--primary', `شروع مرور (${faDigits(Math.min(review.due, 50))} سؤال)`);
+            all.type = 'button';
+            all.addEventListener('click', start(all, null));
+            topics.append(all);
+            for (const t of review.topics.slice(0, 6)) {
+                if (!t.topic) continue;
+                const chip = el('button', 'f-btn f-btn--ghost', `${t.topic} · ${faDigits(t.due)}`);
+                chip.type = 'button';
+                chip.addEventListener('click', start(chip, t.topic));
+                topics.append(chip);
+            }
+        }
+        const soon = review.upcoming.filter((u) => u.count > 0).slice(0, 3)
+            .map((u) => `${u.days === 1 ? 'فردا' : `${faDigits(u.days)} روز دیگر`} ${faDigits(u.count)}`);
+        document.getElementById('review-next').textContent = soon.length > 0 ? `بعدی‌ها: ${soon.join('، ')}` : '';
+    } catch {
+        // The review panel is an extra; the dashboard stands without it.
+    }
+}
+
+if (workspaceId) {
+    load();
+    loadReview();
+}

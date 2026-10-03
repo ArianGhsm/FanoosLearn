@@ -49,18 +49,33 @@ final class ProgressService
         $correct = 0;
         foreach ($attempts as $attempt) {
             $day = (new DateTimeImmutable($attempt['submitted_at'] . ' UTC'))->setTimezone($timezone)->format('Y-m-d');
-            $days[$day] ??= ['answered' => 0, 'correct' => 0, 'attempts' => 0];
+            $days[$day] ??= ['answered' => 0, 'correct' => 0, 'attempts' => 0, 'minutes' => 0];
             $days[$day]['answered'] += $attempt['answered'];
             $days[$day]['correct'] += $attempt['correct'];
+            $days[$day]['minutes'] += $attempt['minutes'];
             ++$days[$day]['attempts'];
             $answers += $attempt['answered'];
             $correct += $attempt['correct'];
         }
 
+        // Timed focus blocks (تایمر مطالعه) count as study time, but not as
+        // a study day of their own for the streak: the streak is about exams.
+        $timed = [];
+        foreach ($this->studySessions($userId, $workspaceId) as $session) {
+            $day = (new DateTimeImmutable($session['ended_at'] . ' UTC'))->setTimezone($timezone)->format('Y-m-d');
+            $timed[$day] = ($timed[$day] ?? 0) + $session['minutes'];
+        }
+        $minutes = 0;
+        foreach (array_unique([...array_keys($days), ...array_keys($timed)]) as $day) {
+            $minutes += ($days[$day]['minutes'] ?? 0) + ($timed[$day] ?? 0);
+        }
+
         $activity = [];
         for ($offset = self::ACTIVITY_DAYS - 1; $offset >= 0; $offset--) {
             $date = $today->modify("-{$offset} days")->format('Y-m-d');
-            $activity[] = ['date' => $date] + ($days[$date] ?? ['answered' => 0, 'correct' => 0, 'attempts' => 0]);
+            $entry = ['date' => $date] + ($days[$date] ?? ['answered' => 0, 'correct' => 0, 'attempts' => 0, 'minutes' => 0]);
+            $entry['minutes'] += $timed[$date] ?? 0;
+            $activity[] = $entry;
         }
 
         $questions = $this->questionTotals($userId, $workspaceId);
@@ -73,6 +88,8 @@ final class ProgressService
                 'questions_seen' => $questions['seen'],
                 'questions_mastered' => $questions['mastered'],
                 'study_days' => count($days),
+                'study_minutes' => $minutes,
+                'today_minutes' => ($days[$today->format('Y-m-d')]['minutes'] ?? 0) + ($timed[$today->format('Y-m-d')] ?? 0),
             ],
             'streak' => $this->streak(array_keys($days), $today),
             'activity' => $activity,
@@ -105,7 +122,7 @@ final class ProgressService
     private function attempts(string $userId, string $workspaceId): array
     {
         $query = $this->database->prepare(<<<'SQL'
-SELECT attempt.assessment_id, attempt.mode, attempt.submitted_at, assessment.title,
+SELECT attempt.assessment_id, attempt.mode, attempt.started_at, attempt.submitted_at, assessment.title,
        COALESCE(metadata.assessment_variant, metadata.assessment_kind, 'practice') AS kind,
        result.correct_count, result.question_count, result.score_basis_points, attempt.answers_json
 FROM exam_attempts attempt
@@ -131,10 +148,32 @@ SQL);
                 'correct' => (int) $row['correct_count'],
                 'question_count' => (int) $row['question_count'],
                 'score_basis_points' => (int) $row['score_basis_points'],
+                'minutes' => self::attemptMinutes((string) $row['started_at'], (string) $row['submitted_at'], (int) $row['question_count']),
             ];
         }
 
         return $attempts;
+    }
+
+    /**
+     * Time spent in an attempt, as study time. An attempt left open
+     * overnight is not a night of study: it is capped at three minutes a
+     * question and three hours in all.
+     */
+    public static function attemptMinutes(string $startedAt, string $submittedAt, int $questionCount): int
+    {
+        $seconds = max(0, (int) strtotime($submittedAt . ' UTC') - (int) strtotime($startedAt . ' UTC'));
+
+        return (int) min(ceil($seconds / 60), max(1, $questionCount) * 3, 180);
+    }
+
+    /** @return list<array{minutes:int,ended_at:string}> */
+    private function studySessions(string $userId, string $workspaceId): array
+    {
+        $query = $this->database->prepare('SELECT minutes, ended_at FROM study_sessions WHERE workspace_id = :workspace AND user_id = :user ORDER BY ended_at');
+        $query->execute(['workspace' => $workspaceId, 'user' => $userId]);
+
+        return array_map(static fn (array $row): array => ['minutes' => (int) $row['minutes'], 'ended_at' => (string) $row['ended_at']], $query->fetchAll());
     }
 
     /** @return array{seen:int,mastered:int} */

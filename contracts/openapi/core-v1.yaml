@@ -410,10 +410,30 @@ paths:
       parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }, { name: reportId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }]
       requestBody: { required: true, content: { application/json: { schema: { type: object, required: [status], properties: { status: { type: string, enum: [resolved, rejected] }, resolution: { type: string, maxLength: 1000 } } } } } }
       responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/review:
+    get:
+      operationId: readReviewBox
+      description: 'مرور هوشمند: what is due for review today -- questions the caller has ever answered wrong, back on a growing interval (1, 3, 7, 14, 30 days) -- with due counts per topic, how many come due in each of the next 7 days, and how many questions are in review at all. Needs exam.take.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/review/start:
+    post:
+      operationId: startReview
+      description: 'Opens today''s due questions (most overdue first, at most 50, optionally one topic''s) as the caller''s own study set. 422 review_nothing_due when nothing is due.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
+      requestBody: { required: false, content: { application/json: { schema: { type: object, properties: { topic: { type: string } } } } } }
+      responses: { '201': { $ref: '#/components/responses/Success' }, '422': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/study-sessions:
+    post:
+      operationId: logStudySession
+      description: 'تایمر مطالعه: records one finished focus block (1-180 minutes; at most 16 hours a day), counted as study time on the progress dashboard. Returns minutes_today.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [minutes], properties: { minutes: { type: integer, minimum: 1, maximum: 180 }, label: { type: string, maxLength: 120 } } } } } }
+      responses: { '201': { $ref: '#/components/responses/Success' }, '422': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/progress:
     get:
       operationId: readProgress
-      description: 'داشبورد پیشرفت: the caller''s own progress in this workspace, read fresh from their scored attempts and exam_question_user_stats -- totals (attempts, answers, correct_percent, questions_seen, questions_mastered, study_days), streak {current, best, today} in the workspace timezone, activity (the last 84 days, answered/correct/attempts per day), trend (the last 30 scores), recent (the last 8 attempts), courses (seen of about how many, correct share) and weak_topics (lowest correct share among topics with at least 5 answers). Needs exam.take.'
+      description: 'داشبورد پیشرفت: the caller''s own progress in this workspace, read fresh from their scored attempts and exam_question_user_stats -- totals (attempts, answers, correct_percent, questions_seen, questions_mastered, study_days, study_minutes, today_minutes -- time in exams, capped at 3 minutes a question and 3 hours an attempt, plus timed focus blocks), streak {current, best, today} in the workspace timezone, activity (the last 84 days, answered/correct/attempts/minutes per day), trend (the last 30 scores), recent (the last 8 attempts), courses (seen of about how many, correct share) and weak_topics (lowest correct share among topics with at least 5 answers). Needs exam.take.'
       parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
       responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/attempts/{attemptId}:
