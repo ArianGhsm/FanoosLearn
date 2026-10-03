@@ -2,6 +2,16 @@
 
 These rules apply to every coding/review agent working on this repository.
 
+## 0. Read first
+
+`docs/PROJECT_PRINCIPLES.md` states what FANOOS is now — a dental residency
+exam-preparation platform built on a reference-aware question bank — and the
+rule that the laptop, GitHub and the server stay identical (code moves
+laptop → GitHub → server; every session ends pushed; merged means deployed).
+Check with `scripts/dev/check-sync.sh`. The bank's design is
+`docs/product/05_DENTAL_RESIDENCY_DATA_MODEL.md`. Where this file and the
+principles disagree, the principles win.
+
 ## 1. Repository and product boundary
 
 - The only writable repository for FANOOS work is `ArianGhsm/FanoosLearn`.
