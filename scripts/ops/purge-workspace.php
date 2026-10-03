@@ -102,22 +102,33 @@ SQL);
         $database->prepare('DELETE FROM tenant_workspaces WHERE id = :workspace')->execute(['workspace' => $workspace]);
         $database->exec('SET FOREIGN_KEY_CHECKS = 1');
 
-        // Nothing may be left pointing at a row that is gone.
+        // Nothing may be left pointing at a row that is gone. Keys are
+        // checked whole: many are composite (workspace_id plus the id), and
+        // a row with any key column NULL is not bound by the key at all.
         $keys = $database->prepare(<<<'SQL'
-SELECT table_name, column_name, referenced_table_name, referenced_column_name
+SELECT table_name, constraint_name, column_name, referenced_table_name, referenced_column_name
 FROM information_schema.key_column_usage
 WHERE table_schema = :schema AND referenced_table_name IS NOT NULL
+ORDER BY table_name, constraint_name, ordinal_position
 SQL);
         $keys->execute(['schema' => $schema]);
+        $constraints = [];
+        foreach ($keys->fetchAll(PDO::FETCH_NUM) as [$child, $constraint, $column, $parent, $parentColumn]) {
+            $constraints["{$child}.{$constraint}"]['child'] = $child;
+            $constraints["{$child}.{$constraint}"]['parent'] = $parent;
+            $constraints["{$child}.{$constraint}"]['pairs'][] = [$column, $parentColumn];
+        }
         $orphans = [];
-        foreach ($keys->fetchAll() as $key) {
-            [$child, $column, $parent, $parentColumn] = array_values($key);
+        foreach ($constraints as $name => $key) {
+            $on = implode(' AND ', array_map(static fn (array $pair): string => "p.`{$pair[1]}` = c.`{$pair[0]}`", $key['pairs']));
+            $bound = implode(' AND ', array_map(static fn (array $pair): string => "c.`{$pair[0]}` IS NOT NULL", $key['pairs']));
+            $first = $key['pairs'][0][1];
             $n = (int) $database->query(
-                "SELECT COUNT(*) FROM `{$child}` c LEFT JOIN `{$parent}` p ON p.`{$parentColumn}` = c.`{$column}`"
-                . " WHERE c.`{$column}` IS NOT NULL AND p.`{$parentColumn}` IS NULL",
+                "SELECT COUNT(*) FROM `{$key['child']}` c LEFT JOIN `{$key['parent']}` p ON {$on}"
+                . " WHERE {$bound} AND p.`{$first}` IS NULL",
             )->fetchColumn();
             if ($n > 0) {
-                $orphans["{$child}.{$column} -> {$parent}"] = $n;
+                $orphans[$name] = $n;
             }
         }
         if ($orphans !== []) {
