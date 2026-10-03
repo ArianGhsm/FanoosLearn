@@ -38,6 +38,16 @@ php scripts/ops/provision-discipline-library.php --discipline=medicine \
 
 The script refuses to move a discipline that already has a different library.
 
+When the library workspace does not exist yet, create it under an institution
+already in the directory; it is then marked as the library the same way
+(dry run without `--execute`):
+
+```
+php scripts/ops/create-library-workspace.php --discipline=dentistry --institution=<slug> \
+    --faculty="دانشکده دندانپزشکی" --program="دندانپزشکی عمومی" \
+    --name="کتابخانه‌ی دندانپزشکی" --actor=<platform owner uuid> --execute
+```
+
 ## API
 
 All public except `GET /profile`:
