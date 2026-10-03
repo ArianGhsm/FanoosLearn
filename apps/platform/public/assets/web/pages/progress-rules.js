@@ -68,3 +68,15 @@ export function direction(scores, n = 5) {
     if (before - now >= 3) return 'down';
     return 'flat';
 }
+
+/**
+ * Study time in words: "۴۵ دقیقه", "۲ ساعت", "۲ ساعت و ۱۰ دقیقه"; "—" for none.
+ */
+export function studyTime(minutes, faDigits) {
+    const total = Math.max(0, Math.round(Number(minutes) || 0));
+    if (total === 0) return '—';
+    const hours = Math.floor(total / 60);
+    const rest = total % 60;
+    if (hours === 0) return `${faDigits(rest)} دقیقه`;
+    return rest === 0 ? `${faDigits(hours)} ساعت` : `${faDigits(hours)} ساعت و ${faDigits(rest)} دقیقه`;
+}

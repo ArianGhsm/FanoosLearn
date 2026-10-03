@@ -40,6 +40,16 @@ final class ProgressPage
     </div>
 </section>
 
+<section class="f-card p-review" id="review" aria-labelledby="review-title" hidden>
+    <div class="p-panel__head">
+        <h2 id="review-title">مرور هوشمند</h2>
+        <a class="p-panel__link" href="/app/timer">تایمر مطالعه</a>
+    </div>
+    <p class="p-review__line" id="review-line"></p>
+    <div class="p-review__topics" id="review-topics"></div>
+    <p class="f-tiny" id="review-next"></p>
+</section>
+
 <div class="p-board" id="progress-board" aria-busy="true">
     <section class="p-tiles" id="tiles" aria-label="خلاصه">
         <span class="p-skel"></span><span class="p-skel"></span><span class="p-skel"></span><span class="p-skel"></span>
