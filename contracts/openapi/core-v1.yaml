@@ -357,6 +357,59 @@ paths:
       description: 'منابع آزمون: the references named for each exam year of the active exam types, newest year first, subject by subject, with edition, authors, chapter scope and whether the announcement is official.'
       parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
       responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/question-tools:
+    get:
+      operationId: readQuestionTools
+      description: 'Which questions of one exam the caller has bookmarked, and their notes on them ({bookmarks: [question_id], notes: {question_id: text}}). The exam must be visible to the caller (published, for everyone or their own set). Needs exam.take.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: assessment_id, in: query, required: true, schema: { $ref: '#/components/schemas/Uuid' } }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/question-tools/bookmark:
+    post:
+      operationId: setQuestionBookmark
+      description: 'Bookmarks (on=true) or un-bookmarks a question of a visible exam. Keyed by the stable question id across exams.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [assessment_id, question_id, on], properties: { assessment_id: { $ref: '#/components/schemas/Uuid' }, question_id: { type: string }, on: { type: boolean } } } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/question-tools/note:
+    post:
+      operationId: saveQuestionNote
+      description: 'Saves the caller''s note on a question (up to 1000 characters); an empty body deletes it. Only the caller sees it.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [assessment_id, question_id, body], properties: { assessment_id: { $ref: '#/components/schemas/Uuid' }, question_id: { type: string }, body: { type: string, maxLength: 1000 } } } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/question-tools/report:
+    post:
+      operationId: reportQuestion
+      description: 'گزارش اشکال: reports a mistake in a question (kind question, answer, explanation or other), for the workspace reviewers. At most 30 per caller per day (429 question_report_limit).'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [assessment_id, question_id, kind, body], properties: { assessment_id: { $ref: '#/components/schemas/Uuid' }, question_id: { type: string }, kind: { type: string, enum: [question, answer, explanation, other] }, body: { type: string, minLength: 1, maxLength: 1000 } } } } } }
+      responses: { '201': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' }, '429': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/saved:
+    get:
+      operationId: readSavedQuestions
+      description: 'The caller''s bookmarks and notes, newest first, each with the exam it was saved from, its topic and subject, and the opening words of the question (never its answer).'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/saved/study:
+    post:
+      operationId: studySavedQuestions
+      description: 'Opens the caller''s bookmarked questions (optionally one topic''s) as their own study set.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
+      requestBody: { required: false, content: { application/json: { schema: { type: object, properties: { topic: { type: string } } } } } }
+      responses: { '201': { $ref: '#/components/responses/Success' }, '422': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/question-reports:
+    get:
+      operationId: listQuestionReports
+      description: 'The reviewers'' queue of reported mistakes in this workspace, by status (open, resolved, rejected), each with the question, its choices and its key. Needs exam.review.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: status, in: query, required: false, schema: { type: string, enum: [open, resolved, rejected] } }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/question-reports/{reportId}:
+    post:
+      operationId: resolveQuestionReport
+      description: 'Closes a report as resolved or rejected, with an optional note. Needs exam.review.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }, { name: reportId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [status], properties: { status: { type: string, enum: [resolved, rejected] }, resolution: { type: string, maxLength: 1000 } } } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/progress:
     get:
       operationId: readProgress

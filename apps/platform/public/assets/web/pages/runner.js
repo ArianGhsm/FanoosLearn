@@ -5,7 +5,7 @@
  * is true, runner-view draws it, runner-transport talks to the server. This
  * file is only the wiring, which is what keeps the three testable.
  */
-import { ApiError, describeError, watchConnection } from '../foundation/api.js';
+import { ApiError, api, describeError, watchConnection } from '../foundation/api.js';
 import {
     afterAnswer, clampPosition, clearAnswer, createAttemptState, hasUnsavedAnswers,
     nextUnanswered, remainingSeconds, setAnswer, showExplanation as markExplanationShown,
@@ -65,6 +65,31 @@ let studyHint = '';
 let studyOpen = false;
 
 /*
+ * The server-side tools (QuestionToolsService): which of this exam's
+ * questions are bookmarked, and the notes kept on the account so they reach
+ * every device and the saved page. Local notes stay the first copy -- typing
+ * never waits on the network -- and are sent on after a pause.
+ */
+let bookmarks = new Set();
+let report = { open: false, kind: 'answer', sending: false, sent: false, error: '' };
+const noteTimers = new Map();
+const workspaceIdForTools = document.querySelector('meta[name="fanoos-workspace"]')?.content ?? '';
+const toolsBase = `/workspaces/${encodeURIComponent(workspaceIdForTools)}/question-tools`;
+
+async function loadServerTools(forAssessment) {
+    try {
+        const tools = await api.get(`${toolsBase}?assessment_id=${encodeURIComponent(forAssessment)}`);
+        bookmarks = new Set(Array.isArray(tools.bookmarks) ? tools.bookmarks : []);
+        for (const [questionId, body] of Object.entries(tools.notes ?? {})) {
+            if (!studyNotes[questionId]) studyNotes[questionId] = String(body);
+        }
+        if (phase === 'question') draw();
+    } catch {
+        // The tools are an extra; the exam works without them.
+    }
+}
+
+/*
  * The position the card was last drawn at, so draw() can tell "the student
  * moved to another question" from "the same question was redrawn". Only the
  * first deserves an entrance animation; animating the second would make the
@@ -96,6 +121,8 @@ function draw() {
                 ranges: studyHighlights[question.id] ?? [],
                 hint: studyHint,
                 open: studyOpen,
+                bookmarked: bookmarks.has(question.id),
+                report,
             }, enter)
             : loading('در حال گرفتن سؤال…'));
     } else if (phase === 'report' && summary) {
@@ -266,6 +293,7 @@ async function start(mode) {
         studyHighlights = loadHighlights(state.assessmentId);
         studyHint = '';
         studyOpen = false;
+        loadServerTools(state.assessmentId);
         startDeadlineTimer();
         persistNow();
         // The merge above may have introduced answers the server has not
@@ -533,6 +561,10 @@ const questionActions = {
         saveNote(state.assessmentId, questionId, text);
         studyNotes[questionId] = typeof text === 'string' ? text.trim() : '';
         if (studyNotes[questionId] === '') delete studyNotes[questionId];
+        clearTimeout(noteTimers.get(questionId));
+        noteTimers.set(questionId, setTimeout(() => {
+            api.post(`${toolsBase}/note`, { assessment_id: state.assessmentId, question_id: questionId, body: studyNotes[questionId] ?? '' }).catch(() => {});
+        }, 1200));
         // Deliberately no draw(): redrawing on every keystroke would rebuild
         // the textarea and drop the caret to the end of the note.
     },
@@ -625,6 +657,33 @@ const questionActions = {
         clearAnswer(state, state.position);
         sync.schedule();
         persistNow();
+        draw();
+    },
+    async toggleBookmark(questionId) {
+        const on = !bookmarks.has(questionId);
+        if (on) bookmarks.add(questionId); else bookmarks.delete(questionId);
+        draw();
+        try {
+            await api.post(`${toolsBase}/bookmark`, { assessment_id: state.assessmentId, question_id: questionId, on });
+        } catch (error) {
+            if (on) bookmarks.delete(questionId); else bookmarks.add(questionId);
+            showError(error, null);
+            draw();
+        }
+    },
+    setReport(changes) {
+        report = { ...report, ...changes };
+        draw();
+    },
+    async sendReport(questionId, body) {
+        report = { ...report, sending: true, error: '' };
+        draw();
+        try {
+            await api.post(`${toolsBase}/report`, { assessment_id: state.assessmentId, question_id: questionId, kind: report.kind, body });
+            report = { open: false, kind: 'answer', sending: false, sent: true, error: '' };
+        } catch (error) {
+            report = { ...report, sending: false, error: describeError(error) };
+        }
         draw();
     },
     toggleFlag() {

@@ -156,6 +156,20 @@ final class WebRouter
             });
         }
 
+        if ($path === '/app/saved' || $path === '/app/admin/reports') {
+            if ($viewer === null) {
+                return $this->redirect('/login');
+            }
+            if ($viewer->workspaceId === null) {
+                return $this->redirect('/app');
+            }
+            if ($path === '/app/admin/reports' && !$viewer->canReviewContent) {
+                return $this->page(404, (new NotFoundPage($this->renderer))->render($viewer));
+            }
+            $page = new SavedPage($this->renderer);
+            return $this->page(200, $path === '/app/saved' ? $page->saved($viewer) : $page->reports($viewer));
+        }
+
         if ($path === '/app/exams/mistakes') {
             if ($viewer === null) {
                 return $this->redirect('/login');
@@ -202,11 +216,13 @@ final class WebRouter
 
         $workspaceName = null;
         $canManageCatalog = false;
+        $canReviewContent = false;
         if ($session->selectedWorkspaceId !== null) {
             foreach ($account['workspaces'] ?? [] as $workspace) {
                 if (($workspace['id'] ?? null) === $session->selectedWorkspaceId) {
                     $workspaceName = (string) ($workspace['name'] ?? '');
                     $canManageCatalog = in_array('commerce.manage_catalog', (array) ($workspace['permission_keys'] ?? []), true);
+                    $canReviewContent = in_array('exam.review', (array) ($workspace['permission_keys'] ?? []), true);
                     break;
                 }
             }
@@ -225,6 +241,7 @@ final class WebRouter
             $session->selectedWorkspaceId,
             $workspaceName === '' ? null : $workspaceName,
             $canManageCatalog,
+            $canReviewContent,
         );
     }
 
