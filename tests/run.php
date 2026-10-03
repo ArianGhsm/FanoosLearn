@@ -22,6 +22,7 @@ use Fanoos\Tests\Integration\CorePlatformTest;
 use Fanoos\Tests\Integration\ContentEngineTest;
 use Fanoos\Tests\Integration\CustomPracticeTest;
 use Fanoos\Tests\Integration\QuestionStatsTest;
+use Fanoos\Tests\Integration\PurgeWorkspaceTest;
 use Fanoos\Tests\Integration\ExamAttemptHistoryTest;
 use Fanoos\Tests\Integration\ExamAttemptModeTest;
 use Fanoos\Tests\Integration\ExamMistakesReviewTest;
@@ -167,6 +168,8 @@ try {
         echo "PASS protected-media forensic candidate lookup scenarios\n";
         $assertions += (new Stage8FinalClosureTest($database, $hmacKey))->run();
         echo "PASS Stage 8 migration/reconciliation final-closure scenarios\n";
+        $assertions += (new PurgeWorkspaceTest($database, $root))->run();
+        echo "PASS workspace purge scenarios\n";
     }
 
     echo "PASS {$assertions} assertions\n";
