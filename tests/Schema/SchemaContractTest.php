@@ -232,10 +232,13 @@ final class SchemaContractTest
         $owner = file_get_contents($this->root . '/apps/platform/src/Operations/OwnerControlPlaneService.php');
         $this->assert(is_string($owner) && !preg_match('/\b(?:ProcessRunner|proc_open|shell_exec|exec|system|passthru)\b/', $owner), 'Owner overview can execute privileged/runtime commands.');
 
-        $deploy = file_get_contents($this->root . '/scripts/ops/cpanel-deploy.sh');
-        $verifyPosition = is_string($deploy) ? strpos($deploy, 'verify-backup.php') : false;
-        $migratePosition = is_string($deploy) ? strpos($deploy, 'scripts/db/migrate.php') : false;
-        $this->assert($verifyPosition !== false && $migratePosition !== false && $verifyPosition < $migratePosition, 'Canonical deploy does not verify backup before migration.');
+        // The canonical deploy is the updater: DeploymentRunner takes and
+        // verifies a backup before it lets the executor migrate.
+        $deployRunner = file_get_contents($this->root . '/apps/platform/src/Operations/DeploymentRunner.php');
+        $backupPosition = is_string($deployRunner) ? strpos($deployRunner, '->backup(') : false;
+        $migratePosition = is_string($deployRunner) ? strpos($deployRunner, '->migrate(') : false;
+        $this->assert($backupPosition !== false && $migratePosition !== false && $backupPosition < $migratePosition, 'Canonical deploy does not back up before migration.');
+        $this->assert(is_string($executor) && str_contains($executor, 'verify-backup.php'), 'Canonical deploy does not verify the backup it takes.');
 
         $ci = file_get_contents($this->root . '/.github/workflows/ci.yml');
         $this->assert(is_string($ci) && str_contains($ci, 'python-bot-worker:') && str_contains($ci, 'ops/stage7-bots/run-deterministic-tests.sh'), 'Central CI does not run deterministic Python bot/worker tests.');

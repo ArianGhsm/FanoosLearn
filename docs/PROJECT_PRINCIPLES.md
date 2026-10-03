@@ -105,20 +105,32 @@ release discipline. In particular: tests are never weakened to pass, every
 durable fact has one owning module, documentation changes in the same change
 as the behaviour it describes, and legacy projects are read-only.
 
-## 4. Decisions still open
+## 4. Decisions
 
-These are the owner's to make; until they are made, the default in brackets
-applies.
+Made by the owner on 2026-10-03:
 
-1. **Brand and domain** — does the dental product keep the FANOOS name and
-   fanooslearn.ir? [yes]
-2. **The existing medical bank** (868 exams, ~40,000 questions) and the
-   university/cohort structure — kept alongside, hidden, or removed?
-   [kept in the database, hidden from the dental product's navigation]
-3. **Exam types in scope at launch** — دستیاری only, or also بورد and ارتقا?
-   [دستیاری first; the schema covers all]
-4. **Where question source files live** (scans, Word/Excel files, answer
-   keys) — they must not go into the code repository. [a private storage
-   location outside Git, with the import scripts in Git]
-5. **Who confirms AI classifications** — the owner, invited reviewers, or
-   both, and at what confidence threshold. [owner; threshold 0.85]
+1. **Brand and domain** — FANOOS and fanooslearn.ir stay.
+2. **The medical bank is gone.** The medical library workspace (868 exams,
+   about 40,000 questions, 1,424 images) was deleted from production on
+   2026-10-03 after a verified backup (`scripts/ops/purge-workspace.php`).
+   FANOOS holds only dental content from here on.
+3. **Exam types** — دستیاری (residency) first. بورد (board) and ارتقا
+   (promotion) come later; the schema carries exam types from the start
+   (`bank_exam_types`), so adding them is data, not a redesign.
+4. **Reviewer** — the owner confirms machine classifications.
+5. **Confidence threshold** — 0.85. Every value an AI assigns (which
+   reference, which chapter, which page, which concept, how similar two
+   questions are) comes with its own certainty between 0 and 1. At 0.85 or
+   above it is used as is; below it, it waits in the owner's review queue
+   and is not shown to students as fact. The threshold can be set per field
+   (for example stricter for pages than for chapters) once real numbers show
+   where the AI is reliable.
+
+Still open:
+
+- **Where question source files live** (scans, Word/Excel files, answer keys).
+  They must not go into this public repository. [default: a private storage
+  location outside Git, with the import scripts in Git]
+- **The university/cohort structure and the bots' class features** built for
+  the earlier product — kept, simplified or removed as the dental product
+  takes shape. [default: kept until the dental product replaces them]

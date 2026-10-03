@@ -104,7 +104,7 @@ test('motion tokens are theme-independent and defined once, in the light root', 
 /*
  * The type scale, guarded the same way the colours are.
  *
- * docs/design/exam-launcher-ui.md §2: the exam stylesheet had nine unrelated
+ * docs/archive/design/exam-launcher-ui.md §2: the exam stylesheet had nine unrelated
  * font sizes, none of which referred to each other. Sizes a hundredth of a
  * rem apart cannot express a hierarchy, they only blur one -- and they come
  * back one convenient literal at a time unless something objects.

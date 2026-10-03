@@ -41,7 +41,7 @@ of it into migrations, with tests, in its own change.
 
 | Table | Purpose | Key fields |
 |---|---|---|
-| `bank_exam_types` | دستیاری، بورد، ارتقا، … | `key`, `name` |
+| `bank_exam_types` | دستیاری first; بورد and ارتقا added later as rows, not schema | `key`, `name`, `is_active` |
 | `bank_exam_sittings` | one real exam: a type in a year (and round) | `exam_type_id`, `year` (Jalali), `round`, `held_on`, `question_count`, `answer_key_status` |
 | `bank_subjects` | the dental subjects (اندو، پریو، …) | `key`, `name`, `parent_id` (for sub-specialties) |
 
@@ -134,8 +134,9 @@ notice, e.g. «پاسخ رسمی مربوط به رفرنس آزمون ۱۳۹۶ 
 
 1. An import or an AI pass writes sources, concepts, similarity, currency and
    explanations with `origin = ai` and a confidence per field.
-2. Anything below the threshold (default 0.85; per-field thresholds allowed)
-   is in the review queue and is not shown to students as fact.
+2. Anything below the threshold (0.85, decided by the owner; per-field
+   thresholds allowed) is in the review queue and is not shown to students
+   as fact. The owner is the reviewer.
 3. A reviewer confirms or corrects it; the row records who and when, and
    `origin` becomes `human`.
 4. Nothing reviewed is overwritten by a later AI pass; a re-run proposes

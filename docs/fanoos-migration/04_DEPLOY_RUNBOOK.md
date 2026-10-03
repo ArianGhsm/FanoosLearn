@@ -1,5 +1,9 @@
 # Fanoos deploy and rollback runbook
 
+> **Historical.** This runbook describes the earlier cPanel host. Production
+> now runs on its own server and deploys only through the updater; see
+> `docs/ops/SERVER.md` and `ops/updater/README.md`.
+
 Status: procedures implemented locally; production deployment not yet authorized
 
 Last updated: 2026-09-07

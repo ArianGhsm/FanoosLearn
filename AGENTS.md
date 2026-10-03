@@ -1,136 +1,95 @@
-# FANOOS Agent Rules
+# FANOOS agent rules
 
-These rules apply to every coding/review agent working on this repository.
+Rules for every person or coding agent working on this repository.
 
 ## 0. Read first
 
-`docs/PROJECT_PRINCIPLES.md` states what FANOOS is now — a dental residency
-exam-preparation platform built on a reference-aware question bank — and the
-rule that the laptop, GitHub and the server stay identical (code moves
-laptop → GitHub → server; every session ends pushed; merged means deployed).
-Check with `scripts/dev/check-sync.sh`. The bank's design is
-`docs/product/05_DENTAL_RESIDENCY_DATA_MODEL.md`. Where this file and the
-principles disagree, the principles win.
+1. `docs/PROJECT_PRINCIPLES.md` — what FANOOS is (a dental residency
+   exam-preparation platform built on a reference-aware question bank), the
+   rule that the laptop, GitHub and the server stay identical, and the open
+   decisions. Where this file and the principles disagree, the principles win.
+2. `docs/product/05_DENTAL_RESIDENCY_DATA_MODEL.md` — the bank's design.
+3. `docs/WORKFLOW.md` — the working loop, from branch to deploy.
+4. `docs/ops/SERVER.md` — what runs on the server and how it is deployed.
 
-## 1. Repository and product boundary
+## 1. Boundaries
 
-- The only writable repository for FANOOS work is `ArianGhsm/FanoosLearn`.
-- FANOOS is an independent product, repository, runtime, database/storage domain, deployment, credential set and bot identity.
-- `Dentistry1402TUMS`, Dent1402Bot/IntegratedDent1402Tums, `VoiceMatnAIBot`, `DeepSeekLiveAIBot` and other legacy projects are read-only reference implementations unless the user explicitly authorizes a separate change there.
-- Reuse proven behavior by extracting/adapting it into FANOOS. Do not make FANOOS depend on a legacy runtime, database, env file, queue, bot token, storage tree or service.
-- Never hard-code a university, city, faculty, program, cohort, professor, course, Telegram group or Dentistry 1402 assumption into application logic when it belongs in data/configuration.
+- The only writable repository is `ArianGhsm/FanoosLearn`. It is **public**:
+  nothing that grants access (credentials, tokens, keys, SSH users, key
+  paths) is ever committed.
+- FANOOS has its own runtime, database, storage, deployment, credentials and
+  bot identities. Other projects (Dentistry1402TUMS, IntegratedDent1402Tums
+  and others) are read-only references; FANOOS never depends on their
+  runtime, database, files or secrets. The production host is shared with
+  another workload, which FANOOS work never touches.
+- Nothing about a specific university, cohort, course or reference is
+  hard-coded in application logic; it belongs in data.
 
-## 2. Canonical sources of truth
+## 2. Sources of truth
 
-- GitHub is the canonical source of truth for FANOOS code, migrations, tests, contracts, non-secret config templates, operational scripts and documentation.
-- Production database/object storage is the canonical source of truth for production data.
-- Backups are independent verified copies of production state; Git is not a data backup.
-- Runtime data, secrets, logs, caches, PID/lock files, uploaded production objects and backup archives must stay outside Git.
+- **GitHub `main`** — code, migrations, tests, contracts, docs, config
+  templates, operator scripts.
+- **The production database and storage** — all production data.
+- **Backups** — verified copies of production; Git is not a backup.
+- Secrets, runtime data, logs, caches, uploads and backups stay out of Git.
+  Owner-only notes on the laptop go in the git-ignored `.local/`.
 
-## 3. Development roles
+## 3. Working loop
 
-Primary development is performed in a local working copy and synchronized to the canonical GitHub repository:
-- architecture and implementation;
-- feature/refactor work;
-- contract work and deterministic tests/CI;
-- review and integration through normal protected branches.
+Work happens on the laptop and reaches the server only through GitHub
+(details and commands in `docs/WORKFLOW.md`):
 
-GitHub is the canonical coordination/release point, not a requirement to author ordinary work in the browser. Use the concise local loop in `docs/REBUILD_LOCAL_WORKFLOW.md`.
+1. Fetch and fast-forward `main`; branch from it.
+2. Make one coherent change, with its tests and its documentation.
+3. Run the checks (`php tests/run.php` static, `node --test tests/web/*.mjs`,
+   plus the integration suite in CI).
+4. Push, open a pull request, merge when CI is green, delete the branch.
+5. Deploy the merged `main` through the updater in the same session, verify
+   the live site, and run `scripts/dev/check-sync.sh`.
 
-Codex is primarily the runtime/deployment operator after integration:
-- exact-SHA checkout;
-- environment/runtime inspection;
-- dependency installation/verification;
-- migration dry-runs/execution;
-- runtime/integration/smoke tests;
-- log-based diagnosis;
-- service/system setup;
-- backup verification;
-- deployment, rollback and live health verification.
+Every session ends with everything pushed. A merged change that is not on
+the server is a gap to report.
 
-Codex may make only small, obvious, environment-specific fixes. Architectural, contract, broad-refactor or multi-module source defects must be reported with evidence and returned to ChatGPT for implementation.
+## 4. Reuse first
 
-## 4. Git and branch workflow
+Before building behaviour that may already exist (here, in git history, or
+in a reference project), find the proven version and adapt it. Do not create
+a second source of the same fact. When something new is unavoidable, say why
+in the change.
 
-Before any write, verify repository full name and current target ref.
+## 5. Contracts and ownership
 
-For normal single-task work:
-1. verify the canonical repository, remote and clean target ref;
-2. fetch and fast-forward the intended base when the checkout is clean;
-3. create a short-lived `codex/...` or task branch and make scoped changes;
-4. run applicable deterministic validation and review the diff for secrets/runtime state;
-5. commit and push to the canonical remote;
-6. use normal review/branch protection before merging.
+Before cross-module work read `contracts/REGISTRY.md`,
+`docs/fanoos-migration/02_MODULE_AND_DATA_OWNERSHIP.md` and
+`02_TARGET_ARCHITECTURE.md`. Every durable fact has one owning module; the
+web, the bots and any future app are clients of the platform API, never
+stores of their own. A contract change ships with its compatibility tests
+and its `contracts/openapi` update.
 
-For explicitly coordinated parallel work:
-- all worker branches start from the same `PARALLEL_BASE_SHA`;
-- workers never write directly to `main`;
-- workers do not merge or deploy;
-- workers do not pull/rebase arbitrary newer `main` mid-task;
-- workers edit only their owned paths and must respect integration-only paths;
-- no force-push on shared branches;
-- unrelated refactors are forbidden.
+## 6. Safety
 
-A worker branch is done when its scope, tests and documentation are complete and the branch is ready for integration. Production deployment is not part of worker completion.
+- Never commit or print secrets: `.env` files, tokens, keys, passwords,
+  session or payment state, production data, logs, backups.
+- Schema changes are expand-only migrations applied by the updater after a
+  verified backup; destructive ones go through the supervised contract path.
+- Never overwrite production data from a development checkout. Bulk changes
+  to production data are repository scripts with a dry run, run by the
+  operator after a verified backup.
+- The owner never operates the server by hand; anything the server must do
+  is a script in this repository.
 
-## 5. Reuse-first implementation rule
+## 7. Tests
 
-Before creating a new implementation for behavior known to exist in legacy projects or earlier FANOOS stages:
-1. search FANOOS and the relevant read-only reference projects;
-2. identify the proven implementation/behavior;
-3. prefer extract/refactor/adapt over rewriting;
-4. preserve validated behavior unless the FANOOS architecture requires a deliberate change;
-5. when a new implementation is unavoidable, record a short technical reason why reuse was unsafe or unsuitable.
+Never weaken a test or CI to make a change pass. A change is done when CI is
+green, it is deployed, and the live site behaves.
 
-Do not create duplicate business logic or parallel sources of state merely for stylistic cleanup.
+## 8. Documentation
 
-## 6. Shared contracts and ownership
+When behaviour, data, contracts, runtime or deployment change, the matching
+document changes in the same pull request. Historical documents live in
+`docs/archive/` and are not maintained.
 
-Read these before cross-module work:
-- `docs/fanoos-migration/02_MODULE_AND_DATA_OWNERSHIP.md`
-- `docs/fanoos-migration/02_TARGET_ARCHITECTURE.md`
-- `contracts/REGISTRY.md`
-- `docs/workflow/INTEGRATION_ONLY_PATHS.md`
+## 9. Scope
 
-Rules:
-- every durable fact has one owning module;
-- Web, Telegram bot and future app use backend contracts and do not become canonical domain stores;
-- workers do not silently change shared contracts;
-- a required contract change must be made in the integration/baseline stage with compatibility tests and documentation;
-- central wiring/hotspot files are integration-only unless a task explicitly reassigns them.
-
-## 7. Safety and data integrity
-
-Never commit or print real secrets. In particular, keep out of Git:
-- real `.env` files;
-- API/bot tokens, signing/HMAC keys, passwords, OAuth/session credentials;
-- SSH/FTP credentials and private keys;
-- production DB/SQLite/JSON state;
-- payment/user/session runtime state;
-- logs, caches, PID/lock files;
-- production snapshots or backup archives.
-
-Before risky schema, migration, payment, entitlement, identity, storage or deployment work, preserve the existing rollback/backup gates. Never overwrite production state from a development checkout.
-
-## 8. Testing and release discipline
-
-Do not weaken existing tests or CI to make a change pass.
-
-At minimum, use the existing repository checks appropriate to the change. CI currently provides PHP lint/static checks, secret/text guards, exact-commit release artifact validation and MySQL integration/tenant-isolation tests.
-
-An integrated release is complete only after:
-- branch work is integrated;
-- shared contracts are validated;
-- deterministic regression/integration CI is green;
-- Codex verifies the exact release SHA in the real runtime;
-- required production backup is verified;
-- canonical deployment succeeds;
-- live health/smoke/log verification succeeds.
-
-## 9. Documentation alignment
-
-When architecture, contracts, persistence, runtime topology, backup/restore behavior or deployment semantics change, update the corresponding documentation in the same change. Do not let operational docs describe a different system from the code.
-
-## 10. No silent scope expansion
-
-Do not add product features, redesign UI, change auth/payment architecture or perform broad cleanup unless the task explicitly requires it. If another module must change, expose the dependency through an interface/contract or return it as an integration requirement rather than editing another worker's implementation.
+Do what the task asks. Product features, redesigns, auth or payment changes
+and broad cleanups happen when the owner asks for them, not as side effects.

@@ -1,0 +1,46 @@
+# FANOOS — فانوس
+
+A dental residency (دستیاری دندانپزشکی) exam-preparation platform, live at
+[fanooslearn.ir](https://fanooslearn.ir), with Telegram and Bale bots.
+
+What sets it apart is the question bank: every question is tied to the exam
+it was set in, the official reference edition for that year (down to chapter
+and page), and an edition-independent concept — so a student can practise
+exactly what this year's references cover, and see when an old answer no
+longer holds.
+
+Start with **[`docs/PROJECT_PRINCIPLES.md`](docs/PROJECT_PRINCIPLES.md)**.
+
+## Repository map
+
+| Path | What |
+|---|---|
+| `apps/platform/` | the PHP 8.3 platform: domain services (`src/`), the HTTP API and the server-rendered website (`public/`, `src/Web`) |
+| `apps/telegram-bot/`, `apps/bale-bot/` | bot runtimes |
+| `apps/workers/` | background workers (notification projector, protected media) |
+| `packages/python/` | code shared by the bots and workers |
+| `database/migrations/`, `database/seeds/` | schema (expand-only migrations) and reference data |
+| `contracts/` | the API contracts (`openapi/`) and the contract registry |
+| `scripts/ops/` | operator scripts run on the server (deploy, backup, imports, maintenance) |
+| `scripts/db/`, `scripts/import/`, `scripts/ci/`, `scripts/dev/` | migrations runner, importers, CI guards, developer tools |
+| `ops/` | systemd unit and nginx templates for the server |
+| `tests/` | PHP static, integration and website tests; web unit tests; bot tests |
+| `docs/` | everything else — see [`docs/README.md`](docs/README.md) |
+
+## Running the checks
+
+```sh
+php tests/run.php              # static, schema and rendering checks (no database)
+node --test tests/web/*.mjs    # web unit tests
+```
+
+The integration suite needs a disposable MySQL database; see
+[`docs/WORKFLOW.md`](docs/WORKFLOW.md). CI runs everything on every pull
+request.
+
+## How changes ship
+
+Laptop → GitHub → server, nothing else: a branch, a pull request, a merge on
+green CI, then a deploy of `main` through the updater on the same day.
+[`docs/WORKFLOW.md`](docs/WORKFLOW.md) has the commands and
+[`docs/ops/SERVER.md`](docs/ops/SERVER.md) the server.
