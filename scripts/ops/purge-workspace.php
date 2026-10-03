@@ -97,8 +97,22 @@ SQL);
             }
             $database->prepare("DELETE FROM `{$table}` WHERE workspace_id = :workspace")->execute(['workspace' => $workspace]);
         }
-        $database->prepare('UPDATE academic_disciplines SET library_workspace_id = NULL WHERE library_workspace_id = :workspace')
-            ->execute(['workspace' => $workspace]);
+        // Other columns that point at the workspace under another name (a
+        // session's selected workspace, a discipline's library): cleared when
+        // they may be empty, otherwise the row goes with the workspace.
+        $references = $database->prepare(<<<'SQL'
+SELECT k.table_name, k.column_name, c.is_nullable
+FROM information_schema.key_column_usage k
+JOIN information_schema.columns c ON c.table_schema = k.table_schema AND c.table_name = k.table_name AND c.column_name = k.column_name
+WHERE k.table_schema = :schema AND k.referenced_table_name = 'tenant_workspaces' AND k.column_name <> 'workspace_id'
+SQL);
+        $references->execute(['schema' => $schema]);
+        foreach ($references->fetchAll(PDO::FETCH_NUM) as [$table, $column, $nullable]) {
+            $sql = $nullable === 'YES'
+                ? "UPDATE `{$table}` SET `{$column}` = NULL WHERE `{$column}` = :workspace"
+                : "DELETE FROM `{$table}` WHERE `{$column}` = :workspace";
+            $database->prepare($sql)->execute(['workspace' => $workspace]);
+        }
         $database->prepare('DELETE FROM tenant_workspaces WHERE id = :workspace')->execute(['workspace' => $workspace]);
         $database->exec('SET FOREIGN_KEY_CHECKS = 1');
 

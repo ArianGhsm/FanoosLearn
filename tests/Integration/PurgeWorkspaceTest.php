@@ -46,6 +46,11 @@ final class PurgeWorkspaceTest
         $gone = $this->footprint($doomed['workspace']);
         $this->assert($gone === ['workspace' => 0, 'assessments' => 0, 'scopes' => 0, 'memberships' => 0, 'assignments' => 0], 'The workspace was not fully removed: ' . json_encode($gone));
         $this->assert($this->footprint($kept['workspace']) === $before, 'The purge touched another workspace.');
+        $selected = $this->database->prepare('SELECT selected_workspace_id FROM iam_sessions WHERE id = :id');
+        $selected->execute(['id' => $doomed['session']]);
+        $this->assert($selected->fetchColumn() === null, 'A session still points at the purged workspace.');
+        $selected->execute(['id' => $kept['session']]);
+        $this->assert($selected->fetchColumn() === $kept['workspace'], 'A session in another workspace lost its selection.');
 
         return $this->assertions;
     }
@@ -87,7 +92,7 @@ final class PurgeWorkspaceTest
         ];
     }
 
-    /** @return array{workspace:string} */
+    /** @return array{workspace:string,session:string} */
     private function workspaceWithExam(string $label): array
     {
         $suffix = $label . substr(str_replace('-', '', Uuid::v7()), -10);
@@ -120,7 +125,13 @@ final class PurgeWorkspaceTest
         $attempt = $exams->startAttempt($student, $workspace, $created['assessment_id']);
         $exams->submitAttempt($student, $workspace, $attempt['attempt_id'], 1, ['q1' => 0]);
 
-        return ['workspace' => $workspace];
+        // A signed-in student with this workspace selected: the purge must
+        // clear the selection, not fail on it and not sign them out.
+        $session = Uuid::v7();
+        $this->database->prepare('INSERT INTO iam_sessions (id, user_id, selected_workspace_id, token_digest, client_json, created_at, last_seen_at, expires_at) VALUES (:id, :user, :workspace, :token, JSON_OBJECT(), UTC_TIMESTAMP(6), UTC_TIMESTAMP(6), DATE_ADD(UTC_TIMESTAMP(6), INTERVAL 1 HOUR))')
+            ->execute(['id' => $session, 'user' => $student, 'workspace' => $workspace, 'token' => random_bytes(32)]);
+
+        return ['workspace' => $workspace, 'session' => $session];
     }
 
     private function member(string $workspace, string $roleKey): string
