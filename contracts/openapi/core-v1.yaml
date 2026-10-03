@@ -410,6 +410,12 @@ paths:
       parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }, { name: reportId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }]
       requestBody: { required: true, content: { application/json: { schema: { type: object, required: [status], properties: { status: { type: string, enum: [resolved, rejected] }, resolution: { type: string, maxLength: 1000 } } } } } }
       responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/assessments/{assessmentId}/ranking:
+    get:
+      operationId: readAssessmentRanking
+      description: 'کارنامه: where the caller stands among everyone who sat this exam -- each person''s first exam-mode (mode=assessment) attempt. ranked=false with reason personal (own study set), no_exam_attempt (caller has no exam-mode attempt) or too_few (fewer than 5 participants: the rank is withheld). When ranked: participants, rank, better_than_percent, mine_percent, average_percent, top_percent, distribution (10 score buckets) and my_bucket. Needs exam.take.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: assessmentId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/review:
     get:
       operationId: readReviewBox

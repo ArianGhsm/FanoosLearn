@@ -59,8 +59,24 @@ final class WebRenderingTest
         $this->everySignedInPageOffersAWayOut($renderer);
         $this->recoveryPageChecksTheLinkClientSideAndCarriesNoToken($renderer);
         $this->noPageReferencesTheRemovedDisplayFace($renderer);
+        $this->theSiteIsInstallableWithoutCachingData($renderer);
 
         return $this->assertions;
+    }
+
+    /** The manifest and worker make the site installable; the worker never caches the API or pages. */
+    private function theSiteIsInstallableWithoutCachingData(PageRenderer $renderer): void
+    {
+        $manifest = json_decode(\Fanoos\Platform\Web\Pwa::manifest()['body'], true, 16, JSON_THROW_ON_ERROR);
+        $this->assert($manifest['start_url'] === '/app' && $manifest['display'] === 'standalone' && count($manifest['icons']) >= 2, 'The manifest is not installable.');
+        foreach ($manifest['icons'] as $icon) {
+            $this->assert(is_file($this->root . '/apps/platform/public' . $icon['src']), "Manifest icon {$icon['src']} is missing.");
+        }
+        $worker = \Fanoos\Platform\Web\Pwa::worker();
+        $this->assert(in_array('Service-Worker-Allowed: /', $worker['headers'], true), 'The worker cannot control the whole site.');
+        $this->assert(!str_contains($worker['body'], '/api/') && str_contains($worker['body'], "startsWith('/assets/')"), 'The worker must cache versioned assets only.');
+        $html = (new LandingPage($renderer))->render();
+        $this->assert(str_contains($html, 'rel="manifest" href="/pwa/manifest"') && str_contains($html, '/assets/web/foundation/pwa.js'), 'Pages do not link the manifest and register the worker.');
     }
 
     private function landingIsPublicAndClaimsNothingItCannotBack(PageRenderer $renderer): void

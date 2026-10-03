@@ -47,6 +47,13 @@ final class WebRouter
                 : $this->redirect('/app');
         }
 
+        if ($path === Pwa::MANIFEST_PATH) {
+            return Pwa::manifest();
+        }
+        if ($path === Pwa::WORKER_PATH) {
+            return Pwa::worker();
+        }
+
         if ($path === '/login') {
             return $viewer === null
                 ? $this->page(200, (new LoginPage($this->renderer))->render())
