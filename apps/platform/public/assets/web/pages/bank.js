@@ -268,10 +268,13 @@ function chapterList(chapters) {
         item.append(el('span', 'b-chapter__number', chapter.number ? faDigits(chapter.number) : '–'));
         const text = el('div', 'b-chapter__text');
         if (chapter.title_fa) text.append(el('span', 'b-chapter__fa', chapter.title_fa));
-        const english = el('span', 'b-chapter__en', chapter.title);
-        english.lang = 'en';
-        english.dir = 'ltr';
-        text.append(english);
+        // A Persian book's title is its own; only a translated one shows the English under it.
+        if (chapter.title !== chapter.title_fa) {
+            const english = el('span', 'b-chapter__en', chapter.title);
+            english.lang = 'en';
+            english.dir = 'ltr';
+            text.append(english);
+        }
         if (scoped && chapter.in_scope === false) text.append(el('span', 'b-chapter__tag', 'خارج از منبع'));
         if (chapter.partial) text.append(el('span', 'b-chapter__tag b-chapter__tag--partial', `بخشی از فصل: ${faDigits(chapter.partial)}`));
         item.append(text);

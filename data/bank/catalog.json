@@ -29,16 +29,11 @@
     "row 153 (1398, مواد دندانی): \"Introduction to Dental Materials (Van Noort)\" has no publication year; recorded as 4th edition because in 1398 the newest edition was the 4th (2013); the 5th appeared in 2024",
     "row 153 (1398, مواد دندانی): edition not stated; recorded as 4th edition from the year 2013 — the 2013 edition is the 4th; the 5th is 2024",
     "row 167 (1397, زبان انگلیسی): \"سطح Upper Intermediate\" is a scope statement, not a book; kept out of the reference list",
-    "1403 dental-materials phillips-materials@13e: scope \"Part II: Direct Restorative Materials\" names no chapter list; kept as text only",
-    "1402 dental-materials powers-wataha-materials@11e: scope \"تمام فصول به جز 1،6،10،12،14\" names no chapter list; kept as text only",
+    "1403 dental-materials phillips-materials@13e: scope \"Part II: Direct Restorative Materials\" read as chapters فصول 5–8 — Part II (Direct Restorative Materials) is chapters 5–8 in the publisher's contents",
     "1401 english anderson-active-skills@2014: scope \"Books 3 and 4; فصل/صفحه مشخص نشده\" names no chapter list; kept as text only",
     "1401 english noble-dental-hygiene@2e: scope \"PDF این کتاب را به عنوان منبع معرفی می‌کند\" names no chapter list; kept as text only",
     "1401 english tahririan-english-dentistry@2016: scope \"ذکر شده به عنوان منبع؛ فصل/صفحه مشخص نشده\" names no chapter list; kept as text only",
     "1401 english schmitt-focus-vocabulary@2011: scope \"ذکر شده به عنوان منبع؛ فصل/صفحه مشخص نشده\" names no chapter list; kept as text only",
-    "1401 dental-materials powers-wataha-materials@11e: scope \"تمام فصول به جز 1،6،10،12،14\" names no chapter list; kept as text only",
-    "1400 dental-materials powers-wataha-materials@11e: scope \"تمام فصول به جز 1،6،10،12،14\" names no chapter list; kept as text only",
-    "1399 endodontics torabinejad-endodontics@5e: scope \"تمام فصول\" names no chapter list; kept as text only",
-    "1399 dental-materials powers-wataha-materials@11e: scope \"تمام فصول به جز 1،6،10،12،14\" names no chapter list; kept as text only",
     "1398 oral-pathology neville-oral-pathology@4e: scope \"فصول 4،18،19 از منابع حذف شدند.\" names no chapter list; kept as text only",
     "1398 orthodontics proffit-orthodontics@5e: scope \"فصول 10 و17 به منابع آزمون 98 اضافه شد.\" names no chapter list; kept as text only",
     "1398 oral-medicine burket-oral-medicine@12e: scope \"ویرایش‌های Burket 2015 و Falace 2018؛ حذف فصل پیگمانتاسیون و افزودن بیماری‌های غدد بزاقی؛ فهرست کامل فصل‌ها در دسترس نیست.\" names no chapter list; kept as text only",
@@ -48,7 +43,6 @@
     "1398 operative-dentistry craig-restorative-materials@14e: scope \"منابع با برچسب کوتاه «Art 2018» و «Craig 2018»؛ جزئیات کامل در PDF مفقود است.\" names no chapter list; kept as text only",
     "1398 community-dentistry national-oral-health@1394: scope \"در اطلاعیه به عنوان منبع معرفی شده؛ مشخصات کامل در PDF مفقود است.\" names no chapter list; kept as text only",
     "1398 dental-materials van-noort-materials@4e: scope \"اطلاعیه می‌گوید Noort جایگزین منبع قبلی شده؛ ویرایش/فصل‌ها در پست نیامده است.\" names no chapter list; kept as text only",
-    "1397 endodontics torabinejad-endodontics@5e: scope \"تمام فصول\" names no chapter list; kept as text only",
     "1397 dental-materials mccabe-walls-materials@9e: scope \"فصول منتخب؛ فهرست کامل در PDF اصلی (نسخهٔ متن استخراجیِ قدیمی در بعضی اعداد RTL وارونگی دارد).\" names no chapter list; kept as text only",
     "1397 periodontics carranza-periodontology@12e: scope \"فهرست فصل‌های منتخب و بخش‌های Online در PDF؛ متن فصل‌ها به علت کیفیت فونت قدیمی با استخراج خودکار قطعی نیست.\" names no chapter list; kept as text only"
   ],
@@ -823,7 +817,209 @@
         {
           "key": "5e",
           "label": "5th edition",
-          "year": 2015
+          "year": 2015,
+          "nodes": [
+            {
+              "key": "ch01",
+              "kind": "chapter",
+              "number": "1",
+              "title": "The Biology of Dental Pulp and Periradicular Tissues",
+              "title_fa": "زیست‌شناسی پالپ دندان و بافت‌های پری‌رادیکولار",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch02",
+              "kind": "chapter",
+              "number": "2",
+              "title": "Protecting the Pulp, Preserving the Apex",
+              "title_fa": "محافظت از پالپ، حفظ اپکس",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch03",
+              "kind": "chapter",
+              "number": "3",
+              "title": "Endodontic Microbiology",
+              "title_fa": "میکروبیولوژی اندودنتیک",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch04",
+              "kind": "chapter",
+              "number": "4",
+              "title": "Pulp and Periradicular Pathosis",
+              "title_fa": "پاتوز پالپ و پری‌رادیکولار",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch05",
+              "kind": "chapter",
+              "number": "5",
+              "title": "Diagnoses, Treatment Planning, and Systemic Considerations",
+              "title_fa": "تشخیص، طرح درمان و ملاحظات سیستمیک",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch06",
+              "kind": "chapter",
+              "number": "6",
+              "title": "Interaction Between Generalist and Specialists",
+              "title_fa": "تعامل دندانپزشک عمومی و متخصصان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch07",
+              "kind": "chapter",
+              "number": "7",
+              "title": "Periodontal and Endodontic Interrelationship",
+              "title_fa": "ارتباط متقابل پریودنتال و اندودنتیک",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch08",
+              "kind": "chapter",
+              "number": "8",
+              "title": "Longitudinal Tooth Fractures",
+              "title_fa": "شکستگی‌های طولی دندان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch09",
+              "kind": "chapter",
+              "number": "9",
+              "title": "Local Anesthetics",
+              "title_fa": "بی‌حس‌کننده‌های موضعی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch10",
+              "kind": "chapter",
+              "number": "10",
+              "title": "Endodontic Emergencies and Therapeutics",
+              "title_fa": "فوریت‌های اندودنتیک و درمان دارویی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch11",
+              "kind": "chapter",
+              "number": "11",
+              "title": "Management of Traumatized Teeth",
+              "title_fa": "درمان دندان‌های ترومادیده",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch12",
+              "kind": "chapter",
+              "number": "12",
+              "title": "Endodontic Radiology",
+              "title_fa": "رادیولوژی اندودنتیک",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch13",
+              "kind": "chapter",
+              "number": "13",
+              "title": "Endodontic Instruments",
+              "title_fa": "وسایل اندودنتیک",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch14",
+              "kind": "chapter",
+              "number": "14",
+              "title": "Internal Anatomy",
+              "title_fa": "آناتومی داخلی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch15",
+              "kind": "chapter",
+              "number": "15",
+              "title": "Isolation, Access Preparation and Length Determination",
+              "title_fa": "ایزولاسیون، تهیه‌ی حفره‌ی دسترسی و تعیین طول کارکرد",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch16",
+              "kind": "chapter",
+              "number": "16",
+              "title": "Cleaning and Shaping, Temporarization",
+              "title_fa": "پاکسازی و شکل‌دهی، ترمیم موقت",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch17",
+              "kind": "chapter",
+              "number": "17",
+              "title": "Restoration of Endodontically Treated Teeth",
+              "title_fa": "ترمیم دندان‌های درمان ریشه‌شده",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch18",
+              "kind": "chapter",
+              "number": "18",
+              "title": "Obturation",
+              "title_fa": "پرکردن کانال",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch19",
+              "kind": "chapter",
+              "number": "19",
+              "title": "Procedural Accidents",
+              "title_fa": "حوادث حین درمان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch20",
+              "kind": "chapter",
+              "number": "20",
+              "title": "Endodontic Retreatment",
+              "title_fa": "درمان مجدد اندودنتیک",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch21",
+              "kind": "chapter",
+              "number": "21",
+              "title": "Endodontic Surgery",
+              "title_fa": "جراحی اندودنتیک",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch22",
+              "kind": "chapter",
+              "number": "22",
+              "title": "Endodontic Outcomes",
+              "title_fa": "نتایج درمان اندودنتیک",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch23",
+              "kind": "chapter",
+              "number": "23",
+              "title": "Single Tooth Implant",
+              "title_fa": "ایمپلنت تک‌دندان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch24",
+              "kind": "chapter",
+              "number": "24",
+              "title": "Bleaching of Discolored Teeth",
+              "title_fa": "بلیچینگ دندان‌های تغییررنگ‌یافته",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch25",
+              "kind": "chapter",
+              "number": "25",
+              "title": "Geriatric Endodontics",
+              "title_fa": "اندودانتیکس سالمندان",
+              "title_fa_origin": "ai"
+            }
+          ]
         },
         {
           "key": "6e",
@@ -1019,12 +1215,424 @@
         {
           "key": "11e",
           "label": "11th edition",
-          "year": 2008
+          "year": 2008,
+          "nodes": [
+            {
+              "key": "ch01",
+              "kind": "chapter",
+              "number": "1",
+              "title": "Introduction to oral medicine and oral diagnosis: evaluation of the dental patient",
+              "title_fa": "مقدمه‌ای بر بیماری‌های دهان و تشخیص دهانی: ارزیابی بیمار دندانپزشکی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch02",
+              "kind": "chapter",
+              "number": "2",
+              "title": "Pharmacology",
+              "title_fa": "فارماکولوژی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch03",
+              "kind": "chapter",
+              "number": "3",
+              "title": "Ulcerative, vesicular, and bullous lesions",
+              "title_fa": "ضایعات زخمی، وزیکولی و بولوز",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch04",
+              "kind": "chapter",
+              "number": "4",
+              "title": "Red and white lesions of the oral mucosa",
+              "title_fa": "ضایعات قرمز و سفید مخاط دهان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch05",
+              "kind": "chapter",
+              "number": "5",
+              "title": "Pigmented lesions of the oral mucosa",
+              "title_fa": "ضایعات پیگمانته‌ی مخاط دهان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch06",
+              "kind": "chapter",
+              "number": "6",
+              "title": "Benign lesions of the oral cavity",
+              "title_fa": "ضایعات خوش‌خیم حفره‌ی دهان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch07",
+              "kind": "chapter",
+              "number": "7",
+              "title": "Oral cancer",
+              "title_fa": "سرطان دهان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch08",
+              "kind": "chapter",
+              "number": "8",
+              "title": "Salivary gland diseases",
+              "title_fa": "بیماری‌های غدد بزاقی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch09",
+              "kind": "chapter",
+              "number": "9",
+              "title": "Temporomandibular disorders",
+              "title_fa": "اختلالات گیجگاهی-فکی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch10",
+              "kind": "chapter",
+              "number": "10",
+              "title": "Orofacial pain",
+              "title_fa": "درد دهانی-صورتی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch11",
+              "kind": "chapter",
+              "number": "11",
+              "title": "Headache",
+              "title_fa": "سردرد",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch12",
+              "kind": "chapter",
+              "number": "12",
+              "title": "Diseases of the respiratory tract",
+              "title_fa": "بیماری‌های دستگاه تنفس",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch13",
+              "kind": "chapter",
+              "number": "13",
+              "title": "Diseases of the cardiovascular system",
+              "title_fa": "بیماری‌های دستگاه قلبی-عروقی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch14",
+              "kind": "chapter",
+              "number": "14",
+              "title": "Diseases of the gastrointestinal tract",
+              "title_fa": "بیماری‌های دستگاه گوارش",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch15",
+              "kind": "chapter",
+              "number": "15",
+              "title": "Renal disease",
+              "title_fa": "بیماری کلیه",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch16",
+              "kind": "chapter",
+              "number": "16",
+              "title": "Hematologic diseases",
+              "title_fa": "بیماری‌های خونی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch17",
+              "kind": "chapter",
+              "number": "17",
+              "title": "Bleeding and clotting disorders",
+              "title_fa": "اختلالات خونریزی و انعقاد",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch18",
+              "kind": "chapter",
+              "number": "18",
+              "title": "Immunologic diseases",
+              "title_fa": "بیماری‌های ایمونولوژیک",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch19",
+              "kind": "chapter",
+              "number": "19",
+              "title": "Transplantation medicine",
+              "title_fa": "پزشکی پیوند",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch20",
+              "kind": "chapter",
+              "number": "20",
+              "title": "Infectious diseases",
+              "title_fa": "بیماری‌های عفونی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch21",
+              "kind": "chapter",
+              "number": "21",
+              "title": "Diabetes mellitus and endocrine diseases",
+              "title_fa": "دیابت شیرین و بیماری‌های غدد درون‌ریز",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch22",
+              "kind": "chapter",
+              "number": "22",
+              "title": "Neuromuscular diseases",
+              "title_fa": "بیماری‌های عصبی-عضلانی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch23",
+              "kind": "chapter",
+              "number": "23",
+              "title": "Basic principles of human genetics: a primer for oral medicine",
+              "title_fa": "اصول پایه‌ی ژنتیک انسانی: مقدمه‌ای برای بیماری‌های دهان",
+              "title_fa_origin": "ai"
+            }
+          ]
         },
         {
           "key": "12e",
           "label": "12th edition",
-          "year": 2015
+          "year": 2015,
+          "nodes": [
+            {
+              "key": "ch01",
+              "kind": "chapter",
+              "number": "1",
+              "title": "Introduction to Oral Medicine and Oral Diagnosis",
+              "title_fa": "مقدمه‌ای بر بیماری‌های دهان و تشخیص دهانی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch02",
+              "kind": "chapter",
+              "number": "2",
+              "title": "Overview of Clinical Research",
+              "title_fa": "مروری بر پژوهش بالینی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch03",
+              "kind": "chapter",
+              "number": "3",
+              "title": "Pharmacotherapy",
+              "title_fa": "دارودرمانی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch04",
+              "kind": "chapter",
+              "number": "4",
+              "title": "Ulcerative, Vesicular, and Bullous Lesions",
+              "title_fa": "ضایعات زخمی، وزیکولی و بولوز",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch05",
+              "kind": "chapter",
+              "number": "5",
+              "title": "Red and White Lesions of the Oral Mucosa",
+              "title_fa": "ضایعات قرمز و سفید مخاط دهان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch06",
+              "kind": "chapter",
+              "number": "6",
+              "title": "Pigmented Lesions of the Oral Mucosa",
+              "title_fa": "ضایعات پیگمانته‌ی مخاط دهان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch07",
+              "kind": "chapter",
+              "number": "7",
+              "title": "Benign Lesions of the Oral Cavity and the Jaws",
+              "title_fa": "ضایعات خوش‌خیم حفره‌ی دهان و فک‌ها",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch08",
+              "kind": "chapter",
+              "number": "8",
+              "title": "Oral and Oropharyngeal Cancer",
+              "title_fa": "سرطان دهان و اوروفارنکس",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch09",
+              "kind": "chapter",
+              "number": "9",
+              "title": "Oral Complications of Cancer Therapies: Diagnosis and Treatment",
+              "title_fa": "عوارض دهانی درمان‌های سرطان: تشخیص و درمان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch10",
+              "kind": "chapter",
+              "number": "10",
+              "title": "Salivary Gland Diseases",
+              "title_fa": "بیماری‌های غدد بزاقی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch11",
+              "kind": "chapter",
+              "number": "11",
+              "title": "Temporomandibular Disorders",
+              "title_fa": "اختلالات گیجگاهی-فکی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch12",
+              "kind": "chapter",
+              "number": "12",
+              "title": "Orofacial Pain",
+              "title_fa": "درد دهانی-صورتی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch13",
+              "kind": "chapter",
+              "number": "13",
+              "title": "Common Headache Disorders",
+              "title_fa": "سردردهای شایع",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch14",
+              "kind": "chapter",
+              "number": "14",
+              "title": "Diseases of the Respiratory Tract",
+              "title_fa": "بیماری‌های دستگاه تنفس",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch15",
+              "kind": "chapter",
+              "number": "15",
+              "title": "Diseases of the Cardiovascular System",
+              "title_fa": "بیماری‌های دستگاه قلبی-عروقی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch16",
+              "kind": "chapter",
+              "number": "16",
+              "title": "Diseases of the Gastrointestinal Tract",
+              "title_fa": "بیماری‌های دستگاه گوارش",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch17",
+              "kind": "chapter",
+              "number": "17",
+              "title": "Renal Disease",
+              "title_fa": "بیماری کلیه",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch18",
+              "kind": "chapter",
+              "number": "18",
+              "title": "Hematologic Diseases",
+              "title_fa": "بیماری‌های خونی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch19",
+              "kind": "chapter",
+              "number": "19",
+              "title": "Bleeding and Clotting Disorders",
+              "title_fa": "اختلالات خونریزی و انعقاد",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch20",
+              "kind": "chapter",
+              "number": "20",
+              "title": "Immunologic Diseases",
+              "title_fa": "بیماری‌های ایمونولوژیک",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch21",
+              "kind": "chapter",
+              "number": "21",
+              "title": "Transplantation Medicine",
+              "title_fa": "پزشکی پیوند",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch22",
+              "kind": "chapter",
+              "number": "22",
+              "title": "Infectious Diseases",
+              "title_fa": "بیماری‌های عفونی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch23",
+              "kind": "chapter",
+              "number": "23",
+              "title": "Disorders of the Endocrine System and Metabolism",
+              "title_fa": "اختلالات دستگاه غدد درون‌ریز و متابولیسم",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch24",
+              "kind": "chapter",
+              "number": "24",
+              "title": "Neuromuscular Diseases",
+              "title_fa": "بیماری‌های عصبی-عضلانی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch25",
+              "kind": "chapter",
+              "number": "25",
+              "title": "Basic Principles of Human Genetics: A Primer for Oral Medicine",
+              "title_fa": "اصول پایه‌ی ژنتیک انسانی: مقدمه‌ای برای بیماری‌های دهان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch26",
+              "kind": "chapter",
+              "number": "26",
+              "title": "Geriatric Oral Medicine",
+              "title_fa": "بیماری‌های دهان در سالمندان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch27",
+              "kind": "chapter",
+              "number": "27",
+              "title": "Pediatric Oral Medicine",
+              "title_fa": "بیماری‌های دهان کودکان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch28",
+              "kind": "chapter",
+              "number": "28",
+              "title": "Panoramic Image Interpretation",
+              "title_fa": "تفسیر تصویر پانورامیک",
+              "title_fa_origin": "ai"
+            }
+          ]
         },
         {
           "key": "13e",
@@ -3471,7 +4079,385 @@
         {
           "key": "3e",
           "label": "3rd edition",
-          "year": 2018
+          "year": 2018,
+          "nodes": [
+            {
+              "key": "ch01",
+              "kind": "chapter",
+              "number": "1",
+              "title": "Concepts of Dental Esthetics",
+              "title_fa": "مفاهیم زیبایی دندان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch02",
+              "kind": "chapter",
+              "number": "2",
+              "title": "Successful Management of Common Psychological Challenges",
+              "title_fa": "مدیریت موفق چالش‌های روانی رایج",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch03",
+              "kind": "chapter",
+              "number": "3",
+              "title": "Esthetic Treatment Planning: Patient and Practice Management Skills in Esthetic Treatment Planning",
+              "title_fa": "طرح درمان زیبایی: مهارت‌های مدیریت بیمار و مطب در طرح درمان زیبایی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch04",
+              "kind": "chapter",
+              "number": "4",
+              "title": "Digital Smile Design: A Digital Tool for Esthetic Evaluation, Team Communication, and Patient Management",
+              "title_fa": "طراحی دیجیتال لبخند: ابزاری دیجیتال برای ارزیابی زیبایی، ارتباط تیمی و مدیریت بیمار",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch05",
+              "kind": "chapter",
+              "number": "5",
+              "title": "Esthetics in Dentistry Marketing",
+              "title_fa": "زیبایی و بازاریابی در دندانپزشکی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch06",
+              "kind": "chapter",
+              "number": "6",
+              "title": "Legal Considerations",
+              "title_fa": "ملاحظات حقوقی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch07",
+              "kind": "chapter",
+              "number": "7",
+              "title": "Practical Clinical Photography",
+              "title_fa": "عکاسی بالینی کاربردی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch08",
+              "kind": "chapter",
+              "number": "8",
+              "title": "Creating Esthetic Restorations Through Special Effects",
+              "title_fa": "ساخت ترمیم‌های زیبا با جلوه‌های ویژه",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch09",
+              "kind": "chapter",
+              "number": "9",
+              "title": "Proportional Smile Design",
+              "title_fa": "طراحی متناسب لبخند",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch10",
+              "kind": "chapter",
+              "number": "10",
+              "title": "Understanding Color",
+              "title_fa": "شناخت رنگ",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch11",
+              "kind": "chapter",
+              "number": "11",
+              "title": "Cosmetic Contouring",
+              "title_fa": "اصلاح فرم زیبایی دندان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch12",
+              "kind": "chapter",
+              "number": "12",
+              "title": "Bleaching Discolored Teeth",
+              "title_fa": "بلیچینگ دندان‌های تغییررنگ‌یافته",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch13",
+              "kind": "chapter",
+              "number": "13",
+              "title": "Adhesion to Hard Tissue on Teeth",
+              "title_fa": "چسبندگی به بافت سخت دندان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch14",
+              "kind": "chapter",
+              "number": "14",
+              "title": "Composite Resin Bonding",
+              "title_fa": "باندینگ کامپوزیت رزینی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch15",
+              "kind": "chapter",
+              "number": "15",
+              "title": "Ceramic Veneers and Partial-Coverage Restorations",
+              "title_fa": "ونیرهای سرامیکی و ترمیم‌های پوشش ناقص",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch16",
+              "kind": "chapter",
+              "number": "16",
+              "title": "Crown Restorations",
+              "title_fa": "ترمیم‌های روکش",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch17",
+              "kind": "chapter",
+              "number": "17",
+              "title": "Replacing Missing Teeth with Fixed Partial Dentures",
+              "title_fa": "جایگزینی دندان‌های ازدست‌رفته با پروتز پارسیل ثابت",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch18",
+              "kind": "chapter",
+              "number": "18",
+              "title": "Esthetic Removable Partial Dentures",
+              "title_fa": "پروتزهای پارسیل متحرک زیبا",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch19",
+              "kind": "chapter",
+              "number": "19",
+              "title": "The Complete Denture",
+              "title_fa": "دنچر کامل",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch20",
+              "kind": "chapter",
+              "number": "20",
+              "title": "Implant Esthetics: Concepts, Surgical Procedures, and Materials",
+              "title_fa": "زیبایی ایمپلنت: مفاهیم، روش‌های جراحی و مواد",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch21",
+              "kind": "chapter",
+              "number": "21",
+              "title": "Management of Stained and Discolored Teeth",
+              "title_fa": "درمان دندان‌های لکه‌دار و تغییررنگ‌یافته",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch22",
+              "kind": "chapter",
+              "number": "22",
+              "title": "Abfraction, Abrasion, Attrition, and Erosion",
+              "title_fa": "آبفرکشن، سایش، اتریشن و اروژن",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch23",
+              "kind": "chapter",
+              "number": "23",
+              "title": "Chipped, Fractured, or Endodontically Treated Teeth",
+              "title_fa": "دندان‌های لب‌پریده، شکسته یا درمان ریشه‌شده",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch24",
+              "kind": "chapter",
+              "number": "24",
+              "title": "Endodontics and Esthetic Dentistry",
+              "title_fa": "اندودانتیکس و دندانپزشکی زیبایی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch25",
+              "kind": "chapter",
+              "number": "25",
+              "title": "Oral Habits",
+              "title_fa": "عادت‌های دهانی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch26",
+              "kind": "chapter",
+              "number": "26",
+              "title": "Restorative Treatment of Diastema",
+              "title_fa": "درمان ترمیمی دیاستم",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch27",
+              "kind": "chapter",
+              "number": "27",
+              "title": "Restorative Treatment of Crowded Teeth",
+              "title_fa": "درمان ترمیمی دندان‌های نامرتب",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch28",
+              "kind": "chapter",
+              "number": "28",
+              "title": "Esthetics in Adult Orthodontics",
+              "title_fa": "زیبایی در ارتودنسی بزرگسالان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch29",
+              "kind": "chapter",
+              "number": "29",
+              "title": "Surgical Orthodontic Correction of Dentofacial Deformity",
+              "title_fa": "اصلاح جراحی-ارتودنسی ناهنجاری دندانی-صورتی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch30",
+              "kind": "chapter",
+              "number": "30",
+              "title": "Pediatric Dentistry",
+              "title_fa": "دندانپزشکی کودکان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch31",
+              "kind": "chapter",
+              "number": "31",
+              "title": "Geresthetics: Esthetic Dentistry for Older Adults",
+              "title_fa": "زیبایی سالمندان: دندانپزشکی زیبایی برای افراد مسن",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch32",
+              "kind": "chapter",
+              "number": "32",
+              "title": "Facial Considerations: An Orthodontic Perspective",
+              "title_fa": "ملاحظات صورت: دیدگاه ارتودنسی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch33",
+              "kind": "chapter",
+              "number": "33",
+              "title": "Facial Considerations in Esthetic Restorations",
+              "title_fa": "ملاحظات صورت در ترمیم‌های زیبایی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch34",
+              "kind": "chapter",
+              "number": "34",
+              "title": "Plastic Surgery Related to Esthetic Dentistry",
+              "title_fa": "جراحی پلاستیک مرتبط با دندانپزشکی زیبایی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch35",
+              "kind": "chapter",
+              "number": "35",
+              "title": "Cosmetic Adjuncts",
+              "title_fa": "روش‌های کمکی زیبایی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch36",
+              "kind": "chapter",
+              "number": "36",
+              "title": "Esthetic Considerations in the Performing Arts",
+              "title_fa": "ملاحظات زیبایی در هنرهای نمایشی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch37",
+              "kind": "chapter",
+              "number": "37",
+              "title": "Periodontal Plastic Surgery",
+              "title_fa": "جراحی پلاستیک پریودنتال",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch38",
+              "kind": "chapter",
+              "number": "38",
+              "title": "Esthetic and Traumatic Emergencies",
+              "title_fa": "فوریت‌های زیبایی و تروماتیک",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch39",
+              "kind": "chapter",
+              "number": "39",
+              "title": "Esthetic Failures",
+              "title_fa": "شکست‌های زیبایی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch40",
+              "kind": "chapter",
+              "number": "40",
+              "title": "Tooth Preparation in Esthetic Dentistry",
+              "title_fa": "تراش دندان در دندانپزشکی زیبایی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch41",
+              "kind": "chapter",
+              "number": "41",
+              "title": "Impressions",
+              "title_fa": "قالب‌گیری",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch42",
+              "kind": "chapter",
+              "number": "42",
+              "title": "Esthetic Temporization",
+              "title_fa": "ترمیم موقت زیبا",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch43",
+              "kind": "chapter",
+              "number": "43",
+              "title": "The Esthetic Try-In",
+              "title_fa": "امتحان زیبایی (تری‌این)",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch44",
+              "kind": "chapter",
+              "number": "44",
+              "title": "Cementation of Restorations",
+              "title_fa": "سمان‌کردن ترمیم‌ها",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch45",
+              "kind": "chapter",
+              "number": "45",
+              "title": "Esthetic Principles in Constructing Ceramic Restorations",
+              "title_fa": "اصول زیبایی در ساخت ترمیم‌های سرامیکی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch46",
+              "kind": "chapter",
+              "number": "46",
+              "title": "Digital Impression Devices and CAD/CAM Systems",
+              "title_fa": "دستگاه‌های قالب‌گیری دیجیتال و سامانه‌های CAD/CAM",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch47",
+              "kind": "chapter",
+              "number": "47",
+              "title": "Maintenance of Esthetic Restorations",
+              "title_fa": "نگهداری ترمیم‌های زیبایی",
+              "title_fa_origin": "ai"
+            }
+          ]
         }
       ]
     },
@@ -3484,7 +4470,193 @@
         {
           "key": "6e",
           "label": "6th edition",
-          "year": 2013
+          "year": 2013,
+          "nodes": [
+            {
+              "key": "ch01",
+              "kind": "chapter",
+              "number": "1",
+              "title": "Clinical significance of dental anatomy, histology, physiology, and occlusion",
+              "title_fa": "اهمیت بالینی آناتومی، بافت‌شناسی، فیزیولوژی دندان و اکلوژن",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch02",
+              "kind": "chapter",
+              "number": "2",
+              "title": "Dental caries: etiology, clinical characteristics, risk assessment, and management",
+              "title_fa": "پوسیدگی دندان: سبب‌شناسی، ویژگی‌های بالینی، ارزیابی خطر و مدیریت",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch03",
+              "kind": "chapter",
+              "number": "3",
+              "title": "Patient assessment, examination and diagnosis, and treatment planning",
+              "title_fa": "ارزیابی بیمار، معاینه، تشخیص و طرح درمان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch04",
+              "kind": "chapter",
+              "number": "4",
+              "title": "Fundamental concepts of enamel and dentin adhesion",
+              "title_fa": "مفاهیم بنیادی چسبندگی به مینا و عاج",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch05",
+              "kind": "chapter",
+              "number": "5",
+              "title": "Fundamentals in tooth preparation and pulp protection",
+              "title_fa": "مبانی تراش دندان و محافظت از پالپ",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch06",
+              "kind": "chapter",
+              "number": "6",
+              "title": "Instruments and equipment for tooth preparation",
+              "title_fa": "وسایل و تجهیزات تراش دندان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch07",
+              "kind": "chapter",
+              "number": "7",
+              "title": "Preliminary considerations for operative dentistry",
+              "title_fa": "ملاحظات مقدماتی دندانپزشکی ترمیمی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch08",
+              "kind": "chapter",
+              "number": "8",
+              "title": "Introduction to composite restorations",
+              "title_fa": "مقدمه‌ای بر ترمیم‌های کامپوزیت",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch09",
+              "kind": "chapter",
+              "number": "9",
+              "title": "Class III, IV, and V direct composite and glass ionomer restorations",
+              "title_fa": "ترمیم‌های مستقیم کامپوزیت و گلاس آینومر کلاس III، IV و V",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch10",
+              "kind": "chapter",
+              "number": "10",
+              "title": "Class I, II, and VI direct composite restorations and other tooth-colored restorations",
+              "title_fa": "ترمیم‌های مستقیم کامپوزیت کلاس I، II و VI و سایر ترمیم‌های هم‌رنگ دندان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch11",
+              "kind": "chapter",
+              "number": "11",
+              "title": "Class I and II indirect tooth-colored restorations",
+              "title_fa": "ترمیم‌های غیرمستقیم هم‌رنگ دندان کلاس I و II",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch12",
+              "kind": "chapter",
+              "number": "12",
+              "title": "Additional conservative esthetic procedures",
+              "title_fa": "درمان‌های زیبایی محافظه‌کارانه‌ی تکمیلی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch13",
+              "kind": "chapter",
+              "number": "13",
+              "title": "Introduction to amalgam restorations",
+              "title_fa": "مقدمه‌ای بر ترمیم‌های آمالگام",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch14",
+              "kind": "chapter",
+              "number": "14",
+              "title": "Class I, II, and VI amalgam restorations",
+              "title_fa": "ترمیم‌های آمالگام کلاس I، II و VI",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch15",
+              "kind": "chapter",
+              "number": "15",
+              "title": "Class III and V amalgam restorations",
+              "title_fa": "ترمیم‌های آمالگام کلاس III و V",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch16",
+              "kind": "chapter",
+              "number": "16",
+              "title": "Complex amalgam restorations",
+              "title_fa": "ترمیم‌های آمالگام پیچیده",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch17",
+              "kind": "chapter",
+              "number": "17",
+              "title": "Class II cast metal restorations",
+              "title_fa": "ترمیم‌های ریختگی فلزی کلاس II",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch18",
+              "kind": "chapter",
+              "number": "18",
+              "title": "Biomaterials",
+              "title_fa": "بیومتریال‌ها",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch19",
+              "kind": "chapter",
+              "number": "19",
+              "title": "Infection control",
+              "title_fa": "کنترل عفونت",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch20",
+              "kind": "chapter",
+              "number": "20",
+              "title": "Pain control for operative dentistry",
+              "title_fa": "کنترل درد در دندانپزشکی ترمیمی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch21",
+              "kind": "chapter",
+              "number": "21",
+              "title": "Bonded splints and bridges",
+              "title_fa": "اسپلینت‌ها و بریج‌های باندشونده",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch22",
+              "kind": "chapter",
+              "number": "22",
+              "title": "Direct gold restorations",
+              "title_fa": "ترمیم‌های طلای مستقیم",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch23",
+              "kind": "chapter",
+              "number": "23",
+              "title": "Additional information on instruments and equipment for tooth preparation",
+              "title_fa": "اطلاعات تکمیلی درباره‌ی وسایل و تجهیزات تراش دندان",
+              "title_fa_origin": "ai"
+            }
+          ]
         },
         {
           "key": "7e",
@@ -5314,7 +6486,201 @@
       "editions": [
         {
           "key": "1394",
-          "label": "چاپ اول (۱۳۹۴)"
+          "label": "چاپ اول (۱۳۹۴)",
+          "nodes": [
+            {
+              "key": "ch01",
+              "kind": "chapter",
+              "number": "1",
+              "title": "تاریخچه و اصول دندانپزشکی اجتماعی",
+              "title_fa": "تاریخچه و اصول دندانپزشکی اجتماعی",
+              "title_fa_origin": "human"
+            },
+            {
+              "key": "ch02",
+              "kind": "chapter",
+              "number": "2",
+              "title": "سلامت و بیماری",
+              "title_fa": "سلامت و بیماری",
+              "title_fa_origin": "human"
+            },
+            {
+              "key": "ch03",
+              "kind": "chapter",
+              "number": "3",
+              "title": "اپیدمیولوژی",
+              "title_fa": "اپیدمیولوژی",
+              "title_fa_origin": "human"
+            },
+            {
+              "key": "ch04",
+              "kind": "chapter",
+              "number": "4",
+              "title": "جمعیت شناسی",
+              "title_fa": "جمعیت شناسی",
+              "title_fa_origin": "human"
+            },
+            {
+              "key": "ch05",
+              "kind": "chapter",
+              "number": "5",
+              "title": "شاخص‌های سلامت دهان و دندان",
+              "title_fa": "شاخص‌های سلامت دهان و دندان",
+              "title_fa_origin": "human"
+            },
+            {
+              "key": "ch06",
+              "kind": "chapter",
+              "number": "6",
+              "title": "شاخص‌های سلامت دهان و دندان در ایران",
+              "title_fa": "شاخص‌های سلامت دهان و دندان در ایران",
+              "title_fa_origin": "human"
+            },
+            {
+              "key": "ch07",
+              "kind": "chapter",
+              "number": "7",
+              "title": "نیاز سنجی سلامت",
+              "title_fa": "نیاز سنجی سلامت",
+              "title_fa_origin": "human"
+            },
+            {
+              "key": "ch08",
+              "kind": "chapter",
+              "number": "8",
+              "title": "غربالگری",
+              "title_fa": "غربالگری",
+              "title_fa_origin": "human"
+            },
+            {
+              "key": "ch09",
+              "kind": "chapter",
+              "number": "9",
+              "title": "نظام سلامت و بخش دندانپزشکی",
+              "title_fa": "نظام سلامت و بخش دندانپزشکی",
+              "title_fa_origin": "human"
+            },
+            {
+              "key": "ch10",
+              "kind": "chapter",
+              "number": "10",
+              "title": "دندانپزشکی مبتنی بر شواهد",
+              "title_fa": "دندانپزشکی مبتنی بر شواهد",
+              "title_fa_origin": "human"
+            },
+            {
+              "key": "ch11",
+              "kind": "chapter",
+              "number": "11",
+              "title": "ارزیابی نقادانه",
+              "title_fa": "ارزیابی نقادانه",
+              "title_fa_origin": "human"
+            },
+            {
+              "key": "ch12",
+              "kind": "chapter",
+              "number": "12",
+              "title": "ارتقاء سلامت دهان",
+              "title_fa": "ارتقاء سلامت دهان",
+              "title_fa_origin": "human"
+            },
+            {
+              "key": "ch13",
+              "kind": "chapter",
+              "number": "13",
+              "title": "آموزش در ارتقاء سلامت دهان و دندان",
+              "title_fa": "آموزش در ارتقاء سلامت دهان و دندان",
+              "title_fa_origin": "human"
+            },
+            {
+              "key": "ch14",
+              "kind": "chapter",
+              "number": "14",
+              "title": "تغییرات رفتاری در ارتقاء سلامت",
+              "title_fa": "تغییرات رفتاری در ارتقاء سلامت",
+              "title_fa_origin": "human"
+            },
+            {
+              "key": "ch15",
+              "kind": "chapter",
+              "number": "15",
+              "title": "عوامل محیطی و ژنتیکی مؤثر بر سلامت",
+              "title_fa": "عوامل محیطی و ژنتیکی مؤثر بر سلامت",
+              "title_fa_origin": "human"
+            },
+            {
+              "key": "ch16",
+              "kind": "chapter",
+              "number": "16",
+              "title": "مدیریت سلامت و برنامه‌ریزی برای ارتقاء سلامت",
+              "title_fa": "مدیریت سلامت و برنامه‌ریزی برای ارتقاء سلامت",
+              "title_fa_origin": "human"
+            },
+            {
+              "key": "ch17",
+              "kind": "chapter",
+              "number": "17",
+              "title": "سلامت و پیشگیری از بیماری‌های نسوج سخت دندانی",
+              "title_fa": "سلامت و پیشگیری از بیماری‌های نسوج سخت دندانی",
+              "title_fa_origin": "human"
+            },
+            {
+              "key": "ch18",
+              "kind": "chapter",
+              "number": "18",
+              "title": "پیشگیری از بیماری‌های بافت‌های نگه‌دارنده و نرم دهان",
+              "title_fa": "پیشگیری از بیماری‌های بافت‌های نگه‌دارنده و نرم دهان",
+              "title_fa_origin": "human"
+            },
+            {
+              "key": "ch19",
+              "kind": "chapter",
+              "number": "19",
+              "title": "صدمات دندانی و رهکارهای پیشگیرانه",
+              "title_fa": "صدمات دندانی و رهکارهای پیشگیرانه",
+              "title_fa_origin": "human"
+            },
+            {
+              "key": "ch20",
+              "kind": "chapter",
+              "number": "20",
+              "title": "دخانیات و سلامت",
+              "title_fa": "دخانیات و سلامت",
+              "title_fa_origin": "human"
+            },
+            {
+              "key": "ch21",
+              "kind": "chapter",
+              "number": "21",
+              "title": "اقتصاد و سلامت",
+              "title_fa": "اقتصاد و سلامت",
+              "title_fa_origin": "human"
+            },
+            {
+              "key": "ch22",
+              "kind": "chapter",
+              "number": "22",
+              "title": "ارزیابی خطر پوسیدگی / درمان‌های محافظه کارانه",
+              "title_fa": "ارزیابی خطر پوسیدگی / درمان‌های محافظه کارانه",
+              "title_fa_origin": "human"
+            },
+            {
+              "key": "ch23",
+              "kind": "chapter",
+              "number": "23",
+              "title": "سلامت دهان بیماران خاص و سالمندان",
+              "title_fa": "سلامت دهان بیماران خاص و سالمندان",
+              "title_fa_origin": "human"
+            },
+            {
+              "key": "ch24",
+              "kind": "chapter",
+              "number": "24",
+              "title": "جنبه‌های اخلاقی و پژوهش در دندانپزشکی اجتماعی",
+              "title_fa": "جنبه‌های اخلاقی و پژوهش در دندانپزشکی اجتماعی",
+              "title_fa_origin": "human"
+            }
+          ]
         }
       ]
     },
@@ -5327,7 +6693,249 @@
         {
           "key": "9e",
           "label": "9th edition",
-          "year": 2008
+          "year": 2008,
+          "nodes": [
+            {
+              "key": "ch01",
+              "kind": "chapter",
+              "number": "1",
+              "title": "Science of dental materials",
+              "title_fa": "علم مواد دندانی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch02",
+              "kind": "chapter",
+              "number": "2",
+              "title": "Properties used to characterise materials",
+              "title_fa": "خواص مورد استفاده برای توصیف مواد",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch03",
+              "kind": "chapter",
+              "number": "3",
+              "title": "Gypsum products for dental casts",
+              "title_fa": "محصولات گچی برای کست‌های دندانی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch04",
+              "kind": "chapter",
+              "number": "4",
+              "title": "Waxes",
+              "title_fa": "موم‌ها",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch05",
+              "kind": "chapter",
+              "number": "5",
+              "title": "Investments and refractory dies",
+              "title_fa": "اینوستمنت‌ها و دای‌های نسوز",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch06",
+              "kind": "chapter",
+              "number": "6",
+              "title": "Metals and alloys",
+              "title_fa": "فلزات و آلیاژها",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch07",
+              "kind": "chapter",
+              "number": "7",
+              "title": "Gold and alloys of noble metals",
+              "title_fa": "طلا و آلیاژهای فلزات نجیب",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch08",
+              "kind": "chapter",
+              "number": "8",
+              "title": "Base metal casting alloys",
+              "title_fa": "آلیاژهای ریختگی بیس‌متال",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch09",
+              "kind": "chapter",
+              "number": "9",
+              "title": "Casting",
+              "title_fa": "ریختگی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch10",
+              "kind": "chapter",
+              "number": "10",
+              "title": "Steel and wrought alloys",
+              "title_fa": "فولاد و آلیاژهای مفتولی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch11",
+              "kind": "chapter",
+              "number": "11",
+              "title": "Ceramics and porcelain fused to metal (PFM)",
+              "title_fa": "سرامیک‌ها و پرسلن جوش‌خورده به فلز (PFM)",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch12",
+              "kind": "chapter",
+              "number": "12",
+              "title": "Synthetic polymers",
+              "title_fa": "پلیمرهای سنتتیک",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch13",
+              "kind": "chapter",
+              "number": "13",
+              "title": "Denture base polymers",
+              "title_fa": "پلیمرهای بیس دنچر",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch14",
+              "kind": "chapter",
+              "number": "14",
+              "title": "Denture lining materials",
+              "title_fa": "مواد لاینر دنچر",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch15",
+              "kind": "chapter",
+              "number": "15",
+              "title": "Artificial teeth",
+              "title_fa": "دندان‌های مصنوعی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch16",
+              "kind": "chapter",
+              "number": "16",
+              "title": "Impression materials: Classification and requirements",
+              "title_fa": "مواد قالب‌گیری: طبقه‌بندی و الزامات",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch17",
+              "kind": "chapter",
+              "number": "17",
+              "title": "Non-elastic impression materials",
+              "title_fa": "مواد قالب‌گیری غیرالاستیک",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch18",
+              "kind": "chapter",
+              "number": "18",
+              "title": "Elastic impression materials: Hydrocolloids",
+              "title_fa": "مواد قالب‌گیری الاستیک: هیدروکلوئیدها",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch19",
+              "kind": "chapter",
+              "number": "19",
+              "title": "Elastic impression materials: Synthetic elastomers",
+              "title_fa": "مواد قالب‌گیری الاستیک: الاستومرهای سنتتیک",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch20",
+              "kind": "chapter",
+              "number": "20",
+              "title": "Requirements of direct filing materials and historical perspectives",
+              "title_fa": "الزامات مواد ترمیم مستقیم و پیشینه‌ی تاریخی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch21",
+              "kind": "chapter",
+              "number": "21",
+              "title": "Dental amalgam",
+              "title_fa": "آمالگام دندانی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch22",
+              "kind": "chapter",
+              "number": "22",
+              "title": "Resin-based filling materials",
+              "title_fa": "مواد ترمیمی بر پایه‌ی رزین",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch23",
+              "kind": "chapter",
+              "number": "23",
+              "title": "Adhesive restorative materials: bonding of resin-based materials",
+              "title_fa": "مواد ترمیمی چسبنده: باندینگ مواد بر پایه‌ی رزین",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch24",
+              "kind": "chapter",
+              "number": "24",
+              "title": "Glass-ionomer restorative materials (polyalkenoates)",
+              "title_fa": "مواد ترمیمی گلاس آینومر (پلی‌آلکنوات‌ها)",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch25",
+              "kind": "chapter",
+              "number": "25",
+              "title": "Resin-modified glass-ionomers and related materials",
+              "title_fa": "گلاس آینومرهای اصلاح‌شده با رزین و مواد مرتبط",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch26",
+              "kind": "chapter",
+              "number": "26",
+              "title": "Temporary crown and bridge resins",
+              "title_fa": "رزین‌های روکش و بریج موقت",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch27",
+              "kind": "chapter",
+              "number": "27",
+              "title": "Requirements of dental cements for lining, base and luting applications",
+              "title_fa": "الزامات سمان‌های دندانی برای کاربردهای لاینر، بیس و سمان‌کردن",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch28",
+              "kind": "chapter",
+              "number": "28",
+              "title": "Cements based on phosphoric acid",
+              "title_fa": "سمان‌های بر پایه‌ی اسید فسفریک",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch29",
+              "kind": "chapter",
+              "number": "29",
+              "title": "Cements based on organometallic chelate compounds",
+              "title_fa": "سمان‌های بر پایه‌ی ترکیبات کیلیت آلی-فلزی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch30",
+              "kind": "chapter",
+              "number": "30",
+              "title": "Polycarboxylates, glass-ionomers and resin-modified glass-ionomers for luting and lining",
+              "title_fa": "پلی‌کربوکسیلات‌ها، گلاس آینومرها و گلاس آینومرهای اصلاح‌شده با رزین برای سمان‌کردن و لاینر",
+              "title_fa_origin": "ai"
+            }
+          ]
         }
       ]
     },
@@ -5340,7 +6948,129 @@
         {
           "key": "11e",
           "label": "11th edition",
-          "year": 2017
+          "year": 2017,
+          "nodes": [
+            {
+              "key": "ch01",
+              "kind": "chapter",
+              "number": "1",
+              "title": "Introduction to Restorative Dental Materials",
+              "title_fa": "مقدمه‌ای بر مواد ترمیمی دندانی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch02",
+              "kind": "chapter",
+              "number": "2",
+              "title": "Properties of Materials",
+              "title_fa": "خواص مواد",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch03",
+              "kind": "chapter",
+              "number": "3",
+              "title": "Preventive Dental Materials",
+              "title_fa": "مواد دندانی پیشگیری",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch04",
+              "kind": "chapter",
+              "number": "4",
+              "title": "Direct Esthetic Restorative Materials",
+              "title_fa": "مواد ترمیمی زیبایی مستقیم",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch05",
+              "kind": "chapter",
+              "number": "5",
+              "title": "Dental Amalgam",
+              "title_fa": "آمالگام دندانی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch06",
+              "kind": "chapter",
+              "number": "6",
+              "title": "Finishing Polishing and Cleansing Materials",
+              "title_fa": "مواد پرداخت، پالیش و تمیزکردن",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch07",
+              "kind": "chapter",
+              "number": "7",
+              "title": "Cements",
+              "title_fa": "سمان‌ها",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch08",
+              "kind": "chapter",
+              "number": "8",
+              "title": "Impression Materials",
+              "title_fa": "مواد قالب‌گیری",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch09",
+              "kind": "chapter",
+              "number": "9",
+              "title": "Model and Die Materials",
+              "title_fa": "مواد مدل و دای",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch10",
+              "kind": "chapter",
+              "number": "10",
+              "title": "Waxes",
+              "title_fa": "موم‌ها",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch11",
+              "kind": "chapter",
+              "number": "11",
+              "title": "Casting Alloys Wrought Alloys and Solders",
+              "title_fa": "آلیاژهای ریختگی، آلیاژهای مفتولی و لحیم‌ها",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch12",
+              "kind": "chapter",
+              "number": "12",
+              "title": "Casting Soldering and Welding",
+              "title_fa": "ریختگی، لحیم‌کاری و جوشکاری",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch13",
+              "kind": "chapter",
+              "number": "13",
+              "title": "Polymers in Prosthodontics",
+              "title_fa": "پلیمرها در پروتزهای دندانی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch14",
+              "kind": "chapter",
+              "number": "14",
+              "title": "Dental Ceramics",
+              "title_fa": "سرامیک‌های دندانی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch15",
+              "kind": "chapter",
+              "number": "15",
+              "title": "Dental Implants",
+              "title_fa": "ایمپلنت‌های دندانی",
+              "title_fa_origin": "ai"
+            }
+          ]
         }
       ]
     },
@@ -11739,7 +13469,21 @@
       "official": true,
       "scope": "Part II: Direct Restorative Materials",
       "evidence": "PDF table · https://t.me/dparseh86/3778",
-      "source_document": "1403_منابع 1403.pdf"
+      "source_document": "1403_منابع 1403.pdf",
+      "scope_chapters": [
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        }
+      ]
     },
     {
       "exam_type": "residency",
@@ -12872,7 +14616,39 @@
       "official": true,
       "scope": "تمام فصول به جز 1،6،10،12،14",
       "evidence": "PDF table · https://t.me/dparseh86/3445",
-      "source_document": "1402_منابع دستیاری دندان 1402.pdf"
+      "source_document": "1402_منابع دستیاری دندان 1402.pdf",
+      "scope_chapters": [
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "15"
+        }
+      ]
     },
     {
       "exam_type": "residency",
@@ -14035,7 +15811,39 @@
       "official": true,
       "scope": "تمام فصول به جز 1،6،10،12،14",
       "evidence": "PDF منابع + اعلام Telegram · https://t.me/dparseh86/3062",
-      "source_document": "1401_رفرنسهای آزمون ورودی دستیاری 1401.pdf"
+      "source_document": "1401_رفرنسهای آزمون ورودی دستیاری 1401.pdf",
+      "scope_chapters": [
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "15"
+        }
+      ]
     },
     {
       "exam_type": "residency",
@@ -15231,7 +17039,39 @@
       "official": true,
       "scope": "تمام فصول به جز 1،6،10،12،14",
       "evidence": "PDF جدول منابع در Telegram · https://t.me/Dentistry_Quiz/668",
-      "source_document": "1400_منابع دستیاری 1400.pdf"
+      "source_document": "1400_منابع دستیاری 1400.pdf",
+      "scope_chapters": [
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "15"
+        }
+      ]
     },
     {
       "exam_type": "residency",
@@ -16387,7 +18227,39 @@
       "official": true,
       "scope": "تمام فصول به جز 1،6،10،12،14",
       "evidence": "PDF table · https://t.me/dparseh86/1991",
-      "source_document": "1399_منابع دستیار.pdf"
+      "source_document": "1399_منابع دستیار.pdf",
+      "scope_chapters": [
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "15"
+        }
+      ]
     },
     {
       "exam_type": "residency",
@@ -16421,7 +18293,84 @@
       "official": true,
       "scope": "تمام فصول",
       "evidence": "PDF table · https://t.me/dparseh86/1991",
-      "source_document": "1399_منابع دستیار.pdf"
+      "source_document": "1399_منابع دستیار.pdf",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "23"
+        },
+        {
+          "number": "24"
+        },
+        {
+          "number": "25"
+        }
+      ]
     },
     {
       "exam_type": "residency",
@@ -17560,7 +19509,84 @@
       "official": true,
       "scope": "تمام فصول",
       "evidence": "PDF رسمی‌نما؛ فایل بازنشرشده در تلگرام · https://t.me/dparseh86/1230",
-      "source_document": "1397_منابع دستیاری 97_اصلاح شده_3.pdf"
+      "source_document": "1397_منابع دستیاری 97_اصلاح شده_3.pdf",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "23"
+        },
+        {
+          "number": "24"
+        },
+        {
+          "number": "25"
+        }
+      ]
     },
     {
       "exam_type": "residency",
