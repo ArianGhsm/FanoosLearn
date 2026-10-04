@@ -236,7 +236,9 @@ def audit(args: dict) -> None:
             issues.append('official_notice_in_question_text')
         if re.search(r'پذیرش دستیار(?:ی| تخصصی)', normalized_text):
             issues.append('page_header_in_question_text')
-        if 'diagram' in (row.get('وضعیت متن') or '').lower() or re.search(r'(?:نمودار|شکل|تصویر)\s*(?:روبرو|مقابل|زیر)', normalized_text):
+        if ('diagram' in (row.get('وضعیت متن') or '').lower()
+                or 'graph' in (row.get('یادداشت') or '').lower()
+                or re.search(r'(?:نمودار|شکل|تصویر)\s*(?:روبرو|مقابل|زیر)', normalized_text)):
             issues.append('figure_asset_not_verified')
         if row['درس'] == 'زبان انگلیسی' and re.search(r'\b(?:passage|above passage|writer|author)\b', raw_text, re.I) and len(raw_text) < 700:
             issues.append('reading_passage_context_not_attached')
