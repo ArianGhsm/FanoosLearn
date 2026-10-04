@@ -222,6 +222,10 @@ def audit(args: dict) -> None:
             issues.append('missing_question_text')
         elif len(choices) != 4 or not stem or any(not choice for choice in choices):
             issues.append('stem_or_choices_need_review')
+        if 'Visually transcribed' in (row.get('وضعیت متن') or ''):
+            issues.append('visual_transcription_needs_independent_check')
+        if 'independent second reading' in (row.get('یادداشت') or ''):
+            issues.append('specific_transcription_term_needs_second_reading')
         raw_text = row['متن سؤال'] or ''
         normalized_text = unicodedata.normalize('NFKC', raw_text)
         if len(re.findall(r'(?m)^\s*\d{1,3}\s*[-–ـ]\s+', raw_text)) > 1:
