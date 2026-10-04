@@ -111,6 +111,106 @@ final class BankImporter
         return $counts;
     }
 
+    /**
+     * Removes the chapter/section nodes of the file's editions that the file
+     * no longer lists (a heading dropped or renumbered since the last
+     * import). Only editions the file gives a node list for are touched, and
+     * a node a question source or an edition mapping points at is kept, as is
+     * any node above a kept one. --dry-run rolls back.
+     *
+     * @param array<string, mixed> $file a catalog file
+     * @return array{stale:int,deleted:int,kept_in_use:int}
+     */
+    public function pruneNodes(string $workspaceId, array $file, bool $dryRun = false): array
+    {
+        if (($file['format'] ?? null) !== self::CATALOG_FORMAT) {
+            throw new BankImportException(['format: only a catalog file lists nodes to keep']);
+        }
+        $result = ['stale' => 0, 'deleted' => 0, 'kept_in_use' => 0];
+        $work = function () use ($workspaceId, $file, &$result): void {
+            foreach ($this->list($file, 'references') as $reference) {
+                foreach ($reference['editions'] ?? [] as $edition) {
+                    $listed = [];
+                    $collect = static function (array $nodes) use (&$collect, &$listed): void {
+                        foreach ($nodes as $node) {
+                            $listed[(string) ($node['key'] ?? '')] = true;
+                            $collect($node['children'] ?? []);
+                        }
+                    };
+                    $collect($edition['nodes'] ?? []);
+                    if ($listed === []) {
+                        continue;
+                    }
+                    $editionId = $this->resolveEdition($workspaceId, ($reference['key'] ?? '') . '@' . ($edition['key'] ?? ''));
+                    if ($editionId === null) {
+                        continue;
+                    }
+                    $rows = $this->database->prepare(<<<'SQL'
+SELECT node.id, node.parent_id, node.node_key,
+       EXISTS (SELECT 1 FROM bank_question_sources s WHERE s.node_id = node.id)
+       OR EXISTS (SELECT 1 FROM bank_edition_mappings m WHERE m.from_node_id = node.id OR m.to_node_id = node.id) AS in_use
+FROM bank_reference_nodes node
+WHERE node.workspace_id = :workspace AND node.edition_id = :edition
+SQL);
+                    $rows->execute(['workspace' => $workspaceId, 'edition' => $editionId]);
+                    $nodes = $rows->fetchAll();
+                    $parent = array_column($nodes, 'parent_id', 'id');
+                    $keep = [];
+                    foreach ($nodes as $node) {
+                        if (isset($listed[(string) $node['node_key']]) || (bool) $node['in_use']) {
+                            // A kept node keeps its whole chain of parents.
+                            for ($id = (string) $node['id']; $id !== '' && !isset($keep[$id]); $id = (string) ($parent[$id] ?? '')) {
+                                $keep[$id] = true;
+                            }
+                        }
+                    }
+                    $stale = array_filter($nodes, static fn (array $n): bool => !isset($listed[(string) $n['node_key']]));
+                    $result['stale'] += count($stale);
+                    $doomed = array_values(array_filter(array_column($stale, 'id'), static fn ($id): bool => !isset($keep[(string) $id])));
+                    $result['kept_in_use'] += count($stale) - count($doomed);
+                    // Children before parents: repeat until nothing more can go.
+                    $childrenOf = [];
+                    foreach ($parent as $child => $of) {
+                        if ($of !== null) {
+                            $childrenOf[(string) $of][] = (string) $child;
+                        }
+                    }
+                    $remaining = array_fill_keys(array_map('strval', $doomed), true);
+                    while ($remaining !== []) {
+                        $progress = false;
+                        foreach (array_keys($remaining) as $id) {
+                            $id = (string) $id;
+                            if (array_filter($childrenOf[$id] ?? [], static fn (string $c): bool => isset($remaining[$c])) !== []) {
+                                continue;
+                            }
+                            $this->database->prepare('DELETE FROM bank_node_concepts WHERE node_id = :node')->execute(['node' => $id]);
+                            $this->database->prepare('DELETE FROM bank_reference_nodes WHERE id = :node AND workspace_id = :workspace')
+                                ->execute(['node' => $id, 'workspace' => $workspaceId]);
+                            unset($remaining[$id]);
+                            ++$result['deleted'];
+                            $progress = true;
+                        }
+                        if (!$progress) {
+                            break;
+                        }
+                    }
+                }
+            }
+        };
+        if ($dryRun) {
+            $this->database->beginTransaction();
+            try {
+                $work();
+            } finally {
+                $this->database->rollBack();
+            }
+        } else {
+            Transaction::run($this->database, $work);
+        }
+
+        return $result;
+    }
+
     // ================================================================ checks
 
     /** @param array<string, mixed> $file */

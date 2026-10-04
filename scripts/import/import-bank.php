@@ -25,6 +25,10 @@ use Fanoos\Platform\Support\RuntimeConfig;
  * back, so the counts are real:
  *   php scripts/import/import-bank.php import --workspace=<uuid> --file=<file.json> [--assets=<folder>] [--dry-run]
  *
+ * Remove the nodes of a catalog's editions that the catalog no longer lists
+ * (never one a question source or edition mapping points at); --dry-run rolls back:
+ *   php scripts/import/import-bank.php prune-nodes --workspace=<uuid> --file=<catalog.json> [--dry-run]
+ *
  * Publish an imported sitting as an exam on the site (actor and reviewer
  * must be different accounts):
  *   php scripts/import/import-bank.php publish --workspace=<uuid> --type=residency --year=1404 [--round=1]
@@ -74,6 +78,18 @@ try {
         $dryRun = isset($options['dry-run']);
         $counts = $importer->import($workspace, $file, $assets, $dryRun);
         echo json_encode(['format' => $file['format'], 'dry_run' => $dryRun, 'written' => $counts], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . PHP_EOL;
+        exit(0);
+    }
+
+    if ($command === 'prune-nodes') {
+        $path = (string) ($options['file'] ?? '');
+        $file = json_decode((string) @file_get_contents($path), true, 64);
+        if (!is_array($file)) {
+            throw new RuntimeException("{$path} is not a readable JSON file");
+        }
+        $dryRun = isset($options['dry-run']);
+        $result = (new BankImporter($database, $images))->pruneNodes($workspace, $file, $dryRun);
+        echo json_encode(['dry_run' => $dryRun] + $result, JSON_PRETTY_PRINT) . PHP_EOL;
         exit(0);
     }
 

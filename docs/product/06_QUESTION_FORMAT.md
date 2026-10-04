@@ -202,6 +202,10 @@ php scripts/import/import-bank.php check  --workspace=<id> --file=residency-1404
 # import (or --dry-run to see the counts without keeping them)
 php scripts/import/import-bank.php import --workspace=<id> --file=catalog.json
 php scripts/import/import-bank.php import --workspace=<id> --file=residency-1404-1.json --assets=./images
+# importing only adds and updates; after headings are dropped or renumbered,
+# remove the nodes the catalog no longer lists (a node a question source or an
+# edition mapping points at is always kept; --dry-run first)
+php scripts/import/import-bank.php prune-nodes --workspace=<id> --file=catalog.json --dry-run
 # publish the sitting as an exam
 php scripts/import/import-bank.php publish --workspace=<id> --type=residency --year=1404 --actor=<id> --reviewer=<id> --time-limit=180
 ```

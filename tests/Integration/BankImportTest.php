@@ -88,6 +88,21 @@ final class BankImportTest
         $again = $importer->import($ws, $sitting);
         $this->assert($again['answers_recorded'] === 0 && $again['questions_changed'] === 0 && $again['explanations'] === 0, 'Re-importing an unchanged sitting changed something: ' . json_encode($again));
 
+        // A heading the catalog no longer lists is pruned; one a question cites is kept.
+        $extra = $catalog;
+        $extra['references'][0]['editions'][0]['nodes'][] = ['key' => 'ch15', 'kind' => 'chapter', 'number' => '15', 'title' => 'Obturation'];
+        $importer->import($ws, $extra);
+        $withExtra = $this->count('bank_reference_nodes', $ws);
+        $dry = $importer->pruneNodes($ws, $catalog, true);
+        $this->assert($dry === ['stale' => 1, 'deleted' => 1, 'kept_in_use' => 0], 'Prune dry run: ' . json_encode($dry));
+        $this->assert($this->count('bank_reference_nodes', $ws) === $withExtra, 'A prune dry run deleted rows.');
+        $pruned = $importer->pruneNodes($ws, $catalog);
+        $this->assert($pruned['deleted'] === 1 && $this->count('bank_reference_nodes', $ws) === $withExtra - 1, 'The unlisted chapter was not pruned: ' . json_encode($pruned));
+        $bare = $catalog;
+        unset($bare['references'][0]['editions'][0]['nodes'][0]['children']);
+        $kept = $importer->pruneNodes($ws, $bare);
+        $this->assert($kept === ['stale' => 1, 'deleted' => 0, 'kept_in_use' => 1], 'A section a question cites was pruned: ' . json_encode($kept));
+
         // The real catalog built from the reference workbook imports cleanly.
         $real = json_decode((string) file_get_contents($this->root . '/data/bank/catalog.json'), true, 64, JSON_THROW_ON_ERROR);
         $problems = $importer->validate($ws, $real);
