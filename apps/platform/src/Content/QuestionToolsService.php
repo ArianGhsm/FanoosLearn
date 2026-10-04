@@ -62,7 +62,8 @@ final class QuestionToolsService
         $marks->execute([$workspaceId, $userId, ...$keys]);
         $highlights = [];
         foreach ($marks->fetchAll() as $row) {
-            $highlights[(string) $row['question_key']] = json_decode((string) $row['ranges_json'], true, 8, JSON_THROW_ON_ERROR);
+            // Through mergeRanges: MySQL stores JSON objects with their keys reordered.
+            $highlights[(string) $row['question_key']] = self::mergeRanges(json_decode((string) $row['ranges_json'], true, 8, JSON_THROW_ON_ERROR) ?? [], PHP_INT_MAX);
         }
 
         return [
