@@ -42,22 +42,26 @@ test('direction compares the last five with the five before, ignoring small wobb
 });
 
 test('question stats read "—" rather than zero when there is nothing to say', () => {
-    assert.deepEqual(statsLines(null), { peer: null, attempts: null, correct: null, last: null });
+    assert.deepEqual(statsLines(null), { peer: null, attempts: null, correct: null, wrong: null, blank: null, last: null });
     const fresh = statsLines({ peer_answered: null, peer_correct_percent: null, answered: 0, correct: 0, last_correct: null, last_answered_at: null });
     assert.equal(fresh.peer, null);
     assert.equal(fresh.correct, null);
     assert.equal(fresh.attempts, 'هنوز نه');
+    assert.equal(fresh.blank, null, 'an old server that sends no blank count reads "—"');
+    assert.equal(statsLines({ answered: 0, correct: 0, blank: 2 }).blank, '۲ بار', 'blanks count even before any answer');
 });
 
 test('question stats word the student\'s record and everyone else\'s share', () => {
     const now = Date.parse('2026-09-28T12:00:00Z');
     const lines = statsLines({
-        peer_answered: 12, peer_correct_percent: 64, answered: 3, correct: 2,
+        peer_answered: 12, peer_correct_percent: 64, answered: 3, correct: 2, blank: 1,
         last_correct: false, last_answered_at: '2026-09-25T08:00:00Z',
     }, now);
     assert.equal(lines.peer, '٪۶۴ از ۱۲ پاسخ');
     assert.equal(lines.attempts, '۳ بار');
     assert.equal(lines.correct, '۲ از ۳');
+    assert.equal(lines.wrong, '۱ بار');
+    assert.equal(lines.blank, '۱ بار');
     assert.equal(lines.last, '۳ روز پیش · نادرست');
     assert.equal(relativeDay('2026-09-28T01:00:00Z', now), 'امروز');
     assert.equal(relativeDay('2026-09-27T01:00:00Z', now), 'دیروز');

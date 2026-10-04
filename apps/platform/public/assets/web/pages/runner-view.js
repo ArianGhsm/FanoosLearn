@@ -590,6 +590,8 @@ function renderQuestionStats(stats) {
             metaItem('source', 'chart', 'پاسخ درست دیگران', lines.peer),
             metaItem('subject', 'repeat', 'تو چند بار زده‌ای', lines.attempts),
             metaItem('difficulty', 'check', 'چند بار درست', lines.correct),
+            metaItem('source', 'chart', 'پاسخ اشتباه', lines.wrong),
+            metaItem('subject', 'repeat', 'پاسخ سفید', lines.blank),
             metaItem('tag', 'calendar', 'آخرین بار', lines.last)),
         lines.peer === null
             ? el('p', { className: 'f-tiny x-qstats__note', text: 'درصد دیگران وقتی نشان داده می‌شود که دست‌کم سه پاسخ از دیگران ثبت شده باشد.' })

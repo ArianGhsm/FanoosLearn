@@ -39,7 +39,7 @@ of the counted rows at ✅.
 | 12 | Difficulty level (سطح دشواری) | M | ✅ |
 | 13 | "x % of users answered this correctly" | M | ✅ peer statistics |
 | 14 | Share of answers per choice after answering | M | ✅ |
-| 15 | Your history on this question (answered / right / wrong / blank / last time) | M | 🟡 answered, right and last time; blanks not counted |
+| 15 | Your history on this question (answered / right / wrong / blank / last time) | M | ✅ answered / right / wrong / blank / last time, under every question |
 | 16 | Descriptive answer (پاسخ تشریحی) | M P | ✅ |
 | 17 | Where in the reference the answer comes from | P | ✅ source line in every bank explanation |
 | 18 | Bookmark a question (بوکمارک) | M | ✅ «ذخیره» in the question head; kept across exams |
@@ -90,4 +90,4 @@ plans. They can come back as their own decisions.
 
 ## Score
 
-Counted rows: 44. ✅ today: 40 (91 %). Target: 36 (≥ 80 %).
+Counted rows: 44. ✅ today: 41 (93 %). Target: 36 (≥ 80 %).
