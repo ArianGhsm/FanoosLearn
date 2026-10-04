@@ -6564,33 +6564,105 @@
      ],
      [
       "I. Circle Appropriate Answer: (Leave Blank If You Do Not Understand The Question.)",
-      []
+      [
+       "1. Is Your General Health Good?",
+       "2. Has There Been a Change in Your Health Within the Last Year?",
+       "3. Have You Been Hospitalized or Had a Serious Illness in the Last 3 Years?",
+       "4. Are You Being Treated by a Physician Now? For What?",
+       "5. Have You Had Problems With Prior Dental Treatment?",
+       "6. Are You in Pain Now?"
+      ]
      ],
      [
       "II. Have You Experienced",
       [
-       "26. Dry Mouth? (Xerostomia)"
+       "7. Chest Pain (Angina)?",
+       "8. Swollen Ankles?",
+       "9. Shortness of Breath?",
+       "10. Recent Weight Loss, Fever, Night Sweats?",
+       "11. Persistent Cough, Coughing Up Blood?",
+       "12. Bleeding Problems, Bruising Easily?",
+       "13. Sinus Problems?",
+       "14. Difficulty Swallowing?",
+       "15. Diarrhea, Constipation, Blood in Stools?",
+       "16. Frequent Vomiting, Nausea?",
+       "17. Difficulty Urinating, Blood in Urine?",
+       "18. Dizziness?",
+       "19. Ringing in Ears?",
+       "20. Headaches?",
+       "21. Fainting Spells?",
+       "22. Blurred Vision?",
+       "23. Seizures?",
+       "24. Excessive Thirst?",
+       "25. Frequent Urination?",
+       "26. Dry Mouth? (Xerostomia)",
+       "27. Jaundice?",
+       "28. Joint Pain, Stiffness?"
       ]
      ],
      [
       "III. Do You Have Or Have You Had",
-      []
+      [
+       "29. Heart Disease?",
+       "30. Heart Attack, Heart Defects?",
+       "31. Heart Murmurs?",
+       "32. Rheumatic Fever?",
+       "33. Stroke, Hardening of Arteries?",
+       "34. High Blood Pressure?",
+       "35. Asthma, Tuberculosis, Emphysema, Other Lung Disease?",
+       "36. Hepatitis, Other Liver Disease?",
+       "37. Stomach Problems, Ulcers?",
+       "38. Allergies to: Drugs, Foods, Medications, Latex?",
+       "39. Family History of Diabetes, Heart Problems, Tumors?",
+       "40. Aids?",
+       "41. Tumors, Cancer?",
+       "42. Arthritis, Rheumatism?",
+       "43. Eye Disease?",
+       "44. Skin Diseases?",
+       "45. Anemia?",
+       "46. VD (Syphilis or Gonorrhea)?",
+       "47. Herpes?",
+       "48. Kidney, Bladder Disease?",
+       "49. Thyroid, Adrenal Disease?",
+       "50. Diabetes?"
+      ]
      ],
      [
       "IV. Do You Have Or Have You Had",
-      []
+      [
+       "51. Psychiatric Care?",
+       "52. Radiation Treatments?",
+       "53. Chemotherapy?",
+       "54. Prosthetic Heart Valve?",
+       "55. Artificial Joint?",
+       "56. Hospitalization?",
+       "57. Blood Transfusions?",
+       "58. Surgeries?",
+       "59. Pacemaker?",
+       "60. Contact Lenses?"
+      ]
      ],
      [
       "V. Are You Taking",
-      []
+      [
+       "61. Recreational Drugs?",
+       "62. Drugs, Medications, Over-the-Counter Medicines (Including Aspirin), Natural Remedies?",
+       "63. Tobacco in Any Form?",
+       "64. Alcohol?"
+      ]
      ],
      [
       "VI. Women Only",
-      []
+      [
+       "65. Are You or Could You Be Pregnant or Nursing?",
+       "66. Taking Birth Control Pills?"
+      ]
      ],
      [
       "VII. All Patients",
-      []
+      [
+       "67. Do You Have or Have You Had Any Other Diseases or Medical Problems NOT Listed on This Form?"
+      ]
      ],
      [
       "Physical Examination",

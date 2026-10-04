@@ -20756,7 +20756,39 @@
                 {
                   "key": "ch10.s03",
                   "kind": "section",
-                  "title": "I. Circle Appropriate Answer: (Leave Blank If You Do Not Understand The Question.)"
+                  "title": "I. Circle Appropriate Answer: (Leave Blank If You Do Not Understand The Question.)",
+                  "children": [
+                    {
+                      "key": "ch10.s03.01",
+                      "kind": "subsection",
+                      "title": "1. Is Your General Health Good?"
+                    },
+                    {
+                      "key": "ch10.s03.02",
+                      "kind": "subsection",
+                      "title": "2. Has There Been a Change in Your Health Within the Last Year?"
+                    },
+                    {
+                      "key": "ch10.s03.03",
+                      "kind": "subsection",
+                      "title": "3. Have You Been Hospitalized or Had a Serious Illness in the Last 3 Years?"
+                    },
+                    {
+                      "key": "ch10.s03.04",
+                      "kind": "subsection",
+                      "title": "4. Are You Being Treated by a Physician Now? For What?"
+                    },
+                    {
+                      "key": "ch10.s03.05",
+                      "kind": "subsection",
+                      "title": "5. Have You Had Problems With Prior Dental Treatment?"
+                    },
+                    {
+                      "key": "ch10.s03.06",
+                      "kind": "subsection",
+                      "title": "6. Are You in Pain Now?"
+                    }
+                  ]
                 },
                 {
                   "key": "ch10.s04",
@@ -20766,34 +20798,344 @@
                     {
                       "key": "ch10.s04.01",
                       "kind": "subsection",
+                      "title": "7. Chest Pain (Angina)?"
+                    },
+                    {
+                      "key": "ch10.s04.02",
+                      "kind": "subsection",
+                      "title": "8. Swollen Ankles?"
+                    },
+                    {
+                      "key": "ch10.s04.03",
+                      "kind": "subsection",
+                      "title": "9. Shortness of Breath?"
+                    },
+                    {
+                      "key": "ch10.s04.04",
+                      "kind": "subsection",
+                      "title": "10. Recent Weight Loss, Fever, Night Sweats?"
+                    },
+                    {
+                      "key": "ch10.s04.05",
+                      "kind": "subsection",
+                      "title": "11. Persistent Cough, Coughing Up Blood?"
+                    },
+                    {
+                      "key": "ch10.s04.06",
+                      "kind": "subsection",
+                      "title": "12. Bleeding Problems, Bruising Easily?"
+                    },
+                    {
+                      "key": "ch10.s04.07",
+                      "kind": "subsection",
+                      "title": "13. Sinus Problems?"
+                    },
+                    {
+                      "key": "ch10.s04.08",
+                      "kind": "subsection",
+                      "title": "14. Difficulty Swallowing?"
+                    },
+                    {
+                      "key": "ch10.s04.09",
+                      "kind": "subsection",
+                      "title": "15. Diarrhea, Constipation, Blood in Stools?"
+                    },
+                    {
+                      "key": "ch10.s04.10",
+                      "kind": "subsection",
+                      "title": "16. Frequent Vomiting, Nausea?"
+                    },
+                    {
+                      "key": "ch10.s04.11",
+                      "kind": "subsection",
+                      "title": "17. Difficulty Urinating, Blood in Urine?"
+                    },
+                    {
+                      "key": "ch10.s04.12",
+                      "kind": "subsection",
+                      "title": "18. Dizziness?"
+                    },
+                    {
+                      "key": "ch10.s04.13",
+                      "kind": "subsection",
+                      "title": "19. Ringing in Ears?"
+                    },
+                    {
+                      "key": "ch10.s04.14",
+                      "kind": "subsection",
+                      "title": "20. Headaches?"
+                    },
+                    {
+                      "key": "ch10.s04.15",
+                      "kind": "subsection",
+                      "title": "21. Fainting Spells?"
+                    },
+                    {
+                      "key": "ch10.s04.16",
+                      "kind": "subsection",
+                      "title": "22. Blurred Vision?"
+                    },
+                    {
+                      "key": "ch10.s04.17",
+                      "kind": "subsection",
+                      "title": "23. Seizures?"
+                    },
+                    {
+                      "key": "ch10.s04.18",
+                      "kind": "subsection",
+                      "title": "24. Excessive Thirst?"
+                    },
+                    {
+                      "key": "ch10.s04.19",
+                      "kind": "subsection",
+                      "title": "25. Frequent Urination?"
+                    },
+                    {
+                      "key": "ch10.s04.20",
+                      "kind": "subsection",
                       "title": "26. Dry Mouth? (Xerostomia)"
+                    },
+                    {
+                      "key": "ch10.s04.21",
+                      "kind": "subsection",
+                      "title": "27. Jaundice?"
+                    },
+                    {
+                      "key": "ch10.s04.22",
+                      "kind": "subsection",
+                      "title": "28. Joint Pain, Stiffness?"
                     }
                   ]
                 },
                 {
                   "key": "ch10.s05",
                   "kind": "section",
-                  "title": "III. Do You Have Or Have You Had"
+                  "title": "III. Do You Have Or Have You Had",
+                  "children": [
+                    {
+                      "key": "ch10.s05.01",
+                      "kind": "subsection",
+                      "title": "29. Heart Disease?"
+                    },
+                    {
+                      "key": "ch10.s05.02",
+                      "kind": "subsection",
+                      "title": "30. Heart Attack, Heart Defects?"
+                    },
+                    {
+                      "key": "ch10.s05.03",
+                      "kind": "subsection",
+                      "title": "31. Heart Murmurs?"
+                    },
+                    {
+                      "key": "ch10.s05.04",
+                      "kind": "subsection",
+                      "title": "32. Rheumatic Fever?"
+                    },
+                    {
+                      "key": "ch10.s05.05",
+                      "kind": "subsection",
+                      "title": "33. Stroke, Hardening of Arteries?"
+                    },
+                    {
+                      "key": "ch10.s05.06",
+                      "kind": "subsection",
+                      "title": "34. High Blood Pressure?"
+                    },
+                    {
+                      "key": "ch10.s05.07",
+                      "kind": "subsection",
+                      "title": "35. Asthma, Tuberculosis, Emphysema, Other Lung Disease?"
+                    },
+                    {
+                      "key": "ch10.s05.08",
+                      "kind": "subsection",
+                      "title": "36. Hepatitis, Other Liver Disease?"
+                    },
+                    {
+                      "key": "ch10.s05.09",
+                      "kind": "subsection",
+                      "title": "37. Stomach Problems, Ulcers?"
+                    },
+                    {
+                      "key": "ch10.s05.10",
+                      "kind": "subsection",
+                      "title": "38. Allergies to: Drugs, Foods, Medications, Latex?"
+                    },
+                    {
+                      "key": "ch10.s05.11",
+                      "kind": "subsection",
+                      "title": "39. Family History of Diabetes, Heart Problems, Tumors?"
+                    },
+                    {
+                      "key": "ch10.s05.12",
+                      "kind": "subsection",
+                      "title": "40. Aids?"
+                    },
+                    {
+                      "key": "ch10.s05.13",
+                      "kind": "subsection",
+                      "title": "41. Tumors, Cancer?"
+                    },
+                    {
+                      "key": "ch10.s05.14",
+                      "kind": "subsection",
+                      "title": "42. Arthritis, Rheumatism?"
+                    },
+                    {
+                      "key": "ch10.s05.15",
+                      "kind": "subsection",
+                      "title": "43. Eye Disease?"
+                    },
+                    {
+                      "key": "ch10.s05.16",
+                      "kind": "subsection",
+                      "title": "44. Skin Diseases?"
+                    },
+                    {
+                      "key": "ch10.s05.17",
+                      "kind": "subsection",
+                      "title": "45. Anemia?"
+                    },
+                    {
+                      "key": "ch10.s05.18",
+                      "kind": "subsection",
+                      "title": "46. VD (Syphilis or Gonorrhea)?"
+                    },
+                    {
+                      "key": "ch10.s05.19",
+                      "kind": "subsection",
+                      "title": "47. Herpes?"
+                    },
+                    {
+                      "key": "ch10.s05.20",
+                      "kind": "subsection",
+                      "title": "48. Kidney, Bladder Disease?"
+                    },
+                    {
+                      "key": "ch10.s05.21",
+                      "kind": "subsection",
+                      "title": "49. Thyroid, Adrenal Disease?"
+                    },
+                    {
+                      "key": "ch10.s05.22",
+                      "kind": "subsection",
+                      "title": "50. Diabetes?"
+                    }
+                  ]
                 },
                 {
                   "key": "ch10.s06",
                   "kind": "section",
-                  "title": "IV. Do You Have Or Have You Had"
+                  "title": "IV. Do You Have Or Have You Had",
+                  "children": [
+                    {
+                      "key": "ch10.s06.01",
+                      "kind": "subsection",
+                      "title": "51. Psychiatric Care?"
+                    },
+                    {
+                      "key": "ch10.s06.02",
+                      "kind": "subsection",
+                      "title": "52. Radiation Treatments?"
+                    },
+                    {
+                      "key": "ch10.s06.03",
+                      "kind": "subsection",
+                      "title": "53. Chemotherapy?"
+                    },
+                    {
+                      "key": "ch10.s06.04",
+                      "kind": "subsection",
+                      "title": "54. Prosthetic Heart Valve?"
+                    },
+                    {
+                      "key": "ch10.s06.05",
+                      "kind": "subsection",
+                      "title": "55. Artificial Joint?"
+                    },
+                    {
+                      "key": "ch10.s06.06",
+                      "kind": "subsection",
+                      "title": "56. Hospitalization?"
+                    },
+                    {
+                      "key": "ch10.s06.07",
+                      "kind": "subsection",
+                      "title": "57. Blood Transfusions?"
+                    },
+                    {
+                      "key": "ch10.s06.08",
+                      "kind": "subsection",
+                      "title": "58. Surgeries?"
+                    },
+                    {
+                      "key": "ch10.s06.09",
+                      "kind": "subsection",
+                      "title": "59. Pacemaker?"
+                    },
+                    {
+                      "key": "ch10.s06.10",
+                      "kind": "subsection",
+                      "title": "60. Contact Lenses?"
+                    }
+                  ]
                 },
                 {
                   "key": "ch10.s07",
                   "kind": "section",
-                  "title": "V. Are You Taking"
+                  "title": "V. Are You Taking",
+                  "children": [
+                    {
+                      "key": "ch10.s07.01",
+                      "kind": "subsection",
+                      "title": "61. Recreational Drugs?"
+                    },
+                    {
+                      "key": "ch10.s07.02",
+                      "kind": "subsection",
+                      "title": "62. Drugs, Medications, Over-the-Counter Medicines (Including Aspirin), Natural Remedies?"
+                    },
+                    {
+                      "key": "ch10.s07.03",
+                      "kind": "subsection",
+                      "title": "63. Tobacco in Any Form?"
+                    },
+                    {
+                      "key": "ch10.s07.04",
+                      "kind": "subsection",
+                      "title": "64. Alcohol?"
+                    }
+                  ]
                 },
                 {
                   "key": "ch10.s08",
                   "kind": "section",
-                  "title": "VI. Women Only"
+                  "title": "VI. Women Only",
+                  "children": [
+                    {
+                      "key": "ch10.s08.01",
+                      "kind": "subsection",
+                      "title": "65. Are You or Could You Be Pregnant or Nursing?"
+                    },
+                    {
+                      "key": "ch10.s08.02",
+                      "kind": "subsection",
+                      "title": "66. Taking Birth Control Pills?"
+                    }
+                  ]
                 },
                 {
                   "key": "ch10.s09",
                   "kind": "section",
-                  "title": "VII. All Patients"
+                  "title": "VII. All Patients",
+                  "children": [
+                    {
+                      "key": "ch10.s09.01",
+                      "kind": "subsection",
+                      "title": "67. Do You Have or Have You Had Any Other Diseases or Medical Problems NOT Listed on This Form?"
+                    }
+                  ]
                 },
                 {
                   "key": "ch10.s10",
