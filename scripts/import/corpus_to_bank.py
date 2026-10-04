@@ -10,7 +10,8 @@ chapter with its confidence, and the official initial and final keys.
     # 2. A person checks every stem and option against the printed pages and
     #    saves it as the reviewed file ("checked": true on each question).
     #    Set "reference_checked" and "chapter_checked" only after checking
-    #    the cited edition and its actual table of contents.
+    #    the cited edition and its actual content. Set "image_checked" with a
+    #    stem_image asset, or "image_not_applicable" after inspecting the page.
     # 3. The import files: a catalog supplement (the chapters and topics used)
     #    and the sitting itself:
     python scripts/import/corpus_to_bank.py build  --workbook=<xlsx> --year=1404 --form=A \
@@ -39,6 +40,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+import unicodedata
 import zipfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -159,15 +161,17 @@ def reference_for(title_with_edition: str, catalog: dict) -> tuple[str, str] | N
             if ref is None:
                 return None
             for e in ref['editions']:
-                if edition and e['key'] == f'{edition.group(1)}e':
+                if edition and e['key'] == f'{edition.group(1)}e' and (not year or e.get('year') == int(year.group(1))):
                     return key, e['key']
-                if year and e['key'] == year.group(1):
+                if not edition and year and e['key'] == year.group(1):
                     return key, e['key']
             return None
     return None
 
 
 def chapter(text: str) -> tuple[str, str] | None:
+    if len(re.findall(r'\bChapter\b', text or '', re.I)) != 1:
+        return None
     m = re.match(r'\s*Chapter\s+(\d+)\.?\s*(.+)', text or '')
     return (m.group(1), m.group(2).strip()) if m else None
 
@@ -209,6 +213,7 @@ def draft(args: dict) -> None:
 def audit(args: dict) -> None:
     """List unresolved corpus rows without treating PDF text as verified."""
     rows = read_rows(Path(args['workbook']))
+    catalog = json.loads(CATALOG.read_text(encoding='utf-8'))
     report = []
     for row in rows:
         stem, choices = split_question(row['متن سؤال'] or '')
@@ -217,14 +222,48 @@ def audit(args: dict) -> None:
             issues.append('missing_question_text')
         elif len(choices) != 4 or not stem or any(not choice for choice in choices):
             issues.append('stem_or_choices_need_review')
+        raw_text = row['متن سؤال'] or ''
+        normalized_text = unicodedata.normalize('NFKC', raw_text)
+        if len(re.findall(r'(?m)^\s*\d{1,3}\s*[-–ـ]\s+', raw_text)) > 1:
+            issues.append('possible_next_question_spill')
+        if len(re.findall(r'(?mi)^\s*(?:a|الف)\s*\)', raw_text)) > 1:
+            issues.append('repeated_choice_set_possible_question_spill')
+        if re.search(r'مرکز سنجش آموزش پزشکی|اطلاعیه کلید نهایی', normalized_text):
+            issues.append('official_notice_in_question_text')
+        if re.search(r'پذیرش دستیار(?:ی| تخصصی)', normalized_text):
+            issues.append('page_header_in_question_text')
+        if 'diagram' in (row.get('وضعیت متن') or '').lower() or re.search(r'(?:نمودار|شکل|تصویر)\s*(?:روبرو|مقابل|زیر)', normalized_text):
+            issues.append('figure_asset_not_verified')
+        if row['درس'] == 'زبان انگلیسی' and re.search(r'\b(?:passage|above passage|writer|author)\b', raw_text, re.I) and len(raw_text) < 700:
+            issues.append('reading_passage_context_not_attached')
         if row['سال آزمون'] == '1405':
             issues.append('corrupted_pdf_text_layer_needs_page_review')
         if not re.search(r'[ABCD]|حذف', row.get('کلید نهایی رسمی') or ''):
             issues.append('missing_official_final_key')
         if not (row.get('رفرنس منتخب سؤال') or '').strip():
             issues.append('missing_question_reference')
-        if not (row.get('فصل پیشنهادی') or '').strip():
+        elif reference_for(row['رفرنس منتخب سؤال'], catalog) is None:
+            without_year = re.sub(r'\(\d{4}\)', '', row['رفرنس منتخب سؤال'])
+            if reference_for(without_year, catalog):
+                issues.append('reference_publication_year_conflicts_with_catalog')
+            else:
+                issues.append('reference_edition_not_in_catalog')
+        candidate = row.get('فصل پیشنهادی') or ''
+        if not candidate.strip():
             issues.append('missing_chapter_candidate')
+        elif len(re.findall(r'\bChapter\b', candidate, re.I)) > 1:
+            issues.append('multiple_chapter_candidate')
+        elif candidate.lstrip().startswith('Section'):
+            issues.append('section_without_verified_parent_chapter')
+        elif chapter(candidate) is None:
+            issues.append('unparseable_chapter_candidate')
+        status = row.get('وضعیت فصل/مبحث') or ''
+        if 'outside the official' in status or 'outside the official' in row.get('وضعیت تطبیق رفرنس', ''):
+            issues.append('chapter_outside_official_scope')
+        if 'هشدار' in status:
+            issues.append('course_disagreement_in_source_notice')
+        if chapter(candidate):
+            issues.append('chapter_content_match_not_verified')
         report.append({'year': int(row['سال آزمون']), 'form': row['فرم'],
                        'number': int(row['شماره سؤال']), 'issues': issues})
     Path(args['out']).write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding='utf-8')
@@ -251,11 +290,16 @@ def build(args: dict) -> None:
         if not q or not q.get('checked') or len(q.get('choices', [])) != 4 or not q.get('stem') or any(not c.strip() for c in q['choices']):
             left_out.append(f'{n}: stem and four choices not checked against the printed page')
             continue
+        if not q.get('image_not_applicable') and not (q.get('image_checked') and q.get('stem_image')):
+            left_out.append(f'{n}: page image/figure status not checked or required asset missing')
+            continue
         subject = SUBJECT_BY_NAME.get(r['درس'].replace('‌', ''))
         if subject is None:
             left_out.append(f"{n}: unknown subject {r['درس']}")
             continue
         item = {'number': n, 'subject': subject, 'stem': q['stem'], 'choices': q['choices'], 'answer': answer(r)}
+        if q.get('stem_image'):
+            item['stem_image'] = q['stem_image']
         ref = reference_for(q.get('reference') or r.get('رفرنس منتخب سؤال', ''), catalog)
         ch = chapter(q.get('chapter') or r.get('فصل پیشنهادی', ''))
         if not q.get('reference_checked') and not q.get('reference_not_applicable'):
@@ -268,7 +312,7 @@ def build(args: dict) -> None:
             left_out.append(f'{n}: chapter not checked against the cited edition')
             continue
         if q.get('chapter_checked') and (ch is None or ref is None):
-            left_out.append(f'{n}: checked chapter lacks a resolvable edition or chapter number')
+            left_out.append(f'{n}: checked chapter is ambiguous or lacks a resolvable edition')
             continue
         if ref and q.get('reference_checked'):
             source = {'ref': f'{ref[0]}@{ref[1]}', 'primary': True, 'origin': 'human', 'confidence': {'source': 1.0}}
