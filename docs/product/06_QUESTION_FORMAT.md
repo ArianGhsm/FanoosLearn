@@ -67,7 +67,8 @@ table of references and editions in the script, and writes:
   chapter (`GET /bank/chapter-outline`);
 - each chapter's Persian title (`title_fa`, with `title_fa_origin` `ai` until
   a dentist reviews it) from `data/bank/reference-tocs.fa.json`, keyed by the
-  English title;
+  English title (chapters and the headings inside them alike, 6,400 titles,
+  machine-translated and checked for consistency, origin `ai`);
 - `decisions`: every judgement the script made that has been checked
   against the publishers' edition dates (an edition inferred from a year, a
   label that disagrees with its year, a row that is a scope statement rather
