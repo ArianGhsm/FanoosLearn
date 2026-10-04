@@ -42,6 +42,7 @@ use Fanoos\Tests\Integration\Stage8FinalClosureTest;
 use Fanoos\Tests\Operations\BackupContractTest;
 use Fanoos\Tests\Operations\FarazSmsGatewayTest;
 use Fanoos\Tests\Operations\ExamRankingTest;
+use Fanoos\Tests\Operations\StudyPlanLayoutTest;
 use Fanoos\Tests\Operations\QuestionBankRowTest;
 use Fanoos\Tests\Operations\StudyScheduleTest;
 use Fanoos\Tests\Operations\ZibalPaymentGatewayTest;
@@ -79,6 +80,8 @@ try {
     echo "PASS question bank row mapping\n";
     $assertions += (new ExamRankingTest())->run();
     echo "PASS exam ranking arithmetic\n";
+    $assertions += (new StudyPlanLayoutTest())->run();
+    echo "PASS study plan layout\n";
     $assertions += (new StudyScheduleTest())->run();
     echo "PASS study review schedule and study time\n";
     $assertions += (new FarazSmsGatewayTest())->run();

@@ -11,6 +11,8 @@ use Fanoos\Platform\Content\ProtectedResourceAuthorizer;
 use Fanoos\Platform\Content\ContentService;
 use Fanoos\Platform\Content\CustomPracticeService;
 use Fanoos\Platform\Content\ExamRankingService;
+use Fanoos\Platform\Content\ExamScheduleService;
+use Fanoos\Platform\Content\StudyPlanService;
 use Fanoos\Platform\Content\ProgressService;
 use Fanoos\Platform\Content\QuestionToolsService;
 use Fanoos\Platform\Content\StudyService;
@@ -57,6 +59,8 @@ final class ApiKernel
         private readonly ?QuestionToolsService $tools = null,
         private readonly ?StudyService $study = null,
         private readonly ?ExamRankingService $ranking = null,
+        private readonly ?ExamScheduleService $schedules = null,
+        private readonly ?StudyPlanService $plans = null,
     ) {
     }
 
@@ -558,6 +562,41 @@ final class ApiKernel
             }
             if ($request->method === 'POST' && $suffix === '/study-sessions') {
                 return ['status' => 201, 'data' => $this->study->logSession($session->userId, $workspaceId, (int) ($request->body['minutes'] ?? 0), isset($request->body['label']) ? (string) $request->body['label'] : null)];
+            }
+        }
+        if ($suffix === '/exam-calendar' || preg_match('#^/exam-calendar/[0-9a-f-]{36}$#', $suffix) === 1) {
+            if ($this->schedules === null) {
+                throw new PlatformException('calendar_unavailable', 'The calendar is not available.', 503);
+            }
+            if ($request->method === 'GET' && $suffix === '/exam-calendar') {
+                return ['status' => 200, 'data' => $this->schedules->calendar($session->userId, $workspaceId)];
+            }
+            $id = substr($suffix, strlen('/exam-calendar/'));
+            if ($request->method === 'POST' && $id !== '') {
+                if (($request->body['remove'] ?? false) === true) {
+                    return ['status' => 200, 'data' => $this->schedules->unschedule($session->userId, $workspaceId, $id)];
+                }
+                return ['status' => 200, 'data' => $this->schedules->schedule(
+                    $session->userId, $workspaceId, $id, (string) ($request->body['opens_at'] ?? ''), (string) ($request->body['closes_at'] ?? ''),
+                    isset($request->body['note']) ? (string) $request->body['note'] : null,
+                )];
+            }
+        }
+        if ($suffix === '/study-plan' || str_starts_with($suffix, '/study-plan/')) {
+            if ($this->plans === null) {
+                throw new PlatformException('study_plan_unavailable', 'Study plans are not available.', 503);
+            }
+            if ($request->method === 'GET' && $suffix === '/study-plan') {
+                return ['status' => 200, 'data' => $this->plans->plan($session->userId, $workspaceId)];
+            }
+            if ($request->method === 'POST' && $suffix === '/study-plan') {
+                return ['status' => 201, 'data' => $this->plans->create($session->userId, $workspaceId, (string) ($request->body['exam_date'] ?? ''), (int) ($request->body['days_per_week'] ?? 6))];
+            }
+            if ($request->method === 'POST' && $suffix === '/study-plan/archive') {
+                return ['status' => 200, 'data' => $this->plans->archive($session->userId, $workspaceId)];
+            }
+            if ($request->method === 'POST' && preg_match('#^/study-plan/days/([0-9]{1,4})$#', $suffix, $match)) {
+                return ['status' => 200, 'data' => $this->plans->setDone($session->userId, $workspaceId, (int) $match[1], ($request->body['done'] ?? false) === true)];
             }
         }
         if ($request->method === 'GET' && $suffix === '/mistakes-review') {

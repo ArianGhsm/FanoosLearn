@@ -483,6 +483,8 @@ SQL);
         if ((bool) $assessment['requires_entitlement'] && !$this->entitlements->has($userId, $workspaceId, (string) $assessment['target_scope_id'])) {
             throw new PlatformException('entitlement_required', 'An active entitlement is required for this assessment.', 403);
         }
+        // تقویم آزمون‌ها: a scheduled exam starts only inside its window.
+        ExamScheduleService::guard($this->database, $workspaceId, $assessmentId, $mode, $now);
         return Transaction::run($this->database, function () use ($userId, $workspaceId, $assessmentId, $assessment, $mode, $now): array {
         // Serialize starts per assessment so two concurrent clicks cannot create
         // two open attempts for the same published version.

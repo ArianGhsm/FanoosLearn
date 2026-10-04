@@ -15,6 +15,8 @@ use Fanoos\Platform\Content\ContentService;
 use Fanoos\Platform\Bank\BankBrowseService;
 use Fanoos\Platform\Content\CustomPracticeService;
 use Fanoos\Platform\Content\ExamRankingService;
+use Fanoos\Platform\Content\ExamScheduleService;
+use Fanoos\Platform\Content\StudyPlanService;
 use Fanoos\Platform\Content\ProgressService;
 use Fanoos\Platform\Content\QuestionToolsService;
 use Fanoos\Platform\Content\StudyService;
@@ -162,10 +164,12 @@ final class PlatformFactory
             new CatalogAdminService($database, $access, $audit),
             $customPractice = new CustomPracticeService($database, $access, $entitlements, $audit),
             new ProgressService($database, $access),
-            new BankBrowseService($database, $access, $customPractice),
+            $bankBrowse = new BankBrowseService($database, $access, $customPractice),
             new QuestionToolsService($database, $access, $audit, $customPractice),
             new StudyService($database, $access, $customPractice),
             new ExamRankingService($database, $access),
+            new ExamScheduleService($database, $access, $audit),
+            new StudyPlanService($database, $access, $bankBrowse),
         );
     }
 }

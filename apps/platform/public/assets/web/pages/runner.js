@@ -205,6 +205,11 @@ function showError(error, retry) {
         pageError = notice('warning', 'سقف امروز پر شد',
             'امروز به سقف سؤال‌های تازه‌ی هر حساب رسیدی. سؤال‌هایی که امروز باز کرده‌ای هنوز در دسترس‌اند؛ سؤال‌های تازه از فردا.',
             null);
+    } else if (error instanceof ApiError && error.code === 'exam_not_open') {
+        pageError = notice('warning', 'این آزمون هنوز باز نشده', 'زمان شروعش را در «تقویم آزمون‌ها» ببین.', null);
+    } else if (error instanceof ApiError && error.code === 'exam_window_closed') {
+        pageError = notice('warning', 'مهلت شرکت در این آزمون تمام شده',
+            'رتبه‌بندی فقط برای کسانی است که در مهلت شرکت کردند. همچنان می‌توانی آن را در حالت «تمرین» یا «یادگیری» بزنی.', null);
     } else if (error instanceof ApiError && error.isRateLimited) {
         const seconds = error.retryAfterSeconds ?? 2;
         pageError = notice('warning', 'کمی آهسته‌تر', `چند ثانیه صبر کن و دوباره تلاش کن (حدود ${seconds} ثانیه).`, retry ? { label: 'تلاش دوباره', onClick: retry } : null);

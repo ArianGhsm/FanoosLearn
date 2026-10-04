@@ -13,8 +13,10 @@ use Fanoos\Platform\Bank\BankImportException;
 use Fanoos\Platform\Bank\BankPublisher;
 use Fanoos\Platform\Content\CustomPracticeService;
 use Fanoos\Platform\Content\ExamQuestionRateGuard;
+use Fanoos\Platform\Content\ExamScheduleService;
 use Fanoos\Platform\Content\ExamService;
 use Fanoos\Platform\Content\QuestionToolsService;
+use Fanoos\Platform\Content\StudyPlanService;
 use Fanoos\Platform\Core\ClassProvisioningService;
 use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Support\PlatformException;
@@ -202,6 +204,47 @@ SQL);
         $this->assert($tools->saved($f['student'], $ws)['highlights'] === [], 'Clearing highlights left them on the page.');
         $this->assert(QuestionToolsService::mergeRanges([['start' => 5, 'end' => 50]], 20) === [['start' => 5, 'end' => 20]], 'A range past the stem was not clamped.');
         $this->assert($tools->forAssessment($f['student'], $ws, $examId)['notes'] === [], 'An emptied note was kept.');
+
+        // تقویم آزمون‌ها: a window that has not opened refuses every start; a
+        // closed one refuses exam mode but still allows practice.
+        $calendar = new ExamScheduleService($this->database, $access, $audit);
+        try {
+            $calendar->schedule($f['student'], $ws, $examId, '+1 day', '+2 days');
+            throw new RuntimeException('A student scheduled an exam.');
+        } catch (PlatformException) {
+            ++$this->assertions;
+        }
+        $calendar->schedule($f['manager'], $ws, $examId, gmdate(DATE_ATOM, time() + 86400), gmdate(DATE_ATOM, time() + 2 * 86400), 'آزمون جامع');
+        try {
+            $exams->startAttempt($f['student'], $ws, $examId, 'practice');
+            throw new RuntimeException('An exam started before its window opened.');
+        } catch (PlatformException $error) {
+            $this->assert($error->errorCode === 'exam_not_open', 'Unexpected refusal: ' . $error->errorCode);
+        }
+        $calendar->schedule($f['manager'], $ws, $examId, gmdate(DATE_ATOM, time() - 2 * 86400), gmdate(DATE_ATOM, time() - 86400));
+        try {
+            $exams->startAttempt($f['student'], $ws, $examId, 'assessment');
+            throw new RuntimeException('An exam was sat in exam mode after its window closed.');
+        } catch (PlatformException $error) {
+            $this->assert($error->errorCode === 'exam_window_closed', 'Unexpected refusal: ' . $error->errorCode);
+        }
+        $this->assert(isset($exams->startAttempt($f['student'], $ws, $examId, 'practice')['attempt_id']), 'A closed exam could not be practised.');
+        $listed = $calendar->calendar($f['student'], $ws);
+        $this->assert(count($listed) === 1 && $listed[0]['state'] === 'closed' && $listed[0]['participants'] === 1 && $listed[0]['my_score_percent'] === 100, 'Calendar row: ' . json_encode($listed, JSON_UNESCAPED_UNICODE));
+        $calendar->unschedule($f['manager'], $ws, $examId);
+        $this->assert($calendar->calendar($f['student'], $ws) === [], 'An unscheduled exam stayed in the calendar.');
+
+        // برنامه‌ی مطالعه: made from the bank's topics, ticked, replaced.
+        $plans = new StudyPlanService($this->database, $access, $browse);
+        $plan = $plans->create($f['student'], $ws, gmdate('Y-m-d', time() + 30 * 86400), 6);
+        $items = array_merge(...array_column($plan['days'], 'items'));
+        $this->assert($plan['total'] >= 20 && in_array('topic', array_column($items, 'kind'), true) && in_array('mock', array_column($items, 'kind'), true), 'Plan: ' . json_encode(array_slice($plan['days'], 0, 3), JSON_UNESCAPED_UNICODE));
+        $plans->setDone($f['student'], $ws, 1, true);
+        $this->assert($plans->plan($f['student'], $ws)['done'] === 1, 'A ticked day was not kept.');
+        $plans->create($f['student'], $ws, gmdate('Y-m-d', time() + 60 * 86400), 5);
+        $this->assert($plans->plan($f['student'], $ws)['done'] === 0, 'A new plan did not replace the old one.');
+        $plans->archive($f['student'], $ws);
+        $this->assert($plans->plan($f['student'], $ws) === null, 'An archived plan is still shown.');
 
         // A voided question leaves the next version; the exam stays the same exam.
         $voided = $amended;

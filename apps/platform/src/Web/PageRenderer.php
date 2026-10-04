@@ -157,7 +157,7 @@ final class PageRenderer
             ? [['/', 'فانوس'], ['/login', 'ورود'], ['/register', 'ساخت حساب'], ['/support', 'پشتیبانی']]
             : ($viewer->workspaceId === null
                 ? [['/app', 'خانه'], ['/account', 'حساب'], ['/support', 'پشتیبانی']]
-                : [['/app/bank', 'بانک سؤال'], ['/app/lessons', 'درسنامه‌ها'], ['/app/references', 'منابع آزمون'], ['/app/announcements', 'اطلاعیه‌ها'], ['/app/exams', 'آزمون‌ها'], ['/app/exams/custom', 'آزمون دلخواه'], ['/app/exams/mistakes', 'مرور اشتباه‌ها'], ['/app/saved', 'ذخیره‌ها و یادداشت‌ها'], ['/app/timer', 'تایمر مطالعه'], ['/app/progress', 'پیشرفت'], ['/account', 'حساب'], ['/support', 'پشتیبانی']]);
+                : [['/app/bank', 'بانک سؤال'], ['/app/lessons', 'درسنامه‌ها'], ['/app/references', 'منابع آزمون'], ['/app/announcements', 'اطلاعیه‌ها'], ['/app/exams', 'آزمون‌ها'], ['/app/exams/custom', 'آزمون دلخواه'], ['/app/exams/mistakes', 'مرور اشتباه‌ها'], ['/app/saved', 'ذخیره‌ها و یادداشت‌ها'], ['/app/plan', 'برنامه‌ی مطالعه'], ['/app/calendar', 'تقویم آزمون‌ها'], ['/app/timer', 'تایمر مطالعه'], ['/app/progress', 'پیشرفت'], ['/account', 'حساب'], ['/support', 'پشتیبانی']]);
         $nav = '';
         foreach ($links as [$href, $label]) {
             $nav .= '<a href="' . $this->escape($href) . '">' . $this->escape($label) . '</a>';
