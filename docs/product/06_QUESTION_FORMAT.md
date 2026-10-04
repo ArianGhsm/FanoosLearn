@@ -40,14 +40,17 @@ table of references and editions in the script, and writes:
 
 - 13 subjects, the three exam types (دستیاری active; بورد and ارتقا present
   but inactive);
-- 31 references with 48 editions; 34 of the editions carry their chapter
-  list (1,062 chapters) from `data/bank/reference-tocs.json`, the
-  publishers' tables of contents with the page each was read from. Chapter
-  n is node `ch0n` (`ch12`, and `ch01.3` for van Noort's numbering), the key
-  question sources cite. Still without a list: Burket 11e/12e, Torabinejad
-  5e, Sturdevant 6e, Powers & Wataha 11e, Goldstein 3e, McCabe & Walls 9e,
-  Daly 3e, Peterson (Persian), the national community-dentistry book and
-  the English titles;
+- 31 references with 48 editions; 42 of the editions carry their chapter
+  list (1,277 chapters) from `data/bank/reference-tocs.json`: the
+  publishers' tables of contents, or a library catalogue record where the
+  publisher lists none, with the page each was read from (`"language": "fa"`
+  marks the Persian national book, whose titles are its own). Chapter n is
+  node `ch0n` (`ch12`, and `ch01.3` for van Noort's numbering), the key
+  question sources cite. Still without a list: Peterson (Persian
+  translation, whose chapter numbering differs from the English 5th
+  edition), Daly (the workbook's "3rd edition, 2005" matches no edition:
+  the book has a 2002 and a 2013 edition) and the four English-exam
+  titles, which are not read by chapter;
 - one validity row per exam year, subject and edition, carrying the
   announced chapter scope (`scope`, e.g. «تمام فصول به جز ۴، ۸، ۱۸») and where
   the announcement came from (`evidence`), and that scope read into the

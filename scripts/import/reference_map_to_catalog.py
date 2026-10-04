@@ -149,6 +149,12 @@ SPLIT_NOTICES = {
         'the notice labels them "Art 2018" and "Craig 2018"'),
 }
 
+# Scopes that name a part of the book rather than chapters:
+# (exam year, reference@edition) -> (the chapters, from the publisher's contents).
+SCOPE_PARTS = {
+    (1403, 'phillips-materials@13e'): ('فصول 5–8', 'Part II (Direct Restorative Materials) is chapters 5–8 in the publisher\'s contents'),
+}
+
 # Rows without a publication year: (exam year, reference key) -> (publication year, why).
 MISSING_YEAR = {
     ('1398', 'van-noort-materials'): ('2013', 'in 1398 the newest edition was the 4th (2013); the 5th appeared in 2024'),
@@ -195,6 +201,15 @@ def read_sheet(path: Path, name: str) -> list[list[str | None]]:
 def fold(title: str) -> str:
     """The key reference-tocs.fa.json uses for an English title."""
     return ' '.join(title.split()).casefold()
+
+
+def persian_title(title: str, language: str | None, persian: dict) -> dict:
+    """A Persian book's own title, or the translation of an English one."""
+    if language == 'fa':
+        return {'title_fa': title, 'title_fa_origin': 'human'}
+    if fold(title) in persian['titles']:
+        return {'title_fa': persian['titles'][fold(title)], 'title_fa_origin': persian['origin']}
+    return {}
 
 
 def chapter_key(number: str) -> str:
@@ -296,6 +311,10 @@ def build() -> dict:
         known = [number for number, _ in tocs.get(record['edition'], {}).get('chapters', [])]
         where = f"{record['year']} {record['subject']} {record['edition']}"
         chapters = resolve_scope(record['scope'], known)
+        if chapters is None and (record['year'], record['edition']) in SCOPE_PARTS:
+            numbers, why = SCOPE_PARTS[(record['year'], record['edition'])]
+            chapters = resolve_scope(numbers, known)
+            decisions.append(f'{where}: scope "{record["scope"]}" read as chapters {numbers} — {why}')
         if chapters is None:
             if record['scope']:
                 decisions.append(f'{where}: scope "{record["scope"]}" names no chapter list; kept as text only')
@@ -312,12 +331,12 @@ def build() -> dict:
         for edition_key, label, year in editions.values():
             if edition_key in used[key] and edition_key not in seen:
                 seen[edition_key] = {'key': edition_key, 'label': label, **({'year': year} if year else {})}
-                chapters = tocs.get(f'{key}@{edition_key}', {}).get('chapters', [])
-                if chapters:
+                toc = tocs.get(f'{key}@{edition_key}', {})
+                if toc.get('chapters'):
                     seen[edition_key]['nodes'] = [
                         {'key': chapter_key(number), 'kind': 'chapter', 'number': number, 'title': name,
-                         **({'title_fa': persian['titles'][fold(name)], 'title_fa_origin': persian['origin']} if fold(name) in persian['titles'] else {})}
-                        for number, name in chapters]
+                         **persian_title(name, toc.get('language'), persian)}
+                        for number, name in toc['chapters']]
         references.append({'key': key, 'title': title, 'authors': authors, 'subject': subject,
                            'editions': sorted(seen.values(), key=lambda e: (e.get('year') or 0, e['key']))})
 

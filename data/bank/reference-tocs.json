@@ -1,7 +1,221 @@
 {
  "format": "fanoos.bank.reference-tocs/1",
- "notes": "Chapter lists of the residency reference editions, copied from the publisher (Elsevier shop pages, the Quintessence product sheet, the e-bookshelf sample, Google Books); \"source\" is where each list was read. scripts/import/reference_map_to_catalog.py turns them into chapter nodes in data/bank/catalog.json. Gaps in numbering are gaps in the publisher list. Publisher marketing tags (\"NEW!\") and all-capitals headings are normalised.",
+ "notes": "Chapter lists of the residency reference editions, copied from the publisher (Elsevier shop pages, the PMPH and Wiley-VCH product pages, the Quintessence product sheet, the e-bookshelf sample, Google Books, Internet Archive catalogue records, isba.ir for the Persian national book); \"source\" is where each list was read. scripts/import/reference_map_to_catalog.py turns them into chapter nodes in data/bank/catalog.json. Gaps in numbering are gaps in the publisher list. Publisher marketing tags (\"NEW!\") and all-capitals headings are normalised. An edition with \"language\": \"fa\" is a Persian book; its titles are the originals.",
  "editions": {
+  "burket-oral-medicine@11e": {
+   "source": "https://archive.org/details/burketsoralmedic0000burk (catalogue record contents)",
+   "chapters": [
+    [
+     "1",
+     "Introduction to oral medicine and oral diagnosis: evaluation of the dental patient"
+    ],
+    [
+     "2",
+     "Pharmacology"
+    ],
+    [
+     "3",
+     "Ulcerative, vesicular, and bullous lesions"
+    ],
+    [
+     "4",
+     "Red and white lesions of the oral mucosa"
+    ],
+    [
+     "5",
+     "Pigmented lesions of the oral mucosa"
+    ],
+    [
+     "6",
+     "Benign lesions of the oral cavity"
+    ],
+    [
+     "7",
+     "Oral cancer"
+    ],
+    [
+     "8",
+     "Salivary gland diseases"
+    ],
+    [
+     "9",
+     "Temporomandibular disorders"
+    ],
+    [
+     "10",
+     "Orofacial pain"
+    ],
+    [
+     "11",
+     "Headache"
+    ],
+    [
+     "12",
+     "Diseases of the respiratory tract"
+    ],
+    [
+     "13",
+     "Diseases of the cardiovascular system"
+    ],
+    [
+     "14",
+     "Diseases of the gastrointestinal tract"
+    ],
+    [
+     "15",
+     "Renal disease"
+    ],
+    [
+     "16",
+     "Hematologic diseases"
+    ],
+    [
+     "17",
+     "Bleeding and clotting disorders"
+    ],
+    [
+     "18",
+     "Immunologic diseases"
+    ],
+    [
+     "19",
+     "Transplantation medicine"
+    ],
+    [
+     "20",
+     "Infectious diseases"
+    ],
+    [
+     "21",
+     "Diabetes mellitus and endocrine diseases"
+    ],
+    [
+     "22",
+     "Neuromuscular diseases"
+    ],
+    [
+     "23",
+     "Basic principles of human genetics: a primer for oral medicine"
+    ]
+   ]
+  },
+  "burket-oral-medicine@12e": {
+   "source": "https://pmphusa.com/book/burkets-oral-medicine-12th-edition/",
+   "chapters": [
+    [
+     "1",
+     "Introduction to Oral Medicine and Oral Diagnosis"
+    ],
+    [
+     "2",
+     "Overview of Clinical Research"
+    ],
+    [
+     "3",
+     "Pharmacotherapy"
+    ],
+    [
+     "4",
+     "Ulcerative, Vesicular, and Bullous Lesions"
+    ],
+    [
+     "5",
+     "Red and White Lesions of the Oral Mucosa"
+    ],
+    [
+     "6",
+     "Pigmented Lesions of the Oral Mucosa"
+    ],
+    [
+     "7",
+     "Benign Lesions of the Oral Cavity and the Jaws"
+    ],
+    [
+     "8",
+     "Oral and Oropharyngeal Cancer"
+    ],
+    [
+     "9",
+     "Oral Complications of Cancer Therapies: Diagnosis and Treatment"
+    ],
+    [
+     "10",
+     "Salivary Gland Diseases"
+    ],
+    [
+     "11",
+     "Temporomandibular Disorders"
+    ],
+    [
+     "12",
+     "Orofacial Pain"
+    ],
+    [
+     "13",
+     "Common Headache Disorders"
+    ],
+    [
+     "14",
+     "Diseases of the Respiratory Tract"
+    ],
+    [
+     "15",
+     "Diseases of the Cardiovascular System"
+    ],
+    [
+     "16",
+     "Diseases of the Gastrointestinal Tract"
+    ],
+    [
+     "17",
+     "Renal Disease"
+    ],
+    [
+     "18",
+     "Hematologic Diseases"
+    ],
+    [
+     "19",
+     "Bleeding and Clotting Disorders"
+    ],
+    [
+     "20",
+     "Immunologic Diseases"
+    ],
+    [
+     "21",
+     "Transplantation Medicine"
+    ],
+    [
+     "22",
+     "Infectious Diseases"
+    ],
+    [
+     "23",
+     "Disorders of the Endocrine System and Metabolism"
+    ],
+    [
+     "24",
+     "Neuromuscular Diseases"
+    ],
+    [
+     "25",
+     "Basic Principles of Human Genetics: A Primer for Oral Medicine"
+    ],
+    [
+     "26",
+     "Geriatric Oral Medicine"
+    ],
+    [
+     "27",
+     "Pediatric Oral Medicine"
+    ],
+    [
+     "28",
+     "Panoramic Image Interpretation"
+    ]
+   ]
+  },
   "burket-oral-medicine@13e": {
    "source": "https://books.google.com/books?id=oPQyEAAAQBAJ (contents with start pages; chapter 26 Geriatric p.991 and 28 Laboratory p.1037 fix the numbering)",
    "chapters": [
@@ -1336,6 +1550,199 @@
     ]
    ]
   },
+  "goldstein-esthetics@3e": {
+   "source": "https://www.wiley-vch.de/en/areas-interest/medicine-health-care/dentistry-14dn/restorative-dentistry-14dn1/esthetic-dentistry-14dn14/ronald-e-goldstein-39-s-esthetics-in-dentistry-978-1-119-27283-0",
+   "chapters": [
+    [
+     "1",
+     "Concepts of Dental Esthetics"
+    ],
+    [
+     "2",
+     "Successful Management of Common Psychological Challenges"
+    ],
+    [
+     "3",
+     "Esthetic Treatment Planning: Patient and Practice Management Skills in Esthetic Treatment Planning"
+    ],
+    [
+     "4",
+     "Digital Smile Design: A Digital Tool for Esthetic Evaluation, Team Communication, and Patient Management"
+    ],
+    [
+     "5",
+     "Esthetics in Dentistry Marketing"
+    ],
+    [
+     "6",
+     "Legal Considerations"
+    ],
+    [
+     "7",
+     "Practical Clinical Photography"
+    ],
+    [
+     "8",
+     "Creating Esthetic Restorations Through Special Effects"
+    ],
+    [
+     "9",
+     "Proportional Smile Design"
+    ],
+    [
+     "10",
+     "Understanding Color"
+    ],
+    [
+     "11",
+     "Cosmetic Contouring"
+    ],
+    [
+     "12",
+     "Bleaching Discolored Teeth"
+    ],
+    [
+     "13",
+     "Adhesion to Hard Tissue on Teeth"
+    ],
+    [
+     "14",
+     "Composite Resin Bonding"
+    ],
+    [
+     "15",
+     "Ceramic Veneers and Partial-Coverage Restorations"
+    ],
+    [
+     "16",
+     "Crown Restorations"
+    ],
+    [
+     "17",
+     "Replacing Missing Teeth with Fixed Partial Dentures"
+    ],
+    [
+     "18",
+     "Esthetic Removable Partial Dentures"
+    ],
+    [
+     "19",
+     "The Complete Denture"
+    ],
+    [
+     "20",
+     "Implant Esthetics: Concepts, Surgical Procedures, and Materials"
+    ],
+    [
+     "21",
+     "Management of Stained and Discolored Teeth"
+    ],
+    [
+     "22",
+     "Abfraction, Abrasion, Attrition, and Erosion"
+    ],
+    [
+     "23",
+     "Chipped, Fractured, or Endodontically Treated Teeth"
+    ],
+    [
+     "24",
+     "Endodontics and Esthetic Dentistry"
+    ],
+    [
+     "25",
+     "Oral Habits"
+    ],
+    [
+     "26",
+     "Restorative Treatment of Diastema"
+    ],
+    [
+     "27",
+     "Restorative Treatment of Crowded Teeth"
+    ],
+    [
+     "28",
+     "Esthetics in Adult Orthodontics"
+    ],
+    [
+     "29",
+     "Surgical Orthodontic Correction of Dentofacial Deformity"
+    ],
+    [
+     "30",
+     "Pediatric Dentistry"
+    ],
+    [
+     "31",
+     "Geresthetics: Esthetic Dentistry for Older Adults"
+    ],
+    [
+     "32",
+     "Facial Considerations: An Orthodontic Perspective"
+    ],
+    [
+     "33",
+     "Facial Considerations in Esthetic Restorations"
+    ],
+    [
+     "34",
+     "Plastic Surgery Related to Esthetic Dentistry"
+    ],
+    [
+     "35",
+     "Cosmetic Adjuncts"
+    ],
+    [
+     "36",
+     "Esthetic Considerations in the Performing Arts"
+    ],
+    [
+     "37",
+     "Periodontal Plastic Surgery"
+    ],
+    [
+     "38",
+     "Esthetic and Traumatic Emergencies"
+    ],
+    [
+     "39",
+     "Esthetic Failures"
+    ],
+    [
+     "40",
+     "Tooth Preparation in Esthetic Dentistry"
+    ],
+    [
+     "41",
+     "Impressions"
+    ],
+    [
+     "42",
+     "Esthetic Temporization"
+    ],
+    [
+     "43",
+     "The Esthetic Try-In"
+    ],
+    [
+     "44",
+     "Cementation of Restorations"
+    ],
+    [
+     "45",
+     "Esthetic Principles in Constructing Ceramic Restorations"
+    ],
+    [
+     "46",
+     "Digital Impression Devices and CAD/CAM Systems"
+    ],
+    [
+     "47",
+     "Maintenance of Esthetic Restorations"
+    ]
+   ]
+  },
   "hupp-oral-surgery@6e": {
    "source": "https://shop.elsevier.com/books/contemporary-oral-and-maxillofacial-surgery/hupp/978-0-323-09177-0",
    "chapters": [
@@ -2284,6 +2691,131 @@
     ]
    ]
   },
+  "mccabe-walls-materials@9e": {
+   "source": "https://archive.org/details/applieddentalmat0000mcca_r1t9 (catalogue record contents)",
+   "chapters": [
+    [
+     "1",
+     "Science of dental materials"
+    ],
+    [
+     "2",
+     "Properties used to characterise materials"
+    ],
+    [
+     "3",
+     "Gypsum products for dental casts"
+    ],
+    [
+     "4",
+     "Waxes"
+    ],
+    [
+     "5",
+     "Investments and refractory dies"
+    ],
+    [
+     "6",
+     "Metals and alloys"
+    ],
+    [
+     "7",
+     "Gold and alloys of noble metals"
+    ],
+    [
+     "8",
+     "Base metal casting alloys"
+    ],
+    [
+     "9",
+     "Casting"
+    ],
+    [
+     "10",
+     "Steel and wrought alloys"
+    ],
+    [
+     "11",
+     "Ceramics and porcelain fused to metal (PFM)"
+    ],
+    [
+     "12",
+     "Synthetic polymers"
+    ],
+    [
+     "13",
+     "Denture base polymers"
+    ],
+    [
+     "14",
+     "Denture lining materials"
+    ],
+    [
+     "15",
+     "Artificial teeth"
+    ],
+    [
+     "16",
+     "Impression materials: Classification and requirements"
+    ],
+    [
+     "17",
+     "Non-elastic impression materials"
+    ],
+    [
+     "18",
+     "Elastic impression materials: Hydrocolloids"
+    ],
+    [
+     "19",
+     "Elastic impression materials: Synthetic elastomers"
+    ],
+    [
+     "20",
+     "Requirements of direct filing materials and historical perspectives"
+    ],
+    [
+     "21",
+     "Dental amalgam"
+    ],
+    [
+     "22",
+     "Resin-based filling materials"
+    ],
+    [
+     "23",
+     "Adhesive restorative materials: bonding of resin-based materials"
+    ],
+    [
+     "24",
+     "Glass-ionomer restorative materials (polyalkenoates)"
+    ],
+    [
+     "25",
+     "Resin-modified glass-ionomers and related materials"
+    ],
+    [
+     "26",
+     "Temporary crown and bridge resins"
+    ],
+    [
+     "27",
+     "Requirements of dental cements for lining, base and luting applications"
+    ],
+    [
+     "28",
+     "Cements based on phosphoric acid"
+    ],
+    [
+     "29",
+     "Cements based on organometallic chelate compounds"
+    ],
+    [
+     "30",
+     "Polycarboxylates, glass-ionomers and resin-modified glass-ionomers for luting and lining"
+    ]
+   ]
+  },
   "mccracken-rpd@12e": {
    "source": "https://shop.elsevier.com/books/mccrackens-removable-partial-prosthodontics/carr/978-0-323-06990-8",
    "chapters": [
@@ -2752,6 +3284,108 @@
     ]
    ]
   },
+  "national-oral-health@1394": {
+   "source": "https://www.isba.ir/Default/BookDetail/6627/",
+   "language": "fa",
+   "chapters": [
+    [
+     "1",
+     "تاریخچه و اصول دندانپزشکی اجتماعی"
+    ],
+    [
+     "2",
+     "سلامت و بیماری"
+    ],
+    [
+     "3",
+     "اپیدمیولوژی"
+    ],
+    [
+     "4",
+     "جمعیت شناسی"
+    ],
+    [
+     "5",
+     "شاخص‌های سلامت دهان و دندان"
+    ],
+    [
+     "6",
+     "شاخص‌های سلامت دهان و دندان در ایران"
+    ],
+    [
+     "7",
+     "نیاز سنجی سلامت"
+    ],
+    [
+     "8",
+     "غربالگری"
+    ],
+    [
+     "9",
+     "نظام سلامت و بخش دندانپزشکی"
+    ],
+    [
+     "10",
+     "دندانپزشکی مبتنی بر شواهد"
+    ],
+    [
+     "11",
+     "ارزیابی نقادانه"
+    ],
+    [
+     "12",
+     "ارتقاء سلامت دهان"
+    ],
+    [
+     "13",
+     "آموزش در ارتقاء سلامت دهان و دندان"
+    ],
+    [
+     "14",
+     "تغییرات رفتاری در ارتقاء سلامت"
+    ],
+    [
+     "15",
+     "عوامل محیطی و ژنتیکی مؤثر بر سلامت"
+    ],
+    [
+     "16",
+     "مدیریت سلامت و برنامه‌ریزی برای ارتقاء سلامت"
+    ],
+    [
+     "17",
+     "سلامت و پیشگیری از بیماری‌های نسوج سخت دندانی"
+    ],
+    [
+     "18",
+     "پیشگیری از بیماری‌های بافت‌های نگه‌دارنده و نرم دهان"
+    ],
+    [
+     "19",
+     "صدمات دندانی و رهکارهای پیشگیرانه"
+    ],
+    [
+     "20",
+     "دخانیات و سلامت"
+    ],
+    [
+     "21",
+     "اقتصاد و سلامت"
+    ],
+    [
+     "22",
+     "ارزیابی خطر پوسیدگی / درمان‌های محافظه کارانه"
+    ],
+    [
+     "23",
+     "سلامت دهان بیماران خاص و سالمندان"
+    ],
+    [
+     "24",
+     "جنبه‌های اخلاقی و پژوهش در دندانپزشکی اجتماعی"
+    ]
+   ]
+  },
   "neville-oral-pathology@4e": {
    "source": "https://shop.elsevier.com/books/oral-and-maxillofacial-pathology/neville/978-1-4557-7052-6",
    "chapters": [
@@ -3165,6 +3799,71 @@
     [
      "20",
      "Emerging Technologies"
+    ]
+   ]
+  },
+  "powers-wataha-materials@11e": {
+   "source": "https://books.google.com/books?id=rRuKCwAAQBAJ (contents with start pages)",
+   "chapters": [
+    [
+     "1",
+     "Introduction to Restorative Dental Materials"
+    ],
+    [
+     "2",
+     "Properties of Materials"
+    ],
+    [
+     "3",
+     "Preventive Dental Materials"
+    ],
+    [
+     "4",
+     "Direct Esthetic Restorative Materials"
+    ],
+    [
+     "5",
+     "Dental Amalgam"
+    ],
+    [
+     "6",
+     "Finishing Polishing and Cleansing Materials"
+    ],
+    [
+     "7",
+     "Cements"
+    ],
+    [
+     "8",
+     "Impression Materials"
+    ],
+    [
+     "9",
+     "Model and Die Materials"
+    ],
+    [
+     "10",
+     "Waxes"
+    ],
+    [
+     "11",
+     "Casting Alloys Wrought Alloys and Solders"
+    ],
+    [
+     "12",
+     "Casting Soldering and Welding"
+    ],
+    [
+     "13",
+     "Polymers in Prosthodontics"
+    ],
+    [
+     "14",
+     "Dental Ceramics"
+    ],
+    [
+     "15",
+     "Dental Implants"
     ]
    ]
   },
@@ -3584,6 +4283,103 @@
     ]
    ]
   },
+  "sturdevant-operative@6e": {
+   "source": "https://archive.org/details/sturdevantsartsc0000unse_m8f6 (catalogue record contents)",
+   "chapters": [
+    [
+     "1",
+     "Clinical significance of dental anatomy, histology, physiology, and occlusion"
+    ],
+    [
+     "2",
+     "Dental caries: etiology, clinical characteristics, risk assessment, and management"
+    ],
+    [
+     "3",
+     "Patient assessment, examination and diagnosis, and treatment planning"
+    ],
+    [
+     "4",
+     "Fundamental concepts of enamel and dentin adhesion"
+    ],
+    [
+     "5",
+     "Fundamentals in tooth preparation and pulp protection"
+    ],
+    [
+     "6",
+     "Instruments and equipment for tooth preparation"
+    ],
+    [
+     "7",
+     "Preliminary considerations for operative dentistry"
+    ],
+    [
+     "8",
+     "Introduction to composite restorations"
+    ],
+    [
+     "9",
+     "Class III, IV, and V direct composite and glass ionomer restorations"
+    ],
+    [
+     "10",
+     "Class I, II, and VI direct composite restorations and other tooth-colored restorations"
+    ],
+    [
+     "11",
+     "Class I and II indirect tooth-colored restorations"
+    ],
+    [
+     "12",
+     "Additional conservative esthetic procedures"
+    ],
+    [
+     "13",
+     "Introduction to amalgam restorations"
+    ],
+    [
+     "14",
+     "Class I, II, and VI amalgam restorations"
+    ],
+    [
+     "15",
+     "Class III and V amalgam restorations"
+    ],
+    [
+     "16",
+     "Complex amalgam restorations"
+    ],
+    [
+     "17",
+     "Class II cast metal restorations"
+    ],
+    [
+     "18",
+     "Biomaterials"
+    ],
+    [
+     "19",
+     "Infection control"
+    ],
+    [
+     "20",
+     "Pain control for operative dentistry"
+    ],
+    [
+     "21",
+     "Bonded splints and bridges"
+    ],
+    [
+     "22",
+     "Direct gold restorations"
+    ],
+    [
+     "23",
+     "Additional information on instruments and equipment for tooth preparation"
+    ]
+   ]
+  },
   "sturdevant-operative@7e": {
    "source": "https://shop.elsevier.com/books/sturdevants-art-and-science-of-operative-dentistry/ritter/978-0-323-47833-5",
    "chapters": [
@@ -3747,6 +4543,111 @@
     [
      "21",
      "Restoration of Endodontically Treated Teeth"
+    ]
+   ]
+  },
+  "torabinejad-endodontics@5e": {
+   "source": "https://shop.elsevier.com/books/endodontics/torabinejad/978-1-4557-5410-6",
+   "chapters": [
+    [
+     "1",
+     "The Biology of Dental Pulp and Periradicular Tissues"
+    ],
+    [
+     "2",
+     "Protecting the Pulp, Preserving the Apex"
+    ],
+    [
+     "3",
+     "Endodontic Microbiology"
+    ],
+    [
+     "4",
+     "Pulp and Periradicular Pathosis"
+    ],
+    [
+     "5",
+     "Diagnoses, Treatment Planning, and Systemic Considerations"
+    ],
+    [
+     "6",
+     "Interaction Between Generalist and Specialists"
+    ],
+    [
+     "7",
+     "Periodontal and Endodontic Interrelationship"
+    ],
+    [
+     "8",
+     "Longitudinal Tooth Fractures"
+    ],
+    [
+     "9",
+     "Local Anesthetics"
+    ],
+    [
+     "10",
+     "Endodontic Emergencies and Therapeutics"
+    ],
+    [
+     "11",
+     "Management of Traumatized Teeth"
+    ],
+    [
+     "12",
+     "Endodontic Radiology"
+    ],
+    [
+     "13",
+     "Endodontic Instruments"
+    ],
+    [
+     "14",
+     "Internal Anatomy"
+    ],
+    [
+     "15",
+     "Isolation, Access Preparation and Length Determination"
+    ],
+    [
+     "16",
+     "Cleaning and Shaping, Temporarization"
+    ],
+    [
+     "17",
+     "Restoration of Endodontically Treated Teeth"
+    ],
+    [
+     "18",
+     "Obturation"
+    ],
+    [
+     "19",
+     "Procedural Accidents"
+    ],
+    [
+     "20",
+     "Endodontic Retreatment"
+    ],
+    [
+     "21",
+     "Endodontic Surgery"
+    ],
+    [
+     "22",
+     "Endodontic Outcomes"
+    ],
+    [
+     "23",
+     "Single Tooth Implant"
+    ],
+    [
+     "24",
+     "Bleaching of Discolored Teeth"
+    ],
+    [
+     "25",
+     "Geriatric Endodontics"
     ]
    ]
   },
