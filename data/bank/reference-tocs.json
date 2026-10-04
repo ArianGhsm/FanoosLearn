@@ -1,0 +1,4424 @@
+{
+ "format": "fanoos.bank.reference-tocs/1",
+ "notes": "Chapter lists of the residency reference editions, copied from the publisher (Elsevier shop pages, the Quintessence product sheet, the e-bookshelf sample, Google Books); \"source\" is where each list was read. scripts/import/reference_map_to_catalog.py turns them into chapter nodes in data/bank/catalog.json. Gaps in numbering are gaps in the publisher list.",
+ "editions": {
+  "burket-oral-medicine@13e": {
+   "source": "https://books.google.com/books?id=oPQyEAAAQBAJ (contents with start pages; chapter 26 Geriatric p.991 and 28 Laboratory p.1037 fix the numbering)",
+   "chapters": [
+    [
+     "1",
+     "Introduction to Oral Medicine and Oral Diagnosis: Patient Evaluation"
+    ],
+    [
+     "2",
+     "Overview of Clinical Research"
+    ],
+    [
+     "3",
+     "Ulcerative, Vesicular, and Bullous Lesions"
+    ],
+    [
+     "4",
+     "Red and White Lesions of the Oral Mucosa"
+    ],
+    [
+     "5",
+     "Pigmented Lesions of the Oral Mucosa"
+    ],
+    [
+     "6",
+     "Benign Lesions of the Oral Cavity and the Jaws"
+    ],
+    [
+     "7",
+     "Head and Neck Cancer"
+    ],
+    [
+     "8",
+     "Oral Complications of Nonsurgical Cancer Therapies"
+    ],
+    [
+     "9",
+     "Salivary Gland Diseases"
+    ],
+    [
+     "10",
+     "Temporomandibular Disorders"
+    ],
+    [
+     "11",
+     "Neuropathic Orofacial Pain"
+    ],
+    [
+     "12",
+     "Common Headache Disorders"
+    ],
+    [
+     "13",
+     "Diseases of the Respiratory Tract"
+    ],
+    [
+     "14",
+     "Diseases of the Cardiovascular System"
+    ],
+    [
+     "15",
+     "Diseases of the Gastrointestinal Tract"
+    ],
+    [
+     "16",
+     "Renal Diseases"
+    ],
+    [
+     "17",
+     "Hematologic Diseases"
+    ],
+    [
+     "18",
+     "Bleeding and Clotting Disorders"
+    ],
+    [
+     "19",
+     "Immunologic Diseases"
+    ],
+    [
+     "20",
+     "Transplantation Medicine"
+    ],
+    [
+     "21",
+     "Infectious Diseases"
+    ],
+    [
+     "22",
+     "Disorders of the Endocrine System and of Metabolism"
+    ],
+    [
+     "23",
+     "Neurologic Diseases"
+    ],
+    [
+     "24",
+     "Psychological and Psychiatric Aspects of Oral Health"
+    ],
+    [
+     "25",
+     "Pediatric Oral Medicine"
+    ],
+    [
+     "26",
+     "Geriatric Oral Medicine"
+    ],
+    [
+     "27",
+     "The Role of Genetics in Oral Medicine"
+    ],
+    [
+     "28",
+     "Laboratory Medicine and Diagnostic Pathology"
+    ],
+    [
+     "29",
+     "How to Identify, Interpret and Apply the Scientific Literature to Practice"
+    ]
+   ]
+  },
+  "carranza-periodontology@12e": {
+   "source": "https://shop.elsevier.com/books/carranzas-clinical-periodontology/newman/978-0-323-18824-1",
+   "chapters": [
+    [
+     "1",
+     "Anatomy of the periodontium"
+    ],
+    [
+     "2",
+     "Aging and the periodontium"
+    ],
+    [
+     "3",
+     "Classification of diseases and conditions affecting the periodontium"
+    ],
+    [
+     "4",
+     "Fundamentals in the methods of periodontal disease epidemiology"
+    ],
+    [
+     "5",
+     "Periodontal pathogenesis"
+    ],
+    [
+     "6",
+     "Genetic susceptibility to periodontal disease"
+    ],
+    [
+     "7",
+     "The role of dental calculus and other local predisposing factors"
+    ],
+    [
+     "8",
+     "Biofilm and periodontal microbiology"
+    ],
+    [
+     "9",
+     "Molecular biology of the host-microbe interactions in periodontal diseases"
+    ],
+    [
+     "10",
+     "Smoking and periodontal disease"
+    ],
+    [
+     "11",
+     "Influence of systemic conditions on the periodontium"
+    ],
+    [
+     "12",
+     "Impact of periodontal infection on systemic health"
+    ],
+    [
+     "13",
+     "Defense mechanisms of the gingiva"
+    ],
+    [
+     "14",
+     "Gingival inflammation"
+    ],
+    [
+     "15",
+     "Clinical features of gingivitis"
+    ],
+    [
+     "16",
+     "Gingival enlargement"
+    ],
+    [
+     "17",
+     "Acute gingival infections"
+    ],
+    [
+     "18",
+     "Gingival disease in childhood"
+    ],
+    [
+     "19",
+     "Desquamative gingivitis"
+    ],
+    [
+     "20",
+     "The periodontal pocket"
+    ],
+    [
+     "21",
+     "Bone loss and patterns of bone destruction"
+    ],
+    [
+     "22",
+     "Periodontal response to external forces"
+    ],
+    [
+     "23",
+     "Chronic periodontitis"
+    ],
+    [
+     "24",
+     "Necrotizing ulcerative periodontitis"
+    ],
+    [
+     "25",
+     "Aggressive periodontitis"
+    ],
+    [
+     "26",
+     "Pathology and management of periodontal problems in patients with HIV infection"
+    ],
+    [
+     "28",
+     "Sleep-disordered breathing"
+    ],
+    [
+     "29",
+     "Clinical diagnosis"
+    ],
+    [
+     "30",
+     "Levels of clinical significance"
+    ],
+    [
+     "31",
+     "Radiographic aids in the diagnosis of periodontal disease"
+    ],
+    [
+     "32",
+     "Clinical risk assessment"
+    ],
+    [
+     "33",
+     "Determination of prognosis"
+    ],
+    [
+     "34",
+     "Rationale for periodontal treatment"
+    ],
+    [
+     "35",
+     "The treatment plan"
+    ],
+    [
+     "36",
+     "Conscious sedation"
+    ],
+    [
+     "37",
+     "Periodontal treatment of medically compromised patients"
+    ],
+    [
+     "38",
+     "Periodontal therapy in the female patient"
+    ],
+    [
+     "39",
+     "Periodontal treatment for older adults"
+    ],
+    [
+     "40",
+     "Treatment of aggressive and atypical forms of periodontitis"
+    ],
+    [
+     "41",
+     "Acute gingival disease"
+    ],
+    [
+     "42",
+     "Treatment of periodontal abscess"
+    ],
+    [
+     "43",
+     "Diagnosis and management of endodontic-periodontic lesions"
+    ],
+    [
+     "44",
+     "Phase I: Periodontal therapy"
+    ],
+    [
+     "45",
+     "Plaque biofilm control for the periodontal patient"
+    ],
+    [
+     "46",
+     "Scaling and root planing"
+    ],
+    [
+     "47",
+     "Sonic and ultrasonic instrumentation and irrigation"
+    ],
+    [
+     "48",
+     "Anti-infective therapy"
+    ],
+    [
+     "49",
+     "Host modulation"
+    ],
+    [
+     "50",
+     "Occlusal evaluation and therapy"
+    ],
+    [
+     "51",
+     "Adjunctive role of orthodontic therapy"
+    ],
+    [
+     "52",
+     "Breathe malodor"
+    ],
+    [
+     "53",
+     "Phase II: Periodontal therapy"
+    ],
+    [
+     "54",
+     "Surgical anatomy of periodontal and implant areas"
+    ],
+    [
+     "55",
+     "General principles of periodontal surgery"
+    ],
+    [
+     "56",
+     "Gingival surgical techniques"
+    ],
+    [
+     "57",
+     "The periodontal flap"
+    ],
+    [
+     "58",
+     "Treatment of gingival enlargement"
+    ],
+    [
+     "59",
+     "The flap technique for pocket therapy"
+    ],
+    [
+     "60",
+     "Resective osseous surgery"
+    ],
+    [
+     "61",
+     "Periodontal regeneration and reconstructive surgery"
+    ],
+    [
+     "62",
+     "Furcation involvement and treatment"
+    ],
+    [
+     "63",
+     "Periodontal plastic and esthetic surgery"
+    ],
+    [
+     "64",
+     "Periodontal microsurgery"
+    ],
+    [
+     "65",
+     "Recent advances in surgical therapy: Lasers in periodontal therapy"
+    ],
+    [
+     "66",
+     "Preparation of the periodontium for restorative dentistry"
+    ],
+    [
+     "67",
+     "Restorative interrelationships"
+    ],
+    [
+     "68",
+     "Multidisciplinary approach to dental and periodontal problems"
+    ],
+    [
+     "69",
+     "Supportive periodontal treatment"
+    ],
+    [
+     "70",
+     "Results of periodontal treatment"
+    ],
+    [
+     "71",
+     "Periimplant anatomy, biology and function"
+    ],
+    [
+     "72",
+     "Clinical evaluation of the implant patient"
+    ],
+    [
+     "73",
+     "Diagnostic imaging for the implant patient"
+    ],
+    [
+     "74",
+     "Biomechanics, prosthetic considerations, and treatment planning"
+    ],
+    [
+     "75",
+     "Basic implant surgical procedures"
+    ],
+    [
+     "76",
+     "Localized bone augmentation and implant site development"
+    ],
+    [
+     "77",
+     "Advanced implant surgical procedures"
+    ],
+    [
+     "78",
+     "Esthetic management of difficult cases (minimally invasive approach)"
+    ],
+    [
+     "79",
+     "Technologic advances in implant surgery: Dental implant microsurgery – immediate"
+    ],
+    [
+     "80",
+     "Technologic advances in implant surgurgery: Piezoelectric bone surgery"
+    ],
+    [
+     "81",
+     "Technologic advances in implant surgery: Computer-assisted surgery"
+    ],
+    [
+     "82",
+     "Implant-related complications and failures"
+    ],
+    [
+     "83",
+     "Supportive implant treatment"
+    ],
+    [
+     "84",
+     "Results of implant treatment"
+    ],
+    [
+     "85",
+     "Atlas of periodontal diseases"
+    ],
+    [
+     "86",
+     "Introduction to evidence-based decision-making"
+    ],
+    [
+     "87",
+     "Assessing the evidence"
+    ],
+    [
+     "88",
+     "Electronic dental records and decision support systems"
+    ],
+    [
+     "89",
+     "Locally delivered, controlled-release antimicrobials"
+    ],
+    [
+     "90",
+     "Locally delivered, controlled-release antimicrobials: Drug development and clinical research"
+    ]
+   ]
+  },
+  "carranza-periodontology@13e": {
+   "source": "https://shop.elsevier.com/books/newman-and-carranzas-clinical-periodontology/newman/978-0-323-52300-4",
+   "chapters": [
+    [
+     "1",
+     "Evidence-Based Decision Making"
+    ],
+    [
+     "2",
+     "Critical Thinking"
+    ],
+    [
+     "3",
+     "Anatomy, Structure, and Function of the Periodontium"
+    ],
+    [
+     "4",
+     "Aging and the Periodontium"
+    ],
+    [
+     "5",
+     "Classification of Diseases and Conditions Affecting the Periodontium"
+    ],
+    [
+     "6",
+     "Fundamentals in the Methods of Periodontal Disease Epidemiology"
+    ],
+    [
+     "7",
+     "Periodontal Disease Pathogenesis"
+    ],
+    [
+     "8",
+     "Biofilm and Periodontal Microbiology"
+    ],
+    [
+     "9",
+     "Practical Molecular Biology of Host-Microbe Interactions"
+    ],
+    [
+     "10",
+     "Resolution of Inflammation"
+    ],
+    [
+     "11",
+     "Precision Dentistry: Genetics of Periodontal Disease Risk and Treatment"
+    ],
+    [
+     "12",
+     "Smoking and periodontal disease"
+    ],
+    [
+     "13",
+     "The Role of Dental Calculus and Other Local Predisposing Factors"
+    ],
+    [
+     "14",
+     "Influence of Systemic Conditions"
+    ],
+    [
+     "15",
+     "Impact of Periodontal Infection on Systemic Health"
+    ],
+    [
+     "16",
+     "Defense Mechanisms of the Gingiva"
+    ],
+    [
+     "17",
+     "Gingival Inflammation"
+    ],
+    [
+     "18",
+     "Clinical Features of Gingivitis"
+    ],
+    [
+     "19",
+     "Gingival Enlargement"
+    ],
+    [
+     "20",
+     "Acute Gingival Infections"
+    ],
+    [
+     "21",
+     "Gingival Disease in Childhood"
+    ],
+    [
+     "22",
+     "Desquamative Gingivitis"
+    ],
+    [
+     "23",
+     "The Periodontal Pocket"
+    ],
+    [
+     "24",
+     "Bone Loss and Patterns of Bone Destruction"
+    ],
+    [
+     "25",
+     "Periodontal Response to External Forces"
+    ],
+    [
+     "26",
+     "Masticatory System Disorders that Influence the Periodontium"
+    ],
+    [
+     "27",
+     "Chronic Periodontitis"
+    ],
+    [
+     "28",
+     "Aggressive Periodontitis"
+    ],
+    [
+     "29",
+     "Necrotizing Ulcerative Periodontitis"
+    ],
+    [
+     "30",
+     "Pathology and Management of Periodontal Problems in Patients with Human Immunodeficiency Virus Infection"
+    ],
+    [
+     "31",
+     "Significance of clinical and biological information"
+    ],
+    [
+     "32",
+     "Periodontal Examination and Diagnosis"
+    ],
+    [
+     "33",
+     "Radiographic Aids in the Diagnosis of Periodontal Diseases"
+    ],
+    [
+     "34",
+     "Clinical Risk Assessment"
+    ],
+    [
+     "35",
+     "Determination of Prognosis"
+    ],
+    [
+     "36",
+     "Treatment Planning and Rationale for Periodontal Treatment"
+    ],
+    [
+     "37",
+     "Electronic Dental Records and Decision Support Systems"
+    ],
+    [
+     "38",
+     "Conscious Sedation"
+    ],
+    [
+     "39",
+     "Periodontal Treatment of Medically Compromised Patients"
+    ],
+    [
+     "40",
+     "Sleep-Disordered Breathing"
+    ],
+    [
+     "41",
+     "Periodontal Therapy in the Female Patient"
+    ],
+    [
+     "42",
+     "Periodontal Treatment for Older Adults"
+    ],
+    [
+     "43",
+     "Treatment of Aggressive and Atypical Forms of Periodontitis"
+    ],
+    [
+     "44",
+     "Treatment of Acute Gingival Disease"
+    ],
+    [
+     "45",
+     "Treatment of Periodontal Abscess"
+    ],
+    [
+     "46",
+     "Diagnosis and Management of Endodontic-Periodontic Lesions"
+    ],
+    [
+     "47",
+     "Phase I Periodontal Therapy"
+    ],
+    [
+     "48",
+     "Plaque Biofilm Control for the Periodontal Patient"
+    ],
+    [
+     "49",
+     "Breath Malodor"
+    ],
+    [
+     "50",
+     "Scaling and Root Planing"
+    ],
+    [
+     "51",
+     "Sonic and Ultrasonic Instrumentation and Irrigation"
+    ],
+    [
+     "52",
+     "Systemic Anti-infective Therapy for Periodontal Diseases"
+    ],
+    [
+     "53",
+     "Locally Delivered, Controlled-Release Antimicrobials"
+    ],
+    [
+     "54",
+     "Host Modulation"
+    ],
+    [
+     "55",
+     "Occlusal Evaluation and Therapy"
+    ],
+    [
+     "56",
+     "Adjunctive Role of Orthodontic Therapy"
+    ],
+    [
+     "57",
+     "Phase II Periodontal Therapy"
+    ],
+    [
+     "58",
+     "Periodontal and Periimplant Surgical Anatomy"
+    ],
+    [
+     "59",
+     "General Principles of Periodontal Surgery"
+    ],
+    [
+     "60",
+     "Principles of Periodontal Surgery for Pocket Reduction"
+    ],
+    [
+     "61",
+     "Treatment of Gingival Enlargement"
+    ],
+    [
+     "62",
+     "Resective Osseous Surgery"
+    ],
+    [
+     "63",
+     "Periodontal Regeneration and Reconstructive Surgery"
+    ],
+    [
+     "64",
+     "Furcation: Involvement and Treatment"
+    ],
+    [
+     "65",
+     "Periodontal Plastic and Esthetic Surgery"
+    ],
+    [
+     "66",
+     "Leukocyte and Platelet Rich Fibrin (L-PRF), Biological Properties and Applications"
+    ],
+    [
+     "67",
+     "Periodontal Microsurgery"
+    ],
+    [
+     "68",
+     "LASERS IN PERIODONTAL AND PERIIMPLANT THERAPY"
+    ],
+    [
+     "69",
+     "Preparation of the Periodontium for Restorative Dentistry"
+    ],
+    [
+     "70",
+     "Restorative Interrelationships"
+    ],
+    [
+     "71",
+     "Multidisciplinary Versus Interdisciplinary Approaches to Dental and Periodontal Problems"
+    ],
+    [
+     "72",
+     "Supportive Periodontal Treatment"
+    ],
+    [
+     "73",
+     "Results of Periodontal Treatment"
+    ],
+    [
+     "74",
+     "Periimplant Anatomy, Biology, and Function"
+    ],
+    [
+     "75",
+     "Clinical Evaluation of the Implant Patient"
+    ],
+    [
+     "76",
+     "Diagnostic Imaging for the Implant Patient"
+    ],
+    [
+     "77",
+     "Prosthetic Considerations for Implant Treatment"
+    ],
+    [
+     "78",
+     "Basic Implant Surgical Procedures"
+    ],
+    [
+     "79",
+     "Localized Bone Augmentation and Implant Site Development"
+    ],
+    [
+     "80",
+     "Advanced Implant Surgical Procedures"
+    ],
+    [
+     "81",
+     "Esthetic Management of Difficult Cases (Minimally Invasive Approach)"
+    ],
+    [
+     "82",
+     "DENTAL IMPLANT MICROSURGERY: IMMEDIATE PLACEMENT"
+    ],
+    [
+     "83",
+     "PIEZOELECTRIC BONE SURGERY"
+    ],
+    [
+     "84",
+     "DIGITAL ASSISTED IMPLANT SURGERY"
+    ],
+    [
+     "85",
+     "Implant-Related Complications and Failures"
+    ],
+    [
+     "86",
+     "Supportive Implant Treatment"
+    ],
+    [
+     "87",
+     "Results of Implant Treatment"
+    ],
+    [
+     "88",
+     "Atlas of Periodontal Diseases"
+    ]
+   ]
+  },
+  "carranza-periodontology@14e": {
+   "source": "https://shop.elsevier.com/books/newman-and-carranzas-clinical-periodontology-and-implantology/newman/978-0-323-87887-6",
+   "chapters": [
+    [
+     "1",
+     "Clinical Periodontology and Implantology in the Era of Precision Medicine"
+    ],
+    [
+     "2",
+     "Evidence-Based Decision Making"
+    ],
+    [
+     "3",
+     "Critical Thinking: Assessing Evidence"
+    ],
+    [
+     "4",
+     "Anatomy, Structure, and Function of the Periodontium"
+    ],
+    [
+     "5",
+     "Classification of Diseases and Conditions Affecting the Periodontium"
+    ],
+    [
+     "6",
+     "Fundamentals in the Methods of Periodontal Disease Epidemiology"
+    ],
+    [
+     "7",
+     "Atlas of Periodontal Diseases"
+    ],
+    [
+     "8",
+     "Periodontal Disease Pathogenesis"
+    ],
+    [
+     "9",
+     "Precision Dentistry: Genetics and Epigenetics of Periodontitis"
+    ],
+    [
+     "10",
+     "Biofilm and Periodontal Microbiology"
+    ],
+    [
+     "11",
+     "Host-Microbe Interactions and the Inflammatory Response"
+    ],
+    [
+     "12",
+     "Resolution of Inflammation"
+    ],
+    [
+     "13",
+     "Aging and the Periodontium"
+    ],
+    [
+     "14",
+     "Defense Mechanisms of the Gingiva"
+    ],
+    [
+     "15",
+     "Dental Biofilm-Induced Gingivitis and Its Management"
+    ],
+    [
+     "16",
+     "Select Systemic and Local Diseases That Affect the Gingiva"
+    ],
+    [
+     "17",
+     "Acute Gingival Infections and Management"
+    ],
+    [
+     "18",
+     "Desquamative Gingivitis"
+    ],
+    [
+     "19",
+     "Gingival Enlargement and Management"
+    ],
+    [
+     "20",
+     "Periodontal Health and Disease in Children and Adolescents"
+    ],
+    [
+     "21",
+     "Periodontitis"
+    ],
+    [
+     "22",
+     "The Periodontal Pocket Formation and Patterns of Bone Loss"
+    ],
+    [
+     "23",
+     "Risk Factors of Periodontal Disease (Smoking)"
+    ],
+    [
+     "24",
+     "The Role of Dental Calculus and Other Local Predisposing Factors"
+    ],
+    [
+     "25",
+     "Influence of Systemic Conditions on the Periodontium"
+    ],
+    [
+     "26",
+     "Impact of Periodontal Infection on Systemic Health"
+    ],
+    [
+     "27",
+     "Pathology and Management of Periodontal Problems Associated With Viral Infection, Including HIV, COVID, and Others"
+    ],
+    [
+     "28",
+     "Periodontal Therapy in the Female Patient"
+    ],
+    [
+     "29",
+     "Aging and Periodontal Health: A Long-Term Relationship"
+    ],
+    [
+     "30",
+     "Acute Periodontal Infections and Management"
+    ],
+    [
+     "31",
+     "Halitosis (Breath Malodor)"
+    ],
+    [
+     "32",
+     "Periodontal Response to External Forces"
+    ],
+    [
+     "33",
+     "Sleep-Related Breathing Disorders"
+    ],
+    [
+     "34",
+     "Masticatory System Disorders That Influence the Periodontium"
+    ],
+    [
+     "35",
+     "Role of Occlusion and TMD in Periodontal Disease Management"
+    ],
+    [
+     "36",
+     "Levels of Clinical Significance"
+    ],
+    [
+     "37",
+     "Electronic Dental Records and the Role of Health Information Technology in Dentistry"
+    ],
+    [
+     "38",
+     "Periodontal Examination"
+    ],
+    [
+     "39",
+     "Radiographic Aids in the Diagnosis of Periodontal Disease"
+    ],
+    [
+     "40",
+     "Periodontal Risk Assessment"
+    ],
+    [
+     "41",
+     "Determination of Prognosis"
+    ],
+    [
+     "42",
+     "Periodontal Treatment Plan"
+    ],
+    [
+     "43",
+     "Nonsurgical Phase of Periodontal Therapy"
+    ],
+    [
+     "44",
+     "Clinical Practice Guideline for Treatment of Periodontitis"
+    ],
+    [
+     "45",
+     "Restorative Interrelationships"
+    ],
+    [
+     "46",
+     "Multidisciplinary Versus Interdisciplinary Approaches to Dental and Periodontal Problems"
+    ],
+    [
+     "47",
+     "Periodontal Referral"
+    ],
+    [
+     "48",
+     "Orthodontics in Periodontal Therapy"
+    ],
+    [
+     "49",
+     "Endo-Perio Lesions"
+    ],
+    [
+     "50",
+     "Plaque Biofilm Control for the Periodontal Patient"
+    ],
+    [
+     "51",
+     "Scaling and Root Instrumentation (Root Planing)"
+    ],
+    [
+     "52",
+     "Sonic and Ultrasonic Instrumentation and Irrigation"
+    ],
+    [
+     "53",
+     "Chemotherapy: Use of Systemic Antibiotics"
+    ],
+    [
+     "54",
+     "Locally Delivered, Controlled-Release Antimicrobials"
+    ],
+    [
+     "55",
+     "Host Modulation"
+    ],
+    [
+     "56",
+     "Surgical Phase of Periodontal Therapy"
+    ],
+    [
+     "57",
+     "Surgical Training and Technology"
+    ],
+    [
+     "58",
+     "Sedation in Periodontics and Implant Surgery"
+    ],
+    [
+     "59",
+     "Periodontal and Peri-Implant Surgical Anatomy"
+    ],
+    [
+     "60",
+     "General Principles of Periodontal Surgery"
+    ],
+    [
+     "61",
+     "Periodontal Surgical Therapy"
+    ],
+    [
+     "62",
+     "Pocket Reduction Therapy—Resective Approach"
+    ],
+    [
+     "63",
+     "Periodontal Regeneration"
+    ],
+    [
+     "64",
+     "Lasers in Periodontal and Peri-Implant Therapy"
+    ],
+    [
+     "65",
+     "Periodontal Plastic and Esthetic Surgery"
+    ],
+    [
+     "66",
+     "Preparation of the Periodontium for Restorative Dentistry"
+    ],
+    [
+     "67",
+     "Periodontal Treatment of Medically Complex Patients"
+    ],
+    [
+     "68",
+     "Periodontal Microsurgery"
+    ],
+    [
+     "69",
+     "Diagnosis and Management of Periodontal Abscesses"
+    ],
+    [
+     "70",
+     "Supportive Periodontal Treatment"
+    ],
+    [
+     "71",
+     "Results of Periodontal Treatment"
+    ],
+    [
+     "72",
+     "Integrating Implants With Periodontal Therapy"
+    ],
+    [
+     "73",
+     "Peri-Implant Anatomy, Biology, and Function"
+    ],
+    [
+     "74",
+     "Clinical Evaluation of the Implant Patient"
+    ],
+    [
+     "75",
+     "Diagnostic Imaging for the Implant Patient"
+    ],
+    [
+     "76",
+     "Prosthetic Considerations: Partially Edentulous"
+    ],
+    [
+     "77",
+     "Prosthetic Considerations: Fully Edentulous"
+    ],
+    [
+     "78",
+     "Basic Implant Surgical Procedures"
+    ],
+    [
+     "79",
+     "Advanced Implant Surgical Procedures: Horizontal and Vertical Augmentation"
+    ],
+    [
+     "80",
+     "Advanced Implant Surgical Procedures: Maxillary Sinus Augmentation"
+    ],
+    [
+     "81",
+     "Advanced Surgical Procedures: Simultaneous Implant Placement and Tissue Augmentation in the Esthetic Zone"
+    ],
+    [
+     "82",
+     "Dental Implant Microsurgery: Immediate Placement"
+    ],
+    [
+     "83",
+     "Piezoelectric Bone Surgery"
+    ],
+    [
+     "84",
+     "Digitally Assisted Implant Placement Surgery"
+    ],
+    [
+     "85",
+     "From Implant Placement to Provisional Restoration"
+    ],
+    [
+     "86",
+     "Complications in Dental Implantology"
+    ],
+    [
+     "87",
+     "Supportive Implant Treatment"
+    ],
+    [
+     "88",
+     "Results of Implant Treatment"
+    ]
+   ]
+  },
+  "craig-restorative-materials@13e": {
+   "source": "https://shop.elsevier.com/books/craigs-restorative-dental-materials/sakaguchi/978-0-323-08108-5",
+   "chapters": [
+    [
+     "1",
+     "Role and Significance of Restorative Dental Materials"
+    ],
+    [
+     "2",
+     "The Oral Environment"
+    ],
+    [
+     "3",
+     "Principles of Design with Restorative Dental Materials"
+    ],
+    [
+     "4",
+     "Fundamentals of Materials Science"
+    ],
+    [
+     "5",
+     "Testing of Dental Materials"
+    ],
+    [
+     "6",
+     "Biocompatibility and Tissue Reaction to Biomaterials"
+    ],
+    [
+     "7",
+     "General Classes of Biomaterials"
+    ],
+    [
+     "8",
+     "Preventative and Intermediary Materials"
+    ],
+    [
+     "9",
+     "Restorative Materials-composites and polymers"
+    ],
+    [
+     "10",
+     "Restorative Materials-metals"
+    ],
+    [
+     "11",
+     "Restorative Materials-ceramics"
+    ],
+    [
+     "12",
+     "Impressions, Casts, and Investments"
+    ],
+    [
+     "13",
+     "Materials for Adhesion and Luting"
+    ],
+    [
+     "14",
+     "Digital Imaging and Processing for Restorations"
+    ],
+    [
+     "15",
+     "Dental and Orofacial Implants"
+    ],
+    [
+     "16",
+     "Tissue Engineering"
+    ]
+   ]
+  },
+  "craig-restorative-materials@14e": {
+   "source": "https://shop.elsevier.com/books/craigs-restorative-dental-materials/sakaguchi/978-0-323-47821-2",
+   "chapters": [
+    [
+     "1",
+     "Role and Significance of Restorative Dental Materials"
+    ],
+    [
+     "2",
+     "The Oral Environment"
+    ],
+    [
+     "3",
+     "Materials-Centered Treatment Design"
+    ],
+    [
+     "4",
+     "Fundamentals of Materials Science"
+    ],
+    [
+     "5",
+     "Testing of Dental Materials and Biomechanics"
+    ],
+    [
+     "6",
+     "Biocompatibility and Tissue Reaction to Biomaterials"
+    ],
+    [
+     "7",
+     "General Classes of Biomaterials"
+    ],
+    [
+     "8",
+     "Preventative and Intermediary Materials"
+    ],
+    [
+     "9",
+     "Restorative Materials: Resin Composites and Polymers"
+    ],
+    [
+     "10",
+     "Restorative Materials: Metals"
+    ],
+    [
+     "11",
+     "Restorative Materials: Ceramics"
+    ],
+    [
+     "12",
+     "Restorative Materials: Impression and Casting"
+    ],
+    [
+     "13",
+     "Materials for Adhesion and Luting"
+    ],
+    [
+     "14",
+     "Digital Imaging and Processing for Restorations"
+    ],
+    [
+     "15",
+     "Dental and Orofacial Implants"
+    ],
+    [
+     "16",
+     "Tissue Engineering"
+    ]
+   ]
+  },
+  "hupp-oral-surgery@6e": {
+   "source": "https://shop.elsevier.com/books/contemporary-oral-and-maxillofacial-surgery/hupp/978-0-323-09177-0",
+   "chapters": [
+    [
+     "1",
+     "Preoperative Health Status Evaluation"
+    ],
+    [
+     "2",
+     "Prevention and Management of Medical Emergencies"
+    ],
+    [
+     "3",
+     "Principles of Surgery"
+    ],
+    [
+     "4",
+     "Wound Repair"
+    ],
+    [
+     "5",
+     "Infection Control in Surgical Practice"
+    ],
+    [
+     "6",
+     "Instrumentation for Basic Oral Surgery"
+    ],
+    [
+     "7",
+     "Principles of Routine Exodontia"
+    ],
+    [
+     "8",
+     "Principles of More Complex Exodontia"
+    ],
+    [
+     "9",
+     "Principles of Management of Impacted Teeth"
+    ],
+    [
+     "10",
+     "Postoperative Patient Management"
+    ],
+    [
+     "11",
+     "Prevention and Management Extraction Complications"
+    ],
+    [
+     "12",
+     "Medicolegal Considerations"
+    ],
+    [
+     "13",
+     "Preprosthetic Surgery"
+    ],
+    [
+     "14",
+     "Implant Treatment: Basic Concepts and Techniques"
+    ],
+    [
+     "15",
+     "Implant Treatment: Advanced Concepts and Complex Cases"
+    ],
+    [
+     "16",
+     "Principles of Management and Prevention of Odontogenic Infections"
+    ],
+    [
+     "17",
+     "Complex Odontogenic Infections"
+    ],
+    [
+     "18",
+     "Principles of Endodontic Surgery"
+    ],
+    [
+     "19",
+     "Management of the Patient Undergoing Radiotherapy or Chemotherapy"
+    ],
+    [
+     "20",
+     "Odontogenic Diseases of the Maxillary Sinus"
+    ],
+    [
+     "21",
+     "Diagnosis and Management of Salivary Gland Disorders"
+    ],
+    [
+     "22",
+     "Principles of Differential Diagnosis and Biopsy"
+    ],
+    [
+     "23",
+     "Surgical Management of Oral Pathologic Lesions"
+    ],
+    [
+     "24",
+     "Soft Tissue and Dentoalveolar Injuries"
+    ],
+    [
+     "25",
+     "Management of Facial Fractures"
+    ],
+    [
+     "26",
+     "Correction of Dentofacial Deformities"
+    ],
+    [
+     "27",
+     "Facial Cosmetic Surgery"
+    ],
+    [
+     "28",
+     "Management of Patients with Orofacial Clefts"
+    ],
+    [
+     "29",
+     "Surgical Reconstruction of Defects of the Jaws"
+    ],
+    [
+     "30",
+     "Management of Temporomandibular Disorders"
+    ],
+    [
+     "32",
+     "Management of the Hospitalized Patient"
+    ]
+   ]
+  },
+  "hupp-oral-surgery@7e": {
+   "source": "https://shop.elsevier.com/books/contemporary-oral-and-maxillofacial-surgery/hupp/978-0-323-55221-9",
+   "chapters": [
+    [
+     "1",
+     "Preoperative Health Status Evaluation"
+    ],
+    [
+     "2",
+     "Prevention and Management of Medical Emergencies"
+    ],
+    [
+     "3",
+     "Principles of Surgery"
+    ],
+    [
+     "4",
+     "Wound Repair"
+    ],
+    [
+     "5",
+     "Infection Control in Surgical Practice"
+    ],
+    [
+     "6",
+     "Pain and Anxiety Control in Surgical Practice"
+    ],
+    [
+     "7",
+     "Instrumentation for Basic Oral Surgery"
+    ],
+    [
+     "8",
+     "Principles of Routine Exodontia"
+    ],
+    [
+     "9",
+     "Principles of More Complex Exodontia"
+    ],
+    [
+     "10",
+     "Principles of Management of Impacted Teeth"
+    ],
+    [
+     "11",
+     "Postextraction Patient Management"
+    ],
+    [
+     "12",
+     "Medicolegal Considerations"
+    ],
+    [
+     "13",
+     "Preprosthetic Surgery"
+    ],
+    [
+     "14",
+     "Implant Treatment: Basic Concepts and Techniques"
+    ],
+    [
+     "15",
+     "Implant Treatment: Advanced Concepts and Complex Cases"
+    ],
+    [
+     "16",
+     "Principles of Management and Prevention of Odontogenic Infections"
+    ],
+    [
+     "17",
+     "Complex Odontogenic Infections"
+    ],
+    [
+     "18",
+     "Principles of Endodontic Surgery"
+    ],
+    [
+     "19",
+     "Management of the Patient Undergoing Radiotherapy or Chemotherapy"
+    ],
+    [
+     "20",
+     "Odontogenic Diseases of the Maxillary Sinus"
+    ],
+    [
+     "21",
+     "Diagnosis and Management of Salivary Gland Disorders"
+    ],
+    [
+     "22",
+     "Principles of Differential Diagnosis and Biopsy"
+    ],
+    [
+     "23",
+     "Surgical Management of Oral Pathologic Lesions"
+    ],
+    [
+     "24",
+     "Soft Tissue and Dentoalveolar Injuries"
+    ],
+    [
+     "25",
+     "Management of Facial Fractures"
+    ],
+    [
+     "26",
+     "Correction of Dentofacial Deformities"
+    ],
+    [
+     "27",
+     "Facial Cosmetic Surgery"
+    ],
+    [
+     "28",
+     "Management of Patients With Orofacial Clefts"
+    ],
+    [
+     "29",
+     "Surgical Reconstruction of Defects of the Jaws"
+    ],
+    [
+     "30",
+     "Facial Neuropathology"
+    ],
+    [
+     "31",
+     "Management of Temporomandibular Disorders"
+    ]
+   ]
+  },
+  "little-falace-dental-management@10e": {
+   "source": "https://shop.elsevier.com/books/little-and-falaces-dental-management-of-the-medically-compromised-patient/miller/978-0-323-80945-0",
+   "chapters": [
+    [
+     "1",
+     "Patient Evaluation and Risk Assessment"
+    ],
+    [
+     "2",
+     "Infective Endocarditis"
+    ],
+    [
+     "3",
+     "Hypertension"
+    ],
+    [
+     "4",
+     "Ischemic Heart Disease"
+    ],
+    [
+     "5",
+     "Cardiac Arrhythmias"
+    ],
+    [
+     "6",
+     "Heart Failure (or Congestive Heart Failure)"
+    ],
+    [
+     "7",
+     "Pulmonary Disease"
+    ],
+    [
+     "8",
+     "Smoking and Tobacco Use Cessation"
+    ],
+    [
+     "9",
+     "Sleep-Related Breathing Disorders"
+    ],
+    [
+     "10",
+     "Liver Disease"
+    ],
+    [
+     "11",
+     "Gastrointestinal Disease"
+    ],
+    [
+     "12",
+     "Chronic Kidney Disease and Dialysis"
+    ],
+    [
+     "13",
+     "Sexually Transmitted Diseases"
+    ],
+    [
+     "14",
+     "Diabetes Mellitus"
+    ],
+    [
+     "15",
+     "Adrenal Insufficiency"
+    ],
+    [
+     "16",
+     "Thyroid Diseases"
+    ],
+    [
+     "17",
+     "Pregnancy and Breast Feeding"
+    ],
+    [
+     "18",
+     "AIDS, HIV Infection, and Related Conditions"
+    ],
+    [
+     "19",
+     "Allergy"
+    ],
+    [
+     "20",
+     "Rheumatologic and Connective Tissue Disorders"
+    ],
+    [
+     "21",
+     "Organ and Bone Marrow Transplantation"
+    ],
+    [
+     "22",
+     "Disorders of Red Blood Cells"
+    ],
+    [
+     "23",
+     "Disorders of White Blood Cells"
+    ],
+    [
+     "24",
+     "Acquired Bleeding and Hypercoagulable Disorders"
+    ],
+    [
+     "25",
+     "Congenital Bleeding and Hypercoagulable Disorders"
+    ],
+    [
+     "26",
+     "Cancer and Oral Care of the Patient"
+    ],
+    [
+     "27",
+     "Neurologic Disorders"
+    ],
+    [
+     "28",
+     "Anxiety, Eating Disorders, and Behavioral Reactions to Illness"
+    ],
+    [
+     "29",
+     "Psychiatric Disorders"
+    ],
+    [
+     "30",
+     "Drug and Alcohol Abuse"
+    ]
+   ]
+  },
+  "little-falace-dental-management@8e": {
+   "source": "https://shop.elsevier.com/books/little-and-falaces-dental-management-of-the-medically-compromised-patient/little/978-0-323-08028-6",
+   "chapters": [
+    [
+     "1",
+     "Patient Evaluation and Risk Assessment"
+    ],
+    [
+     "2",
+     "Infective Endocarditis"
+    ],
+    [
+     "3",
+     "Hypertension"
+    ],
+    [
+     "4",
+     "Ischemic Heart Disease"
+    ],
+    [
+     "5",
+     "Cardiac Arrhythmias"
+    ],
+    [
+     "6",
+     "Heart Failure (or Congestive Heart Failure)"
+    ],
+    [
+     "7",
+     "Pulmonary Disease"
+    ],
+    [
+     "8",
+     "Smoking and Tobacco Use Cessation"
+    ],
+    [
+     "9",
+     "Sleep-Related Breathing Disorders"
+    ],
+    [
+     "10",
+     "Liver Disease"
+    ],
+    [
+     "11",
+     "Gastrointestinal Disease"
+    ],
+    [
+     "12",
+     "Chronic Kidney Disease and Dialysis"
+    ],
+    [
+     "13",
+     "Sexually Transmitted Diseases"
+    ],
+    [
+     "14",
+     "Diabetes Mellitus"
+    ],
+    [
+     "15",
+     "Adrenal Insufficiency"
+    ],
+    [
+     "16",
+     "Thyroid Diseases (Hyperthyroidism, Hypothyroidism, Thyroiditis, and Neoplastic Disease)"
+    ],
+    [
+     "17",
+     "Pregnancy and Breast Feeding"
+    ],
+    [
+     "18",
+     "AIDS, HIV Infection, and Related Conditions"
+    ],
+    [
+     "19",
+     "Allergy"
+    ],
+    [
+     "20",
+     "Rheumatologic and Connective Tissue Disorders"
+    ],
+    [
+     "21",
+     "Organ and Bone Marrow Transplantation"
+    ],
+    [
+     "22",
+     "Disorders of Red Blood Cells"
+    ],
+    [
+     "23",
+     "Disorders of White Blood Cells"
+    ],
+    [
+     "24",
+     "Acquired Bleeding and Hypercoagulable Disorders"
+    ],
+    [
+     "25",
+     "Congenital Bleeding and Hypercoagulable Disorders"
+    ],
+    [
+     "26",
+     "Cancer and Oral Care of the Patient"
+    ],
+    [
+     "27",
+     "Neurologic Disorders"
+    ],
+    [
+     "28",
+     "Anxiety, Eating Disorders and Behavioral Reactions to Illness"
+    ],
+    [
+     "29",
+     "Psychiatric Disorders"
+    ],
+    [
+     "30",
+     "Drug and Alcohol Abuse"
+    ]
+   ]
+  },
+  "little-falace-dental-management@9e": {
+   "source": "https://shop.elsevier.com/books/little-and-falaces-dental-management-of-the-medically-compromised-patient/little/978-0-323-44355-5",
+   "chapters": [
+    [
+     "1",
+     "Patient Evaluation and Risk Assessment"
+    ],
+    [
+     "2",
+     "Infective Endocarditis"
+    ],
+    [
+     "3",
+     "Hypertension"
+    ],
+    [
+     "4",
+     "Ischemic Heart Disease"
+    ],
+    [
+     "5",
+     "Cardiac Arrhythmias"
+    ],
+    [
+     "6",
+     "Heart Failure (or Congestive Heart Failure)"
+    ],
+    [
+     "7",
+     "Pulmonary Disease"
+    ],
+    [
+     "8",
+     "Smoking and Tobacco Use Cessation"
+    ],
+    [
+     "9",
+     "Sleep-Related Breathing Disorders"
+    ],
+    [
+     "10",
+     "Liver Disease"
+    ],
+    [
+     "11",
+     "Gastrointestinal Disease"
+    ],
+    [
+     "12",
+     "Chronic Kidney Disease and Dialysis"
+    ],
+    [
+     "13",
+     "Sexually Transmitted Diseases"
+    ],
+    [
+     "14",
+     "Diabetes Mellitus"
+    ],
+    [
+     "15",
+     "Adrenal Insufficiency"
+    ],
+    [
+     "16",
+     "Thyroid Diseases"
+    ],
+    [
+     "17",
+     "Pregnancy and Breast Feeding"
+    ],
+    [
+     "18",
+     "AIDS, HIV Infection, and Related Conditions"
+    ],
+    [
+     "19",
+     "Allergy"
+    ],
+    [
+     "20",
+     "Rheumatologic and Connective Tissue Disorders"
+    ],
+    [
+     "21",
+     "Organ and Bone Marrow Transplantation"
+    ],
+    [
+     "22",
+     "Disorders of Red Blood Cells"
+    ],
+    [
+     "23",
+     "Disorders of White Blood Cells"
+    ],
+    [
+     "24",
+     "Acquired Bleeding and Hypercoagulable Disorders"
+    ],
+    [
+     "25",
+     "Congenital Bleeding and Hypercoagulable Disorders"
+    ],
+    [
+     "26",
+     "Cancer and Oral Care of the Patient"
+    ],
+    [
+     "27",
+     "Neurologic Disorders"
+    ],
+    [
+     "28",
+     "Anxiety, Eating Disorders, and Behavioral Reactions to Illness"
+    ],
+    [
+     "29",
+     "Psychiatric Disorders"
+    ],
+    [
+     "30",
+     "Drug and Alcohol Abuse"
+    ]
+   ]
+  },
+  "malamed-local-anesthesia@6e": {
+   "source": "https://shop.elsevier.com/books/handbook-of-local-anesthesia/malamed/978-0-323-07413-1",
+   "chapters": [
+    [
+     "1",
+     "Neurophysiology"
+    ],
+    [
+     "2",
+     "Pharmacology of Local Anesthetics"
+    ],
+    [
+     "3",
+     "Pharmacology of Vasoconstrictors"
+    ],
+    [
+     "4",
+     "Clinical Action of Specific Agents"
+    ],
+    [
+     "5",
+     "The Syringe"
+    ],
+    [
+     "6",
+     "The Needle"
+    ],
+    [
+     "7",
+     "The Cartridge"
+    ],
+    [
+     "8",
+     "Additional Armamentarium"
+    ],
+    [
+     "9",
+     "Preparation of the Armamentarium"
+    ],
+    [
+     "10",
+     "Physical and Psychological Evaluation"
+    ],
+    [
+     "11",
+     "Basic Injection Technique"
+    ],
+    [
+     "12",
+     "Anatomical Considerations"
+    ],
+    [
+     "13",
+     "Techniques of Maxillary Anesthesia"
+    ],
+    [
+     "14",
+     "Techniques of Mandibular Anesthesia"
+    ],
+    [
+     "15",
+     "Supplemental Injection Techniques"
+    ],
+    [
+     "16",
+     "Local Anesthetic Considerations in Dental Specialties"
+    ],
+    [
+     "17",
+     "Local Complications"
+    ],
+    [
+     "18",
+     "Systemic Complications"
+    ],
+    [
+     "19",
+     "Legal Considerations"
+    ],
+    [
+     "20",
+     "Future Trends in Pain Control"
+    ],
+    [
+     "21",
+     "Questions"
+    ]
+   ]
+  },
+  "malamed-local-anesthesia@7e": {
+   "source": "https://shop.elsevier.com/books/handbook-of-local-anesthesia/malamed/978-0-323-58207-0",
+   "chapters": [
+    [
+     "1",
+     "Neurophysiology"
+    ],
+    [
+     "2",
+     "Pharmacology of Local Anesthetics"
+    ],
+    [
+     "3",
+     "Pharmacology of Vasoconstrictors"
+    ],
+    [
+     "4",
+     "Clinical Action of Specific Agents"
+    ],
+    [
+     "5",
+     "The Syringe"
+    ],
+    [
+     "6",
+     "The Needle"
+    ],
+    [
+     "7",
+     "The Cartridge"
+    ],
+    [
+     "8",
+     "Additional Armamentarium"
+    ],
+    [
+     "9",
+     "Preparation of the Armamentarium"
+    ],
+    [
+     "10",
+     "Physical and Psychological Evaluation"
+    ],
+    [
+     "11",
+     "Basic Injection Technique"
+    ],
+    [
+     "12",
+     "Anatomical Considerations"
+    ],
+    [
+     "13",
+     "Techniques of Maxillary Anesthesia"
+    ],
+    [
+     "14",
+     "Techniques of Mandibular Anesthesia"
+    ],
+    [
+     "15",
+     "Supplemental Injection Techniques"
+    ],
+    [
+     "16",
+     "Local Anesthetic Considerations in Dental Specialties"
+    ],
+    [
+     "17",
+     "Local Complications"
+    ],
+    [
+     "18",
+     "Systemic Complications"
+    ],
+    [
+     "19",
+     "Problems in Achieving Pain Control"
+    ],
+    [
+     "20",
+     "Recent Advances in Local Anesthesia"
+    ],
+    [
+     "21",
+     "Future Trends in Pain Control"
+    ],
+    [
+     "22",
+     "Frequently Asked Questions"
+    ],
+    [
+     "23",
+     "Legal Considerations"
+    ]
+   ]
+  },
+  "malamed-medical-emergencies@7e": {
+   "source": "https://shop.elsevier.com/books/medical-emergencies-in-the-dental-office/malamed/978-0-323-17122-9",
+   "chapters": [
+    [
+     "1",
+     "Introduction"
+    ],
+    [
+     "2",
+     "Prevention"
+    ],
+    [
+     "3",
+     "Preparation"
+    ],
+    [
+     "4",
+     "Legal Considerations"
+    ],
+    [
+     "5",
+     "Unconsciousness: General Considerations"
+    ],
+    [
+     "6",
+     "Vasodepressor Syncope"
+    ],
+    [
+     "7",
+     "Postural Hypotension"
+    ],
+    [
+     "8",
+     "Acute Adrenal Insufficiency"
+    ],
+    [
+     "9",
+     "Unconsciousness: Differential Diagnosis"
+    ],
+    [
+     "10",
+     "Respiratory Distress: General Considerations"
+    ],
+    [
+     "11",
+     "Foreign Body Airway Obstruction"
+    ],
+    [
+     "12",
+     "Hyperventilation"
+    ],
+    [
+     "13",
+     "Asthma"
+    ],
+    [
+     "14",
+     "Heart Failure and Acute Pulmonary Edema"
+    ],
+    [
+     "15",
+     "Respiratory Distress: Differential Diagnosis"
+    ],
+    [
+     "16",
+     "Altered Consciousness: General Considerations"
+    ],
+    [
+     "17",
+     "Diabetes Mellitus: Hyperglycemia and Hypoglycemia"
+    ],
+    [
+     "18",
+     "Thyroid Gland Dysfunction"
+    ],
+    [
+     "19",
+     "Cerebrovascular Accident"
+    ],
+    [
+     "20",
+     "Altered Consciousness: Differential Diagnosis"
+    ],
+    [
+     "21",
+     "Seizures"
+    ],
+    [
+     "22",
+     "Drug-Related Emergencies: General Considerations"
+    ],
+    [
+     "23",
+     "Drug Overdose Reactions"
+    ],
+    [
+     "24",
+     "Allergy"
+    ],
+    [
+     "25",
+     "Drug-Related Emergencies: Differential Diagnosis"
+    ],
+    [
+     "26",
+     "Chest Pain: General Considerations"
+    ],
+    [
+     "27",
+     "Angina Pectoris"
+    ],
+    [
+     "28",
+     "Acute Myocardial Infarction"
+    ],
+    [
+     "29",
+     "Chest Pain: Differential Diagnosis"
+    ],
+    [
+     "30",
+     "Cardiac Arrest"
+    ],
+    [
+     "31",
+     "Pediatric Considerations"
+    ]
+   ]
+  },
+  "mccracken-rpd@12e": {
+   "source": "https://shop.elsevier.com/books/mccrackens-removable-partial-prosthodontics/carr/978-0-323-06990-8",
+   "chapters": [
+    [
+     "1",
+     "Partially Edentulous Epidemiology, Physiology, and Terminology"
+    ],
+    [
+     "2",
+     "Consideration for Managing Partial Tooth Loss: Tooth Replacements from the Patient Perspective"
+    ],
+    [
+     "3",
+     "Classification of Partially Edentulous Arches"
+    ],
+    [
+     "4",
+     "Biomechanics of Removable Partial Dentures"
+    ],
+    [
+     "5",
+     "Major and Minor Connectors"
+    ],
+    [
+     "6",
+     "Rests and Rest Seats"
+    ],
+    [
+     "7",
+     "Direct Retainers"
+    ],
+    [
+     "8",
+     "Indirect Retainers"
+    ],
+    [
+     "9",
+     "Denture Base Considerations"
+    ],
+    [
+     "10",
+     "Principles of Removable Partial Denture Design"
+    ],
+    [
+     "11",
+     "Surveying"
+    ],
+    [
+     "12",
+     "Diagnosis and Treatment Planning"
+    ],
+    [
+     "13",
+     "Preparation of Mouth for Removable Partial Dentures"
+    ],
+    [
+     "14",
+     "Preparation of Abutment Teeth"
+    ],
+    [
+     "15",
+     "Impression Materials and Procedures for Removable Partial Dentures"
+    ],
+    [
+     "16",
+     "Support for the Distal Extension Denture Base"
+    ],
+    [
+     "17",
+     "Occlusal Relationships for Removable Partial Dentures"
+    ],
+    [
+     "18",
+     "Laboratory Procedures"
+    ],
+    [
+     "19",
+     "Work Authorizations for Removable Partial Dentures"
+    ],
+    [
+     "20",
+     "Initial Placement, Adjustment, and Servicing of the Removable Partial Denture"
+    ],
+    [
+     "21",
+     "Relining and Rebasing the Removable Partial Denture"
+    ],
+    [
+     "22",
+     "Repairs and Additions to Removable Partial Dentures"
+    ],
+    [
+     "23",
+     "Interim Removable Partial Dentures"
+    ],
+    [
+     "24",
+     "Removable Partial Denture Considerations in Maxillofacial Prosthetics"
+    ],
+    [
+     "25",
+     "Considerations for the Use of Dental Implants with Removable Partial Dentures"
+    ]
+   ]
+  },
+  "mccracken-rpd@13e": {
+   "source": "https://shop.elsevier.com/books/mccrackens-removable-partial-prosthodontics/carr/978-0-323-33990-2",
+   "chapters": [
+    [
+     "1",
+     "PARTIALLY EDENTULOUS EPIDEMIOLOGY, PHYSIOLOGY, AND TERMINOLOGY"
+    ],
+    [
+     "2",
+     "CONSIDERATION FOR MANAGING PARTIAL TOOTH LOSS"
+    ],
+    [
+     "3",
+     "CLASSIFICATION OF PARTIALLY EDENTULOUS ARCHES"
+    ],
+    [
+     "4",
+     "BIOMECHANICS OF REMOVABLE PARTIAL DENTURES"
+    ],
+    [
+     "5",
+     "MAJOR AND MINOR CONNECTORS"
+    ],
+    [
+     "6",
+     "RESTS AND REST SEATS"
+    ],
+    [
+     "7",
+     "DIRECT RETAINERS"
+    ],
+    [
+     "8",
+     "INDIRECT RETAINERS"
+    ],
+    [
+     "9",
+     "DENTURE BASE CONSIDERATIONS"
+    ],
+    [
+     "10",
+     "PRINCIPLES OF REMOVABLE PARTIAL DENTURE DESIGN"
+    ],
+    [
+     "11",
+     "SURVEYING"
+    ],
+    [
+     "12",
+     "DIAGNOSIS AND TREATMENT PLANNING"
+    ],
+    [
+     "13",
+     "PREPARATION OF MOUTH FOR REMOVABLE PARTIAL DENTURES"
+    ],
+    [
+     "14",
+     "PREPARATION OF ABUTMENT TEETH"
+    ],
+    [
+     "15",
+     "IMPRESSION MATERIALS AND PROCEDURES FOR REMOVABLE PARTIAL DENTURES"
+    ],
+    [
+     "16",
+     "SUPPORT FOR THE DISTAL EXTENSION DENTURE BASE"
+    ],
+    [
+     "17",
+     "OCCLUSAL RELATIONSHIPS FOR REMOVABLE PARTIAL DENTURES"
+    ],
+    [
+     "18",
+     "LABORATORY PROCEDURES"
+    ],
+    [
+     "19",
+     "WORK AUTHORIZATIONS FOR REMOVABLE PARTIAL DENTURES"
+    ],
+    [
+     "20",
+     "INITIAL PLACEMENT, ADJUSTMENT, AND SERVICING OF THE REMOVABLE PARTIAL DENTURE"
+    ],
+    [
+     "21",
+     "RELINING AND REBASING THE REMOVABLE PARTIAL DENTURE"
+    ],
+    [
+     "22",
+     "REPAIRS AND ADDITIONS TO REMOVABLE PARTIAL DENTURES"
+    ],
+    [
+     "23",
+     "INTERIM REMOVABLE PARTIAL DENTURES"
+    ],
+    [
+     "24",
+     "REMOVABLE PARTIAL DENTURE CONSIDERATIONS IN MAXILLOFACIAL PROSTHETICS"
+    ],
+    [
+     "25",
+     "CONSIDERATIONS FOR THE USE OF DENTAL IMPLANTS WITH REMOVABLE PARTIAL DENTURES"
+    ]
+   ]
+  },
+  "mcdonald-avery-pediatric@10e": {
+   "source": "https://shop.elsevier.com/books/mcdonald-and-averys-dentistry-for-the-child-and-adolescent/dean/978-0-323-28745-6",
+   "chapters": [
+    [
+     "1",
+     "Examination of the Mouth and Other Relevant Structures"
+    ],
+    [
+     "2",
+     "Radiographic Techniques"
+    ],
+    [
+     "3",
+     "Acquired and Developmental Disturbances of the Teeth and Associated Oral Structures"
+    ],
+    [
+     "4",
+     "Development and Morphology of the Primary Teeth"
+    ],
+    [
+     "5",
+     "Clinical Genetics for the Dental Practitioner"
+    ],
+    [
+     "6",
+     "Child Abuse and Neglect"
+    ],
+    [
+     "7",
+     "Mechanical and Chemotherapeutic Home Oral Hygiene"
+    ],
+    [
+     "8",
+     "Nutritional Considerations for the Pediatric Dental Patient"
+    ],
+    [
+     "9",
+     "Dental Caries in the Child and Adolescent"
+    ],
+    [
+     "10",
+     "Pit and Fissure Sealants and Preventative Resin Restorations"
+    ],
+    [
+     "11",
+     "Restorative Dentistry"
+    ],
+    [
+     "12",
+     "Dental Materials"
+    ],
+    [
+     "13",
+     "Treatment of Deep Caries, Vital Pulp Exposure, and Pulpless Teeth"
+    ],
+    [
+     "14",
+     "Gingivitis and Periodontal Disease"
+    ],
+    [
+     "15",
+     "Local Anesthesia for the Child and Adolescent"
+    ],
+    [
+     "16",
+     "Nonpharmacologic Management of Children's Behaviors"
+    ],
+    [
+     "17",
+     "Pharmacologic Management of Patient Behavior"
+    ],
+    [
+     "18",
+     "Hospital Dental Services for Children and the Use of General Anesthesia"
+    ],
+    [
+     "19",
+     "Eruption of the Teeth: Local, Systemic, and Congenital Factors That Influence the Process"
+    ],
+    [
+     "20",
+     "Growth of the Face and Dental Arches"
+    ],
+    [
+     "21",
+     "Cephalometrics and Facial Esthetics: The Key to Complete Treatment Planning"
+    ],
+    [
+     "22",
+     "Managing the Developing Occlusion"
+    ],
+    [
+     "23",
+     "Multidisciplinary Team Approach to Cleft Lip and Palate Management"
+    ],
+    [
+     "24",
+     "Prosthodontic Treatment of the Adolescent Patient"
+    ],
+    [
+     "25",
+     "Dental Problems of Children with Special Needs"
+    ],
+    [
+     "26",
+     "Management of the Medically Comprimised Patient: Hematology, Oncology, Hepatitis, and AIDS"
+    ],
+    [
+     "27",
+     "Management of Trauma to the Teeth and Supporting Tissues"
+    ],
+    [
+     "28",
+     "Tumors of the Oral Soft Tissues and Cysts and Tumors of the Bone"
+    ],
+    [
+     "29",
+     "Oral Surgery for the Pediatric Patient"
+    ],
+    [
+     "30",
+     "Community Oral Health"
+    ],
+    [
+     "31",
+     "Practice Management"
+    ]
+   ]
+  },
+  "mcdonald-avery-pediatric@11e": {
+   "source": "https://shop.elsevier.com/books/mcdonald-and-averys-dentistry-for-the-child-and-adolescent/dean/978-0-323-69820-7",
+   "chapters": [
+    [
+     "1",
+     "Examination of the Mouth and Other Relevant Structures"
+    ],
+    [
+     "2",
+     "Radiographic Techniques"
+    ],
+    [
+     "3",
+     "Acquired and Developmental Disturbances of the Teeth and Associated Oral Structures"
+    ],
+    [
+     "4",
+     "Development and Morphology of the Primary Teeth"
+    ],
+    [
+     "5",
+     "Oral Pathology of the Child and Adolescent"
+    ],
+    [
+     "6",
+     "Clinical Genetics for the Dental Practitioner"
+    ],
+    [
+     "7",
+     "Child Abuse and Neglect"
+    ],
+    [
+     "8",
+     "Mechanical and Chemotherapeutic Home Oral Hygiene"
+    ],
+    [
+     "9",
+     "Nutritional Considerations for the Pediatric Dental Patient"
+    ],
+    [
+     "10",
+     "Dental Caries in the Child and Adolescent"
+    ],
+    [
+     "11",
+     "Pit and Fissure Sealants and Preventative Resin Restorations"
+    ],
+    [
+     "12",
+     "Restorative Dentistry"
+    ],
+    [
+     "13",
+     "Dental Materials"
+    ],
+    [
+     "14",
+     "Treatment of Deep Caries, Vital Pulp Exposure, and Pulpless Teeth"
+    ],
+    [
+     "15",
+     "Gingivitis and Periodontal Disease"
+    ],
+    [
+     "16",
+     "Local Anesthesia for the Child and Adolescent"
+    ],
+    [
+     "17",
+     "Nonpharmacologic Management of Children's Behaviors"
+    ],
+    [
+     "18",
+     "Pharmacologic Management of Patient Behavior"
+    ],
+    [
+     "19",
+     "Hospital Dental Services for Children and the Use of General Anesthesia"
+    ],
+    [
+     "20",
+     "Eruption of the Teeth: Local, Systemic, and Congenital Factors That Influence the Process"
+    ],
+    [
+     "21",
+     "Growth of the Face and Dental Arches"
+    ],
+    [
+     "22",
+     "Cephalometrics and Facial Esthetics: The Key to Complete Treatment Planning"
+    ],
+    [
+     "23",
+     "Managing the Developing Occlusion"
+    ],
+    [
+     "24",
+     "Multidisciplinary Team Approach to Cleft Lip and Palate Management"
+    ],
+    [
+     "25",
+     "Prosthodontic Treatment of the Adolescent Patient"
+    ],
+    [
+     "26",
+     "Dental Problems of Children with Special Needs"
+    ],
+    [
+     "27",
+     "Management of the Medically Compromised Patient: Hematology, Oncology, Hepatitis, and AIDS"
+    ],
+    [
+     "28",
+     "Management of Trauma to the Teeth and Supporting Tissues"
+    ],
+    [
+     "29",
+     "Oral Surgery for the Pediatric Patient"
+    ],
+    [
+     "30",
+     "Pediatric Oral Health Advocacy"
+    ],
+    [
+     "31",
+     "Practice Management"
+    ]
+   ]
+  },
+  "neville-oral-pathology@4e": {
+   "source": "https://shop.elsevier.com/books/oral-and-maxillofacial-pathology/neville/978-1-4557-7052-6",
+   "chapters": [
+    [
+     "1",
+     "Developmental Defects of the Oral and Maxillofacial Region"
+    ],
+    [
+     "2",
+     "Abnormalities of Teeth"
+    ],
+    [
+     "3",
+     "Pulpal and Periapical Disease"
+    ],
+    [
+     "4",
+     "Periodontal Diseases"
+    ],
+    [
+     "5",
+     "Bacterial Infections"
+    ],
+    [
+     "6",
+     "Fungal and Protozoal Diseases"
+    ],
+    [
+     "7",
+     "Viral Infections"
+    ],
+    [
+     "8",
+     "Physical and Chemical Injuries"
+    ],
+    [
+     "9",
+     "Allergies and Immunologic Diseases"
+    ],
+    [
+     "10",
+     "Epithelial Pathology"
+    ],
+    [
+     "11",
+     "Salivary Gland Pathology"
+    ],
+    [
+     "12",
+     "Soft Tissue Tumors"
+    ],
+    [
+     "13",
+     "Hematologic Disorders"
+    ],
+    [
+     "14",
+     "Bone Pathology"
+    ],
+    [
+     "15",
+     "Odontogenic Cysts and Tumors"
+    ],
+    [
+     "16",
+     "Dermatologic Diseases"
+    ],
+    [
+     "17",
+     "Oral Manifestations of Systemic Diseases"
+    ],
+    [
+     "18",
+     "Facial Pain and Neuromuscular Diseases"
+    ],
+    [
+     "19",
+     "Forensic Dentistry"
+    ]
+   ]
+  },
+  "neville-oral-pathology@5e": {
+   "source": "https://shop.elsevier.com/books/oral-and-maxillofacial-pathology/neville/978-0-323-78981-3",
+   "chapters": [
+    [
+     "1",
+     "Developmental Defects of the Oral and Maxillofacial Region"
+    ],
+    [
+     "2",
+     "Abnormalities of Teeth"
+    ],
+    [
+     "3",
+     "Pulpal and Periapical Disease"
+    ],
+    [
+     "4",
+     "Periodontal Diseases"
+    ],
+    [
+     "5",
+     "Bacterial Infections"
+    ],
+    [
+     "6",
+     "Fungal and Protozoal Diseases"
+    ],
+    [
+     "7",
+     "Viral Infections"
+    ],
+    [
+     "8",
+     "Physical and Chemical Injuries"
+    ],
+    [
+     "9",
+     "Allergies and Immunologic Diseases"
+    ],
+    [
+     "10",
+     "Epithelial Pathology"
+    ],
+    [
+     "11",
+     "Salivary Gland Pathology"
+    ],
+    [
+     "12",
+     "Soft Tissue Tumors"
+    ],
+    [
+     "13",
+     "Hematologic Disorders"
+    ],
+    [
+     "14",
+     "Bone Pathology"
+    ],
+    [
+     "15",
+     "Odontogenic Cysts and Tumors"
+    ],
+    [
+     "16",
+     "Dermatologic Diseases"
+    ],
+    [
+     "17",
+     "Oral Manifestations of Systemic Diseases"
+    ],
+    [
+     "18",
+     "Facial Pain and Neuromuscular Diseases"
+    ],
+    [
+     "19",
+     "Forensic Dentistry"
+    ]
+   ]
+  },
+  "nowak-pediatric@6e": {
+   "source": "https://shop.elsevier.com/books/pediatric-dentistry/nowak/978-0-323-60826-8",
+   "chapters": [
+    [
+     "1",
+     "The Importance of Pediatric Dentistry"
+    ],
+    [
+     "2",
+     "Differential Diagnosis of Oral Lesions and Developmental Anomalies"
+    ],
+    [
+     "3",
+     "Anomalies of the Developing Dentition"
+    ],
+    [
+     "4",
+     "Oral and Dental Care of Local and Systemic Diseases"
+    ],
+    [
+     "5",
+     "Cleft Lip and Palate NEW!"
+    ],
+    [
+     "6",
+     "Fundamental Principles of Pediatric Physiology and Anatomy"
+    ],
+    [
+     "7",
+     "Assessment and Management of Pain in the Pediatric Patient"
+    ],
+    [
+     "8",
+     "Pain Reaction Control: Sedation"
+    ],
+    [
+     "9",
+     "Antimicrobials in Pediatric Dentistry"
+    ],
+    [
+     "10",
+     "Medical Emergencies"
+    ],
+    [
+     "11",
+     "Dental Public Health Issues in Pediatric Dentistry"
+    ],
+    [
+     "12",
+     "Dental Caries"
+    ],
+    [
+     "13",
+     "The Dynamics of Change"
+    ],
+    [
+     "14",
+     "Examination, Diagnosis, and Treatment Planning of the Infant and Toddler"
+    ],
+    [
+     "15",
+     "Prevention of Dental Disease"
+    ],
+    [
+     "16",
+     "Introduction to Dental Trauma: Managing Traumatic Injuries in the Primary Dentition"
+    ],
+    [
+     "17",
+     "Congenital Genetic Disorders and Syndromes"
+    ],
+    [
+     "18",
+     "The Dynamics of Change"
+    ],
+    [
+     "19",
+     "Examination, Diagnosis, and Treatment Planning"
+    ],
+    [
+     "20",
+     "Prevention of Dental Disease"
+    ],
+    [
+     "21",
+     "Dental Materials"
+    ],
+    [
+     "22",
+     "Restorative Dentistry for the Primary Dentition"
+    ],
+    [
+     "23",
+     "Pulp Therapy for the Primary Dentition"
+    ],
+    [
+     "24",
+     "Behavior Guidance of the Pediatric Dental Patient"
+    ],
+    [
+     "25",
+     "Periodontal Problems in Children and Adolescents"
+    ],
+    [
+     "26",
+     "Space Maintenance in the Primary Dentition"
+    ],
+    [
+     "27",
+     "Oral Habits"
+    ],
+    [
+     "28",
+     "Orthodontic Treatment in the Primary Dentition"
+    ],
+    [
+     "29",
+     "Oral Surgery in Children"
+    ],
+    [
+     "30",
+     "The Dynamics of Change"
+    ],
+    [
+     "31",
+     "Examination, Diagnosis, and Treatment Planning"
+    ],
+    [
+     "32",
+     "Prevention of Dental Disease"
+    ],
+    [
+     "33",
+     "Pit and Fissure Sealants: Scientific and Clinical Rationale"
+    ],
+    [
+     "34",
+     "Pulp Therapy for the Young Permanent Dentition"
+    ],
+    [
+     "35",
+     "Managing Traumatic Injuries in the Young Permanent Dentition"
+    ],
+    [
+     "36",
+     "Treatment Planning and Management of Orthodontic Problems"
+    ],
+    [
+     "37",
+     "The Dynamics of Change"
+    ],
+    [
+     "38",
+     "Examination, Diagnosis, and Treatment Planning for General and Orthodontic Problems"
+    ],
+    [
+     "39",
+     "Prevention of Dental Disease"
+    ],
+    [
+     "40",
+     "Restorative Dentistry for the Adolescent"
+    ],
+    [
+     "41",
+     "Sports Dentistry and Mouth Protection"
+    ]
+   ]
+  },
+  "phillips-materials@13e": {
+   "source": "https://shop.elsevier.com/books/phillips-science-of-dental-materials/shen/978-0-323-69755-2",
+   "chapters": [
+    [
+     "1",
+     "Overview of Preventive and Restorative Materials"
+    ],
+    [
+     "2",
+     "Structure of Matter, General Classes of Materials and Principles of Adhesion"
+    ],
+    [
+     "3",
+     "Chemical and Physical Properties of Solids"
+    ],
+    [
+     "4",
+     "Mechanical Properties of Solids"
+    ],
+    [
+     "5",
+     "Resin-Based Composites"
+    ],
+    [
+     "6",
+     "Bonding Mechanism and Bonding Agents"
+    ],
+    [
+     "7",
+     "Cements"
+    ],
+    [
+     "8",
+     "Dental Amalgams"
+    ],
+    [
+     "9",
+     "Metals"
+    ],
+    [
+     "10",
+     "Ceramic-Based Materials"
+    ],
+    [
+     "11",
+     "Prosthetic Polymers and Resins"
+    ],
+    [
+     "12",
+     "Dental Implants"
+    ],
+    [
+     "13",
+     "Auxiliary Materials"
+    ],
+    [
+     "14",
+     "Casting Investments and Casting Procedures"
+    ],
+    [
+     "15",
+     "Digital Technology in Dentistry NEW!"
+    ],
+    [
+     "16",
+     "Finishing and Polishing Prostheses"
+    ],
+    [
+     "17",
+     "Biocompatibility"
+    ],
+    [
+     "18",
+     "In Vitro Research of Dental Materials NEW!"
+    ],
+    [
+     "19",
+     "Clinical Research of Restorations NEW!"
+    ],
+    [
+     "20",
+     "Emerging Technologies"
+    ]
+   ]
+  },
+  "proffit-orthodontics@5e": {
+   "source": "https://shop.elsevier.com/books/contemporary-orthodontics/proffit/978-0-323-08317-1",
+   "chapters": [
+    [
+     "1",
+     "Malocclusion and Dentofacial Deformity in Contemporary Society"
+    ],
+    [
+     "2",
+     "Concepts of Growth and Development"
+    ],
+    [
+     "3",
+     "Early Stages of Development"
+    ],
+    [
+     "4",
+     "Later Stages of Development"
+    ],
+    [
+     "5",
+     "The Etiology of Orthodontic Problems"
+    ],
+    [
+     "6",
+     "Orthodontic Diagnosis: The Problem-Oriented Approach"
+    ],
+    [
+     "7",
+     "Orthodontic Treatment Planning: From Problem List to Specific Plan"
+    ],
+    [
+     "8",
+     "The Biologic Basis of Orthodontic Therapy"
+    ],
+    [
+     "9",
+     "Mechanical Principles in Orthodontic Force Control"
+    ],
+    [
+     "10",
+     "Contemporary Orthodontic Appliances"
+    ],
+    [
+     "11",
+     "Moderate Nonskeletal Problems in Preadolescent Children: Preventive and Interceptive Treatment in Family Practice"
+    ],
+    [
+     "12",
+     "Complex Nonskeletal Problems in Preadolescent Children: Preventive and Interceptive Treatment"
+    ],
+    [
+     "13",
+     "Treatment of Skeletal Problems in Children and Preadolescents"
+    ],
+    [
+     "14",
+     "Comprehensive Orthodontic Treatment in the Early Permanent Dentition"
+    ],
+    [
+     "15",
+     "The Second Stage of Comprehensive Treatment: Correction of Molar Relationship and Space Closure"
+    ],
+    [
+     "16",
+     "The Third Stage of Comprehensive Treatment: Finishing"
+    ],
+    [
+     "17",
+     "Retention"
+    ],
+    [
+     "18",
+     "Treatment for Adults"
+    ],
+    [
+     "19",
+     "Combined Surgical and Orthodontic Treatment"
+    ]
+   ]
+  },
+  "proffit-orthodontics@6e": {
+   "source": "https://shop.elsevier.com/books/contemporary-orthodontics/proffit/978-0-323-54387-3",
+   "chapters": [
+    [
+     "1",
+     "Malocclusion and Dentofacial Deformity in Contemporary Society"
+    ],
+    [
+     "2",
+     "Concepts of Growth and Development"
+    ],
+    [
+     "3",
+     "Early Stages of Development"
+    ],
+    [
+     "4",
+     "Later Stages of Development"
+    ],
+    [
+     "5",
+     "The Etiology of Orthodontic Problems"
+    ],
+    [
+     "6",
+     "Orthodontic Diagnosis: The Problem-Oriented Approach"
+    ],
+    [
+     "7",
+     "Orthodontic Treatment Planning: From Problem List to Specific Plan"
+    ],
+    [
+     "8",
+     "The Biologic Basis of Orthodontic Therapy"
+    ],
+    [
+     "9",
+     "Mechanical Principles in Orthodontic Force Control"
+    ],
+    [
+     "10",
+     "Contemporary Orthodontic Appliances"
+    ],
+    [
+     "11",
+     "Moderate Non-Skeletal Problems: Preventive and Interceptive Treatment"
+    ],
+    [
+     "12",
+     "Complex Non-Skeletal Problems"
+    ],
+    [
+     "13",
+     "Growth Modification in Transverse and Class III Problems"
+    ],
+    [
+     "14",
+     "Growth Modification in Class II, Open Bite/ Deep Bite, and Multi-Dimensional Problems"
+    ],
+    [
+     "15",
+     "The First Stage of Comprehensive Treatment: Alignment and Leveling"
+    ],
+    [
+     "16",
+     "The Second Stage of Comprehensive Treatment: Correction of Molar Relationship and Space Closure"
+    ],
+    [
+     "17",
+     "The Third Stage of Comprehensive Treatment: Finishing"
+    ],
+    [
+     "18",
+     "Retention"
+    ],
+    [
+     "19",
+     "Special Considerations in Orthodontics for Adults"
+    ],
+    [
+     "20",
+     "Surgical-Orthodontic Treatment"
+    ]
+   ]
+  },
+  "rosenstiel-fixed@6e": {
+   "source": "https://shop.elsevier.com/books/contemporary-fixed-prosthodontics/rosenstiel/978-0-323-72089-2",
+   "chapters": [
+    [
+     "1",
+     "History Taking and Clinical Examination"
+    ],
+    [
+     "2",
+     "Diagnostic Procedures"
+    ],
+    [
+     "3",
+     "Treatment Planning"
+    ],
+    [
+     "4",
+     "Principles of Occlusion"
+    ],
+    [
+     "5",
+     "Periodontal Considerations"
+    ],
+    [
+     "6",
+     "Mouth Preparation"
+    ],
+    [
+     "7",
+     "Principles of Tooth Preparation"
+    ],
+    [
+     "8",
+     "Tooth Preparation for Ceramic Restorations"
+    ],
+    [
+     "9",
+     "The Complete Crown Preparation"
+    ],
+    [
+     "10",
+     "The Ceramic-Veneered Crown Preparation"
+    ],
+    [
+     "11",
+     "The Cast Partial Veneer Crown, Inlay, and Onlay Preparations"
+    ],
+    [
+     "12",
+     "Restoration of the Endodontically Treated Tooth"
+    ],
+    [
+     "13",
+     "Implant-Supported Fixed Prostheses"
+    ],
+    [
+     "14",
+     "Tissue Management, Scanning, and Impression Making"
+    ],
+    [
+     "15",
+     "Interim Fixed Restorations"
+    ],
+    [
+     "16",
+     "Communicating With the Dental Laboratory"
+    ],
+    [
+     "17",
+     "Definitive Casts and Dies"
+    ],
+    [
+     "18",
+     "Restoration Design"
+    ],
+    [
+     "19",
+     "Framework Design and Metal Selection for Metal-Ceramic Restorations"
+    ],
+    [
+     "20",
+     "Pontic Design"
+    ],
+    [
+     "21",
+     "Retainers for Removable Partial Dentures"
+    ],
+    [
+     "22",
+     "Metal Restoration Fabrication"
+    ],
+    [
+     "23",
+     "Color, the Color-Replication Process, and Esthetics"
+    ],
+    [
+     "24",
+     "Metal-Ceramic Restorations"
+    ],
+    [
+     "25",
+     "Ceramic Restorations"
+    ],
+    [
+     "26",
+     "Resin-Bonded Fixed Partial Dentures"
+    ],
+    [
+     "27",
+     "Connectors for Fixed Partial Dentures"
+    ],
+    [
+     "28",
+     "Finishing the Metal Restoration"
+    ],
+    [
+     "29",
+     "Evaluation, Characterization, and Glazing"
+    ],
+    [
+     "30",
+     "Luting Agents and Cementation Procedures"
+    ],
+    [
+     "31",
+     "Postoperative Care"
+    ]
+   ]
+  },
+  "shillingburg-fixed@4e": {
+   "source": "https://content.e-bookshelf.de/media/reading/L-14270835-575403b7a8.pdf (publisher reading sample, contents page)",
+   "chapters": [
+    [
+     "1",
+     "An Introduction to Fixed Prosthodontics"
+    ],
+    [
+     "2",
+     "Fundamentals of Occlusion"
+    ],
+    [
+     "3",
+     "Articulators"
+    ],
+    [
+     "4",
+     "Interocclusal Records"
+    ],
+    [
+     "5",
+     "Articulation of Casts"
+    ],
+    [
+     "6",
+     "Treatment Planning for Single-Tooth Restorations"
+    ],
+    [
+     "7",
+     "Treatment Planning for the Replacement of Missing Teeth"
+    ],
+    [
+     "8",
+     "Fixed Partial Denture and Implant Conﬁgurations"
+    ],
+    [
+     "9",
+     "Principles of Tooth Preparations"
+    ],
+    [
+     "10",
+     "Preparations for Full Coverage Crowns"
+    ],
+    [
+     "11",
+     "Preparations for Partial Coverage Crowns"
+    ],
+    [
+     "12",
+     "Preparations for Intracoronal Restorations"
+    ],
+    [
+     "13",
+     "Preparations for Severely Debilitated Teeth"
+    ],
+    [
+     "14",
+     "Preparations for Periodontally Weakened Teeth"
+    ],
+    [
+     "15",
+     "Provisional Restorations"
+    ],
+    [
+     "16",
+     "Fluid Control and Soft Tissue Management"
+    ],
+    [
+     "17",
+     "Impressions"
+    ],
+    [
+     "18",
+     "Working Casts and Dies"
+    ],
+    [
+     "19",
+     "Wax Patterns"
+    ],
+    [
+     "20",
+     "Investing and Casting"
+    ],
+    [
+     "21",
+     "Cementation and Bonding"
+    ],
+    [
+     "22",
+     "Esthetic Considerations"
+    ],
+    [
+     "23",
+     "All-Ceramic Restorations"
+    ],
+    [
+     "24",
+     "Metal-Ceramic Restorations"
+    ],
+    [
+     "25",
+     "Pontics and Edentulous Ridges"
+    ],
+    [
+     "26",
+     "Solder Joints and Other Connectors"
+    ],
+    [
+     "27",
+     "Restoration of Osseointegrated Dental Implants"
+    ],
+    [
+     "28",
+     "Single-Tooth Implant Restoration"
+    ],
+    [
+     "29",
+     "Multiple-Tooth Implant Restoration"
+    ]
+   ]
+  },
+  "sturdevant-operative@7e": {
+   "source": "https://shop.elsevier.com/books/sturdevants-art-and-science-of-operative-dentistry/ritter/978-0-323-47833-5",
+   "chapters": [
+    [
+     "1",
+     "Clinical Significance of Dental Anatomy, Histology, Physiology, and Occlusion"
+    ],
+    [
+     "2",
+     "Dental Caries: Etiology, Clinical Characteristics, Risk Assessment, and Management"
+    ],
+    [
+     "3",
+     "Patient Assessment, Examination and Diagnosis, and Treatment Planning"
+    ],
+    [
+     "4",
+     "Fundamental Concepts of Tooth Preparation and Pulp Protection"
+    ],
+    [
+     "5",
+     "Fundamental Concepts of Enamel and Dentin Adhesion"
+    ],
+    [
+     "6",
+     "Light Curing in Operative Dentistry"
+    ],
+    [
+     "7",
+     "Color and Shade Matching in Operative Dentistry"
+    ],
+    [
+     "8",
+     "Clinical Technique for Direct Composite Resin and Glass Ionomer Restorations"
+    ],
+    [
+     "9",
+     "Additional Conservative Esthetic Procedures"
+    ],
+    [
+     "10",
+     "Clinical Technique for Amalgam Restorations"
+    ],
+    [
+     "11",
+     "Periodontology Applied to Operative Dentistry"
+    ],
+    [
+     "12",
+     "Digital Dentistry in Operative Dentistry"
+    ],
+    [
+     "13",
+     "Biomaterials"
+    ],
+    [
+     "14",
+     "Instruments and Equipment for Tooth Preparation"
+    ],
+    [
+     "15",
+     "Preliminary Considerations for Operative Dentistry"
+    ],
+    [
+     "16",
+     "Bonded Splints and Bridges"
+    ],
+    [
+     "17",
+     "Direct Gold Restorations"
+    ],
+    [
+     "18",
+     "Class II Cast Metal Restorations"
+    ]
+   ]
+  },
+  "summit-operative@4e": {
+   "source": "https://www.quintessence-publishing.com/usa/en/product-info/814644/fundamentals-of-operative-dentistry (publisher info sheet PDF, Contents)",
+   "chapters": [
+    [
+     "1",
+     "Biologic Considerations"
+    ],
+    [
+     "2",
+     "Patient Evaluation and Problem-Oriented Treatment Planning"
+    ],
+    [
+     "3",
+     "Esthetic Considerations in Diagnosis and Treatment Planning"
+    ],
+    [
+     "4",
+     "Color and Shade Matching"
+    ],
+    [
+     "5",
+     "Caries Management: Diagnosis and Treatment Strategies"
+    ],
+    [
+     "6",
+     "Pulpal Considerations"
+    ],
+    [
+     "7",
+     "Nomenclature and Instrumentation"
+    ],
+    [
+     "8",
+     "Field Isolation"
+    ],
+    [
+     "9",
+     "Adhesion to Enamel and Dentin"
+    ],
+    [
+     "10",
+     "Direct Anterior Restorations"
+    ],
+    [
+     "11",
+     "Direct Posterior Esthetic Restorations"
+    ],
+    [
+     "12",
+     "Amalgam Restorations"
+    ],
+    [
+     "13",
+     "Diagnosis and Treatment of Root Caries"
+    ],
+    [
+     "14",
+     "Fluoride-Releasing Materials"
+    ],
+    [
+     "15",
+     "Class 5 Restorations"
+    ],
+    [
+     "16",
+     "Natural Tooth Bleaching"
+    ],
+    [
+     "17",
+     "Porcelain Veneers"
+    ],
+    [
+     "18",
+     "Anterior Ceramic Crowns"
+    ],
+    [
+     "19",
+     "Esthetic Inlays and Onlays"
+    ],
+    [
+     "20",
+     "Cast Gold Restorations"
+    ],
+    [
+     "21",
+     "Restoration of Endodontically Treated Teeth"
+    ]
+   ]
+  },
+  "torabinejad-endodontics@6e": {
+   "source": "https://shop.elsevier.com/books/endodontics/torabinejad/978-0-323-62436-7",
+   "chapters": [
+    [
+     "1",
+     "Pathogenesis of Pulp and Periapical Diseases"
+    ],
+    [
+     "2",
+     "Systemic Health Considerations in the Endodontic Patient and Geriatric Endodontics"
+    ],
+    [
+     "3",
+     "Endodontic Radiology"
+    ],
+    [
+     "4",
+     "Endodontic Diagnosis and Treatment Planning"
+    ],
+    [
+     "5",
+     "Differential Diagnosis of Pain and Radiolucencies of Non-Pulpal Origin"
+    ],
+    [
+     "6",
+     "Endodontic Case Complexity and Working with the Specialist"
+    ],
+    [
+     "7",
+     "Endodontic Armamentarium"
+    ],
+    [
+     "8",
+     "Local Anesthesia"
+    ],
+    [
+     "9",
+     "Endodontic Emergencies and Therapeutics"
+    ],
+    [
+     "10",
+     "Management of the Vital Pulp and of Immature Teeth"
+    ],
+    [
+     "11",
+     "Management of Traumatic Dental Injuries"
+    ],
+    [
+     "12",
+     "Root Canal Anatomy"
+    ],
+    [
+     "13",
+     "Isolation, Access Preparation, Working Length Determination"
+    ],
+    [
+     "14",
+     "Cleaning and Shaping, Intra-canal Medications"
+    ],
+    [
+     "15",
+     "Obturation and Temporization"
+    ],
+    [
+     "16",
+     "Restoration of Endodontically-Treated Teeth"
+    ],
+    [
+     "17",
+     "Bleaching Discolored Nonvital Teeth"
+    ],
+    [
+     "18",
+     "Procedural Accidents"
+    ],
+    [
+     "19",
+     "Non-Surgical Retreatment"
+    ],
+    [
+     "20",
+     "Apical Microsurgery"
+    ],
+    [
+     "21",
+     "Adjunctive Surgical Procedures"
+    ],
+    [
+     "22",
+     "Endodontic Treatment Outcomes"
+    ]
+   ]
+  },
+  "van-noort-materials@4e": {
+   "source": "https://shop.elsevier.com/books/introduction-to-dental-materials/van-noort/978-0-7234-3659-1",
+   "chapters": [
+    [
+     "1.1",
+     "Biomaterials, safety and biocompatibility"
+    ],
+    [
+     "1.2",
+     "Atomic building blocks"
+    ],
+    [
+     "1.3",
+     "Structure of ceramics"
+    ],
+    [
+     "1.4",
+     "Structure of metals and alloys"
+    ],
+    [
+     "1.5",
+     "Structure of polymers"
+    ],
+    [
+     "1.6",
+     "Mechanical properties"
+    ],
+    [
+     "1.7",
+     "Physical properties"
+    ],
+    [
+     "1.8",
+     "Chemical properties"
+    ],
+    [
+     "1.9",
+     "Principles of adhesion"
+    ],
+    [
+     "2.1",
+     "Dental amalgams"
+    ],
+    [
+     "2.2",
+     "Resin composites and polyacid-modified resin composites"
+    ],
+    [
+     "2.3",
+     "Glass–ionomer cements and resin-modified glass–ionomer cements"
+    ],
+    [
+     "2.4",
+     "Intermediate restorative materials"
+    ],
+    [
+     "2.5",
+     "Enamel and dentine bonding"
+    ],
+    [
+     "2.6",
+     "Endodontic materials"
+    ],
+    [
+     "2.7",
+     "Impression materials"
+    ],
+    [
+     "3.1",
+     "Models, dies and refractories"
+    ],
+    [
+     "3.2",
+     "Denture base resins"
+    ],
+    [
+     "3.3",
+     "Casting alloys for metallic restorations"
+    ],
+    [
+     "3.4",
+     "Dental ceramics"
+    ],
+    [
+     "3.5",
+     "Metal-bonded ceramics"
+    ],
+    [
+     "3.6",
+     "All-ceramic restorations: high-strength core ceramics"
+    ],
+    [
+     "3.7",
+     "All-ceramic restorations: resin-bonded ceramics"
+    ],
+    [
+     "3.8",
+     "Luting agents"
+    ],
+    [
+     "3.9",
+     "Stainless steel"
+    ]
+   ]
+  },
+  "van-noort-materials@5e": {
+   "source": "https://shop.elsevier.com/books/introduction-to-dental-materials/van-noort/978-0-7020-8108-8",
+   "chapters": [
+    [
+     "1.1",
+     "Biomaterials, Safety and Biocompatibility"
+    ],
+    [
+     "1.2",
+     "Atomic Building Blocks"
+    ],
+    [
+     "1.3",
+     "Structure of Ceramics"
+    ],
+    [
+     "1.4",
+     "Structure of Metals and Alloys"
+    ],
+    [
+     "1.5",
+     "Structure of Polymers"
+    ],
+    [
+     "1.6",
+     "Mechanical Properties"
+    ],
+    [
+     "1.7",
+     "Physical Properties"
+    ],
+    [
+     "1.8",
+     "Chemical Properties"
+    ],
+    [
+     "1.9",
+     "Principles of Adhesion"
+    ],
+    [
+     "2.1",
+     "Dental Amalgam"
+    ],
+    [
+     "2.2",
+     "Resin-Based Composites"
+    ],
+    [
+     "2.3",
+     "Glass Ionomer Cements"
+    ],
+    [
+     "2.4",
+     "Cavity Lining and Base Materials"
+    ],
+    [
+     "2.5",
+     "Enamel and Dentine Bonding"
+    ],
+    [
+     "2.6",
+     "Endodontic Materials"
+    ],
+    [
+     "2.7",
+     "Impression Materials"
+    ],
+    [
+     "3.1",
+     "Models, Dies, and Refractories: Traditional and CAD/CAM Techniques and Materials"
+    ],
+    [
+     "3.2",
+     "Denture Base Resins"
+    ],
+    [
+     "3.3",
+     "Alloys for Metallic Restorations"
+    ],
+    [
+     "3.4",
+     "Traditional Dental Ceramics"
+    ],
+    [
+     "3.5",
+     "Contemporary Dental Ceramics"
+    ],
+    [
+     "3.6",
+     "Cementation of Indirect Restorations"
+    ],
+    [
+     "3.7",
+     "Stainless Steel and Other Alloys"
+    ]
+   ]
+  },
+  "white-pharoah-radiology@7e": {
+   "source": "https://shop.elsevier.com/books/oral-radiology/white/978-0-323-09633-1",
+   "chapters": [
+    [
+     "1",
+     "Physics"
+    ],
+    [
+     "2",
+     "Biology"
+    ],
+    [
+     "3",
+     "Safety and Protection"
+    ],
+    [
+     "4",
+     "Digital Imaging"
+    ],
+    [
+     "5",
+     "Film Imaging"
+    ],
+    [
+     "6",
+     "Projection Geometry"
+    ],
+    [
+     "7",
+     "Intraoral Projections"
+    ],
+    [
+     "8",
+     "Intraoral Anatomy"
+    ],
+    [
+     "9",
+     "Extraoral Projections"
+    ],
+    [
+     "10",
+     "Panoramic Imaging"
+    ],
+    [
+     "11",
+     "CBCT Volume Acquisition"
+    ],
+    [
+     "12",
+     "CBCT Volume Preparation"
+    ],
+    [
+     "13",
+     "CBCT Anatomy NEW!"
+    ],
+    [
+     "14",
+     "Other Imaging Modalities"
+    ],
+    [
+     "15",
+     "Quality Assurance and Infection Control"
+    ],
+    [
+     "16",
+     "Prescribing Diagnostic Imaging"
+    ],
+    [
+     "17",
+     "Principles"
+    ],
+    [
+     "18",
+     "Caries"
+    ],
+    [
+     "19",
+     "Periodontal Diseases"
+    ],
+    [
+     "20",
+     "Inflammatory Disease"
+    ],
+    [
+     "21",
+     "Cysts"
+    ],
+    [
+     "22",
+     "Benign Tumors"
+    ],
+    [
+     "23",
+     "Other Bone Diseases"
+    ],
+    [
+     "24",
+     "Malignant Diseases"
+    ],
+    [
+     "25",
+     "Systemic Diseases"
+    ],
+    [
+     "26",
+     "Paranasal Sinus Diseases"
+    ],
+    [
+     "27",
+     "Temporomandibular Joint Abnormalities"
+    ],
+    [
+     "28",
+     "Soft Tissue Calcifications and Ossifications"
+    ],
+    [
+     "29",
+     "Salivary Gland Diseases"
+    ],
+    [
+     "30",
+     "Trauma"
+    ],
+    [
+     "31",
+     "Dental Anomalies"
+    ],
+    [
+     "32",
+     "Craniofacial Anomalies"
+    ],
+    [
+     "33",
+     "Implants"
+    ],
+    [
+     "34",
+     "Forensics NEW!"
+    ]
+   ]
+  },
+  "white-pharoah-radiology@8e": {
+   "source": "https://shop.elsevier.com/books/white-and-pharoahs-oral-radiology/mallya/978-0-323-54383-5",
+   "chapters": [
+    [
+     "1",
+     "Physics"
+    ],
+    [
+     "2",
+     "Biological Effects of Ionizing Radiation"
+    ],
+    [
+     "3",
+     "Safety and Protection"
+    ],
+    [
+     "4",
+     "Digital Imaging"
+    ],
+    [
+     "5",
+     "Film Imaging"
+    ],
+    [
+     "6",
+     "Projection Geometry"
+    ],
+    [
+     "7",
+     "Intraoral Projections"
+    ],
+    [
+     "8",
+     "Cephalometric and Skull Imaging"
+    ],
+    [
+     "9",
+     "Panoramic Imaging"
+    ],
+    [
+     "10",
+     "Cone Beam Computed Tomography: Volume Acquisition"
+    ],
+    [
+     "11",
+     "Cone Beam Computed Tomography: Volume Preparation"
+    ],
+    [
+     "12",
+     "Radiologic Anatomy"
+    ],
+    [
+     "13",
+     "Other Imaging Modalities"
+    ],
+    [
+     "14",
+     "Beyond Three-Dimensional Imaging"
+    ],
+    [
+     "15",
+     "Dental Implants"
+    ],
+    [
+     "16",
+     "Quality Assurance and Infection Control"
+    ],
+    [
+     "17",
+     "Prescribing Diagnostic Imaging"
+    ],
+    [
+     "18",
+     "Principles of Radiographic Interpretation"
+    ],
+    [
+     "19",
+     "Dental Caries"
+    ],
+    [
+     "20",
+     "Periodontal Diseases"
+    ],
+    [
+     "21",
+     "Dental Anomalies"
+    ],
+    [
+     "22",
+     "Inflammatory Disease"
+    ],
+    [
+     "23",
+     "Cysts"
+    ],
+    [
+     "24",
+     "Benign Tumors and Neoplasms"
+    ],
+    [
+     "25",
+     "Diseases Affecting the Structure of Bone"
+    ],
+    [
+     "26",
+     "Malignant Neoplasms"
+    ],
+    [
+     "27",
+     "Trauma"
+    ],
+    [
+     "28",
+     "Paranasal Sinus Diseases"
+    ],
+    [
+     "29",
+     "Craniofacial Anomalies"
+    ],
+    [
+     "30",
+     "Temporomandibular Joint Abnormalities"
+    ],
+    [
+     "31",
+     "Soft Tissue Calcifications and Ossifications"
+    ],
+    [
+     "32",
+     "Salivary Gland Diseases"
+    ],
+    [
+     "33",
+     "Forensics"
+    ]
+   ]
+  },
+  "zarb-edentulous@13e": {
+   "source": "https://shop.elsevier.com/books/prosthodontic-treatment-for-edentulous-patients/zarb/978-0-323-07844-3",
+   "chapters": [
+    [
+     "1",
+     "The Edentulous State"
+    ],
+    [
+     "2",
+     "Systemic Health Aspects and Nutritional Considerations for Edentulous Patients"
+    ],
+    [
+     "3",
+     "The Aging Edentulous Patient"
+    ],
+    [
+     "4",
+     "Sequelae Caused by Wearing Complete Dentures"
+    ],
+    [
+     "5",
+     "History Taking, Treatment Planning and Improving Denture-Bearing Areas for Edentulous Patients"
+    ],
+    [
+     "6",
+     "Additional Treatment Planning Options for both Edentulous and Potentially Edentulous Patients"
+    ],
+    [
+     "7",
+     "Materials Used in the Management of Edentulous Patients"
+    ],
+    [
+     "8",
+     "Maxillary and Mandibular Analougue/Substitutes for the Denture-Bearing Area"
+    ],
+    [
+     "9",
+     "The Dentures' Polished Surfaces, Recording Jaw Relations, and Their Transfer to an Articulator"
+    ],
+    [
+     "10",
+     "The Occlusal Surfaces: The Selection and Arrangement of Prosthetic Teeth"
+    ],
+    [
+     "11",
+     "The Try-in Appointment"
+    ],
+    [
+     "12",
+     "Prosthesis Insertion and Follow-up Appointments"
+    ],
+    [
+     "13",
+     "Modified Protocols for Immediate Dentures, Overdentures, and Single Dentures"
+    ],
+    [
+     "14",
+     "Prolonging the Useful Life of Complete Dentures: Relines, Repairs and Duplications"
+    ],
+    [
+     "15",
+     "Speech Considerations with Complete Dentures"
+    ],
+    [
+     "16",
+     "The Science of Osseointegration"
+    ],
+    [
+     "17",
+     "Implant Overdentures"
+    ],
+    [
+     "18",
+     "Fixed Full Arch Implant-Supported Prostheses for the Edentulous Patient"
+    ],
+    [
+     "19",
+     "Maxillofacial Prosthodontics for the Edentulous Patient"
+    ],
+    [
+     "20",
+     "Managing Problems and Complications"
+    ],
+    [
+     "21",
+     "Immediately Loaded Complete Dental Prostheses"
+    ],
+    [
+     "22",
+     "Current and Possible Future Directions in Implant Prosthdontics"
+    ],
+    [
+     "23",
+     "The Impact of Socioeconomic, Cultural and Technological Changes and the Notion of Standards of Care and Alternative Protocols"
+    ]
+   ]
+  }
+ }
+}

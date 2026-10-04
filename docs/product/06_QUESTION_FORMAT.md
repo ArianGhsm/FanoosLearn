@@ -40,7 +40,14 @@ table of references and editions in the script, and writes:
 
 - 13 subjects, the three exam types (دستیاری active; بورد and ارتقا present
   but inactive);
-- 31 references with 48 editions;
+- 31 references with 48 editions; 34 of the editions carry their chapter
+  list (1,062 chapters) from `data/bank/reference-tocs.json`, the
+  publishers' tables of contents with the page each was read from. Chapter
+  n is node `ch0n` (`ch12`, and `ch01.3` for van Noort's numbering), the key
+  question sources cite. Still without a list: Burket 11e/12e, Torabinejad
+  5e, Sturdevant 6e, Powers & Wataha 11e, Goldstein 3e, McCabe & Walls 9e,
+  Daly 3e, Peterson (Persian), the national community-dentistry book and
+  the English titles;
 - one validity row per exam year, subject and edition, carrying the
   announced chapter scope (`scope`, e.g. «تمام فصول به جز ۴، ۸، ۱۸») and where
   the announcement came from (`evidence`);
@@ -53,8 +60,8 @@ table of references and editions in the script, and writes:
 - `review_notes`: judgements not yet checked, for the owner to confirm
   (currently none). Neither list is imported.
 
-Chapter trees and concepts are not in the workbook; they are added as
-questions are classified.
+Concepts are not in the workbook; they are added as questions are
+classified.
 
 ## 2. One question in the sitting file
 
