@@ -169,6 +169,19 @@ SQL);
         }
         $this->assert($torabinejad !== null && count($torabinejad['chapters']) === 22 && $torabinejad['chapters'][0]['number'] === '1' && $torabinejad['chapters'][21]['number'] === '22',
             'The 1405 endodontics reference does not list its 22 chapters in order: ' . json_encode($torabinejad['chapters'] ?? null, JSON_UNESCAPED_UNICODE));
+        $this->assert($torabinejad['chapters'][0]['in_scope'] === true && is_string($torabinejad['chapters'][0]['title_fa']) && $torabinejad['chapters'][0]['title_fa_reviewed'] === false,
+            'A chapter of a whole-book reference is not in scope with its unreviewed Persian title: ' . json_encode($torabinejad['chapters'][0], JSON_UNESCAPED_UNICODE));
+        $proffit = null;
+        foreach ($years[0]['subjects'] as $row) {
+            foreach ($row['references'] as $ref) {
+                if ($row['key'] === 'orthodontics' && $ref['title'] === 'Contemporary Orthodontics') {
+                    $proffit = $ref;
+                }
+            }
+        }
+        $byNumber = array_column($proffit['chapters'] ?? [], null, 'number');
+        $this->assert(($byNumber['1']['in_scope'] ?? null) === true && ($byNumber['20']['in_scope'] ?? null) === false && is_string($byNumber['2']['partial'] ?? null),
+            'The 1405 orthodontics scope is not marked chapter by chapter: ' . json_encode($proffit['chapters'] ?? null, JSON_UNESCAPED_UNICODE));
         $set = $browse->study($f['student'], $ws, ['subject' => 'endodontics', 'topic' => 'endodontics/cleaning-and-shaping']);
         $this->assert($set['question_count'] === 2, 'The study set does not hold the topic: ' . json_encode($set, JSON_UNESCAPED_UNICODE));
         $studyAttempt = $exams->startAttempt($f['student'], $ws, $set['assessment_id']);

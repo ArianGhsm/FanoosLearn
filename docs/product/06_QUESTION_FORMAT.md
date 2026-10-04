@@ -50,7 +50,15 @@ table of references and editions in the script, and writes:
   the English titles;
 - one validity row per exam year, subject and edition, carrying the
   announced chapter scope (`scope`, e.g. «تمام فصول به جز ۴، ۸، ۱۸») and where
-  the announcement came from (`evidence`);
+  the announcement came from (`evidence`), and that scope read into the
+  edition's chapter numbers (`scope_chapters`: `[{number, partial?}]`,
+  `partial` holding the announcement's words when only some pages count).
+  `scripts/import/scope_chapters.py` does the reading (tests in
+  `tests/import/`); a notice that only adds or drops chapters, or names no
+  chapter list, gets no `scope_chapters` and a line in `decisions`;
+- each chapter's Persian title (`title_fa`, with `title_fa_origin` `ai` until
+  a dentist reviews it) from `data/bank/reference-tocs.fa.json`, keyed by the
+  English title;
 - `decisions`: every judgement the script made that has been checked
   against the publishers' edition dates (an edition inferred from a year, a
   label that disagrees with its year, a row that is a scope statement rather
@@ -142,7 +150,7 @@ Migration `0030_dental_bank.sql`:
 | still correct under an edition? | `bank_question_currency` |
 | related questions | `bank_question_similarity` |
 | the exam it was set in | `bank_exam_sittings` → `bank_exam_types` |
-| the catalog | `bank_subjects`, `bank_concepts`, `bank_references`, `bank_reference_editions`, `bank_reference_nodes`, `bank_node_concepts`, `bank_reference_validity` (with the year's announced `scope` and its `evidence`, migration 0031), `bank_edition_mappings` |
+| the catalog | `bank_subjects`, `bank_concepts`, `bank_references`, `bank_reference_editions`, `bank_reference_nodes`, `bank_node_concepts`, `bank_reference_validity` (with the year's announced `scope` and its `evidence`, migration 0031, and `scope_chapters`, migration 0037), `bank_reference_nodes.title_fa` (migration 0037), `bank_edition_mappings` |
 
 Re-importing a file updates in place. A changed stem or choice raises the
 question's `version`; a changed explanation becomes a new explanation

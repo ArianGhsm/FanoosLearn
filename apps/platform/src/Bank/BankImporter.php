@@ -176,6 +176,10 @@ final class BankImporter
                         $this->requireKey($node, 'key', self::NODE_KEY, $where);
                         $this->requireEnum($node, 'kind', self::NODE_KINDS, $where);
                         $this->requireText($node, 'title', 300, $where);
+                        if (isset($node['title_fa'])) {
+                            $this->requireText($node, 'title_fa', 300, $where);
+                            $this->requireEnum($node, 'title_fa_origin', ['ai', 'human'], $where);
+                        }
                         $pages = $node['pages'] ?? null;
                         if ($pages !== null && (!is_array($pages) || count($pages) !== 2 || !is_int($pages[0]) || !is_int($pages[1]) || $pages[0] > $pages[1])) {
                             $this->fail("{$where}.pages", 'must be [first, last] page numbers');
@@ -206,6 +210,12 @@ final class BankImporter
             }
             if (!isset($editions[(string) ($row['edition'] ?? '')]) && $this->resolveEdition($workspaceId, (string) ($row['edition'] ?? '')) === null) {
                 $this->fail("{$here}.edition", 'unknown edition "' . ($row['edition'] ?? '') . '" (reference@edition)');
+            }
+            foreach ($this->arrayOf($row, 'scope_chapters', $here) as $c => $chapter) {
+                $this->requireText($chapter, 'number', 20, "{$here}.scope_chapters[{$c}]");
+                if (isset($chapter['partial'])) {
+                    $this->requireText($chapter, 'partial', 400, "{$here}.scope_chapters[{$c}]");
+                }
             }
         }
 
@@ -420,11 +430,16 @@ final class BankImporter
                 ++$counts['editions'];
                 $writeNodes = function (array $list, ?string $parentId) use (&$writeNodes, $workspaceId, $editionId, &$counts): void {
                     foreach ($list as $order => $node) {
-                        $id = $this->upsert('bank_reference_nodes', $workspaceId, ['edition_id' => $editionId, 'node_key' => $node['key']], [
+                        $values = [
                             'parent_id' => $parentId, 'kind' => $node['kind'], 'number' => isset($node['number']) ? (string) $node['number'] : null,
                             'title' => $node['title'], 'page_start' => $node['pages'][0] ?? null, 'page_end' => $node['pages'][1] ?? null,
                             'sort_order' => $order,
-                        ]);
+                        ];
+                        // A file without Persian titles (a question import's chapters) keeps the ones already stored.
+                        if (isset($node['title_fa'])) {
+                            $values += ['title_fa' => $node['title_fa'], 'title_fa_origin' => $node['title_fa_origin']];
+                        }
+                        $id = $this->upsert('bank_reference_nodes', $workspaceId, ['edition_id' => $editionId, 'node_key' => $node['key']], $values);
                         ++$counts['nodes'];
                         $this->database->prepare('DELETE FROM bank_node_concepts WHERE node_id = :node')->execute(['node' => $id]);
                         foreach ($node['concepts'] ?? [] as $conceptKey) {
@@ -447,6 +462,7 @@ final class BankImporter
             ], [
                 'is_official' => ($row['official'] ?? true) ? 1 : 0,
                 'scope' => isset($row['scope']) ? mb_substr((string) $row['scope'], 0, 1000) : null,
+                'scope_chapters' => isset($row['scope_chapters']) ? json_encode($row['scope_chapters'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) : null,
                 'evidence' => isset($row['evidence']) ? mb_substr((string) $row['evidence'], 0, 400) : null,
                 'source_document' => isset($row['source_document']) ? mb_substr((string) $row['source_document'], 0, 400) : null,
                 'recorded_at' => $this->now(),

@@ -245,23 +245,43 @@ function referenceItem(ref) {
     li.append(meta);
     if (ref.scope) li.append(el('span', 'b-ref__scope', ref.scope));
     if (ref.official === false) li.append(el('span', 'b-old', 'اعلام غیررسمی'));
-    if (Array.isArray(ref.chapters) && ref.chapters.length > 0) {
-        const details = el('details', 'b-chapters');
-        details.append(el('summary', '', `فهرست فصل‌ها · ${faDigits(ref.chapters.length)} فصل`));
-        const ol = el('ol', 'b-chapters__list');
-        for (const chapter of ref.chapters) {
-            const item = el('li', 'b-chapter');
-            item.append(el('span', 'b-chapter__number', chapter.number ? faDigits(chapter.number) : '–'));
-            const title = el('span', 'b-chapter__title', chapter.title);
-            title.lang = 'en';
-            title.dir = 'ltr';
-            item.append(title);
-            ol.append(item);
-        }
-        details.append(ol);
-        li.append(details);
-    }
+    if (Array.isArray(ref.chapters) && ref.chapters.length > 0) li.append(chapterList(ref.chapters));
     return li;
+}
+
+/*
+ * The edition's chapters, Persian title over the publisher's English one.
+ * When the year's announcement names its chapters, the ones outside it are
+ * dimmed and the ones it limits to some pages say so.
+ */
+function chapterList(chapters) {
+    const scoped = chapters.some((chapter) => chapter.in_scope === true);
+    const inScope = chapters.filter((chapter) => chapter.in_scope === true).length;
+    const details = el('details', 'b-chapters');
+    const summary = [`فهرست فصل‌ها · ${faDigits(chapters.length)} فصل`];
+    if (scoped) summary.push(`${faDigits(inScope)} فصل در منبع این سال`);
+    details.append(el('summary', '', summary.join(' · ')));
+    const ol = el('ol', 'b-chapters__list');
+    for (const chapter of chapters) {
+        const item = el('li', 'b-chapter');
+        if (scoped && chapter.in_scope === false) item.classList.add('is-out');
+        item.append(el('span', 'b-chapter__number', chapter.number ? faDigits(chapter.number) : '–'));
+        const text = el('div', 'b-chapter__text');
+        if (chapter.title_fa) text.append(el('span', 'b-chapter__fa', chapter.title_fa));
+        const english = el('span', 'b-chapter__en', chapter.title);
+        english.lang = 'en';
+        english.dir = 'ltr';
+        text.append(english);
+        if (scoped && chapter.in_scope === false) text.append(el('span', 'b-chapter__tag', 'خارج از منبع'));
+        if (chapter.partial) text.append(el('span', 'b-chapter__tag b-chapter__tag--partial', `بخشی از فصل: ${faDigits(chapter.partial)}`));
+        item.append(text);
+        ol.append(item);
+    }
+    details.append(ol);
+    if (chapters.some((chapter) => chapter.title_fa && !chapter.title_fa_reviewed)) {
+        details.append(el('p', 'b-chapters__note', 'عنوان‌های فارسی ترجمه‌ی ماشینی‌اند و هنوز بازبینی نشده‌اند؛ عنوان انگلیسی همان فهرست ناشر است.'));
+    }
+    return details;
 }
 
 /* ---------------------------------------------------------- references */

@@ -1,6 +1,6 @@
 {
  "format": "fanoos.bank.reference-tocs/1",
- "notes": "Chapter lists of the residency reference editions, copied from the publisher (Elsevier shop pages, the Quintessence product sheet, the e-bookshelf sample, Google Books); \"source\" is where each list was read. scripts/import/reference_map_to_catalog.py turns them into chapter nodes in data/bank/catalog.json. Gaps in numbering are gaps in the publisher list.",
+ "notes": "Chapter lists of the residency reference editions, copied from the publisher (Elsevier shop pages, the Quintessence product sheet, the e-bookshelf sample, Google Books); \"source\" is where each list was read. scripts/import/reference_map_to_catalog.py turns them into chapter nodes in data/bank/catalog.json. Gaps in numbering are gaps in the publisher list. Publisher marketing tags (\"NEW!\") and all-capitals headings are normalised.",
  "editions": {
   "burket-oral-medicine@13e": {
    "source": "https://books.google.com/books?id=oPQyEAAAQBAJ (contents with start pages; chapter 26 Geriatric p.991 and 28 Laboratory p.1037 fix the numbering)",
@@ -757,7 +757,7 @@
     ],
     [
      "68",
-     "LASERS IN PERIODONTAL AND PERIIMPLANT THERAPY"
+     "Lasers in Periodontal and Periimplant Therapy"
     ],
     [
      "69",
@@ -813,15 +813,15 @@
     ],
     [
      "82",
-     "DENTAL IMPLANT MICROSURGERY: IMMEDIATE PLACEMENT"
+     "Dental Implant Microsurgery: Immediate Placement"
     ],
     [
      "83",
-     "PIEZOELECTRIC BONE SURGERY"
+     "Piezoelectric Bone Surgery"
     ],
     [
      "84",
-     "DIGITAL ASSISTED IMPLANT SURGERY"
+     "Digital Assisted Implant Surgery"
     ],
     [
      "85",
@@ -2394,103 +2394,103 @@
    "chapters": [
     [
      "1",
-     "PARTIALLY EDENTULOUS EPIDEMIOLOGY, PHYSIOLOGY, AND TERMINOLOGY"
+     "Partially Edentulous Epidemiology, Physiology, and Terminology"
     ],
     [
      "2",
-     "CONSIDERATION FOR MANAGING PARTIAL TOOTH LOSS"
+     "Consideration for Managing Partial Tooth Loss"
     ],
     [
      "3",
-     "CLASSIFICATION OF PARTIALLY EDENTULOUS ARCHES"
+     "Classification of Partially Edentulous Arches"
     ],
     [
      "4",
-     "BIOMECHANICS OF REMOVABLE PARTIAL DENTURES"
+     "Biomechanics of Removable Partial Dentures"
     ],
     [
      "5",
-     "MAJOR AND MINOR CONNECTORS"
+     "Major and Minor Connectors"
     ],
     [
      "6",
-     "RESTS AND REST SEATS"
+     "Rests and Rest Seats"
     ],
     [
      "7",
-     "DIRECT RETAINERS"
+     "Direct Retainers"
     ],
     [
      "8",
-     "INDIRECT RETAINERS"
+     "Indirect Retainers"
     ],
     [
      "9",
-     "DENTURE BASE CONSIDERATIONS"
+     "Denture Base Considerations"
     ],
     [
      "10",
-     "PRINCIPLES OF REMOVABLE PARTIAL DENTURE DESIGN"
+     "Principles of Removable Partial Denture Design"
     ],
     [
      "11",
-     "SURVEYING"
+     "Surveying"
     ],
     [
      "12",
-     "DIAGNOSIS AND TREATMENT PLANNING"
+     "Diagnosis and Treatment Planning"
     ],
     [
      "13",
-     "PREPARATION OF MOUTH FOR REMOVABLE PARTIAL DENTURES"
+     "Preparation of Mouth for Removable Partial Dentures"
     ],
     [
      "14",
-     "PREPARATION OF ABUTMENT TEETH"
+     "Preparation of Abutment Teeth"
     ],
     [
      "15",
-     "IMPRESSION MATERIALS AND PROCEDURES FOR REMOVABLE PARTIAL DENTURES"
+     "Impression Materials and Procedures for Removable Partial Dentures"
     ],
     [
      "16",
-     "SUPPORT FOR THE DISTAL EXTENSION DENTURE BASE"
+     "Support for the Distal Extension Denture Base"
     ],
     [
      "17",
-     "OCCLUSAL RELATIONSHIPS FOR REMOVABLE PARTIAL DENTURES"
+     "Occlusal Relationships for Removable Partial Dentures"
     ],
     [
      "18",
-     "LABORATORY PROCEDURES"
+     "Laboratory Procedures"
     ],
     [
      "19",
-     "WORK AUTHORIZATIONS FOR REMOVABLE PARTIAL DENTURES"
+     "Work Authorizations for Removable Partial Dentures"
     ],
     [
      "20",
-     "INITIAL PLACEMENT, ADJUSTMENT, AND SERVICING OF THE REMOVABLE PARTIAL DENTURE"
+     "Initial Placement, Adjustment, and Servicing of the Removable Partial Denture"
     ],
     [
      "21",
-     "RELINING AND REBASING THE REMOVABLE PARTIAL DENTURE"
+     "Relining and Rebasing the Removable Partial Denture"
     ],
     [
      "22",
-     "REPAIRS AND ADDITIONS TO REMOVABLE PARTIAL DENTURES"
+     "Repairs and Additions to Removable Partial Dentures"
     ],
     [
      "23",
-     "INTERIM REMOVABLE PARTIAL DENTURES"
+     "Interim Removable Partial Dentures"
     ],
     [
      "24",
-     "REMOVABLE PARTIAL DENTURE CONSIDERATIONS IN MAXILLOFACIAL PROSTHETICS"
+     "Removable Partial Denture Considerations in Maxillofacial Prosthetics"
     ],
     [
      "25",
-     "CONSIDERATIONS FOR THE USE OF DENTAL IMPLANTS WITH REMOVABLE PARTIAL DENTURES"
+     "Considerations for the Use of Dental Implants with Removable Partial Dentures"
     ]
    ]
   },
@@ -2935,7 +2935,7 @@
     ],
     [
      "5",
-     "Cleft Lip and Palate NEW!"
+     "Cleft Lip and Palate"
     ],
     [
      "6",
@@ -3144,7 +3144,7 @@
     ],
     [
      "15",
-     "Digital Technology in Dentistry NEW!"
+     "Digital Technology in Dentistry"
     ],
     [
      "16",
@@ -3156,11 +3156,11 @@
     ],
     [
      "18",
-     "In Vitro Research of Dental Materials NEW!"
+     "In Vitro Research of Dental Materials"
     ],
     [
      "19",
-     "Clinical Research of Restorations NEW!"
+     "Clinical Research of Restorations"
     ],
     [
      "20",
@@ -4098,7 +4098,7 @@
     ],
     [
      "13",
-     "CBCT Anatomy NEW!"
+     "CBCT Anatomy"
     ],
     [
      "14",
@@ -4182,7 +4182,7 @@
     ],
     [
      "34",
-     "Forensics NEW!"
+     "Forensics"
     ]
    ]
   },
@@ -4412,7 +4412,7 @@
     ],
     [
      "22",
-     "Current and Possible Future Directions in Implant Prosthdontics"
+     "Current and Possible Future Directions in Implant Prosthodontics"
     ],
     [
      "23",

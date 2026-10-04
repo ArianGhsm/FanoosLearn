@@ -203,7 +203,7 @@ final class BankBrowseService
         $this->access->requireWorkspace($userId, $workspaceId, 'exam.take');
         $query = $this->database->prepare(<<<'SQL'
 SELECT type.name AS type_name, type.type_key, validity.exam_year, subject.subject_key, subject.name AS subject_name, subject.sort_order,
-       reference.title, reference.authors, edition.id AS edition_id, edition.edition_label, edition.published_year, validity.scope, validity.is_official
+       reference.title, reference.authors, edition.id AS edition_id, edition.edition_label, edition.published_year, validity.scope, validity.scope_chapters, validity.is_official
 FROM bank_reference_validity validity
 JOIN bank_exam_types type ON type.id = validity.exam_type_id
 JOIN bank_subjects subject ON subject.id = validity.subject_id
@@ -229,7 +229,7 @@ SQL);
                 'published_year' => $row['published_year'] === null ? null : (int) $row['published_year'],
                 'scope' => $row['scope'],
                 'official' => (bool) $row['is_official'],
-                'chapters' => $chapters[(string) $row['edition_id']] ?? [],
+                'chapters' => self::markScope($chapters[(string) $row['edition_id']] ?? [], $row['scope_chapters']),
             ];
             unset($subjects);
         }
@@ -244,19 +244,24 @@ SQL);
      * Each edition's chapters (its top-level nodes), in chapter-number order:
      * question imports add nodes too, so sort_order is not the book's order.
      *
-     * @return array<string, list<array{number:?string,title:string}>>
+     * @return array<string, list<array{number:?string,title:string,title_fa:?string,title_fa_reviewed:bool}>>
      */
     private function editionChapters(string $workspaceId): array
     {
         $query = $this->database->prepare(<<<'SQL'
-SELECT edition_id, number, title
+SELECT edition_id, number, title, title_fa, title_fa_origin
 FROM bank_reference_nodes
 WHERE workspace_id = :workspace AND parent_id IS NULL AND kind = 'chapter'
 SQL);
         $query->execute(['workspace' => $workspaceId]);
         $byEdition = [];
         foreach ($query->fetchAll() as $row) {
-            $byEdition[(string) $row['edition_id']][] = ['number' => $row['number'] === null ? null : (string) $row['number'], 'title' => (string) $row['title']];
+            $byEdition[(string) $row['edition_id']][] = [
+                'number' => $row['number'] === null ? null : (string) $row['number'],
+                'title' => (string) $row['title'],
+                'title_fa' => $row['title_fa'] === null ? null : (string) $row['title_fa'],
+                'title_fa_reviewed' => $row['title_fa_origin'] === 'human',
+            ];
         }
         foreach ($byEdition as &$list) {
             usort($list, static fn (array $a, array $b): int => strnatcmp((string) $a['number'], (string) $b['number']));
@@ -264,6 +269,30 @@ SQL);
         unset($list);
 
         return $byEdition;
+    }
+
+    /**
+     * Marks each chapter in or out of the year's announced scope
+     * (in_scope null when the announcement names no chapter list), with the
+     * announcement's own words when it covers only part of the chapter.
+     *
+     * @param list<array<string, mixed>> $chapters
+     * @return list<array<string, mixed>>
+     */
+    private static function markScope(array $chapters, mixed $scopeJson): array
+    {
+        $scope = is_string($scopeJson) ? json_decode($scopeJson, true) : null;
+        $named = [];
+        foreach (is_array($scope) ? $scope : [] as $entry) {
+            if (is_array($entry) && isset($entry['number'])) {
+                $named[(string) $entry['number']] = isset($entry['partial']) ? (string) $entry['partial'] : null;
+            }
+        }
+
+        return array_map(static fn (array $chapter): array => $chapter + [
+            'in_scope' => is_array($scope) ? array_key_exists((string) $chapter['number'], $named) : null,
+            'partial' => $named[(string) $chapter['number']] ?? null,
+        ], $chapters);
     }
 
     /**
