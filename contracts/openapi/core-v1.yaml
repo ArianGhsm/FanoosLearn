@@ -443,6 +443,44 @@ paths:
       parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
       requestBody: { required: true, content: { application/json: { schema: { type: object, required: [minutes], properties: { minutes: { type: integer, minimum: 1, maximum: 180 }, label: { type: string, maxLength: 120 } } } } } }
       responses: { '201': { $ref: '#/components/responses/Success' }, '422': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/exam-calendar:
+    get:
+      operationId: readExamCalendar
+      description: 'تقویم آزمون‌ها: scheduled exams the caller can see, with opens_at, closes_at, state (upcoming, open, closed), question_count, time_limit_minutes, participants (people with a scored exam-mode attempt) and the caller''s first exam-mode score. Starting a scheduled exam before it opens is refused (409 exam_not_open); after it closes, exam mode is refused (409 exam_window_closed) but practice and learning are not. Needs exam.take.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/exam-calendar/{assessmentId}:
+    post:
+      operationId: scheduleExam
+      description: 'Gives a published exam a window (opens_at, closes_at as ISO instants, at most a year apart, with an optional note) or, with remove=true, takes it off the calendar. Needs exam.manage.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }, { name: assessmentId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, properties: { opens_at: { type: string, format: date-time }, closes_at: { type: string, format: date-time }, note: { type: string, maxLength: 300 }, remove: { type: boolean } } } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/study-plan:
+    get:
+      operationId: readStudyPlan
+      description: 'برنامه‌ی مطالعه: the caller''s active plan (null when none) -- exam_date, days (day_no, date, items, done), total, done, missed (past days not ticked) and today_day_no. Items are topic (subject_key, topic_key, questions), subject, reading (no questions in the bank yet), review, mock or rest.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+    post:
+      operationId: createStudyPlan
+      description: 'Makes a new plan from today to exam_date (a week to two years away), studying days_per_week days (3-7; rest days come off Friday first): the bank''s topics, subjects interleaved and packed to even daily questions, then 15 % (3-14 days) of mock papers and review. Replaces the active plan.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [exam_date], properties: { exam_date: { type: string, format: date }, days_per_week: { type: integer, minimum: 3, maximum: 7 } } } } } }
+      responses: { '201': { $ref: '#/components/responses/Success' }, '422': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/study-plan/days/{dayNo}:
+    post:
+      operationId: tickStudyPlanDay
+      description: 'Marks one day of the active plan done (done=true) or not.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }, { name: dayNo, in: path, required: true, schema: { type: integer, minimum: 1 } }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [done], properties: { done: { type: boolean } } } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/study-plan/archive:
+    post:
+      operationId: archiveStudyPlan
+      description: 'Sets the active plan aside (it is kept, no longer shown).'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
+      responses: { '200': { $ref: '#/components/responses/Success' } }
   /workspaces/{workspaceId}/progress:
     get:
       operationId: readProgress

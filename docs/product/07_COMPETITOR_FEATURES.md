@@ -63,10 +63,10 @@ of the counted rows at ✅.
 | 31 | Performance report by subject and day (گزارشات) | M | ✅ progress dashboard |
 | 32 | Study time per day (محاسبه ساعت مطالعه) | M | ✅ minutes per day and in total, from exams and the timer |
 | 33 | Daily streak / score (امتیاز روزانه) | M | ✅ streak |
-| 34 | Day-by-day study plan with "done" ticks (برنامه روزانه) | M P | ❌ |
+| 34 | Day-by-day study plan with "done" ticks (برنامه روزانه) | M P | ✅ /app/plan: day-by-day to the exam date from the bank's topics, consolidation days at the end, a tick per day |
 | 35 | Study timer (تایمر مطالعه) | M | ✅ /app/timer: 25/5, 50/10, 90/15 focus blocks, recorded as study time |
 | 36 | Timed full-exam simulation | M P | ✅ timed exams |
-| 37 | Calendar of scheduled exams with deadlines and participant counts | M | ❌ |
+| 37 | Calendar of scheduled exams with deadlines and participant counts | M | ✅ /app/calendar: open / upcoming / closed with window and participants; managers schedule; the window is enforced |
 | 38 | Report card with rank / percentile among participants (کارنامه) | M P | ✅ after each exam: rank, better-than %, average, top, score histogram (first exam-mode attempt; withheld under 5 people) |
 
 ## Around the bank
@@ -90,4 +90,4 @@ plans. They can come back as their own decisions.
 
 ## Score
 
-Counted rows: 44. ✅ today: 42 (95 %). Target: 36 (≥ 80 %).
+Counted rows: 44. ✅ today: 44 (100 %). Target: 36 (≥ 80 %).

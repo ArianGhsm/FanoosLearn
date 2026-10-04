@@ -65,6 +65,9 @@ final class AccountMergePlanner
         'exam_question_highlights' => [['user_id', self::MOVE_DEDUPE, 'workspace_id,question_key']],
         'exam_question_reports' => [['user_id', self::MOVE, null], ['resolved_by_user_id', self::HISTORY, null]],
         'study_sessions' => [['user_id', self::MOVE, null]],
+        // Both accounts' plans move; the newest active one is the one shown.
+        'study_plans' => [['user_id', self::MOVE, null]],
+        'exam_schedules' => [['created_by_user_id', self::HISTORY, null]],
         'entitlement_grants' => [['subject_user_id', self::MOVE, null]],
         'commerce_orders' => [['buyer_user_id', self::MOVE, null]],
         'content_delivery_issuances' => [['user_id', self::MOVE, null]],

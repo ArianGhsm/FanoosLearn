@@ -30,6 +30,8 @@ final class ExamsPage
         <div class="x-catalog__actions">
             <a class="f-btn f-btn--primary" href="/app/exams/custom">آزمون دلخواه بساز</a>
             <a class="f-btn f-btn--ghost" href="/app/exams/mistakes">مرور اشتباه‌ها</a>
+            <a class="f-btn f-btn--ghost" href="/app/calendar">تقویم آزمون‌ها</a>
+            <a class="f-btn f-btn--ghost" href="/app/plan">برنامه‌ی مطالعه</a>
         </div>
     </div>
 </header>

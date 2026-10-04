@@ -204,6 +204,18 @@ final class WebRouter
             });
         }
 
+        if ($path === '/app/calendar' || $path === '/app/plan') {
+            if ($viewer === null) {
+                return $this->redirect('/login');
+            }
+            if ($viewer->workspaceId === null) {
+                return $this->redirect('/app');
+            }
+            return $this->page(200, $path === '/app/calendar'
+                ? (new ExamCalendarPage($this->renderer))->render($viewer)
+                : (new StudyPlanPage($this->renderer))->render($viewer));
+        }
+
         if ($path === '/app/exams/mistakes') {
             if ($viewer === null) {
                 return $this->redirect('/login');

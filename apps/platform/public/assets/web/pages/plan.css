@@ -1,0 +1,101 @@
+/* برنامه‌ی مطالعه and تقویم آزمون‌ها. Builds on bank.css. */
+
+.p-make,
+.c-schedule {
+    display: grid;
+    gap: var(--space-3);
+}
+
+.c-schedule {
+    margin-top: var(--space-3);
+}
+
+.c-schedule__field {
+    display: grid;
+    gap: var(--space-1);
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.p-summary {
+    margin: 0 0 var(--space-3);
+}
+
+.p-bar {
+    height: 8px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-muted);
+    overflow: hidden;
+}
+
+.p-bar::before {
+    content: "";
+    display: block;
+    width: var(--p, 0%);
+    height: 100%;
+    background: var(--accent);
+    transition: width var(--motion-base) var(--ease);
+}
+
+.p-day {
+    margin-bottom: var(--space-3);
+}
+
+.p-day--today {
+    border-color: var(--accent);
+    margin-bottom: var(--space-5);
+}
+
+.p-day.is-done {
+    opacity: 0.7;
+}
+
+.p-day__head {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-3);
+}
+
+.p-day__head h3 {
+    margin: 0;
+    font-size: var(--text-base);
+}
+
+.p-day__tick {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-inline-start: auto;
+    font-size: var(--text-sm);
+    cursor: pointer;
+}
+
+.p-day__items {
+    display: grid;
+    gap: var(--space-2);
+    margin: var(--space-3) 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.p-item {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-3);
+}
+
+.p-item__text {
+    flex: 1 1 220px;
+}
+
+.p-week {
+    margin-bottom: var(--space-2);
+}
+
+.p-week > summary {
+    padding: var(--space-3) 0;
+    cursor: pointer;
+    font-weight: var(--weight-medium);
+}
