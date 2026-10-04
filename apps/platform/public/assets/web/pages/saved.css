@@ -91,3 +91,15 @@
     margin: var(--space-2) 0 0;
     color: var(--text-secondary);
 }
+
+.s-item__marks {
+    margin: 0;
+    line-height: 2;
+}
+
+.s-item__marks .x-highlight {
+    padding: 0 2px;
+    border-radius: 3px;
+    background: var(--accent-soft);
+    color: inherit;
+}

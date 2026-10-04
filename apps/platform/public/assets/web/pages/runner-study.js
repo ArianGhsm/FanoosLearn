@@ -17,7 +17,8 @@
  *    in the next, which is most of the point of writing one.
  *
  * 2. A highlight is stored as a pair of offsets, never as the highlighted
- *    text. Notes are the student's own words and are theirs to keep; the
+ *    text (here, and on the account -- QuestionToolsService::saveHighlights,
+ *    whose highlights page reads the fragments back from the exam). Notes are the student's own words and are theirs to keep; the
  *    question is the product. Storing "the part the student found
  *    important" as text would reconstruct the stem in localStorage a
  *    fragment at a time, which is exactly what the per-question pacing

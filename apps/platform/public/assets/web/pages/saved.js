@@ -3,7 +3,7 @@
  * (data-page="reports"). Every API string goes in through textContent.
  */
 import { api, describeError } from '../foundation/api.js';
-import { groupByTopic } from './saved-rules.js';
+import { groupByTopic, highlightCards } from './saved-rules.js';
 
 const workspaceId = document.querySelector('meta[name="fanoos-workspace"]')?.content ?? '';
 const base = `/workspaces/${encodeURIComponent(workspaceId)}`;
@@ -38,7 +38,14 @@ function emptyCard(title, text) {
 
 function item(entry, withNote) {
     const row = el('div', 's-item');
-    row.append(el('p', 's-item__preview', entry.preview));
+    if (Array.isArray(entry.fragments) && entry.fragments.length > 0) {
+        const marks = el('p', 's-item__marks');
+        for (const fragment of entry.fragments) marks.append(el('mark', 'x-highlight', fragment), document.createTextNode(' … '));
+        row.append(marks);
+        row.append(el('p', 'f-tiny s-item__preview', entry.preview));
+    } else {
+        row.append(el('p', 's-item__preview', entry.preview));
+    }
     if (withNote && entry.note) row.append(el('p', 's-item__note', entry.note));
     const meta = el('div', 'b-row__meta');
     meta.append(el('span', '', entry.assessment_title), el('span', '', dateFormat.format(new Date(entry.at))));
@@ -58,6 +65,41 @@ async function studyTopic(button, topic) {
     }
 }
 
+/* هایلایت‌ها as flashcards: the highlighted phrase in front, the question it is from behind. */
+function flashcardDeck(cards, onClose) {
+    let index = 0;
+    let flipped = false;
+    const card = el('button', 'l-card');
+    card.type = 'button';
+    const face = el('p', 'l-card__face');
+    const where = el('p', 'f-tiny');
+    const count = el('p', 'f-tiny l-card__count');
+    card.append(face);
+    const draw = () => {
+        const c = cards[index];
+        face.textContent = flipped ? c.back : c.front;
+        card.classList.toggle('is-back', flipped);
+        where.textContent = [c.topic, c.source].filter(Boolean).join(' · ');
+        count.textContent = `${(index + 1).toLocaleString('fa-IR')} از ${cards.length.toLocaleString('fa-IR')} · ${flipped ? 'سؤالِ این هایلایت' : 'هایلایت'} (برای برگرداندن بزن)`;
+    };
+    card.addEventListener('click', () => { flipped = !flipped; draw(); });
+    const nav = el('div', 'b-actions l-card__nav');
+    for (const [label, delta, tone] of [['قبلی', -1, 'ghost'], ['بعدی', 1, 'primary']]) {
+        const b = el('button', `f-btn f-btn--${tone}`, label);
+        b.type = 'button';
+        b.addEventListener('click', () => { index = (index + delta + cards.length) % cards.length; flipped = false; draw(); });
+        nav.append(b);
+    }
+    const close = el('button', 'f-btn f-btn--ghost', 'بستن');
+    close.type = 'button';
+    close.addEventListener('click', onClose);
+    nav.append(close);
+    draw();
+    const wrap = el('div', 'l-cards');
+    wrap.append(card, where, count, nav);
+    return wrap;
+}
+
 async function saved() {
     let data;
     try {
@@ -69,14 +111,23 @@ async function saved() {
     }
     const tabs = [...document.querySelectorAll('[data-view]')];
     const draw = (view) => {
-        const list = view === 'bookmarks' ? data.bookmarks : data.notes;
+        const list = { bookmarks: data.bookmarks, notes: data.notes, highlights: data.highlights ?? [] }[view];
         if (list.length === 0) {
-            done(view === 'bookmarks'
-                ? emptyCard('هنوز سؤالی ذخیره نکرده‌ای', 'حین آزمون، دکمه‌ی «ذخیره» بالای هر سؤال آن را این‌جا نگه می‌دارد.')
-                : emptyCard('هنوز یادداشتی ننوشته‌ای', 'در «ابزار مطالعه» زیر هر سؤال می‌توانی یادداشت بنویسی.'));
+            done({
+                bookmarks: emptyCard('هنوز سؤالی ذخیره نکرده‌ای', 'حین آزمون، دکمه‌ی «ذخیره» بالای هر سؤال آن را این‌جا نگه می‌دارد.'),
+                notes: emptyCard('هنوز یادداشتی ننوشته‌ای', 'در «ابزار مطالعه» زیر هر سؤال می‌توانی یادداشت بنویسی.'),
+                highlights: emptyCard('هنوز هایلایتی نداری', 'بخشی از صورت سؤال را انتخاب کن و در «ابزار مطالعه» دکمه‌ی هایلایت را بزن.'),
+            }[view]);
             return;
         }
         const parts = [];
+        if (view === 'highlights') {
+            const cards = highlightCards(list);
+            const flip = el('button', 'f-btn f-btn--primary s-all', `مرور به‌شکل فلش‌کارت (${cards.length.toLocaleString('fa-IR')})`);
+            flip.type = 'button';
+            flip.addEventListener('click', () => done(flashcardDeck(cards, () => draw('highlights'))));
+            parts.push(flip);
+        }
         if (view === 'bookmarks') {
             const all = el('button', 'f-btn f-btn--primary s-all', `مرور همه‌ی ذخیره‌ها (${list.length.toLocaleString('fa-IR')})`);
             all.type = 'button';

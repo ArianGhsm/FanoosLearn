@@ -191,6 +191,16 @@ SQL);
         $tools->resolveReport($f['reviewer'], $ws, $reportId, 'resolved', 'اصلاح شد');
         $this->assert($tools->reports($f['reviewer'], $ws) === [] && count($tools->reports($f['reviewer'], $ws, 'resolved')) === 1, 'A resolved report stayed open.');
         $tools->saveNote($f['student'], $ws, $examId, $key, '');
+
+        // هایلایت‌ها: offsets on the account, fragments read back from the exam.
+        $saved = $tools->saveHighlights($f['student'], $ws, $examId, $key, [['start' => 4, 'end' => 9], ['start' => 0, 'end' => 5], ['start' => 'x']]);
+        $this->assert($saved['ranges'] === [['start' => 0, 'end' => 9]], 'Highlights were not merged: ' . json_encode($saved));
+        $this->assert($tools->forAssessment($f['student'], $ws, $examId)['highlights'][$key] === [['start' => 0, 'end' => 9]], 'Highlights were not kept on the account.');
+        $marked = $tools->saved($f['student'], $ws)['highlights'];
+        $this->assert(count($marked) === 1 && mb_strlen($marked[0]['fragments'][0]) === 9, 'The highlights page did not read the fragment back: ' . json_encode($marked, JSON_UNESCAPED_UNICODE));
+        $tools->saveHighlights($f['student'], $ws, $examId, $key, []);
+        $this->assert($tools->saved($f['student'], $ws)['highlights'] === [], 'Clearing highlights left them on the page.');
+        $this->assert(QuestionToolsService::mergeRanges([['start' => 5, 'end' => 50]], 20) === [['start' => 5, 'end' => 20]], 'A range past the stem was not clamped.');
         $this->assert($tools->forAssessment($f['student'], $ws, $examId)['notes'] === [], 'An emptied note was kept.');
 
         // A voided question leaves the next version; the exam stays the same exam.

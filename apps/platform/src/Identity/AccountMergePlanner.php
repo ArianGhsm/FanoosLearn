@@ -62,6 +62,7 @@ final class AccountMergePlanner
         // accounts kept the same question, the target's is kept.
         'exam_question_bookmarks' => [['user_id', self::MOVE_DEDUPE, 'workspace_id,question_key']],
         'exam_question_notes' => [['user_id', self::MOVE_DEDUPE, 'workspace_id,question_key']],
+        'exam_question_highlights' => [['user_id', self::MOVE_DEDUPE, 'workspace_id,question_key']],
         'exam_question_reports' => [['user_id', self::MOVE, null], ['resolved_by_user_id', self::HISTORY, null]],
         'study_sessions' => [['user_id', self::MOVE, null]],
         'entitlement_grants' => [['subject_user_id', self::MOVE, null]],

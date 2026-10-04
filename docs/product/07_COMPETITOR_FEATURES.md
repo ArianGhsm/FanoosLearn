@@ -45,7 +45,7 @@ of the counted rows at ✅.
 | 18 | Bookmark a question (بوکمارک) | M | ✅ «ذخیره» in the question head; kept across exams |
 | 19 | Personal note on a question (یادداشت شخصی) | M | ✅ in the study drawer; saved on the account, every device |
 | 20 | Report a mistake in a question or answer (گزارش اشکال) | M | ✅ in the study drawer; reviewers resolve them at /app/admin/reports |
-| 21 | Highlight part of the answer to review later (هایلایت → فلش‌کارت) | M | ✅ highlights over the stem (kept in the browser, by design: offsets, never text) |
+| 21 | Highlight part of the answer to review later (هایلایت → فلش‌کارت) | M | ✅ highlights over the stem, kept on the account as offsets |
 | 22 | Question list, next / previous | M | ✅ |
 | 23 | Protection against copying the bank | M | ✅ paced reading (burst + daily cap) |
 | 24 | Watermark on the question | M | ✅ the reader's name and account fragment, tiled faintly over the question card |
@@ -59,7 +59,7 @@ of the counted rows at ✅.
 | 27 | Review assistant that resurfaces what you got wrong on a schedule (مرور هوشمند) | M P | ✅ «مرور هوشمند» on the progress page: wrong answers come back at 1, 3, 7, 14, 30 days |
 | 28 | Bookmarks page grouped by topic (بوکمارک‌های من) | M | ✅ /app/saved, grouped by topic, each topic one tap from a study set |
 | 29 | Notes page (یادداشت‌های من) | M | ✅ /app/saved, notes tab |
-| 30 | Highlights / flashcards page (هایلایت‌ها) | M | ❌ |
+| 30 | Highlights / flashcards page (هایلایت‌ها) | M | ✅ /app/saved highlights tab, grouped by topic, with a flashcard mode (phrase in front, its question behind) |
 | 31 | Performance report by subject and day (گزارشات) | M | ✅ progress dashboard |
 | 32 | Study time per day (محاسبه ساعت مطالعه) | M | ✅ minutes per day and in total, from exams and the timer |
 | 33 | Daily streak / score (امتیاز روزانه) | M | ✅ streak |
@@ -90,4 +90,4 @@ plans. They can come back as their own decisions.
 
 ## Score
 
-Counted rows: 44. ✅ today: 41 (93 %). Target: 36 (≥ 80 %).
+Counted rows: 44. ✅ today: 42 (95 %). Target: 36 (≥ 80 %).

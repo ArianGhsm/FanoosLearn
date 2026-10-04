@@ -29,6 +29,9 @@ final class QuestionToolsService
     /** Reports one student may send in a day: enough for real mistakes, not a flood. */
     public const REPORTS_PER_DAY = 30;
     private const PREVIEW = 220;
+    public const MAX_RANGES = 30;
+    /** One highlight is a phrase or a sentence, not the stem. */
+    public const MAX_FRAGMENT = 300;
 
     public function __construct(
         private readonly PDO $database,
@@ -41,24 +44,31 @@ final class QuestionToolsService
     /**
      * This exam's questions the student has bookmarked or noted, for the runner.
      *
-     * @return array{bookmarks:list<string>,notes:array<string,string>}
+     * @return array{bookmarks:list<string>,notes:array<string,string>,highlights:array<string,list<array{start:int,end:int}>>}
      */
     public function forAssessment(string $userId, string $workspaceId, string $assessmentId): array
     {
         $this->access->requireWorkspace($userId, $workspaceId, 'exam.take');
         $keys = array_keys($this->questions($userId, $workspaceId, $assessmentId));
         if ($keys === []) {
-            return ['bookmarks' => [], 'notes' => []];
+            return ['bookmarks' => [], 'notes' => [], 'highlights' => []];
         }
         $placeholders = implode(',', array_fill(0, count($keys), '?'));
         $bookmarks = $this->database->prepare("SELECT question_key FROM exam_question_bookmarks WHERE workspace_id = ? AND user_id = ? AND question_key IN ({$placeholders})");
         $bookmarks->execute([$workspaceId, $userId, ...$keys]);
         $notes = $this->database->prepare("SELECT question_key, body FROM exam_question_notes WHERE workspace_id = ? AND user_id = ? AND question_key IN ({$placeholders})");
         $notes->execute([$workspaceId, $userId, ...$keys]);
+        $marks = $this->database->prepare("SELECT question_key, ranges_json FROM exam_question_highlights WHERE workspace_id = ? AND user_id = ? AND question_key IN ({$placeholders})");
+        $marks->execute([$workspaceId, $userId, ...$keys]);
+        $highlights = [];
+        foreach ($marks->fetchAll() as $row) {
+            $highlights[(string) $row['question_key']] = json_decode((string) $row['ranges_json'], true, 8, JSON_THROW_ON_ERROR);
+        }
 
         return [
             'bookmarks' => array_map('strval', $bookmarks->fetchAll(PDO::FETCH_COLUMN)),
             'notes' => array_map('strval', array_column($notes->fetchAll(), 'body', 'question_key')),
+            'highlights' => $highlights,
         ];
     }
 
@@ -104,6 +114,76 @@ SQL)->execute(['workspace' => $workspaceId, 'user' => $userId, 'question' => $qu
         return ['saved' => true];
     }
 
+    /**
+     * Replaces a question's highlights with these ranges (offsets into its
+     * stem, as the runner shows it). Ranges are merged, clamped to the stem,
+     * and refused when one is longer than a sentence. None deletes them.
+     *
+     * @param list<mixed> $ranges
+     * @return array{ranges:list<array{start:int,end:int}>}
+     */
+    public function saveHighlights(string $userId, string $workspaceId, string $assessmentId, string $questionKey, array $ranges): array
+    {
+        $this->access->requireWorkspace($userId, $workspaceId, 'exam.take');
+        $this->requireQuestion($userId, $workspaceId, $assessmentId, $questionKey);
+        $question = $this->questions($userId, $workspaceId, $assessmentId)[$questionKey];
+        $merged = self::mergeRanges($ranges, mb_strlen((string) ($question['prompt'] ?? '')));
+        if (count($merged) > self::MAX_RANGES) {
+            throw new PlatformException('question_highlights_too_many', 'Too many highlights on one question.', 422);
+        }
+        foreach ($merged as $range) {
+            if ($range['end'] - $range['start'] > self::MAX_FRAGMENT) {
+                throw new PlatformException('question_highlight_too_long', 'A highlight is a phrase, not the whole question.', 422);
+            }
+        }
+        if ($merged === []) {
+            $this->database->prepare('DELETE FROM exam_question_highlights WHERE workspace_id = :workspace AND user_id = :user AND question_key = :question')
+                ->execute(['workspace' => $workspaceId, 'user' => $userId, 'question' => $questionKey]);
+            return ['ranges' => []];
+        }
+        $this->database->prepare(<<<'SQL'
+INSERT INTO exam_question_highlights (workspace_id, user_id, question_key, assessment_id, ranges_json, updated_at)
+VALUES (:workspace, :user, :question, :assessment, :ranges, UTC_TIMESTAMP(6))
+ON DUPLICATE KEY UPDATE ranges_json = VALUES(ranges_json), assessment_id = VALUES(assessment_id), updated_at = VALUES(updated_at)
+SQL)->execute(['workspace' => $workspaceId, 'user' => $userId, 'question' => $questionKey, 'assessment' => $assessmentId, 'ranges' => json_encode($merged, JSON_THROW_ON_ERROR)]);
+
+        return ['ranges' => $merged];
+    }
+
+    /**
+     * The same normalisation as the runner's mergeRanges (runner-study.js):
+     * clamp, drop empty, sort, merge overlapping or touching ranges.
+     *
+     * @param list<mixed> $ranges
+     * @return list<array{start:int,end:int}>
+     */
+    public static function mergeRanges(array $ranges, int $length): array
+    {
+        $clean = [];
+        foreach ($ranges as $range) {
+            if (!is_array($range) || !is_numeric($range['start'] ?? null) || !is_numeric($range['end'] ?? null)) {
+                continue;
+            }
+            $start = max(0, min($length, (int) $range['start']));
+            $end = max(0, min($length, (int) $range['end']));
+            if ($end > $start) {
+                $clean[] = ['start' => $start, 'end' => $end];
+            }
+        }
+        usort($clean, static fn (array $a, array $b): int => [$a['start'], $a['end']] <=> [$b['start'], $b['end']]);
+        $merged = [];
+        foreach ($clean as $range) {
+            $last = count($merged) - 1;
+            if ($last >= 0 && $range['start'] <= $merged[$last]['end']) {
+                $merged[$last]['end'] = max($merged[$last]['end'], $range['end']);
+                continue;
+            }
+            $merged[] = $range;
+        }
+
+        return $merged;
+    }
+
     /** @return array{report_id:string} */
     public function report(string $userId, string $workspaceId, string $assessmentId, string $questionKey, string $kind, string $body): array
     {
@@ -135,7 +215,7 @@ SQL)->execute(['id' => $id, 'workspace' => $workspaceId, 'user' => $userId, 'que
      * The student's bookmarks and notes, newest first, each with where it
      * was saved, its topic and the opening words of the question.
      *
-     * @return array{bookmarks:list<array<string,mixed>>,notes:list<array<string,mixed>>}
+     * @return array{bookmarks:list<array<string,mixed>>,notes:list<array<string,mixed>>,highlights:list<array<string,mixed>>}
      */
     public function saved(string $userId, string $workspaceId): array
     {
@@ -144,6 +224,8 @@ SQL)->execute(['id' => $id, 'workspace' => $workspaceId, 'user' => $userId, 'que
         $bookmarks->execute(['workspace' => $workspaceId, 'user' => $userId]);
         $notes = $this->database->prepare('SELECT question_key, assessment_id, updated_at AS at, body FROM exam_question_notes WHERE workspace_id = :workspace AND user_id = :user ORDER BY updated_at DESC LIMIT 500');
         $notes->execute(['workspace' => $workspaceId, 'user' => $userId]);
+        $marks = $this->database->prepare('SELECT question_key, assessment_id, updated_at AS at, NULL AS body, ranges_json FROM exam_question_highlights WHERE workspace_id = :workspace AND user_id = :user ORDER BY updated_at DESC LIMIT 300');
+        $marks->execute(['workspace' => $workspaceId, 'user' => $userId]);
 
         $definitions = [];
         $shape = function (array $row) use ($userId, $workspaceId, &$definitions): ?array {
@@ -155,6 +237,12 @@ SQL)->execute(['id' => $id, 'workspace' => $workspaceId, 'user' => $userId, 'que
                 return null; // the exam is gone or no longer visible to them
             }
             $prompt = (string) ($question['prompt'] ?? '');
+            $fragments = [];
+            if (isset($row['ranges_json'])) {
+                foreach (self::mergeRanges(json_decode((string) $row['ranges_json'], true, 8, JSON_THROW_ON_ERROR) ?? [], mb_strlen($prompt)) as $range) {
+                    $fragments[] = mb_substr($prompt, $range['start'], min(self::MAX_FRAGMENT, $range['end'] - $range['start']));
+                }
+            }
             return [
                 'question_id' => (string) $row['question_key'],
                 'assessment_id' => $assessmentId,
@@ -163,6 +251,7 @@ SQL)->execute(['id' => $id, 'workspace' => $workspaceId, 'user' => $userId, 'que
                 'subject' => isset($question['tags'][0]) ? (string) $question['tags'][0] : null,
                 'preview' => mb_strlen($prompt) > self::PREVIEW ? mb_substr($prompt, 0, self::PREVIEW) . '…' : $prompt,
                 'note' => $row['body'] === null ? null : (string) $row['body'],
+                'fragments' => $fragments,
                 'at' => gmdate(DATE_ATOM, (int) strtotime($row['at'] . ' UTC')),
             ];
         };
@@ -170,6 +259,7 @@ SQL)->execute(['id' => $id, 'workspace' => $workspaceId, 'user' => $userId, 'que
         return [
             'bookmarks' => array_values(array_filter(array_map($shape, $bookmarks->fetchAll()))),
             'notes' => array_values(array_filter(array_map($shape, $notes->fetchAll()))),
+            'highlights' => array_values(array_filter(array_map($shape, $marks->fetchAll()), static fn (?array $item): bool => $item !== null && $item['fragments'] !== [])),
         ];
     }
 

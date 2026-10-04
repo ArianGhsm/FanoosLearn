@@ -689,7 +689,7 @@ function renderStudy(question, study, actions) {
                 text: study.hint || 'بخشی از صورت سؤال را انتخاب کن، بعد «هایلایت» را بزن.',
             }),
             editor,
-            el('p', { className: 'f-tiny x-study__hint', text: 'یادداشت روی حسابت هم ذخیره می‌شود و در «ذخیره‌ها و یادداشت‌ها» پیدایش می‌کنی؛ هایلایت‌ها فقط در همین مرورگر می‌مانند.' }),
+            el('p', { className: 'f-tiny x-study__hint', text: 'یادداشت‌ها و هایلایت‌ها روی حسابت ذخیره می‌شوند و در «ذخیره‌ها و یادداشت‌ها» پیدایشان می‌کنی؛ هایلایت‌ها را آن‌جا مثل فلش‌کارت هم مرور می‌کنی.' }),
             renderReportForm(question, study.report ?? null, actions)));
 }
 
