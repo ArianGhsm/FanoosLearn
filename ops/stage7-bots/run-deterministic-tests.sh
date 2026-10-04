@@ -7,3 +7,4 @@ PYTHONPATH=packages/python python3 -m unittest discover -s tests/bots -p 'test_*
 PYTHONPATH=packages/python python3 -m unittest discover -s tests/workers -p 'test_*.py' -v
 PYTHONPATH=packages/python python3 -m unittest discover -s tests/ux -p 'worker03_test_*.py' -v
 PYTHONPATH=packages/python python3 -m unittest discover -s tests/ux-v3 -p 'test_bot_*.py' -v
+python3 -m unittest discover -s tests/import -p 'test_*.py' -v

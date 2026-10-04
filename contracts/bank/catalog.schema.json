@@ -180,6 +180,24 @@
             ],
             "maxLength": 400,
             "description": "Where the announcement was found and how trustworthy it is."
+          },
+          "scope_chapters": {
+            "type": "array",
+            "description": "The announced scope read into chapter numbers of the edition; absent when the announcement names no chapter list. partial carries the announcement's words when only part of the chapter counts.",
+            "items": {
+              "type": "object",
+              "required": [
+                "number"
+              ],
+              "properties": {
+                "number": {
+                  "type": "string"
+                },
+                "partial": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }
@@ -334,6 +352,18 @@
           "items": {
             "$ref": "#/$defs/node"
           }
+        },
+        "title_fa": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "Persian title beside the publisher's English one."
+        },
+        "title_fa_origin": {
+          "enum": [
+            "ai",
+            "human"
+          ],
+          "description": "ai: machine translation not yet reviewed; human: reviewed."
         }
       }
     }

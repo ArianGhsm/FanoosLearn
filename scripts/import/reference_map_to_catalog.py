@@ -31,6 +31,10 @@ ROOT = Path(__file__).resolve().parents[2]
 WORKBOOK = ROOT / 'docs/research/dental-residency-reference-map-1396-1405.xlsx'
 OUTPUT = ROOT / 'data/bank/catalog.json'
 TOCS = ROOT / 'data/bank/reference-tocs.json'
+TOCS_FA = ROOT / 'data/bank/reference-tocs.fa.json'
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from scope_chapters import resolve as resolve_scope  # noqa: E402
 SHEET = 'نقشه منابع'
 
 SUBJECTS = [
@@ -188,6 +192,11 @@ def read_sheet(path: Path, name: str) -> list[list[str | None]]:
     raise SystemExit(f'sheet {name!r} not found')
 
 
+def fold(title: str) -> str:
+    """The key reference-tocs.fa.json uses for an English title."""
+    return ' '.join(title.split()).casefold()
+
+
 def chapter_key(number: str) -> str:
     """Chapter 2 -> ch02, van Noort's chapter 1.3 -> ch01.3."""
     first, *rest = number.split('.')
@@ -282,6 +291,19 @@ def build() -> dict:
         add(where, year, subject, clean(title), clean(pub_year), clean(edition_text), scope, evidence, post, pdf)
 
     tocs = json.loads(TOCS.read_text(encoding='utf-8'))['editions']
+    persian = json.loads(TOCS_FA.read_text(encoding='utf-8'))
+    for record in validity.values():
+        known = [number for number, _ in tocs.get(record['edition'], {}).get('chapters', [])]
+        where = f"{record['year']} {record['subject']} {record['edition']}"
+        chapters = resolve_scope(record['scope'], known)
+        if chapters is None:
+            if record['scope']:
+                decisions.append(f'{where}: scope "{record["scope"]}" names no chapter list; kept as text only')
+            continue
+        unknown = [c['number'] for c in chapters if known and c['number'] not in known]
+        if unknown:
+            notes.append(f'{where}: scope names chapters {", ".join(unknown)} that the edition\'s table of contents lacks — confirm')
+        record['scope_chapters'] = chapters
     references = []
     for _m, key, title, authors, subject, editions in REFERENCES:
         if key not in used:
@@ -292,8 +314,10 @@ def build() -> dict:
                 seen[edition_key] = {'key': edition_key, 'label': label, **({'year': year} if year else {})}
                 chapters = tocs.get(f'{key}@{edition_key}', {}).get('chapters', [])
                 if chapters:
-                    seen[edition_key]['nodes'] = [{'key': chapter_key(number), 'kind': 'chapter', 'number': number, 'title': name}
-                                                  for number, name in chapters]
+                    seen[edition_key]['nodes'] = [
+                        {'key': chapter_key(number), 'kind': 'chapter', 'number': number, 'title': name,
+                         **({'title_fa': persian['titles'][fold(name)], 'title_fa_origin': persian['origin']} if fold(name) in persian['titles'] else {})}
+                        for number, name in chapters]
         references.append({'key': key, 'title': title, 'authors': authors, 'subject': subject,
                            'editions': sorted(seen.values(), key=lambda e: (e.get('year') or 0, e['key']))})
 
