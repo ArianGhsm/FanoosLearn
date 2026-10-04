@@ -57,6 +57,7 @@ final class AccountMergePlanner
         // Derived counters: dropped, then rebuilt for the target from the
         // attempts that moved (QuestionStatsRecorder::rebuild).
         'exam_question_user_stats' => [['user_id', self::DROP, null]],
+        'exam_question_user_blanks' => [['user_id', self::DROP, null]],
         // The student's own bookmarks and notes go with them; where both
         // accounts kept the same question, the target's is kept.
         'exam_question_bookmarks' => [['user_id', self::MOVE_DEDUPE, 'workspace_id,question_key']],

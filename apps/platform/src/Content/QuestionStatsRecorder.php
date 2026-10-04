@@ -59,9 +59,14 @@ final class QuestionStatsRecorder
         }
 
         $entries = [];
+        $blanks = [];
         foreach ($review as $entry) {
             $id = (string) ($entry['id'] ?? '');
-            if (($entry['selected'] ?? null) === null || isset($revealed[$id]) || !isset($questions[$id])) {
+            if (isset($revealed[$id]) || !isset($questions[$id])) {
+                continue;
+            }
+            if (($entry['selected'] ?? null) === null) {
+                $blanks[$id] = true;
                 continue;
             }
             $entries[$id] = $entry;
@@ -69,6 +74,7 @@ final class QuestionStatsRecorder
         // One lock order for every writer, so two submissions sharing
         // questions cannot deadlock on each other's rows.
         ksort($entries, SORT_STRING);
+        ksort($blanks, SORT_STRING);
 
         $global = $this->database->prepare(<<<'SQL'
 INSERT INTO exam_question_stats (workspace_id, question_key, answered_count, correct_count, updated_at)
@@ -94,6 +100,16 @@ ON DUPLICATE KEY UPDATE
     course_id = COALESCE(VALUES(course_id), course_id),
     topic = COALESCE(VALUES(topic), topic)
 SQL);
+
+        // پاسخ سفید: a blank is not an answer, so it is counted on its own.
+        $blank = $this->database->prepare(<<<'SQL'
+INSERT INTO exam_question_user_blanks (workspace_id, user_id, question_key, blank_count, last_blank_at)
+VALUES (:workspace, :user, :question, 1, :at)
+ON DUPLICATE KEY UPDATE blank_count = blank_count + 1, last_blank_at = GREATEST(last_blank_at, VALUES(last_blank_at))
+SQL);
+        foreach (array_keys($blanks) as $id) {
+            $blank->execute(['workspace' => $workspaceId, 'user' => $userId, 'question' => (string) $id, 'at' => $answeredAt]);
+        }
 
         foreach ($entries as $id => $entry) {
             $correct = ($entry['is_correct'] ?? false) === true ? 1 : 0;
@@ -134,7 +150,7 @@ SQL);
     {
         $where = $workspaceId === null ? '' : 'WHERE workspace_id = :workspace';
         $parameters = $workspaceId === null ? [] : ['workspace' => $workspaceId];
-        foreach (['exam_question_stats', 'exam_question_choice_stats', 'exam_question_user_stats'] as $table) {
+        foreach (['exam_question_stats', 'exam_question_choice_stats', 'exam_question_user_stats', 'exam_question_user_blanks'] as $table) {
             $this->database->prepare("DELETE FROM {$table} {$where}")->execute($parameters);
         }
 
@@ -174,20 +190,22 @@ SQL);
      * it, and this student's own record. Other people's numbers are withheld
      * below PEER_MINIMUM answers.
      *
-     * @return array{peer_answered:?int,peer_correct_percent:?int,answered:int,correct:int,last_correct:?bool,last_answered_at:?string}
+     * @return array{peer_answered:?int,peer_correct_percent:?int,answered:int,correct:int,blank:int,last_correct:?bool,last_answered_at:?string}
      */
     public function forQuestion(string $workspaceId, string $userId, string $questionKey): array
     {
         $query = $this->database->prepare(<<<'SQL'
 SELECT stats.answered_count AS all_answered, stats.correct_count AS all_correct,
-       mine.answered_count, mine.correct_count, mine.last_correct, mine.last_answered_at
+       mine.answered_count, mine.correct_count, mine.last_correct, mine.last_answered_at, blanks.blank_count
 FROM (SELECT 1) anchor
 LEFT JOIN exam_question_stats stats ON stats.workspace_id = :workspace AND stats.question_key = :question
 LEFT JOIN exam_question_user_stats mine ON mine.workspace_id = :workspace_mine AND mine.user_id = :user AND mine.question_key = :question_mine
+LEFT JOIN exam_question_user_blanks blanks ON blanks.workspace_id = :workspace_blank AND blanks.user_id = :user_blank AND blanks.question_key = :question_blank
 SQL);
         $query->execute([
             'workspace' => $workspaceId, 'question' => $questionKey,
             'workspace_mine' => $workspaceId, 'user' => $userId, 'question_mine' => $questionKey,
+            'workspace_blank' => $workspaceId, 'user_blank' => $userId, 'question_blank' => $questionKey,
         ]);
         $row = $query->fetch() ?: [];
         $answered = (int) ($row['answered_count'] ?? 0);
@@ -201,6 +219,7 @@ SQL);
             'peer_correct_percent' => $enough ? (int) round($peerCorrect * 100 / $peerAnswered) : null,
             'answered' => $answered,
             'correct' => $correct,
+            'blank' => (int) ($row['blank_count'] ?? 0),
             'last_correct' => $answered > 0 ? (bool) $row['last_correct'] : null,
             'last_answered_at' => $answered > 0 ? gmdate(DATE_ATOM, (int) strtotime($row['last_answered_at'] . ' UTC')) : null,
         ];
