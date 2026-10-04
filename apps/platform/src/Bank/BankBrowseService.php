@@ -203,7 +203,7 @@ final class BankBrowseService
         $this->access->requireWorkspace($userId, $workspaceId, 'exam.take');
         $query = $this->database->prepare(<<<'SQL'
 SELECT type.name AS type_name, type.type_key, validity.exam_year, subject.subject_key, subject.name AS subject_name, subject.sort_order,
-       reference.title, reference.authors, edition.id AS edition_id, edition.edition_label, edition.published_year, validity.scope, validity.scope_chapters, validity.is_official
+       reference.reference_key, reference.title, reference.authors, edition.id AS edition_id, edition.edition_key, edition.edition_label, edition.published_year, validity.scope, validity.scope_chapters, validity.is_official
 FROM bank_reference_validity validity
 JOIN bank_exam_types type ON type.id = validity.exam_type_id
 JOIN bank_subjects subject ON subject.id = validity.subject_id
@@ -224,6 +224,7 @@ SQL);
             $subjects[$row['subject_key']] ??= ['key' => (string) $row['subject_key'], 'name' => (string) $row['subject_name'], 'references' => []];
             $subjects[$row['subject_key']]['references'][] = [
                 'title' => (string) $row['title'],
+                'edition_ref' => $row['reference_key'] . '@' . $row['edition_key'],
                 'authors' => $row['authors'],
                 'edition' => (string) $row['edition_label'],
                 'published_year' => $row['published_year'] === null ? null : (int) $row['published_year'],
@@ -249,14 +250,17 @@ SQL);
     private function editionChapters(string $workspaceId): array
     {
         $query = $this->database->prepare(<<<'SQL'
-SELECT edition_id, number, title, title_fa, title_fa_origin
-FROM bank_reference_nodes
-WHERE workspace_id = :workspace AND parent_id IS NULL AND kind = 'chapter'
+SELECT node.edition_id, node.node_key, node.number, node.title, node.title_fa, node.title_fa_origin,
+       (SELECT COUNT(*) FROM bank_reference_nodes child WHERE child.parent_id = node.id) AS sections
+FROM bank_reference_nodes node
+WHERE node.workspace_id = :workspace AND node.parent_id IS NULL AND node.kind = 'chapter'
 SQL);
         $query->execute(['workspace' => $workspaceId]);
         $byEdition = [];
         foreach ($query->fetchAll() as $row) {
             $byEdition[(string) $row['edition_id']][] = [
+                'key' => (string) $row['node_key'],
+                'sections' => (int) $row['sections'],
                 'number' => $row['number'] === null ? null : (string) $row['number'],
                 'title' => (string) $row['title'],
                 'title_fa' => $row['title_fa'] === null ? null : (string) $row['title_fa'],
@@ -269,6 +273,56 @@ SQL);
         unset($list);
 
         return $byEdition;
+    }
+
+    /**
+     * One chapter's headings (sections and the subsections under them), in
+     * book order, fetched when a reader opens the chapter on منابع آزمون.
+     *
+     * @return array{chapter:array<string,mixed>,sections:list<array<string,mixed>>}
+     */
+    public function chapterOutline(string $userId, string $workspaceId, string $editionRef, string $chapterKey): array
+    {
+        $this->access->requireWorkspace($userId, $workspaceId, 'exam.take');
+        [$referenceKey, $editionKey] = array_pad(explode('@', $editionRef, 2), 2, '');
+        $chapter = $this->database->prepare(<<<'SQL'
+SELECT node.id, node.number, node.title, node.title_fa, node.title_fa_origin
+FROM bank_reference_nodes node
+JOIN bank_reference_editions edition ON edition.id = node.edition_id
+JOIN bank_references reference ON reference.id = edition.reference_id
+WHERE node.workspace_id = :workspace AND reference.reference_key = :reference AND edition.edition_key = :edition
+  AND node.node_key = :chapter AND node.parent_id IS NULL
+SQL);
+        $chapter->execute(['workspace' => $workspaceId, 'reference' => $referenceKey, 'edition' => $editionKey, 'chapter' => $chapterKey]);
+        $row = $chapter->fetch();
+        if ($row === false) {
+            throw new PlatformException('bank_chapter_not_found', 'That chapter is not in the catalog.', 404);
+        }
+        $children = $this->database->prepare(<<<'SQL'
+SELECT id, parent_id, title, title_fa, title_fa_origin, sort_order FROM bank_reference_nodes
+WHERE workspace_id = :workspace AND (parent_id = :chapter OR parent_id IN (SELECT id FROM bank_reference_nodes WHERE parent_id = :chapter_again))
+ORDER BY sort_order
+SQL);
+        $children->execute(['workspace' => $workspaceId, 'chapter' => $row['id'], 'chapter_again' => $row['id']]);
+        $node = static fn (array $r): array => [
+            'title' => (string) $r['title'],
+            'title_fa' => $r['title_fa'] === null ? null : (string) $r['title_fa'],
+            'title_fa_reviewed' => $r['title_fa_origin'] === 'human',
+        ];
+        $sections = [];
+        $rows = $children->fetchAll();
+        foreach ($rows as $r) {
+            if ($r['parent_id'] === $row['id']) {
+                $sections[(string) $r['id']] = $node($r) + ['subsections' => []];
+            }
+        }
+        foreach ($rows as $r) {
+            if (isset($sections[(string) $r['parent_id']])) {
+                $sections[(string) $r['parent_id']]['subsections'][] = $node($r);
+            }
+        }
+
+        return ['chapter' => ['number' => $row['number'] === null ? null : (string) $row['number']] + $node($row), 'sections' => array_values($sections)];
     }
 
     /**

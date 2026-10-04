@@ -1,6 +1,6 @@
 {
  "format": "fanoos.bank.reference-tocs/1",
- "notes": "Chapter lists of the residency reference editions, copied from the publisher (Elsevier shop pages, the PMPH and Wiley-VCH product pages, the Quintessence product sheet, the e-bookshelf sample, Google Books, Internet Archive catalogue records, isba.ir for the Persian national book); \"source\" is where each list was read. scripts/import/reference_map_to_catalog.py turns them into chapter nodes in data/bank/catalog.json. Gaps in numbering are gaps in the publisher list. Publisher marketing tags (\"NEW!\") and all-capitals headings are normalised. An edition with \"language\": \"fa\" is a Persian book; its titles are the originals.",
+ "notes": "Chapter lists of the residency reference editions, copied from the publisher (Elsevier shop pages, the PMPH and Wiley-VCH product pages, the Quintessence product sheet, the e-bookshelf sample, Google Books, Internet Archive catalogue records, isba.ir for the Persian national book); \"source\" is where each list was read. scripts/import/reference_map_to_catalog.py turns them into chapter nodes in data/bank/catalog.json. Gaps in numbering are gaps in the publisher list. Publisher marketing tags (\"NEW!\") and all-capitals headings are normalised. An edition with \"language\": \"fa\" is a Persian book; its titles are the originals. Where the book itself is at hand (University/Residency Exam/Books), its own contents win over the web page.",
  "editions": {
   "burket-oral-medicine@11e": {
    "source": "https://archive.org/details/burketsoralmedic0000burk (catalogue record contents)",
@@ -2922,7 +2922,7 @@
    ]
   },
   "mccracken-rpd@13e": {
-   "source": "https://shop.elsevier.com/books/mccrackens-removable-partial-prosthodontics/carr/978-0-323-33990-2",
+   "source": "https://shop.elsevier.com/books/mccrackens-removable-partial-prosthodontics/carr/978-0-323-33990-2 — numbering and titles from the book itself (2016 PDF contents): chapter 12 is dental implants, the web list puts it last",
    "chapters": [
     [
      "1",
@@ -2930,7 +2930,7 @@
     ],
     [
      "2",
-     "Consideration for Managing Partial Tooth Loss"
+     "Considerations for Managing Partial Tooth Loss: Tooth Replacements from the Patient Perspective"
     ],
     [
      "3",
@@ -2970,59 +2970,59 @@
     ],
     [
      "12",
-     "Diagnosis and Treatment Planning"
+     "Considerations for the Use of Dental Implants with Removable Partial Dentures"
     ],
     [
      "13",
-     "Preparation of Mouth for Removable Partial Dentures"
+     "Diagnosis and Treatment Planning"
     ],
     [
      "14",
-     "Preparation of Abutment Teeth"
+     "Preparation of the Mouth for Removable Partial Dentures"
     ],
     [
      "15",
-     "Impression Materials and Procedures for Removable Partial Dentures"
+     "Preparation of Abutment Teeth"
     ],
     [
      "16",
-     "Support for the Distal Extension Denture Base"
+     "Impression Materials and Procedures for Removable Partial Dentures"
     ],
     [
      "17",
-     "Occlusal Relationships for Removable Partial Dentures"
+     "Support for the Distal Extension Denture Base"
     ],
     [
      "18",
-     "Laboratory Procedures"
+     "Occlusal Relationships for Removable Partial Dentures"
     ],
     [
      "19",
-     "Work Authorizations for Removable Partial Dentures"
+     "Laboratory Procedures"
     ],
     [
      "20",
-     "Initial Placement, Adjustment, and Servicing of the Removable Partial Denture"
+     "Work Authorizations for Removable Partial Dentures"
     ],
     [
      "21",
-     "Relining and Rebasing the Removable Partial Denture"
+     "Initial Placement, Adjustment, and Servicing of the Removable Partial Denture"
     ],
     [
      "22",
-     "Repairs and Additions to Removable Partial Dentures"
+     "Relining and Rebasing the Removable Partial Denture"
     ],
     [
      "23",
-     "Interim Removable Partial Dentures"
+     "Repairs and Additions to Removable Partial Dentures"
     ],
     [
      "24",
-     "Removable Partial Denture Considerations in Maxillofacial Prosthetics"
+     "Interim Removable Partial Dentures"
     ],
     [
      "25",
-     "Considerations for the Use of Dental Implants with Removable Partial Dentures"
+     "Removable Partial Denture Considerations in Maxillofacial Prosthetics"
     ]
    ]
   },
@@ -3276,7 +3276,7 @@
     ],
     [
      "30",
-     "Pediatric Oral Health Advocacy"
+     "Pediatric Oral Health and Dental Care: From Demography to Advocacy"
     ],
     [
      "31",
@@ -4704,11 +4704,11 @@
     ],
     [
      "13",
-     "Isolation, Access Preparation, Working Length Determination"
+     "Isolation, Endodontic Access, and Length Determination"
     ],
     [
      "14",
-     "Cleaning and Shaping, Intra-canal Medications"
+     "Cleaning and Shaping"
     ],
     [
      "15",
@@ -4810,6 +4810,10 @@
     [
      "2.7",
      "Impression materials"
+    ],
+    [
+     "2.8",
+     "Nanotechnology in dental materials"
     ],
     [
      "3.1",
@@ -5176,7 +5180,7 @@
     ],
     [
      "22",
-     "Inflammatory Disease"
+     "Inflammatory Conditions of the Jaws"
     ],
     [
      "23",

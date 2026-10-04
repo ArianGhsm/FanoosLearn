@@ -299,3 +299,45 @@ a.b-row:hover {
         width: 100%;
     }
 }
+
+/* سرفصل‌ها: one chapter's headings, opened on demand */
+
+.b-outline__toggle {
+    justify-self: start;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    font: inherit;
+    font-size: var(--text-xs);
+    cursor: pointer;
+}
+
+.b-outline__list,
+.b-outline__sublist {
+    display: grid;
+    gap: var(--space-1);
+    margin: var(--space-1) 0 0;
+    padding-inline-start: var(--space-3);
+}
+
+.b-outline__section,
+.b-outline__subsection {
+    display: grid;
+    gap: 1px;
+}
+
+.b-outline__fa {
+    font-size: var(--text-sm);
+}
+
+.b-outline__subsection .b-outline__fa {
+    font-size: var(--text-xs);
+}
+
+.b-outline__en {
+    color: var(--text-secondary);
+    font-size: var(--text-xs);
+    text-align: end;
+    overflow-wrap: anywhere;
+}

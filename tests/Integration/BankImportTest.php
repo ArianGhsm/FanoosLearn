@@ -171,6 +171,13 @@ SQL);
             'The 1405 endodontics reference does not list its 22 chapters in order: ' . json_encode($torabinejad['chapters'] ?? null, JSON_UNESCAPED_UNICODE));
         $this->assert($torabinejad['chapters'][0]['in_scope'] === true && is_string($torabinejad['chapters'][0]['title_fa']) && $torabinejad['chapters'][0]['title_fa_reviewed'] === false,
             'A chapter of a whole-book reference is not in scope with its unreviewed Persian title: ' . json_encode($torabinejad['chapters'][0], JSON_UNESCAPED_UNICODE));
+        $cleaning = array_values(array_filter($torabinejad['chapters'], static fn (array $c): bool => $c['number'] === '14'))[0];
+        $this->assert($cleaning['sections'] > 0 && $cleaning['key'] === 'ch14' && $torabinejad['edition_ref'] === 'torabinejad-endodontics@6e',
+            'The cleaning-and-shaping chapter does not say it has headings: ' . json_encode($cleaning, JSON_UNESCAPED_UNICODE));
+        $outline = $browse->chapterOutline($f['student'], $ws, 'torabinejad-endodontics@6e', 'ch14');
+        $this->assert(count($outline['sections']) === $cleaning['sections'] && $outline['sections'][0]['title'] === 'Principles of Cleaning and Shaping'
+            && array_sum(array_map(static fn (array $s): int => count($s['subsections']), $outline['sections'])) > 0,
+            'The chapter outline does not list the book\'s headings in order: ' . json_encode(array_slice($outline['sections'], 0, 3), JSON_UNESCAPED_UNICODE));
         $proffit = null;
         foreach ($years[0]['subjects'] as $row) {
             foreach ($row['references'] as $ref) {

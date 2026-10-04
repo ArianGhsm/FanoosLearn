@@ -32,6 +32,7 @@ WORKBOOK = ROOT / 'docs/research/dental-residency-reference-map-1396-1405.xlsx'
 OUTPUT = ROOT / 'data/bank/catalog.json'
 TOCS = ROOT / 'data/bank/reference-tocs.json'
 TOCS_FA = ROOT / 'data/bank/reference-tocs.fa.json'
+SECTIONS = ROOT / 'data/bank/reference-sections.json'
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from scope_chapters import resolve as resolve_scope  # noqa: E402
@@ -212,6 +213,20 @@ def persian_title(title: str, language: str | None, persian: dict) -> dict:
     return {}
 
 
+def section_nodes(chapter: str, headings: list, persian: dict) -> dict:
+    """A chapter's headings as children: ch04.s03 (section), ch04.s03.02 (subsection)."""
+    if not headings:
+        return {}
+    children = []
+    for i, (title, subtitles) in enumerate(headings, 1):
+        node = {'key': f'{chapter}.s{i:02d}', 'kind': 'section', 'title': title[:300], **persian_title(title, None, persian)}
+        if subtitles:
+            node['children'] = [{'key': f'{chapter}.s{i:02d}.{j:02d}', 'kind': 'subsection', 'title': sub[:300],
+                                 **persian_title(sub, None, persian)} for j, sub in enumerate(subtitles, 1)]
+        children.append(node)
+    return {'children': children}
+
+
 def chapter_key(number: str) -> str:
     """Chapter 2 -> ch02, van Noort's chapter 1.3 -> ch01.3."""
     first, *rest = number.split('.')
@@ -307,6 +322,7 @@ def build() -> dict:
 
     tocs = json.loads(TOCS.read_text(encoding='utf-8'))['editions']
     persian = json.loads(TOCS_FA.read_text(encoding='utf-8'))
+    sections = json.loads(SECTIONS.read_text(encoding='utf-8'))['editions']
     for record in validity.values():
         known = [number for number, _ in tocs.get(record['edition'], {}).get('chapters', [])]
         where = f"{record['year']} {record['subject']} {record['edition']}"
@@ -333,9 +349,11 @@ def build() -> dict:
                 seen[edition_key] = {'key': edition_key, 'label': label, **({'year': year} if year else {})}
                 toc = tocs.get(f'{key}@{edition_key}', {})
                 if toc.get('chapters'):
+                    inside = sections.get(f'{key}@{edition_key}', {}).get('chapters', {})
                     seen[edition_key]['nodes'] = [
                         {'key': chapter_key(number), 'kind': 'chapter', 'number': number, 'title': name,
-                         **persian_title(name, toc.get('language'), persian)}
+                         **persian_title(name, toc.get('language'), persian),
+                         **section_nodes(chapter_key(number), inside.get(number, []), persian)}
                         for number, name in toc['chapters']]
         references.append({'key': key, 'title': title, 'authors': authors, 'subject': subject,
                            'editions': sorted(seen.values(), key=lambda e: (e.get('year') or 0, e['key']))})

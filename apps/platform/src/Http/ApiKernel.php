@@ -508,6 +508,14 @@ final class ApiKernel
             if ($request->method === 'GET' && $suffix === '/bank/references') {
                 return ['status' => 200, 'data' => $this->bank->references($session->userId, $workspaceId)];
             }
+            if ($request->method === 'GET' && $suffix === '/bank/chapter-outline') {
+                return ['status' => 200, 'data' => $this->bank->chapterOutline(
+                    $session->userId,
+                    $workspaceId,
+                    (string) ($request->query['edition'] ?? ''),
+                    (string) ($request->query['chapter'] ?? ''),
+                )];
+            }
             if ($request->method === 'GET' && preg_match('#^/bank/subjects/([a-z0-9_-]{1,60})$#', $suffix, $match)) {
                 return ['status' => 200, 'data' => $this->bank->subject($session->userId, $workspaceId, $match[1])];
             }

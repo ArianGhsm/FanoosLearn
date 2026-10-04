@@ -245,7 +245,7 @@ function referenceItem(ref) {
     li.append(meta);
     if (ref.scope) li.append(el('span', 'b-ref__scope', ref.scope));
     if (ref.official === false) li.append(el('span', 'b-old', 'اعلام غیررسمی'));
-    if (Array.isArray(ref.chapters) && ref.chapters.length > 0) li.append(chapterList(ref.chapters));
+    if (Array.isArray(ref.chapters) && ref.chapters.length > 0) li.append(chapterList(ref.chapters, ref.edition_ref));
     return li;
 }
 
@@ -254,7 +254,7 @@ function referenceItem(ref) {
  * When the year's announcement names its chapters, the ones outside it are
  * dimmed and the ones it limits to some pages say so.
  */
-function chapterList(chapters) {
+function chapterList(chapters, editionRef) {
     const scoped = chapters.some((chapter) => chapter.in_scope === true);
     const inScope = chapters.filter((chapter) => chapter.in_scope === true).length;
     const details = el('details', 'b-chapters');
@@ -267,16 +267,10 @@ function chapterList(chapters) {
         if (scoped && chapter.in_scope === false) item.classList.add('is-out');
         item.append(el('span', 'b-chapter__number', chapter.number ? faDigits(chapter.number) : '–'));
         const text = el('div', 'b-chapter__text');
-        if (chapter.title_fa) text.append(el('span', 'b-chapter__fa', chapter.title_fa));
-        // A Persian book's title is its own; only a translated one shows the English under it.
-        if (chapter.title !== chapter.title_fa) {
-            const english = el('span', 'b-chapter__en', chapter.title);
-            english.lang = 'en';
-            english.dir = 'ltr';
-            text.append(english);
-        }
+        text.append(...bilingual(chapter, 'b-chapter'));
         if (scoped && chapter.in_scope === false) text.append(el('span', 'b-chapter__tag', 'خارج از منبع'));
         if (chapter.partial) text.append(el('span', 'b-chapter__tag b-chapter__tag--partial', `بخشی از فصل: ${faDigits(chapter.partial)}`));
+        if (chapter.sections > 0 && editionRef) text.append(outlineToggle(editionRef, chapter));
         item.append(text);
         ol.append(item);
     }
@@ -285,6 +279,63 @@ function chapterList(chapters) {
         details.append(el('p', 'b-chapters__note', 'عنوان‌های فارسی ترجمه‌ی ماشینی‌اند و هنوز بازبینی نشده‌اند؛ عنوان انگلیسی همان فهرست ناشر است.'));
     }
     return details;
+}
+
+/* A title as the page shows it: Persian over the English it translates (a Persian book's title alone). */
+function bilingual(node, prefix) {
+    const parts = [];
+    if (node.title_fa) parts.push(el('span', `${prefix}__fa`, node.title_fa));
+    if (node.title !== node.title_fa) {
+        const english = el('span', `${prefix}__en`, node.title);
+        english.lang = 'en';
+        english.dir = 'ltr';
+        parts.push(english);
+    }
+    return parts;
+}
+
+/* سرفصل‌ها: the chapter's headings, fetched the first time the reader opens them. */
+function outlineToggle(editionRef, chapter) {
+    const wrap = el('div', 'b-outline');
+    const button = el('button', 'b-outline__toggle', `سرفصل‌ها · ${faDigits(chapter.sections)}`);
+    button.type = 'button';
+    button.setAttribute('aria-expanded', 'false');
+    const body = el('div', 'b-outline__body');
+    body.hidden = true;
+    let loaded = false;
+    button.addEventListener('click', async () => {
+        const open = body.hidden;
+        body.hidden = !open;
+        button.setAttribute('aria-expanded', String(open));
+        if (!open || loaded) return;
+        loaded = true;
+        body.replaceChildren(el('span', 'f-muted', 'در حال بارگذاری…'));
+        try {
+            const query = new URLSearchParams({ edition: editionRef, chapter: chapter.key });
+            const outline = await api.get(`${base}/bank/chapter-outline?${query}`);
+            const list = el('ul', 'b-outline__list');
+            for (const section of outline.sections) {
+                const item = el('li', 'b-outline__section');
+                item.append(...bilingual(section, 'b-outline'));
+                if (section.subsections.length > 0) {
+                    const sub = el('ul', 'b-outline__sublist');
+                    for (const subsection of section.subsections) {
+                        const subItem = el('li', 'b-outline__subsection');
+                        subItem.append(...bilingual(subsection, 'b-outline'));
+                        sub.append(subItem);
+                    }
+                    item.append(sub);
+                }
+                list.append(item);
+            }
+            body.replaceChildren(list);
+        } catch (error) {
+            loaded = false;
+            body.replaceChildren(el('span', 'f-muted', describeError(error)));
+        }
+    });
+    wrap.append(button, body);
+    return wrap;
 }
 
 /* ---------------------------------------------------------- references */
