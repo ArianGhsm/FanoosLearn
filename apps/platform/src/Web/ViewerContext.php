@@ -7,10 +7,11 @@ namespace Fanoos\Platform\Web;
 /**
  * Everything a rendered page is allowed to know about who is looking at it.
  *
- * Deliberately narrow: a display name, the selected workspace, and the CSRF
- * token. No permissions, no role names, no membership list. The navigation
- * here decides what to *show*; the backend decides what is *allowed*, on
- * every request, and hiding a link has never been a security control.
+ * Deliberately narrow: a display name, the selected workspace, the CSRF
+ * token, and the permission keys the viewer holds in that workspace -- used
+ * only to decide what to *show* (a composer, a review button). No role
+ * names, no membership list. The backend decides what is *allowed*, on every
+ * request, and hiding a link has never been a security control.
  */
 final class ViewerContext
 {
@@ -25,7 +26,15 @@ final class ViewerContext
         public readonly bool $canManageCatalog = false,
         // Only decides whether the reports queue is linked; the API checks exam.review.
         public readonly bool $canReviewContent = false,
+        /** @var list<string> */
+        public readonly array $permissionKeys = [],
     ) {
+    }
+
+    /** Whether to show something that needs this permission; never a check that guards it. */
+    public function can(string $permissionKey): bool
+    {
+        return in_array($permissionKey, $this->permissionKeys, true);
     }
 
     /**

@@ -6,6 +6,7 @@
  * Nothing here uses innerHTML with data that came from the API. Question and
  * choice text is written through textContent, always.
  */
+import { watermarkImage } from './watermark.js';
 import {
     ATTEMPT_FILTERS, answeredCount, isAnswered, isExplanationShown, isFlagged, isStruck, isTimeCritical,
     progressPercent, remainingSeconds, unansweredPositions, visiblePositions,
@@ -885,11 +886,6 @@ export function renderMap(state, actions) {
  * on a layer that ignores the pointer, so it never gets in the way of a
  * choice or a selection.
  */
-export function watermarkImage(mark) {
-    const text = String(mark).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180"><text x="160" y="90" text-anchor="middle" transform="rotate(-24 160 90)" font-family="sans-serif" font-size="15" fill="#888">${text}</text></svg>`;
-    return `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}")`;
-}
 
 function renderWatermark() {
     const mark = document.querySelector('.x-runner')?.dataset.watermark ?? '';
