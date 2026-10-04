@@ -249,7 +249,7 @@ def audit(args: dict) -> None:
             else:
                 issues.append('reference_edition_not_in_catalog')
         candidate = row.get('فصل پیشنهادی') or ''
-        if not candidate.strip():
+        if not candidate.strip() or candidate.strip() == 'نیازمند بازبینی؛ فصل قابل تأیید نیست':
             issues.append('missing_chapter_candidate')
         elif len(re.findall(r'\bChapter\b', candidate, re.I)) > 1:
             issues.append('multiple_chapter_candidate')
