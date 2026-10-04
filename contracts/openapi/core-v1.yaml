@@ -377,6 +377,13 @@ paths:
       parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
       requestBody: { required: true, content: { application/json: { schema: { type: object, required: [assessment_id, question_id, body], properties: { assessment_id: { $ref: '#/components/schemas/Uuid' }, question_id: { type: string }, body: { type: string, maxLength: 1000 } } } } } }
       responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/question-tools/highlights:
+    post:
+      operationId: saveQuestionHighlights
+      description: 'Replaces the caller''s highlights on a question''s stem with these ranges -- offsets into the stem as the runner shows it, merged and clamped like the runner does; at most 30 ranges of up to 300 characters; an empty list deletes them. Only offsets are stored; GET /saved reads the fragments back from the exam for the caller (highlights[].fragments).'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [assessment_id, question_id, ranges], properties: { assessment_id: { $ref: '#/components/schemas/Uuid' }, question_id: { type: string }, ranges: { type: array, maxItems: 30, items: { type: object, properties: { start: { type: integer, minimum: 0 }, end: { type: integer, minimum: 0 } } } } } } } } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/question-tools/report:
     post:
       operationId: reportQuestion

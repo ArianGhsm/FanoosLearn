@@ -89,6 +89,11 @@ const noteTimers = new Map();
 const workspaceIdForTools = document.querySelector('meta[name="fanoos-workspace"]')?.content ?? '';
 const toolsBase = `/workspaces/${encodeURIComponent(workspaceIdForTools)}/question-tools`;
 
+function syncHighlights(questionId) {
+    api.post(`${toolsBase}/highlights`, { assessment_id: state.assessmentId, question_id: questionId, ranges: studyHighlights[questionId] ?? [] })
+        .catch(() => {});
+}
+
 async function loadServerTools(forAssessment) {
     try {
         const tools = await api.get(`${toolsBase}?assessment_id=${encodeURIComponent(forAssessment)}`);
@@ -96,6 +101,12 @@ async function loadServerTools(forAssessment) {
         for (const [questionId, body] of Object.entries(tools.notes ?? {})) {
             if (!studyNotes[questionId]) studyNotes[questionId] = String(body);
         }
+        // Highlights made on another device join this browser's copy, so the
+        // next local change saves both rather than dropping the server's.
+        for (const [questionId, ranges] of Object.entries(tools.highlights ?? {})) {
+            for (const range of Array.isArray(ranges) ? ranges : []) addHighlight(forAssessment, questionId, range, Number.MAX_SAFE_INTEGER);
+        }
+        studyHighlights = loadHighlights(forAssessment);
         if (phase === 'question') draw();
     } catch {
         // The tools are an extra; the exam works without them.
@@ -631,6 +642,7 @@ const questionActions = {
 
         addHighlight(state.assessmentId, questionId, { start, end }, paragraph.textContent.length);
         studyHighlights = loadHighlights(state.assessmentId);
+        syncHighlights(questionId);
         selection.removeAllRanges();
         draw();
     },
@@ -638,6 +650,7 @@ const questionActions = {
     clearHighlights(questionId) {
         clearHighlights(state.assessmentId, questionId);
         studyHighlights = loadHighlights(state.assessmentId);
+        syncHighlights(questionId);
         draw();
     },
 

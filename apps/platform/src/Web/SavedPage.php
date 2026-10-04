@@ -20,7 +20,7 @@ final class SavedPage
         $main = <<<'HTML'
 <header class="b-head">
     <h1>ذخیره‌ها و یادداشت‌ها</h1>
-    <p class="f-muted">سؤال‌هایی که حین آزمون ذخیره کرده‌ای و یادداشت‌هایت، مبحث به مبحث.</p>
+    <p class="f-muted">سؤال‌هایی که حین آزمون ذخیره کرده‌ای، یادداشت‌ها و هایلایت‌هایت، مبحث به مبحث.</p>
 </header>
 <div class="f-notice f-notice--error" id="saved-error" hidden>
     <div class="f-notice__body"><p id="saved-error-text"></p></div>
@@ -28,6 +28,7 @@ final class SavedPage
 <div class="b-tabs" role="tablist" aria-label="ذخیره‌ها">
     <button class="x-chip is-active" type="button" role="tab" aria-selected="true" data-view="bookmarks">سؤال‌های ذخیره‌شده</button>
     <button class="x-chip" type="button" role="tab" aria-selected="false" data-view="notes">یادداشت‌ها</button>
+    <button class="x-chip" type="button" role="tab" aria-selected="false" data-view="highlights">هایلایت‌ها</button>
 </div>
 <div id="saved" data-page="saved" aria-busy="true" aria-live="polite">
     <div class="x-skeleton" aria-hidden="true"></div>
@@ -65,7 +66,7 @@ HTML;
         return $this->renderer->render([
             'title' => $title . ' | فانوس',
             'description' => $title,
-            'stylesheets' => ['/assets/web/pages/exams.css', '/assets/web/pages/bank.css', '/assets/web/pages/saved.css'],
+            'stylesheets' => ['/assets/web/pages/exams.css', '/assets/web/pages/bank.css', '/assets/web/pages/saved.css', '/assets/web/pages/lessons.css'],
             'modules' => ['/assets/web/pages/saved.js'],
             'viewer' => $viewer,
             'activeNav' => $nav,

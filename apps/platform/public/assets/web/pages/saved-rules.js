@@ -18,3 +18,18 @@ export function groupByTopic(items) {
         return b.items.length - a.items.length;
     });
 }
+
+/**
+ * Highlights as flashcards: one card per highlighted phrase, the question it
+ * came from (its opening words) on the back.
+ */
+export function highlightCards(items) {
+    const cards = [];
+    for (const item of items) {
+        for (const fragment of Array.isArray(item.fragments) ? item.fragments : []) {
+            if (typeof fragment !== 'string' || fragment.trim() === '') continue;
+            cards.push({ front: fragment.trim(), back: item.preview, topic: item.topic ?? null, source: item.assessment_title ?? null });
+        }
+    }
+    return cards;
+}

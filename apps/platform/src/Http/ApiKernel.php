@@ -527,6 +527,9 @@ final class ApiKernel
             if ($request->method === 'POST' && $suffix === '/question-tools/note') {
                 return ['status' => 200, 'data' => $this->tools->saveNote($session->userId, $workspaceId, $assessment, $question, (string) ($body['body'] ?? ''))];
             }
+            if ($request->method === 'POST' && $suffix === '/question-tools/highlights') {
+                return ['status' => 200, 'data' => $this->tools->saveHighlights($session->userId, $workspaceId, $assessment, $question, is_array($body['ranges'] ?? null) ? array_values($body['ranges']) : [])];
+            }
             if ($request->method === 'POST' && $suffix === '/question-tools/report') {
                 return ['status' => 201, 'data' => $this->tools->report($session->userId, $workspaceId, $assessment, $question, (string) ($body['kind'] ?? ''), (string) ($body['body'] ?? ''))];
             }
