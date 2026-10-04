@@ -33,10 +33,13 @@ signed up while it had none:
 
 ```
 php scripts/ops/provision-discipline-library.php --discipline=medicine \
-    --workspace=<uuid> --name="بانک سؤالات پزشکی"
+    --workspace=<uuid> --name="بانک سؤالات پزشکی" --timezone=Asia/Tehran
 ```
 
 The script refuses to move a discipline that already has a different library.
+Re-running it is safe. `--timezone` sets the workspace's canonical timezone
+(`tenant_workspaces.timezone_name`, in which schedules and "today" are read);
+workspaces start as UTC. `create-library-workspace.php` passes `--timezone` on.
 
 When the library workspace does not exist yet, create it under an institution
 already in the directory; it is then marked as the library the same way

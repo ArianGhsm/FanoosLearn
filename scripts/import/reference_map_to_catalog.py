@@ -9,7 +9,10 @@ edition labels disagree with their year. Every book is therefore matched
 against the explicit table REFERENCES below, and every judgement the script
 makes (an edition inferred from a year, a row that is not a book, a partial
 notice) is written into the catalog's "review_notes" for the owner to
-confirm. Re-running on the same workbook gives the same file.
+confirm. Judgements already checked against the publishers' edition dates are
+listed in CONFIRMED, SPLIT_NOTICES and MISSING_YEAR below; they go into
+"decisions" instead, with the reason. Re-running on the same workbook gives
+the same file.
 """
 from __future__ import annotations
 
@@ -110,6 +113,37 @@ REFERENCES = [
 ]
 
 NOT_A_BOOK = ['تمامی کتب مرجع', 'سطح upper intermediate']
+
+# Edition judgements checked against the publishers' edition dates:
+# (reference key, publication year in the workbook) -> why the edition is right.
+CONFIRMED = {
+    ('torabinejad-endodontics', '2020'): 'the 6th edition was printed in 2020 with a 2021 copyright; 2020 is that printing',
+    ('little-falace-dental-management', '2018'): 'the 2018 edition is the 9th (Little, Miller, Rhodus); the book has no 12th edition, so "12th Ed." in the workbook is a typo',
+    ('nowak-pediatric', '2019'): 'the 2019 edition of Pediatric Dentistry: Infancy through Adolescence is the 6th',
+    ('neville-oral-pathology', '2016'): 'the 2016 edition is the 4th; the 5th is 2024',
+    ('proffit-orthodontics', '2013'): 'the 2013 edition is the 5th; the 6th is 2019',
+    ('malamed-local-anesthesia', '2013'): 'the 2013 edition is the 6th; the 7th is 2019',
+    ('burket-oral-medicine', '2015'): 'the 2015 edition is the 12th; the 13th is 2021',
+    ('sturdevant-operative', '2018'): 'the 2018 edition is the 7th (Ritter, Boushell, Walter)',
+    ('craig-restorative-materials', '2018'): 'the 14th edition was published in 2018 with a 2019 copyright',
+    ('van-noort-materials', '2013'): 'the 2013 edition is the 4th; the 5th is 2024',
+}
+
+# Partial notices that name two books on one row: (exam year, subject) ->
+# the books as (title to match, publication year), and where the years come from.
+SPLIT_NOTICES = {
+    ('1398', 'oral-medicine'): (
+        [("Burket's Oral Medicine", '2015'), ('Dental Management of the Medically Compromised Patient', '2018')],
+        'the notice scope names "Burket 2015" and "Falace 2018"'),
+    ('1398', 'operative-dentistry'): (
+        [("Sturdevant's Art and Science of Operative Dentistry", '2018'), ("Craig's Restorative Dental Materials", '2018')],
+        'the notice labels them "Art 2018" and "Craig 2018"'),
+}
+
+# Rows without a publication year: (exam year, reference key) -> (publication year, why).
+MISSING_YEAR = {
+    ('1398', 'van-noort-materials'): ('2013', 'in 1398 the newest edition was the 4th (2013); the 5th appeared in 2024'),
+}
 EDITION_NUMBER = re.compile(r'(\d+)\s*(?:st|nd|rd|th)', re.I)
 
 
@@ -160,40 +194,37 @@ def build() -> dict:
     validity: dict[tuple, dict] = {}
     used: dict[str, set] = {}
 
-    for number, row in enumerate(rows, start=2):
-        year, _period, subject_name, title, authors, pub_year, edition_text, scope, evidence, post, pdf, note = (row + [None] * 12)[:12]
-        title_l = clean(title).lower()
-        where = f'row {number} ({year}, {clean(subject_name)})'
-        subject = SUBJECT_BY_NAME.get(clean(subject_name).replace('‌', ''))
-        if subject is None:
-            notes.append(f'{where}: unknown subject "{clean(subject_name)}", skipped')
-            continue
-        if any(marker in title_l for marker in NOT_A_BOOK):
-            notes.append(f'{where}: "{clean(title)}" is a scope statement, not a book; kept out of the reference list')
-            continue
-        if ' / ' in clean(title):
-            notes.append(f'{where}: "{clean(title)}" names two books in one partial notice; not recorded as validity')
-            continue
+    decisions: list[str] = []
+
+    def add(where: str, year, subject: str, title: str, pub: str, edition_text: str, scope, evidence, post, pdf) -> None:
+        title_l = title.lower()
         matches = [ref for ref in REFERENCES if all(m in title_l for m in ref[0])]
         # "Pediatric Dentistry" also appears inside other titles; prefer the most specific match.
         matches.sort(key=lambda ref: -sum(len(m) for m in ref[0]))
         if not matches:
-            notes.append(f'{where}: no reference matches "{clean(title)}", skipped')
-            continue
+            notes.append(f'{where}: no reference matches "{title}", skipped')
+            return
         ref = matches[0]
-        key, _t, _a, _s, editions = ref[1], ref[2], ref[3], ref[4], ref[5]
-        pub = clean(pub_year)
+        key, editions = ref[1], ref[5]
+        if pub == '' and (clean(year), key) in MISSING_YEAR:
+            pub, why = MISSING_YEAR[(clean(year), key)]
+            decisions.append(f'{where}: "{title}" has no publication year; recorded as {editions[pub][1]} because {why}')
         if pub not in editions:
-            notes.append(f'{where}: "{clean(title)}" has no known edition for year "{pub}", skipped')
-            continue
+            notes.append(f'{where}: "{title}" has no known edition for year "{pub}", skipped')
+            return
         edition_key, label, _y = editions[pub]
-        stated = EDITION_NUMBER.search(clean(edition_text))
+        stated = EDITION_NUMBER.search(edition_text)
+        judgement = None
         if stated and edition_key[0].isdigit() and not edition_key.startswith(stated.group(1)) and not edition_key.endswith('-fa'):
-            notes.append(f'{where}: workbook says "{clean(edition_text)}" for {pub}; recorded as {label} — confirm')
+            judgement = f'workbook says "{edition_text}" for {pub}; recorded as {label}'
         elif not stated and edition_key[0].isdigit() and edition_key.endswith('e'):
-            notes.append(f'{where}: edition not stated; inferred {label} from the year {pub} — confirm')
-        if pub == '2020' and key == 'torabinejad-endodontics':
-            notes.append(f'{where}: 2020 printing of the 6th edition, recorded as the 6th edition')
+            judgement = f'edition not stated; recorded as {label} from the year {pub}'
+        elif pub == '2020' and key == 'torabinejad-endodontics':
+            judgement = f'2020 printing, recorded as the {label}'
+        if judgement and (key, pub) in CONFIRMED:
+            decisions.append(f'{where}: {judgement} — {CONFIRMED[(key, pub)]}')
+        elif judgement:
+            notes.append(f'{where}: {judgement} — confirm')
         used.setdefault(key, set()).add(edition_key)
 
         partial = clean(evidence).lower().startswith('partial')
@@ -213,8 +244,31 @@ def build() -> dict:
             if previous['scope'] != record['scope'] and record['scope']:
                 previous['scope'] = '; '.join(x for x in [previous['scope'], record['scope']] if x)
             previous['official'] = previous['official'] or record['official']
-            continue
+            return
         validity[identity] = record
+
+    for number, row in enumerate(rows, start=2):
+        year, _period, subject_name, title, authors, pub_year, edition_text, scope, evidence, post, pdf, note = (row + [None] * 12)[:12]
+        where = f'row {number} ({year}, {clean(subject_name)})'
+        subject = SUBJECT_BY_NAME.get(clean(subject_name).replace('‌', ''))
+        if subject is None:
+            notes.append(f'{where}: unknown subject "{clean(subject_name)}", skipped')
+            continue
+        if any(marker in clean(title).lower() for marker in NOT_A_BOOK):
+            decisions.append(f'{where}: "{clean(title)}" is a scope statement, not a book; kept out of the reference list')
+            continue
+        if ' / ' in clean(title):
+            split = SPLIT_NOTICES.get((clean(year), subject))
+            if split is None:
+                notes.append(f'{where}: "{clean(title)}" names two books in one partial notice; not recorded as validity')
+                continue
+            books, why = split
+            decisions.append(f'{where}: "{clean(title)}" names two books; recorded as '
+                             + ' and '.join(f'{t} ({y})' for t, y in books) + f' because {why}')
+            for book_title, book_year in books:
+                add(where, year, subject, book_title, book_year, '', scope, evidence, post, pdf)
+            continue
+        add(where, year, subject, clean(title), clean(pub_year), clean(edition_text), scope, evidence, post, pdf)
 
     references = []
     for _m, key, title, authors, subject, editions in REFERENCES:
@@ -233,6 +287,7 @@ def build() -> dict:
                  'docs/research/dental-residency-reference-map-1396-1405.xlsx. Edit the script or the workbook, '
                  'not this file. Chapter trees and concepts are added as questions are classified.',
         'review_notes': notes,
+        'decisions': decisions,
         'exam_types': [
             {'key': 'residency', 'name': 'دستیاری', 'active': True, 'order': 0},
             {'key': 'board', 'name': 'بورد', 'active': False, 'order': 1},
@@ -252,4 +307,5 @@ if __name__ == '__main__':
     sys.stdout.reconfigure(encoding='utf-8')
     print(f"{OUTPUT.relative_to(ROOT)}: {len(catalog['references'])} references, "
           f"{sum(len(r['editions']) for r in catalog['references'])} editions, "
-          f"{len(catalog['validity'])} validity rows, {len(catalog['review_notes'])} notes to review")
+          f"{len(catalog['validity'])} validity rows, {len(catalog['decisions'])} decisions, "
+          f"{len(catalog['review_notes'])} notes to review")

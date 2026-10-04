@@ -23,9 +23,13 @@ use Fanoos\Platform\Support\Transaction;
  * Students who signed up while the discipline had no library are enrolled
  * now. Re-running is safe.
  *
+ * --timezone sets the workspace's canonical timezone (tenant_workspaces.
+ * timezone_name, in which schedules and "today" are read). Workspaces start
+ * as UTC; a library whose students are in Iran wants Asia/Tehran.
+ *
  * Usage:
  *   php scripts/ops/provision-discipline-library.php \
- *       --discipline=<code, e.g. medicine> --workspace=<uuid> [--name=<new workspace name>]
+ *       --discipline=<code, e.g. medicine> --workspace=<uuid> [--name=<new workspace name>] [--timezone=Asia/Tehran]
  */
 
 $root = dirname(__DIR__, 2);
@@ -46,14 +50,18 @@ try {
     $code = (string) argument('discipline');
     $workspaceId = (string) argument('workspace');
     $name = argument('name');
+    $timezone = argument('timezone');
     if ($code === '' || preg_match('/^[0-9a-f-]{36}$/', $workspaceId) !== 1) {
-        throw new RuntimeException('Usage: --discipline=<code> --workspace=<uuid> [--name=<name>]');
+        throw new RuntimeException('Usage: --discipline=<code> --workspace=<uuid> [--name=<name>] [--timezone=<IANA name>]');
+    }
+    if ($timezone !== null && !in_array($timezone, DateTimeZone::listIdentifiers(), true)) {
+        throw new RuntimeException("--timezone must be an IANA timezone name such as Asia/Tehran, not {$timezone}.");
     }
 
     $database = DatabaseConnection::fromEnvironment();
     $audit = new AuditLogger($database);
 
-    $disciplineId = Transaction::run($database, static function () use ($database, $audit, $code, $workspaceId, $name): string {
+    $disciplineId = Transaction::run($database, static function () use ($database, $audit, $code, $workspaceId, $name, $timezone): string {
         $discipline = $database->prepare('SELECT id, library_workspace_id FROM academic_disciplines WHERE code = :code FOR UPDATE');
         $discipline->execute(['code' => $code]);
         $row = $discipline->fetch();
@@ -76,7 +84,11 @@ try {
             $database->prepare('UPDATE tenant_workspaces SET name = :name, updated_at = UTC_TIMESTAMP(6), version = version + 1 WHERE id = :id')
                 ->execute(['name' => mb_substr(trim($name), 0, 200), 'id' => $workspaceId]);
         }
-        $audit->record($workspaceId, null, 'discipline.library.provision', 'academic_discipline', (string) $row['id'], 'success', ['code' => $code]);
+        if ($timezone !== null) {
+            $database->prepare('UPDATE tenant_workspaces SET timezone_name = :timezone, updated_at = UTC_TIMESTAMP(6), version = version + 1 WHERE id = :id AND timezone_name <> :same')
+                ->execute(['timezone' => $timezone, 'same' => $timezone, 'id' => $workspaceId]);
+        }
+        $audit->record($workspaceId, null, 'discipline.library.provision', 'academic_discipline', (string) $row['id'], 'success', ['code' => $code, 'timezone' => $timezone]);
 
         return (string) $row['id'];
     });
@@ -84,7 +96,10 @@ try {
     $registration = new StudentRegistrationService($database, new AuthService($database, new PasswordHasher(), $audit), new PasswordHasher(), $audit);
     $enrolled = $registration->enrolDisciplineStudents($disciplineId);
 
-    echo json_encode(['discipline' => $code, 'library_workspace_id' => $workspaceId, 'students_enrolled' => $enrolled], JSON_UNESCAPED_UNICODE) . PHP_EOL;
+    $zone = $database->prepare('SELECT timezone_name FROM tenant_workspaces WHERE id = :id');
+    $zone->execute(['id' => $workspaceId]);
+
+    echo json_encode(['discipline' => $code, 'library_workspace_id' => $workspaceId, 'timezone' => $zone->fetchColumn(), 'students_enrolled' => $enrolled], JSON_UNESCAPED_UNICODE) . PHP_EOL;
 } catch (Throwable $error) {
     fwrite(STDERR, 'FAIL ' . $error->getMessage() . PHP_EOL);
     exit(1);
