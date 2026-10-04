@@ -228,6 +228,13 @@
         }
       }
     },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Judgement calls made while building the file that have been checked, each with its reason. Not imported."
+    },
     "review_notes": {
       "type": "array",
       "items": {

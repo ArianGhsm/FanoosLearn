@@ -23,7 +23,7 @@ use Fanoos\Platform\Support\DatabaseConnection;
  * Usage:
  *   php scripts/ops/create-library-workspace.php --discipline=dentistry --institution=<institution slug>
  *       --faculty="دانشکده دندانپزشکی" --program="دندانپزشکی عمومی" --name="کتابخانه‌ی دندانپزشکی"
- *       --actor=<platform owner uuid> [--degree=professional-doctorate] [--entry-year=1405] [--execute]
+ *       --actor=<platform owner uuid> [--degree=professional-doctorate] [--entry-year=1405] [--timezone=Asia/Tehran] [--execute]
  */
 
 $root = dirname(__DIR__, 2);
@@ -96,6 +96,9 @@ SQL);
     echo json_encode($created, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . PHP_EOL;
 
     $command = [PHP_BINARY, __DIR__ . '/provision-discipline-library.php', '--discipline=' . $options['discipline'], '--workspace=' . $created['workspace_id']];
+    if (isset($options['timezone'])) {
+        $command[] = '--timezone=' . $options['timezone'];
+    }
     passthru(implode(' ', array_map('escapeshellarg', $command)), $status);
     exit($status);
 } catch (Throwable $error) {

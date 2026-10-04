@@ -44,9 +44,14 @@ table of references and editions in the script, and writes:
 - one validity row per exam year, subject and edition, carrying the
   announced chapter scope (`scope`, e.g. «تمام فصول به جز ۴، ۸، ۱۸») and where
   the announcement came from (`evidence`);
-- `review_notes`: every judgement the script made (an edition inferred from
-  a year, a label that disagrees with its year, a row that is a scope
-  statement rather than a book, a partial notice), for the owner to confirm.
+- `decisions`: every judgement the script made that has been checked
+  against the publishers' edition dates (an edition inferred from a year, a
+  label that disagrees with its year, a row that is a scope statement rather
+  than a book, a partial notice naming two books), each with its reason; the
+  checked judgements live in the script's `CONFIRMED`, `SPLIT_NOTICES` and
+  `MISSING_YEAR` tables;
+- `review_notes`: judgements not yet checked, for the owner to confirm
+  (currently none). Neither list is imported.
 
 Chapter trees and concepts are not in the workbook; they are added as
 questions are classified.
