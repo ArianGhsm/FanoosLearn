@@ -203,7 +203,7 @@ final class BankBrowseService
         $this->access->requireWorkspace($userId, $workspaceId, 'exam.take');
         $query = $this->database->prepare(<<<'SQL'
 SELECT type.name AS type_name, type.type_key, validity.exam_year, subject.subject_key, subject.name AS subject_name, subject.sort_order,
-       reference.title, reference.authors, edition.edition_label, edition.published_year, validity.scope, validity.is_official
+       reference.title, reference.authors, edition.id AS edition_id, edition.edition_label, edition.published_year, validity.scope, validity.is_official
 FROM bank_reference_validity validity
 JOIN bank_exam_types type ON type.id = validity.exam_type_id
 JOIN bank_subjects subject ON subject.id = validity.subject_id
@@ -213,9 +213,11 @@ WHERE validity.workspace_id = :workspace AND type.is_active = TRUE
 ORDER BY validity.exam_year DESC, type.sort_order, subject.sort_order, subject.name, reference.title
 SQL);
         $query->execute(['workspace' => $workspaceId]);
+        $rows = $query->fetchAll();
+        $chapters = $this->editionChapters($workspaceId);
 
         $years = [];
-        foreach ($query->fetchAll() as $row) {
+        foreach ($rows as $row) {
             $key = $row['type_key'] . ':' . $row['exam_year'];
             $years[$key] ??= ['type' => (string) $row['type_name'], 'year' => (int) $row['exam_year'], 'subjects' => []];
             $subjects = &$years[$key]['subjects'];
@@ -227,6 +229,7 @@ SQL);
                 'published_year' => $row['published_year'] === null ? null : (int) $row['published_year'],
                 'scope' => $row['scope'],
                 'official' => (bool) $row['is_official'],
+                'chapters' => $chapters[(string) $row['edition_id']] ?? [],
             ];
             unset($subjects);
         }
@@ -235,6 +238,32 @@ SQL);
             $year['subjects'] = array_values($year['subjects']);
             return $year;
         }, $years));
+    }
+
+    /**
+     * Each edition's chapters (its top-level nodes), in chapter-number order:
+     * question imports add nodes too, so sort_order is not the book's order.
+     *
+     * @return array<string, list<array{number:?string,title:string}>>
+     */
+    private function editionChapters(string $workspaceId): array
+    {
+        $query = $this->database->prepare(<<<'SQL'
+SELECT edition_id, number, title
+FROM bank_reference_nodes
+WHERE workspace_id = :workspace AND parent_id IS NULL AND kind = 'chapter'
+SQL);
+        $query->execute(['workspace' => $workspaceId]);
+        $byEdition = [];
+        foreach ($query->fetchAll() as $row) {
+            $byEdition[(string) $row['edition_id']][] = ['number' => $row['number'] === null ? null : (string) $row['number'], 'title' => (string) $row['title']];
+        }
+        foreach ($byEdition as &$list) {
+            usort($list, static fn (array $a, array $b): int => strnatcmp((string) $a['number'], (string) $b['number']));
+        }
+        unset($list);
+
+        return $byEdition;
     }
 
     /**

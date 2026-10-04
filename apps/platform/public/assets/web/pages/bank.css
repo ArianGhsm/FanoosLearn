@@ -221,6 +221,38 @@ a.b-row:hover {
     margin: 0;
 }
 
+.b-chapters summary {
+    cursor: pointer;
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.b-chapters__list {
+    display: grid;
+    gap: var(--space-1);
+    margin: var(--space-2) 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.b-chapter {
+    display: grid;
+    grid-template-columns: 4ch 1fr;
+    gap: var(--space-2);
+    align-items: baseline;
+    font-size: var(--text-sm);
+}
+
+.b-chapter__number {
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.b-chapter__title {
+    text-align: end;
+    overflow-wrap: anywhere;
+}
+
 @media (max-width: 560px) {
     .b-topic {
         flex-wrap: wrap;

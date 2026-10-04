@@ -104,6 +104,7 @@ SQL);
         $row = $endo->fetch();
         $this->assert($row !== false && $row['edition_key'] === '6e' && $row['scope'] !== null, 'The 1405 endodontics reference is not Torabinejad 6e with its scope.');
         $this->assert($this->count('bank_reference_validity', $ws) >= 150, 'The real catalog lost its year-by-year references.');
+        $this->assert($this->count('bank_reference_nodes', $ws) >= 1000, 'The real catalog lost its chapter lists.');
 
         // A reviewed source survives a later AI pass.
         $this->database->prepare("UPDATE bank_question_sources s JOIN bank_questions q ON q.id = s.question_id SET s.reviewed_by_user_id = :user, s.reviewed_at = UTC_TIMESTAMP(6), s.page = '257' WHERE q.question_key = :key")
@@ -156,7 +157,18 @@ SQL);
         $subject = $browse->subject($f['student'], $ws, 'endodontics');
         $this->assert($subject['topics'][0]['key'] === 'endodontics/cleaning-and-shaping' && $subject['topics'][0]['total'] === 2 && count($subject['high_yield']) === 2, 'Subject topics: ' . json_encode($subject['topics'], JSON_UNESCAPED_UNICODE));
         $this->assert($subject['references'] !== [], 'The subject page lists no references.');
-        $this->assert($browse->references($f['student'], $ws)[0]['year'] >= 1405, 'References are not newest year first.');
+        $years = $browse->references($f['student'], $ws);
+        $this->assert($years[0]['year'] >= 1405, 'References are not newest year first.');
+        $torabinejad = null;
+        foreach ($years[0]['subjects'] as $row) {
+            foreach ($row['references'] as $ref) {
+                if ($row['key'] === 'endodontics' && str_starts_with($ref['title'], 'Endodontics')) {
+                    $torabinejad = $ref;
+                }
+            }
+        }
+        $this->assert($torabinejad !== null && count($torabinejad['chapters']) === 22 && $torabinejad['chapters'][0]['number'] === '1' && $torabinejad['chapters'][21]['number'] === '22',
+            'The 1405 endodontics reference does not list its 22 chapters in order: ' . json_encode($torabinejad['chapters'] ?? null, JSON_UNESCAPED_UNICODE));
         $set = $browse->study($f['student'], $ws, ['subject' => 'endodontics', 'topic' => 'endodontics/cleaning-and-shaping']);
         $this->assert($set['question_count'] === 2, 'The study set does not hold the topic: ' . json_encode($set, JSON_UNESCAPED_UNICODE));
         $studyAttempt = $exams->startAttempt($f['student'], $ws, $set['assessment_id']);

@@ -245,6 +245,22 @@ function referenceItem(ref) {
     li.append(meta);
     if (ref.scope) li.append(el('span', 'b-ref__scope', ref.scope));
     if (ref.official === false) li.append(el('span', 'b-old', 'اعلام غیررسمی'));
+    if (Array.isArray(ref.chapters) && ref.chapters.length > 0) {
+        const details = el('details', 'b-chapters');
+        details.append(el('summary', '', `فهرست فصل‌ها · ${faDigits(ref.chapters.length)} فصل`));
+        const ol = el('ol', 'b-chapters__list');
+        for (const chapter of ref.chapters) {
+            const item = el('li', 'b-chapter');
+            item.append(el('span', 'b-chapter__number', chapter.number ? faDigits(chapter.number) : '–'));
+            const title = el('span', 'b-chapter__title', chapter.title);
+            title.lang = 'en';
+            title.dir = 'ltr';
+            item.append(title);
+            ol.append(item);
+        }
+        details.append(ol);
+        li.append(details);
+    }
     return li;
 }
 
