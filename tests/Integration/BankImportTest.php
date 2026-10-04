@@ -92,11 +92,12 @@ final class BankImportTest
         $extra = $catalog;
         $extra['references'][0]['editions'][0]['nodes'][] = ['key' => 'ch15', 'kind' => 'chapter', 'number' => '15', 'title' => 'Obturation'];
         $importer->import($ws, $extra);
+        $withExtra = $this->count('bank_reference_nodes', $ws);
         $dry = $importer->pruneNodes($ws, $catalog, true);
         $this->assert($dry === ['stale' => 1, 'deleted' => 1, 'kept_in_use' => 0], 'Prune dry run: ' . json_encode($dry));
-        $this->assert($this->count('bank_reference_nodes', $ws) === $counts['nodes'] + 1, 'A prune dry run deleted rows.');
+        $this->assert($this->count('bank_reference_nodes', $ws) === $withExtra, 'A prune dry run deleted rows.');
         $pruned = $importer->pruneNodes($ws, $catalog);
-        $this->assert($pruned['deleted'] === 1 && $this->count('bank_reference_nodes', $ws) === $counts['nodes'], 'The unlisted chapter was not pruned: ' . json_encode($pruned));
+        $this->assert($pruned['deleted'] === 1 && $this->count('bank_reference_nodes', $ws) === $withExtra - 1, 'The unlisted chapter was not pruned: ' . json_encode($pruned));
         $bare = $catalog;
         unset($bare['references'][0]['editions'][0]['nodes'][0]['children']);
         $kept = $importer->pruneNodes($ws, $bare);
