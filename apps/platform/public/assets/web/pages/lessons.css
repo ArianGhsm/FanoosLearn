@@ -1,0 +1,120 @@
+/* درسنامه‌ها and اطلاعیه‌ها. Builds on bank.css. */
+
+.l-compose summary {
+    cursor: pointer;
+}
+
+.l-compose form,
+.n-compose {
+    display: grid;
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+}
+
+.l-compose textarea,
+.n-compose textarea {
+    width: 100%;
+    resize: vertical;
+}
+
+.l-reader {
+    position: relative;
+    overflow: hidden;
+}
+
+.l-watermark {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.08;
+    background-repeat: repeat;
+    z-index: 1;
+}
+
+.l-reader__head h1 {
+    margin: 0 0 var(--space-1);
+}
+
+.l-reader__body {
+    position: relative;
+    z-index: 2;
+    margin-top: var(--space-4);
+    line-height: 2;
+}
+
+.l-reader__file {
+    display: grid;
+    gap: var(--space-3);
+    justify-items: start;
+    margin-top: var(--space-4);
+}
+
+.l-cards {
+    display: grid;
+    gap: var(--space-3);
+    justify-items: center;
+    margin-top: var(--space-5);
+    position: relative;
+    z-index: 2;
+}
+
+.l-card {
+    display: grid;
+    place-items: center;
+    width: min(100%, 520px);
+    min-height: 220px;
+    padding: var(--space-5);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    background: var(--surface-muted);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: var(--text-lg);
+    cursor: pointer;
+    transition: background var(--motion-fast) var(--ease);
+}
+
+.l-card.is-back {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+}
+
+.l-card__face {
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+.l-card__count {
+    margin: 0;
+}
+
+.n-item {
+    margin-bottom: var(--space-4);
+}
+
+.n-item.is-unread {
+    border-inline-start: 3px solid var(--accent);
+}
+
+.n-item__head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.n-item__head h2 {
+    margin: 0;
+    font-size: var(--text-lg);
+}
+
+.n-item__new {
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-pill);
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    font-size: var(--text-xs);
+}
+
+.n-item__when {
+    margin: var(--space-1) 0 var(--space-3);
+}

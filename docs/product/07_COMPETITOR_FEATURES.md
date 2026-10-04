@@ -76,9 +76,9 @@ of the counted rows at ✅.
 | 39 | Plans and purchase (اشتراک) | M P | ✅ store and products (payments switched off for now) |
 | 40 | Dark mode | M | ✅ |
 | 41 | Installable app (اپلیکیشن) | M P | ✅ installable (manifest, icons, a worker that caches only versioned assets) |
-| 42 | Announcement board (تابلو اعلانات / اخبار) | M P | 🟡 the platform has announcements, no page |
+| 42 | Announcement board (تابلو اعلانات / اخبار) | M P | ✅ /app/announcements, unread marked; composer for broadcasters (reaches the bots too) |
 | 43 | Support contact | M P | ✅ /support with the bot contacts and FAQ; linked in every footer |
-| 44 | Lessons and summaries next to the bank (درسنامه، خلاصه، مایندمپ) | M P | 🟡 protected files exist; no lesson page |
+| 44 | Lessons and summaries next to the bank (درسنامه، خلاصه، مایندمپ) | M P | ✅ /app/lessons: lessons, summaries, flashcards, files via protected delivery; composer with draft → review → publish |
 
 ## Left out on purpose
 
@@ -90,4 +90,4 @@ plans. They can come back as their own decisions.
 
 ## Score
 
-Counted rows: 44. ✅ today: 39 (89 %). Target: 36 (≥ 80 %).
+Counted rows: 44. ✅ today: 41 (93 %). Target: 36 (≥ 80 %).

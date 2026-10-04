@@ -190,6 +190,20 @@ final class WebRouter
                 : $this->page(200, (new StudyTimerPage($this->renderer))->render($viewer));
         }
 
+        if ($path === '/app/announcements' || $path === '/app/lessons' || preg_match('#^/app/lessons/[0-9a-f-]{36}$#', $path) === 1) {
+            if ($viewer === null) {
+                return $this->redirect('/login');
+            }
+            if ($viewer->workspaceId === null) {
+                return $this->redirect('/app');
+            }
+            return $this->page(200, match (true) {
+                $path === '/app/announcements' => (new AnnouncementsPage($this->renderer))->render($viewer),
+                $path === '/app/lessons' => (new LessonsPage($this->renderer))->library($viewer),
+                default => (new LessonsPage($this->renderer))->lesson($viewer, substr($path, strlen('/app/lessons/'))),
+            });
+        }
+
         if ($path === '/app/exams/mistakes') {
             if ($viewer === null) {
                 return $this->redirect('/login');
@@ -237,12 +251,14 @@ final class WebRouter
         $workspaceName = null;
         $canManageCatalog = false;
         $canReviewContent = false;
+        $permissionKeys = [];
         if ($session->selectedWorkspaceId !== null) {
             foreach ($account['workspaces'] ?? [] as $workspace) {
                 if (($workspace['id'] ?? null) === $session->selectedWorkspaceId) {
                     $workspaceName = (string) ($workspace['name'] ?? '');
                     $canManageCatalog = in_array('commerce.manage_catalog', (array) ($workspace['permission_keys'] ?? []), true);
                     $canReviewContent = in_array('exam.review', (array) ($workspace['permission_keys'] ?? []), true);
+                    $permissionKeys = array_values(array_map('strval', (array) ($workspace['permission_keys'] ?? [])));
                     break;
                 }
             }
@@ -262,6 +278,7 @@ final class WebRouter
             $workspaceName === '' ? null : $workspaceName,
             $canManageCatalog,
             $canReviewContent,
+            $permissionKeys,
         );
     }
 
