@@ -23,24 +23,28 @@ export function relativeDay(iso, now = Date.now()) {
 }
 
 /**
- * @returns {{peer: ?string, attempts: ?string, correct: ?string, last: ?string}}
+ * @returns {{peer: ?string, attempts: ?string, correct: ?string, wrong: ?string, blank: ?string, last: ?string}}
  */
 export function statsLines(stats, now = Date.now()) {
     if (!stats || typeof stats !== 'object') {
-        return { peer: null, attempts: null, correct: null, last: null };
+        return { peer: null, attempts: null, correct: null, wrong: null, blank: null, last: null };
     }
     const answered = Number(stats.answered) || 0;
+    const blanks = Number(stats.blank) || 0;
+    const blank = Number.isInteger(stats.blank) ? `${faDigits(blanks)} بار` : null;
     const peer = Number.isInteger(stats.peer_correct_percent) && Number.isInteger(stats.peer_answered)
         ? `٪${faDigits(stats.peer_correct_percent)} از ${faDigits(stats.peer_answered)} پاسخ`
         : null;
     if (answered === 0) {
-        return { peer, attempts: 'هنوز نه', correct: null, last: null };
+        return { peer, attempts: 'هنوز نه', correct: null, wrong: null, blank, last: null };
     }
     const when = relativeDay(stats.last_answered_at, now);
     return {
         peer,
         attempts: `${faDigits(answered)} بار`,
         correct: `${faDigits(Number(stats.correct) || 0)} از ${faDigits(answered)}`,
+        wrong: `${faDigits(answered - (Number(stats.correct) || 0))} بار`,
+        blank,
         last: when === null ? null : `${when} · ${stats.last_correct ? 'درست' : 'نادرست'}`,
     };
 }

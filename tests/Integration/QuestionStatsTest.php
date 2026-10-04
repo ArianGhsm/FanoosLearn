@@ -88,6 +88,11 @@ final class QuestionStatsTest
         $own = (new QuestionStatsRecorder($this->database))->forQuestion($ws, $f['s1'], 'q1');
         $this->assert($own['answered'] === 2 && $own['correct'] === 2, 'An unrevealed answer in learning mode was not counted.');
 
+        // پاسخ سفید: s3 left q2 blank -- counted as a blank, never as an answer.
+        $own = (new QuestionStatsRecorder($this->database))->forQuestion($ws, $f['s3'], 'q2');
+        $this->assert($own['blank'] === 1 && $own['answered'] === 0 && $own['last_correct'] === null, 'A blank was not counted on its own: ' . json_encode($own));
+        $this->assert((new QuestionStatsRecorder($this->database))->forQuestion($ws, $f['s1'], 'q2')['blank'] === 0, 'An answered question was counted as blank.');
+
         // A weak topic needs five answers: s2 gets all of B wrong.
         $this->sit($f['s2'], $b, ['k1' => 1, 'k2' => 1, 'k3' => 1, 'k4' => 1, 'k5' => 1]);
 
@@ -148,6 +153,7 @@ final class QuestionStatsTest
             'exam_question_stats' => 'SELECT question_key, answered_count, correct_count FROM exam_question_stats WHERE workspace_id = :workspace ORDER BY question_key',
             'exam_question_choice_stats' => 'SELECT question_key, choice_index, picked_count FROM exam_question_choice_stats WHERE workspace_id = :workspace ORDER BY question_key, choice_index',
             'exam_question_user_stats' => 'SELECT user_id, question_key, course_id, topic, answered_count, correct_count, last_correct FROM exam_question_user_stats WHERE workspace_id = :workspace ORDER BY user_id, question_key',
+            'exam_question_user_blanks' => 'SELECT user_id, question_key, blank_count FROM exam_question_user_blanks WHERE workspace_id = :workspace ORDER BY user_id, question_key',
         ] as $table => $sql) {
             $query = $this->database->prepare($sql);
             $query->execute(['workspace' => $this->fixture['workspace']]);
