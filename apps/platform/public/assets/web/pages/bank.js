@@ -276,7 +276,7 @@ function chapterList(chapters, editionRef) {
     }
     details.append(ol);
     if (chapters.some((chapter) => chapter.title_fa && !chapter.title_fa_reviewed)) {
-        details.append(el('p', 'b-chapters__note', 'عنوان‌های فارسی ترجمه‌ی ماشینی‌اند و هنوز بازبینی نشده‌اند؛ عنوان انگلیسی همان فهرست ناشر است.'));
+        details.append(el('p', 'b-chapters__note', 'عنوان‌های فارسی را هوش مصنوعی ترجمه و یکدست کرده و هنوز متخصص بازبینی‌شان نکرده است؛ عنوان انگلیسی همان متن کتاب است.'));
     }
     return details;
 }
