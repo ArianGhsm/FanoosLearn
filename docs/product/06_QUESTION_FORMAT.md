@@ -59,6 +59,12 @@ table of references and editions in the script, and writes:
   `scripts/import/scope_chapters.py` does the reading (tests in
   `tests/import/`); a notice that only adds or drops chapters, or names no
   chapter list, gets no `scope_chapters` and a line in `decisions`;
+- each chapter's headings, from `data/bank/reference-sections.json`: the
+  sections and subsections inside the chapter, read from the owner's copies
+  of 13 books (the PDF's bookmarks, or its heading styles where it has
+  none); children of the chapter node, keyed `ch14.s03` and `ch14.s03.02`.
+  Only headings are kept, never the text. The page fetches them per
+  chapter (`GET /bank/chapter-outline`);
 - each chapter's Persian title (`title_fa`, with `title_fa_origin` `ai` until
   a dentist reviews it) from `data/bank/reference-tocs.fa.json`, keyed by the
   English title;
