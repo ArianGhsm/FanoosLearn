@@ -28,9 +28,11 @@ accepts several options is "disputed" (the runner scores one answer, so the
 publisher leaves it out rather than mark a right answer wrong). Accepted
 options stay in the answer source until the bank supports them structurally.
 
-Chapters become catalog nodes ("ch6") of the cited edition and a topic-level
-concept per chapter, with the AI confidence carried through: below the
-owner's 0.85 threshold they are stored but not shown as fact.
+A checked chapter ("Chapter 6. ..." or van Noort's "Chapter 3.5 ...") must
+already be a chapter node of the cited edition in the catalog; the question
+cites that node ("ch06", "ch03.5") and a topic-level concept per chapter,
+both with the catalog's own title. A reviewed "reference" may name the
+catalog edition directly ("craig-restorative-materials@14e").
 
 Standard library only; reads the workbook with the same XML reader as
 reference_map_to_catalog.py.
@@ -47,7 +49,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from reference_map_to_catalog import REFERENCES, SUBJECT_BY_NAME  # noqa: E402
+from reference_map_to_catalog import REFERENCES, SUBJECT_BY_NAME, chapter_key  # noqa: E402
 
 CATALOG = ROOT / 'data/bank/catalog.json'
 NS = {'m': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main',
@@ -148,9 +150,14 @@ def split_question(text: str) -> tuple[str, list[str]]:
 
 
 def reference_for(title_with_edition: str, catalog: dict) -> tuple[str, str] | None:
-    """'Contemporary Orthodontics — 6th Ed. (2019)' -> ('proffit-orthodontics', '6e')."""
+    """'Contemporary Orthodontics — 6th Ed. (2019)' -> ('proffit-orthodontics', '6e').
+    A reviewed correction may name the catalog edition directly: 'craig-restorative-materials@14e'."""
     if not title_with_edition:
         return None
+    direct = re.fullmatch(r'\s*([a-z0-9-]+)@([\w-]+)\s*', title_with_edition)
+    if direct:
+        ref = next((r for r in catalog['references'] if r['key'] == direct.group(1)), None)
+        return (direct.group(1), direct.group(2)) if ref and any(e['key'] == direct.group(2) for e in ref['editions']) else None
     title, _, rest = title_with_edition.partition('—')
     low = title.lower().replace('’', "'")
     edition = re.search(r'(\d+)(?:st|nd|rd|th)\s*ed', rest, re.I)
@@ -172,8 +179,18 @@ def reference_for(title_with_edition: str, catalog: dict) -> tuple[str, str] | N
 def chapter(text: str) -> tuple[str, str] | None:
     if len(re.findall(r'\bChapter\b', text or '', re.I)) != 1:
         return None
-    m = re.match(r'\s*Chapter\s+(\d+)\.?\s*(.+)', text or '')
+    m = re.match(r'\s*Chapter\s+(\d+(?:\.\d+)?)(?:\.\s*|\s+)(.+)', text or '')
     return (m.group(1), m.group(2).strip()) if m else None
+
+
+def catalog_chapter(catalog: dict, ref: tuple[str, str], number: str) -> dict | None:
+    """The cited edition's chapter node with this number (van Noort's '3.5' included)."""
+    for r in catalog['references']:
+        if r['key'] == ref[0]:
+            for e in r['editions']:
+                if e['key'] == ref[1]:
+                    return next((n for n in e.get('nodes', []) if n.get('kind') == 'chapter' and n.get('number') == number), None)
+    return None
 
 
 def answer(row: dict[str, str]) -> dict:
@@ -320,39 +337,38 @@ def build(args: dict) -> None:
         if q.get('chapter_checked') and (ch is None or ref is None):
             left_out.append(f'{n}: checked chapter is ambiguous or lacks a resolvable edition')
             continue
+        node = catalog_chapter(catalog, ref, ch[0]) if ch and ref and q.get('chapter_checked') else None
+        if q.get('chapter_checked') and node is None:
+            left_out.append(f'{n}: chapter {ch[0]} is not in the catalog for {ref[0]}@{ref[1]}')
+            continue
         if ref and q.get('reference_checked'):
             source = {'ref': f'{ref[0]}@{ref[1]}', 'primary': True, 'origin': 'human', 'confidence': {'source': 1.0}}
-            if ch and q.get('chapter_checked'):
-                node_key = f'ch{int(ch[0]):02d}'
-                nodes[(ref[0], ref[1], node_key)] = {'number': ch[0], 'title': ch[1]}
+            if node is not None:
+                # The catalog's own node: its key (dotted chapters are ch03.5) and its title.
+                node_key = chapter_key(node['number'])
+                if node.get('key') != node_key:
+                    raise ValueError(f'{n}: catalog node {node.get("key")} does not match chapter {node["number"]}')
+                nodes[(ref[0], ref[1], node_key)] = {'number': node['number'], 'title': node['title']}
                 source['ref'] += f'#{node_key}'
                 source['confidence']['node'] = 1.0
-                concept_key = f'{subject}/{ref[0]}-ch{int(ch[0]):02d}'
-                concepts[concept_key] = {'key': concept_key, 'subject': subject, 'level': 'topic', 'name': ch[1]}
+                concept_key = f'{subject}/{ref[0]}-{node_key}'
+                concepts[concept_key] = {'key': concept_key, 'subject': subject, 'level': 'topic', 'name': node['title'][:200]}
                 item['concepts'] = [{'key': concept_key, 'primary': True, 'confidence': 1.0, 'origin': 'human'}]
             item['sources'] = [source]
         questions.append(item)
 
     if left_out:
         raise ValueError(f'{year}: {len(left_out)} questions block the build: ' + '; '.join(left_out))
-    by_ref: dict[str, dict] = {}
-    for (ref_key, edition, node_key), node in sorted(nodes.items()):
-        base = next(r for r in catalog['references'] if r['key'] == ref_key)
-        entry = by_ref.setdefault(ref_key, {k: v for k, v in base.items() if k != 'editions'} | {'editions': []})
-        ed = next((e for e in entry['editions'] if e['key'] == edition), None)
-        if ed is None:
-            ed = {k: v for k, v in next(e for e in base['editions'] if e['key'] == edition).items() if k != 'nodes'} | {'nodes': []}
-            entry['editions'].append(ed)
-        ed['nodes'].append({'key': node_key, 'kind': 'chapter', 'number': node['number'], 'title': node['title'][:300]})
-    references = list(by_ref.values())
+    # The cited chapters are already nodes of the full catalog (checked above). They are
+    # not repeated here: the importer would rewrite their order and page range from this
+    # partial list. The supplement adds only the chapter-level topics.
 
     supplement = {
         'format': 'fanoos.bank.catalog/1',
-        'notes': f'Chapters and chapter-level topics cited by the {year} residency questions (corpus workbook, AI chapter suggestions with confidence).',
+        'notes': f'Chapter-level topics cited by the {year} residency questions, each chapter checked against the cited edition.',
         'exam_types': catalog['exam_types'],
         'subjects': catalog['subjects'],
         'concepts': sorted(concepts.values(), key=lambda c: c['key']),
-        'references': references,
     }
     sitting = {
         'format': 'fanoos.bank.sitting/1',
