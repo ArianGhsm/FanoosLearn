@@ -222,7 +222,8 @@ def audit(args: dict) -> None:
             issues.append('missing_question_text')
         elif len(choices) != 4 or not stem or any(not choice for choice in choices):
             issues.append('stem_or_choices_need_review')
-        if 'Visually transcribed' in (row.get('وضعیت متن') or ''):
+        text_status = row.get('وضعیت متن') or ''
+        if 'independent check pending' in text_status or 'Visually transcribed' in text_status:
             issues.append('visual_transcription_needs_independent_check')
         if 'independent second reading' in (row.get('یادداشت') or ''):
             issues.append('specific_transcription_term_needs_second_reading')
@@ -242,7 +243,8 @@ def audit(args: dict) -> None:
             issues.append('figure_asset_not_verified')
         if row['درس'] == 'زبان انگلیسی' and re.search(r'\b(?:passage|above passage|writer|author)\b', raw_text, re.I) and len(raw_text) < 700:
             issues.append('reading_passage_context_not_attached')
-        if row['سال آزمون'] == '1405':
+        if row['سال آزمون'] == '1405' and not (
+                'Visually transcribed' in text_status or 'Visually checked' in text_status):
             issues.append('corrupted_pdf_text_layer_needs_page_review')
         if not re.search(r'[ABCD]|حذف', row.get('کلید نهایی رسمی') or ''):
             issues.append('missing_official_final_key')
