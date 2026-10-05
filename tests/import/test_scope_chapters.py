@@ -53,6 +53,24 @@ class ScopeChaptersTest(unittest.TestCase):
         self.assertEqual(numbers(resolve('بخش 3؛ بخش‌های 3.4–3.7', sections)), ['3.4', '3.5', '3.6', '3.7'])
         self.assertEqual(numbers(resolve('بخش‌های 2.2،3،3.4،3.5', sections)), ['2.2', '3.4', '3.5'])
 
+    def test_the_official_lists_own_phrasing(self):
+        self.assertEqual(numbers(resolve('فصول 4 و 5 و 13 تا 16 و 18 کتاب', TWENTY)), ['4', '5', '13', '14', '15', '16', '18'])
+        self.assertEqual(numbers(resolve('فصل 1 تا پایان فصل 3 - فصل 12 - فصل 15 تا پایان فصل 17', TWENTY)),
+                         ['1', '2', '3', '12', '15', '16', '17'])
+        self.assertEqual(numbers(resolve('فصل های 4-10-12-14 کتاب', TWENTY)), ['4', '10', '12', '14'])
+        self.assertEqual(numbers(resolve('کلیه فصول (به جز فصول 5 و 9 و 10) کتاب', TWENTY)),
+                         [n for n in TWENTY if n not in {'5', '9', '10'}])
+
+    def test_only_and_whole_list_qualifiers_are_not_partial(self):
+        self.assertEqual(partial(resolve('فقط فصول 1 و 2 و 3', TWENTY)), [])
+        self.assertEqual(partial(resolve('فصول 2 و 3 و 4 کتاب (فقط مباحث ملاحظات دندانپزشکی)', TWENTY)), [])
+
+    def test_a_parenthesis_after_a_chapter_limits_that_chapter(self):
+        result = resolve('فصول 1 (از صفحه 1 تا 15) و 2 و 3 و 13 (از صفحه 461 تا 484) کتاب', TWENTY)
+        self.assertEqual(numbers(result), ['1', '2', '3', '13'])
+        self.assertEqual(partial(result), ['1', '13'])
+        self.assertEqual(partial(resolve('فصل 9 صفحات 276 تا 278 و 288 تا 291', TWENTY)), ['9'])
+
     def test_notices_that_only_change_a_list_are_unreadable(self):
         for text in ['فصول 4،18،19 از منابع حذف شدند.', 'فصول 10 و17 به منابع آزمون 98 اضافه شد.',
                      'Part II: Direct Restorative Materials', 'ذکر شده به عنوان منبع؛ فصل/صفحه مشخص نشده',

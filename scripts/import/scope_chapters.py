@@ -20,7 +20,7 @@ UNREADABLE = ['حذف شد', 'حذف فصل', 'ویرایش‌های', 'اضاف
 PARTIAL = ['فقط', 'به جز ص', 'به‌جز ص', 'بجز ص', 'تا ص', 'تا ابتدای', 'از مبحث', 'از حدود', 'ادامه']
 NUMBER = r'\d+(?:\.\d+)?'
 RANGE = re.compile(rf'({NUMBER})\s*[–\-—]\s*({NUMBER})|({NUMBER})')
-PAGES = re.compile(r'(?:صص|ص)\s*\.?\s*\d+(?:\s*[–\-—]\s*\d+)?(?:\s*و\s*\d+(?:\s*[–\-—]\s*\d+)?)*')
+PAGES = re.compile(r'(?:صفحات|صفحه|صص|ص)\s*\.?\s*\d+(?:\s*[–\-—]\s*\d+)?(?:\s*و\s*\d+(?:\s*[–\-—]\s*\d+)?)*')
 
 
 def _order(number: str) -> tuple[int, ...]:
@@ -54,6 +54,29 @@ def resolve(scope: str | None, chapters: list[str]) -> list[dict] | None:
     if any(marker in lower for marker in UNREADABLE):
         return None
     known = sorted(chapters, key=_order)
+    # The official lists' own phrasing: «فصل 1 تا پایان فصل 9», «13 تا 26»,
+    # «فصل های 4-10-12-14» (a list, not ranges), «کلیه فصول».
+    text = text.replace('تا پایان فصل', 'تا')
+    text = re.sub(rf'{NUMBER}(?:\s*-\s*{NUMBER}){{2,}}', lambda m: '، '.join(re.findall(NUMBER, m.group(0))), text)
+    text = re.sub(rf'({NUMBER})\s*تا\s*({NUMBER})', lambda m: f'{m.group(1)}–{m.group(2)}', text)
+    if text.startswith('کلیه فصول'):
+        text = 'تمام فصول' + text[len('کلیه فصول'):]
+    # «فقط فصول …» means "only these chapters", not part of them; a parenthesis
+    # after «کتاب» («(فقط مباحث ملاحظات دندانپزشکی)») qualifies the whole list.
+    text = re.sub(r'^فقط\s+(?=فص)', '', text)
+    text = re.sub(r'کتاب\s*\([^)]*\)', 'کتاب', text)
+    lower = text.lower()
+    # «فصول 1 (از صفحه 1 تا 15) و 2»: a parenthesis right after a chapter
+    # number limits that chapter only.
+    limited: dict[str, str] = {}
+
+    def note_limit(m: re.Match) -> str:
+        inner = m.group(2).strip()
+        if re.search(r'فصل\s*\d', inner) or not (re.search(r'از\s*ص', inner) or any(w in inner for w in PARTIAL)):
+            return m.group(0)
+        limited[m.group(1)] = inner
+        return m.group(1)
+    text = re.sub(rf'({NUMBER})\s*\(([^)]*)\)', note_limit, text)
 
     if lower.startswith('تمام فصول'):
         head, _, rest = text.partition('؛')
@@ -86,7 +109,7 @@ def resolve(scope: str | None, chapters: list[str]) -> list[dict] | None:
             elif numbers:
                 numbers = [c for c in known if c.split('.')[0] in numbers]
                 headings.update(numbers)
-        partial_here = any(word in outer for word in PARTIAL) or (len(numbers) == 1 and re.search(r'صص|ص\s*\d', outer))
+        partial_here = any(word in outer for word in PARTIAL) or (len(numbers) == 1 and re.search(r'(?:صفحات|صفحه|صص|ص)\s*\d', outer))
         for part in inner:
             named = re.findall(r'فصل\s*(\d+)', part.translate(DIGITS))
             if named and any(word in part or 'ص' in part for word in PARTIAL):
@@ -106,6 +129,9 @@ def resolve(scope: str | None, chapters: list[str]) -> list[dict] | None:
     for n in headings - explicit:
         if n.split('.')[0] in narrowed:
             included.pop(n, None)
+    for n, inner in limited.items():
+        if n in included:
+            included[n] = inner
     if not included:
         return None
     ordered = sorted(included, key=_order)

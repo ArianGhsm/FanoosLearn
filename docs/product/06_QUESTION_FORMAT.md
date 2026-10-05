@@ -35,21 +35,27 @@ and editions the catalog already has.
 **The real catalog** is `data/bank/catalog.json`. It is generated, not
 edited by hand: `python scripts/import/reference_map_to_catalog.py` reads
 the research workbook `docs/research/dental-residency-reference-map-1396-1405.xlsx`
-(official reference lists, 1396–1405), matches every book against an explicit
+(reference lists, 1396–1405) and every later year's official list in
+`docs/research/dental-residency-references-<year>.json` (1406, transcribed
+from the PDF on sanjeshp.ir), matches every book against an explicit
 table of references and editions in the script, and writes:
 
 - 13 subjects, the three exam types (دستیاری active; بورد and ارتقا present
   but inactive);
-- 31 references with 48 editions; 42 of the editions carry their chapter
-  list (1,277 chapters) from `data/bank/reference-tocs.json`: the
+- only the books the medical education assessment center (سنجش پزشکی) named,
+  1397–1406: the 1401 file's English books came from an appended page, not
+  the official table (which only sets the English level), so the script's
+  `NOT_IN_OFFICIAL_LIST` leaves them out with that reason;
+- 27 references with 44 editions; 43 of the editions carry their chapter
+  list (1,301 chapters) from `data/bank/reference-tocs.json`: the
   publishers' tables of contents, or a library catalogue record where the
   publisher lists none, with the page each was read from (`"language": "fa"`
   marks the Persian national book, whose titles are its own). Chapter n is
   node `ch0n` (`ch12`, and `ch01.3` for van Noort's numbering), the key
   question sources cite. Still without a list: Peterson (Persian
   translation, whose chapter numbering differs from the English 5th
-  edition) and the four English-exam titles (Daly is the 2013 2nd edition, as
-  the owner confirmed; its chapters come from the publisher's Crossref records), which are not read by chapter;
+  edition). Daly is the 2013 2nd edition, as the owner confirmed; its
+  chapters come from the publisher's Crossref records;
 - one validity row per exam year, subject and edition, carrying the
   announced chapter scope (`scope`, e.g. «تمام فصول به جز ۴، ۸، ۱۸») and where
   the announcement came from (`evidence`), and that scope read into the
@@ -202,7 +208,7 @@ php scripts/import/import-bank.php check  --workspace=<id> --file=residency-1404
 php scripts/import/import-bank.php import --workspace=<id> --file=catalog.json
 php scripts/import/import-bank.php import --workspace=<id> --file=residency-1404-1.json --assets=./images
 # importing only adds and updates; after headings are dropped or renumbered,
-# remove the nodes, and the editions of its references, that the catalog no
+# remove the nodes, editions and references that the catalog no
 # longer lists (anything a question source, edition mapping or currency check
 # points at is always kept; --dry-run first)
 php scripts/import/import-bank.php prune-nodes --workspace=<id> --file=catalog.json --dry-run

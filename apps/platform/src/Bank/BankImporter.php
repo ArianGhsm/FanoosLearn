@@ -118,17 +118,17 @@ final class BankImporter
      * a node a question source or an edition mapping points at is kept, as is
      * any node above a kept one. An edition of a listed reference that the
      * file no longer names is removed with its nodes and year rows when
-     * nothing cites it. --dry-run rolls back.
+     * nothing cites it, and so is a reference the file no longer has. --dry-run rolls back.
      *
      * @param array<string, mixed> $file a catalog file
-     * @return array{stale:int,deleted:int,kept_in_use:int,editions_deleted:int}
+     * @return array{stale:int,deleted:int,kept_in_use:int,editions_deleted:int,references_deleted:int}
      */
     public function pruneNodes(string $workspaceId, array $file, bool $dryRun = false): array
     {
         if (($file['format'] ?? null) !== self::CATALOG_FORMAT) {
             throw new BankImportException(['format: only a catalog file lists nodes to keep']);
         }
-        $result = ['stale' => 0, 'deleted' => 0, 'kept_in_use' => 0, 'editions_deleted' => 0];
+        $result = ['stale' => 0, 'deleted' => 0, 'kept_in_use' => 0, 'editions_deleted' => 0, 'references_deleted' => 0];
         $work = function () use ($workspaceId, $file, &$result): void {
             foreach ($this->list($file, 'references') as $reference) {
                 $listedEditions = [];
@@ -156,25 +156,29 @@ WHERE edition.workspace_id = :workspace AND reference.reference_key = :reference
 SQL);
                 $editions->execute(['workspace' => $workspaceId, 'reference' => (string) ($reference['key'] ?? '')]);
                 foreach ($editions->fetchAll() as $edition) {
-                    if (in_array((string) $edition['edition_key'], $listedEditions, true)) {
-                        continue;
+                    if (!in_array((string) $edition['edition_key'], $listedEditions, true)) {
+                        $this->dropEdition($workspaceId, (string) $edition['id'], $result);
                     }
-                    $cited = $this->database->prepare(<<<'SQL'
-SELECT EXISTS (SELECT 1 FROM bank_question_sources WHERE edition_id = :a)
-    OR EXISTS (SELECT 1 FROM bank_question_currency WHERE against_edition_id = :b)
-SQL);
-                    $cited->execute(['a' => $edition['id'], 'b' => $edition['id']]);
-                    if ((bool) $cited->fetchColumn()) {
-                        continue;
-                    }
-                    if (!$this->pruneEditionNodes($workspaceId, (string) $edition['id'], [], $result)) {
-                        continue;
-                    }
-                    $this->database->prepare('DELETE FROM bank_reference_validity WHERE workspace_id = :workspace AND edition_id = :edition')
-                        ->execute(['workspace' => $workspaceId, 'edition' => $edition['id']]);
-                    $this->database->prepare('DELETE FROM bank_reference_editions WHERE workspace_id = :workspace AND id = :edition')
-                        ->execute(['workspace' => $workspaceId, 'edition' => $edition['id']]);
-                    ++$result['editions_deleted'];
+                }
+            }
+            // A reference the file no longer has at all goes the same way, edition by edition.
+            $listedReferences = array_map(static fn (array $r): string => (string) ($r['key'] ?? ''), $this->list($file, 'references'));
+            $references = $this->database->prepare('SELECT id, reference_key FROM bank_references WHERE workspace_id = :workspace');
+            $references->execute(['workspace' => $workspaceId]);
+            foreach ($references->fetchAll() as $reference) {
+                if (in_array((string) $reference['reference_key'], $listedReferences, true)) {
+                    continue;
+                }
+                $editions = $this->database->prepare('SELECT id FROM bank_reference_editions WHERE workspace_id = :workspace AND reference_id = :reference');
+                $editions->execute(['workspace' => $workspaceId, 'reference' => $reference['id']]);
+                $left = 0;
+                foreach ($editions->fetchAll(PDO::FETCH_COLUMN) as $editionId) {
+                    $left += $this->dropEdition($workspaceId, (string) $editionId, $result) ? 0 : 1;
+                }
+                if ($left === 0) {
+                    $this->database->prepare('DELETE FROM bank_references WHERE workspace_id = :workspace AND id = :reference')
+                        ->execute(['workspace' => $workspaceId, 'reference' => $reference['id']]);
+                    ++$result['references_deleted'];
                 }
             }
         };
@@ -190,6 +194,31 @@ SQL);
         }
 
         return $result;
+    }
+
+    /**
+     * Removes an edition with its nodes and year rows unless a question
+     * source, currency check, edition mapping or question-cited node holds it.
+     *
+     * @param array<string, int> $result counters, updated
+     */
+    private function dropEdition(string $workspaceId, string $editionId, array &$result): bool
+    {
+        $cited = $this->database->prepare(<<<'SQL'
+SELECT EXISTS (SELECT 1 FROM bank_question_sources WHERE edition_id = :a)
+    OR EXISTS (SELECT 1 FROM bank_question_currency WHERE against_edition_id = :b)
+SQL);
+        $cited->execute(['a' => $editionId, 'b' => $editionId]);
+        if ((bool) $cited->fetchColumn() || !$this->pruneEditionNodes($workspaceId, $editionId, [], $result)) {
+            return false;
+        }
+        $this->database->prepare('DELETE FROM bank_reference_validity WHERE workspace_id = :workspace AND edition_id = :edition')
+            ->execute(['workspace' => $workspaceId, 'edition' => $editionId]);
+        $this->database->prepare('DELETE FROM bank_reference_editions WHERE workspace_id = :workspace AND id = :edition')
+            ->execute(['workspace' => $workspaceId, 'edition' => $editionId]);
+        ++$result['editions_deleted'];
+
+        return true;
     }
 
     /**
