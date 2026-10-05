@@ -48,9 +48,8 @@ table of references and editions in the script, and writes:
   node `ch0n` (`ch12`, and `ch01.3` for van Noort's numbering), the key
   question sources cite. Still without a list: Peterson (Persian
   translation, whose chapter numbering differs from the English 5th
-  edition), Daly (the workbook's "3rd edition, 2005" matches no edition:
-  the book has a 2002 and a 2013 edition) and the four English-exam
-  titles, which are not read by chapter;
+  edition) and the four English-exam titles (Daly is the 2013 2nd edition, as
+  the owner confirmed; its chapters come from the publisher's Crossref records), which are not read by chapter;
 - one validity row per exam year, subject and edition, carrying the
   announced chapter scope (`scope`, e.g. «تمام فصول به جز ۴، ۸، ۱۸») and where
   the announcement came from (`evidence`), and that scope read into the
@@ -203,8 +202,9 @@ php scripts/import/import-bank.php check  --workspace=<id> --file=residency-1404
 php scripts/import/import-bank.php import --workspace=<id> --file=catalog.json
 php scripts/import/import-bank.php import --workspace=<id> --file=residency-1404-1.json --assets=./images
 # importing only adds and updates; after headings are dropped or renumbered,
-# remove the nodes the catalog no longer lists (a node a question source or an
-# edition mapping points at is always kept; --dry-run first)
+# remove the nodes, and the editions of its references, that the catalog no
+# longer lists (anything a question source, edition mapping or currency check
+# points at is always kept; --dry-run first)
 php scripts/import/import-bank.php prune-nodes --workspace=<id> --file=catalog.json --dry-run
 # publish the sitting as an exam
 php scripts/import/import-bank.php publish --workspace=<id> --type=residency --year=1404 --actor=<id> --reviewer=<id> --time-limit=180

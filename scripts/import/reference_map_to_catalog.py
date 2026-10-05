@@ -99,7 +99,7 @@ REFERENCES = [
     (['focus on vocabulary'], 'schmitt-focus-vocabulary', 'Focus on Vocabulary 2: Mastering the Academic Word List', 'Schmitt D, Schmitt N', 'english',
      {'2011': ('2011', '2011', 2011)}),
     (['essential dental public health'], 'daly-public-health', 'Essential Dental Public Health', 'Daly B, Batchelor P, Treasure ET, Watt RG', 'community-dentistry',
-     {'2005': ('3e', '3rd edition', 2005)}),
+     {'2005': ('2e', '2nd edition', 2013)}),
     (['کتاب ملی سلامت دهان'], 'national-oral-health', 'کتاب ملی سلامت دهان و دندانپزشکی اجتماعی', 'گروه مؤلفین؛ جهاد دانشگاهی', 'community-dentistry',
      {'1394': ('1394', 'چاپ اول (۱۳۹۴)', None), '': ('1394', 'چاپ اول (۱۳۹۴)', None)}),
     (['applied dental materials'], 'mccabe-walls-materials', 'Applied Dental Materials', 'McCabe JF, Walls AWG', 'dental-materials',
@@ -137,6 +137,7 @@ CONFIRMED = {
     ('sturdevant-operative', '2018'): 'the 2018 edition is the 7th (Ritter, Boushell, Walter)',
     ('craig-restorative-materials', '2018'): 'the 14th edition was published in 2018 with a 2019 copyright',
     ('van-noort-materials', '2013'): 'the 2013 edition is the 4th; the 5th is 2024',
+    ('daly-public-health', '2005'): 'the owner confirmed 1397 meant the 2013 edition (the 2nd, Oxford University Press); the book has no 3rd edition, so "3rd Ed., 2005" in the workbook is a slip',
 }
 
 # Partial notices that name two books on one row: (exam year, subject) ->

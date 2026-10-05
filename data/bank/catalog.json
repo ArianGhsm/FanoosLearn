@@ -29,6 +29,7 @@
     "row 153 (1398, مواد دندانی): \"Introduction to Dental Materials (Van Noort)\" has no publication year; recorded as 4th edition because in 1398 the newest edition was the 4th (2013); the 5th appeared in 2024",
     "row 153 (1398, مواد دندانی): edition not stated; recorded as 4th edition from the year 2013 — the 2013 edition is the 4th; the 5th is 2024",
     "row 167 (1397, زبان انگلیسی): \"سطح Upper Intermediate\" is a scope statement, not a book; kept out of the reference list",
+    "row 168 (1397, سلامت دهان و دندانپزشکی اجتماعی): workbook says \"3rd Ed.\" for 2005; recorded as 2nd edition — the owner confirmed 1397 meant the 2013 edition (the 2nd, Oxford University Press); the book has no 3rd edition, so \"3rd Ed., 2005\" in the workbook is a slip",
     "1403 dental-materials phillips-materials@13e: scope \"Part II: Direct Restorative Materials\" read as chapters فصول 5–8 — Part II (Direct Restorative Materials) is chapters 5–8 in the publisher's contents",
     "1401 english anderson-active-skills@2014: scope \"Books 3 and 4; فصل/صفحه مشخص نشده\" names no chapter list; kept as text only",
     "1401 english noble-dental-hygiene@2e: scope \"PDF این کتاب را به عنوان منبع معرفی می‌کند\" names no chapter list; kept as text only",
@@ -46940,9 +46941,195 @@
       "subject": "community-dentistry",
       "editions": [
         {
-          "key": "3e",
-          "label": "3rd edition",
-          "year": 2005
+          "key": "2e",
+          "label": "2nd edition",
+          "year": 2013,
+          "nodes": [
+            {
+              "key": "ch01",
+              "kind": "chapter",
+              "number": "1",
+              "title": "Introduction to the principles of public health",
+              "title_fa": "مقدمه‌ای بر اصول سلامت عمومی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch02",
+              "kind": "chapter",
+              "number": "2",
+              "title": "Determinants of health",
+              "title_fa": "عوامل تعیین‌کننده‌ی سلامت",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch03",
+              "kind": "chapter",
+              "number": "3",
+              "title": "Definitions of health",
+              "title_fa": "تعاریف سلامت",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch04",
+              "kind": "chapter",
+              "number": "4",
+              "title": "Public health approaches to prevention",
+              "title_fa": "رویکردهای سلامت عمومی در پیشگیری",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch05",
+              "kind": "chapter",
+              "number": "5",
+              "title": "Overview of epidemiology",
+              "title_fa": "مروری بر اپیدمیولوژی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch06",
+              "kind": "chapter",
+              "number": "6",
+              "title": "Trends in oral health",
+              "title_fa": "روندهای سلامت دهان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch07",
+              "kind": "chapter",
+              "number": "7",
+              "title": "Evidence-based practice",
+              "title_fa": "عمل مبتنی بر شواهد",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch08",
+              "kind": "chapter",
+              "number": "8",
+              "title": "Principles of oral health promotion",
+              "title_fa": "اصول ارتقای سلامت دهان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch09",
+              "kind": "chapter",
+              "number": "9",
+              "title": "Overview of behaviour change",
+              "title_fa": "مروری بر تغییر رفتار",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch10",
+              "kind": "chapter",
+              "number": "10",
+              "title": "Prevention and oral health education in dental practice settings",
+              "title_fa": "پیشگیری و آموزش سلامت دهان در مطب دندانپزشکی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch11",
+              "kind": "chapter",
+              "number": "11",
+              "title": "Sugars and caries prevention",
+              "title_fa": "قندها و پیشگیری از پوسیدگی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch12",
+              "kind": "chapter",
+              "number": "12",
+              "title": "Fluoride and fissure sealants",
+              "title_fa": "فلوراید و فیشورسیلانت‌ها",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch13",
+              "kind": "chapter",
+              "number": "13",
+              "title": "Prevention of periodontal diseases",
+              "title_fa": "پیشگیری از بیماری‌های پریودنتال",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch14",
+              "kind": "chapter",
+              "number": "14",
+              "title": "Oral cancer prevention",
+              "title_fa": "پیشگیری از سرطان دهان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch15",
+              "kind": "chapter",
+              "number": "15",
+              "title": "Public health approaches to the prevention of traumatic dental injuries",
+              "title_fa": "رویکردهای سلامت عمومی در پیشگیری از آسیب‌های تروماتیک دندان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch16",
+              "kind": "chapter",
+              "number": "16",
+              "title": "Prevention for people with disabilities and vulnerable groups",
+              "title_fa": "پیشگیری برای افراد دارای معلولیت و گروه‌های آسیب‌پذیر",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch17",
+              "kind": "chapter",
+              "number": "17",
+              "title": "Overview of health care systems",
+              "title_fa": "مروری بر نظام‌های مراقبت سلامت",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch18",
+              "kind": "chapter",
+              "number": "18",
+              "title": "The structure of the NHS in the UK",
+              "title_fa": "ساختار NHS (نظام سلامت ملی) در بریتانیا",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch19",
+              "kind": "chapter",
+              "number": "19",
+              "title": "The structure of dental services in the UK",
+              "title_fa": "ساختار خدمات دندانپزشکی در بریتانیا",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch20",
+              "kind": "chapter",
+              "number": "20",
+              "title": "The European Union and dentistry",
+              "title_fa": "اتحادیه‌ی اروپا و دندانپزشکی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch21",
+              "kind": "chapter",
+              "number": "21",
+              "title": "Planning dental services",
+              "title_fa": "برنامه‌ریزی خدمات دندانپزشکی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch22",
+              "kind": "chapter",
+              "number": "22",
+              "title": "Health economics",
+              "title_fa": "اقتصاد سلامت",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch23",
+              "kind": "chapter",
+              "number": "23",
+              "title": "Problems with health care delivery",
+              "title_fa": "مشکلات ارائه‌ی مراقبت سلامت",
+              "title_fa_origin": "ai"
+            }
+          ]
         }
       ]
     },
@@ -70866,7 +71053,7 @@
       "exam_type": "residency",
       "year": 1397,
       "subject": "community-dentistry",
-      "edition": "daly-public-health@3e",
+      "edition": "daly-public-health@2e",
       "official": true,
       "scope": "فصول 1–13",
       "evidence": "PDF رسمی‌نما؛ فایل بازنشرشده در تلگرام · https://t.me/dparseh86/1230",
