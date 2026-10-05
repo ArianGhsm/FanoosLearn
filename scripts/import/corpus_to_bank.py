@@ -214,6 +214,11 @@ def audit(args: dict) -> None:
     """List unresolved corpus rows without treating PDF text as verified."""
     rows = read_rows(Path(args['workbook']))
     catalog = json.loads(CATALOG.read_text(encoding='utf-8'))
+    figure_manifest_path = Path(args['workbook']).parent / 'figure-assets' / 'manifest.json'
+    figure_reviews = {
+        item['asset']: item.get('review_status', '')
+        for item in json.loads(figure_manifest_path.read_text(encoding='utf-8'))
+    } if figure_manifest_path.is_file() else {}
     report = []
     for row in rows:
         stem, choices = split_question(row['متن سؤال'] or '')
@@ -237,10 +242,16 @@ def audit(args: dict) -> None:
             issues.append('official_notice_in_question_text')
         if re.search(r'پذیرش دستیار(?:ی| تخصصی)', normalized_text):
             issues.append('page_header_in_question_text')
-        if ('diagram' in (row.get('وضعیت متن') or '').lower()
+        figure_paths = [item.strip() for item in (row.get('تصاویر سؤال و گزینه‌ها') or '').split(' | ') if item.strip()]
+        figure_required = ('diagram' in (row.get('وضعیت متن') or '').lower()
                 or 'graph' in (row.get('یادداشت') or '').lower()
-                or re.search(r'(?:نمودار|شکل|تصویر)\s*(?:روبرو|مقابل|زیر)', normalized_text)):
+                or re.search(r'(?:نمودار|شکل|تصویر)\s*(?:روبرو|مقابل|زیر)', normalized_text))
+        if figure_required and (not figure_paths or any(
+                path not in figure_reviews or not (Path(args['workbook']).parent / path).is_file()
+                for path in figure_paths)):
             issues.append('figure_asset_not_verified')
+        if figure_paths and any('independent_second_review_pending' in figure_reviews.get(path, '') for path in figure_paths):
+            issues.append('figure_crop_needs_independent_check')
         if row['درس'] == 'زبان انگلیسی' and re.search(r'\b(?:passage|above passage|writer|author)\b', raw_text, re.I) and len(raw_text) < 700:
             issues.append('reading_passage_context_not_attached')
         if row['سال آزمون'] == '1405' and not (
@@ -270,7 +281,7 @@ def audit(args: dict) -> None:
             issues.append('chapter_outside_official_scope')
         if 'هشدار' in status:
             issues.append('course_disagreement_in_source_notice')
-        if chapter(candidate):
+        if chapter(candidate) and not status.startswith('Verified chapter in exact-edition book'):
             issues.append('chapter_content_match_not_verified')
         report.append({'year': int(row['سال آزمون']), 'form': row['فرم'],
                        'number': int(row['شماره سؤال']), 'issues': issues})
