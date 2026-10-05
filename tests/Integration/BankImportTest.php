@@ -94,14 +94,14 @@ final class BankImportTest
         $importer->import($ws, $extra);
         $withExtra = $this->count('bank_reference_nodes', $ws);
         $dry = $importer->pruneNodes($ws, $catalog, true);
-        $this->assert($dry === ['stale' => 1, 'deleted' => 1, 'kept_in_use' => 0, 'editions_deleted' => 0], 'Prune dry run: ' . json_encode($dry));
+        $this->assert($dry === ['stale' => 1, 'deleted' => 1, 'kept_in_use' => 0, 'editions_deleted' => 0, 'references_deleted' => 0], 'Prune dry run: ' . json_encode($dry));
         $this->assert($this->count('bank_reference_nodes', $ws) === $withExtra, 'A prune dry run deleted rows.');
         $pruned = $importer->pruneNodes($ws, $catalog);
         $this->assert($pruned['deleted'] === 1 && $this->count('bank_reference_nodes', $ws) === $withExtra - 1, 'The unlisted chapter was not pruned: ' . json_encode($pruned));
         $bare = $catalog;
         unset($bare['references'][0]['editions'][0]['nodes'][0]['children']);
         $kept = $importer->pruneNodes($ws, $bare);
-        $this->assert($kept === ['stale' => 1, 'deleted' => 0, 'kept_in_use' => 1, 'editions_deleted' => 0], 'A section a question cites was pruned: ' . json_encode($kept));
+        $this->assert($kept === ['stale' => 1, 'deleted' => 0, 'kept_in_use' => 1, 'editions_deleted' => 0, 'references_deleted' => 0], 'A section a question cites was pruned: ' . json_encode($kept));
         // An edition the catalog no longer names goes with its chapters and year rows.
         $oldEdition = $catalog;
         $oldEdition['references'][0]['editions'][] = ['key' => '4e', 'label' => '4th edition', 'year' => 2009, 'nodes' => [['key' => 'ch12', 'kind' => 'chapter', 'number' => '12', 'title' => 'Cleaning and Shaping']]];
@@ -111,6 +111,16 @@ final class BankImportTest
         $gone = $importer->pruneNodes($ws, $catalog);
         $this->assert($gone['editions_deleted'] === 1 && $gone['deleted'] === 1 && $this->count('bank_reference_validity', $ws) === $validityBefore - 1,
             'An edition the catalog dropped was not removed with its chapter and year row: ' . json_encode($gone));
+        // So does a whole reference the catalog no longer has.
+        $oldReference = $catalog;
+        $oldReference['references'][] = ['key' => 'old-english-reader', 'title' => 'An English Reader', 'subject' => 'endodontics',
+            'editions' => [['key' => '2014', 'label' => '2014', 'year' => 2014]]];
+        $oldReference['validity'][] = ['exam_type' => 'residency', 'year' => 1391, 'subject' => 'endodontics', 'edition' => 'old-english-reader@2014', 'official' => true];
+        $importer->import($ws, $oldReference);
+        $referencesBefore = $this->count('bank_references', $ws);
+        $dropped = $importer->pruneNodes($ws, $catalog);
+        $this->assert($dropped['references_deleted'] === 1 && $dropped['editions_deleted'] === 1 && $this->count('bank_references', $ws) === $referencesBefore - 1,
+            'A reference the catalog no longer has was not removed: ' . json_encode($dropped));
 
         // The real catalog built from the reference workbook imports cleanly.
         $real = json_decode((string) file_get_contents($this->root . '/data/bank/catalog.json'), true, 64, JSON_THROW_ON_ERROR);

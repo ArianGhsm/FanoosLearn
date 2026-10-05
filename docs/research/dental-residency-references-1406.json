@@ -1,0 +1,208 @@
+{
+  "format": "fanoos.research.reference-rows/1",
+  "notes": "The official dental residency reference list for 1406 (دوره ۴۱), as published by the medical education assessment center (sanjeshp.ir, Content.aspx?click=26, row «منابع آزمون دستیاری دندانپزشکی دوره 41 - سال 1406»), transcribed row by row from its three-page PDF. Same columns as the «نقشه منابع» sheet of dental-residency-reference-map-1396-1405.xlsx; scripts/import/reference_map_to_catalog.py reads both. Scopes are copied as printed (digits in Latin form); the Proffit row's six sub-rows are joined with «؛».",
+  "rows": [
+    {
+      "year": "1406",
+      "period": "41",
+      "subject": "اندودانتیکس",
+      "title": "Endodontics: Principles and Practice",
+      "authors": "Torabinejad M; Fouad AF; Shabahang S",
+      "pub_year": "2021",
+      "edition": "6th Ed.",
+      "scope": "تمام فصول کتاب"
+    },
+    {
+      "year": "1406",
+      "period": "41",
+      "subject": "بیماری‌های دهان و فک و صورت",
+      "title": "Burket's Oral Medicine",
+      "authors": "Glick M",
+      "pub_year": "2021",
+      "edition": "13th Ed.",
+      "scope": "فصول 3 و 4 و 5 و 6 و 9 کتاب"
+    },
+    {
+      "year": "1406",
+      "period": "41",
+      "subject": "بیماری‌های دهان و فک و صورت",
+      "title": "Dental Management in the Medically Compromised Patient",
+      "authors": "Falace DA; Little J",
+      "pub_year": "2024",
+      "edition": "10th Ed.",
+      "scope": "فصول 2 و 3 و 4 و 12 و 14 و 16 و 17 و 24 کتاب (فقط مباحث ملاحظات دندانپزشکی)"
+    },
+    {
+      "year": "1406",
+      "period": "41",
+      "subject": "پریودانتیکس",
+      "title": "Carranza's Clinical Periodontology",
+      "authors": "",
+      "pub_year": "2023",
+      "edition": "14th Ed.",
+      "scope": "فصول 4 و 5 و 8 و 10 و 13 تا 26 و 28 و 29 و 30 و 32 و 35 و 38 تا 45 و 47 تا 53 و 56 و 59 و 60 و 61 و 62 و 66 و 70 و 72 تا 74 و 78 و 87 کتاب"
+    },
+    {
+      "year": "1406",
+      "period": "41",
+      "subject": "دندانپزشکی کودکان",
+      "title": "McDonald and Avery's Dentistry for the Child and Adolescent",
+      "authors": "McDonald J",
+      "pub_year": "2021",
+      "edition": "11th Ed.",
+      "scope": "فقط فصول 1 و 2 و 3 و 4 و 8 و 9 و 10 و 11 و 12 و 14 و 15 و 16 و 17 و 20 و 21 و 23 و 26 و 27 و 28 و 29"
+    },
+    {
+      "year": "1406",
+      "period": "41",
+      "subject": "رادیولوژی دهان و فک و صورت",
+      "title": "Oral Radiology, Principles and Interpretation",
+      "authors": "White SC; Pharoah MJ",
+      "pub_year": "2019",
+      "edition": "8th Ed.",
+      "scope": "فصل 1 تا پایان فصل 9 - فصل 12 - فصل 15 تا پایان فصل 28"
+    },
+    {
+      "year": "1406",
+      "period": "41",
+      "subject": "پروتزهای دندانی",
+      "title": "Fundamentals of Fixed Prosthodontics",
+      "authors": "Shillingburg HT",
+      "pub_year": "2012",
+      "edition": "4th Ed.",
+      "scope": "کلیه فصول (به جز فصول 5 و 9 و 10 و 11 و 12) کتاب"
+    },
+    {
+      "year": "1406",
+      "period": "41",
+      "subject": "پروتزهای دندانی",
+      "title": "McCracken's Removable Partial Prosthodontics",
+      "authors": "Carr AB",
+      "pub_year": "2016",
+      "edition": "13th Ed.",
+      "scope": "تمام فصول کتاب"
+    },
+    {
+      "year": "1406",
+      "period": "41",
+      "subject": "پروتزهای دندانی",
+      "title": "Contemporary Fixed Prosthodontics",
+      "authors": "Rosenstiel SF",
+      "pub_year": "2023",
+      "edition": "6th Ed.",
+      "scope": "فصول 7 و 8 و 9 و 10 و 11 کتاب"
+    },
+    {
+      "year": "1406",
+      "period": "41",
+      "subject": "پروتزهای دندانی",
+      "title": "Prosthodontic Treatment for Edentulous Patients",
+      "authors": "Zarb G; Hobkirk J",
+      "pub_year": "2013",
+      "edition": "13th Ed.",
+      "scope": "کلیه فصول (به جز فصول 18 و 19 و 20 و 21 و 22) کتاب"
+    },
+    {
+      "year": "1406",
+      "period": "41",
+      "subject": "جراحی دهان و فک و صورت",
+      "title": "Contemporary Oral and Maxillofacial Surgery",
+      "authors": "Hupp J",
+      "pub_year": "2019",
+      "edition": "7th Ed.",
+      "scope": "تمام فصول کتاب"
+    },
+    {
+      "year": "1406",
+      "period": "41",
+      "subject": "جراحی دهان و فک و صورت",
+      "title": "Handbook of Local Anesthesia",
+      "authors": "Malamed S",
+      "pub_year": "2019",
+      "edition": "7th Ed.",
+      "scope": "فصول 1 تا 18"
+    },
+    {
+      "year": "1406",
+      "period": "41",
+      "subject": "دندانپزشکی ترمیمی",
+      "title": "Sturdevant's Art and Science of Operative Dentistry",
+      "authors": "Ritter AV",
+      "pub_year": "2018",
+      "edition": "7th Ed.",
+      "scope": "فصول 1 (از صفحه 1 تا 15) و 2 و 3 و 4 و 5 و 9 و 10 و 13 (از صفحه 461 تا 484) کتاب"
+    },
+    {
+      "year": "1406",
+      "period": "41",
+      "subject": "دندانپزشکی ترمیمی",
+      "title": "Summit's Fundamentals of Operative Dentistry: A Contemporary Approach",
+      "authors": "",
+      "pub_year": "2013",
+      "edition": "4th Ed.",
+      "scope": "فصل 6 و 7 و 9 (از مبحث باندینگ تا صفحه 217) و 10 و 11 کتاب"
+    },
+    {
+      "year": "1406",
+      "period": "41",
+      "subject": "آسیب‌شناسی دهان و فک و صورت",
+      "title": "Oral and Maxillofacial Pathology",
+      "authors": "Neville B; Damm DD",
+      "pub_year": "2024",
+      "edition": "5th Ed.",
+      "scope": "کلیه فصول به جز 1 و 2 و 4 و 8 و 17 و 18 و 19 کتاب"
+    },
+    {
+      "year": "1406",
+      "period": "41",
+      "subject": "ارتودانتیکس",
+      "title": "Contemporary Orthodontics",
+      "authors": "Proffit WR",
+      "pub_year": "2019",
+      "edition": "6th Ed.",
+      "scope": "فصول 1 و 3 و 4 و 5 و 6 و 7 و 8 و 11 و 12 و 13؛ فصل 2 صفحات 18 تا 47؛ فصل 9 صفحات 276 تا 278 و 288 تا 291؛ فصل 10 صفحات 310 تا 315؛ فصل 14 کل فصل بجز صفحات 462 تا 465 و 472 تا 476؛ فصل 18 صفحات 579 تا 589"
+    },
+    {
+      "year": "1406",
+      "period": "41",
+      "subject": "سلامت دهان و دندانپزشکی اجتماعی",
+      "title": "کتاب ملی سلامت دهان و دندانپزشکی اجتماعی",
+      "authors": "گروه مؤلفین؛ جهاد دانشگاهی",
+      "pub_year": "1394",
+      "edition": "اول",
+      "scope": "فصول 1 تا 16 کتاب"
+    },
+    {
+      "year": "1406",
+      "period": "41",
+      "subject": "مواد دندانی",
+      "title": "Craig's Restorative Dental Materials",
+      "authors": "",
+      "pub_year": "2019",
+      "edition": "14th Ed.",
+      "scope": "فصل های 4-10-12-14 کتاب"
+    },
+    {
+      "year": "1406",
+      "period": "41",
+      "subject": "مواد دندانی",
+      "title": "Introduction to Dental Materials (Van Noort)",
+      "authors": "Van Noort R",
+      "pub_year": "2024",
+      "edition": "5th Ed.",
+      "scope": "فصل های 2.2 و 2.3 و 2.5 و 2.4 و 3.4 و 3.5 و 3.6 کتاب"
+    },
+    {
+      "year": "1406",
+      "period": "41",
+      "subject": "زبان انگلیسی",
+      "title": "تمامی کتب مرجع معرفی‌شده به عنوان رفرنس دروس آزمون ورودی دندانپزشکی به زبان انگلیسی",
+      "authors": "",
+      "pub_year": "",
+      "edition": "",
+      "scope": "سؤالات درس زبان تخصصی دندانپزشکی در سطح منابع معرفی‌شده و با در نظر گرفتن مفاهیم آن‌ها طراحی خواهند شد"
+    }
+  ],
+  "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
+  "source_document": "منابع آزمون دستیاری دندانپزشکی دوره 41 - سال 1406.pdf"
+}

@@ -25,7 +25,7 @@ use Fanoos\Platform\Support\RuntimeConfig;
  * back, so the counts are real:
  *   php scripts/import/import-bank.php import --workspace=<uuid> --file=<file.json> [--assets=<folder>] [--dry-run]
  *
- * Remove the nodes, and the editions of its references, that a catalog no longer lists
+ * Remove the nodes, editions and references that a catalog no longer lists
  * (never one a question source or edition mapping points at); --dry-run rolls back:
  *   php scripts/import/import-bank.php prune-nodes --workspace=<uuid> --file=<catalog.json> [--dry-run]
  *

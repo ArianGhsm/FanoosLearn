@@ -10,6 +10,10 @@
     "row 86 (1401, اندودانتیکس): 2020 printing, recorded as the 6th edition — the 6th edition was printed in 2020 with a 2021 copyright; 2020 is that printing",
     "row 88 (1401, بیماری‌های دهان و فک و صورت): workbook says \"12th Ed.\" for 2018; recorded as 9th edition — the 2018 edition is the 9th (Little, Miller, Rhodus); the book has no 12th edition, so \"12th Ed.\" in the workbook is a typo",
     "row 94 (1401, دندانپزشکی کودکان): edition not stated; recorded as 6th edition from the year 2019 — the 2019 edition of Pediatric Dentistry: Infancy through Adolescence is the 6th",
+    "row 96 (1401, زبان انگلیسی): \"Active Skills for Reading 3 & 4\" left out — the four English books come from page 5 of the 1401 file, an appended page in another format; the official table itself (page 4) only says the English questions are at Upper Intermediate level",
+    "row 97 (1401, زبان انگلیسی): \"Clinical Textbook of Dental Hygiene and Therapy\" left out — the four English books come from page 5 of the 1401 file, an appended page in another format; the official table itself (page 4) only says the English questions are at Upper Intermediate level",
+    "row 98 (1401, زبان انگلیسی): \"English for the Students of Dentistry\" left out — the four English books come from page 5 of the 1401 file, an appended page in another format; the official table itself (page 4) only says the English questions are at Upper Intermediate level",
+    "row 99 (1401, زبان انگلیسی): \"Focus on Vocabulary 2: Mastering the Academic Word List\" left out — the four English books come from page 5 of the 1401 file, an appended page in another format; the official table itself (page 4) only says the English questions are at Upper Intermediate level",
     "row 109 (1400, اندودانتیکس): 2020 printing, recorded as the 6th edition — the 6th edition was printed in 2020 with a 2021 copyright; 2020 is that printing",
     "row 111 (1400, بیماری‌های دهان و فک و صورت): workbook says \"12th Ed.\" for 2018; recorded as 9th edition — the 2018 edition is the 9th (Little, Miller, Rhodus); the book has no 12th edition, so \"12th Ed.\" in the workbook is a typo",
     "row 117 (1400, دندانپزشکی کودکان): edition not stated; recorded as 6th edition from the year 2019 — the 2019 edition of Pediatric Dentistry: Infancy through Adolescence is the 6th",
@@ -30,11 +34,8 @@
     "row 153 (1398, مواد دندانی): edition not stated; recorded as 4th edition from the year 2013 — the 2013 edition is the 4th; the 5th is 2024",
     "row 167 (1397, زبان انگلیسی): \"سطح Upper Intermediate\" is a scope statement, not a book; kept out of the reference list",
     "row 168 (1397, سلامت دهان و دندانپزشکی اجتماعی): workbook says \"3rd Ed.\" for 2005; recorded as 2nd edition — the owner confirmed 1397 meant the 2013 edition (the 2nd, Oxford University Press); the book has no 3rd edition, so \"3rd Ed., 2005\" in the workbook is a slip",
+    "row 193 (1406, زبان انگلیسی): \"تمامی کتب مرجع معرفی‌شده به عنوان رفرنس دروس آزمون ورودی دندانپزشکی به زبان انگلیسی\" is a scope statement, not a book; kept out of the reference list",
     "1403 dental-materials phillips-materials@13e: scope \"Part II: Direct Restorative Materials\" read as chapters فصول 5–8 — Part II (Direct Restorative Materials) is chapters 5–8 in the publisher's contents",
-    "1401 english anderson-active-skills@2014: scope \"Books 3 and 4; فصل/صفحه مشخص نشده\" names no chapter list; kept as text only",
-    "1401 english noble-dental-hygiene@2e: scope \"PDF این کتاب را به عنوان منبع معرفی می‌کند\" names no chapter list; kept as text only",
-    "1401 english tahririan-english-dentistry@2016: scope \"ذکر شده به عنوان منبع؛ فصل/صفحه مشخص نشده\" names no chapter list; kept as text only",
-    "1401 english schmitt-focus-vocabulary@2011: scope \"ذکر شده به عنوان منبع؛ فصل/صفحه مشخص نشده\" names no chapter list; kept as text only",
     "1398 oral-pathology neville-oral-pathology@4e: scope \"فصول 4،18،19 از منابع حذف شدند.\" names no chapter list; kept as text only",
     "1398 orthodontics proffit-orthodontics@5e: scope \"فصول 10 و17 به منابع آزمون 98 اضافه شد.\" names no chapter list; kept as text only",
     "1398 oral-medicine burket-oral-medicine@12e: scope \"ویرایش‌های Burket 2015 و Falace 2018؛ حذف فصل پیگمانتاسیون و افزودن بیماری‌های غدد بزاقی؛ فهرست کامل فصل‌ها در دسترس نیست.\" names no chapter list; kept as text only",
@@ -46883,58 +46884,6 @@
       ]
     },
     {
-      "key": "anderson-active-skills",
-      "title": "Active Skills for Reading 3 & 4",
-      "authors": "Anderson NJ",
-      "subject": "english",
-      "editions": [
-        {
-          "key": "2014",
-          "label": "2014",
-          "year": 2014
-        }
-      ]
-    },
-    {
-      "key": "noble-dental-hygiene",
-      "title": "Clinical Textbook of Dental Hygiene and Therapy",
-      "authors": "Noble S (ed.)",
-      "subject": "english",
-      "editions": [
-        {
-          "key": "2e",
-          "label": "2nd edition",
-          "year": 2012
-        }
-      ]
-    },
-    {
-      "key": "tahririan-english-dentistry",
-      "title": "English for the Students of Dentistry",
-      "authors": "Tahririan MH, Sadri E, Tahririan D",
-      "subject": "english",
-      "editions": [
-        {
-          "key": "2016",
-          "label": "2016",
-          "year": 2016
-        }
-      ]
-    },
-    {
-      "key": "schmitt-focus-vocabulary",
-      "title": "Focus on Vocabulary 2: Mastering the Academic Word List",
-      "authors": "Schmitt D, Schmitt N",
-      "subject": "english",
-      "editions": [
-        {
-          "key": "2011",
-          "label": "2011",
-          "year": 2011
-        }
-      ]
-    },
-    {
       "key": "daly-public-health",
       "title": "Essential Dental Public Health",
       "authors": "Daly B, Batchelor P, Treasure ET, Watt RG",
@@ -62548,6 +62497,1193 @@
   "validity": [
     {
       "exam_type": "residency",
+      "year": 1406,
+      "subject": "community-dentistry",
+      "edition": "national-oral-health@1394",
+      "official": true,
+      "scope": "فصول 1 تا 16 کتاب",
+      "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
+      "source_document": "منابع آزمون دستیاری دندانپزشکی دوره 41 - سال 1406.pdf",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1406,
+      "subject": "dental-materials",
+      "edition": "craig-restorative-materials@14e",
+      "official": true,
+      "scope": "فصل های 4-10-12-14 کتاب",
+      "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
+      "source_document": "منابع آزمون دستیاری دندانپزشکی دوره 41 - سال 1406.pdf",
+      "scope_chapters": [
+        {
+          "number": "4"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "14"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1406,
+      "subject": "dental-materials",
+      "edition": "van-noort-materials@5e",
+      "official": true,
+      "scope": "فصل های 2.2 و 2.3 و 2.5 و 2.4 و 3.4 و 3.5 و 3.6 کتاب",
+      "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
+      "source_document": "منابع آزمون دستیاری دندانپزشکی دوره 41 - سال 1406.pdf",
+      "scope_chapters": [
+        {
+          "number": "2.2"
+        },
+        {
+          "number": "2.3"
+        },
+        {
+          "number": "2.4"
+        },
+        {
+          "number": "2.5"
+        },
+        {
+          "number": "3.4"
+        },
+        {
+          "number": "3.5"
+        },
+        {
+          "number": "3.6"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1406,
+      "subject": "endodontics",
+      "edition": "torabinejad-endodontics@6e",
+      "official": true,
+      "scope": "تمام فصول کتاب",
+      "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
+      "source_document": "منابع آزمون دستیاری دندانپزشکی دوره 41 - سال 1406.pdf",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1406,
+      "subject": "operative-dentistry",
+      "edition": "sturdevant-operative@7e",
+      "official": true,
+      "scope": "فصول 1 (از صفحه 1 تا 15) و 2 و 3 و 4 و 5 و 9 و 10 و 13 (از صفحه 461 تا 484) کتاب",
+      "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
+      "source_document": "منابع آزمون دستیاری دندانپزشکی دوره 41 - سال 1406.pdf",
+      "scope_chapters": [
+        {
+          "number": "1",
+          "partial": "از صفحه 1–15"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "13",
+          "partial": "از صفحه 461–484"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1406,
+      "subject": "operative-dentistry",
+      "edition": "summit-operative@4e",
+      "official": true,
+      "scope": "فصل 6 و 7 و 9 (از مبحث باندینگ تا صفحه 217) و 10 و 11 کتاب",
+      "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
+      "source_document": "منابع آزمون دستیاری دندانپزشکی دوره 41 - سال 1406.pdf",
+      "scope_chapters": [
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "9",
+          "partial": "از مبحث باندینگ تا صفحه 217"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1406,
+      "subject": "oral-medicine",
+      "edition": "burket-oral-medicine@13e",
+      "official": true,
+      "scope": "فصول 3 و 4 و 5 و 6 و 9 کتاب",
+      "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
+      "source_document": "منابع آزمون دستیاری دندانپزشکی دوره 41 - سال 1406.pdf",
+      "scope_chapters": [
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "9"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1406,
+      "subject": "oral-medicine",
+      "edition": "little-falace-dental-management@10e",
+      "official": true,
+      "scope": "فصول 2 و 3 و 4 و 12 و 14 و 16 و 17 و 24 کتاب (فقط مباحث ملاحظات دندانپزشکی)",
+      "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
+      "source_document": "منابع آزمون دستیاری دندانپزشکی دوره 41 - سال 1406.pdf",
+      "scope_chapters": [
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "24"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1406,
+      "subject": "oral-pathology",
+      "edition": "neville-oral-pathology@5e",
+      "official": true,
+      "scope": "کلیه فصول به جز 1 و 2 و 4 و 8 و 17 و 18 و 19 کتاب",
+      "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
+      "source_document": "منابع آزمون دستیاری دندانپزشکی دوره 41 - سال 1406.pdf",
+      "scope_chapters": [
+        {
+          "number": "3"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1406,
+      "subject": "oral-radiology",
+      "edition": "white-pharoah-radiology@8e",
+      "official": true,
+      "scope": "فصل 1 تا پایان فصل 9 - فصل 12 - فصل 15 تا پایان فصل 28",
+      "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
+      "source_document": "منابع آزمون دستیاری دندانپزشکی دوره 41 - سال 1406.pdf",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "23"
+        },
+        {
+          "number": "24"
+        },
+        {
+          "number": "25"
+        },
+        {
+          "number": "26"
+        },
+        {
+          "number": "27"
+        },
+        {
+          "number": "28"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1406,
+      "subject": "oral-surgery",
+      "edition": "hupp-oral-surgery@7e",
+      "official": true,
+      "scope": "تمام فصول کتاب",
+      "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
+      "source_document": "منابع آزمون دستیاری دندانپزشکی دوره 41 - سال 1406.pdf",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "23"
+        },
+        {
+          "number": "24"
+        },
+        {
+          "number": "25"
+        },
+        {
+          "number": "26"
+        },
+        {
+          "number": "27"
+        },
+        {
+          "number": "28"
+        },
+        {
+          "number": "29"
+        },
+        {
+          "number": "30"
+        },
+        {
+          "number": "31"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1406,
+      "subject": "oral-surgery",
+      "edition": "malamed-local-anesthesia@7e",
+      "official": true,
+      "scope": "فصول 1 تا 18",
+      "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
+      "source_document": "منابع آزمون دستیاری دندانپزشکی دوره 41 - سال 1406.pdf",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1406,
+      "subject": "orthodontics",
+      "edition": "proffit-orthodontics@6e",
+      "official": true,
+      "scope": "فصول 1 و 3 و 4 و 5 و 6 و 7 و 8 و 11 و 12 و 13؛ فصل 2 صفحات 18 تا 47؛ فصل 9 صفحات 276 تا 278 و 288 تا 291؛ فصل 10 صفحات 310 تا 315؛ فصل 14 کل فصل بجز صفحات 462 تا 465 و 472 تا 476؛ فصل 18 صفحات 579 تا 589",
+      "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
+      "source_document": "منابع آزمون دستیاری دندانپزشکی دوره 41 - سال 1406.pdf",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2",
+          "partial": "فصل 2 صفحات 18–47"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9",
+          "partial": "فصل 9 صفحات 276–278 و 288–291"
+        },
+        {
+          "number": "10",
+          "partial": "فصل 10 صفحات 310–315"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14",
+          "partial": "فصل 14 کل فصل بجز صفحات 462–465 و 472–476"
+        },
+        {
+          "number": "18",
+          "partial": "فصل 18 صفحات 579–589"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1406,
+      "subject": "pediatric-dentistry",
+      "edition": "mcdonald-avery-pediatric@11e",
+      "official": true,
+      "scope": "فقط فصول 1 و 2 و 3 و 4 و 8 و 9 و 10 و 11 و 12 و 14 و 15 و 16 و 17 و 20 و 21 و 23 و 26 و 27 و 28 و 29",
+      "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
+      "source_document": "منابع آزمون دستیاری دندانپزشکی دوره 41 - سال 1406.pdf",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "23"
+        },
+        {
+          "number": "26"
+        },
+        {
+          "number": "27"
+        },
+        {
+          "number": "28"
+        },
+        {
+          "number": "29"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1406,
+      "subject": "periodontics",
+      "edition": "carranza-periodontology@14e",
+      "official": true,
+      "scope": "فصول 4 و 5 و 8 و 10 و 13 تا 26 و 28 و 29 و 30 و 32 و 35 و 38 تا 45 و 47 تا 53 و 56 و 59 و 60 و 61 و 62 و 66 و 70 و 72 تا 74 و 78 و 87 کتاب",
+      "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
+      "source_document": "منابع آزمون دستیاری دندانپزشکی دوره 41 - سال 1406.pdf",
+      "scope_chapters": [
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "23"
+        },
+        {
+          "number": "24"
+        },
+        {
+          "number": "25"
+        },
+        {
+          "number": "26"
+        },
+        {
+          "number": "28"
+        },
+        {
+          "number": "29"
+        },
+        {
+          "number": "30"
+        },
+        {
+          "number": "32"
+        },
+        {
+          "number": "35"
+        },
+        {
+          "number": "38"
+        },
+        {
+          "number": "39"
+        },
+        {
+          "number": "40"
+        },
+        {
+          "number": "41"
+        },
+        {
+          "number": "42"
+        },
+        {
+          "number": "43"
+        },
+        {
+          "number": "44"
+        },
+        {
+          "number": "45"
+        },
+        {
+          "number": "47"
+        },
+        {
+          "number": "48"
+        },
+        {
+          "number": "49"
+        },
+        {
+          "number": "50"
+        },
+        {
+          "number": "51"
+        },
+        {
+          "number": "52"
+        },
+        {
+          "number": "53"
+        },
+        {
+          "number": "56"
+        },
+        {
+          "number": "59"
+        },
+        {
+          "number": "60"
+        },
+        {
+          "number": "61"
+        },
+        {
+          "number": "62"
+        },
+        {
+          "number": "66"
+        },
+        {
+          "number": "70"
+        },
+        {
+          "number": "72"
+        },
+        {
+          "number": "73"
+        },
+        {
+          "number": "74"
+        },
+        {
+          "number": "78"
+        },
+        {
+          "number": "87"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1406,
+      "subject": "prosthodontics",
+      "edition": "mccracken-rpd@13e",
+      "official": true,
+      "scope": "تمام فصول کتاب",
+      "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
+      "source_document": "منابع آزمون دستیاری دندانپزشکی دوره 41 - سال 1406.pdf",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "23"
+        },
+        {
+          "number": "24"
+        },
+        {
+          "number": "25"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1406,
+      "subject": "prosthodontics",
+      "edition": "rosenstiel-fixed@6e",
+      "official": true,
+      "scope": "فصول 7 و 8 و 9 و 10 و 11 کتاب",
+      "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
+      "source_document": "منابع آزمون دستیاری دندانپزشکی دوره 41 - سال 1406.pdf",
+      "scope_chapters": [
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1406,
+      "subject": "prosthodontics",
+      "edition": "shillingburg-fixed@4e",
+      "official": true,
+      "scope": "کلیه فصول (به جز فصول 5 و 9 و 10 و 11 و 12) کتاب",
+      "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
+      "source_document": "منابع آزمون دستیاری دندانپزشکی دوره 41 - سال 1406.pdf",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "23"
+        },
+        {
+          "number": "24"
+        },
+        {
+          "number": "25"
+        },
+        {
+          "number": "26"
+        },
+        {
+          "number": "27"
+        },
+        {
+          "number": "28"
+        },
+        {
+          "number": "29"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1406,
+      "subject": "prosthodontics",
+      "edition": "zarb-edentulous@13e",
+      "official": true,
+      "scope": "کلیه فصول (به جز فصول 18 و 19 و 20 و 21 و 22) کتاب",
+      "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
+      "source_document": "منابع آزمون دستیاری دندانپزشکی دوره 41 - سال 1406.pdf",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "23"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
       "year": 1405,
       "subject": "community-dentistry",
       "edition": "national-oral-health@1394",
@@ -67559,46 +68695,6 @@
     {
       "exam_type": "residency",
       "year": 1401,
-      "subject": "english",
-      "edition": "anderson-active-skills@2014",
-      "official": true,
-      "scope": "Books 3 and 4; فصل/صفحه مشخص نشده",
-      "evidence": "PDF منابع + اعلام Telegram · https://t.me/dparseh86/3062",
-      "source_document": "1401_رفرنسهای آزمون ورودی دستیاری 1401.pdf"
-    },
-    {
-      "exam_type": "residency",
-      "year": 1401,
-      "subject": "english",
-      "edition": "noble-dental-hygiene@2e",
-      "official": true,
-      "scope": "PDF این کتاب را به عنوان منبع معرفی می‌کند",
-      "evidence": "PDF منابع + اعلام Telegram · https://t.me/dparseh86/3062",
-      "source_document": "1401_رفرنسهای آزمون ورودی دستیاری 1401.pdf"
-    },
-    {
-      "exam_type": "residency",
-      "year": 1401,
-      "subject": "english",
-      "edition": "schmitt-focus-vocabulary@2011",
-      "official": true,
-      "scope": "ذکر شده به عنوان منبع؛ فصل/صفحه مشخص نشده",
-      "evidence": "PDF منابع + اعلام Telegram · https://t.me/dparseh86/3062",
-      "source_document": "1401_رفرنسهای آزمون ورودی دستیاری 1401.pdf"
-    },
-    {
-      "exam_type": "residency",
-      "year": 1401,
-      "subject": "english",
-      "edition": "tahririan-english-dentistry@2016",
-      "official": true,
-      "scope": "ذکر شده به عنوان منبع؛ فصل/صفحه مشخص نشده",
-      "evidence": "PDF منابع + اعلام Telegram · https://t.me/dparseh86/3062",
-      "source_document": "1401_رفرنسهای آزمون ورودی دستیاری 1401.pdf"
-    },
-    {
-      "exam_type": "residency",
-      "year": 1401,
       "subject": "operative-dentistry",
       "edition": "craig-restorative-materials@14e",
       "official": true,
@@ -67607,12 +68703,11 @@
       "source_document": "1401_رفرنسهای آزمون ورودی دستیاری 1401.pdf",
       "scope_chapters": [
         {
-          "number": "9",
-          "partial": "فصول 9–10 (فقط صص 171–178)"
+          "number": "9"
         },
         {
           "number": "10",
-          "partial": "فصول 9–10 (فقط صص 171–178)"
+          "partial": "فقط صص 171–178"
         },
         {
           "number": "13"
@@ -68795,12 +69890,11 @@
       "source_document": "1400_منابع دستیاری 1400.pdf",
       "scope_chapters": [
         {
-          "number": "9",
-          "partial": "فصول 9–10 (فقط صص 171–178)"
+          "number": "9"
         },
         {
           "number": "10",
-          "partial": "فصول 9–10 (فقط صص 171–178)"
+          "partial": "فقط صص 171–178"
         },
         {
           "number": "13"
@@ -69992,12 +71086,11 @@
       "source_document": "1399_منابع دستیار.pdf",
       "scope_chapters": [
         {
-          "number": "9",
-          "partial": "فصول 9–10 (فقط صص 171–178)"
+          "number": "9"
         },
         {
           "number": "10",
-          "partial": "فصول 9–10 (فقط صص 171–178)"
+          "partial": "فقط صص 171–178"
         },
         {
           "number": "13"

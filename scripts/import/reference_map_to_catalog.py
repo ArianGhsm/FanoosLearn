@@ -29,6 +29,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 WORKBOOK = ROOT / 'docs/research/dental-residency-reference-map-1396-1405.xlsx'
+# Later years' official lists, transcribed in the workbook's columns (one file per year).
+EXTRA_YEARS = sorted((ROOT / 'docs/research').glob('dental-residency-references-*.json'))
 OUTPUT = ROOT / 'data/bank/catalog.json'
 TOCS = ROOT / 'data/bank/reference-tocs.json'
 TOCS_FA = ROOT / 'data/bank/reference-tocs.fa.json'
@@ -157,6 +159,13 @@ SCOPE_PARTS = {
     (1403, 'phillips-materials@13e'): ('فصول 5–8', 'Part II (Direct Restorative Materials) is chapters 5–8 in the publisher\'s contents'),
 }
 
+# Rows the workbook carries that are not part of the medical education assessment
+# center's (سنجش پزشکی) list: (exam year, subject) -> why.
+NOT_IN_OFFICIAL_LIST = {
+    ('1401', 'english'): 'the four English books come from page 5 of the 1401 file, an appended page in another '
+                         'format; the official table itself (page 4) only says the English questions are at Upper Intermediate level',
+}
+
 # Rows without a publication year: (exam year, reference key) -> (publication year, why).
 MISSING_YEAR = {
     ('1398', 'van-noort-materials'): ('2013', 'in 1398 the newest edition was the 4th (2013); the 5th appeared in 2024'),
@@ -241,6 +250,11 @@ def clean(value) -> str:
 def build() -> dict:
     rows = read_sheet(WORKBOOK, SHEET)
     header, rows = rows[0], [r + [None] * (12 - len(r)) for r in rows[1:] if r]
+    for extra in EXTRA_YEARS:
+        data = json.loads(extra.read_text(encoding='utf-8'))
+        for r in data['rows']:
+            rows.append([r['year'], r.get('period'), r['subject'], r['title'], r.get('authors'), r.get('pub_year'), r.get('edition'),
+                         r.get('scope'), data.get('evidence'), None, data.get('source_document'), None])
     notes: list[str] = []
     validity: dict[tuple, dict] = {}
     used: dict[str, set] = {}
@@ -304,6 +318,9 @@ def build() -> dict:
         subject = SUBJECT_BY_NAME.get(clean(subject_name).replace('‌', ''))
         if subject is None:
             notes.append(f'{where}: unknown subject "{clean(subject_name)}", skipped')
+            continue
+        if (clean(year), subject) in NOT_IN_OFFICIAL_LIST:
+            decisions.append(f'{where}: "{clean(title)}" left out — {NOT_IN_OFFICIAL_LIST[(clean(year), subject)]}')
             continue
         if any(marker in clean(title).lower() for marker in NOT_A_BOOK):
             decisions.append(f'{where}: "{clean(title)}" is a scope statement, not a book; kept out of the reference list')
