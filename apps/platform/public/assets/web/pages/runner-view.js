@@ -789,7 +789,9 @@ function renderQuestionMeta(question) {
     const topic = typeof question.topic === 'string' ? question.topic.trim() : '';
     items.push(metaItem('subject', 'book', 'مبحث', topic === '' ? null : faText(topic)));
 
-    const difficulty = question.difficulty;
+    // Measured from everyone's answers once enough are in; otherwise the
+    // question's own authored difficulty.
+    const difficulty = question.stats?.difficulty ?? question.difficulty;
     const hasDifficulty = difficulty !== undefined && difficulty !== null && String(difficulty).trim() !== '';
     const level = hasDifficulty ? String(difficulty).trim() : '';
     items.push(metaItem('difficulty', 'gauge', 'سطح دشواری', hasDifficulty ? (DIFFICULTY_LABELS[level.toLowerCase()] ?? faText(level)) : null));
@@ -975,6 +977,7 @@ export function renderReport(summary, actions, ranking = null) {
             }, el('span', { className: 'x-report__percent', text: `٪${faDigits(percent)}` })),
             el('p', { className: 'x-report__line', text: `${faDigits(correct)} پاسخ درست از ${faDigits(total)} سؤال` }),
             renderReportStats(summary, total, correct),
+            renderPointsEarned(summary),
             renderRanking(ranking),
             Number(summary.revealed_count || 0) === 0 ? null : notice(
                 'warning',
@@ -984,6 +987,18 @@ export function renderReport(summary, actions, ranking = null) {
             el('div', { className: 'x-report__actions' },
                 el('button', { className: 'f-btn f-btn--primary', type: 'button', text: 'مرور پاسخ‌ها', on: { click: actions.review } }),
                 el('a', { className: 'f-btn f-btn--ghost', attrs: { href: '/app/exams' }, text: 'فهرست آزمون‌ها' }))));
+}
+
+/*
+ * امتیاز روزانه: what this attempt added to today's points, linked to the
+ * points page. Absent for an attempt scored before points existed.
+ */
+function renderPointsEarned(summary) {
+    const points = Number(summary.points_earned);
+    if (!Number.isFinite(points) || points <= 0) return null;
+    return el('a', { className: 'x-report__points', attrs: { href: '/app/points' } },
+        el('strong', { text: `+${faDigits(points)} امتیاز` }),
+        el('span', { text: summary.daily_goal_reached ? ' · به هدف امروز رسیدی و یک سکه گرفتی' : ' · امتیاز روزانه' }));
 }
 
 /*

@@ -763,6 +763,17 @@ body.x-focus .f-page {
     margin-bottom: var(--space-5);
 }
 
+.x-report__points {
+    display: inline-block;
+    margin-bottom: var(--space-4);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-pill);
+    background: var(--warning-soft);
+    color: var(--warning);
+    font-size: var(--text-sm);
+    text-decoration: none;
+}
+
 /* ------------------------------------------------------ study tools */
 
 /* The student's own highlight over the stem. `color: inherit` because a

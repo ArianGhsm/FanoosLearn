@@ -62,7 +62,7 @@ of the counted rows at ✅.
 | 30 | Highlights / flashcards page (هایلایت‌ها) | M | ✅ /app/saved highlights tab, grouped by topic, with a flashcard mode (phrase in front, its question behind) |
 | 31 | Performance report by subject and day (گزارشات) | M | ✅ progress dashboard |
 | 32 | Study time per day (محاسبه ساعت مطالعه) | M | ✅ minutes per day and in total, from exams and the timer |
-| 33 | Daily streak / score (امتیاز روزانه) | M | ✅ streak |
+| 33 | Daily streak / score (امتیاز روزانه) | M | ✅ streak, and daily points against a 500-point goal (/app/points) |
 | 34 | Day-by-day study plan with "done" ticks (برنامه روزانه) | M P | ✅ /app/plan: day-by-day to the exam date from the bank's topics, consolidation days at the end, a tick per day |
 | 35 | Study timer (تایمر مطالعه) | M | ✅ /app/timer: 25/5, 50/10, 90/15 focus blocks, recorded as study time |
 | 36 | Timed full-exam simulation | M P | ✅ timed exams |
@@ -80,14 +80,27 @@ of the counted rows at ✅.
 | 43 | Support contact | M P | ✅ /support with the bot contacts and FAQ; linked in every footer |
 | 44 | Lessons and summaries next to the bank (درسنامه، خلاصه، مایندمپ) | M P | ✅ /app/lessons: lessons, summaries, flashcards, files via protected delivery; composer with draft → review → publish |
 
+## Engagement (owner's decision, 2026-10-06)
+
+Reviewed again on 2026-10-06 from inside a signed-in MedoFast account. The
+owner asked for the infrastructure of these now, before the bank is full;
+the design is docs/product/08_ENGAGEMENT.md.
+
+| # | Option | Who | FANOOS |
+|---|---|---|---|
+| 45 | Points per right answer by difficulty, a daily goal, place today / this week / this month (امتیاز روزانه و رتبه) | M | ✅ /app/points |
+| 46 | Coins for each goal day, spent on discount codes (مدوفست‌کوین) | M | 🟡 coins are earned; spending them comes with discount codes |
+| 47 | Discount codes on plans | M | ❌ |
+| 48 | Group study room: private link, up to 10 friends, today's study side by side (اتاق مطالعه گروهی) | M | ❌ |
+| 49 | Affiliate programme (کسب درآمد از مدوفست) | M | ❌ |
+
 ## Left out on purpose
 
 Not counted, because they are content, marketing or a separate product, not
 an option of the bank: printed books and their print options, top-ranker
 interviews, the blog, phone consultation, the English-language package,
-MedoFast's study room and AI study assistant (گوربک), group purchase and gift
-plans. They can come back as their own decisions.
+MedoFast's AI study assistant (گوربک), group purchase and gift plans. They can come back as their own decisions.
 
 ## Score
 
-Counted rows: 44. ✅ today: 44 (100 %). Target: 36 (≥ 80 %).
+Counted rows: 49. ✅ today: 45 (92 %), 🟡 1. Target: 40 (≥ 80 %).

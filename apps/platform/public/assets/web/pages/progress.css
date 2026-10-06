@@ -8,6 +8,10 @@
     margin: 0 0 var(--space-1);
 }
 
+.p-head__links {
+    margin: var(--space-3) 0 0;
+}
+
 .p-board {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));

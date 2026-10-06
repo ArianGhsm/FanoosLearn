@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fanoos\Platform\Content;
 
+use Fanoos\Platform\Engagement\QuestionDifficulty;
 use PDO;
 
 /**
@@ -33,6 +34,7 @@ final class QuestionStatsRecorder
      * @param array<string, mixed> $definition the attempt's version definition
      * @param list<array<string, mixed>> $review the scored review entries
      * @param list<int> $revealedPositions 1-based positions whose answer was seen before answering (seenFirst())
+     * @return list<string> the questions counted as answered right (what points are earned for)
      */
     public function record(
         string $workspaceId,
@@ -43,7 +45,7 @@ final class QuestionStatsRecorder
         array $review,
         array $revealedPositions,
         string $answeredAt,
-    ): void {
+    ): array {
         $questions = [];
         foreach ($definition['questions'] ?? [] as $question) {
             $questions[(string) $question['id']] = $question;
@@ -111,8 +113,12 @@ SQL);
             $blank->execute(['workspace' => $workspaceId, 'user' => $userId, 'question' => (string) $id, 'at' => $answeredAt]);
         }
 
+        $counted = [];
         foreach ($entries as $id => $entry) {
             $correct = ($entry['is_correct'] ?? false) === true ? 1 : 0;
+            if ($correct === 1) {
+                $counted[] = (string) $id;
+            }
             $question = $questions[$id];
             $topic = trim((string) ($question['topic'] ?? ''));
             $global->execute(['workspace' => $workspaceId, 'question' => $id, 'correct' => $correct]);
@@ -126,6 +132,8 @@ SQL);
                 'correct' => $correct, 'last_correct' => $correct, 'answered_at' => $answeredAt,
             ]);
         }
+
+        return $counted;
     }
 
     /**
@@ -190,7 +198,7 @@ SQL);
      * it, and this student's own record. Other people's numbers are withheld
      * below PEER_MINIMUM answers.
      *
-     * @return array{peer_answered:?int,peer_correct_percent:?int,answered:int,correct:int,blank:int,last_correct:?bool,last_answered_at:?string}
+     * @return array{peer_answered:?int,peer_correct_percent:?int,answered:int,correct:int,blank:int,last_correct:?bool,last_answered_at:?string,difficulty:?string}
      */
     public function forQuestion(string $workspaceId, string $userId, string $questionKey): array
     {
@@ -222,6 +230,8 @@ SQL);
             'blank' => (int) ($row['blank_count'] ?? 0),
             'last_correct' => $answered > 0 ? (bool) $row['last_correct'] : null,
             'last_answered_at' => $answered > 0 ? gmdate(DATE_ATOM, (int) strtotime($row['last_answered_at'] . ' UTC')) : null,
+            // Measured from everyone's answers (this student's included); null until enough are in.
+            'difficulty' => QuestionDifficulty::measured((int) ($row['all_answered'] ?? 0), (int) ($row['all_correct'] ?? 0)),
         ];
     }
 
