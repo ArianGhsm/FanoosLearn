@@ -189,7 +189,7 @@ async function reports() {
                 q.append(el('summary', '', 'سؤال'), el('p', '', report.prompt));
                 const ol = el('ol', 's-report__choices');
                 report.choices.forEach((choice, index) => {
-                    const li = el('li', index === report.answer ? 'is-answer' : '', `${LETTERS[index] ?? index + 1}) ${choice}`);
+                    const li = el('li', index === report.answer || (report.also_correct || []).includes(index) ? 'is-answer' : '', `${LETTERS[index] ?? index + 1}) ${choice}`);
                     ol.append(li);
                 });
                 q.append(ol);

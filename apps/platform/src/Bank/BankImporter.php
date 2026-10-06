@@ -480,6 +480,17 @@ SQL);
                 } elseif (!is_int($choice) || $choice < 1 || $choice > count($choices)) {
                     $this->fail("{$here}.answer.choice", 'must be the 1-based number of a choice');
                 }
+                // The other options an official key also accepts ("multiple correct").
+                if (array_key_exists('also_correct', $answer)) {
+                    $also = $answer['also_correct'];
+                    if (!in_array($answer['status'] ?? null, ['preliminary', 'final', 'amended'], true)) {
+                        $this->fail("{$here}.answer.also_correct", 'is only for a standing answer (preliminary, final or amended)');
+                    } elseif (!is_array($also) || !array_is_list($also) || $also === []
+                        || count(array_unique($also)) !== count($also)
+                        || array_filter($also, static fn ($n): bool => !is_int($n) || $n < 1 || $n > count($choices) || $n === $choice) !== []) {
+                        $this->fail("{$here}.answer.also_correct", 'must list other 1-based choice numbers, each once, without "choice"');
+                    }
+                }
             }
 
             if (isset($question['type'])) {
@@ -714,13 +725,16 @@ SQL);
 
             // The official key keeps its history: a new row only when it changed.
             $answer = $question['answer'];
-            $latest = $this->database->prepare('SELECT choice_position, status FROM bank_official_answers WHERE question_id = :question ORDER BY recorded_at DESC, id DESC LIMIT 1');
+            $latest = $this->database->prepare('SELECT choice_position, also_correct_positions, status FROM bank_official_answers WHERE question_id = :question ORDER BY recorded_at DESC, id DESC LIMIT 1');
             $latest->execute(['question' => $questionId]);
             $current = $latest->fetch() ?: null;
             $choice = $answer['choice'] ?? null;
-            if ($current === null || (int) $current['choice_position'] !== (int) $choice || $current['status'] !== $answer['status'] || ($current['choice_position'] === null) !== ($choice === null)) {
-                $this->database->prepare('INSERT INTO bank_official_answers (id, workspace_id, question_id, choice_position, status, source, recorded_at) VALUES (:id, :workspace, :question, :choice, :status, :source, :at)')
-                    ->execute(['id' => Uuid::v7(), 'workspace' => $workspaceId, 'question' => $questionId, 'choice' => $choice, 'status' => $answer['status'], 'source' => $answer['source'] ?? null, 'at' => $this->now()]);
+            $also = isset($answer['also_correct']) ? array_values(array_map('intval', $answer['also_correct'])) : [];
+            sort($also);
+            $currentAlso = $current === null || $current['also_correct_positions'] === null ? [] : array_map('intval', (array) json_decode((string) $current['also_correct_positions'], true));
+            if ($current === null || (int) $current['choice_position'] !== (int) $choice || $current['status'] !== $answer['status'] || ($current['choice_position'] === null) !== ($choice === null) || $currentAlso !== $also) {
+                $this->database->prepare('INSERT INTO bank_official_answers (id, workspace_id, question_id, choice_position, also_correct_positions, status, source, recorded_at) VALUES (:id, :workspace, :question, :choice, :also, :status, :source, :at)')
+                    ->execute(['id' => Uuid::v7(), 'workspace' => $workspaceId, 'question' => $questionId, 'choice' => $choice, 'also' => $also === [] ? null : json_encode($also, JSON_THROW_ON_ERROR), 'status' => $answer['status'], 'source' => $answer['source'] ?? null, 'at' => $this->now()]);
                 ++$counts['answers_recorded'];
             }
 

@@ -17,7 +17,7 @@ import {
     reconcileAnswers, saveQueuedSubmission, savePersistedAttempt,
 } from './runner-persistence.js';
 import {
-    notice, renderHistory, renderIntro, renderMap, renderQuestion, renderReport,
+    isAccepted, notice, renderHistory, renderIntro, renderMap, renderQuestion, renderReport,
     renderReviewQuestion, renderSubmitDialog,
 } from './runner-view.js';
 import {
@@ -785,7 +785,7 @@ const questionActions = {
 function afterReveal(position, payload) {
     const chosen = state.answers[String(position)];
     if (chosen === undefined) return;
-    const correct = chosen === payload.answer;
+    const correct = isAccepted(payload.answer, payload.also_correct, chosen);
     if (state.mode !== 'assessment') playFeedbackTone(settings, correct ? 'correct' : 'incorrect');
     if (correct && effectiveSpeed(settings, state.mode) === 'fast') scheduleAutoAdvance();
 }

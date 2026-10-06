@@ -320,6 +320,24 @@ SQL);
         $this->assert($again['assessment_id'] === $published['assessment_id'] && $again['new_exam'] === false, 'Republishing created a second exam.');
         $this->assert($again['questions'] === 1 && $again['left_out'] === [BankImporter::questionKey('residency', 1404, 1, 2) . ': official answer voided'], 'A voided question was published: ' . json_encode($again));
 
+        // A final key that accepts two options: the question is published and either option scores.
+        $two = $amended;
+        $two['questions'][1]['answer'] = ['choice' => 2, 'also_correct' => [1], 'status' => 'amended', 'source' => 'کلید نهایی: ۱ و ۲'];
+        $bad = $two;
+        $bad['questions'][1]['answer']['also_correct'] = [2];
+        $this->assert($this->mentions($importer->validate($ws, $bad), 'questions[1].answer.also_correct'), 'An also-correct option equal to the answer was accepted.');
+        $this->assert($importer->import($ws, $two)['answers_recorded'] === 1, 'The second accepted option was not recorded.');
+        $both = $publisher->publish($ws, 'residency', 1404, 1, $f['manager'], $f['reviewer']);
+        $this->assert($both['questions'] === 2 && $both['left_out'] === [], 'A question with two accepted options was left out: ' . json_encode($both));
+        $second = BankImporter::questionKey('residency', 1404, 1, 2);
+        foreach ([0, 1] as $choice) {
+            $try = $exams->startAttempt($f['student'], $ws, $both['assessment_id']);
+            $result = $exams->submitAttempt($f['student'], $ws, $try['attempt_id'], 1, [$second => $choice]);
+            $this->assert($result['correct_count'] === 1, "Accepted option {$choice} did not score: " . json_encode($result));
+        }
+        $wrongTry = $exams->startAttempt($f['student'], $ws, $both['assessment_id']);
+        $this->assert($exams->submitAttempt($f['student'], $ws, $wrongTry['attempt_id'], 1, [$second => 2])['correct_count'] === 0, 'An option the key does not accept scored.');
+
         // Two people review an exam; only an installation owner may review their own.
         // The manager is given the reviewer role too, so only the self-review rule refuses.
         $this->grant($ws, $f['manager'], 'content-reviewer');

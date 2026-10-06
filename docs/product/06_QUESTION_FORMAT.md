@@ -133,6 +133,12 @@ re-importing a fuller file.
   changed), `disputed`, `voided` (question cancelled; `choice` is null).
   Every change is kept as history; disputed and voided questions are left
   out of the published exam.
+- **Several accepted options:** when the final key accepts more than one
+  option, `choice` is one of them and `also_correct` lists the others
+  (`{"choice": 1, "also_correct": [2], "status": "amended"}`). The question
+  is published; in the exam any of them scores, and the reveal, the review
+  and the mistakes review mark all of them as right (`also_correct` beside
+  `answer`/`correct`, 0-based there).
 - **References** are written `reference@edition` and
   `reference@edition#node`, using the catalog's keys.
 - **Type:** recall, conceptual, clinical_scenario, diagnosis,

@@ -24,9 +24,8 @@ sitting is required; missing or unchecked questions stop the build.
 
 Answers: a final key that differs from the initial one is "amended"; a
 question the official notice voided is "voided"; one where the notice
-accepts several options is "disputed" (the runner scores one answer, so the
-publisher leaves it out rather than mark a right answer wrong). Accepted
-options stay in the answer source until the bank supports them structurally.
+accepts several options keeps the first as "choice" and the others in
+"also_correct", and any of them scores.
 
 A checked chapter ("Chapter 6. ..." or van Noort's "Chapter 3.5 ...") must
 already be a chapter node of the cited edition in the catalog; the question
@@ -202,7 +201,9 @@ def answer(row: dict[str, str]) -> dict:
         return {'choice': None, 'status': 'voided', 'source': source + ' (سؤال حذف شد)'}
     options = [LETTERS[x] for x in re.findall(r'[ABCD]', final)]
     if len(options) > 1:
-        return {'choice': options[0], 'status': 'disputed', 'source': source + ' — گزینه‌های پذیرفته: ' + '، '.join(str(o) for o in options)}
+        # The final key accepts several options: any of them scores.
+        return {'choice': options[0], 'also_correct': options[1:], 'status': 'amended',
+                'source': source + ' — گزینه‌های پذیرفته: ' + '، '.join(str(o) for o in options)}
     if len(options) != 1:
         raise ValueError(f'unreadable key {final!r}')
     status = 'amended' if initial and initial != final else 'final'
