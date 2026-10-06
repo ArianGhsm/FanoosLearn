@@ -64,6 +64,13 @@ final class WebRouter
                 : $this->redirect('/app');
         }
 
+        // A referral link (برنامه همکاری): on to sign-up with the code, which
+        // register.js keeps and sends with the new account. Someone already
+        // signed in has nothing to sign up for.
+        if (preg_match('#^/r/([a-z0-9]{10})$#', $path, $referral) === 1) {
+            return $this->redirect($viewer === null ? '/register?ref=' . $referral[1] : '/app');
+        }
+
         if ($path === '/register') {
             return $viewer === null
                 ? $this->page(200, (new RegisterPage($this->renderer))->render())
@@ -72,6 +79,27 @@ final class WebRouter
 
         if ($path === '/pay/return') {
             return $this->page(200, (new PaymentReturnPage($this->renderer))->render($viewer, ...$this->settlePayment($query)));
+        }
+
+        if ($path === '/app/affiliate') {
+            if ($viewer === null) {
+                return $this->redirect('/login');
+            }
+            return $viewer->workspaceId === null
+                ? $this->redirect('/app')
+                : $this->page(200, (new AffiliatePage($this->renderer))->render($viewer));
+        }
+
+        if ($path === '/app/admin/affiliate') {
+            if ($viewer === null) {
+                return $this->redirect('/login');
+            }
+            if ($viewer->workspaceId === null) {
+                return $this->redirect('/app');
+            }
+            return $viewer->canManageCatalog
+                ? $this->page(200, (new AffiliatePage($this->renderer))->adminPage($viewer))
+                : $this->page(404, (new NotFoundPage($this->renderer))->render($viewer));
         }
 
         if ($path === '/app/admin/discounts') {

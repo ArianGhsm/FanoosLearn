@@ -12,7 +12,7 @@ its own pull request and is marked here when it ships.
 | Coins earned | ✅ |
 | Coins spent, discount codes | ✅ |
 | Group study room | ✅ |
-| Affiliate programme | planned |
+| Affiliate programme | ✅ (off until the owner turns it on) |
 
 ## Difficulty (سطح دشواری)
 
@@ -127,10 +127,34 @@ statistics, `rebuild-question-stats.php` does not recompute them.
   not themselves. When the last member leaves, the room is archived and its
   link stops working.
 
-## Affiliate programme (planned)
+## Affiliate programme (برنامه همکاری در فروش)
 
-- Each account can get a referral link. A sign-up through it is attributed
-  to the referrer.
-- A paid order by an attributed buyer earns the referrer a commission,
-  recorded in a ledger. Payouts are marked by the owner.
-- The rates are the owner's to set; until then the programme stays off.
+`Commerce\AffiliateService`; tables `affiliate_programs`, `affiliate_links`,
+`affiliate_referrals`, `affiliate_commissions`.
+
+**The owner's settings** (`/app/admin/affiliate`, needs
+`commerce.manage_catalog`): the programme on or off, the commission
+percentage (1–90), and how many days after sign-up a purchase still earns it.
+The programme is **off** until the owner turns it on. The page fills in
+10 % and 90 days only as starting values.
+
+**Links.** A student gets a 10-character code on `/app/affiliate`. The link
+`/r/<code>` leads to sign-up, and `register.js` keeps the code for 30 days.
+
+**Attribution.** `StudentRegistrationService::register` calls
+`attribute()` inside its own transaction. An unknown code, a programme
+that is off, and one's own link all attribute nothing. One referral per
+account and workspace.
+
+**Commission.** When an order becomes paid (`CommerceService::finalize`,
+same transaction), a buyer referred within the window earns their referrer
+the percentage of what was actually paid. That is the discounted total if a
+code was used. There is one commission per order (a unique order id), so a
+repeated callback cannot pay twice.
+
+**Payouts.** The owner sees each affiliate's referrals, buyers, pending and
+paid-out totals, and marks pending commissions paid out. The money itself
+moves outside the site.
+
+**What a referrer sees.** Counts and money only: sign-ups, buyers, pending
+and paid amounts, and their recent commissions. Never who the buyers are.

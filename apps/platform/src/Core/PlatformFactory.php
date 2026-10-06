@@ -7,6 +7,7 @@ namespace Fanoos\Platform\Core;
 use Fanoos\Platform\Audit\AuditLogger;
 use Fanoos\Platform\Authorization\AccessGate;
 use Fanoos\Platform\Authorization\ScopeAuthorizer;
+use Fanoos\Platform\Commerce\AffiliateService;
 use Fanoos\Platform\Commerce\CatalogAdminService;
 use Fanoos\Platform\Commerce\CommerceService;
 use Fanoos\Platform\Commerce\DiscountService;
@@ -178,6 +179,7 @@ final class PlatformFactory
             new DiscountService($database, $access, $audit),
             new CoinService($database, $access, $audit),
             new StudyRoomService($database, $access, $audit),
+            new AffiliateService($database, $access, $audit),
         );
     }
 }

@@ -9,6 +9,39 @@
 import { api, ApiError, describeError } from '../foundation/api.js';
 import { currentJalaliYear, faDigits, passwordStrength, usernameProblem, wireRevealToggles } from './auth-shared.js';
 
+/*
+ * برنامه همکاری: a referral link (/r/<code>) arrives here as ?ref=<code>.
+ * The code is kept for 30 days, so someone who looks around first and signs
+ * up later is still counted; it goes with the sign-up, and the server
+ * ignores a code that is not live.
+ */
+const REFERRAL_SLOT = 'fanoos.referral';
+const REFERRAL_DAYS = 30;
+
+function keepReferral() {
+    const code = new URLSearchParams(window.location.search).get('ref');
+    if (!code || !/^[a-z0-9]{10}$/.test(code)) return;
+    try {
+        localStorage.setItem(REFERRAL_SLOT, JSON.stringify({ code, at: Date.now() }));
+    } catch {
+        // Private mode: the code still goes with a sign-up made right now.
+    }
+}
+
+function referralCode() {
+    const fromUrl = new URLSearchParams(window.location.search).get('ref');
+    if (fromUrl && /^[a-z0-9]{10}$/.test(fromUrl)) return fromUrl;
+    try {
+        const kept = JSON.parse(localStorage.getItem(REFERRAL_SLOT) || 'null');
+        if (kept && Date.now() - kept.at < REFERRAL_DAYS * 86400000) return kept.code;
+    } catch {
+        // Nothing kept.
+    }
+    return null;
+}
+
+keepReferral();
+
 const form = document.getElementById('register-form');
 const steps = [...form.querySelectorAll('.f-wizard__step')];
 const track = [...document.querySelectorAll('#register-track li')];
@@ -216,6 +249,9 @@ form.addEventListener('submit', async (event) => {
         const value = String(data.get(optional) || '').trim();
         if (value !== '') body[optional] = value;
     }
+
+    const referral = referralCode();
+    if (referral) body.referral_code = referral;
 
     submit.disabled = true;
     submit.textContent = 'در حال ساخت حساب…';

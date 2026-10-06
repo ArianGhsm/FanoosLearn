@@ -19,6 +19,7 @@ use Fanoos\Platform\Web\PageRenderer;
 use Fanoos\Platform\Web\PointsPage;
 use Fanoos\Platform\Web\DiscountsAdminPage;
 use Fanoos\Platform\Web\StorePage;
+use Fanoos\Platform\Web\AffiliatePage;
 use Fanoos\Platform\Web\StudyRoomsPage;
 use Fanoos\Platform\Web\ProgressPage;
 use Fanoos\Platform\Web\RecoveryPage;
@@ -190,6 +191,11 @@ final class WebRenderingTest
             str_contains($discounts, 'id="code-form"') && str_contains($discounts, 'id="offer-form"') && str_contains($discounts, '/assets/web/pages/discounts-admin.js'),
             'The discounts page must render both forms and load its script.',
         );
+        $this->assert(str_contains($discounts, 'href="/app/admin/affiliate"'), 'The discounts page must link to the affiliate settings.');
+        $affiliate = (new AffiliatePage($renderer))->render($viewer);
+        $this->assert(str_contains($affiliate, 'id="aff"') && str_contains($affiliate, '/assets/web/pages/affiliate.js'), 'The affiliate page must render its board and load its script.');
+        $affiliateAdmin = (new AffiliatePage($renderer))->adminPage($owner);
+        $this->assert(str_contains($affiliateAdmin, 'id="aff-settings"') && str_contains($affiliateAdmin, 'id="aff-list"'), 'The affiliate settings page must render its form and list.');
     }
 
     private function navigationHidesWorkspaceAreasUntilOneIsSelected(PageRenderer $renderer): void

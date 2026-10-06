@@ -442,6 +442,10 @@ SQL);
                 foreach ($scopes->fetchAll(PDO::FETCH_COLUMN) as $scopeId) {
                     $this->entitlements->grantFromOrder((string) $order['workspace_id'], (string) $order['buyer_user_id'], (string) $scopeId, (string) $order['order_id']);
                 }
+                // برنامه همکاری در فروش: a referred buyer's paid order earns their referrer's commission.
+                (new AffiliateService($this->database))->commission(
+                    (string) $order['workspace_id'], (string) $order['buyer_user_id'], (string) $order['order_id'], (int) $order['total_minor'],
+                );
                 $this->audit->record((string) $order['workspace_id'], $actorUserId, 'payment.verify', 'commerce_order', (string) $order['order_id']);
                 return ['order_id' => $order['order_id'], 'status' => 'paid', 'duplicate' => false];
             }

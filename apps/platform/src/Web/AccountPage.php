@@ -38,6 +38,13 @@ final class AccountPage
         $workspace = $viewer->workspaceName === null
             ? '<p class="f-muted">هنوز فضای آموزشی‌ای انتخاب نکرده‌ای.</p>'
             : '<p class="a-account__value">' . $this->renderer->escape($viewer->workspaceName) . '</p>';
+        $earn = $viewer->workspaceId === null ? '' : <<<'HTML'
+<section class="f-card a-account">
+    <h2>کسب درآمد با معرفی فانوس</h2>
+    <p class="f-muted">لینک اختصاصی‌ات را بفرست؛ از خرید کسانی که با آن ثبت‌نام کنند پورسانت می‌گیری.</p>
+    <p><a class="f-btn f-btn--ghost" href="/app/affiliate">لینک و درآمد من</a></p>
+</section>
+HTML;
 
         $main = <<<HTML
 <h1>حساب کاربری</h1>
@@ -50,6 +57,7 @@ final class AccountPage
     {$workspace}
     <p><a class="f-btn f-btn--ghost" href="/app?switch=1">تغییر فضای آموزشی</a></p>
 </section>
+{$earn}
 
 <section class="f-card a-account" aria-labelledby="bots-title" id="bots"{$botAttributes}>
     <h2 id="bots-title">اتصال به ربات</h2>

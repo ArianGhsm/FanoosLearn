@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Fanoos Core API
-  version: 1.8.0
+  version: 1.9.0
   description: Canonical human/browser API. Mutating authenticated operations require the existing session CSRF contract.
 servers:
   - url: /api/v1
@@ -540,6 +540,19 @@ paths:
     post: { operationId: leaveStudyRoom, description: 'The last member out archives the room.', parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: roomId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' } } }
   /workspaces/{workspaceId}/rooms/{roomId}/members/{userId}/remove:
     post: { operationId: removeStudyRoomMember, description: 'The creator only (403 study_room_not_creator); not themselves.', parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: roomId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }, { name: userId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } } }
+  /workspaces/{workspaceId}/affiliate:
+    get:
+      operationId: readAffiliate
+      description: 'برنامه همکاری در فروش: {enabled, commission_percent, attribution_days, code (null until made), currency, referrals, buyers, pending_minor, paid_out_minor, commissions [{commission_minor, status pending|paid_out, created_at}]}. Counts and money only, never who bought. Needs exam.take.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+  /workspaces/{workspaceId}/affiliate/link:
+    post: { operationId: makeAffiliateLink, description: 'The caller''s referral code, made on first ask ({code}); the link is /r/<code>. 409 affiliate_program_off.', parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' } } }
+  /workspaces/{workspaceId}/admin/affiliate:
+    get: { operationId: readAffiliateProgram, description: 'The programme ({enabled, commission_percent, attribution_days}) and affiliates [{user_id, name, code, referrals, buyers, pending_minor, paid_out_minor}]. Needs commerce.manage_catalog.', parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } } }
+    post: { operationId: saveAffiliateProgram, description: 'Body {enabled, commission_percent 1-90, attribution_days 1-3650}.', parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' }, '422': { $ref: '#/components/responses/Error' } } }
+  /workspaces/{workspaceId}/admin/affiliate/{userId}/pay-out:
+    post: { operationId: payOutAffiliate, description: 'Marks the affiliate''s pending commissions paid out: {count, total_minor}.', parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: userId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
   /workspaces/{workspaceId}/attempts/{attemptId}:
     patch: { operationId: saveAssessmentProgress, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AttemptId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' } } }
   /workspaces/{workspaceId}/attempts/{attemptId}/questions/{position}:
