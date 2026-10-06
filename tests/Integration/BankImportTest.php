@@ -335,7 +335,9 @@ SQL);
             $student = $this->member($ws, 'student');
             $try = $exams->startAttempt($student, $ws, $both['assessment_id']);
             $result = $exams->submitAttempt($student, $ws, $try['attempt_id'], (int) $try['revision'], [$second => $choice]);
-            $this->assert($result['correct_count'] === $expected, "Option {$choice} scored wrongly: " . json_encode($result));
+            $stored = $this->database->prepare('SELECT review_json FROM exam_attempt_results WHERE attempt_id = :attempt');
+            $stored->execute(['attempt' => $try['attempt_id']]);
+            $this->assert($result['correct_count'] === $expected, "Option {$choice} scored wrongly: " . json_encode($result) . ' review: ' . $stored->fetchColumn());
         }
 
         // Two people review an exam; only an installation owner may review their own.
