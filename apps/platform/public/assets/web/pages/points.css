@@ -42,6 +42,9 @@
 }
 
 .pt-goal__fill {
+    /* Starts empty (2πr for r=52); points.js sets the share reached. */
+    stroke-dasharray: 326.73;
+    stroke-dashoffset: 326.73;
     stroke: var(--accent);
     stroke-linecap: round;
     transition: stroke-dashoffset 600ms var(--ease);

@@ -78,6 +78,9 @@ final class PageRenderer
         }
 
         $scripts = ['<script type="module" src="' . $this->escape($this->assets->url('/assets/web/foundation/pwa.js')) . '"></script>'];
+        if ($viewer !== null && $viewer->workspaceId !== null) {
+            $scripts[] = '<script type="module" src="' . $this->escape($this->assets->url('/assets/web/foundation/header-stats.js')) . '"></script>';
+        }
         foreach ($page['modules'] ?? [] as $module) {
             $scripts[] = '<script type="module" src="' . $this->escape($this->assets->url($module)) . '"></script>';
         }
@@ -141,6 +144,11 @@ final class PageRenderer
             . '<a class="f-brand" href="/app">' . PublicChrome::LANTERN . '<span class="f-brand__name">فانوس</span></a>'
             . $workspace
             . '<nav class="f-nav" aria-label="بخش‌های اصلی">' . $items . '</nav>'
+            // Today's points and coins, filled in by header-stats.js; hidden until it has them.
+            . ($viewer->workspaceId === null ? '' : '<a class="f-stats" id="f-stats" href="/app/points" hidden>'
+                . '<span class="f-stats__item f-stats__item--points" title="امتیاز امروز"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg><b id="f-stats-points"></b></span>'
+                . '<span class="f-stats__item f-stats__item--coins" title="سکه"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M9.5 10h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3h4"/></svg><b id="f-stats-coins"></b></span>'
+                . '</a>')
             // On a wide screen the account is the person, at the end of the
             // bar; on a phone it is the last tab of the bottom bar instead.
             . '<a class="f-account" href="/account"' . $current . '>'

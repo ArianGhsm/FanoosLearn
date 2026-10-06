@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Fanoos Core API
-  version: 1.9.0
+  version: 1.10.0
   description: Canonical human/browser API. Mutating authenticated operations require the existing session CSRF contract.
 servers:
   - url: /api/v1
@@ -493,6 +493,12 @@ paths:
       description: 'داشبورد پیشرفت: the caller''s own progress in this workspace, read fresh from their scored attempts and exam_question_user_stats -- totals (attempts, answers, correct_percent, questions_seen, questions_mastered, study_days, study_minutes, today_minutes -- time in exams, capped at 3 minutes a question and 3 hours an attempt, plus timed focus blocks), streak {current, best, today} in the workspace timezone, activity (the last 84 days, answered/correct/attempts/minutes per day), trend (the last 30 scores), recent (the last 8 attempts), courses (seen of about how many, correct share) and weak_topics (lowest correct share among topics with at least 5 answers). Needs exam.take.'
       parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
       responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/points/today:
+    get:
+      operationId: readPointsGlance
+      description: 'The header''s glance: {points (today), goal, coins}. Needs exam.take.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' } }
   /workspaces/{workspaceId}/points:
     get:
       operationId: readPoints

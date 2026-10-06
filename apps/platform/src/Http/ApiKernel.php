@@ -573,6 +573,12 @@ final class ApiKernel
             $courses = array_filter(explode(',', (string) ($request->query['course_ids'] ?? '')));
             return ['status' => 200, 'data' => $this->requireCustomPractice()->options($session->userId, $workspaceId, array_values($courses))];
         }
+        if ($request->method === 'GET' && $suffix === '/points/today') {
+            if ($this->points === null) {
+                throw new PlatformException('points_unavailable', 'Points are not available.', 503);
+            }
+            return ['status' => 200, 'data' => $this->points->glance($session->userId, $workspaceId)];
+        }
         if ($request->method === 'GET' && $suffix === '/points') {
             if ($this->points === null) {
                 throw new PlatformException('points_unavailable', 'Points are not available.', 503);
