@@ -183,7 +183,9 @@ copy** of its questions. Everything the site already does works on it: the
 three modes, the timer, pacing, the review, per-question statistics,
 custom practice, the mistakes review and progress. Publishing again after a
 correction adds a new version; past attempts keep the version they were
-taken on.
+taken on. It goes through the exam's review like any exam: the reviewer is
+another account, except that an installation owner (a platform-scope role)
+may review their own; that approval is audited with `self_review_by_owner`.
 
 What the student sees for one question:
 

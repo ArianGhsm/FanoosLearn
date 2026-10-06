@@ -30,7 +30,8 @@ use Fanoos\Platform\Support\RuntimeConfig;
  *   php scripts/import/import-bank.php prune-nodes --workspace=<uuid> --file=<catalog.json> [--dry-run]
  *
  * Publish an imported sitting as an exam on the site (actor and reviewer
- * must be different accounts):
+ * are different accounts, unless the actor is an installation owner, who
+ * may review their own):
  *   php scripts/import/import-bank.php publish --workspace=<uuid> --type=residency --year=1404 [--round=1]
  *       --actor=<uuid> --reviewer=<uuid> [--time-limit=<minutes>] [--max-attempts=<n>]
  *

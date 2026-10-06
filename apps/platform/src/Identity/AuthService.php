@@ -271,7 +271,8 @@ SQL);
      * Whether this account holds a live role assignment on the platform
      * scope -- the owners of the installation.
      *
-     * Deliberately a role-assignment check rather than a hardcoded user id
+     * The query lives in PlatformOperators, for services without an
+     * AuthService. Deliberately a role-assignment check rather than a hardcoded user id
      * or a role-key match: an owner is whoever has been granted the platform
      * scope, which is the same fact `ScopeAuthorizer` already decides
      * against, so the two cannot drift apart.
@@ -284,23 +285,7 @@ SQL);
      */
     public function isPlatformOperator(string $userId): bool
     {
-        $query = $this->database->prepare(<<<'SQL'
-SELECT 1
-FROM rbac_role_assignments assignment
-JOIN rbac_scopes scope ON scope.id = assignment.scope_id
-JOIN rbac_role_templates role ON role.id = assignment.role_template_id
-WHERE assignment.user_id = :user
-  AND scope.scope_type = 'platform'
-  AND scope.archived_at IS NULL
-  AND role.status = 'active'
-  AND assignment.revoked_at IS NULL
-  AND assignment.valid_from <= UTC_TIMESTAMP(6)
-  AND (assignment.valid_until IS NULL OR assignment.valid_until > UTC_TIMESTAMP(6))
-LIMIT 1
-SQL);
-        $query->execute(['user' => $userId]);
-
-        return $query->fetchColumn() !== false;
+        return (new PlatformOperators($this->database))->isOperator($userId);
     }
 
     public function selectWorkspace(AuthenticatedSession $session, string $workspaceId): void

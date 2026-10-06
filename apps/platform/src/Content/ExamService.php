@@ -8,6 +8,7 @@ use Fanoos\Platform\Audit\AuditLogger;
 use Fanoos\Platform\Authorization\AccessGate;
 use Fanoos\Platform\Authorization\ScopeAuthorizer;
 use Fanoos\Platform\Entitlements\EntitlementService;
+use Fanoos\Platform\Identity\PlatformOperators;
 use Fanoos\Platform\Support\PlatformException;
 use Fanoos\Platform\Support\Transaction;
 use Fanoos\Platform\Support\Uuid;
@@ -157,7 +158,10 @@ SQL);
             if ($state['status'] !== 'review') {
                 throw new PlatformException('exam_version_state_conflict', 'Assessment version is not awaiting review.', 409);
             }
-            if (hash_equals((string) $state['created_by_user_id'], $actorUserId)) {
+            // Two people review an exam, except an installation owner, who may
+            // review their own (owner's decision, 2026-10-06); that is audited as such.
+            $selfReview = hash_equals((string) $state['created_by_user_id'], $actorUserId);
+            if ($selfReview && !(new PlatformOperators($this->database))->isOperator($actorUserId)) {
                 throw new PlatformException('self_review_forbidden', 'An assessment creator cannot approve their own work.', 403);
             }
             $this->execute(<<<'SQL'
@@ -172,7 +176,7 @@ SQL, [
             if ($decision === 'rejected') {
                 $this->execute("UPDATE exam_assessments SET status = IF(current_version_no = 0, 'draft', status), updated_at = UTC_TIMESTAMP(6) WHERE id = :assessment AND workspace_id = :workspace", ['assessment' => $assessmentId, 'workspace' => $workspaceId]);
             }
-            $this->audit->record($workspaceId, $actorUserId, 'exam.version.' . $decision, 'exam_assessment_version', $versionId, 'success', ['assessment_id' => $assessmentId]);
+            $this->audit->record($workspaceId, $actorUserId, 'exam.version.' . $decision, 'exam_assessment_version', $versionId, 'success', ['assessment_id' => $assessmentId] + ($selfReview ? ['self_review_by_owner' => true] : []));
         });
     }
 

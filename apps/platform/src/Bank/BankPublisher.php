@@ -19,7 +19,8 @@ use PDO;
  * after a correction adds a new version of the same exam.
  *
  * It goes through ExamService's own draft → review → publish path: the
- * actor and the reviewer must be different people, as for any exam.
+ * actor and the reviewer are different people, as for any exam, unless the
+ * actor is an installation owner reviewing their own (audited as such).
  *
  * Left out of the exam, and reported: withdrawn questions, and questions
  * whose official answer is voided or disputed — a student cannot be scored
