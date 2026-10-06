@@ -22,6 +22,7 @@ use Fanoos\Platform\Content\SecureDeliveryService;
 use Fanoos\Platform\Content\SecureObjectDownloadService;
 use Fanoos\Platform\Core\ScheduleProjectionService;
 use Fanoos\Platform\Core\WorkspacePlatformService;
+use Fanoos\Platform\Engagement\PointsService;
 use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Identity\AccountPhoneService;
 use Fanoos\Platform\Identity\AuthService;
@@ -61,6 +62,7 @@ final class ApiKernel
         private readonly ?ExamRankingService $ranking = null,
         private readonly ?ExamScheduleService $schedules = null,
         private readonly ?StudyPlanService $plans = null,
+        private readonly ?PointsService $points = null,
     ) {
     }
 
@@ -491,6 +493,12 @@ final class ApiKernel
         if ($request->method === 'GET' && $suffix === '/custom-practice/options') {
             $courses = array_filter(explode(',', (string) ($request->query['course_ids'] ?? '')));
             return ['status' => 200, 'data' => $this->requireCustomPractice()->options($session->userId, $workspaceId, array_values($courses))];
+        }
+        if ($request->method === 'GET' && $suffix === '/points') {
+            if ($this->points === null) {
+                throw new PlatformException('points_unavailable', 'Points are not available.', 503);
+            }
+            return ['status' => 200, 'data' => $this->points->summary($session->userId, $workspaceId)];
         }
         if ($request->method === 'GET' && $suffix === '/progress') {
             if ($this->progress === null) {

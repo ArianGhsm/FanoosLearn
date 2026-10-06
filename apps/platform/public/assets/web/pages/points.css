@@ -1,0 +1,189 @@
+/* امتیاز روزانه. Builds on progress.css (p-head, p-panel, p-skel). */
+
+.pt-board {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+}
+
+.pt-goal,
+.pt-ranks {
+    grid-column: 1 / -1;
+}
+
+.pt-goal {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    animation: f-rise 360ms var(--ease) both;
+}
+
+.pt-goal__ring {
+    position: relative;
+    flex: none;
+    width: 120px;
+    height: 120px;
+}
+
+.pt-goal__ring svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.pt-goal__track,
+.pt-goal__fill {
+    fill: none;
+    stroke-width: 10;
+}
+
+.pt-goal__track {
+    stroke: var(--surface-strong);
+}
+
+.pt-goal__fill {
+    stroke: var(--accent);
+    stroke-linecap: round;
+    transition: stroke-dashoffset 600ms var(--ease);
+}
+
+.pt-goal__ring[data-done="true"] .pt-goal__fill {
+    stroke: var(--success);
+}
+
+.pt-goal__value {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-size: var(--text-2xl);
+    font-weight: 700;
+}
+
+.pt-goal__text {
+    flex: 1;
+    min-width: 0;
+}
+
+.pt-goal__text h2 {
+    margin: 0 0 var(--space-1);
+    font-size: var(--text-lg);
+}
+
+.pt-goal__line {
+    margin: 0 0 var(--space-1);
+    font-size: var(--text-base);
+}
+
+.pt-coins {
+    display: grid;
+    justify-items: center;
+    gap: 2px;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-lg);
+    background: var(--warning-soft);
+    color: var(--warning);
+}
+
+.pt-coins strong {
+    font-size: var(--text-xl);
+}
+
+.pt-coins__icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 3px solid currentColor;
+}
+
+.pt-ranks {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-4);
+}
+
+.pt-rank {
+    display: grid;
+    gap: var(--space-1);
+    animation: f-rise 360ms var(--ease) both;
+}
+
+.pt-rank__label,
+.pt-rank__line {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.pt-rank__value {
+    font-size: var(--text-xl);
+}
+
+.pt-rank[data-first="true"] {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-lift);
+}
+
+.pt-bars {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+    height: 160px;
+    align-items: end;
+}
+
+.pt-bars__col {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    height: 100%;
+    gap: var(--space-1);
+    text-align: center;
+    min-width: 0;
+}
+
+.pt-bars__bar {
+    align-self: end;
+    height: max(var(--h), 3px);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    background: var(--accent-soft);
+    transition: height 500ms var(--ease);
+}
+
+.pt-bars__bar[data-current="true"] {
+    background: var(--accent);
+}
+
+.pt-bars__value,
+.pt-bars__label {
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pt-rules {
+    margin: 0;
+    padding-inline-start: var(--space-5);
+    display: grid;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+@media (max-width: 720px) {
+    .pt-board,
+    .pt-ranks {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pt-goal {
+        flex-wrap: wrap;
+        gap: var(--space-4);
+    }
+
+    .pt-goal__ring {
+        width: 96px;
+        height: 96px;
+    }
+}

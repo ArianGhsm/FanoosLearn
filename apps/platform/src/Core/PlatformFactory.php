@@ -25,6 +25,7 @@ use Fanoos\Platform\Content\ExamImageStore;
 use Fanoos\Platform\Content\ExamService;
 use Fanoos\Platform\Content\SecureDeliveryService;
 use Fanoos\Platform\Content\SecureObjectDownloadService;
+use Fanoos\Platform\Engagement\PointsService;
 use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Http\ApiKernel;
 use Fanoos\Platform\Identity\AuthService;
@@ -170,6 +171,7 @@ final class PlatformFactory
             new ExamRankingService($database, $access),
             new ExamScheduleService($database, $access, $audit),
             new StudyPlanService($database, $access, $bankBrowse),
+            new PointsService($database, $access),
         );
     }
 }

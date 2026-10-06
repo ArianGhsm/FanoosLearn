@@ -7,6 +7,8 @@ namespace Fanoos\Platform\Content;
 use Fanoos\Platform\Audit\AuditLogger;
 use Fanoos\Platform\Authorization\AccessGate;
 use Fanoos\Platform\Authorization\ScopeAuthorizer;
+use Fanoos\Platform\Engagement\PointsService;
+use Fanoos\Platform\Engagement\QuestionDifficulty;
 use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Identity\PlatformOperators;
 use Fanoos\Platform\Support\PlatformException;
@@ -17,6 +19,8 @@ use PDO;
 final class ExamService
 {
     private readonly QuestionStatsRecorder $questionStats;
+    private readonly PointsService $points;
+    private readonly QuestionDifficulty $difficulty;
 
     public function __construct(
         private readonly PDO $database,
@@ -27,6 +31,8 @@ final class ExamService
         private readonly ExamQuestionRateGuard $questionRateGuard,
     ) {
         $this->questionStats = new QuestionStatsRecorder($database);
+        $this->points = new PointsService($database);
+        $this->difficulty = new QuestionDifficulty($database);
     }
 
     /**
@@ -867,10 +873,18 @@ SQL, [
             'review' => json_encode($review, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
         ]);
         $revealed = json_decode((string) ($attempt['revealed_json'] ?? '[]'), true, 16, JSON_THROW_ON_ERROR);
-        $this->questionStats->record(
+        $answeredAt = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s.u');
+        $rightAnswers = $this->questionStats->record(
             $workspaceId, $userId, $attemptId, $this->assessmentCourse($workspaceId, (string) $attempt['assessment_id']),
             $definition, $review, QuestionStatsRecorder::seenFirst((string) $attempt['mode'], $revealed),
-            (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s.u'),
+            $answeredAt,
+        );
+        // امتیاز روزانه: each counted right answer, by the question's difficulty.
+        $byId = array_column($definition['questions'], null, 'id');
+        $earned = $this->points->award(
+            $workspaceId, $userId, $rightAnswers,
+            $this->difficulty->levels($workspaceId, array_intersect_key($byId, array_flip($rightAnswers))),
+            $answeredAt,
         );
         $this->audit->record($workspaceId, $userId, 'exam.attempt.scored', 'exam_attempt', $attemptId, 'success', [
             'assessment_id' => $attempt['assessment_id'], 'score_basis_points' => $score, 'late' => $late,
@@ -884,7 +898,7 @@ SQL, [
         // answers, which an expiry-triggered scoring path never sees.
         $answered = count($normalized);
 
-        return ['attempt_id' => $attemptId, 'revision' => $revision, 'status' => 'scored', 'correct_count' => $correct, 'answered_count' => $answered, 'question_count' => $questionCount, 'score_basis_points' => $score];
+        return ['attempt_id' => $attemptId, 'revision' => $revision, 'status' => 'scored', 'correct_count' => $correct, 'answered_count' => $answered, 'question_count' => $questionCount, 'score_basis_points' => $score, 'points_earned' => $earned['points'], 'daily_goal_reached' => $earned['goal_reached']];
     }
 
     /** @param array<string, mixed> $attempt */

@@ -16,6 +16,7 @@ use Fanoos\Platform\Web\CustomPracticePage;
 use Fanoos\Platform\Web\ExamsPage;
 use Fanoos\Platform\Web\NotFoundPage;
 use Fanoos\Platform\Web\PageRenderer;
+use Fanoos\Platform\Web\PointsPage;
 use Fanoos\Platform\Web\ProgressPage;
 use Fanoos\Platform\Web\RecoveryPage;
 use Fanoos\Platform\Web\ViewerContext;
@@ -168,6 +169,12 @@ final class WebRenderingTest
             str_contains($progress, 'id="progress-board"') && str_contains($progress, '/assets/web/pages/progress.js')
                 && str_contains($progress, 'href="/app/progress" aria-current="page"'),
             'The progress page must render its board, load its script and mark its navigation item.',
+        );
+        $this->assert(str_contains($progress, 'href="/app/points"'), 'The progress page must link to the points page.');
+        $points = (new PointsPage($renderer))->render($viewer);
+        $this->assert(
+            str_contains($points, 'id="points-board"') && str_contains($points, '/assets/web/pages/points.js') && str_contains($points, 'id="goal-ring"'),
+            'The points page must render its board and goal ring and load its script.',
         );
     }
 

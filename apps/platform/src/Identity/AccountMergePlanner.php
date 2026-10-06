@@ -65,6 +65,11 @@ final class AccountMergePlanner
         'exam_question_highlights' => [['user_id', self::MOVE_DEDUPE, 'workspace_id,question_key']],
         'exam_question_reports' => [['user_id', self::MOVE, null], ['resolved_by_user_id', self::HISTORY, null]],
         'study_sessions' => [['user_id', self::MOVE, null]],
+        // امتیاز روزانه and سکه go with the student; where both accounts have
+        // the same day (or the same coin event), the target's row is kept.
+        'engagement_point_awards' => [['user_id', self::MOVE_DEDUPE, 'workspace_id,day,question_key']],
+        'engagement_daily_points' => [['user_id', self::MOVE_DEDUPE, 'workspace_id,day']],
+        'engagement_coin_ledger' => [['user_id', self::MOVE_DEDUPE, 'workspace_id,reason,reference']],
         // Both accounts' plans move; the newest active one is the one shown.
         'study_plans' => [['user_id', self::MOVE, null]],
         'exam_schedules' => [['created_by_user_id', self::HISTORY, null]],
