@@ -293,3 +293,65 @@
     color: var(--text-primary);
     border-bottom: 1px solid var(--warning);
 }
+
+/* Today's points and coins in the header (header-stats.js). */
+.f-stats {
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 2px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-muted);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+}
+
+.f-stats[hidden] {
+    display: none;
+}
+
+.f-stats__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-pill);
+}
+
+.f-stats__item svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+}
+
+.f-stats__item--points {
+    color: var(--accent);
+}
+
+.f-stats[data-done="true"] .f-stats__item--points {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.f-stats__item--coins {
+    background: var(--warning-soft);
+    color: var(--warning);
+}
+
+.f-stats:hover {
+    border-color: var(--border-strong);
+}
+
+@media (max-width: 720px) {
+    .f-stats {
+        order: 3;
+        font-size: var(--text-xs);
+    }
+}

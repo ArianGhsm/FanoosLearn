@@ -15,6 +15,32 @@ const workspaceId = document.querySelector('meta[name="fanoos-workspace"]')?.con
 
 if (list) loadWorkspaces();
 if (courses && workspaceId) loadCourses();
+if (document.getElementById('today') && workspaceId) loadToday();
+
+/*
+ * امروز: today's points against the goal, the reviews due, and coins --
+ * the three things worth a glance on arriving. Each read is independent;
+ * the strip shows once the points are in.
+ */
+async function loadToday() {
+    const base = `/workspaces/${encodeURIComponent(workspaceId)}`;
+    try {
+        const stats = await api.get(`${base}/points/today`);
+        document.getElementById('today-points').textContent = `${faDigits(stats.points)} از ${faDigits(stats.goal)}`;
+        document.getElementById('today-bar').parentElement.style.setProperty('--done', `${Math.min(100, Math.round((stats.points * 100) / stats.goal))}%`);
+        document.getElementById('today-coins').textContent = faDigits(stats.coins);
+        document.getElementById('today').hidden = false;
+    } catch {
+        return;
+    }
+    try {
+        const review = await api.get(`${base}/review`);
+        document.getElementById('today-review').textContent = faDigits(review.due ?? 0);
+        document.getElementById('today-review-note').textContent = review.due > 0 ? 'سؤال برای مرور' : 'چیزی برای مرور نیست';
+    } catch {
+        document.getElementById('today-review').textContent = '—';
+    }
+}
 
 const TILE_LIMIT = 10;
 

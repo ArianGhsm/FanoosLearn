@@ -238,6 +238,13 @@ final class WebRenderingTest
     private function homeShowsTheChooserWhenAskedToSwitch(PageRenderer $renderer): void
     {
         $viewer = new ViewerContext('u1', 'آرین', 'c', 'w1', 'کلاس من');
+        // منوی اصلی: every section is one tap from home, and the header carries today's points.
+        $home = (new HomePage($renderer))->render($viewer);
+        foreach (['/app/bank', '/app/exams/custom', '/app/plan', '/app/points', '/app/rooms', '/app/saved', '/app/affiliate', '/support'] as $href) {
+            $this->assert(str_contains($home, 'class="f-tile" href="' . $href . '"'), "The main menu must offer {$href}.");
+        }
+        $this->assert(str_contains($home, 'id="today"') && str_contains($home, 'id="f-stats"') && str_contains($home, 'header-stats.js'), 'Home must carry the today strip and the header points.');
+        $this->assert(!str_contains((new HomePage($renderer))->render(new ViewerContext('u1', 'آرین', 'c', null, null)), 'id="f-stats"'), 'Without a workspace there are no points to show.');
 
         $this->assert(
             !str_contains((new HomePage($renderer))->render($viewer), 'workspace-list'),

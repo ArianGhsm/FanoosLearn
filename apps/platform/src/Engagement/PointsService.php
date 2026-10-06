@@ -147,6 +147,19 @@ SQL)->execute(['id' => Uuid::v7(), 'workspace' => $workspaceId, 'user' => $userI
         ];
     }
 
+    /**
+     * The header's glance: today's points against the goal, and coins. Two
+     * small reads, for every page.
+     *
+     * @return array{points:int,goal:int,coins:int}
+     */
+    public function glance(string $userId, string $workspaceId, ?int $now = null): array
+    {
+        $this->access?->requireWorkspace($userId, $workspaceId, 'exam.take');
+
+        return ['points' => $this->today($workspaceId, $userId, $now), 'goal' => self::DAILY_GOAL, 'coins' => $this->coins($workspaceId, $userId)];
+    }
+
     /** A student's points today, in the workspace's local day. */
     public function today(string $workspaceId, string $userId, ?int $now = null): int
     {
