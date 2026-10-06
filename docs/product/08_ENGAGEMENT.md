@@ -10,7 +10,7 @@ its own pull request and is marked here when it ships.
 | Difficulty level, measured | ✅ |
 | Daily points and ranking | ✅ |
 | Coins earned | ✅ |
-| Coins spent, discount codes | planned |
+| Coins spent, discount codes | ✅ |
 | Group study room | planned |
 | Affiliate programme | planned |
 
@@ -69,17 +69,41 @@ which makes the credit idempotent.
 **Not rebuilt.** Points are a record of what was earned. Unlike the question
 statistics, `rebuild-question-stats.php` does not recompute them.
 
-## Coins and discount codes (planned)
+## Coins and discount codes (کد تخفیف و سکه)
 
-- The coin balance is the sum of the ledger.
-- Spending a coin writes a negative row whose reference is the discount code
-  it bought.
-- The owner defines the "boxes" (how many coins buy which discount on which
-  plan) as data. A box mints a personal, single-use code that expires after
-  a few days.
-- The same discount-code table serves codes the owner creates directly.
-- Checkout validates a code against its product, expiry, use count and
-  owner, and records the redemption with the order.
+**Codes** (`Commerce\DiscountService`, table `commerce_discount_codes`).
+- A code takes a percentage or an amount off.
+- It can be limited to one product, to a validity window, to a total number
+  of uses, and to uses per person.
+- The owner manages codes at `/app/admin/discounts` (needs
+  `commerce.manage_catalog`).
+- Codes are typed without regard to case or spaces.
+
+**Checkout.**
+- A student enters a code in the store. The page checks it against each
+  product (`POST /discount-codes/check`) and shows the new price, or the
+  reason the code does not apply.
+- `createOrder` checks the code again inside the order's transaction and
+  stores `discount_code_id` and `discount_minor` on the order. `total_minor`
+  is what the gateway charges.
+- **Uses count only from paid orders**, so an abandoned checkout never uses a
+  code up.
+- A discount never takes the charge below 1,000 toman, the least the gateway
+  can take (`MINIMUM_CHARGE_MINOR`).
+- Someone else's personal code reads exactly like a code that does not exist.
+
+**Coins** (`Engagement\CoinService`).
+- The balance is the sum of `engagement_coin_ledger`.
+- The owner sets the "boxes" (`engagement_coin_offers`) on the same admin
+  page: a title, a cost in coins, a discount, optionally one product, and how
+  many days the code is valid.
+- Redeeming a box mints a random 8-character personal code (single use, its
+  owner only) and writes a negative ledger row referencing that code, in one
+  transaction.
+- The transaction locks the student's ledger rows, so two taps cannot spend
+  the same coins twice.
+- Students see their balance, the boxes and the codes they bought on
+  `/app/points`.
 
 ## Group study room (planned)
 

@@ -23,7 +23,10 @@ final class ProductsAdminPage
         <h1>محصولات و قیمت</h1>
         <p class="f-muted">قیمت را هر وقت خواستی عوض کن؛ از همان لحظه اعمال می‌شود و سفارش‌های قبلی با قیمت خودشان می‌مانند.</p>
     </div>
-    <button class="f-btn f-btn--primary" type="button" id="product-new">محصول تازه</button>
+    <div class="p-head__actions">
+        <a class="f-btn f-btn--ghost" href="/app/admin/discounts">کدهای تخفیف و سکه</a>
+        <button class="f-btn f-btn--primary" type="button" id="product-new">محصول تازه</button>
+    </div>
 </div>
 
 <div class="f-notice f-notice--error" id="products-error" hidden>

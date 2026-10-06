@@ -10,6 +10,7 @@ use Fanoos\Tests\Core\CatalogAdminServiceTest;
 use Fanoos\Tests\Core\ClassCreationRequestServiceTest;
 use Fanoos\Tests\Core\ClassMembershipTest;
 use Fanoos\Tests\Core\ClassProvisioningTest;
+use Fanoos\Tests\Core\DiscountCoinTest;
 use Fanoos\Tests\Core\InstitutionTermServiceTest;
 use Fanoos\Tests\Core\OnboardingDirectoryTest;
 use Fanoos\Tests\Core\OnboardingPhoneVerificationTest;
@@ -165,6 +166,8 @@ try {
         echo "PASS account merge planner scenarios\n";
         $assertions += (new CatalogAdminServiceTest($database))->run();
         echo "PASS owner products and prices scenarios\n";
+        $assertions += (new DiscountCoinTest($database))->run();
+        echo "PASS discount codes and coin boxes\n";
         $assertions += (new PaymentReconcileTest($database))->run();
         echo "PASS automatic payment settlement scenarios\n";
         $assertions += (new RepresentativeApprovalTest($database))->run();

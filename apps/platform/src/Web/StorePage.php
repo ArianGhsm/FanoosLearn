@@ -23,6 +23,14 @@ final class StorePage
 <div class="f-notice f-notice--error" id="store-error" hidden>
     <div class="f-notice__body"><p id="store-error-text"></p></div>
 </div>
+<form class="f-card f-discount" id="discount-form" novalidate>
+    <label class="f-discount__label" for="discount-code">کد تخفیف داری؟</label>
+    <div class="f-discount__row">
+        <input class="f-input" id="discount-code" name="code" autocomplete="off" inputmode="latin" dir="ltr" maxlength="40" placeholder="مثلاً FANOOS20">
+        <button class="f-btn f-btn--ghost" type="submit">اعمال</button>
+    </div>
+    <p class="f-tiny f-discount__note" id="discount-note" aria-live="polite"></p>
+</form>
 <div class="f-store" id="store" aria-busy="true">
     <p class="f-muted">در حال خواندن…</p>
 </div>

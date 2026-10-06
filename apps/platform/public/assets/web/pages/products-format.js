@@ -24,3 +24,9 @@ export function rialFromTyped(typed) {
     if (!/^[0-9]{1,12}$/.test(digits)) return null;
     return Number(digits) * 10;
 }
+
+/** «٪۲۰ تخفیف» or «۵۰٬۰۰۰ تومان تخفیف», and the product when the discount is for one. */
+export function discountText(item) {
+    const value = item.kind === 'percent' ? `٪${faDigits(item.percent)} تخفیف` : `${tomanText(item.amount_minor)} تخفیف`;
+    return item.product_name ? `${value} برای «${item.product_name}»` : value;
+}

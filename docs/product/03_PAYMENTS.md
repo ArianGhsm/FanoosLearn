@@ -37,6 +37,15 @@ same gateway the Dent1402 site uses.
    (`POST .../payments/{attempt}/reconcile`). With payments off, the timer does
    nothing.
 
+## Discount codes
+
+An order may carry a discount code (docs/product/08_ENGAGEMENT.md). The code
+is checked inside the order's transaction. The order stores
+`discount_code_id` and `discount_minor`, and `total_minor` (what Zibal is
+asked for and what verification compares) is the discounted amount. A
+discount never takes the charge below 1,000 toman. A code's uses are counted
+from paid orders only.
+
 ## Configuration
 
 These keys go in the platform config (`FANOOS_PAYMENT_*`):

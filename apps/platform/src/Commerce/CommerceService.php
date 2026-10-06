@@ -28,14 +28,15 @@ final class CommerceService
     }
 
     /** @return array<string, mixed> */
-    public function createOrder(string $actorUserId, string $workspaceId, string $productId, string $idempotencyKey): array
+    public function createOrder(string $actorUserId, string $workspaceId, string $productId, string $idempotencyKey, ?string $discountCode = null): array
     {
         $this->access->requireWorkspace($actorUserId, $workspaceId, 'commerce.purchase');
         if ($idempotencyKey === '' || strlen($idempotencyKey) > 160) {
             throw new PlatformException('invalid_idempotency_key', 'A valid idempotency key is required.', 422);
         }
 
-        $order = Transaction::run($this->database, function () use ($actorUserId, $workspaceId, $productId, $idempotencyKey): array {
+        $discountCode = $discountCode === null || trim($discountCode) === '' ? null : $discountCode;
+        $order = Transaction::run($this->database, function () use ($actorUserId, $workspaceId, $productId, $idempotencyKey, $discountCode): array {
             $existing = $this->database->prepare('SELECT id, buyer_user_id, total_minor, currency, status FROM commerce_orders WHERE workspace_id = :workspace AND idempotency_key = :key FOR UPDATE');
             $existing->execute(['workspace' => $workspaceId, 'key' => $idempotencyKey]);
             $found = $existing->fetch();
@@ -62,19 +63,27 @@ SQL);
                 throw new PlatformException('product_unavailable', 'Product or active price is unavailable.', 404);
             }
 
+            // کد تخفیف: checked here, inside the order's transaction, so what is
+            // charged is decided once. Its uses are counted from paid orders.
+            $discount = $discountCode === null ? null
+                : (new DiscountService($this->database))->quote($actorUserId, $workspaceId, (string) $product['id'], (int) $product['amount_minor'], $discountCode);
+            $total = $discount === null ? (int) $product['amount_minor'] : $discount['total_minor'];
+
             $orderId = Uuid::v7();
             $callbackToken = $this->callbackToken($orderId);
             $insertOrder = $this->database->prepare(<<<'SQL'
 INSERT INTO commerce_orders (
-    id, workspace_id, buyer_user_id, public_token_digest, status, total_minor,
+    id, workspace_id, buyer_user_id, public_token_digest, status, total_minor, discount_code_id, discount_minor,
     currency, idempotency_key, version, created_at, updated_at
-) VALUES (:id, :workspace, :buyer, :token_digest, 'pending', :amount, :currency, :key, 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))
+) VALUES (:id, :workspace, :buyer, :token_digest, 'pending', :amount, :discount_code, :discount_minor, :currency, :key, 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))
 SQL);
             $insertOrder->bindValue(':id', $orderId);
             $insertOrder->bindValue(':workspace', $workspaceId);
             $insertOrder->bindValue(':buyer', $actorUserId);
             $insertOrder->bindValue(':token_digest', hash('sha256', $callbackToken, true), PDO::PARAM_LOB);
-            $insertOrder->bindValue(':amount', (int) $product['amount_minor'], PDO::PARAM_INT);
+            $insertOrder->bindValue(':amount', $total, PDO::PARAM_INT);
+            $insertOrder->bindValue(':discount_code', $discount['code_id'] ?? null);
+            $insertOrder->bindValue(':discount_minor', $discount['discount_minor'] ?? null, $discount === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
             $insertOrder->bindValue(':currency', (string) $product['currency']);
             $insertOrder->bindValue(':key', $idempotencyKey);
             $insertOrder->execute();
@@ -98,9 +107,9 @@ SQL);
             $attemptId = Uuid::v7();
             $attempt->execute([
                 'id' => $attemptId, 'workspace' => $workspaceId, 'order_id' => $orderId,
-                'key' => 'start', 'provider' => $this->gateway->key(), 'amount' => $product['amount_minor'],
+                'key' => 'start', 'provider' => $this->gateway->key(), 'amount' => $total,
             ]);
-            return ['id' => $orderId, 'total_minor' => $product['amount_minor'], 'currency' => $product['currency'], 'status' => 'pending', 'attempt_id' => $attemptId];
+            return ['id' => $orderId, 'total_minor' => $total, 'currency' => $product['currency'], 'status' => 'pending', 'attempt_id' => $attemptId];
         });
 
         $callbackToken = $this->callbackToken((string) $order['id']);

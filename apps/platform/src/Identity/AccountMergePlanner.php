@@ -75,6 +75,8 @@ final class AccountMergePlanner
         'exam_schedules' => [['created_by_user_id', self::HISTORY, null]],
         'entitlement_grants' => [['subject_user_id', self::MOVE, null]],
         'commerce_orders' => [['buyer_user_id', self::MOVE, null]],
+        // A personal code bought with coins goes with its owner; who created a code is history.
+        'commerce_discount_codes' => [['owner_user_id', self::MOVE, null], ['created_by_user_id', self::HISTORY, null]],
         'content_delivery_issuances' => [['user_id', self::MOVE, null]],
         'protected_media_artifacts' => [['user_id', self::MOVE, null]],
         'notification_recipients' => [['user_id', self::MOVE, null]],

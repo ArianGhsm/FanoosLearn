@@ -9,6 +9,7 @@ use Fanoos\Platform\Authorization\AccessGate;
 use Fanoos\Platform\Authorization\ScopeAuthorizer;
 use Fanoos\Platform\Commerce\CatalogAdminService;
 use Fanoos\Platform\Commerce\CommerceService;
+use Fanoos\Platform\Commerce\DiscountService;
 use Fanoos\Platform\Commerce\PaymentGatewayFactory;
 use Fanoos\Platform\Content\ProtectedResourceAuthorizer;
 use Fanoos\Platform\Content\ContentService;
@@ -25,6 +26,7 @@ use Fanoos\Platform\Content\ExamImageStore;
 use Fanoos\Platform\Content\ExamService;
 use Fanoos\Platform\Content\SecureDeliveryService;
 use Fanoos\Platform\Content\SecureObjectDownloadService;
+use Fanoos\Platform\Engagement\CoinService;
 use Fanoos\Platform\Engagement\PointsService;
 use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Http\ApiKernel;
@@ -172,6 +174,8 @@ final class PlatformFactory
             new ExamScheduleService($database, $access, $audit),
             new StudyPlanService($database, $access, $bankBrowse),
             new PointsService($database, $access),
+            new DiscountService($database, $access, $audit),
+            new CoinService($database, $access, $audit),
         );
     }
 }
