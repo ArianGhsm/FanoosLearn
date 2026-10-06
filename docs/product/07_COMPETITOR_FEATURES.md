@@ -92,7 +92,7 @@ the design is docs/product/08_ENGAGEMENT.md.
 | 46 | Coins for each goal day, spent on discount codes (مدوفست‌کوین) | M | ✅ boxes on /app/points mint personal codes |
 | 47 | Discount codes on plans | M | ✅ /app/admin/discounts; entered in the store |
 | 48 | Group study room: private link, up to 10 friends, today's study side by side (اتاق مطالعه گروهی) | M | ✅ /app/rooms |
-| 49 | Affiliate programme (کسب درآمد از مدوفست) | M | ❌ |
+| 49 | Affiliate programme (کسب درآمد از مدوفست) | M | ✅ /app/affiliate (off until the owner turns it on at /app/admin/affiliate) |
 
 ## Left out on purpose
 
@@ -103,4 +103,4 @@ MedoFast's AI study assistant (گوربک), group purchase and gift plans. They 
 
 ## Score
 
-Counted rows: 49. ✅ today: 48 (98 %). Target: 40 (≥ 80 %).
+Counted rows: 49. ✅ today: 49 (100 %). Target: 40 (≥ 80 %).

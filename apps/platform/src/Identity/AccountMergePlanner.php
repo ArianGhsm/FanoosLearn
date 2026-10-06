@@ -73,6 +73,12 @@ final class AccountMergePlanner
         // Study rooms: a membership goes with the student (one per room); who made a room is history.
         'engagement_study_room_members' => [['user_id', self::MOVE_DEDUPE, 'room_id']],
         'engagement_study_rooms' => [['created_by_user_id', self::HISTORY, null]],
+        // برنامه همکاری: a link, the referrals it brought and their commissions go with the
+        // affiliate; who was referred stays attached to the buyer; owner actions are history.
+        'affiliate_programs' => [['updated_by_user_id', self::HISTORY, null]],
+        'affiliate_links' => [['user_id', self::MOVE_DEDUPE, 'workspace_id']],
+        'affiliate_referrals' => [['referred_user_id', self::MOVE_DEDUPE, 'workspace_id'], ['affiliate_user_id', self::MOVE, null]],
+        'affiliate_commissions' => [['affiliate_user_id', self::MOVE, null], ['referred_user_id', self::MOVE, null], ['paid_out_by_user_id', self::HISTORY, null]],
         // Both accounts' plans move; the newest active one is the one shown.
         'study_plans' => [['user_id', self::MOVE, null]],
         'exam_schedules' => [['created_by_user_id', self::HISTORY, null]],

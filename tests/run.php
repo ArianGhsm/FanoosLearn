@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Fanoos\Platform\Support\DatabaseConnection;
 use Fanoos\Tests\Core\AccountMergePlannerTest;
 use Fanoos\Tests\Core\AccountPhoneTest;
+use Fanoos\Tests\Core\AffiliateTest;
 use Fanoos\Tests\Core\AnnouncementPublishTest;
 use Fanoos\Tests\Core\CatalogAdminServiceTest;
 use Fanoos\Tests\Core\ClassCreationRequestServiceTest;
@@ -171,6 +172,8 @@ try {
         echo "PASS discount codes and coin boxes\n";
         $assertions += (new StudyRoomTest($database))->run();
         echo "PASS study room scenarios\n";
+        $assertions += (new AffiliateTest($database))->run();
+        echo "PASS affiliate programme scenarios\n";
         $assertions += (new PaymentReconcileTest($database))->run();
         echo "PASS automatic payment settlement scenarios\n";
         $assertions += (new RepresentativeApprovalTest($database))->run();

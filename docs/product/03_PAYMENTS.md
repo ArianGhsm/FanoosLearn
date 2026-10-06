@@ -46,6 +46,13 @@ asked for and what verification compares) is the discounted amount. A
 discount never takes the charge below 1,000 toman. A code's uses are counted
 from paid orders only.
 
+## Affiliate commissions
+
+When an order becomes paid, the same transaction records a commission if the
+buyer signed up through a referral link within the programme's window
+(docs/product/08_ENGAGEMENT.md). There is one commission per order,
+calculated on the amount actually paid.
+
 ## Configuration
 
 These keys go in the platform config (`FANOOS_PAYMENT_*`):

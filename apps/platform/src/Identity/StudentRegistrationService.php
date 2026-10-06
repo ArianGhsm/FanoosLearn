@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fanoos\Platform\Identity;
 
 use Fanoos\Platform\Audit\AuditLogger;
+use Fanoos\Platform\Commerce\AffiliateService;
 use Fanoos\Platform\Support\PlatformException;
 use Fanoos\Platform\Support\TextNormalizer;
 use Fanoos\Platform\Support\Transaction;
@@ -71,8 +72,9 @@ SQL)->fetchAll();
     {
         $fields = $this->validate($input);
         $sourceDigest = hash('sha256', 'register:' . trim($source), true);
+        $referral = is_string($input['referral_code'] ?? null) ? $input['referral_code'] : null;
 
-        $result = Transaction::run($this->database, function () use ($fields, $sourceDigest, $client): array|PlatformException {
+        $result = Transaction::run($this->database, function () use ($fields, $sourceDigest, $client, $referral): array|PlatformException {
             if (!$this->consumeRegistrationSlot($sourceDigest)) {
                 return new PlatformException('registration_throttled', 'Too many sign-ups from this network. Try again later.', 429);
             }
@@ -144,6 +146,8 @@ SQL)->execute([
             if ($libraryId !== null) {
                 $this->enrol($userId, $libraryId);
             }
+            // Signed up through a referral link: attributed to its owner (nothing, if the code is not a live one).
+            (new AffiliateService($this->database))->attribute($userId, $referral);
 
             $session = $this->auth->establishSession($userId, $client);
             $this->audit->record($libraryId, $userId, 'auth.register', 'iam_user', $userId, 'success', [

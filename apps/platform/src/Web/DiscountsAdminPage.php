@@ -63,7 +63,10 @@ HTML;
         <h1>کدهای تخفیف و جعبه‌های سکه</h1>
         <p class="f-muted">کدهایی که خودت می‌دهی، و جعبه‌هایی که دانشجو با سکه‌ی امتیاز روزانه‌اش کد تخفیف شخصی می‌خرد. تخفیف هیچ‌وقت مبلغ را زیر ۱٬۰۰۰ تومان نمی‌برد.</p>
     </div>
-    <a class="f-btn f-btn--ghost" href="/app/admin/products">محصولات و قیمت</a>
+    <div class="p-head__actions">
+        <a class="f-btn f-btn--ghost" href="/app/admin/affiliate">همکاری در فروش</a>
+        <a class="f-btn f-btn--ghost" href="/app/admin/products">محصولات و قیمت</a>
+    </div>
 </div>
 
 <div class="f-notice f-notice--error" id="discounts-error" hidden>

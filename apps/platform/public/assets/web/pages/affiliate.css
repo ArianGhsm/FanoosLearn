@@ -1,0 +1,109 @@
+/* برنامه همکاری در فروش. Builds on progress.css (p-head). */
+
+.a-board {
+    display: grid;
+    gap: var(--space-4);
+}
+
+.a-terms {
+    margin: 0;
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.a-link {
+    display: grid;
+    gap: var(--space-3);
+}
+
+.a-link h2,
+.a-history h2 {
+    margin: 0;
+    font-size: var(--text-lg);
+}
+
+.a-link__url {
+    font-size: var(--text-sm);
+}
+
+.a-link .f-btn {
+    justify-self: start;
+}
+
+.a-tiles {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-3);
+}
+
+.a-tile {
+    display: grid;
+    gap: var(--space-1);
+}
+
+.a-tile__label {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.a-tile__value {
+    font-size: var(--text-lg);
+}
+
+.a-history__list {
+    list-style: none;
+    margin: var(--space-3) 0 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-2);
+}
+
+.a-history__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2) var(--space-4);
+}
+
+.a-history__row.is-paid_out strong {
+    color: var(--success);
+}
+
+.a-settings {
+    display: grid;
+    gap: var(--space-3);
+    max-width: 520px;
+    margin-bottom: var(--space-6);
+}
+
+.a-settings .f-btn {
+    justify-self: start;
+}
+
+.a-switch {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: var(--weight-strong);
+}
+
+.a-list {
+    display: grid;
+    gap: var(--space-3);
+}
+
+.a-affiliate {
+    display: grid;
+    gap: var(--space-1);
+}
+
+.a-affiliate .f-btn {
+    justify-self: start;
+    margin-top: var(--space-2);
+}
+
+@media (max-width: 720px) {
+    .a-tiles {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}

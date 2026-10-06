@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fanoos\Platform\Http;
 
 use Fanoos\Platform\Bank\BankBrowseService;
+use Fanoos\Platform\Commerce\AffiliateService;
 use Fanoos\Platform\Commerce\CatalogAdminService;
 use Fanoos\Platform\Commerce\CommerceService;
 use Fanoos\Platform\Commerce\DiscountService;
@@ -69,6 +70,7 @@ final class ApiKernel
         private readonly ?DiscountService $discounts = null,
         private readonly ?CoinService $coins = null,
         private readonly ?StudyRoomService $rooms = null,
+        private readonly ?AffiliateService $affiliates = null,
     ) {
     }
 
@@ -322,6 +324,26 @@ final class ApiKernel
         if ($request->method === 'POST' && preg_match('#^/admin/discount-codes/([0-9a-f-]{36})/status$#', $suffix, $match)) {
             $this->requireDiscounts()->setStatus($session->userId, $workspaceId, $match[1], ($request->body['active'] ?? false) === true);
             return ['status' => 200, 'data' => ['id' => $match[1], 'active' => ($request->body['active'] ?? false) === true]];
+        }
+        if (str_starts_with($suffix, '/affiliate') || str_starts_with($suffix, '/admin/affiliate')) {
+            if ($this->affiliates === null) {
+                throw new PlatformException('affiliates_unavailable', 'The affiliate programme is not available.', 503);
+            }
+            if ($request->method === 'GET' && $suffix === '/affiliate') {
+                return ['status' => 200, 'data' => $this->affiliates->overview($session->userId, $workspaceId)];
+            }
+            if ($request->method === 'POST' && $suffix === '/affiliate/link') {
+                return ['status' => 200, 'data' => $this->affiliates->link($session->userId, $workspaceId)];
+            }
+            if ($request->method === 'GET' && $suffix === '/admin/affiliate') {
+                return ['status' => 200, 'data' => $this->affiliates->admin($session->userId, $workspaceId)];
+            }
+            if ($request->method === 'POST' && $suffix === '/admin/affiliate') {
+                return ['status' => 200, 'data' => $this->affiliates->save($session->userId, $workspaceId, $request->body)];
+            }
+            if ($request->method === 'POST' && preg_match('#^/admin/affiliate/([0-9a-f-]{36})/pay-out$#', $suffix, $match)) {
+                return ['status' => 200, 'data' => $this->affiliates->payOut($session->userId, $workspaceId, $match[1])];
+            }
         }
         if (str_starts_with($suffix, '/rooms')) {
             if ($this->rooms === null) {
