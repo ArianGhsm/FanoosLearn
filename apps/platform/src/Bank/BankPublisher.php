@@ -103,6 +103,8 @@ SELECT question.id, question.question_key, question.stem, question.stem_image, q
        question.expert_difficulty, question.status, subject.name AS subject_name,
        (SELECT answer.choice_position FROM bank_official_answers answer WHERE answer.question_id = question.id
         ORDER BY answer.recorded_at DESC, answer.id DESC LIMIT 1) AS answer_choice,
+       (SELECT answer.also_correct_positions FROM bank_official_answers answer WHERE answer.question_id = question.id
+        ORDER BY answer.recorded_at DESC, answer.id DESC LIMIT 1) AS answer_also_correct,
        (SELECT answer.status FROM bank_official_answers answer WHERE answer.question_id = question.id
         ORDER BY answer.recorded_at DESC, answer.id DESC LIMIT 1) AS answer_status,
        (SELECT concept.name FROM bank_question_concepts link JOIN bank_concepts concept ON concept.id = link.concept_id
@@ -131,15 +133,20 @@ SQL);
             $choices->execute(['question' => $row['id']]);
             $choices = $choices->fetchAll();
 
+            $also = $row['answer_also_correct'] === null ? [] : array_map('intval', (array) json_decode((string) $row['answer_also_correct'], true));
             $question = [
                 'id' => $key,
                 'prompt' => (string) $row['stem'],
                 'choices' => array_map(static fn (array $choice): string => (string) $choice['text'], $choices),
                 'answer' => (int) $row['answer_choice'] - 1,
-                'explanation' => $this->explanation((string) $row['id'], (int) $row['answer_choice'], count($choices)),
+                'explanation' => $this->explanation((string) $row['id'], (int) $row['answer_choice'], $also, count($choices)),
                 'topic' => (string) ($row['concept_name'] ?? $row['subject_name']),
                 'tags' => [(string) $row['subject_name']],
             ];
+            // An official key that accepts several options: any of them scores.
+            if ($also !== []) {
+                $question['also_correct'] = array_map(static fn (int $position): int => $position - 1, $also);
+            }
             if ($row['expert_difficulty'] !== null) {
                 $question['difficulty'] = match (true) {
                     (int) $row['expert_difficulty'] <= 2 => 'easy',
@@ -163,7 +170,8 @@ SQL);
      * answer, why, why not the others, the tip, the trap, and where in the
      * reference it comes from.
      */
-    private function explanation(string $questionId, int $answer, int $choiceCount): ?string
+    /** @param list<int> $also the other accepted 1-based positions */
+    private function explanation(string $questionId, int $answer, array $also, int $choiceCount): ?string
     {
         $query = $this->database->prepare('SELECT id, short_answer, reference_explanation, source_location, exam_tip, common_trap FROM bank_explanations WHERE question_id = :question AND is_current = TRUE');
         $query->execute(['question' => $questionId]);
@@ -182,10 +190,15 @@ SQL);
         $source->execute(['question' => $questionId]);
         $where = $source->fetch();
 
-        if ($row === false && $where === false) {
+        if ($row === false && $where === false && $also === []) {
             return null;
         }
-        $parts = ['**پاسخ: گزینه‌ی ' . (self::LETTERS[$answer - 1] ?? (string) $answer) . '**'];
+        $accepted = array_merge([$answer], $also);
+        sort($accepted);
+        $letters = array_map(static fn (int $p): string => self::LETTERS[$p - 1] ?? (string) $p, $accepted);
+        $parts = [count($letters) === 1
+            ? '**پاسخ: گزینه‌ی ' . $letters[0] . '**'
+            : '**پاسخ: گزینه‌های ' . implode(' و ', $letters) . '** (کلید نهایی هر ' . (count($letters) === 2 ? 'دو' : 'کدام') . ' را پذیرفته است)'];
         if ($row !== false) {
             if ($row['short_answer']) {
                 $parts[] = (string) $row['short_answer'];
@@ -197,7 +210,7 @@ SQL);
             $why->execute(['explanation' => $row['id']]);
             $lines = [];
             foreach ($why->fetchAll() as $choice) {
-                if ((int) $choice['position'] !== $answer && (int) $choice['position'] <= $choiceCount) {
+                if (!in_array((int) $choice['position'], $accepted, true) && (int) $choice['position'] <= $choiceCount) {
                     $lines[] = '- **' . (self::LETTERS[(int) $choice['position'] - 1] ?? $choice['position']) . ':** ' . $choice['why_wrong'];
                 }
             }

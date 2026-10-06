@@ -55,6 +55,7 @@
           "required": ["status"],
           "properties": {
             "choice": { "type": ["integer", "null"], "minimum": 1, "description": "1-based choice number; null only when voided." },
+            "also_correct": { "type": "array", "items": { "type": "integer", "minimum": 1 }, "minItems": 1, "uniqueItems": true, "description": "Other 1-based choices the official key also accepts (\"multiple correct\"); any of them scores. Not the same as choice; only with preliminary, final or amended." },
             "status": { "enum": ["preliminary", "final", "amended", "disputed", "voided"] },
             "source": { "type": "string" }
           }

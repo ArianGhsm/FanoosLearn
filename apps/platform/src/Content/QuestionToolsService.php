@@ -326,6 +326,7 @@ SQL);
                 'prompt' => $question === null ? null : (string) ($question['prompt'] ?? ''),
                 'choices' => $question === null ? [] : array_map('strval', (array) ($question['choices'] ?? [])),
                 'answer' => $question === null || !isset($question['answer']) ? null : (int) $question['answer'],
+                'also_correct' => $question === null ? [] : array_map('intval', (array) ($question['also_correct'] ?? [])),
                 'created_at' => gmdate(DATE_ATOM, (int) strtotime($row['created_at'] . ' UTC')),
             ];
         }, $query->fetchAll());

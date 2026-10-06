@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'scripts' / 'import'))
-from corpus_to_bank import catalog_chapter, chapter, reference_for  # noqa: E402
+from corpus_to_bank import answer, catalog_chapter, chapter, reference_for  # noqa: E402
 
 CATALOG = {'references': [
     {'key': 'van-noort-materials', 'editions': [{'key': '5e', 'year': 2024, 'nodes': [
@@ -33,6 +33,14 @@ class CorpusToBankTest(unittest.TestCase):
         self.assertEqual(reference_for('craig-restorative-materials@14e', CATALOG), ('craig-restorative-materials', '14e'))
         self.assertIsNone(reference_for('craig-restorative-materials@13e', CATALOG))
         self.assertIsNone(reference_for('unknown-book@1e', CATALOG))
+
+    def test_a_key_that_accepts_several_options_keeps_them_all(self):
+        both = answer({'کلید نهایی رسمی': 'A,B', 'کلید اولیه رسمی': 'A'})
+        self.assertEqual((both['choice'], both['also_correct'], both['status']), (1, [2], 'amended'))
+        single = answer({'کلید نهایی رسمی': 'C', 'کلید اولیه رسمی': 'C'})
+        self.assertEqual((single['choice'], single['status']), (3, 'final'))
+        self.assertNotIn('also_correct', single)
+        self.assertEqual(answer({'کلید نهایی رسمی': 'حذف'})['status'], 'voided')
 
 
 if __name__ == '__main__':

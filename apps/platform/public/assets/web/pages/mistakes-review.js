@@ -17,7 +17,7 @@ const workspaceId = document.querySelector('meta[name="fanoos-workspace"]')?.con
 function card(question) {
     const choices = el('ul', { className: 'x-choices x-choices--review' });
     (question.choices || []).forEach((choice, index) => {
-        const isCorrect = index === question.correct;
+        const isCorrect = index === question.correct || (question.also_correct || []).includes(index);
         choices.append(el('li', { className: 'x-choices__item' },
             el('div', { className: `x-choice x-choice--review${isCorrect ? ' is-correct' : ''}` },
                 el('span', { className: 'x-choice__letter', text: CHOICE_LETTERS[index] ?? faDigits(index + 1) }),

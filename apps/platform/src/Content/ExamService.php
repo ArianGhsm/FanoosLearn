@@ -461,7 +461,7 @@ SQL);
                     'images' => self::imageFlags($question),
                     'correct' => $question['answer'],
                     'explanation' => $question['explanation'] ?? null,
-                ];
+                ] + self::alsoCorrect($question);
             }
         }
 
@@ -607,7 +607,7 @@ SQL, [
      * student chose; what changes is that the score is no longer presented
      * as if it were earned blind.
      *
-     * @return array{position:int,question_count:int,question_id:string,answer:int,explanation:?string,revealed:list<int>}
+     * @return array{position:int,question_count:int,question_id:string,answer:int,explanation:?string,revealed:list<int>,also_correct?:list<int>}
      */
     public function revealQuestion(string $userId, string $workspaceId, string $attemptId, int $position, ?int $now = null): array
     {
@@ -668,7 +668,7 @@ SQL, [
                 'allowed' => true, 'position' => $position, 'question_count' => $questionCount,
                 'question_id' => $questionId, 'answer' => (int) $question['answer'],
                 'explanation' => $question['explanation'] ?? null, 'revealed' => $revealed,
-            ];
+            ] + self::alsoCorrect($question);
         });
 
         if ($outcome['allowed'] === false) {
@@ -837,12 +837,12 @@ SQL, [
         foreach ($definition['questions'] as $question) {
             $id = (string) $question['id'];
             $selected = $normalized[$id] ?? null;
-            $isCorrect = $selected !== null && $selected === $question['answer'];
+            $isCorrect = self::scores($question, $selected);
             $correct += $isCorrect ? 1 : 0;
             $review[] = [
                 'id' => $id, 'selected' => $selected, 'correct' => $question['answer'],
                 'is_correct' => $isCorrect, 'explanation' => $question['explanation'] ?? null,
-            ];
+            ] + self::alsoCorrect($question);
         }
         $questionCount = count($definition['questions']);
         $score = $questionCount === 0 ? 0 : (int) round(($correct / $questionCount) * 10000);
@@ -1014,7 +1014,7 @@ SQL);
                 'was_revealed' => in_array($position, $revealed, true),
                 'stats' => $this->questionStats->forQuestion($workspaceId, $userId, $questionId),
                 'choice_shares' => $this->questionStats->choiceShares($workspaceId, $questionId, count($question['choices'])),
-            ];
+            ] + self::alsoCorrect($entry);
         });
 
         if ($outcome['allowed'] === false) {
@@ -1257,6 +1257,23 @@ SQL, ['workspace' => $workspaceId, 'assessment' => $assessmentId, 'version' => $
                 throw new PlatformException('question_answer_invalid', 'Correct choice index is invalid.', 422);
             }
             $normalized['answer'] = $answer;
+            // Other options that also score: an official key that accepts more than one.
+            if (array_key_exists('also_correct', $question) && $question['also_correct'] !== null && $question['also_correct'] !== []) {
+                $also = $question['also_correct'];
+                if (!is_array($also) || !array_is_list($also)) {
+                    throw new PlatformException('question_also_correct_invalid', 'Also-correct choices must be a list of choice indexes.', 422);
+                }
+                $normalizedAlso = [];
+                foreach ($also as $alsoChoice) {
+                    $alsoChoice = filter_var($alsoChoice, FILTER_VALIDATE_INT);
+                    if ($alsoChoice === false || $alsoChoice < 0 || $alsoChoice >= count($choices) || $alsoChoice === $answer || in_array($alsoChoice, $normalizedAlso, true)) {
+                        throw new PlatformException('question_also_correct_invalid', 'Also-correct choices must be other valid choice indexes, each once.', 422);
+                    }
+                    $normalizedAlso[] = $alsoChoice;
+                }
+                sort($normalizedAlso);
+                $normalized['also_correct'] = $normalizedAlso;
+            }
             if (isset($question['explanation']) && $question['explanation'] !== null && $question['explanation'] !== '') {
                 $normalized['explanation'] = $this->text((string) $question['explanation'], 4000, 'question_explanation_invalid');
             } else {
@@ -1479,6 +1496,29 @@ SQL);
         }
 
         return $row;
+    }
+
+    /**
+     * Whether a chosen option scores: the answer, or one of the options an
+     * official key also accepts.
+     *
+     * @param array<string, mixed> $question
+     */
+    public static function scores(array $question, ?int $selected): bool
+    {
+        return $selected !== null && ($selected === $question['answer'] || in_array($selected, $question['also_correct'] ?? [], true));
+    }
+
+    /**
+     * ['also_correct' => [...]] for a question with several accepted options,
+     * [] otherwise, so a single-answer question keeps its existing shape.
+     *
+     * @param array<string, mixed> $question
+     * @return array{also_correct?: list<int>}
+     */
+    public static function alsoCorrect(array $question): array
+    {
+        return ($question['also_correct'] ?? []) === [] ? [] : ['also_correct' => array_map('intval', $question['also_correct'])];
     }
 
     /** @param array<string, mixed> $definition @param array<string, mixed> $answers @return array<string, int> */

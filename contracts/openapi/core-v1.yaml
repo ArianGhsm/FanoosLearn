@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Fanoos Core API
-  version: 1.4.0
+  version: 1.5.0
   description: Canonical human/browser API. Mutating authenticated operations require the existing session CSRF contract.
 servers:
   - url: /api/v1
@@ -610,6 +610,7 @@ components:
         choices: { type: array, items: { type: string }, minItems: 2, maxItems: 10 }
         selected: { type: [integer, 'null'] }
         correct: { type: integer }
+        also_correct: { type: array, items: { type: integer }, description: 'Other choice indexes the official key also accepts; any of them scores. Absent for a single-answer question. The same field accompanies the revealed answer (learning mode) and the mistakes review.' }
         is_correct: { type: boolean }
         explanation: { type: [string, 'null'] }
       additionalProperties: false

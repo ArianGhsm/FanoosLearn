@@ -408,6 +408,14 @@ function saveLabel(status) {
     return '';
 }
 
+/**
+ * Whether choice `index` is a right answer: the key's answer, or one of the
+ * options an official key also accepts (`also_correct`, "multiple correct").
+ */
+export function isAccepted(answer, alsoCorrect, index) {
+    return index === answer || (Array.isArray(alsoCorrect) && alsoCorrect.includes(index));
+}
+
 /** One question with its choices. */
 export function renderQuestion(state, question, saveStatus, actions, reveal = null, study = null, enter = null) {
     const position = state.position;
@@ -417,8 +425,8 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
     (question.choices || []).forEach((choice, index) => {
         const struck = isStruck(state, position, index);
         const isSelected = selected === index;
-        const shownCorrect = reveal !== null && reveal.answer === index;
-        const shownWrong = reveal !== null && isSelected && reveal.answer !== index;
+        const shownCorrect = reveal !== null && isAccepted(reveal.answer, reveal.also_correct, index);
+        const shownWrong = reveal !== null && isSelected && !shownCorrect;
         choices.append(el('li', { className: 'x-choices__item' },
             el('button', {
                 className: `x-choice${isSelected ? ' is-selected' : ''}${struck ? ' is-struck' : ''}${shownCorrect ? ' is-correct' : ''}${shownWrong ? ' is-wrong' : ''}`,
@@ -545,10 +553,15 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
  * say so too and the student should not be surprised by that later.
  */
 function renderReveal(reveal, question, chosen, { explanationVisible = true, onShowExplanation = null } = {}) {
-    const letter = CHOICE_LETTERS[reveal.answer] ?? faDigits(reveal.answer + 1);
+    const accepted = [reveal.answer, ...(reveal.also_correct || [])].sort((a, b) => a - b);
+    const letters = accepted.map((index) => CHOICE_LETTERS[index] ?? faDigits(index + 1));
+    const letter = letters.length === 1 ? `گزینه ${letters[0]}` : `گزینه‌های ${letters.join(' و ')}`;
+    const right = chosen !== null && chosen !== undefined && accepted.includes(chosen);
     const verdict = chosen === null || chosen === undefined
-        ? `پاسخ درست: گزینه ${letter}`
-        : (chosen === reveal.answer ? `درست گفتی — گزینه ${letter}` : `نادرست. پاسخ درست گزینه ${letter} است.`);
+        ? `پاسخ درست: ${letter}`
+        : (right
+            ? `درست گفتی — گزینه ${CHOICE_LETTERS[chosen] ?? faDigits(chosen + 1)}${letters.length > 1 ? ` (کلید هر ${letters.length === 2 ? 'دو' : 'کدام'} را پذیرفته: ${letters.join(' و ')})` : ''}`
+            : `نادرست. پاسخ درست ${letter} است.`);
 
     const explanationBody = !explanationVisible
         ? el('button', {
@@ -560,7 +573,7 @@ function renderReveal(reveal, question, chosen, { explanationVisible = true, onS
                 el('p', { className: 'x-explanation__origin', text: 'این توضیح با کمک هوش مصنوعی نوشته شده و بازبینی انسانی نشده است.' }))
             : el('p', { className: 'f-tiny', text: 'برای این سؤال توضیحی ثبت نشده است.' }));
 
-    return el('section', { className: `x-revealed${chosen === reveal.answer ? ' is-right' : ''}` },
+    return el('section', { className: `x-revealed${right ? ' is-right' : ''}` },
         el('p', { className: 'x-revealed__head', text: verdict }),
         explanationBody,
         el('p', { className: 'f-tiny', text: 'این سؤال در کارنامه به‌عنوان «پاسخ دیده‌شده» علامت می‌خورد.' }));
@@ -1014,7 +1027,7 @@ function renderReportStats(summary, total, correct) {
 export function renderReviewQuestion(entry, position, questionCount, actions, assessmentId = '') {
     const choices = el('ul', { className: 'x-choices x-choices--review' });
     (entry.choices || []).forEach((choice, index) => {
-        const isCorrect = index === entry.correct;
+        const isCorrect = isAccepted(entry.correct, entry.also_correct, index);
         const isChosen = index === entry.selected;
         const classes = ['x-choice', 'x-choice--review'];
         if (isCorrect) classes.push('is-correct');
