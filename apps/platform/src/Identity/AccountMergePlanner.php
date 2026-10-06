@@ -70,6 +70,9 @@ final class AccountMergePlanner
         'engagement_point_awards' => [['user_id', self::MOVE_DEDUPE, 'workspace_id,day,question_key']],
         'engagement_daily_points' => [['user_id', self::MOVE_DEDUPE, 'workspace_id,day']],
         'engagement_coin_ledger' => [['user_id', self::MOVE_DEDUPE, 'workspace_id,reason,reference']],
+        // Study rooms: a membership goes with the student (one per room); who made a room is history.
+        'engagement_study_room_members' => [['user_id', self::MOVE_DEDUPE, 'room_id']],
+        'engagement_study_rooms' => [['created_by_user_id', self::HISTORY, null]],
         // Both accounts' plans move; the newest active one is the one shown.
         'study_plans' => [['user_id', self::MOVE, null]],
         'exam_schedules' => [['created_by_user_id', self::HISTORY, null]],

@@ -11,7 +11,7 @@ its own pull request and is marked here when it ships.
 | Daily points and ranking | ✅ |
 | Coins earned | ✅ |
 | Coins spent, discount codes | ✅ |
-| Group study room | planned |
+| Group study room | ✅ |
 | Affiliate programme | planned |
 
 ## Difficulty (سطح دشواری)
@@ -105,13 +105,27 @@ statistics, `rebuild-question-stats.php` does not recompute them.
 - Students see their balance, the boxes and the codes they bought on
   `/app/points`.
 
-## Group study room (planned)
+## Group study room (اتاق مطالعه گروهی)
 
-- A private invite link.
-- At most 10 members per room, and each member in at most 10 rooms.
-- Each member's study today, shown side by side: minutes from exams and the
-  timer, questions answered, and points.
-- Leave at any time. The creator can remove members.
+`Engagement\StudyRoomService`; tables `engagement_study_rooms` and
+`engagement_study_room_members`; page `/app/rooms`.
+
+- **Joining.** A room is private to its workspace and joined only through its
+  12-character invite code. The invite link is `/app/rooms?join=<code>`; the
+  page joins on arrival and removes the code from the address.
+- **What members see.** Each member's name and their study **today**, ranked
+  by minutes, then points. Today's study is:
+  - minutes from exams and the timer (`ProgressService::today`, capped as the
+    progress dashboard caps it);
+  - questions answered and right;
+  - points.
+
+  Nobody outside the room sees any of it, and the page says so.
+- **Limits.** At most 10 members present in a room, and each person in at
+  most 10 rooms. Joining a room you are already in is harmless.
+- **Leaving.** Anyone may leave. Only the creator may remove a member, and
+  not themselves. When the last member leaves, the room is archived and its
+  link stops working.
 
 ## Affiliate programme (planned)
 

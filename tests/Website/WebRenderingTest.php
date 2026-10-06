@@ -19,6 +19,7 @@ use Fanoos\Platform\Web\PageRenderer;
 use Fanoos\Platform\Web\PointsPage;
 use Fanoos\Platform\Web\DiscountsAdminPage;
 use Fanoos\Platform\Web\StorePage;
+use Fanoos\Platform\Web\StudyRoomsPage;
 use Fanoos\Platform\Web\ProgressPage;
 use Fanoos\Platform\Web\RecoveryPage;
 use Fanoos\Platform\Web\ViewerContext;
@@ -178,7 +179,9 @@ final class WebRenderingTest
             str_contains($points, 'id="points-board"') && str_contains($points, '/assets/web/pages/points.js') && str_contains($points, 'id="goal-ring"'),
             'The points page must render its board and goal ring and load its script.',
         );
-        $this->assert(str_contains($points, 'id="coin-shop"'), 'The points page must offer the coin boxes.');
+        $this->assert(str_contains($points, 'id="coin-shop"') && str_contains($points, 'href="/app/rooms"'), 'The points page must offer the coin boxes and link to the study rooms.');
+        $rooms = (new StudyRoomsPage($renderer))->render($viewer);
+        $this->assert(str_contains($rooms, 'id="room-create"') && str_contains($rooms, 'id="room-join"') && str_contains($rooms, '/assets/web/pages/rooms.js'), 'The study rooms page must render both forms and load its script.');
         $store = (new StorePage($renderer))->render($viewer);
         $this->assert(str_contains($store, 'id="discount-form"') && str_contains($store, 'id="discount-code"'), 'The store must take a discount code.');
         $owner = new ViewerContext('u1', 'آرین', 'c', 'w1', 'کتابخانه', true);

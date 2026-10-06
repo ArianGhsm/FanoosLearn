@@ -156,6 +156,44 @@ SQL);
     }
 
     /**
+     * One student's study today, in the workspace's local day: minutes (time
+     * in exams, capped as attemptMinutes() caps it, plus timed focus
+     * blocks), questions answered and answered right. For views that show
+     * several students side by side (the study room); the caller checks who
+     * may see it.
+     *
+     * @return array{minutes:int,answered:int,correct:int}
+     */
+    public function today(string $userId, string $workspaceId, ?int $now = null): array
+    {
+        $timezone = $this->timezone($workspaceId);
+        $start = (new DateTimeImmutable('@' . ($now ?? time())))->setTimezone($timezone)->setTime(0, 0);
+        $from = $start->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s');
+        $to = $start->modify('+1 day')->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s');
+
+        $attempts = $this->database->prepare(<<<'SQL'
+SELECT attempt.started_at, attempt.submitted_at, attempt.answers_json, result.correct_count, result.question_count
+FROM exam_attempts attempt
+JOIN exam_attempt_results result ON result.attempt_id = attempt.id AND result.workspace_id = attempt.workspace_id
+WHERE attempt.workspace_id = :workspace AND attempt.user_id = :user AND attempt.status = 'scored'
+  AND attempt.submitted_at >= :from AND attempt.submitted_at < :to
+SQL);
+        $attempts->execute(['workspace' => $workspaceId, 'user' => $userId, 'from' => $from, 'to' => $to]);
+        $totals = ['minutes' => 0, 'answered' => 0, 'correct' => 0];
+        foreach ($attempts->fetchAll() as $row) {
+            $answers = json_decode((string) ($row['answers_json'] ?? '{}'), true);
+            $totals['answered'] += is_array($answers) ? count($answers) : 0;
+            $totals['correct'] += (int) $row['correct_count'];
+            $totals['minutes'] += self::attemptMinutes((string) $row['started_at'], (string) $row['submitted_at'], (int) $row['question_count']);
+        }
+        $timer = $this->database->prepare('SELECT COALESCE(SUM(minutes), 0) FROM study_sessions WHERE workspace_id = :workspace AND user_id = :user AND ended_at >= :from AND ended_at < :to');
+        $timer->execute(['workspace' => $workspaceId, 'user' => $userId, 'from' => $from, 'to' => $to]);
+        $totals['minutes'] += (int) $timer->fetchColumn();
+
+        return $totals;
+    }
+
+    /**
      * Time spent in an attempt, as study time. An attempt left open
      * overnight is not a night of study: it is capped at three minutes a
      * question and three hours in all.

@@ -28,6 +28,7 @@ use Fanoos\Platform\Content\SecureDeliveryService;
 use Fanoos\Platform\Content\SecureObjectDownloadService;
 use Fanoos\Platform\Engagement\CoinService;
 use Fanoos\Platform\Engagement\PointsService;
+use Fanoos\Platform\Engagement\StudyRoomService;
 use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Http\ApiKernel;
 use Fanoos\Platform\Identity\AuthService;
@@ -176,6 +177,7 @@ final class PlatformFactory
             new PointsService($database, $access),
             new DiscountService($database, $access, $audit),
             new CoinService($database, $access, $audit),
+            new StudyRoomService($database, $access, $audit),
         );
     }
 }
