@@ -67,6 +67,19 @@ final class PointsPage
         <div class="pt-bars" id="months"></div>
     </section>
 
+    <section class="f-card p-panel pt-wide" aria-labelledby="shop-title" id="coin-shop">
+        <div class="p-panel__head">
+            <h2 id="shop-title">سکه‌هایت را خرج کن</h2>
+            <span class="p-panel__hint" id="shop-balance"></span>
+        </div>
+        <p class="f-tiny">هر جعبه یک کد تخفیف شخصی می‌سازد که فقط با همین حساب و فقط یک بار، تا چند روز، کار می‌کند.</p>
+        <ul class="pt-offers" id="offers"></ul>
+        <div class="pt-mycodes" id="my-codes-box" hidden>
+            <h3>کدهای تو</h3>
+            <ul class="pt-mycodes__list" id="my-codes"></ul>
+        </div>
+    </section>
+
     <section class="f-card p-panel" aria-labelledby="rules-title">
         <div class="p-panel__head"><h2 id="rules-title">امتیاز چطور حساب می‌شود</h2></div>
         <ul class="pt-rules" id="rules"></ul>

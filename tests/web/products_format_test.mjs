@@ -20,3 +20,10 @@ test('prices read in Tomans with Persian grouping', () => {
     assert.equal(tomanText(1500000), '۱۵۰٬۰۰۰ تومان');
     assert.equal(tomanText(null), 'بدون قیمت');
 });
+
+test('a discount reads as a percentage or an amount, and names its product', async () => {
+    const { discountText } = await import('../../apps/platform/public/assets/web/pages/products-format.js');
+    assert.equal(discountText({ kind: 'percent', percent: 20 }), '٪۲۰ تخفیف');
+    assert.equal(discountText({ kind: 'amount', amount_minor: 500000 }), '۵۰٬۰۰۰ تومان تخفیف');
+    assert.equal(discountText({ kind: 'percent', percent: 10, product_name: 'اشتراک یک‌ساله' }), '٪۱۰ تخفیف برای «اشتراک یک‌ساله»');
+});

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Fanoos Core API
-  version: 1.6.0
+  version: 1.7.0
   description: Canonical human/browser API. Mutating authenticated operations require the existing session CSRF contract.
 servers:
   - url: /api/v1
@@ -168,7 +168,7 @@ paths:
     get: { operationId: getScopedAdminDashboard, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
   /workspaces/{workspaceId}/orders:
     get: { operationId: listMyOrders, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
-    post: { operationId: createOrder, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' }, '503': { $ref: '#/components/responses/Error' } } }
+    post: { operationId: createOrder, description: 'Body {product_id, idempotency_key, discount_code?}. With a code, amount_minor is the discounted charge; a refused code answers 422 with the same codes as discount-codes/check.', parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' }, '503': { $ref: '#/components/responses/Error' } } }
   /workspaces/{workspaceId}/catalog:
     get:
       operationId: listPurchasableCatalog
@@ -499,6 +499,34 @@ paths:
       description: 'امتیاز روزانه (docs/product/08_ENGAGEMENT.md): the caller''s points in this workspace -- goal (500), points_per_answer {easy, medium, hard}, today {date, points, rank, active}, week {start (Saturday), points, rank, active}, month {start, label (Jalali month), points, rank, active}, days / weeks / months (the last seven of each, oldest first, with points), coins (balance) and goal_days. rank is the caller''s own place among the workspace''s students with points in the period (null without points); active is how many those are; no one else''s name or score is returned. Needs exam.take.'
       parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
       responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/discount-codes/check:
+    post:
+      operationId: checkDiscountCode
+      description: 'کد تخفیف: body {product_id, code}. Returns {code, label, discount_minor, total_minor, price_minor, currency} for the caller, or 422 discount_code_invalid | discount_code_expired | discount_code_wrong_product | discount_code_used | discount_code_not_applicable. Someone else''s personal code is discount_code_invalid. Read-only; POST .../orders accepts the same code as discount_code and checks it again. Needs commerce.purchase.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '422': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/coins:
+    get:
+      operationId: readCoins
+      description: 'سکه: {coins, offers [{id, title, coins, kind, amount_minor, percent, product_id, product_name, code_valid_days, affordable}], codes [{code, label, kind, amount_minor, percent, product_name, valid_until, state ready|used|expired}]} -- the caller''s balance, the active boxes and the codes they bought. Needs exam.take.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+  /workspaces/{workspaceId}/coins/redeem:
+    post:
+      operationId: redeemCoins
+      description: 'Body {offer_id}. Spends the box''s coins and mints a personal single-use code: {code, valid_until, coins (balance after)}. 409 coins_insufficient, 404 coin_offer_not_found.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
+      responses: { '201': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' }, '409': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/admin/discount-codes:
+    get: { operationId: listDiscountCodes, description: 'The owner''s codes with paid uses. Needs commerce.manage_catalog.', parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } } }
+    post: { operationId: createDiscountCode, description: 'Body {code, label, kind amount|percent, amount_minor | percent, product_id?, max_uses?, per_user_limit?, valid_days?}. 409 discount_code_taken.', parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } } }
+  /workspaces/{workspaceId}/admin/discount-codes/{codeId}/status:
+    post: { operationId: setDiscountCodeStatus, description: 'Body {active}.', parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: codeId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' } } }
+  /workspaces/{workspaceId}/admin/coin-offers:
+    get: { operationId: listCoinOffers, description: 'Every box. Needs commerce.manage_catalog.', parameters: [{ $ref: '#/components/parameters/WorkspaceId' }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+    post: { operationId: createCoinOffer, description: 'Body {title, coins, kind, amount_minor | percent, product_id?, code_valid_days?, active?, sort_order?}.', parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' }, '422': { $ref: '#/components/responses/Error' } } }
+  /workspaces/{workspaceId}/admin/coin-offers/{offerId}:
+    patch: { operationId: updateCoinOffer, description: 'The same body as creating one.', parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: offerId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' } } }
   /workspaces/{workspaceId}/attempts/{attemptId}:
     patch: { operationId: saveAssessmentProgress, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AttemptId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' } } }
   /workspaces/{workspaceId}/attempts/{attemptId}/questions/{position}:

@@ -89,8 +89,8 @@ the design is docs/product/08_ENGAGEMENT.md.
 | # | Option | Who | FANOOS |
 |---|---|---|---|
 | 45 | Points per right answer by difficulty, a daily goal, place today / this week / this month (امتیاز روزانه و رتبه) | M | ✅ /app/points |
-| 46 | Coins for each goal day, spent on discount codes (مدوفست‌کوین) | M | 🟡 coins are earned; spending them comes with discount codes |
-| 47 | Discount codes on plans | M | ❌ |
+| 46 | Coins for each goal day, spent on discount codes (مدوفست‌کوین) | M | ✅ boxes on /app/points mint personal codes |
+| 47 | Discount codes on plans | M | ✅ /app/admin/discounts; entered in the store |
 | 48 | Group study room: private link, up to 10 friends, today's study side by side (اتاق مطالعه گروهی) | M | ❌ |
 | 49 | Affiliate programme (کسب درآمد از مدوفست) | M | ❌ |
 
@@ -103,4 +103,4 @@ MedoFast's AI study assistant (گوربک), group purchase and gift plans. They 
 
 ## Score
 
-Counted rows: 49. ✅ today: 45 (92 %), 🟡 1. Target: 40 (≥ 80 %).
+Counted rows: 49. ✅ today: 47 (96 %). Target: 40 (≥ 80 %).

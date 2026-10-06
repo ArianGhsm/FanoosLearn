@@ -87,3 +87,60 @@
     height: 56px;
     border-radius: var(--radius-md);
 }
+
+/* کد تخفیف */
+.f-discount {
+    display: grid;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+    max-width: 520px;
+}
+
+.f-discount[hidden] {
+    display: none;
+}
+
+.f-discount__label {
+    font-weight: var(--weight-strong);
+}
+
+.f-discount__row {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.f-discount__row .f-input {
+    flex: 1;
+    min-width: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.f-discount__note {
+    margin: 0;
+    min-height: 1.2em;
+}
+
+.f-product__prices {
+    display: grid;
+}
+
+.f-product__prices .f-product__price {
+    margin: 0;
+}
+
+.f-product__price--old {
+    font-size: var(--text-base);
+    color: var(--text-tertiary);
+    text-decoration: line-through;
+}
+
+.f-product__saving {
+    margin: 0 0 var(--space-2);
+    color: var(--success);
+}
+
+.f-product__refused {
+    margin: 0 0 var(--space-2);
+    color: var(--danger);
+}

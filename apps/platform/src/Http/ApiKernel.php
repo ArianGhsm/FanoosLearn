@@ -7,6 +7,7 @@ namespace Fanoos\Platform\Http;
 use Fanoos\Platform\Bank\BankBrowseService;
 use Fanoos\Platform\Commerce\CatalogAdminService;
 use Fanoos\Platform\Commerce\CommerceService;
+use Fanoos\Platform\Commerce\DiscountService;
 use Fanoos\Platform\Content\ProtectedResourceAuthorizer;
 use Fanoos\Platform\Content\ContentService;
 use Fanoos\Platform\Content\CustomPracticeService;
@@ -22,6 +23,7 @@ use Fanoos\Platform\Content\SecureDeliveryService;
 use Fanoos\Platform\Content\SecureObjectDownloadService;
 use Fanoos\Platform\Core\ScheduleProjectionService;
 use Fanoos\Platform\Core\WorkspacePlatformService;
+use Fanoos\Platform\Engagement\CoinService;
 use Fanoos\Platform\Engagement\PointsService;
 use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Identity\AccountPhoneService;
@@ -63,6 +65,8 @@ final class ApiKernel
         private readonly ?ExamScheduleService $schedules = null,
         private readonly ?StudyPlanService $plans = null,
         private readonly ?PointsService $points = null,
+        private readonly ?DiscountService $discounts = null,
+        private readonly ?CoinService $coins = null,
     ) {
     }
 
@@ -300,7 +304,36 @@ final class ApiKernel
                 $session->userId, $workspaceId,
                 (string) ($request->body['product_id'] ?? ''),
                 (string) ($request->body['idempotency_key'] ?? ''),
+                isset($request->body['discount_code']) ? (string) $request->body['discount_code'] : null,
             )];
+        }
+        if ($request->method === 'POST' && $suffix === '/discount-codes/check') {
+            return ['status' => 200, 'data' => $this->requireDiscounts()->check(
+                $session->userId, $workspaceId, (string) ($request->body['product_id'] ?? ''), (string) ($request->body['code'] ?? ''),
+            )];
+        }
+        if ($suffix === '/admin/discount-codes' && in_array($request->method, ['GET', 'POST'], true)) {
+            return $request->method === 'GET'
+                ? ['status' => 200, 'data' => $this->requireDiscounts()->codes($session->userId, $workspaceId)]
+                : ['status' => 201, 'data' => $this->requireDiscounts()->create($session->userId, $workspaceId, $request->body)];
+        }
+        if ($request->method === 'POST' && preg_match('#^/admin/discount-codes/([0-9a-f-]{36})/status$#', $suffix, $match)) {
+            $this->requireDiscounts()->setStatus($session->userId, $workspaceId, $match[1], ($request->body['active'] ?? false) === true);
+            return ['status' => 200, 'data' => ['id' => $match[1], 'active' => ($request->body['active'] ?? false) === true]];
+        }
+        if ($request->method === 'GET' && $suffix === '/coins') {
+            return ['status' => 200, 'data' => $this->requireCoins()->wallet($session->userId, $workspaceId)];
+        }
+        if ($request->method === 'POST' && $suffix === '/coins/redeem') {
+            return ['status' => 201, 'data' => $this->requireCoins()->redeem($session->userId, $workspaceId, (string) ($request->body['offer_id'] ?? ''))];
+        }
+        if ($suffix === '/admin/coin-offers' && in_array($request->method, ['GET', 'POST'], true)) {
+            return $request->method === 'GET'
+                ? ['status' => 200, 'data' => $this->requireCoins()->offers($session->userId, $workspaceId)]
+                : ['status' => 201, 'data' => $this->requireCoins()->saveOffer($session->userId, $workspaceId, null, $request->body)];
+        }
+        if ($request->method === 'PATCH' && preg_match('#^/admin/coin-offers/([0-9a-f-]{36})$#', $suffix, $match)) {
+            return ['status' => 200, 'data' => $this->requireCoins()->saveOffer($session->userId, $workspaceId, $match[1], $request->body)];
         }
         if ($suffix === '/admin/products' && in_array($request->method, ['GET', 'POST'], true)) {
             $admin = $this->requireCatalogAdmin();
@@ -713,6 +746,22 @@ final class ApiKernel
             throw new PlatformException('catalog_admin_unavailable', 'Product management is not available.', 503);
         }
         return $this->catalogAdmin;
+    }
+
+    private function requireDiscounts(): DiscountService
+    {
+        if ($this->discounts === null) {
+            throw new PlatformException('discounts_unavailable', 'Discount codes are not available.', 503);
+        }
+        return $this->discounts;
+    }
+
+    private function requireCoins(): CoinService
+    {
+        if ($this->coins === null) {
+            throw new PlatformException('coins_unavailable', 'Coins are not available.', 503);
+        }
+        return $this->coins;
     }
 
     private function requireAccountPhone(): AccountPhoneService

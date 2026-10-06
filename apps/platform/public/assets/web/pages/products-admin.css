@@ -278,3 +278,19 @@
         padding-inline: var(--space-4);
     }
 }
+
+.p-head__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+/* کدهای تخفیف و جعبه‌های سکه */
+.d-section {
+    margin-top: var(--space-7);
+}
+
+.d-code {
+    font-size: var(--text-lg);
+    letter-spacing: 0.06em;
+}

@@ -17,6 +17,8 @@ use Fanoos\Platform\Web\ExamsPage;
 use Fanoos\Platform\Web\NotFoundPage;
 use Fanoos\Platform\Web\PageRenderer;
 use Fanoos\Platform\Web\PointsPage;
+use Fanoos\Platform\Web\DiscountsAdminPage;
+use Fanoos\Platform\Web\StorePage;
 use Fanoos\Platform\Web\ProgressPage;
 use Fanoos\Platform\Web\RecoveryPage;
 use Fanoos\Platform\Web\ViewerContext;
@@ -175,6 +177,15 @@ final class WebRenderingTest
         $this->assert(
             str_contains($points, 'id="points-board"') && str_contains($points, '/assets/web/pages/points.js') && str_contains($points, 'id="goal-ring"'),
             'The points page must render its board and goal ring and load its script.',
+        );
+        $this->assert(str_contains($points, 'id="coin-shop"'), 'The points page must offer the coin boxes.');
+        $store = (new StorePage($renderer))->render($viewer);
+        $this->assert(str_contains($store, 'id="discount-form"') && str_contains($store, 'id="discount-code"'), 'The store must take a discount code.');
+        $owner = new ViewerContext('u1', 'آرین', 'c', 'w1', 'کتابخانه', true);
+        $discounts = (new DiscountsAdminPage($renderer))->render($owner);
+        $this->assert(
+            str_contains($discounts, 'id="code-form"') && str_contains($discounts, 'id="offer-form"') && str_contains($discounts, '/assets/web/pages/discounts-admin.js'),
+            'The discounts page must render both forms and load its script.',
         );
     }
 

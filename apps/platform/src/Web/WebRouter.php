@@ -74,6 +74,18 @@ final class WebRouter
             return $this->page(200, (new PaymentReturnPage($this->renderer))->render($viewer, ...$this->settlePayment($query)));
         }
 
+        if ($path === '/app/admin/discounts') {
+            if ($viewer === null) {
+                return $this->redirect('/login');
+            }
+            if ($viewer->workspaceId === null) {
+                return $this->redirect('/app');
+            }
+            return $viewer->canManageCatalog
+                ? $this->page(200, (new DiscountsAdminPage($this->renderer))->render($viewer))
+                : $this->page(404, (new NotFoundPage($this->renderer))->render($viewer));
+        }
+
         if ($path === '/app/admin/products') {
             if ($viewer === null) {
                 return $this->redirect('/login');
