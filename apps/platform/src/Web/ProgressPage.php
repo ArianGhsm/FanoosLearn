@@ -24,7 +24,7 @@ final class ProgressPage
         $main = <<<'HTML'
 <header class="p-head">
     <h1>پیشرفت من</h1>
-    <p class="p-head__links"><a class="f-btn f-btn--ghost" href="/app/points">امتیاز روزانه و رتبه</a></p>
+    <p class="p-head__links"><a class="f-btn f-btn--ghost" href="/app/points">امتیاز روزانه و رتبه</a> <a class="f-btn f-btn--ghost" href="/app/rooms">اتاق مطالعه گروهی</a></p>
     <p class="f-muted">از روی آزمون‌هایی که تمام کرده‌ای: چقدر، چه روزهایی، کجا خوبی و کجا نه.</p>
 </header>
 

@@ -17,6 +17,7 @@ use Fanoos\Tests\Core\OnboardingPhoneVerificationTest;
 use Fanoos\Tests\Core\PaymentReconcileTest;
 use Fanoos\Tests\Core\RepresentativeApprovalTest;
 use Fanoos\Tests\Core\StudentRegistrationTest;
+use Fanoos\Tests\Core\StudyRoomTest;
 use Fanoos\Tests\Integration\EngagementTest;
 use Fanoos\Tests\Integration\TenantIsolationTest;
 use Fanoos\Tests\Integration\MigrationSafetyTest;
@@ -168,6 +169,8 @@ try {
         echo "PASS owner products and prices scenarios\n";
         $assertions += (new DiscountCoinTest($database))->run();
         echo "PASS discount codes and coin boxes\n";
+        $assertions += (new StudyRoomTest($database))->run();
+        echo "PASS study room scenarios\n";
         $assertions += (new PaymentReconcileTest($database))->run();
         echo "PASS automatic payment settlement scenarios\n";
         $assertions += (new RepresentativeApprovalTest($database))->run();

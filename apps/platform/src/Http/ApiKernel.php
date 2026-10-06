@@ -25,6 +25,7 @@ use Fanoos\Platform\Core\ScheduleProjectionService;
 use Fanoos\Platform\Core\WorkspacePlatformService;
 use Fanoos\Platform\Engagement\CoinService;
 use Fanoos\Platform\Engagement\PointsService;
+use Fanoos\Platform\Engagement\StudyRoomService;
 use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Identity\AccountPhoneService;
 use Fanoos\Platform\Identity\AuthService;
@@ -67,6 +68,7 @@ final class ApiKernel
         private readonly ?PointsService $points = null,
         private readonly ?DiscountService $discounts = null,
         private readonly ?CoinService $coins = null,
+        private readonly ?StudyRoomService $rooms = null,
     ) {
     }
 
@@ -320,6 +322,28 @@ final class ApiKernel
         if ($request->method === 'POST' && preg_match('#^/admin/discount-codes/([0-9a-f-]{36})/status$#', $suffix, $match)) {
             $this->requireDiscounts()->setStatus($session->userId, $workspaceId, $match[1], ($request->body['active'] ?? false) === true);
             return ['status' => 200, 'data' => ['id' => $match[1], 'active' => ($request->body['active'] ?? false) === true]];
+        }
+        if (str_starts_with($suffix, '/rooms')) {
+            if ($this->rooms === null) {
+                throw new PlatformException('study_rooms_unavailable', 'Study rooms are not available.', 503);
+            }
+            if ($request->method === 'GET' && $suffix === '/rooms') {
+                return ['status' => 200, 'data' => $this->rooms->rooms($session->userId, $workspaceId)];
+            }
+            if ($request->method === 'POST' && $suffix === '/rooms') {
+                return ['status' => 201, 'data' => $this->rooms->create($session->userId, $workspaceId, (string) ($request->body['name'] ?? ''))];
+            }
+            if ($request->method === 'POST' && $suffix === '/rooms/join') {
+                return ['status' => 200, 'data' => $this->rooms->join($session->userId, $workspaceId, (string) ($request->body['code'] ?? ''))];
+            }
+            if ($request->method === 'POST' && preg_match('#^/rooms/([0-9a-f-]{36})/leave$#', $suffix, $match)) {
+                $this->rooms->leave($session->userId, $workspaceId, $match[1]);
+                return ['status' => 200, 'data' => ['left' => true]];
+            }
+            if ($request->method === 'POST' && preg_match('#^/rooms/([0-9a-f-]{36})/members/([0-9a-f-]{36})/remove$#', $suffix, $match)) {
+                $this->rooms->remove($session->userId, $workspaceId, $match[1], $match[2]);
+                return ['status' => 200, 'data' => ['removed' => true]];
+            }
         }
         if ($request->method === 'GET' && $suffix === '/coins') {
             return ['status' => 200, 'data' => $this->requireCoins()->wallet($session->userId, $workspaceId)];

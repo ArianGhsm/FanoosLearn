@@ -23,6 +23,7 @@ final class PointsPage
 <header class="p-head">
     <h1>امتیاز روزانه</h1>
     <p class="f-muted">هر پاسخ درست امتیاز دارد؛ سؤال سخت‌تر، امتیاز بیشتر. هر روز که به هدف برسی، یک سکه می‌گیری.</p>
+    <p class="p-head__links"><a class="f-btn f-btn--ghost" href="/app/rooms">اتاق مطالعه گروهی</a></p>
 </header>
 
 <div class="f-notice f-notice--error" id="points-error" hidden>

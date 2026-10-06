@@ -147,6 +147,14 @@ SQL)->execute(['id' => Uuid::v7(), 'workspace' => $workspaceId, 'user' => $userI
         ];
     }
 
+    /** A student's points today, in the workspace's local day. */
+    public function today(string $workspaceId, string $userId, ?int $now = null): int
+    {
+        $today = (new DateTimeImmutable('@' . ($now ?? time())))->setTimezone($this->timezone($workspaceId))->setTime(0, 0);
+
+        return $this->total($workspaceId, $userId, $today, $today);
+    }
+
     public function coins(string $workspaceId, string $userId): int
     {
         $query = $this->database->prepare('SELECT COALESCE(SUM(delta), 0) FROM engagement_coin_ledger WHERE workspace_id = :workspace AND user_id = :user');

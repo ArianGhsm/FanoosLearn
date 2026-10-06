@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Fanoos Core API
-  version: 1.7.0
+  version: 1.8.0
   description: Canonical human/browser API. Mutating authenticated operations require the existing session CSRF contract.
 servers:
   - url: /api/v1
@@ -527,6 +527,19 @@ paths:
     post: { operationId: createCoinOffer, description: 'Body {title, coins, kind, amount_minor | percent, product_id?, code_valid_days?, active?, sort_order?}.', parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' }, '422': { $ref: '#/components/responses/Error' } } }
   /workspaces/{workspaceId}/admin/coin-offers/{offerId}:
     patch: { operationId: updateCoinOffer, description: 'The same body as creating one.', parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: offerId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' } } }
+  /workspaces/{workspaceId}/rooms:
+    get:
+      operationId: listStudyRooms
+      description: 'اتاق مطالعه گروهی: the caller''s rooms -- [{id, name, invite_code, mine, total_minutes, members [{user_id, name, me, creator, minutes, answered, correct, points}]}], members ranked by today''s minutes. Only members of a room see it. Needs exam.take.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      responses: { '200': { $ref: '#/components/responses/Success' } }
+    post: { operationId: createStudyRoom, description: 'Body {name} (1-60 characters). The creator joins it. 409 study_room_limit.', parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '201': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } } }
+  /workspaces/{workspaceId}/rooms/join:
+    post: { operationId: joinStudyRoom, description: 'Body {code}. 404 study_room_not_found, 409 study_room_full | study_room_limit. Joining again is harmless.', parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' }, '409': { $ref: '#/components/responses/Error' } } }
+  /workspaces/{workspaceId}/rooms/{roomId}/leave:
+    post: { operationId: leaveStudyRoom, description: 'The last member out archives the room.', parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: roomId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' }, '404': { $ref: '#/components/responses/Error' } } }
+  /workspaces/{workspaceId}/rooms/{roomId}/members/{userId}/remove:
+    post: { operationId: removeStudyRoomMember, description: 'The creator only (403 study_room_not_creator); not themselves.', parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: roomId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }, { name: userId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } } }
   /workspaces/{workspaceId}/attempts/{attemptId}:
     patch: { operationId: saveAssessmentProgress, parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/AttemptId' }, { $ref: '#/components/parameters/Csrf' }], responses: { '200': { $ref: '#/components/responses/Success' }, '409': { $ref: '#/components/responses/Error' } } }
   /workspaces/{workspaceId}/attempts/{attemptId}/questions/{position}:

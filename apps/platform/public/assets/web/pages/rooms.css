@@ -1,0 +1,140 @@
+/* اتاق مطالعه گروهی. Builds on progress.css (p-head). */
+
+.r-forms {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+}
+
+.r-form {
+    display: grid;
+    gap: var(--space-3);
+    align-content: start;
+}
+
+.r-form h2 {
+    margin: 0;
+    font-size: var(--text-lg);
+}
+
+.r-limits {
+    margin: var(--space-3) 0 var(--space-5);
+}
+
+.r-list {
+    display: grid;
+    gap: var(--space-4);
+}
+
+.r-room {
+    display: grid;
+    gap: var(--space-4);
+    animation: f-rise 360ms var(--ease) both;
+}
+
+.r-room__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2) var(--space-4);
+}
+
+.r-room__head h2 {
+    margin: 0;
+    font-size: var(--text-xl);
+}
+
+.r-room__total {
+    margin-inline-start: auto;
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.r-members {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-2);
+}
+
+.r-member {
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+}
+
+.r-member.is-me {
+    background: var(--accent-soft);
+}
+
+.r-member__place {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--surface-strong);
+    font-weight: var(--weight-strong);
+}
+
+.r-member:first-child .r-member__place {
+    background: var(--warning-soft);
+    color: var(--warning);
+}
+
+.r-member__name {
+    font-weight: var(--weight-medium);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.r-member__answers,
+.r-member__points {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.r-member__remove {
+    padding-block: var(--space-1);
+    font-size: var(--text-sm);
+}
+
+.r-invite {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.r-invite__link {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--text-sm);
+}
+
+.r-room__leave {
+    justify-self: start;
+}
+
+@media (max-width: 720px) {
+    .r-forms {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .r-member {
+        grid-template-columns: 2rem minmax(0, 1fr) auto;
+    }
+
+    .r-member__answers,
+    .r-member__points {
+        grid-column: 2 / -1;
+    }
+
+    .r-invite {
+        flex-direction: column;
+    }
+}
