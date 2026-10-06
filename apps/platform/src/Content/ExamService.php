@@ -1264,12 +1264,12 @@ SQL, ['workspace' => $workspaceId, 'assessment' => $assessmentId, 'version' => $
                     throw new PlatformException('question_also_correct_invalid', 'Also-correct choices must be a list of choice indexes.', 422);
                 }
                 $normalizedAlso = [];
-                foreach ($also as $index) {
-                    $index = filter_var($index, FILTER_VALIDATE_INT);
-                    if ($index === false || $index < 0 || $index >= count($choices) || $index === $answer || in_array($index, $normalizedAlso, true)) {
+                foreach ($also as $alsoChoice) {
+                    $alsoChoice = filter_var($alsoChoice, FILTER_VALIDATE_INT);
+                    if ($alsoChoice === false || $alsoChoice < 0 || $alsoChoice >= count($choices) || $alsoChoice === $answer || in_array($alsoChoice, $normalizedAlso, true)) {
                         throw new PlatformException('question_also_correct_invalid', 'Also-correct choices must be other valid choice indexes, each once.', 422);
                     }
-                    $normalizedAlso[] = $index;
+                    $normalizedAlso[] = $alsoChoice;
                 }
                 sort($normalizedAlso);
                 $normalized['also_correct'] = $normalizedAlso;
