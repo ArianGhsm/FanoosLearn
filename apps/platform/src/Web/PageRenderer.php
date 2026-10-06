@@ -46,7 +46,7 @@ final class PageRenderer
             '<meta charset="utf-8">',
             '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">',
             '<meta name="description" content="' . $description . '">',
-            '<meta name="theme-color" content="#f5f3ee">',
+            '<meta name="theme-color" content="#f4f5fb" media="(prefers-color-scheme: light)">', '<meta name="theme-color" content="#0e1120" media="(prefers-color-scheme: dark)">',
             '<title>' . $title . '</title>',
             '<link rel="manifest" href="' . Pwa::MANIFEST_PATH . '">',
             '<link rel="icon" type="image/png" sizes="192x192" href="' . $this->escape($this->assets->url('/assets/web/icons/icon-192.png')) . '">',

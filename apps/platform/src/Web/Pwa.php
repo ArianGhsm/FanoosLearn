@@ -34,8 +34,8 @@ final class Pwa
             'start_url' => '/app',
             'scope' => '/',
             'display' => 'standalone',
-            'background_color' => '#151412',
-            'theme_color' => '#151412',
+            'background_color' => '#0e1120',
+            'theme_color' => '#5b4cf0',
             'icons' => [
                 ['src' => '/assets/web/icons/icon-192.png', 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
                 ['src' => '/assets/web/icons/icon-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
@@ -62,7 +62,7 @@ final class Pwa
         $cache = self::CACHE;
         $offline = json_encode(
             '<!doctype html><html lang="fa" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-            . '<title>فانوس</title><body style="font-family:system-ui,sans-serif;background:#151412;color:#f2efe8;display:grid;place-items:center;min-height:100vh;margin:0;text-align:center">'
+            . '<title>فانوس</title><body style="font-family:system-ui,sans-serif;background:#0e1120;color:#eef0fa;display:grid;place-items:center;min-height:100vh;margin:0;text-align:center">'
             . '<div><p style="font-size:1.25rem">اتصال اینترنت برقرار نیست.</p><p style="opacity:.7">وقتی وصل شدی، صفحه را دوباره باز کن.</p></div></body></html>',
             JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR,
         );

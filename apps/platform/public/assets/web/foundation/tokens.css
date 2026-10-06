@@ -5,116 +5,95 @@
  * once, in both themes. A page stylesheet that hard-codes a colour is a bug:
  * it will be wrong in the other theme, and nothing will catch it.
  *
- * The palette takes its proportions from the legacy Dent site (a light,
- * low-contrast paper ground with one confident blue accent) because that is
- * the look the owner already trusts with real students -- but the values are
- * FANOOS's own, and nothing here names a university, a cohort or a subject.
+ * The palette (owner's decision, 2026-10-06): lively and bright like the
+ * exam apps students already use, and still calm enough to read a clinical
+ * stem on for two hours. A vivid indigo-violet carries the brand and every
+ * primary action; the lantern's amber is kept for what a student earns
+ * (points, coins); white cards sit on a cool, faintly lit and woven ground.
+ * Nothing here names a university, a cohort or a subject.
  */
 
 :root {
     color-scheme: light;
 
+    --bg-body: #f4f5fb;
+    --bg-aura-start: #ecebff;
+    --bg-aura-end: #f7f7fd;
 
-    --bg-body: #f5f3ee;
-    --bg-aura-start: #f5f3ee;
-    --bg-aura-end: #f5f3ee;
+    --surface: #ffffff;
+    --surface-muted: #f2f3fa;
+    --surface-strong: #e3e6f2;
+    --surface-inset: #eef0f8;
 
-    --surface: #fffdf9;
-    --surface-muted: #f3f0e9;
-    --surface-strong: #e9e4da;
-    --surface-inset: #efebe3;
-
-    --text-primary: #1f1d1a;
-    --text-secondary: #625d55;
-    --text-tertiary: #8f897e;
+    --text-primary: #1a1d2e;
+    --text-secondary: #575e78;
+    --text-tertiary: #8a90a8;
     --text-on-accent: #ffffff;
 
-    --accent: #a4600d;
-    --accent-strong: #8a4f08;
-    --accent-soft: rgba(164, 96, 13, 0.09);
+    --accent: #5b4cf0;
+    --accent-strong: #4535d8;
+    --accent-soft: rgba(91, 76, 240, 0.10);
 
-    --success: #2e7a4d;
-    --success-soft: rgba(46, 122, 77, 0.10);
-    --warning: #a8700f;
-    --warning-soft: rgba(168, 112, 15, 0.12);
-    --danger: #b0413a;
-    --danger-soft: rgba(176, 65, 58, 0.09);
+    --success: #16955a;
+    --success-soft: rgba(22, 149, 90, 0.11);
+    --warning: #d97706;
+    --warning-soft: rgba(245, 158, 11, 0.15);
+    --danger: #e0434f;
+    --danger-soft: rgba(224, 67, 79, 0.10);
 
-    --border: rgba(31, 29, 26, 0.11);
-    --border-strong: rgba(31, 29, 26, 0.22);
+    --border: rgba(26, 29, 46, 0.08);
+    --border-strong: rgba(26, 29, 46, 0.18);
 
-    --focus-ring: rgba(164, 96, 13, 0.35);
+    --focus-ring: rgba(91, 76, 240, 0.38);
 
     /*
-     * Shadows are tinted toward the accent rather than neutral grey, and the
-     * blur is allowed to actually show. The previous values were grey at 0.22
-     * alpha with a -30px spread, which on a light ground is invisible: nothing
-     * on the page appeared to sit *above* anything else, and the whole site
-     * read as flat. A shadow that cannot be seen is not restraint, it is a
-     * shadow that is not there.
+     * Shadows are tinted toward the brand, and their blur is allowed to show:
+     * cards visibly sit above the ground, and a lifted card glows faintly in
+     * the accent rather than going grey.
      */
-    /* The negative spread is the number that matters. At -28px on a 38px blur
-     * almost nothing reaches the page, which is how the first attempt at this
-     * still looked flat next to the old values despite tripling the alpha. */
-    --shadow-soft: 0 1px 2px rgba(31, 29, 26, 0.05);
-    --shadow-strong: 0 12px 32px -12px rgba(31, 29, 26, 0.25);
+    --shadow-soft: 0 1px 2px rgba(26, 29, 46, 0.05), 0 4px 14px -8px rgba(60, 56, 140, 0.18);
+    --shadow-strong: 0 18px 40px -16px rgba(60, 56, 140, 0.32);
     /* For a surface that has lifted under the pointer. */
-    --shadow-lift: 0 6px 18px -10px rgba(31, 29, 26, 0.25);
+    --shadow-lift: 0 12px 28px -12px rgba(91, 76, 240, 0.38);
     /* For a surface that is itself accent-coloured, so the shadow it casts is its own colour. */
-    --shadow-accent: none;
+    --shadow-accent: 0 10px 24px -10px rgba(91, 76, 240, 0.65);
 
-    /* Accent surfaces are a gradient, not a flat fill -- the cheapest way for
-     * a primary action to look lit from somewhere rather than painted on. */
-    --accent-gradient: linear-gradient(var(--accent), var(--accent));
-
-    /*
-     * Light placed in the page, rather than one flat body colour. Three soft
-     * pools at fixed points read as a room with windows; the page beneath them
-     * stays calm enough to read a clinical stem on for two hours.
-     */
-    --aura-1: transparent;
-    --aura-2: transparent;
-    --aura-3: transparent;
-
-    /* The hairline of the background weave. Any stronger and it stops
-       being a texture and starts being graph paper. */
-    --weave: transparent;
+    /* Primary surfaces are a gradient, lit from one corner rather than painted flat. */
+    --accent-gradient: linear-gradient(135deg, #6c5cff 0%, #5b4cf0 45%, #8b4cf0 100%);
 
     /*
-     * Information hues.
-     *
-     * Everything on this site was one blue accent and four greys, which is
-     * why it read as corporate and flat: nothing could be told apart at a
-     * glance, because nothing had a colour of its own. These give each
-     * *kind* of fact a hue, so a subject and a difficulty are different
-     * things to the eye before they are read.
-     *
-     * The rule that keeps this from becoming confetti: a hue names a kind of
-     * information, never a mood and never a decoration. Anything that does
-     * not correspond to a kind of fact stays on the accent or the greys.
+     * Light placed in the page: three soft pools of the brand, the lantern
+     * and teal, behind everything. Low enough to read through.
      */
-    --hue-subject: #0f8a7e;
-    --hue-subject-soft: rgba(15, 138, 126, 0.12);
-    --hue-difficulty: #c2701d;
-    --hue-difficulty-soft: rgba(194, 112, 29, 0.12);
-    --hue-tag: #7b4fd1;
-    --hue-tag-soft: rgba(123, 79, 209, 0.12);
-    --hue-source: #c24a7a;
-    --hue-source-soft: rgba(194, 74, 122, 0.12);
+    --aura-1: rgba(108, 92, 255, 0.10);
+    --aura-2: rgba(245, 158, 11, 0.08);
+    --aura-3: rgba(20, 184, 166, 0.06);
+
+    /* The hairline of the background weave: a texture, not graph paper. */
+    --weave: rgba(26, 29, 46, 0.035);
 
     /*
-     * Motion vocabulary. There was none: the site had one animation in two
-     * thousand lines, so nothing ever acknowledged being touched. Durations
-     * stay short -- this is feedback, not decoration -- and base.css already
-     * collapses all of it under prefers-reduced-motion.
+     * Information hues: each *kind* of fact has its own colour (a subject,
+     * a difficulty, a tag, a source), so they are told apart at a glance.
+     * A hue names a kind of information, never a mood.
      */
+    --hue-subject: #0d9488;
+    --hue-subject-soft: rgba(13, 148, 136, 0.12);
+    --hue-difficulty: #ea580c;
+    --hue-difficulty-soft: rgba(234, 88, 12, 0.12);
+    --hue-tag: #7c3aed;
+    --hue-tag-soft: rgba(124, 58, 237, 0.11);
+    --hue-source: #db2777;
+    --hue-source-soft: rgba(219, 39, 119, 0.10);
+
+    /* Motion: short, feedback not decoration; base.css collapses it under prefers-reduced-motion. */
     --ease: cubic-bezier(0.2, 0.8, 0.3, 1);
     --motion-fast: 120ms;
     --motion-base: 200ms;
 
-    --radius-sm: 6px;
-    --radius-md: 10px;
-    --radius-lg: 14px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 18px;
     --radius-pill: 999px;
 
     --space-1: 4px;
@@ -130,138 +109,122 @@
 }
 
 /*
- * Dark theme. The viewer's own setting wins over the system preference, so
- * both a media query and an explicit attribute are defined -- and the media
- * query is guarded so an explicit "light" choice is never overridden by a
- * dark system setting.
+ * Dark theme: deep navy, the same brand and lantern lifted for a dark
+ * ground. The viewer's own setting wins over the system preference, so both
+ * a media query and an explicit attribute are defined -- and the media query
+ * is guarded so an explicit "light" choice is never overridden. The two
+ * blocks are kept identical (tests/web/design_tokens_test.mjs).
  */
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
         color-scheme: dark;
 
-        --bg-body: #151412;
-        --bg-aura-start: #151412;
-        --bg-aura-end: #151412;
+        --bg-body: #0e1120;
+        --bg-aura-start: #171a3a;
+        --bg-aura-end: #10132a;
 
-        --surface: #1c1b18;
-        --surface-muted: #23211e;
-        --surface-strong: #2c2a26;
-        --surface-inset: #211f1c;
+        --surface: #161a2e;
+        --surface-muted: #1c2138;
+        --surface-strong: #262c48;
+        --surface-inset: #131729;
 
-        --text-primary: #ece7de;
-        --text-secondary: #aaa396;
-        --text-tertiary: #7d776c;
-        --text-on-accent: #1a1408;
+        --text-primary: #eef0fa;
+        --text-secondary: #a7aecb;
+        --text-tertiary: #737a99;
+        --text-on-accent: #ffffff;
 
-        --accent: #eda948;
-        --accent-strong: #f5bd66;
-        --accent-soft: rgba(237, 169, 72, 0.11);
+        --accent: #8d80ff;
+        --accent-strong: #a69cff;
+        --accent-soft: rgba(141, 128, 255, 0.16);
 
-        --success: #6cc08f;
-        --success-soft: rgba(108, 192, 143, 0.12);
-        --warning: #e5b25a;
-        --warning-soft: rgba(229, 178, 90, 0.12);
-        --danger: #e27d74;
-        --danger-soft: rgba(226, 125, 116, 0.11);
+        --success: #4ade80;
+        --success-soft: rgba(74, 222, 128, 0.13);
+        --warning: #fbbf24;
+        --warning-soft: rgba(251, 191, 36, 0.14);
+        --danger: #fb7185;
+        --danger-soft: rgba(251, 113, 133, 0.13);
 
-        --border: rgba(236, 231, 222, 0.10);
-        --border-strong: rgba(236, 231, 222, 0.20);
+        --border: rgba(238, 240, 250, 0.08);
+        --border-strong: rgba(238, 240, 250, 0.17);
 
-        --focus-ring: rgba(237, 169, 72, 0.40);
+        --focus-ring: rgba(141, 128, 255, 0.45);
 
-        /* Kept byte-for-byte in step with the :root[data-theme="dark"] block
-         * below. A value that lands in only one of the two is not a missing
-         * colour -- it silently inherits the *light* value, so the bug shows
-         * up only for a viewer on system-dark who never touched the toggle. */
-        --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3);
-        --shadow-strong: 0 16px 40px -12px rgba(0, 0, 0, 0.6);
-        --shadow-lift: 0 8px 20px -10px rgba(0, 0, 0, 0.6);
-        --shadow-accent: none;
+        --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 16px -10px rgba(0, 0, 0, 0.6);
+        --shadow-strong: 0 18px 44px -14px rgba(0, 0, 0, 0.7);
+        --shadow-lift: 0 12px 30px -12px rgba(141, 128, 255, 0.35);
+        --shadow-accent: 0 10px 26px -10px rgba(141, 128, 255, 0.6);
 
-        --accent-gradient: linear-gradient(var(--accent), var(--accent));
+        --accent-gradient: linear-gradient(135deg, #7c6cff 0%, #6a5cf5 45%, #9d5cf5 100%);
 
-        --aura-1: transparent;
-        --aura-2: transparent;
-        --aura-3: transparent;
+        --aura-1: rgba(124, 108, 255, 0.14);
+        --aura-2: rgba(251, 191, 36, 0.06);
+        --aura-3: rgba(45, 212, 191, 0.06);
 
-        /* Lighter than the ground rather than darker: on a dark surface a
-           darker line reads as a crack, not a weave. */
-        --weave: transparent;
+        --weave: rgba(238, 240, 250, 0.025);
 
-        /* Lifted and desaturated for a dark ground: the light values are mud
-           at this lightness, and the soft fills need more alpha to show at
-           all. Same four kinds of fact, same order. */
-        --hue-subject: #3fd0bd;
-        --hue-subject-soft: rgba(63, 208, 189, 0.16);
-        --hue-difficulty: #e8a84f;
-        --hue-difficulty-soft: rgba(232, 168, 79, 0.16);
-        --hue-tag: #b18cf5;
-        --hue-tag-soft: rgba(177, 140, 245, 0.16);
-        --hue-source: #f07fa8;
-        --hue-source-soft: rgba(240, 127, 168, 0.16);
+        --hue-subject: #2dd4bf;
+        --hue-subject-soft: rgba(45, 212, 191, 0.15);
+        --hue-difficulty: #fb923c;
+        --hue-difficulty-soft: rgba(251, 146, 60, 0.15);
+        --hue-tag: #a78bfa;
+        --hue-tag-soft: rgba(167, 139, 250, 0.16);
+        --hue-source: #f472b6;
+        --hue-source-soft: rgba(244, 114, 182, 0.15);
     }
 }
 
 :root[data-theme="dark"] {
     color-scheme: dark;
 
-    --bg-body: #151412;
-    --bg-aura-start: #151412;
-    --bg-aura-end: #151412;
+    --bg-body: #0e1120;
+    --bg-aura-start: #171a3a;
+    --bg-aura-end: #10132a;
 
-    --surface: #1c1b18;
-    --surface-muted: #23211e;
-    --surface-strong: #2c2a26;
-    --surface-inset: #211f1c;
+    --surface: #161a2e;
+    --surface-muted: #1c2138;
+    --surface-strong: #262c48;
+    --surface-inset: #131729;
 
-    --text-primary: #ece7de;
-    --text-secondary: #aaa396;
-    --text-tertiary: #7d776c;
-    --text-on-accent: #1a1408;
+    --text-primary: #eef0fa;
+    --text-secondary: #a7aecb;
+    --text-tertiary: #737a99;
+    --text-on-accent: #ffffff;
 
-    --accent: #eda948;
-    --accent-strong: #f5bd66;
-    --accent-soft: rgba(237, 169, 72, 0.11);
+    --accent: #8d80ff;
+    --accent-strong: #a69cff;
+    --accent-soft: rgba(141, 128, 255, 0.16);
 
-    --success: #6cc08f;
-    --success-soft: rgba(108, 192, 143, 0.12);
-    --warning: #e5b25a;
-    --warning-soft: rgba(229, 178, 90, 0.12);
-    --danger: #e27d74;
-    --danger-soft: rgba(226, 125, 116, 0.11);
+    --success: #4ade80;
+    --success-soft: rgba(74, 222, 128, 0.13);
+    --warning: #fbbf24;
+    --warning-soft: rgba(251, 191, 36, 0.14);
+    --danger: #fb7185;
+    --danger-soft: rgba(251, 113, 133, 0.13);
 
-    --border: rgba(236, 231, 222, 0.10);
-    --border-strong: rgba(236, 231, 222, 0.20);
+    --border: rgba(238, 240, 250, 0.08);
+    --border-strong: rgba(238, 240, 250, 0.17);
 
-    --focus-ring: rgba(237, 169, 72, 0.40);
+    --focus-ring: rgba(141, 128, 255, 0.45);
 
-    /* On a dark ground the depth has to come from black, but anything the
-     * accent colours still casts its own light -- so lift and accent stay
-     * blue while the ambient shadows go deeper. */
-    --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-strong: 0 16px 40px -12px rgba(0, 0, 0, 0.6);
-    --shadow-lift: 0 8px 20px -10px rgba(0, 0, 0, 0.6);
-    --shadow-accent: none;
+    --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 16px -10px rgba(0, 0, 0, 0.6);
+    --shadow-strong: 0 18px 44px -14px rgba(0, 0, 0, 0.7);
+    --shadow-lift: 0 12px 30px -12px rgba(141, 128, 255, 0.35);
+    --shadow-accent: 0 10px 26px -10px rgba(141, 128, 255, 0.6);
 
-    --accent-gradient: linear-gradient(var(--accent), var(--accent));
+    --accent-gradient: linear-gradient(135deg, #7c6cff 0%, #6a5cf5 45%, #9d5cf5 100%);
 
-    --aura-1: transparent;
-    --aura-2: transparent;
-    --aura-3: transparent;
+    --aura-1: rgba(124, 108, 255, 0.14);
+    --aura-2: rgba(251, 191, 36, 0.06);
+    --aura-3: rgba(45, 212, 191, 0.06);
 
-    /* Lighter than the ground rather than darker: on a dark surface a
-       darker line reads as a crack, not a weave. */
-    --weave: transparent;
+    --weave: rgba(238, 240, 250, 0.025);
 
-    /* Lifted and desaturated for a dark ground: the light values are mud
-       at this lightness, and the soft fills need more alpha to show at
-       all. Same four kinds of fact, same order. */
-    --hue-subject: #3fd0bd;
-    --hue-subject-soft: rgba(63, 208, 189, 0.16);
-    --hue-difficulty: #e8a84f;
-    --hue-difficulty-soft: rgba(232, 168, 79, 0.16);
-    --hue-tag: #b18cf5;
-    --hue-tag-soft: rgba(177, 140, 245, 0.16);
-    --hue-source: #f07fa8;
-    --hue-source-soft: rgba(240, 127, 168, 0.16);
+    --hue-subject: #2dd4bf;
+    --hue-subject-soft: rgba(45, 212, 191, 0.15);
+    --hue-difficulty: #fb923c;
+    --hue-difficulty-soft: rgba(251, 146, 60, 0.15);
+    --hue-tag: #a78bfa;
+    --hue-tag-soft: rgba(167, 139, 250, 0.16);
+    --hue-source: #f472b6;
+    --hue-source-soft: rgba(244, 114, 182, 0.15);
 }
