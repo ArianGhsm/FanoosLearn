@@ -330,13 +330,13 @@ SQL);
         $both = $publisher->publish($ws, 'residency', 1404, 1, $f['manager'], $f['reviewer']);
         $this->assert($both['questions'] === 2 && $both['left_out'] === [], 'A question with two accepted options was left out: ' . json_encode($both));
         $second = BankImporter::questionKey('residency', 1404, 1, 2);
-        foreach ([0, 1] as $choice) {
-            $try = $exams->startAttempt($f['student'], $ws, $both['assessment_id']);
-            $result = $exams->submitAttempt($f['student'], $ws, $try['attempt_id'], 1, [$second => $choice]);
-            $this->assert($result['correct_count'] === 1, "Accepted option {$choice} did not score: " . json_encode($result));
+        // A new student each time: a fresh attempt on the version just published.
+        foreach ([0 => 1, 1 => 1, 2 => 0] as $choice => $expected) {
+            $student = $this->member($ws, 'student');
+            $try = $exams->startAttempt($student, $ws, $both['assessment_id']);
+            $result = $exams->submitAttempt($student, $ws, $try['attempt_id'], (int) $try['revision'], [$second => $choice]);
+            $this->assert($result['correct_count'] === $expected, "Option {$choice} scored wrongly: " . json_encode($result));
         }
-        $wrongTry = $exams->startAttempt($f['student'], $ws, $both['assessment_id']);
-        $this->assert($exams->submitAttempt($f['student'], $ws, $wrongTry['attempt_id'], 1, [$second => 2])['correct_count'] === 0, 'An option the key does not accept scored.');
 
         // Two people review an exam; only an installation owner may review their own.
         // The manager is given the reviewer role too, so only the self-review rule refuses.
