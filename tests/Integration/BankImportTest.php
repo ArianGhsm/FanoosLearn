@@ -320,6 +320,22 @@ SQL);
         $this->assert($again['assessment_id'] === $published['assessment_id'] && $again['new_exam'] === false, 'Republishing created a second exam.');
         $this->assert($again['questions'] === 1 && $again['left_out'] === [BankImporter::questionKey('residency', 1404, 1, 2) . ': official answer voided'], 'A voided question was published: ' . json_encode($again));
 
+        // Two people review an exam; only an installation owner may review their own.
+        // The manager is given the reviewer role too, so only the self-review rule refuses.
+        $this->grant($ws, $f['manager'], 'content-reviewer');
+        $own = $exams->createAssessment($f['manager'], $ws, 'Self review', ['questions' => [['id' => 'q1', 'prompt' => 'p', 'choices' => ['a', 'b'], 'answer' => 0]]]);
+        $exams->submitForReview($f['manager'], $ws, $own['assessment_id'], $own['version_id']);
+        try {
+            $exams->reviewVersion($f['manager'], $ws, $own['assessment_id'], $own['version_id'], 'approved');
+            $this->assert(false, 'A content manager approved their own exam.');
+        } catch (PlatformException $e) {
+            $this->assert($e->errorCode === 'self_review_forbidden', 'Self review failed for the wrong reason: ' . $e->errorCode);
+        }
+        $byOwner = $publisher->publish($ws, 'residency', 1404, 1, $f['owner'], $f['owner']);
+        $this->assert($byOwner['assessment_id'] === $published['assessment_id'] && $byOwner['new_exam'] === false, 'The owner could not publish their own version.');
+        $audited = $this->scalar("SELECT COUNT(*) FROM audit_events WHERE action = 'exam.version.approved' AND subject_id = :version AND actor_id = :owner AND JSON_EXTRACT(metadata_json, '$.self_review_by_owner') = true", ['version' => $byOwner['version_id'], 'owner' => $f['owner']]);
+        $this->assert($audited === 1, 'The self review by the owner was not audited as such.');
+
         return $this->assertions;
     }
 
@@ -397,6 +413,7 @@ SQL);
 
         return [
             'workspace' => $workspace,
+            'owner' => $owner,
             'manager' => $this->member($workspace, 'content-manager'),
             'reviewer' => $this->member($workspace, 'content-reviewer'),
             'student' => $this->member($workspace, 'student'),
@@ -408,6 +425,13 @@ SQL);
         $user = $this->user('Bank ' . $roleKey);
         $this->database->prepare("INSERT INTO tenant_workspace_memberships (id, workspace_id, user_id, status, joined_at, created_at, updated_at) VALUES (:id, :workspace, :user, 'active', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))")
             ->execute(['id' => Uuid::v7(), 'workspace' => $workspace, 'user' => $user]);
+        $this->grant($workspace, $user, $roleKey);
+
+        return $user;
+    }
+
+    private function grant(string $workspace, string $user, string $roleKey): void
+    {
         $this->database->prepare(<<<'SQL'
 INSERT INTO rbac_role_assignments (id, user_id, role_template_id, scope_id, valid_from, created_at)
 SELECT :id, :user, role.id, scope.id, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
@@ -415,8 +439,6 @@ FROM rbac_role_templates role
 JOIN rbac_scopes scope ON scope.scope_type = 'workspace' AND scope.entity_id = :workspace AND scope.workspace_id = :workspace_check
 WHERE role.role_key = :role
 SQL)->execute(['id' => Uuid::v7(), 'user' => $user, 'workspace' => $workspace, 'workspace_check' => $workspace, 'role' => $roleKey]);
-
-        return $user;
     }
 
     private function user(string $name): string

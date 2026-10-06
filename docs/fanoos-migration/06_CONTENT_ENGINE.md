@@ -131,7 +131,8 @@ Each must contain at least 32 bytes. If they are absent, only delivery endpoints
 `ContentEngineTest` covers:
 
 - manager create and reviewer approval;
-- self-review denial;
+- self-review denial (exams: `BankImportTest`, where an installation owner
+  may review their own exam and that approval is audited as such);
 - authorized view and outsider denial;
 - two tenants with the same course/resource names;
 - immutable version update and current-version switch;
