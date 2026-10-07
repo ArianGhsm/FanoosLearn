@@ -299,9 +299,10 @@
     align-content: start;
     gap: 2px;
     padding: var(--space-4);
-    border: 1px solid var(--border);
+    border: 1px solid transparent;
     border-radius: var(--radius-lg);
     background: var(--surface);
+    box-shadow: var(--shadow-soft);
     color: var(--text-primary);
     text-decoration: none;
     transition: border-color var(--motion-fast) var(--ease), transform var(--motion-fast) var(--ease), box-shadow var(--motion-fast) var(--ease);
@@ -322,28 +323,31 @@
 .f-tile[data-hue="warning"] { --hue: var(--warning); --hue-soft: var(--warning-soft); }
 .f-tile[data-hue="danger"] { --hue: var(--danger); --hue-soft: var(--danger-soft); }
 
-/* A filled badge in the tile's own colour, lit from one corner: the
-   brightness of an illustrated menu without stock pictures. */
+/* A large two-tone icon straight on the white tile, the way MedoFast's
+   menu draws its illustrations: the outline in the tile's colour, the
+   shapes filled with a wash of it. No badge behind it. */
 .f-tile__icon {
     display: grid;
     place-items: center;
-    width: 52px;
-    height: 52px;
+    width: 56px;
+    height: 56px;
     margin-bottom: var(--space-2);
-    border-radius: 16px;
-    background: linear-gradient(135deg, color-mix(in srgb, var(--hue) 72%, white), var(--hue));
-    color: var(--text-on-accent);
-    box-shadow: 0 8px 18px -8px var(--hue);
+    color: var(--hue);
 }
 
 .f-tile__icon svg {
-    width: 26px;
-    height: 26px;
+    width: 44px;
+    height: 44px;
     fill: none;
     stroke: currentColor;
-    stroke-width: 2;
+    stroke-width: 1.7;
     stroke-linecap: round;
     stroke-linejoin: round;
+}
+
+/* Only closed shapes take the wash; an open stroke filled would draw a wedge. */
+.f-tile__icon :is(rect, circle, path[d$="z"]) {
+    fill: var(--hue-soft);
 }
 
 .f-tile__label {
