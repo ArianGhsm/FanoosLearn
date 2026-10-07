@@ -37,6 +37,12 @@ repository is public. They live in the owner's local, git-ignored
 
 The database is `fanoos_prod` on the local MySQL.
 
+nginx serves everything under `/assets/` as immutable for a year
+(`ops/nginx/fanoos-performance.conf`). A release reaches browsers only
+because every asset URL carries `?v=<release sha>`: page links get it from
+`Web\AssetVersioner::url()`, and modules imported by other modules get it
+from the import map each page emits (`AssetVersioner::moduleMap()`).
+
 ## Users
 
 | User | Runs |

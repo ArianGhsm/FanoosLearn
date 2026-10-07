@@ -21,6 +21,9 @@ final class AssetVersioner
     /** @var array<string, string> */
     private array $cache = [];
 
+    /** @var array<string, string>|null */
+    private ?array $modules = null;
+
     public function __construct(
         private readonly string $publicRoot,
         private readonly ?string $releaseVersion = null,
@@ -42,5 +45,47 @@ final class AssetVersioner
         }
 
         return $this->cache[$path] = $path . '?v=' . rawurlencode($version);
+    }
+
+    /**
+     * Every JavaScript module under /assets/web, mapped to its versioned URL.
+     *
+     * A page's top-level scripts get their version from url(), but the
+     * modules they import are named by plain relative specifiers
+     * ('./runner-view.js'), and nginx serves every asset as immutable for a
+     * year (ops/nginx/fanoos-performance.conf). Without this map a returning
+     * browser re-ran last month's runner-view.js under this release's
+     * runner.js. The page emits it as an import map, which the browser
+     * applies to every import, nested ones included.
+     *
+     * @return array<string, string>
+     */
+    public function moduleMap(): array
+    {
+        if ($this->modules !== null) {
+            return $this->modules;
+        }
+
+        $base = $this->publicRoot . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'web';
+        $paths = [];
+        if (is_dir($base)) {
+            $files = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($base, \FilesystemIterator::SKIP_DOTS),
+            );
+            foreach ($files as $file) {
+                if ($file->isFile() && $file->getExtension() === 'js') {
+                    $relative = substr($file->getPathname(), strlen($base));
+                    $paths[] = '/assets/web' . str_replace(DIRECTORY_SEPARATOR, '/', $relative);
+                }
+            }
+        }
+        sort($paths);
+
+        $map = [];
+        foreach ($paths as $path) {
+            $map[$path] = $this->url($path);
+        }
+
+        return $this->modules = $map;
     }
 }
