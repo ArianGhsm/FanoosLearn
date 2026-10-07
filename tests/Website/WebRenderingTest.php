@@ -50,6 +50,7 @@ final class WebRenderingTest
         $renderer = new PageRenderer(new AssetVersioner($this->root . '/apps/platform/public'));
 
         $this->landingIsPublicAndClaimsNothingItCannotBack($renderer);
+        $this->nestedModulesAreVersionedByAnImportMap($renderer);
         $this->signedOutPagesCarryNoCsrfToken($renderer);
         $this->signedInPagesCarryTheCsrfTokenAndTheChrome($renderer);
         $this->navigationHidesWorkspaceAreasUntilOneIsSelected($renderer);
@@ -95,6 +96,23 @@ final class WebRenderingTest
         foreach (['دندانپزشکی', 'هزار دانشجو', 'میلیون', '۱۴۰۲'] as $forbidden) {
             $this->assert(!str_contains($html, $forbidden), "Landing page must not claim or name: {$forbidden}");
         }
+    }
+
+    /**
+     * nginx serves /assets/ as immutable for a year, so a module imported by
+     * another module (runner.js -> runner-view.js) must be versioned too, or
+     * a returning browser runs last release's copy under this release's page.
+     */
+    private function nestedModulesAreVersionedByAnImportMap(PageRenderer $renderer): void
+    {
+        $html = (new LoginPage($renderer))->render();
+        $map = strpos($html, '<script type="importmap">');
+        $module = strpos($html, '<script type="module"');
+        $this->assert($map !== false && $module !== false && $map < $module, 'The import map must come before every module script.');
+        $this->assert(
+            str_contains($html, '"/assets/web/pages/runner-view.js":"/assets/web/pages/runner-view.js?v='),
+            'A module only ever imported by another module must still be versioned.',
+        );
     }
 
     private function signedOutPagesCarryNoCsrfToken(PageRenderer $renderer): void

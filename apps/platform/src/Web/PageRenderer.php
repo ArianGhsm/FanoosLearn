@@ -51,6 +51,11 @@ final class PageRenderer
             // before any stylesheet so a dark choice never flashes light.
             '<script>try{var t=localStorage.getItem("fanoos.theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t);else if(t==="system")document.documentElement.removeAttribute("data-theme")}catch(e){}</script>',
             '<title>' . $title . '</title>',
+            // Before any module script: it versions the imports nested inside them.
+            '<script type="importmap">' . json_encode(
+                ['imports' => $this->assets->moduleMap()],
+                JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_THROW_ON_ERROR,
+            ) . '</script>',
             '<link rel="manifest" href="' . Pwa::MANIFEST_PATH . '">',
             '<link rel="icon" type="image/png" sizes="192x192" href="' . $this->escape($this->assets->url('/assets/web/icons/icon-192.png')) . '">',
             '<link rel="apple-touch-icon" href="' . $this->escape($this->assets->url('/assets/web/icons/apple-touch-icon.png')) . '">',
