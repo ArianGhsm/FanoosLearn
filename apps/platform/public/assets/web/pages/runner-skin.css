@@ -6,8 +6,9 @@
  * the stem and the options; a bar at the bottom moves you on. Type is sized
  * for reading a clinical stem for two hours: the stem large and medium
  * weight, options one step smaller and regular, everything else small and
- * quiet. Colour carries meaning only: the brand for your choice, green for
- * right, red for wrong, amber for what you earned.
+ * quiet. Colour carries meaning only: blue for your choice, green for
+ * right, red for wrong, amber for what you earned, the brand's coral for
+ * moving on.
  */
 
 body.x-runner-page {
@@ -150,6 +151,7 @@ body.x-runner-page {
     gap: var(--space-3);
     padding-block: var(--space-4) 0;
     border: 0;
+    background: transparent;
 }
 
 .x-runner-page .x-question__meta {
@@ -291,15 +293,16 @@ body.x-runner-page {
     font-weight: var(--weight-strong);
 }
 
+/* The student's choice is blue: never confused with green (right) or red (wrong). */
 .x-runner-page .x-choice.is-selected {
-    border-color: var(--accent);
-    background: var(--accent-soft);
+    border-color: var(--info);
+    background: var(--info-soft);
     box-shadow: none;
 }
 
 .x-runner-page .x-choice.is-selected .x-choice__letter {
     border-color: transparent;
-    background: var(--accent-gradient);
+    background: var(--info);
     color: var(--text-on-accent);
 }
 

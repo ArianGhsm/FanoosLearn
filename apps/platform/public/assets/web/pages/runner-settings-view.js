@@ -9,7 +9,7 @@ import { el, faDigits } from './runner-view.js';
 const THEME_OPTIONS = [
     { value: 'light', label: 'روشن' },
     { value: 'dark', label: 'تیره' },
-    { value: 'system', label: 'سیستم' },
+    { value: 'system', label: 'مثل بقیه‌ی سایت' },
 ];
 
 const NAVIGATION_TOGGLES = [
