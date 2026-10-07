@@ -322,23 +322,26 @@
 .f-tile[data-hue="warning"] { --hue: var(--warning); --hue-soft: var(--warning-soft); }
 .f-tile[data-hue="danger"] { --hue: var(--danger); --hue-soft: var(--danger-soft); }
 
+/* A filled badge in the tile's own colour, lit from one corner: the
+   brightness of an illustrated menu without stock pictures. */
 .f-tile__icon {
     display: grid;
     place-items: center;
-    width: 44px;
-    height: 44px;
+    width: 52px;
+    height: 52px;
     margin-bottom: var(--space-2);
-    border-radius: var(--radius-md);
-    background: var(--hue-soft);
-    color: var(--hue);
+    border-radius: 16px;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--hue) 72%, white), var(--hue));
+    color: var(--text-on-accent);
+    box-shadow: 0 8px 18px -8px var(--hue);
 }
 
 .f-tile__icon svg {
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     fill: none;
     stroke: currentColor;
-    stroke-width: 1.75;
+    stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
 }

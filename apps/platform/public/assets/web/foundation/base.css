@@ -184,8 +184,14 @@ img {
 }
 
 .f-btn--ghost {
-    background: transparent;
+    background: var(--surface);
     border-color: var(--border-strong);
+    box-shadow: var(--shadow-soft);
+}
+
+.f-btn--ghost:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
 }
 
 .f-btn--block {

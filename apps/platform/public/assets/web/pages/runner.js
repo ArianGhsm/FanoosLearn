@@ -147,7 +147,7 @@ function draw() {
                 open: studyOpen,
                 bookmarked: bookmarks.has(question.id),
                 report,
-            }, enter)
+            }, enter, { turbo: effectiveSpeed(settings, state.mode) === 'turbo' })
             : loading('در حال گرفتن سؤال…'));
     } else if (phase === 'report' && summary) {
         if (ranking === undefined) {

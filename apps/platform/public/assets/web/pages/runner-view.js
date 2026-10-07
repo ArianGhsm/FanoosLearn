@@ -207,6 +207,7 @@ const ICONS = {
     previous: 'M9 5l7 7-7 7',
     // A magnifier: open an image full size.
     zoom: 'M11 4a7 7 0 100 14 7 7 0 000-14zM20 20l-4-4M11 8v6M8 11h6',
+    close: 'M6 6l12 12M18 6L6 18',
 };
 
 export function icon(name, { filled = false } = {}) {
@@ -347,28 +348,21 @@ function formatRemaining(totalSeconds) {
 }
 
 /** The bar pinned to the top of a running attempt. */
-function renderTopBar(state, saveStatus, actions) {
+function renderTopBar(state, saveStatus, actions, flags = {}) {
     const percent = progressPercent(state);
     const remaining = remainingSeconds(state);
     return el('div', { className: 'x-bar' },
-        el('div', { className: 'x-bar__step', attrs: { role: 'group', 'aria-label': 'پیمایش سؤال‌ها' } },
-            el('button', {
-                className: 'x-bar__nav', type: 'button',
-                attrs: { disabled: state.position <= 1, 'aria-label': 'سؤال قبلی', title: 'سؤال قبلی' },
-                on: { click: actions.previous },
-            }, icon('previous')),
-            el('button', {
-                className: 'x-bar__nav', type: 'button',
-                attrs: { disabled: state.position >= state.questionCount, 'aria-label': 'سؤال بعدی', title: 'سؤال بعدی' },
-                on: { click: actions.next },
-            }, icon('next'))),
         el('button', {
-            className: 'x-bar__map', type: 'button',
-            attrs: { 'aria-label': 'نقشه سؤال‌ها' },
-            on: { click: actions.openMap },
-        }, icon('grid'), el('span', { text: 'نقشه' })),
+            className: 'x-bar__icon x-bar__leave', type: 'button',
+            attrs: { 'aria-label': 'خروج از آزمون بدون ثبت', title: 'خروج' },
+            on: { click: actions.leave },
+        }, icon('close')),
         el('div', { className: 'x-bar__progress' },
-            el('div', { className: 'x-bar__progress-track' },
+            el('span', {
+                className: 'x-bar__position',
+                text: `سؤال ${faDigits(state.position)} از ${faDigits(state.questionCount)}`,
+            }),
+            el('div', { className: 'x-bar__progress-track', attrs: { title: `${faDigits(answeredCount(state))} پاسخ‌داده` } },
                 el('div', {
                     className: 'x-bar__progress-fill',
                     attrs: { style: `width:${percent}%` },
@@ -378,6 +372,13 @@ function renderTopBar(state, saveStatus, actions) {
                 text: `${faDigits(answeredCount(state))} از ${faDigits(state.questionCount)} پاسخ‌داده`,
                 attrs: { role: 'status' },
             })),
+        // فوق‌سریع shows each answer on arrival; saying so in the bar is what
+        // keeps it from looking like every question was answered already.
+        flags.turbo ? el('button', {
+            className: 'x-bar__mode', type: 'button',
+            attrs: { title: 'پاسخ هر سؤال همان لحظه نشان داده می‌شود؛ برای خاموش کردن بزن' },
+            on: { click: actions.openSettings },
+        }, el('span', { text: 'مرور سریع' })) : null,
         remaining === null ? null : el('span', {
             className: `x-bar__timer${isTimeCritical(state) ? ' is-critical' : ''}`,
             attrs: { role: 'timer', 'aria-live': 'polite', 'aria-label': 'زمان باقی‌مانده' },
@@ -388,15 +389,15 @@ function renderTopBar(state, saveStatus, actions) {
             attrs: { role: 'status' },
         }),
         el('button', {
-            className: 'x-bar__settings', type: 'button',
-            attrs: { 'aria-label': 'تنظیمات' },
-            on: { click: actions.openSettings },
-        }, icon('settings')),
+            className: 'x-bar__icon x-bar__map', type: 'button',
+            attrs: { 'aria-label': 'نقشه سؤال‌ها', title: 'نقشه سؤال‌ها' },
+            on: { click: actions.openMap },
+        }, icon('grid'), el('span', { text: 'نقشه' })),
         el('button', {
-            className: 'f-btn f-btn--ghost x-bar__leave', type: 'button', text: 'خروج',
-            attrs: { 'aria-label': 'خروج از آزمون بدون ثبت' },
-            on: { click: actions.leave },
-        }));
+            className: 'x-bar__icon x-bar__settings', type: 'button',
+            attrs: { 'aria-label': 'تنظیمات', title: 'تنظیمات' },
+            on: { click: actions.openSettings },
+        }, icon('settings')));
 }
 
 function saveLabel(status) {
@@ -417,7 +418,7 @@ export function isAccepted(answer, alsoCorrect, index) {
 }
 
 /** One question with its choices. */
-export function renderQuestion(state, question, saveStatus, actions, reveal = null, study = null, enter = null) {
+export function renderQuestion(state, question, saveStatus, actions, reveal = null, study = null, enter = null, flags = {}) {
     const position = state.position;
     const selected = state.answers[String(position)];
 
@@ -480,18 +481,18 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
         },
     },
         el('header', { className: 'x-question__head' },
-            el('span', { className: 'x-question__index', text: `سؤال ${faDigits(position)} از ${faDigits(state.questionCount)}` }),
-            el('button', {
-                className: `x-flag${flagged ? ' is-on' : ''}`, type: 'button',
-                attrs: { 'aria-pressed': flagged ? 'true' : 'false' },
-                on: { click: actions.toggleFlag },
-            }, icon('flag', { filled: flagged }), el('span', { text: flagged ? 'نشان‌دار' : 'نشان‌دار کن' })),
-            !study ? null : el('button', {
-                className: `x-flag x-bookmark${study.bookmarked ? ' is-on' : ''}`, type: 'button',
-                attrs: { 'aria-pressed': study.bookmarked ? 'true' : 'false', title: 'برای مرور بعدی در «ذخیره‌ها» نگهش دار' },
-                on: { click: () => actions.toggleBookmark(question.id) },
-            }, icon('bookmark', { filled: study.bookmarked === true }), el('span', { text: study.bookmarked ? 'ذخیره شد' : 'ذخیره' }))),
-        renderQuestionMeta(question),
+            renderQuestionMeta(question),
+            el('div', { className: 'x-question__tools' },
+                !study ? null : el('button', {
+                    className: `x-tool x-bookmark${study.bookmarked ? ' is-on' : ''}`, type: 'button',
+                    attrs: { 'aria-pressed': study.bookmarked ? 'true' : 'false', 'aria-label': study.bookmarked ? 'ذخیره شد' : 'ذخیره برای مرور', title: 'برای مرور بعدی در «ذخیره‌ها» نگهش دار' },
+                    on: { click: () => actions.toggleBookmark(question.id) },
+                }, icon('bookmark', { filled: study.bookmarked === true })),
+                el('button', {
+                    className: `x-tool x-flag${flagged ? ' is-on' : ''}`, type: 'button',
+                    attrs: { 'aria-pressed': flagged ? 'true' : 'false', 'aria-label': flagged ? 'نشان‌دار' : 'نشان‌دار کن', title: 'نشان‌دار کن تا بعداً برگردی' },
+                    on: { click: actions.toggleFlag },
+                }, icon('flag', { filled: flagged })))),
         renderStem(question, study),
         stemFigure(state.assessmentId, question),
         choices,
@@ -528,18 +529,25 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
     // first. What is left here is not stepping: jumping to the first gap, and
     // finishing. It sits under the sheet, in the sheet's own column, so the
     // question list beside it never pushes it down.
-    const finish = el('nav', { className: 'x-nav', attrs: { 'aria-label': 'پایان آزمون' } },
+    const last = position >= state.questionCount;
+    const finish = el('nav', { className: 'x-nav', attrs: { 'aria-label': 'پیمایش سؤال‌ها' } },
         el('button', {
-            className: 'f-btn f-btn--ghost x-nav__gap', type: 'button', text: 'اولین بی‌پاسخ',
+            className: 'f-btn f-btn--ghost x-nav__prev', type: 'button',
+            attrs: { disabled: position <= 1, 'aria-label': 'سؤال قبلی' },
+            on: { click: actions.previous },
+        }, icon('previous'), el('span', { className: 'x-nav__label', text: 'قبلی' })),
+        el('button', {
+            className: 'x-nav__gap', type: 'button', text: 'اولین بی‌پاسخ',
             attrs: { disabled: unansweredPositions(state).length === 0 },
             on: { click: actions.firstUnanswered },
         }),
-        position >= state.questionCount
-            ? el('button', { className: 'f-btn f-btn--primary', type: 'button', text: 'پایان و ثبت', on: { click: actions.requestSubmit } })
-            : el('button', { className: 'f-btn f-btn--primary', type: 'button', text: 'بعدی ←', on: { click: actions.next } }));
+        last
+            ? el('button', { className: 'f-btn f-btn--primary x-nav__next', type: 'button', text: 'پایان و ثبت', on: { click: actions.requestSubmit } })
+            : el('button', { className: 'f-btn f-btn--primary x-nav__next', type: 'button', on: { click: actions.next } },
+                el('span', { className: 'x-nav__label', text: 'بعدی' }), icon('next')));
 
     return el('div', { className: 'x-question' },
-        renderTopBar(state, saveStatus, actions),
+        renderTopBar(state, saveStatus, actions, flags),
         el('div', { className: 'x-question__stage' },
             renderRail(state, actions),
             el('div', { className: 'x-question__col' }, card, finish),
@@ -596,19 +604,14 @@ function renderReveal(reveal, question, chosen, { explanationVisible = true, onS
  */
 function renderQuestionStats(stats) {
     const lines = statsLines(stats);
+    const item = (label, value) => el('div', { className: `x-qstat${value ? '' : ' is-unknown'}` },
+        el('span', { className: 'x-qstat__value', text: value || '—' }),
+        el('span', { className: 'x-qstat__label', text: label }));
 
-    return el('section', { className: 'x-qstats' },
-        el('h3', { className: 'x-qstats__title', text: 'آمار این سؤال' }),
-        el('div', { className: 'x-qstats__grid' },
-            metaItem('source', 'chart', 'پاسخ درست دیگران', lines.peer),
-            metaItem('subject', 'repeat', 'تو چند بار زده‌ای', lines.attempts),
-            metaItem('difficulty', 'check', 'چند بار درست', lines.correct),
-            metaItem('source', 'chart', 'پاسخ اشتباه', lines.wrong),
-            metaItem('subject', 'repeat', 'پاسخ سفید', lines.blank),
-            metaItem('tag', 'calendar', 'آخرین بار', lines.last)),
-        lines.peer === null
-            ? el('p', { className: 'f-tiny x-qstats__note', text: 'درصد دیگران وقتی نشان داده می‌شود که دست‌کم سه پاسخ از دیگران ثبت شده باشد.' })
-            : null);
+    return el('section', { className: 'x-qstats', attrs: { 'aria-label': 'آمار این سؤال' } },
+        item('پاسخ درست دیگران', lines.peer),
+        item('درست‌های تو', lines.correct ?? lines.attempts),
+        item('آخرین بار', lines.last));
 }
 
 /*
@@ -747,64 +750,35 @@ function renderReportForm(question, report, actions) {
 /*
  * The chips above a question's stem: what it is about, and how hard.
  *
- * `topic`, `tags` and `difficulty` have been travelling in every question
- * payload since ExamService::safeQuestion() was written (it copies each one
- * through when present) and the runner discarded all three. This renders
- * whatever actually arrived and nothing when none did -- today's imported
- * bank carries `topic` alone, because import-question-bank.php maps the
- * chapter to it and sets neither of the others.
- *
- * Difficulty is shown with its label rather than bare. The value's scale is
- * not defined anywhere in this repository, so a chip reading «۳» would be
- * inventing a meaning; «سختی: ۳» states exactly what is known.
+ * Each name appears once (a bank question's topic falls back to its
+ * subject, which is also its tag), and a chip is drawn only for what is
+ * known -- the difficulty, for one, appears once enough people have answered
+ * the question or its author set it.
  */
-/*
- * One fact about the question: a coloured icon, a label, and the value.
- *
- * A fact we expect to carry eventually renders even when we do not have it
- * yet -- icon, label and an em dash. The owner's instruction, and medofast
- * does the same thing: signed out, its per-question statistics read «؟ بار»
- * with the rows fully drawn, so the page does not change shape when the data
- * arrives. An em dash says *unknown*; a zero would say *none*, and those are
- * different claims about the same question.
- *
- * Rows in a grid rather than pills in a line. A pill row has to be read
- * left to right to be understood at all -- every pill looks the same shape
- * and the label is buried inside it. In a grid the eye lands on the icon,
- * then the label, then the value, and two facts can be compared by looking
- * down a column. It is the difference between a tag cloud and a spec sheet,
- * and a question's facts are a spec sheet.
- */
-function metaItem(kind, iconName, label, value) {
-    const known = typeof value === 'string' && value !== '';
-    return el('div', { className: `x-meta x-meta--${kind}${known ? '' : ' is-unknown'}` },
-        el('span', { className: 'x-meta__icon' }, icon(iconName)),
-        el('span', { className: 'x-meta__label', text: label }),
-        el('span', { className: 'x-meta__value', text: known ? value : '—' }));
-}
-
 function renderQuestionMeta(question) {
-    const items = [];
+    const chips = [];
+    const seen = new Set();
+    const add = (kind, text) => {
+        const value = typeof text === 'string' ? text.trim() : '';
+        if (value === '' || seen.has(value)) return;
+        seen.add(value);
+        chips.push(el('span', { className: `x-chip x-chip--${kind}`, text: faText(value) }));
+    };
 
-    const topic = typeof question.topic === 'string' ? question.topic.trim() : '';
-    items.push(metaItem('subject', 'book', 'مبحث', topic === '' ? null : faText(topic)));
+    add('subject', question.topic);
+    // Tags often repeat the subject (a bank question's topic falls back to
+    // its subject): each name is shown once.
+    (Array.isArray(question.tags) ? question.tags : []).slice(0, 3).forEach((tag) => add('tag', tag));
 
     // Measured from everyone's answers once enough are in; otherwise the
-    // question's own authored difficulty.
+    // question's own authored difficulty. Shown only when known.
     const difficulty = question.stats?.difficulty ?? question.difficulty;
-    const hasDifficulty = difficulty !== undefined && difficulty !== null && String(difficulty).trim() !== '';
-    const level = hasDifficulty ? String(difficulty).trim() : '';
-    items.push(metaItem('difficulty', 'gauge', 'سطح دشواری', hasDifficulty ? (DIFFICULTY_LABELS[level.toLowerCase()] ?? faText(level)) : null));
+    const level = typeof difficulty === 'string' ? difficulty.trim().toLowerCase() : '';
+    if (DIFFICULTY_LABELS[level]) {
+        chips.push(el('span', { className: `x-chip x-chip--level is-${level}`, text: DIFFICULTY_LABELS[level] }));
+    }
 
-    const tags = (Array.isArray(question.tags) ? question.tags : [])
-        .map((tag) => (typeof tag === 'string' ? tag.trim() : ''))
-        .filter((tag) => tag !== '')
-        // Capped: a question carrying a dozen tags would push the stem off
-        // the first screen, and the stem is what the student came for.
-        .slice(0, 3);
-    items.push(metaItem('tag', 'tag', 'برچسب', tags.length === 0 ? null : tags.map(faText).join(' · ')));
-
-    return el('div', { className: 'x-question__meta' }, ...items);
+    return el('div', { className: 'x-question__meta' }, ...chips);
 }
 
 /*

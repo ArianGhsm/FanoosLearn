@@ -42,13 +42,20 @@
 }
 
 .f-brand .f-lantern {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
+    color: var(--warning);
+    filter: drop-shadow(0 2px 6px var(--warning-soft));
 }
 
+/* The name in the brand's gradient: the one place a word is coloured. */
 .f-brand__name {
-    font-size: var(--text-lg);
+    font-size: var(--text-xl);
     font-weight: var(--weight-strong);
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
 }
 
 .f-header__workspace {
@@ -242,14 +249,18 @@
 
     .f-nav__link[aria-current="page"] {
         color: var(--accent);
+        font-weight: var(--weight-strong);
     }
 
-    /* On the bottom bar the mark sits on the top edge, facing the page. */
+    /* On the bottom bar the current section's icon sits in a soft pill. */
+    .f-nav__link[aria-current="page"] .f-nav__icon {
+        padding: 3px 14px;
+        background: var(--accent-soft);
+        border-radius: var(--radius-pill);
+    }
+
     .f-nav__link[aria-current="page"]::after {
-        top: -1px;
-        bottom: auto;
-        inset-inline: 30%;
-        border-radius: 0 0 2px 2px;
+        display: none;
     }
 
     body.f-has-nav .f-page {
