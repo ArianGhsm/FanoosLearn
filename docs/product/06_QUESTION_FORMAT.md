@@ -223,3 +223,53 @@ php scripts/import/import-bank.php prune-nodes --workspace=<id> --file=catalog.j
 # publish the sitting as an exam
 php scripts/import/import-bank.php publish --workspace=<id> --type=residency --year=1404 --actor=<id> --reviewer=<id> --time-limit=180
 ```
+
+## 6. From a year's question document
+
+The owner's consolidated per-year documents (`1398.docx` … `1405.docx`) give
+each question in printed order: subject headings, the stem with any figure
+right after it, the options (الف–د, or a–d in English), an answer line, the
+English reading passages before their questions, and a closing key table.
+`scripts/import/docx_to_sitting.py` turns one of them into a sitting file and
+its images:
+
+```sh
+python scripts/import/docx_to_sitting.py --docx=1400.docx --year=1400 --form=A --out=out/1400 --workbook=question-corpus-1400-1405.xlsx
+```
+
+- **Text, options, figures** come from the document. A reading passage is
+  put before each of its questions. An option the document lacks reads
+  «(این گزینه در نسخه‌ی منبع چاپ نشده است)». Options drawn inside a figure
+  read «نمودار الف» … «نمودار د», and the figure shows them.
+- **Keys:** the documents' answer lines are **not** trusted where an
+  official key exists. Checked against the official final key notices, the
+  1404 document disagreed on 11 questions, including a deleted and a
+  multiple-answer question swapped. With `--workbook`, every answer comes from
+  the official final key for that year and form, and each disagreement is
+  printed. For 1398 and 1399 no official key is on file, so the document's
+  key is used, and the answer's source says so.
+- **What is left out, and reported:**
+  - questions the document says are missing (1398 Q190, 1399 Q64);
+  - an unnumbered question (1398);
+  - questions without a usable official key (1401 Q240);
+  - questions named with `--leave-out` because a figure they need is not in
+    the source (1398 Q22, Q187).
+- **Numbering:** 1398 and 1402 are form B documents, so their sittings follow
+  form B numbering. The others are form A (1405 has one form).
+- **Chapters** are not assigned here; that is a later re-import of the same
+  sitting with sources.
+
+Imported and published on 2026-10-07:
+
+| Year | Questions | Published | Notes |
+|---|---:|---:|---|
+| 1398 (B) | 247 | 245 | |
+| 1399 | 249 | 248 | |
+| 1400 | 250 | 249 | |
+| 1401 | 249 | 249 | |
+| 1402 (B) | 250 | 243 | |
+| 1403 | 250 | 250 | |
+| 1404 | 250 | 247 | from the hand-checked transcription, with chapters |
+| 1405 | 250 | 246 | |
+
+"Published" leaves out the questions the official key deleted.
