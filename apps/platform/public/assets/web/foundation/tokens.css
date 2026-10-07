@@ -5,78 +5,82 @@
  * once, in both themes. A page stylesheet that hard-codes a colour is a bug:
  * it will be wrong in the other theme, and nothing will catch it.
  *
- * The palette (owner's decision, 2026-10-06): lively and bright like the
- * exam apps students already use, and still calm enough to read a clinical
- * stem on for two hours. A vivid indigo-violet carries the brand and every
- * primary action; the lantern's amber is kept for what a student earns
- * (points, coins); white cards sit on a cool, faintly lit and woven ground.
+ * The palette (owner's decisions, 2026-10-06/07): lively and warm like the
+ * exam apps students already use (MedoFast), light by default, and still
+ * calm enough to read a clinical stem on for two hours. A coral-orange
+ * flame carries the brand and every primary action; amber is for what a
+ * student earns (points, coins); blue marks the option a student chose, so
+ * it is never confused with red for a wrong answer; white cards sit on a
+ * faintly lit, woven ground.
  * Nothing here names a university, a cohort or a subject.
  */
 
 :root {
     color-scheme: light;
 
-    --bg-body: #f4f5fb;
-    --bg-aura-start: #ecebff;
-    --bg-aura-end: #f7f7fd;
+    --bg-body: #f6f6f9;
+    --bg-aura-start: #fff3ee;
+    --bg-aura-end: #fafafc;
 
     --surface: #ffffff;
-    --surface-muted: #f2f3fa;
-    --surface-strong: #e3e6f2;
-    --surface-inset: #eef0f8;
+    --surface-muted: #f3f3f7;
+    --surface-strong: #e6e6ee;
+    --surface-inset: #efeff5;
 
-    --text-primary: #1a1d2e;
-    --text-secondary: #575e78;
-    --text-tertiary: #8a90a8;
+    --text-primary: #1c1d29;
+    --text-secondary: #5b5d70;
+    --text-tertiary: #8d8fa3;
     --text-on-accent: #ffffff;
 
-    --accent: #5b4cf0;
-    --accent-strong: #4535d8;
-    --accent-soft: rgba(91, 76, 240, 0.10);
+    --accent: #f2542d;
+    --accent-strong: #d9431f;
+    --accent-soft: rgba(242, 84, 45, 0.10);
 
     --success: #16955a;
     --success-soft: rgba(22, 149, 90, 0.11);
     --warning: #d97706;
     --warning-soft: rgba(245, 158, 11, 0.15);
-    --danger: #e0434f;
-    --danger-soft: rgba(224, 67, 79, 0.10);
+    --danger: #dc2626;
+    --danger-soft: rgba(220, 38, 38, 0.09);
 
     --border: rgba(26, 29, 46, 0.08);
     --border-strong: rgba(26, 29, 46, 0.18);
 
-    --focus-ring: rgba(91, 76, 240, 0.38);
+    --focus-ring: rgba(242, 84, 45, 0.35);
 
     /*
      * Shadows are tinted toward the brand, and their blur is allowed to show:
      * cards visibly sit above the ground, and a lifted card glows faintly in
      * the accent rather than going grey.
      */
-    --shadow-soft: 0 1px 2px rgba(26, 29, 46, 0.05), 0 4px 14px -8px rgba(60, 56, 140, 0.18);
-    --shadow-strong: 0 18px 40px -16px rgba(60, 56, 140, 0.32);
+    --shadow-soft: 0 1px 2px rgba(28, 29, 41, 0.05), 0 4px 14px -8px rgba(28, 29, 41, 0.14);
+    --shadow-strong: 0 18px 40px -18px rgba(28, 29, 41, 0.25);
     /* For a surface that has lifted under the pointer. */
-    --shadow-lift: 0 12px 28px -12px rgba(91, 76, 240, 0.38);
+    --shadow-lift: 0 12px 28px -12px rgba(242, 84, 45, 0.32);
     /* For a surface that is itself accent-coloured, so the shadow it casts is its own colour. */
-    --shadow-accent: 0 10px 24px -10px rgba(91, 76, 240, 0.65);
+    --shadow-accent: 0 10px 22px -10px rgba(242, 84, 45, 0.6);
 
     /* Primary surfaces are a gradient, lit from one corner rather than painted flat. */
-    --accent-gradient: linear-gradient(135deg, #6c5cff 0%, #5b4cf0 45%, #8b4cf0 100%);
+    --accent-gradient: linear-gradient(135deg, #ff8a3d 0%, #f2542d 50%, #e8365d 100%);
 
     /*
      * Light placed in the page: three soft pools of the brand, the lantern
      * and teal, behind everything. Low enough to read through.
      */
-    --aura-1: rgba(108, 92, 255, 0.10);
-    --aura-2: rgba(245, 158, 11, 0.08);
-    --aura-3: rgba(20, 184, 166, 0.06);
+    --aura-1: rgba(255, 138, 61, 0.10);
+    --aura-2: rgba(232, 54, 93, 0.06);
+    --aura-3: rgba(13, 148, 136, 0.05);
 
     /* The hairline of the background weave: a texture, not graph paper. */
-    --weave: rgba(26, 29, 46, 0.035);
+    --weave: rgba(28, 29, 41, 0.04);
 
     /*
      * Information hues: each *kind* of fact has its own colour (a subject,
      * a difficulty, a tag, a source), so they are told apart at a glance.
      * A hue names a kind of information, never a mood.
      */
+    --info: #2563eb;
+    --info-soft: rgba(37, 99, 235, 0.10);
     --hue-subject: #0d9488;
     --hue-subject-soft: rgba(13, 148, 136, 0.12);
     --hue-difficulty: #ea580c;
@@ -119,49 +123,51 @@
     :root:not([data-theme="light"]) {
         color-scheme: dark;
 
-        --bg-body: #0e1120;
-        --bg-aura-start: #171a3a;
-        --bg-aura-end: #10132a;
+        --bg-body: #11131c;
+        --bg-aura-start: #1d1720;
+        --bg-aura-end: #13151f;
 
-        --surface: #161a2e;
-        --surface-muted: #1c2138;
-        --surface-strong: #262c48;
-        --surface-inset: #131729;
+        --surface: #191b26;
+        --surface-muted: #20222f;
+        --surface-strong: #2b2e3d;
+        --surface-inset: #161822;
 
         --text-primary: #eef0fa;
         --text-secondary: #a7aecb;
         --text-tertiary: #737a99;
         --text-on-accent: #ffffff;
 
-        --accent: #8d80ff;
-        --accent-strong: #a69cff;
-        --accent-soft: rgba(141, 128, 255, 0.16);
+        --accent: #ff7a4f;
+        --accent-strong: #ff9670;
+        --accent-soft: rgba(255, 122, 79, 0.15);
 
         --success: #4ade80;
         --success-soft: rgba(74, 222, 128, 0.13);
         --warning: #fbbf24;
         --warning-soft: rgba(251, 191, 36, 0.14);
-        --danger: #fb7185;
-        --danger-soft: rgba(251, 113, 133, 0.13);
+        --danger: #f87171;
+        --danger-soft: rgba(248, 113, 113, 0.14);
 
         --border: rgba(238, 240, 250, 0.08);
         --border-strong: rgba(238, 240, 250, 0.17);
 
-        --focus-ring: rgba(141, 128, 255, 0.45);
+        --focus-ring: rgba(255, 122, 79, 0.45);
 
         --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 16px -10px rgba(0, 0, 0, 0.6);
         --shadow-strong: 0 18px 44px -14px rgba(0, 0, 0, 0.7);
-        --shadow-lift: 0 12px 30px -12px rgba(141, 128, 255, 0.35);
-        --shadow-accent: 0 10px 26px -10px rgba(141, 128, 255, 0.6);
+        --shadow-lift: 0 12px 30px -12px rgba(255, 122, 79, 0.30);
+        --shadow-accent: 0 10px 26px -10px rgba(255, 106, 69, 0.55);
 
-        --accent-gradient: linear-gradient(135deg, #7c6cff 0%, #6a5cf5 45%, #9d5cf5 100%);
+        --accent-gradient: linear-gradient(135deg, #ff9a55 0%, #ff6a45 50%, #f0507a 100%);
 
-        --aura-1: rgba(124, 108, 255, 0.14);
-        --aura-2: rgba(251, 191, 36, 0.06);
-        --aura-3: rgba(45, 212, 191, 0.06);
+        --aura-1: rgba(255, 122, 79, 0.10);
+        --aura-2: rgba(240, 80, 122, 0.06);
+        --aura-3: rgba(45, 212, 191, 0.04);
 
         --weave: rgba(238, 240, 250, 0.025);
 
+        --info: #60a5fa;
+        --info-soft: rgba(96, 165, 250, 0.16);
         --hue-subject: #2dd4bf;
         --hue-subject-soft: rgba(45, 212, 191, 0.15);
         --hue-difficulty: #fb923c;
@@ -176,49 +182,51 @@
 :root[data-theme="dark"] {
     color-scheme: dark;
 
-    --bg-body: #0e1120;
-    --bg-aura-start: #171a3a;
-    --bg-aura-end: #10132a;
+    --bg-body: #11131c;
+    --bg-aura-start: #1d1720;
+    --bg-aura-end: #13151f;
 
-    --surface: #161a2e;
-    --surface-muted: #1c2138;
-    --surface-strong: #262c48;
-    --surface-inset: #131729;
+    --surface: #191b26;
+    --surface-muted: #20222f;
+    --surface-strong: #2b2e3d;
+    --surface-inset: #161822;
 
     --text-primary: #eef0fa;
     --text-secondary: #a7aecb;
     --text-tertiary: #737a99;
     --text-on-accent: #ffffff;
 
-    --accent: #8d80ff;
-    --accent-strong: #a69cff;
-    --accent-soft: rgba(141, 128, 255, 0.16);
+    --accent: #ff7a4f;
+    --accent-strong: #ff9670;
+    --accent-soft: rgba(255, 122, 79, 0.15);
 
     --success: #4ade80;
     --success-soft: rgba(74, 222, 128, 0.13);
     --warning: #fbbf24;
     --warning-soft: rgba(251, 191, 36, 0.14);
-    --danger: #fb7185;
-    --danger-soft: rgba(251, 113, 133, 0.13);
+    --danger: #f87171;
+    --danger-soft: rgba(248, 113, 113, 0.14);
 
     --border: rgba(238, 240, 250, 0.08);
     --border-strong: rgba(238, 240, 250, 0.17);
 
-    --focus-ring: rgba(141, 128, 255, 0.45);
+    --focus-ring: rgba(255, 122, 79, 0.45);
 
     --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 16px -10px rgba(0, 0, 0, 0.6);
     --shadow-strong: 0 18px 44px -14px rgba(0, 0, 0, 0.7);
-    --shadow-lift: 0 12px 30px -12px rgba(141, 128, 255, 0.35);
-    --shadow-accent: 0 10px 26px -10px rgba(141, 128, 255, 0.6);
+    --shadow-lift: 0 12px 30px -12px rgba(255, 122, 79, 0.30);
+    --shadow-accent: 0 10px 26px -10px rgba(255, 106, 69, 0.55);
 
-    --accent-gradient: linear-gradient(135deg, #7c6cff 0%, #6a5cf5 45%, #9d5cf5 100%);
+    --accent-gradient: linear-gradient(135deg, #ff9a55 0%, #ff6a45 50%, #f0507a 100%);
 
-    --aura-1: rgba(124, 108, 255, 0.14);
-    --aura-2: rgba(251, 191, 36, 0.06);
-    --aura-3: rgba(45, 212, 191, 0.06);
+    --aura-1: rgba(255, 122, 79, 0.10);
+    --aura-2: rgba(240, 80, 122, 0.06);
+    --aura-3: rgba(45, 212, 191, 0.04);
 
     --weave: rgba(238, 240, 250, 0.025);
 
+    --info: #60a5fa;
+    --info-soft: rgba(96, 165, 250, 0.16);
     --hue-subject: #2dd4bf;
     --hue-subject-soft: rgba(45, 212, 191, 0.15);
     --hue-difficulty: #fb923c;

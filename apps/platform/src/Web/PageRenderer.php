@@ -46,7 +46,10 @@ final class PageRenderer
             '<meta charset="utf-8">',
             '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">',
             '<meta name="description" content="' . $description . '">',
-            '<meta name="theme-color" content="#f4f5fb" media="(prefers-color-scheme: light)">', '<meta name="theme-color" content="#0e1120" media="(prefers-color-scheme: dark)">',
+            '<meta name="theme-color" content="#f6f6f9">',
+            // Light unless the viewer chose dark (foundation/theme.js), applied
+            // before any stylesheet so a dark choice never flashes light.
+            '<script>try{var t=localStorage.getItem("fanoos.theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t);else if(t==="system")document.documentElement.removeAttribute("data-theme")}catch(e){}</script>',
             '<title>' . $title . '</title>',
             '<link rel="manifest" href="' . Pwa::MANIFEST_PATH . '">',
             '<link rel="icon" type="image/png" sizes="192x192" href="' . $this->escape($this->assets->url('/assets/web/icons/icon-192.png')) . '">',
@@ -77,7 +80,10 @@ final class PageRenderer
             $head[] = '<link rel="stylesheet" href="' . $this->escape($this->assets->url($sheet)) . '">';
         }
 
-        $scripts = ['<script type="module" src="' . $this->escape($this->assets->url('/assets/web/foundation/pwa.js')) . '"></script>'];
+        $scripts = [
+            '<script type="module" src="' . $this->escape($this->assets->url('/assets/web/foundation/pwa.js')) . '"></script>',
+            '<script type="module" src="' . $this->escape($this->assets->url('/assets/web/foundation/theme.js')) . '"></script>',
+        ];
         if ($viewer !== null && $viewer->workspaceId !== null) {
             $scripts[] = '<script type="module" src="' . $this->escape($this->assets->url('/assets/web/foundation/header-stats.js')) . '"></script>';
         }
@@ -90,7 +96,7 @@ final class PageRenderer
         $chrome = $viewer === null ? ($page['publicHeader'] ?? '') : $this->chrome($viewer, $page['activeNav'] ?? '');
 
         return '<!doctype html>' . "\n"
-            . '<html lang="fa" dir="rtl">' . "\n"
+            . '<html lang="fa" dir="rtl" data-theme="light">' . "\n"
             . '<head>' . "\n" . implode("\n", $head) . "\n" . '</head>' . "\n"
             . '<body' . ($bodyClasses === '' ? '' : ' class="' . $this->escape($bodyClasses) . '"') . '>' . "\n"
             . '<a class="f-skip" href="#main">رفتن به محتوای اصلی</a>' . "\n"
@@ -144,6 +150,10 @@ final class PageRenderer
             . '<a class="f-brand" href="/app">' . PublicChrome::LANTERN . '<span class="f-brand__name">فانوس</span></a>'
             . $workspace
             . '<nav class="f-nav" aria-label="بخش‌های اصلی">' . $items . '</nav>'
+            . '<button class="f-theme" id="f-theme" type="button" aria-label="تیره یا روشن" title="تیره یا روشن">'
+            . '<svg class="f-theme__moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>'
+            . '<svg class="f-theme__sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>'
+            . '</button>'
             // Today's points and coins, filled in by header-stats.js; hidden until it has them.
             . ($viewer->workspaceId === null ? '' : '<a class="f-stats" id="f-stats" href="/app/points" hidden>'
                 . '<span class="f-stats__item f-stats__item--points" title="امتیاز امروز"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg><b id="f-stats-points"></b></span>'

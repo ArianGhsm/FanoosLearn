@@ -17,18 +17,25 @@ export function applyFontSize(settings) {
 }
 
 /**
- * The site already themes from prefers-color-scheme plus a data-theme
- * attribute (assets/web/foundation/tokens.css); this sets that attribute
- * and nothing else. 'system' means "no explicit choice", so the attribute
- * is removed and the CSS media query decides.
+ * The exam's own theme choice sets the data-theme attribute the site's
+ * tokens read (assets/web/foundation/tokens.css). 'system' -- the default --
+ * means "as the rest of the site": the choice made with the header's switch
+ * (foundation/theme.js), light unless the viewer chose otherwise.
  */
 export function applyTheme(settings) {
     const root = document.documentElement;
     if (settings.theme === 'light' || settings.theme === 'dark') {
         root.setAttribute('data-theme', settings.theme);
-    } else {
-        root.removeAttribute('data-theme');
+        return;
     }
+    let site = null;
+    try {
+        site = localStorage.getItem('fanoos.theme');
+    } catch {
+        // No storage: the site default.
+    }
+    if (site === 'system') root.removeAttribute('data-theme');
+    else root.setAttribute('data-theme', site === 'dark' ? 'dark' : 'light');
 }
 
 let audioContext = null;

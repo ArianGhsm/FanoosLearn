@@ -366,3 +366,49 @@
         font-size: var(--text-xs);
     }
 }
+
+/* The light/dark switch (foundation/theme.js): a moon in light, a sun in dark. */
+.f-theme {
+    align-self: center;
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.f-theme:hover {
+    background: var(--surface-muted);
+    color: var(--accent);
+}
+
+.f-theme svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.f-theme__sun,
+.f-theme[aria-pressed="true"] .f-theme__moon {
+    display: none;
+}
+
+.f-theme[aria-pressed="true"] .f-theme__sun {
+    display: block;
+}
+
+@media (max-width: 720px) {
+    .f-theme {
+        order: 2;
+    }
+}

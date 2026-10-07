@@ -274,7 +274,8 @@ final class WebRenderingTest
         ];
 
         foreach ($pages as $html) {
-            $this->assert(str_contains($html, '<html lang="fa" dir="rtl">'), 'Every page must declare Persian RTL.');
+            $this->assert(str_contains($html, '<html lang="fa" dir="rtl" '), 'Every page must declare Persian RTL.');
+            $this->assert(str_contains($html, 'data-theme="light"') && str_contains($html, 'fanoos.theme'), 'Every page must start light and apply a chosen theme before drawing.');
             $this->assert(str_contains($html, 'id="main"'), 'Every page must have the skip-link target.');
             // Assets are behind an immutable release symlink, so an unversioned
             // URL hands a returning visitor a file from a release that is gone.
