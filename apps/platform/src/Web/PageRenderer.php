@@ -46,7 +46,7 @@ final class PageRenderer
             '<meta charset="utf-8">',
             '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">',
             '<meta name="description" content="' . $description . '">',
-            '<meta name="theme-color" content="#f6f6f9">',
+            '<meta name="theme-color" content="#ffffff">',
             // Light unless the viewer chose dark (foundation/theme.js), applied
             // before any stylesheet so a dark choice never flashes light.
             '<script>try{var t=localStorage.getItem("fanoos.theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t);else if(t==="system")document.documentElement.removeAttribute("data-theme")}catch(e){}</script>',
