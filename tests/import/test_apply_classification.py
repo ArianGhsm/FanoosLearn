@@ -6,7 +6,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / 'scripts' / 'references'))
-from apply_classification import carry_over, chapter_nodes, flat, fragments, printed_page  # noqa: E402
+from apply_classification import carry_over, chapter_nodes, flat, fragments, human_guard, printed_page  # noqa: E402
 
 
 class ApplyClassificationTest(unittest.TestCase):
@@ -37,6 +37,27 @@ class ApplyClassificationTest(unittest.TestCase):
         node = carry_over(self.catalog, 'neville-oral-pathology@5e', '15', 'neville-oral-pathology@4e')
         self.assertIsNotNone(node)
         self.assertEqual(node['title'], chapter_nodes(self.catalog, 'neville-oral-pathology@5e')['15']['title'])
+
+    def test_a_human_checked_chapter_is_never_replaced_silently(self):
+        checked = {'sources': [{'ref': 'torabinejad-endodontics@6e#ch12', 'origin': 'human'}]}
+        why, keep = human_guard(checked, 'torabinejad-endodontics@6e#ch13', {})
+        self.assertIn('human-checked', why)
+        why, keep = human_guard(checked, None, {'none': 'not found'})
+        self.assertIn('human-checked', why)
+        self.assertEqual(human_guard(checked, 'torabinejad-endodontics@6e#ch13', {'override_human': 'the page states it; ch12 only names it'}), (None, False))
+        self.assertEqual(human_guard(checked, 'torabinejad-endodontics@6e#ch12', {}), (None, True))
+        self.assertEqual(human_guard({'sources': [{'ref': 'x#ch1', 'origin': 'ai'}]}, 'x#ch2', {}), (None, False))
+
+    def test_find_in_books_quotes_pass_the_evidence_check(self):
+        from find_in_books import Book
+        page = 'Apical patency is a technique that advocated the repeated placement of small hand files to or beyond the foramen. ' * 3
+        book = Book.__new__(Book)
+        book.pages = [(1, page)]
+        book.flat = [' '.join(page.lower().split())]
+        quote = book.quote(0, ['apical patency', 'small hand files'])
+        self.assertIsNotNone(quote)
+        self.assertGreaterEqual(len(quote.split()), 4)
+        self.assertIn(flat(quote), flat(page))
 
 
 if __name__ == '__main__':

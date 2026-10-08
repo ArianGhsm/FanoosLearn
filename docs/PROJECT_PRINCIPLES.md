@@ -149,6 +149,21 @@ Made by the owner on 2026-10-08:
      docs/product/09_CHAPTER_CLASSIFICATION.md: a source is accepted only
      with its page and a quote from that page, checked against the book by
      `scripts/references/apply_classification.py`.
+7. **Chapter classification is one procedure for every agent, and its
+   checks are never bypassed.** Whoever classifies -- Claude, Codex or a
+   person -- follows docs/product/09_CHAPTER_CLASSIFICATION.md end to end:
+   - a source is accepted only with an official edition, a chapter, a page
+     inside that chapter and a quote from that page, all checked by
+     `apply_classification.py`; to make a decision pass, the decision
+     changes, never the catalog, the chapter map, the texts or the scripts;
+   - a question not found after honest re-searching stays undecided; `none`
+     is only for a question no official reference can cover;
+   - a human-checked chapter is replaced only with a stated reason
+     (`override_human`);
+   - a year is imported only from the sitting that matches the site, proven
+     by a dry run that changes no question, after a verified backup;
+   - every mistake found in the work becomes a guard in the scripts or a
+     line in 09 §8, so the next agent cannot repeat it.
 
 Still open:
 

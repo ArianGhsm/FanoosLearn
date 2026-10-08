@@ -21,7 +21,9 @@ Nothing is taken on trust. A decision is accepted only when
 - the page lies inside that chapter (data/bank/reference-chapter-pages.json);
 - every fragment of the evidence (split on "...", each of at least four
   words) is printed on that page of .local/references/<edition>.txt;
-- the confidence is a number from 0 to 1.
+- the confidence is a number from 0 to 1;
+- it does not replace a human-checked source with a different chapter (or
+  with none) unless it says why in "override_human".
 Every rejection is listed with its reason; with any rejection the sitting is
 not written unless --partial is given.
 
@@ -116,6 +118,25 @@ def carry_over(catalog: dict, source_edition: str, chapter: str, target_edition:
     return best if best_score >= 0.6 else None
 
 
+def human_guard(question: dict, new_ref: str | None, decision: dict) -> tuple[str | None, bool]:
+    """A chapter a person has checked is never replaced silently.
+
+    Returns (why it is rejected or None, whether to keep the existing human
+    source as it is). A different chapter, or none, needs "override_human" with
+    the reason. On 1404 an AI pass would otherwise have overwritten 49 checked
+    chapters, 16 of them with weaker matches.
+    """
+    existing = [s for s in (question.get('sources') or []) if s.get('origin') == 'human']
+    if not existing:
+        return None, False
+    if existing[0].get('ref') == new_ref:
+        return None, True
+    if str(decision.get('override_human', '')).strip():
+        return None, False
+    return (f'the question already has a human-checked chapter ({existing[0].get("ref")}); '
+            'leave it undecided, or set "override_human" to the reason this one is better'), False
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
     parser.add_argument('--sitting', required=True)
@@ -146,6 +167,7 @@ def main() -> int:
     questions = {q['number']: q for q in sitting['questions']}
 
     accepted, rejected, seen = {}, [], set()
+    keep_human: set[int] = set()
     for d in decisions:
         n = d.get('number')
         why = None
@@ -221,6 +243,12 @@ def main() -> int:
                 }
                 if cite != edition:
                     accepted[n]['found_in'] = f'{edition}#ch{chapter} (nearest edition; the official one was not available)'
+        if why is None and n in accepted:
+            why, keep = human_guard(q, None if accepted[n] is None else accepted[n]['ref'], d)
+            if why:
+                del accepted[n]
+            elif keep:
+                keep_human.add(n)
         if why:
             rejected.append((n, why))
 
@@ -233,6 +261,8 @@ def main() -> int:
 
     for n, src in accepted.items():
         q = questions[n]
+        if n in keep_human:
+            continue  # the same chapter a person already checked: keep their source
         if src is None:
             q.pop('sources', None)
         else:

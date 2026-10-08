@@ -29,6 +29,8 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from apply_classification import flat as evidence_flat  # noqa: E402  (the same check the quotes must pass)
 CHAPTERS = REPO / 'data' / 'bank' / 'reference-chapter-pages.json'
 PAGE = re.compile(r'^=== PAGE (\d+) ===$', re.M)
 TOKEN = re.compile(r'[a-z0-9]+')
@@ -113,6 +115,24 @@ class Book:
                 best, best_hits = start, hits
         return flat[best:best + width]
 
+    def quote(self, i: int, terms: list[str], size: int = 10) -> str | None:
+        """A run of whole words around the best match, already checked to be on
+        the page the way apply_classification.py checks evidence -- ready to
+        copy into a decision when it states the fact."""
+        words = self.snippet(i, terms, 400).split()[1:-1]  # drop the cut words at the edges
+        if len(words) < 4:
+            return None
+        wanted = [w for t in terms for w in TOKEN.findall(norm(t)) if len(w) > 2]
+        best, best_hits = 0, -1
+        for start in range(0, max(1, len(words) - size + 1)):
+            window = ' '.join(words[start:start + size])
+            hits = sum(1 for w in wanted if w in window)
+            if hits > best_hits:
+                best, best_hits = start, hits
+        quote = ' '.join(words[best:best + size])
+        page_text = evidence_flat(self.pages[i][1])
+        return quote if len(quote.split()) >= 4 and evidence_flat(quote) in page_text else None
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
@@ -138,6 +158,9 @@ def main() -> int:
             for score, i in book.search(q['terms'], args.top):
                 page = book.pages[i][0]
                 print(f"   {edition} p{page} ch{book.chapter_of.get(page)} {score:5.1f} | {book.snippet(i, q['terms'])}")
+                quote = book.quote(i, q['terms'])
+                if quote:
+                    print(f'      quote: {quote}')
     return 0
 
 
