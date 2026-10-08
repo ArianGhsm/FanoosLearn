@@ -8,16 +8,28 @@
     margin: 0 0 var(--space-1);
 }
 
+/* The search and the references link share one row, at every width. */
 .b-head__tools {
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
     gap: var(--space-2);
     margin-top: var(--space-4);
 }
 
 .b-search {
-    flex: 1 1 260px;
+    flex: 1 1 0;
     min-width: 0;
+}
+
+.b-head__tools .f-btn {
+    flex: none;
+    white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+    .b-head__tools .f-btn {
+        padding-inline: var(--space-3);
+    }
 }
 
 .b-tabs {
@@ -82,6 +94,16 @@ a.b-row:hover {
     font-size: var(--text-base);
     margin-bottom: var(--space-1);
     color: var(--text-primary);
+}
+
+/* A chapter's English title, under its Persian one. */
+.b-row__en {
+    display: block;
+    margin: calc(-1 * var(--space-1)) 0 var(--space-1);
+    direction: ltr;
+    text-align: right;
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
 }
 
 .b-row__meta {

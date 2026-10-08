@@ -152,6 +152,7 @@ function topicTable(rows, subject, total, recentFrom, withTopic) {
         line.style.setProperty('--share', `${share(row.total, total)}%`);
         const body = el('div', 'b-row__body');
         body.append(el('strong', 'b-row__title', row.name ?? 'هنوز مبحث‌بندی نشده'));
+        if (row.name_en) body.append(el('span', 'b-row__en', row.name_en));
         const meta = el('div', 'b-row__meta');
         meta.append(el('span', '', `${faDigits(row.total)} سؤال`));
         if (recentFrom !== null) meta.append(el('span', '', `${faDigits(row.recent)} از ${faDigits(recentFrom)} به بعد`));

@@ -173,24 +173,37 @@ final class PageRenderer
             . '</div></header>';
     }
 
-    /** The foot of every page: the mark, what FANOOS is, and the ways around it. */
+    /** The foot of every page: the mark, what FANOOS is, and the ways around it, grouped. */
     private function footer(?ViewerContext $viewer): string
     {
-        $links = $viewer === null
-            ? [['/', 'فانوس'], ['/login', 'ورود'], ['/register', 'ساخت حساب'], ['/support', 'پشتیبانی']]
+        $groups = $viewer === null
+            ? [
+                'فانوس' => [['/', 'صفحه‌ی اصلی'], ['/support', 'پشتیبانی']],
+                'حساب' => [['/login', 'ورود'], ['/register', 'ساخت حساب']],
+            ]
             : ($viewer->workspaceId === null
-                ? [['/app', 'خانه'], ['/account', 'حساب'], ['/support', 'پشتیبانی']]
-                : [['/app/bank', 'بانک سؤال'], ['/app/lessons', 'درسنامه‌ها'], ['/app/references', 'منابع آزمون'], ['/app/announcements', 'اطلاعیه‌ها'], ['/app/exams', 'آزمون‌ها'], ['/app/exams/custom', 'آزمون دلخواه'], ['/app/exams/mistakes', 'مرور اشتباه‌ها'], ['/app/saved', 'ذخیره‌ها و یادداشت‌ها'], ['/app/plan', 'برنامه‌ی مطالعه'], ['/app/calendar', 'تقویم آزمون‌ها'], ['/app/timer', 'تایمر مطالعه'], ['/app/progress', 'پیشرفت'], ['/account', 'حساب'], ['/support', 'پشتیبانی']]);
-        $nav = '';
-        foreach ($links as [$href, $label]) {
-            $nav .= '<a href="' . $this->escape($href) . '">' . $this->escape($label) . '</a>';
+                ? ['حساب' => [['/app', 'خانه'], ['/account', 'حساب'], ['/support', 'پشتیبانی']]]
+                : [
+                    'مطالعه' => [['/app/bank', 'بانک سؤال'], ['/app/lessons', 'درسنامه‌ها'], ['/app/references', 'منابع آزمون'], ['/app/saved', 'ذخیره‌ها و یادداشت‌ها']],
+                    'آزمون' => [['/app/exams', 'آزمون‌ها'], ['/app/exams/custom', 'آزمون دلخواه'], ['/app/exams/mistakes', 'مرور اشتباه‌ها'], ['/app/calendar', 'تقویم آزمون‌ها']],
+                    'برنامه' => [['/app/plan', 'برنامه‌ی مطالعه'], ['/app/timer', 'تایمر مطالعه'], ['/app/progress', 'پیشرفت'], ['/app/announcements', 'اطلاعیه‌ها']],
+                    'حساب' => [['/account', 'پنل کاربری'], ['/support', 'پشتیبانی']],
+                ]);
+        $columns = '';
+        foreach ($groups as $title => $links) {
+            $items = '';
+            foreach ($links as [$href, $label]) {
+                $items .= '<li><a href="' . $this->escape($href) . '">' . $this->escape($label) . '</a></li>';
+            }
+            $columns .= '<div class="f-footer__group"><h2>' . $this->escape($title) . '</h2><ul>' . $items . '</ul></div>';
         }
 
         return '<footer class="f-footer"><div class="f-footer__inner">'
             . '<div class="f-footer__brand">' . PublicChrome::LANTERN
-            . '<span><strong>فانوس</strong><small>فضای آموزشی دانشجو</small></span></div>'
-            . '<nav class="f-footer__links" aria-label="پیوندهای پایین صفحه">' . $nav . '</nav>'
-            . '</div></footer>';
+            . '<span><strong>فانوس</strong><small>فضای آموزشی دانشجو</small></span>'
+            . '<p>آمادگی آزمون دستیاری دندان‌پزشکی با بانک سؤالی که هر سؤالش به فصل و صفحه‌ی منبع رسمی وصل است.</p></div>'
+            . '<nav class="f-footer__links" aria-label="پیوندهای پایین صفحه">' . $columns . '</nav>'
+            . '</div><div class="f-footer__base"><span>© فانوس</span><a href="/support">پشتیبانی</a></div></footer>';
     }
 
     public function escape(string $value): string
