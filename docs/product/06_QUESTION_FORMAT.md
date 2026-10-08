@@ -271,7 +271,7 @@ Imported and published on 2026-10-07:
 | 1400 | 250 | 249 | |
 | 1401 | 249 | 249 | |
 | 1402 (B) | 250 | 243 | |
-| 1403 | 250 | 250 | |
+| 1403 | 250 | 250 | chapters for 200 (2026-10-08; pathology, periodontics and Falace through the nearest edition) |
 | 1404 | 250 | 247 | from the hand-checked transcription, with chapters |
 | 1405 | 250 | 246 | chapters for 200 (2026-10-08, checked against the books; radiology and community dentistry wait for their books) |
 
