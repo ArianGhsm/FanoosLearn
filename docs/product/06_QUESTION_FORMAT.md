@@ -86,6 +86,14 @@ table of references and editions in the script, and writes:
 Concepts are not in the workbook; they are added as questions are
 classified.
 
+### Board exams (بورد) — separate specialties
+
+For dental board 1404, use **ten distinct 100-question specialty sittings**, each with question numbers 1–100, rather than combining them into one exam. Like promotion, the `round` key is a stable **internal specialty slot**, not a separate exam date; the visible title is `بورد ۱۴۰۴ · <subject name>`. Board/promotion allow slots 1–99, and other exam types keep rounds 1–9. A single sitting must contain questions from exactly one specialty.
+
+Board 1404 slots: 1 endodontics; 2 periodontics; 3 prosthodontics; 4 operative-dentistry; 5 oral-surgery; 6 oral-medicine; 7 oral-pathology; 8 oral-radiology; 9 orthodontics; 10 pediatric-dentistry. Preserve the complete original DOCX files privately, all source images, and the final answer key. Deleted questions must remain in the bank with `answer.status=voided` and not appear in published, scoreable exams. Multiple-correct questions use `answer.also_correct` with the additional 1-based choice numbers. Do not infer or assign sources/chapter/pages from incidental source labels in question stems. The original source text may include spacing/OCR artifacts; do not silently invent corrections. Any unresolvable source defect is flagged and its question withdrawn pending review.
+
+Run ten independent `check` and `import --dry-run` validations; confirm an intact backup and `questions_changed=0` before importing or publishing. Verify subject-specific titles, separate assessment identifiers, image counts, final answer statuses, and a post-import backup. Keep proprietary question text, key and image assets out of the public repository.
+
 ### Promotion exams (ارتقا) — separate specialties
 
 Promotion question papers are separate for each specialty: the 1405 Drive folder contains ten independently numbered 100-question documents. They are **not** combined into one 1,000-question exam. The existing `exam_round` field is used as a stable *internal specialty slot* for these promotion sittings (1–99), while ordinary exam types keep their 1–9 rounds. The site-visible title is `ارتقا <year> · <subject>`, derived from the single subject in the sitting, not "نوبت N". Never reuse a slot for another specialty in the same year after import; the question keys incorporate it.
