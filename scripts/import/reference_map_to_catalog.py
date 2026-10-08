@@ -385,7 +385,7 @@ def build() -> dict:
         'decisions': decisions,
         'exam_types': [
             {'key': 'residency', 'name': 'دستیاری', 'active': True, 'order': 0},
-            {'key': 'board', 'name': 'بورد', 'active': False, 'order': 1},
+            {'key': 'board', 'name': 'بورد', 'active': True, 'order': 1},
             {'key': 'promotion', 'name': 'ارتقا', 'active': True, 'order': 2},
         ],
         'subjects': [{'key': k, 'name': n, 'name_en': e, 'order': i} for i, (k, n, e) in enumerate(SUBJECTS)],
