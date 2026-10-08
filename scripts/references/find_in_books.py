@@ -33,11 +33,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from apply_classification import flat as evidence_flat  # noqa: E402  (the same check the quotes must pass)
 CHAPTERS = REPO / 'data' / 'bank' / 'reference-chapter-pages.json'
 PAGE = re.compile(r'^=== PAGE (\d+) ===$', re.M)
-TOKEN = re.compile(r'[a-z0-9]+')
+TOKEN = re.compile(r'[^\W_]+', re.UNICODE)
 
 
 def norm(text: str) -> str:
     text = text.lower().replace('’', "'").replace('ﬁ', 'fi').replace('ﬂ', 'fl').replace('¿', 'fi').replace('À', 'fl')
+    text = text.replace('ي', 'ی').replace('ى', 'ی').replace('ك', 'ک')
     return re.sub(r'-\s*\n\s*', '', text)
 
 

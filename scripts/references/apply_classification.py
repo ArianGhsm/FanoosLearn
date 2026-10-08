@@ -54,8 +54,9 @@ def flat(text: str) -> str:
     text = ''.join(c for c in text if not 0xE000 <= ord(c) <= 0xF8FF)
     text = text.lower().replace('’', "'").replace('‘', "'").replace('“', '"').replace('”', '"')
     text = text.replace('ﬁ', 'fi').replace('ﬂ', 'fl').replace('¿', 'fi').replace('À', 'fl').replace('­', '')
+    text = text.replace('ي', 'ی').replace('ى', 'ی').replace('ك', 'ک')
     text = re.sub(r'-\s*\n\s*', '', text)
-    return re.sub(r'[^a-z0-9%.,;:()/+\-–]+', ' ', text).strip()
+    return re.sub(r'[^\w%.,;:()/+\-–]+', ' ', text, flags=re.UNICODE).strip()
 
 
 def fragments(evidence: str) -> list[str]:
