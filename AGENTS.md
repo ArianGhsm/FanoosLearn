@@ -11,6 +11,8 @@ Rules for every person or coding agent working on this repository.
 2. `docs/product/05_DENTAL_RESIDENCY_DATA_MODEL.md` — the bank's design.
 3. `docs/WORKFLOW.md` — the working loop, from branch to deploy.
 4. `docs/ops/SERVER.md` — what runs on the server and how it is deployed.
+5. `docs/product/09_CHAPTER_CLASSIFICATION.md` — before assigning any
+   question a reference, chapter or page.
 
 ## 1. Boundaries
 

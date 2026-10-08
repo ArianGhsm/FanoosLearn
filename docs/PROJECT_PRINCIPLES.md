@@ -145,6 +145,10 @@ Made by the owner on 2026-10-08:
      supplies it, its questions are matched in the nearest edition named in
      the list, mapped back to the official edition's chapter, and marked as
      such.
+   - The procedure -- the same for every exam type and every agent -- is
+     docs/product/09_CHAPTER_CLASSIFICATION.md: a source is accepted only
+     with its page and a quote from that page, checked against the book by
+     `scripts/references/apply_classification.py`.
 
 Still open:
 
