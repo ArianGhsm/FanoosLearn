@@ -639,7 +639,10 @@ body.x-runner-page {
 
 /* ------------------------------------------------------------ dialogs */
 
+/* Above the site header and the bottom navigation: the header used to sit
+   over the top of a tall dialog, cutting its title off on a phone. */
 .x-runner-page .x-dialog {
+    z-index: 200;
     background: rgba(16, 26, 41, 0.45);
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
