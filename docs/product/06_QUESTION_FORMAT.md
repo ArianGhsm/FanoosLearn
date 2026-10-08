@@ -272,7 +272,7 @@ Imported and published on 2026-10-07:
 | 1401 | 249 | 249 | chapters for 196 (2026-10-08; Carranza, Burket, Falace and Neville through the nearest edition, pediatrics through McDonald 11e mapped to Nowak 6e chapters; four questions left unclassified) |
 | 1402 (B) | 250 | 243 | chapters for 200 (2026-10-08) |
 | 1403 | 250 | 250 | chapters for 200 (2026-10-08; pathology, periodontics and Falace through the nearest edition) |
-| 1404 | 250 | 247 | from the hand-checked transcription, with chapters |
+| 1404 | 250 | 247 | from the hand-checked transcription; chapters for 172 re-verified against the books on 2026-10-08 (33 corrected), the rest keep the transcription's checked chapters. Re-imports must start from `corpus_to_bank.py build` on the reviewed file, not from the docx, or 171 stems change |
 | 1405 | 250 | 246 | chapters for 200 (2026-10-08, checked against the books; radiology and community dentistry wait for their books) |
 
 "Published" leaves out the questions the official key deleted.
