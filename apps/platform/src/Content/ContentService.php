@@ -299,6 +299,97 @@ SQL, ['version_no' => $version['version_no'], 'resource' => $resourceId, 'worksp
     }
 
     /**
+     * Publish an owner-supplied official reference PDF after its private object
+     * has been verified. This import path records its own audit event instead
+     * of manufacturing a human review decision.
+     */
+    public function publishVerifiedPrivateReferencePdf(
+        string $actorUserId,
+        string $workspaceId,
+        string $resourceId,
+        string $versionId,
+        string $editionKey,
+    ): void {
+        $this->access->requireWorkspace($actorUserId, $workspaceId, 'resource.create');
+        $this->access->requireWorkspace($actorUserId, $workspaceId, 'resource.manage_protected');
+        $this->access->requireWorkspace($actorUserId, $workspaceId, 'resource.publish');
+        if (!preg_match('/^[a-z0-9-]{2,120}@[a-z0-9-]{2,24}$/', $editionKey)) {
+            throw new PlatformException('reference_edition_key_invalid', 'Reference edition key is invalid.', 422);
+        }
+
+        Transaction::run($this->database, function () use (
+            $actorUserId, $workspaceId, $resourceId, $versionId, $editionKey,
+        ): void {
+            $query = $this->database->prepare(<<<'SQL'
+SELECT resource.lifecycle_status, resource.current_version_no,
+       metadata.topic, metadata.format_key, metadata.access_level,
+       version.version_no, version.status AS version_status, version.source_kind,
+       version.object_id, object_record.detected_mime, object_record.classification,
+       object_record.status AS object_status,
+       (SELECT MAX(latest.version_no)
+        FROM content_resource_versions latest
+        WHERE latest.resource_id = resource.id AND latest.workspace_id = resource.workspace_id) AS latest_version_no
+FROM content_resources resource
+JOIN content_resource_metadata metadata
+  ON metadata.resource_id = resource.id AND metadata.workspace_id = resource.workspace_id
+JOIN content_resource_versions version
+  ON version.id = :version AND version.resource_id = resource.id AND version.workspace_id = resource.workspace_id
+JOIN content_objects object_record
+  ON object_record.id = version.object_id AND object_record.workspace_id = version.workspace_id
+WHERE resource.id = :resource AND resource.workspace_id = :workspace
+  AND resource.deleted_at IS NULL AND resource.archived_at IS NULL
+FOR UPDATE
+SQL);
+            $query->execute(['version' => $versionId, 'resource' => $resourceId, 'workspace' => $workspaceId]);
+            $row = $query->fetch();
+            if ($row === false) {
+                throw new PlatformException('resource_version_not_found', 'Reference PDF version was not found.', 404);
+            }
+            if ($row['topic'] !== $editionKey || $row['format_key'] !== 'reference_pdf'
+                || $row['access_level'] !== 'private' || $row['source_kind'] !== 'uploaded'
+                || $row['detected_mime'] !== 'application/pdf' || $row['classification'] !== 'private'
+                || $row['object_status'] !== 'verified') {
+                throw new PlatformException('reference_pdf_invariants_failed', 'Reference PDF does not meet the private verified import requirements.', 409);
+            }
+            if ($row['version_status'] === 'approved'
+                && $row['lifecycle_status'] === 'published'
+                && (int) $row['current_version_no'] === (int) $row['version_no']) {
+                return;
+            }
+            if ($row['version_status'] !== 'draft'
+                || (int) $row['version_no'] !== (int) $row['latest_version_no']) {
+                throw new PlatformException('reference_pdf_version_state_conflict', 'Only the latest draft reference PDF version can be imported and published.', 409);
+            }
+
+            $this->execute("UPDATE content_resource_versions SET status = 'approved' WHERE id = :version AND resource_id = :resource AND workspace_id = :workspace", [
+                'version' => $versionId, 'resource' => $resourceId, 'workspace' => $workspaceId,
+            ]);
+            $this->execute(<<<'SQL'
+UPDATE content_resources
+SET current_version_no = :version_no, lifecycle_status = 'published',
+    updated_at = UTC_TIMESTAMP(6), version = version + 1
+WHERE id = :resource AND workspace_id = :workspace
+SQL, [
+                'version_no' => (int) $row['version_no'],
+                'resource' => $resourceId,
+                'workspace' => $workspaceId,
+            ]);
+            $this->outbox($workspaceId, 'content_resource', $resourceId, 'content.resource.published', [
+                'resource_id' => $resourceId,
+                'resource_version_id' => $versionId,
+                'version_no' => (int) $row['version_no'],
+            ]);
+            $this->audit->record($workspaceId, $actorUserId, 'content.reference_pdf.imported_and_published', 'content_resource_version', $versionId, 'success', [
+                'resource_id' => $resourceId,
+                'edition_key' => $editionKey,
+                'classification' => 'private',
+                'mime' => 'application/pdf',
+                'review_bypassed' => true,
+            ]);
+        });
+    }
+
+    /**
      * @param array<string, mixed> $payload
      * @param array<string, mixed> $metadata
      * @return array{resource_id:string,version_id:string,version_no:int,status:string}

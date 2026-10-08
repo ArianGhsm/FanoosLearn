@@ -112,6 +112,63 @@ Only GitHub `main`, only after its CI is green, only through the updater
 | `scripts/ops/purge-workspace.php` | remove a workspace (dry run by default); `--images-only` as `fanoosweb` |
 | `scripts/ops/bootstrap-owner.php` | create the first owner account |
 | `scripts/ops/import-question-bank*.php` | import question banks |
+| `scripts/ops/reference-library-inventory.php` | read-only inventory of the private dental reference PDF library, storage capacity and Google Drive mounts |
+| `scripts/ops/reference-library-source-info.php` | checksum and size check for one PDF already on a mounted Google Drive |
+| `scripts/ops/import-reference-library.php` | dry-run or audited import of the complete official reference PDF catalog into the private dental library |
+| `scripts/ops/import-reference-library.ps1` | laptop-to-FANOOS transfer; sends only PDFs the server dry run says it needs |
+
+## Dental reference PDFs
+
+The official edition list is `data/bank/catalog.json`. Reference PDFs are
+production data: they are never committed to Git and are not converted to
+text during this import. The library stores each PDF as a private immutable
+object, with the catalog edition key in `content_resource_metadata.topic` and
+`format_key=reference_pdf`.
+
+After the matching `main` release is deployed, an operator first runs the
+read-only inventory and the importer's dry run. The manifest has
+`format=fanoos.reference-library.v1`; each available local or Drive source
+entry names the PDF and its SHA-256 and byte size. A Drive source may point
+to a mounted Drive file; it is read in place and imported without staging
+another copy. The dry run also reports
+catalog editions without a source and recognizes editions already registered
+as verified private PDFs. Apply is blocked until every official edition is
+either already present or has a verified PDF source. A staged file must be
+inside the staging directory, have a PDF signature, and match its checksum.
+The importer reuses an exact private-object checksum without storing another
+copy. It publishes verified official reference PDFs through a dedicated
+audited import path: the imported version is marked approved and published
+without fabricating a human review record. This path requires resource
+creation, protected-resource management and publishing permissions, and
+accepts only the latest verified private PDF attached to a private
+`reference_pdf` resource whose topic matches the catalog edition key.
+
+The Windows transfer script reads the ignored owner-only
+`.local/reference-library/sources.json`, whose `editions` entries contain an
+`edition_key`, `kind` (`local` or `drive_mount`) and `path`. It hashes local
+PDFs without extracting text, reads mounted Drive PDFs in place, runs the
+server dry run, and transfers only missing local PDFs. `-Apply` then makes a
+verified full backup, imports, checks the final private inventory and removes
+the temporary staging directory. Without `-Apply`, it only reports the dry
+run.
+
+The apply command requires a verified full database-and-storage backup and
+checks that the private storage filesystem has enough free space for every
+new byte. For example, from the deployed release as the FANOOS updater
+operator:
+
+```sh
+php scripts/ops/reference-library-inventory.php
+php scripts/ops/import-reference-library.php --dry-run --staging=/srv/fanoos/staging/reference-import/<batch>
+php scripts/ops/verify-backup.php /var/backups/fanoos/<verified-backup>
+php scripts/ops/import-reference-library.php --apply --verified-backup=/var/backups/fanoos/<verified-backup> --staging=/srv/fanoos/staging/reference-import/<batch>
+php scripts/ops/reference-library-inventory.php
+```
+
+The operator provisions staging through the approved FANOOS import transport;
+it must not write reference files directly into object storage. A Drive mount
+is only an input source: the PDFs still need to be imported into FANOOS private
+object storage for the reference library to be complete.
 
 ## Retention
 
