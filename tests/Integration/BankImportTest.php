@@ -140,6 +140,24 @@ SQL);
         $this->assert($this->count('bank_reference_validity', $ws) >= 150, 'The real catalog lost its year-by-year references.');
         $this->assert($this->count('bank_reference_nodes', $ws) >= 1000, 'The real catalog lost its chapter lists.');
 
+        // Promotion specialty papers in one year must not collide with each other.
+        $promotion = $sitting;
+        $promotion['exam_type'] = 'promotion';
+        $promotion['year'] = 1405;
+        $promotion['round'] = 10;
+        foreach ($promotion['questions'] as &$promotionQuestion) {
+            $promotionQuestion['subject'] = 'endodontics';
+            unset($promotionQuestion['sources'], $promotionQuestion['concepts'], $promotionQuestion['explanation'], $promotionQuestion['currency']);
+        }
+        unset($promotionQuestion);
+        $this->assert($importer->validate($ws, $promotion) === [], 'Promotion round 10 must validate when every question has the same specialty.');
+        $mixedPromotion = $promotion;
+        $mixedPromotion['questions'][1]['subject'] = 'orthodontics';
+        $this->assert($this->mentions($importer->validate($ws, $mixedPromotion), 'questions[1].subject'), 'Promotion sitting mixed specialties.');
+        $importer->import($ws, $promotion);
+        $this->assert($this->scalar('SELECT COUNT(*) FROM bank_questions WHERE workspace_id = :ws AND question_key LIKE :prefix', ['ws' => $ws, 'prefix' => 'promotion-1405-10-%']) === 2, 'Promotion specialty slot keys missing.');
+        $this->assert($this->scalar("SELECT is_active FROM bank_exam_types WHERE workspace_id = :ws AND type_key = 'promotion'", ['ws' => $ws]) == 1, 'Promotion not active from real catalog.');
+
         // A reviewed source survives a later AI pass.
         $this->database->prepare("UPDATE bank_question_sources s JOIN bank_questions q ON q.id = s.question_id SET s.reviewed_by_user_id = :user, s.reviewed_at = UTC_TIMESTAMP(6), s.page = '257' WHERE q.question_key = :key")
             ->execute(['user' => $f['reviewer'], 'key' => $key]);
