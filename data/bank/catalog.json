@@ -64,7 +64,7 @@
     {
       "key": "promotion",
       "name": "ارتقا",
-      "active": false,
+      "active": true,
       "order": 2
     }
   ],
