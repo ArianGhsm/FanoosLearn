@@ -18,6 +18,33 @@ import { choiceShareLabel, statsLines } from './question-stats.js';
 const DIFFICULTY_LABELS = { easy: 'آسان', medium: 'متوسط', hard: 'دشوار' };
 const CHOICE_LETTERS = ['الف', 'ب', 'ج', 'د', 'ه', 'و', 'ز', 'ح', 'ط', 'ی'];
 
+/**
+ * Plain-text bidirectional typography for clinical Latin phrases in Persian
+ * questions. Isolate a complete Latin phrase instead of letting surrounding
+ * RTL punctuation reorder it on iOS. This never rewrites the stored question
+ * or answer text, and builds only text nodes (never HTML).
+ */
+export function bidiTextSegments(input) {
+    const text = String(input ?? '');
+    const latinPhrase = /[A-Za-z][A-Za-z0-9]*(?:[-/_.+][A-Za-z0-9]+)*(?:[ \t]+[A-Za-z][A-Za-z0-9]*(?:[-/_.+][A-Za-z0-9]+)*)*/g;
+    const result = [];
+    let end = 0;
+    for (const match of text.matchAll(latinPhrase)) {
+        if (match.index > end) result.push({ text: text.slice(end, match.index), latin: false });
+        result.push({ text: match[0], latin: true });
+        end = match.index + match[0].length;
+    }
+    if (end < text.length) result.push({ text: text.slice(end), latin: false });
+    return result;
+}
+
+export function bidiNodes(text) {
+    return bidiTextSegments(text).map((part) => part.latin
+        ? el('bdi', { attrs: { dir: 'ltr' }, text: part.text })
+        : document.createTextNode(part.text));
+}
+
+
 /*
  * Question images.
  *
@@ -436,7 +463,7 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
                 on: { click: () => (reveal === null ? actions.choose(index) : undefined) },
             },
                 el('span', { className: 'x-choice__letter', text: CHOICE_LETTERS[index] ?? faDigits(index + 1) }),
-                el('span', { className: 'x-choice__text', text: faText(choice) },
+                el('span', { className: 'x-choice__text', attrs: { dir: 'auto' } }, ...bidiNodes(faText(choice)),
                     // A bare picture: the whole choice is one button, and a
                     // tap on its image chooses it like a tap on its words.
                     choiceImageUrl(state.assessmentId, question, index)
@@ -631,12 +658,14 @@ function renderQuestionStats(stats) {
 function renderStem(question, study) {
     const text = faText(question.prompt);
     const ranges = study && Array.isArray(study.ranges) ? study.ranges : [];
-    const paragraph = el('p', { className: 'x-question__prompt' });
+    const paragraph = el('p', { className: 'x-question__prompt', attrs: { dir: 'auto' } });
 
     for (const segment of highlightSegments(text, ranges)) {
-        paragraph.append(segment.highlighted
-            ? el('mark', { className: 'x-highlight', text: segment.text })
-            : document.createTextNode(segment.text));
+        if (segment.highlighted) {
+            paragraph.append(el('mark', { className: 'x-highlight' }, ...bidiNodes(segment.text)));
+        } else {
+            paragraph.append(...bidiNodes(segment.text));
+        }
     }
 
     return paragraph;
@@ -1063,7 +1092,7 @@ export function renderReviewQuestion(entry, position, questionCount, actions, as
         el('article', { className: 'f-card x-review__card' },
             el('span', { className: `x-verdict is-${verdict.kind}`, text: verdict.text }),
             seenFirst ? el('span', { className: 'x-verdict is-revealed', text: 'پاسخ را قبل از جواب دادن دیدی' }) : null,
-            el('p', { className: 'x-question__prompt', text: faText(entry.prompt) }),
+            el('p', { className: 'x-question__prompt', attrs: { dir: 'auto' } }, ...bidiNodes(faText(entry.prompt))),
             stemFigure(assessmentId, entry),
             choices,
             entry.choice_shares
