@@ -239,6 +239,17 @@ body.x-focus .f-page {
  * sections with their own rhythm -- a header strip, the facts, the stem, the
  * choices -- separated by hairlines rather than by guesswork.
  */
+/* Keep Latin clinical terminology ordered inside Persian exam text. */
+.x-question__prompt,
+.x-choice__text {
+    overflow-wrap: anywhere;
+    unicode-bidi: isolate;
+}
+.x-question__prompt bdi,
+.x-choice__text bdi {
+    unicode-bidi: isolate;
+}
+
 .x-question__card {
     position: relative;
     padding: 0;
