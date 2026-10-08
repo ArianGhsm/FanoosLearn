@@ -45,17 +45,33 @@ measured: on 1403 endodontics a third of such chapters were wrong, and on
 | Decisions | `.local/classification/decisions/<year>-<subject>.json` |
 | Server access for the import | `.local/SERVER_ACCESS.md` (git-ignored; never in this repository) |
 
-Setting up once, and again whenever books are added to the owner's library:
+Initial setup:
 
 ```sh
 python scripts/references/build_reference_texts.py --library "<book library>"
 python scripts/references/build_chapter_pages.py
 ```
 
+When a book is added, build its text as above, then update only its chapter
+map (repeat `--only` for several new editions):
+
+```sh
+python scripts/references/build_chapter_pages.py --only <edition>
+```
+
 A new book means: its PDF named in `reference-texts.json` (the `missing`
-mark removed), both commands re-run, and the chapter map checked (every
-chapter of the edition has a run of pages). A new exam type, year or
-edition is data: the reference and its edition in the catalog (with its
+mark removed), its text built, and its chapter pages built. A full rebuild
+requires reviewing changed boundaries in existing editions before replacing
+their maps. Check that every chapter of the edition has a run of pages.
+Inspect the first chapter, the
+last chapter and any weakly supported boundaries too: a complete count alone
+does not prove the page ranges are right. A chapter opening printed inside a
+page pins that page as its start; standalone Persian `n فصل` running heads
+serve the same purpose. Contents pages and roman-numbered summary pages do
+not establish a chapter start. If a range is wrong, fix the general mapping
+method from the book's own pages and add a regression test before classifying;
+never adjust a range merely to make a particular decision pass. A new exam
+type, year or edition is data: the reference and its edition in the catalog (with its
 chapter list), the year's official list in `validity`, the PDF in
 `reference-texts.json`. The procedure does not change.
 
@@ -255,6 +271,9 @@ the corrected questions as changed, the answers and option order stay, and
 | An AI pass overwrote human-checked chapters (49 on 1404) | `override_human` required to replace a human source |
 | `none` used for "not found", removing an existing source | §5: not found stays undecided |
 | Deploy requested before CI on `main` finished | WORKFLOW: request deployment only after CI on the merge commit is green |
+| Persian chapter numbers were present as `n فصل`, but the map skipped 19 of 24 chapters and put front matter in chapter 1 | recognise the standalone Persian heading and pin each chapter to its first occurrence; test the boundary and front matter |
+| Burket 12e chapter 24 began after a long local contents, so its opening was missed and pages 629–641 landed in chapter 25 | scan the page for a standalone chapter label followed by its title, and use the opening page as a hard boundary; test a deep opening |
+| A roman-numbered Little & Falace summary mentioned chapter 22 and falsely looked like its opening | ignore roman-numbered front matter as an opening; test that summary pages cannot move a chapter boundary |
 
 ## 9. Handing a year to another agent
 
