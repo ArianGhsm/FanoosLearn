@@ -6,7 +6,7 @@
  * is paced.
  */
 import { api, describeError } from '../foundation/api.js';
-import { el, faDigits, faText, notice, questionImageUrl, renderFigure } from './runner-view.js';
+import { bidiNodes, el, faDigits, faText, notice, questionImageUrl, renderFigure } from './runner-view.js';
 import { renderMarkdown } from './markdown.js';
 
 const CHOICE_LETTERS = ['الف', 'ب', 'ج', 'د', 'ه', 'و', 'ز', 'ح', 'ط', 'ی'];
@@ -21,7 +21,7 @@ function card(question) {
         choices.append(el('li', { className: 'x-choices__item' },
             el('div', { className: `x-choice x-choice--review${isCorrect ? ' is-correct' : ''}` },
                 el('span', { className: 'x-choice__letter', text: CHOICE_LETTERS[index] ?? faDigits(index + 1) }),
-                el('span', { className: 'x-choice__text', text: faText(choice) },
+                el('span', { className: 'x-choice__text', attrs: { dir: 'auto' } }, ...bidiNodes(faText(choice)),
                     question.images?.choices?.[index]
                         ? renderFigure(questionImageUrl(question.assessment_id, question.question_id, `choice-${index}`), `تصویر گزینه‌ی ${CHOICE_LETTERS[index] ?? index + 1}`, { compact: true })
                         : null),
@@ -30,7 +30,7 @@ function card(question) {
 
     return el('article', { className: 'f-card x-review__card x-mistakes__card' },
         el('span', { className: 'x-chip x-chip--static', text: faText(question.assessment_title) }),
-        el('p', { className: 'x-question__prompt', text: faText(question.prompt) }),
+        el('p', { className: 'x-question__prompt', attrs: { dir: 'auto' } }, ...bidiNodes(faText(question.prompt))),
         question.images?.stem
             ? renderFigure(questionImageUrl(question.assessment_id, question.question_id, 'stem'), 'تصویر سؤال')
             : null,
