@@ -266,9 +266,9 @@ Imported and published on 2026-10-07:
 
 | Year | Questions | Published | Notes |
 |---|---:|---:|---|
-| 1398 (B) | 247 | 245 | |
-| 1399 | 249 | 248 | |
-| 1400 | 250 | 249 | |
+| 1398 (B) | 247 | 245 | chapters for 85 (2026-10-08; the recorded 1398 list names only the references that changed that year, so endodontics, prosthodontics, periodontics, pediatrics and most surgery have no official edition yet) |
+| 1399 | 249 | 248 | chapters for 184 (2026-10-08) |
+| 1400 | 250 | 249 | chapters for 188 (2026-10-08) |
 | 1401 | 249 | 249 | chapters for 196 (2026-10-08; Carranza, Burket, Falace and Neville through the nearest edition, pediatrics through McDonald 11e mapped to Nowak 6e chapters; four questions left unclassified) |
 | 1402 (B) | 250 | 243 | chapters for 200 (2026-10-08) |
 | 1403 | 250 | 250 | chapters for 200 (2026-10-08; pathology, periodontics and Falace through the nearest edition) |
