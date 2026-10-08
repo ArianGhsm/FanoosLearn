@@ -273,6 +273,6 @@ Imported and published on 2026-10-07:
 | 1402 (B) | 250 | 243 | chapters for 200 (2026-10-08) |
 | 1403 | 250 | 250 | chapters for 200 (2026-10-08; pathology, periodontics and Falace through the nearest edition) |
 | 1404 | 250 | 247 | from the hand-checked transcription; chapters for 172 re-verified against the books on 2026-10-08 (33 corrected), the rest keep the transcription's checked chapters. Re-imports must start from `corpus_to_bank.py build` on the reviewed file, not from the docx, or 171 stems change |
-| 1405 | 250 | 246 | chapters for 200 (2026-10-08, checked against the books; radiology and community dentistry wait for their books) |
+| 1405 | 250 | 246 | chapters for 200 (2026-10-08, checked against the books; radiology and community dentistry wait for their books). The booklet's text layer is corrupt, so on 2026-10-08 the wording of 166 questions was replaced by the workbook's visual transcription (same question and option order; Q81, Q92 and Q191 keep their figure-based text) |
 
 "Published" leaves out the questions the official key deleted.
