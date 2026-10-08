@@ -24,6 +24,10 @@ class ApplyClassificationTest(unittest.TestCase):
         self.assertIn(flat('the vrf may mimic other conditions, commonly periodontal disease'), flat(page))
         self.assertNotIn(flat('the vrf always mimics periodontal disease'), flat(page))
 
+    def test_private_use_ligature_glyphs_are_dropped_on_both_sides(self):
+        page = 'the color changes can be marginal, diuse, or patch-like'
+        self.assertIn(flat('marginal, diuse, or patch-like'), flat(page))
+
     def test_the_printed_page_number_is_read_from_the_head_or_foot(self):
         self.assertEqual(printed_page('439\nCHAPTER 20 Apical Microsurgery\nbody text'), '439')
         self.assertEqual(printed_page('body text\nmore\nCHAPTER 3 Endodontic Radiology 50'), '50')

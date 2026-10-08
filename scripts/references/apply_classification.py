@@ -47,6 +47,9 @@ PAGE = re.compile(r'^=== PAGE (\d+) ===$', re.M)
 
 
 def flat(text: str) -> str:
+    # Some PDFs set ligatures (ff, fi, fl) as private-use glyphs; they print
+    # as nothing, so a quote copied from the page has them missing too.
+    text = ''.join(c for c in text if not 0xE000 <= ord(c) <= 0xF8FF)
     text = text.lower().replace('’', "'").replace('‘', "'").replace('“', '"').replace('”', '"')
     text = text.replace('ﬁ', 'fi').replace('ﬂ', 'fl').replace('¿', 'fi').replace('À', 'fl').replace('­', '')
     text = re.sub(r'-\s*\n\s*', '', text)
@@ -136,7 +139,9 @@ def main() -> int:
             official.setdefault(v['subject'], set()).add(v['edition'])
 
     source = Path(args.decisions)
-    files = sorted(source.glob('*.json')) if source.is_dir() else [source]
+    # A directory holds every year's decisions; only this sitting's are read
+    # (<year>-<subject>.json, docs/product/09_CHAPTER_CLASSIFICATION.md).
+    files = sorted(source.glob(f'{year}-*.json')) if source.is_dir() else [source]
     decisions = [d for f in files for d in json.loads(f.read_text(encoding='utf-8'))]
     questions = {q['number']: q for q in sitting['questions']}
 
@@ -165,11 +170,21 @@ def main() -> int:
                     why = f'{edition} is not an official {exam_type} {year} reference for {q["subject"]}'
                 else:
                     cite = stand_in_for[0]
-                    node = carry_over(catalog, edition, chapter, cite)
-                    if node is None:
-                        why = f'chapter {chapter} of {edition} has no same-titled chapter in {cite}'
+                    # Editions get reorganised (one chapter split in two, chapters
+                    # renamed): the classifier may name the official edition's
+                    # chapter itself; otherwise it is carried over by title.
+                    named = str(d.get('official_chapter', '')).strip()
+                    if named:
+                        if named not in chapter_nodes(catalog, cite):
+                            why = f'{cite} has no chapter {named}'
+                        else:
+                            cite_chapter = named
                     else:
-                        cite_chapter = node['number']
+                        node = carry_over(catalog, edition, chapter, cite)
+                        if node is None:
+                            why = f'chapter {chapter} of {edition} has no same-titled chapter in {cite}; name it with official_chapter'
+                        else:
+                            cite_chapter = node['number']
             nodes = chapter_nodes(catalog, edition)
             page = d.get('page')
             if why is None and chapter not in nodes:

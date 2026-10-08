@@ -122,7 +122,11 @@ does, or conclude it is not in the book.
   review queue (PROJECT_PRINCIPLES decision 5).
 - For a missing official edition, `edition` is the nearest one you searched;
   the check carries the chapter over to the official edition by its title
-  and the source cites the official edition.
+  and the source cites the official edition. When the editions were
+  reorganised (a chapter renamed, split or merged — Carranza 13 → 14 is
+  the common case), name the official edition's chapter yourself with
+  `"official_chapter": "18"`, chosen from that edition's chapter list for
+  the fact the quote states; the check confirms the chapter exists.
 
 **Step 6 — check and write.**
 
