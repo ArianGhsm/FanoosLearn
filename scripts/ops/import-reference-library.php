@@ -426,11 +426,13 @@ function pathIsInsideDriveMount(string $candidate): bool
         }
         $left = preg_split('/\\s+/', substr($line, 0, $separator));
         $right = preg_split('/\\s+/', substr($line, $separator + 3));
-        if (!is_array($left) || !isset($left[4]) || !is_array($right) || !isset($right[0], $right[1])
-            || preg_match('/(?:drive|google|rclone)/i', $right[0] . ' ' . $right[1]) !== 1) {
+        if (!is_array($left) || !isset($left[4]) || !is_array($right) || !isset($right[0], $right[1])) {
             continue;
         }
         $mountPoint = strtr($left[4], ['\\040' => ' ', '\\011' => "\t", '\\134' => '\\']);
+        if (preg_match('/(?:drive|google|rclone)/i', $mountPoint . ' ' . $right[0] . ' ' . $right[1]) !== 1) {
+            continue;
+        }
         $realMount = realpath($mountPoint);
         if ($realMount === false) {
             continue;
