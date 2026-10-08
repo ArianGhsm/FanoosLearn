@@ -112,3 +112,14 @@ Only GitHub `main`, only after its CI is green, only through the updater
 | `scripts/ops/purge-workspace.php` | remove a workspace (dry run by default); `--images-only` as `fanoosweb` |
 | `scripts/ops/bootstrap-owner.php` | create the first owner account |
 | `scripts/ops/import-question-bank*.php` | import question banks |
+
+## Retention
+
+Nothing prunes itself: every deploy adds a release and every import or deploy
+adds a backup. `scripts/ops/prune-retention.sh` (run as root, `--dry-run`
+first) keeps the live release and the five newest others, the 14 newest
+backups plus the archive backup `20261003T170919Z-6fbfdcba` (the last full
+copy before the medical bank was purged; the owner's decision of 2026-10-08),
+and removes the rest and the `/var/lib/fanoos/bank-import-*` staging folders.
+On 2026-10-08 it took the disk from 85% to 77%. Run it when the disk passes
+80%.
