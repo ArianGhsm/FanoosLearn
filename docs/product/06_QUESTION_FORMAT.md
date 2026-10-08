@@ -273,6 +273,6 @@ Imported and published on 2026-10-07:
 | 1402 (B) | 250 | 243 | |
 | 1403 | 250 | 250 | |
 | 1404 | 250 | 247 | from the hand-checked transcription, with chapters |
-| 1405 | 250 | 246 | |
+| 1405 | 250 | 246 | chapters for 200 (2026-10-08, checked against the books; radiology and community dentistry wait for their books) |
 
 "Published" leaves out the questions the official key deleted.

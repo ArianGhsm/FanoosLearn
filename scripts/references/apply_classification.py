@@ -136,7 +136,9 @@ def main() -> int:
             official.setdefault(v['subject'], set()).add(v['edition'])
 
     source = Path(args.decisions)
-    files = sorted(source.glob('*.json')) if source.is_dir() else [source]
+    # A directory holds every year's decisions; only this sitting's are read
+    # (<year>-<subject>.json, docs/product/09_CHAPTER_CLASSIFICATION.md).
+    files = sorted(source.glob(f'{year}-*.json')) if source.is_dir() else [source]
     decisions = [d for f in files for d in json.loads(f.read_text(encoding='utf-8'))]
     questions = {q['number']: q for q in sitting['questions']}
 
