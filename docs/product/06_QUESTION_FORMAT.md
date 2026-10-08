@@ -257,7 +257,10 @@ python scripts/import/docx_to_sitting.py --docx=1400.docx --year=1400 --form=A -
 - **Numbering:** 1398 and 1402 are form B documents, so their sittings follow
   form B numbering. The others are form A (1405 has one form).
 - **Chapters** are not assigned here; that is a later re-import of the same
-  sitting with sources.
+  sitting with sources, found in the books' full texts
+  (`.local/references/<edition>.txt`, built by
+  `scripts/references/build_reference_texts.py`; PROJECT_PRINCIPLES
+  decision 6).
 
 Imported and published on 2026-10-07:
 

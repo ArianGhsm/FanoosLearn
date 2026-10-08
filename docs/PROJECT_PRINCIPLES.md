@@ -126,6 +126,26 @@ Made by the owner on 2026-10-03:
    (for example stricter for pages than for chapters) once real numbers show
    where the AI is reliable.
 
+Made by the owner on 2026-10-08:
+
+6. **One full-book text per reference edition, in one place.** Chapter
+   classification (which reference, which chapter, which page a question
+   comes from) is done against the book's own text and nothing else.
+   - Every official edition (the catalog's `reference@edition` keys) has
+     exactly one file: `.local/references/<edition>.txt` (git-ignored), the
+     whole book from its first page to its last, with `=== PAGE n ===`
+     before each PDF page.
+   - The files are built by `scripts/references/build_reference_texts.py`
+     from the list in `data/bank/reference-texts.json`, which names, for each
+     edition, its PDF in the owner's book library (outside Git;
+     `FANOOS_BOOKS_DIR`) or marks it missing.
+   - Summaries, chapter-by-chapter extracts, CDR/DDQ/پارسه booklets and
+     translations are not references and are never used for classification.
+   - An edition with no complete copy is listed as missing; until the owner
+     supplies it, its questions are matched in the nearest edition named in
+     the list, mapped back to the official edition's chapter, and marked as
+     such.
+
 Still open:
 
 - **Where question source files live** (scans, Word/Excel files, answer keys).
