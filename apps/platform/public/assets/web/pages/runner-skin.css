@@ -7,7 +7,7 @@
  * for reading a clinical stem for two hours: the stem large and medium
  * weight, options one step smaller and regular, everything else small and
  * quiet. Colour carries meaning only: blue for your choice, green for
- * right, red for wrong, amber for what you earned, the brand's coral for
+ * right, red for wrong, orange for what you earned, the brand's red for
  * moving on.
  */
 
@@ -516,49 +516,311 @@ body.x-runner-page {
 
 /* ------------------------------------------------------------- phone */
 
+/*
+ * On a phone the exam is an app screen, not a web page (owner, 2026-10-08:
+ * it still felt like an old site). Edge to edge, no floating card, no
+ * ground texture: a top bar fixed to the top edge with the progress as a
+ * hairline along its foot, the question straight on the white surface, and
+ * a bottom bar fixed to the bottom edge. Nothing scrolls above the top bar
+ * and nothing hides under the bottom one.
+ */
 @media (max-width: 720px) {
     body.x-runner-page {
-        --x-card-pad: var(--space-4);
-        --reading-size: 1rem;
+        --x-card-pad: 18px;
+        --reading-size: 0.98rem;
+        background: var(--surface);
     }
+
+    body.x-runner-page.x-focus .f-page {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0 0 calc(80px + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* -------- top bar: flush with the top edge, the full width */
 
     .x-runner-page .x-bar {
         position: sticky;
-        top: var(--space-2);
-        margin-inline: 0;
-        border-radius: var(--radius-lg);
+        top: 0;
+        z-index: 30;
+        gap: 6px;
+        margin: 0;
+        padding: 10px 12px 12px;
+        padding-top: calc(10px + env(safe-area-inset-top, 0px));
+        border: 0;
+        border-bottom: 1px solid var(--border);
+        border-radius: 0;
+        background: color-mix(in srgb, var(--surface) 90%, transparent);
+        backdrop-filter: saturate(1.4) blur(14px);
+        -webkit-backdrop-filter: saturate(1.4) blur(14px);
+        box-shadow: none;
+    }
+
+    .x-runner-page .x-bar__icon {
+        width: 38px;
+        height: 38px;
+        min-height: 0;
+        padding: 0;
+        border-radius: 12px;
+        background: transparent;
+    }
+
+    .x-runner-page .x-bar__icon:active {
+        background: var(--surface-muted);
+    }
+
+    .x-runner-page .x-bar__icon svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    /* The position is the bar's title, centred between its controls. */
+    .x-runner-page .x-bar__progress {
+        position: static;
+        display: block;
+        min-width: 0;
+        padding: 0;
+        text-align: center;
+    }
+
+    .x-runner-page .x-bar__position {
+        font-size: var(--text-base);
+        font-weight: var(--weight-strong);
+    }
+
+    /* The progress is a hairline along the bar's foot, edge to edge. */
+    .x-runner-page .x-bar__progress-track {
+        position: absolute;
+        inset-inline: 0;
+        bottom: -1px;
+        height: 3px;
+        border-radius: 0;
+        background: transparent;
+    }
+
+    .x-runner-page .x-bar__progress-fill {
+        border-radius: 0;
+        background: var(--accent);
+    }
+
+    .x-runner-page .x-bar__timer {
+        padding: 4px 10px;
+        border-radius: var(--radius-pill);
+        font-size: var(--text-xs);
+    }
+
+    .x-runner-page .x-bar__mode {
+        padding: 4px 10px;
+    }
+
+    .x-runner-page .x-bar__save {
+        display: none;
+    }
+
+    /* -------- the question: on the surface itself, no card */
+
+    .x-runner-page .x-question__stage {
+        display: block;
     }
 
     .x-runner-page .x-question__card {
-        border-radius: 20px;
+        margin: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        overflow: visible;
+    }
+
+    .x-runner-page .x-question__head {
+        align-items: center;
+        padding-block: 16px 0;
+    }
+
+    .x-runner-page .x-question__tools {
+        gap: 2px;
+    }
+
+    .x-runner-page .x-tool,
+    .x-runner-page .x-tool.is-on {
+        width: 36px;
+        height: 36px;
+        border: 0;
+        border-radius: 10px;
+    }
+
+    .x-runner-page .x-tool {
+        background: transparent;
+    }
+
+    .x-runner-page .x-tool svg {
+        width: 21px;
+        height: 21px;
     }
 
     .x-runner-page .x-question__prompt {
-        font-size: calc(1.06rem * var(--x-question-font-scale, 1));
-        line-height: 1.95;
+        padding-block: 14px 20px;
+        font-size: calc(1.04rem * var(--x-question-font-scale, 1));
+        font-weight: 500;
+        line-height: 2.05;
+    }
+
+    .x-runner-page .x-question__card .x-figure {
+        margin-inline: var(--x-card-pad);
+        border-radius: 14px;
+    }
+
+    /* -------- options: one clean row each; the strike keeps its own lane
+       at the end, so no text can run under it */
+
+    .x-runner-page .x-choices {
+        gap: 10px;
+        padding-block: 0 18px;
+    }
+
+    .x-runner-page .x-choices__item {
+        display: block;
+        position: relative;
     }
 
     .x-runner-page .x-choice {
-        min-height: 54px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        min-height: 56px;
+        margin: 0;
+        padding: 12px 14px;
+        padding-inline-end: 50px;
+        border: 1.5px solid var(--surface-strong);
+        border-radius: 14px;
+        background: var(--surface);
+        font-size: calc(var(--reading-size) * var(--x-question-font-scale, 1));
         line-height: 1.8;
+        transform: none;
+        box-shadow: none;
     }
 
-    /* The bottom bar: thumb reach, above the page, never covering the end of
-       the card (the page pads for it). */
-    .x-runner-page .x-nav {
-        padding: var(--space-2) var(--space-3);
-        padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
-        background: color-mix(in srgb, var(--surface) 94%, transparent);
-        backdrop-filter: saturate(1.3) blur(10px);
-        -webkit-backdrop-filter: saturate(1.3) blur(10px);
+    .x-runner-page .x-choice:active:not(.is-struck) {
+        background: var(--surface-muted);
+    }
+
+    .x-runner-page .x-choice__text {
+        flex: 1;
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .x-runner-page .x-choice__letter {
+        flex: none;
+        width: 30px;
+        min-width: 30px;
+        height: 30px;
+        border: 0;
+        border-radius: 9px;
+        background: var(--surface-muted);
+        color: var(--text-secondary);
+        font-size: var(--text-xs);
+    }
+
+    .x-runner-page .x-choice__strike {
+        inset-inline-end: 6px;
+        width: 38px;
+        height: 38px;
+        border: 0;
+        opacity: 0.55;
+    }
+
+    .x-runner-page .x-choice__zoom {
+        position: static;
+        flex: none;
+        width: 32px;
+        height: 32px;
+    }
+
+    .x-runner-page .x-choice__img {
+        display: block;
+        max-width: 100%;
+        margin-top: 8px;
+        border-radius: 10px;
+    }
+
+    /* -------- under the options */
+
+    .x-runner-page .x-question__foot {
+        padding-block: 0 18px;
+    }
+
+    .x-runner-page .x-question__reveal {
+        width: 100%;
+        min-height: 46px;
+        border: 1.5px dashed var(--border-strong);
+        border-radius: 14px;
+        background: transparent;
+        color: var(--text-secondary);
+    }
+
+    .x-runner-page .x-revealed {
+        margin-inline: var(--x-card-pad);
+        border-radius: 14px;
+    }
+
+    .x-runner-page .x-qstats {
+        gap: 0;
+        margin: 0 var(--x-card-pad) 14px;
+        border: 0;
+        border-radius: 14px;
+        overflow: hidden;
+        background: var(--surface-muted);
+    }
+
+    .x-runner-page .x-qstat {
+        padding: 12px 6px;
+        background: transparent;
+    }
+
+    .x-runner-page .x-qstat + .x-qstat {
+        border-inline-start: 1px solid var(--border);
+    }
+
+    .x-runner-page .x-study {
+        margin: 0;
         border-top: 1px solid var(--border);
-        box-shadow: 0 -8px 24px -16px rgba(26, 29, 46, 0.35);
+    }
+
+    /* -------- bottom bar: flush with the bottom edge, in thumb reach */
+
+    .x-runner-page .x-nav {
+        position: fixed;
+        inset-inline: 0;
+        bottom: 0;
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+        padding: 10px 14px;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+        border-top: 1px solid var(--border);
+        background: color-mix(in srgb, var(--surface) 92%, transparent);
+        backdrop-filter: saturate(1.4) blur(14px);
+        -webkit-backdrop-filter: saturate(1.4) blur(14px);
+        box-shadow: none;
+    }
+
+    .x-runner-page .x-nav .f-btn {
+        min-height: 50px;
+        border-radius: 14px;
     }
 
     .x-runner-page .x-nav__prev {
+        flex: none;
+        width: 50px;
         min-width: 0;
-        width: 48px;
         padding: 0;
+        border: 1.5px solid var(--surface-strong);
+        background: var(--surface);
     }
 
     .x-runner-page .x-nav__prev .x-nav__label {
@@ -569,7 +831,18 @@ body.x-runner-page {
         clip-path: inset(50%);
     }
 
-    .x-runner-page .x-nav .f-btn {
-        min-height: 48px;
+    .x-runner-page .x-nav__gap {
+        flex: none;
+        min-height: 50px;
+        padding: 0 6px;
+        font-size: var(--text-sm);
+    }
+
+    .x-runner-page .x-nav__next {
+        flex: 1 !important;
+        font-size: var(--text-lg);
+        font-weight: var(--weight-strong);
+        background: var(--accent);
+        box-shadow: none;
     }
 }
