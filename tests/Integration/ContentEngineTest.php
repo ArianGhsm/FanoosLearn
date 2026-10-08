@@ -132,6 +132,58 @@ final class ContentEngineTest
             $fixture['global_admin'], $fixture['workspace_a'], $deliveryResource['resource_id'],
             $pdfPath, 'lesson.pdf', 'protected',
         );
+        $privateReference = $content->createResource(
+            $fixture['global_admin'], $fixture['workspace_a'], 'other', 'Existing private reference PDF',
+            ['reference' => ['edition_key' => 'fixture@1e']],
+            ['topic' => 'fixture@1e', 'format_key' => 'reference_pdf', 'access_level' => 'private'],
+            'imported',
+        );
+        $privatePdfDigest = hash_file('sha256', $pdfPath);
+        if (!is_string($privatePdfDigest)) {
+            throw new RuntimeException('Temporary upload fixture checksum could not be read.');
+        }
+        $privatePdf = $uploads->addUploadedVersion(
+            $fixture['global_admin'], $fixture['workspace_a'], $privateReference['resource_id'],
+            $pdfPath, 'reference.pdf', 'private',
+        );
+        $reused = $uploads->addExistingPrivatePdfVersion(
+            $fixture['global_admin'], $fixture['workspace_a'], $privateReference['resource_id'], 'fixture@1e', $privatePdfDigest,
+        );
+        self::assert($reused['object_id'] === $privatePdf['object_id'], 'A matching verified private PDF should be reused rather than copied.');
+        $matchingObjectCount = $this->database->prepare("SELECT COUNT(*) FROM content_objects WHERE workspace_id = :workspace AND checksum_sha256 = UNHEX(:checksum) AND detected_mime = 'application/pdf' AND classification = 'private' AND status = 'verified'");
+        $matchingObjectCount->execute(['workspace' => $fixture['workspace_a'], 'checksum' => $privatePdfDigest]);
+        self::assert((int) $matchingObjectCount->fetchColumn() === 1, 'Reusing a verified PDF must not create a duplicate storage object.');
+        $content->publishVerifiedPrivateReferencePdf(
+            $fixture['global_admin'], $fixture['workspace_a'], $privateReference['resource_id'],
+            $reused['version_id'], 'fixture@1e',
+        );
+        $content->publishVerifiedPrivateReferencePdf(
+            $fixture['global_admin'], $fixture['workspace_a'], $privateReference['resource_id'],
+            $reused['version_id'], 'fixture@1e',
+        );
+        $publishedReference = $this->database->prepare(<<<'SQL'
+SELECT resource.lifecycle_status, resource.current_version_no,
+       version.version_no, version.status
+FROM content_resources resource
+JOIN content_resource_versions version
+  ON version.resource_id = resource.id AND version.workspace_id = resource.workspace_id
+WHERE resource.id = :resource AND version.id = :version
+SQL);
+        $publishedReference->execute(['resource' => $privateReference['resource_id'], 'version' => $reused['version_id']]);
+        $publishedReferenceRow = $publishedReference->fetch();
+        self::assert(is_array($publishedReferenceRow)
+            && $publishedReferenceRow['lifecycle_status'] === 'published'
+            && $publishedReferenceRow['status'] === 'approved'
+            && (int) $publishedReferenceRow['current_version_no'] === (int) $publishedReferenceRow['version_no'],
+            'Verified private reference PDF imports should publish the exact approved version.');
+        $referenceReviewCount = $this->database->prepare('SELECT COUNT(*) FROM content_version_reviews WHERE resource_version_id = :version');
+        $referenceReviewCount->execute(['version' => $reused['version_id']]);
+        self::assert((int) $referenceReviewCount->fetchColumn() === 0, 'The reference import path must not invent a human review record.');
+        self::assert($protected->decide($fixture['global_admin'], $fixture['workspace_a'], $privateReference['resource_id'])['allowed'], 'The published private reference should be deliverable to its owner.');
+        $this->expectPlatformException('reference_pdf_invariants_failed', fn () => $content->publishVerifiedPrivateReferencePdf(
+            $fixture['global_admin'], $fixture['workspace_a'], $deliveryResource['resource_id'],
+            $uploaded['version_id'], 'fixture@1e',
+        ));
         @unlink($pdfPath);
         $content->submitForReview($fixture['global_admin'], $fixture['workspace_a'], $deliveryResource['resource_id'], $uploaded['version_id']);
         $content->reviewVersion($fixture['reviewer'], $fixture['workspace_a'], $deliveryResource['resource_id'], $uploaded['version_id'], 'approved');
