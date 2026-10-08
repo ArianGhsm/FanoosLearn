@@ -58,7 +58,7 @@
     {
       "key": "board",
       "name": "بورد",
-      "active": false,
+      "active": true,
       "order": 1
     },
     {

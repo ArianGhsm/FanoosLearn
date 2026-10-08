@@ -158,6 +158,18 @@ SQL);
         $this->assert($this->scalar('SELECT COUNT(*) FROM bank_questions WHERE workspace_id = :ws AND question_key LIKE :prefix', ['ws' => $ws, 'prefix' => 'promotion-1405-10-%']) === 2, 'Promotion specialty slot keys missing.');
         $this->assert($this->scalar("SELECT is_active FROM bank_exam_types WHERE workspace_id = :ws AND type_key = 'promotion'", ['ws' => $ws]) == 1, 'Promotion not active from real catalog.');
 
+        // Board papers in the same year also require independent specialty slots.
+        $board = $promotion;
+        $board['exam_type'] = 'board';
+        $board['year'] = 1404;
+        $this->assert($importer->validate($ws, $board) === [], 'Board round 10 must validate when all questions have the same specialty.');
+        $mixedBoard = $board;
+        $mixedBoard['questions'][1]['subject'] = 'orthodontics';
+        $this->assert($this->mentions($importer->validate($ws, $mixedBoard), 'questions[1].subject'), 'Board sitting mixed specialties.');
+        $importer->import($ws, $board);
+        $this->assert($this->scalar('SELECT COUNT(*) FROM bank_questions WHERE workspace_id = :ws AND question_key LIKE :prefix', ['ws' => $ws, 'prefix' => 'board-1404-10-%']) === 2, 'Board specialty slot keys missing.');
+        $this->assert($this->scalar("SELECT is_active FROM bank_exam_types WHERE workspace_id = :ws AND type_key = 'board'", ['ws' => $ws]) == 1, 'Board not active in catalog.');
+
         // A reviewed source survives a later AI pass.
         $this->database->prepare("UPDATE bank_question_sources s JOIN bank_questions q ON q.id = s.question_id SET s.reviewed_by_user_id = :user, s.reviewed_at = UTC_TIMESTAMP(6), s.page = '257' WHERE q.question_key = :key")
             ->execute(['user' => $f['reviewer'], 'key' => $key]);

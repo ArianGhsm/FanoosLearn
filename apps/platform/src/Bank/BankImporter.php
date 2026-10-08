@@ -419,9 +419,9 @@ SQL);
         if (!is_int($file['year'] ?? null) || $file['year'] < 1350 || $file['year'] > 1500) {
             $this->fail('year', 'must be a Jalali year, e.g. 1404');
         }
-        // Promotion specialties are independent sittings within the same year.
+        // Promotion and board specialties are independent sittings within the same year.
         // Their stable slots can exceed the nine rounds supported for other exam types.
-        $maxRound = ($file['exam_type'] ?? null) === 'promotion' ? 99 : 9;
+        $maxRound = in_array(($file['exam_type'] ?? null), ['promotion', 'board'], true) ? 99 : 9;
         if (isset($file['round']) && (!is_int($file['round']) || $file['round'] < 1 || $file['round'] > $maxRound)) {
             $this->fail('round', "must be 1–{$maxRound}");
         }
@@ -437,7 +437,7 @@ SQL);
             $this->fail('questions', 'must hold at least one question');
         }
         $numbers = [];
-        $promotionSubject = null;
+        $specialtySubject = null;
         foreach ($questions as $i => $question) {
             $here = "questions[{$i}]";
             if (!is_array($question)) {
@@ -451,12 +451,12 @@ SQL);
                 $this->fail("{$here}.number", "{$number} appears twice");
             }
             $numbers[(int) $number] = true;
-            if (($file['exam_type'] ?? null) === 'promotion') {
+            if (in_array(($file['exam_type'] ?? null), ['promotion', 'board'], true)) {
                 $questionSubject = (string) ($question['subject'] ?? '');
-                if ($promotionSubject !== null && $promotionSubject !== $questionSubject) {
-                    $this->fail("{$here}.subject", 'a promotion sitting must contain questions from one specialty only');
+                if ($specialtySubject !== null && $specialtySubject !== $questionSubject) {
+                    $this->fail("{$here}.subject", 'a specialty board/promotion sitting must contain questions from one specialty only');
                 }
-                $promotionSubject ??= $questionSubject;
+                $specialtySubject ??= $questionSubject;
             }
             if ($this->lookup($workspaceId, 'bank_subjects', 'subject_key', (string) ($question['subject'] ?? '')) === null) {
                 $this->fail("{$here}.subject", 'unknown subject "' . ($question['subject'] ?? '') . '"');
