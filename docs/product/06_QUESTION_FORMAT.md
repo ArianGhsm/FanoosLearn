@@ -86,6 +86,14 @@ table of references and editions in the script, and writes:
 Concepts are not in the workbook; they are added as questions are
 classified.
 
+### Promotion exams (ارتقا) — separate specialties
+
+Promotion question papers are separate for each specialty: the 1405 Drive folder contains ten independently numbered 100-question documents. They are **not** combined into one 1,000-question exam. The existing `exam_round` field is used as a stable *internal specialty slot* for these promotion sittings (1–99), while ordinary exam types keep their 1–9 rounds. The site-visible title is `ارتقا <year> · <subject>`, derived from the single subject in the sitting, not "نوبت N". Never reuse a slot for another specialty in the same year after import; the question keys incorporate it.
+
+Promotion 1405 slots: 1 endodontics; 2 periodontics; 3 prosthodontics; 4 operative-dentistry; 5 oral-surgery; 6 oral-medicine; 7 oral-pathology; 8 oral-radiology; 9 orthodontics; 10 pediatric-dentistry. Each sitting has numbers 1–100, the official final key and any `voided`/`also_correct` statuses. Preserve verified images as assets. An ambiguous option in a source document is kept in the bank as `withdrawn` until visual review, never guessed, and excluded from publication. Chapter/page/sources stay absent until verified against complete references.
+
+Keep the source DOCX and prepared JSON/images outside Git (private storage), follow `check`, `import --dry-run`, verified backup, import and publication for every sitting. Re-imports must report `questions_changed=0` unless an explicit corrected transcription is being imported.
+
 ## 2. One question in the sitting file
 
 ```json
