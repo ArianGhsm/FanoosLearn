@@ -60,6 +60,14 @@ SQL);
         }
         $definition = ['questions' => $questions];
         $title = $row['type_name'] . ' ' . self::faDigits((string) $year) . ($round > 1 ? ' · نوبت ' . self::faDigits((string) $round) : '');
+        if ($examType === 'promotion') {
+            // For promotion exams a slot identifies a specialty, not a second sitting.
+            $subjects = array_values(array_unique(array_map(static fn (array $question): string => (string) ($question['tags'][0] ?? ''), $questions)));
+            if (count($subjects) !== 1 || $subjects[0] === '') {
+                throw new PlatformException('promotion_specialty_invalid', 'A promotion exam must have exactly one specialty.', 422);
+            }
+            $title = $row['type_name'] . ' ' . self::faDigits((string) $year) . ' · ' . $subjects[0];
+        }
 
         $newExam = $row['assessment_id'] === null;
         if ($newExam) {

@@ -419,8 +419,11 @@ SQL);
         if (!is_int($file['year'] ?? null) || $file['year'] < 1350 || $file['year'] > 1500) {
             $this->fail('year', 'must be a Jalali year, e.g. 1404');
         }
-        if (isset($file['round']) && (!is_int($file['round']) || $file['round'] < 1 || $file['round'] > 9)) {
-            $this->fail('round', 'must be 1–9');
+        // Promotion specialties are independent sittings within the same year.
+        // Their stable slots can exceed the nine rounds supported for other exam types.
+        $maxRound = ($file['exam_type'] ?? null) === 'promotion' ? 99 : 9;
+        if (isset($file['round']) && (!is_int($file['round']) || $file['round'] < 1 || $file['round'] > $maxRound)) {
+            $this->fail('round', "must be 1–{$maxRound}");
         }
         if (isset($file['held_on']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $file['held_on']) !== 1) {
             $this->fail('held_on', 'must be a Gregorian date, YYYY-MM-DD');
@@ -434,6 +437,7 @@ SQL);
             $this->fail('questions', 'must hold at least one question');
         }
         $numbers = [];
+        $promotionSubject = null;
         foreach ($questions as $i => $question) {
             $here = "questions[{$i}]";
             if (!is_array($question)) {
@@ -447,6 +451,13 @@ SQL);
                 $this->fail("{$here}.number", "{$number} appears twice");
             }
             $numbers[(int) $number] = true;
+            if (($file['exam_type'] ?? null) === 'promotion') {
+                $questionSubject = (string) ($question['subject'] ?? '');
+                if ($promotionSubject !== null && $promotionSubject !== $questionSubject) {
+                    $this->fail("{$here}.subject", 'a promotion sitting must contain questions from one specialty only');
+                }
+                $promotionSubject ??= $questionSubject;
+            }
             if ($this->lookup($workspaceId, 'bank_subjects', 'subject_key', (string) ($question['subject'] ?? '')) === null) {
                 $this->fail("{$here}.subject", 'unknown subject "' . ($question['subject'] ?? '') . '"');
             }
