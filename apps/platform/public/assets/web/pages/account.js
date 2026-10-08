@@ -22,6 +22,8 @@ const doneBox = document.getElementById('password-done');
 const signout = document.getElementById('signout');
 const signoutError = document.getElementById('signout-error');
 const signoutErrorText = document.getElementById('signout-error-text');
+// The row carries an icon and a hint; only its label changes while signing out.
+const signoutLabel = signout?.querySelector?.('.a-row__label') ?? signout;
 
 function fail(message) {
     doneBox.hidden = true;
@@ -71,7 +73,7 @@ form?.addEventListener('submit', async (event) => {
 signout?.addEventListener('click', async () => {
     signoutError.hidden = true;
     signout.disabled = true;
-    signout.textContent = 'در حال خروج…';
+    signoutLabel.textContent = 'در حال خروج…';
     try {
         await api.post('/auth/logout', {});
     } catch (error) {
@@ -79,7 +81,7 @@ signout?.addEventListener('click', async () => {
         // right destination is still the signed-out front door.
         if (!(error instanceof ApiError && error.isSessionExpired)) {
             signout.disabled = false;
-            signout.textContent = 'خروج از حساب';
+            signoutLabel.textContent = 'خروج از حساب';
             signoutErrorText.textContent = describeError(error);
             signoutError.hidden = false;
             signoutError.setAttribute('tabindex', '-1');

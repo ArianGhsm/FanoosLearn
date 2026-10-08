@@ -119,6 +119,136 @@ a.b-row:hover {
     flex: none;
 }
 
+/* ------------------------------------------------------- course cards */
+
+/*
+ * The overview as a grid of cards, like MedoFast's bank: each course a white
+ * card with its own colour mark, its name, and how many questions it has.
+ */
+.b-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: var(--space-3);
+}
+
+.b-card {
+    --hue: var(--accent);
+    --hue-soft: var(--accent-soft);
+    position: relative;
+    display: grid;
+    align-content: start;
+    gap: 4px;
+    min-height: 150px;
+    padding: var(--space-4);
+    border: 1px solid transparent;
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: transform var(--motion-fast) var(--ease), box-shadow var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease);
+}
+
+a.b-card:hover,
+a.b-card:focus-visible {
+    border-color: var(--hue);
+    box-shadow: var(--shadow-lift);
+    transform: translateY(-2px);
+}
+
+.b-card[data-hue="subject"] { --hue: var(--hue-subject); --hue-soft: var(--hue-subject-soft); }
+.b-card[data-hue="tag"] { --hue: var(--hue-tag); --hue-soft: var(--hue-tag-soft); }
+.b-card[data-hue="difficulty"] { --hue: var(--hue-difficulty); --hue-soft: var(--hue-difficulty-soft); }
+.b-card[data-hue="source"] { --hue: var(--hue-source); --hue-soft: var(--hue-source-soft); }
+.b-card[data-hue="success"] { --hue: var(--success); --hue-soft: var(--success-soft); }
+.b-card[data-hue="info"] { --hue: var(--info); --hue-soft: var(--info-soft); }
+
+.b-card.is-empty {
+    box-shadow: none;
+    background: var(--surface-muted);
+}
+
+.b-card.is-empty .b-card__mark {
+    filter: grayscale(1);
+    opacity: 0.6;
+}
+
+.b-card__mark {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin-bottom: var(--space-2);
+    border-radius: 14px;
+    background: var(--hue-soft);
+    color: var(--hue);
+    font-size: var(--text-xl);
+    font-weight: var(--weight-strong);
+}
+
+.b-card__title {
+    font-size: var(--text-base);
+    line-height: 1.6;
+}
+
+.b-card__count {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--hue);
+}
+
+.b-card.is-empty .b-card__count {
+    color: var(--text-tertiary);
+}
+
+.b-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin-top: 4px;
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+}
+
+/* A year card leads with the year itself, large, in its colour. */
+.b-card--year {
+    min-height: 0;
+}
+
+.b-card__year {
+    font-size: var(--text-3xl);
+    font-weight: var(--weight-strong);
+    line-height: 1.2;
+    color: var(--hue);
+}
+
+@media (max-width: 560px) {
+    .b-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .b-card {
+        min-height: 0;
+        padding: 14px;
+    }
+
+    .b-card__mark {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        font-size: var(--text-lg);
+    }
+
+    .b-card__title {
+        font-size: var(--text-sm);
+    }
+
+    .b-card__meta {
+        display: none;
+    }
+}
+
 /* ------------------------------------------------------------- subject */
 
 .b-facts {

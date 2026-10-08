@@ -59,6 +59,9 @@ function studyButton(text, body, tone = 'ghost') {
     return button;
 }
 
+/* The information hues (foundation/tokens.css), cycled across the cards. */
+const CARD_HUES = ['subject', 'accent', 'tag', 'difficulty', 'source', 'success', 'info'];
+
 /* ------------------------------------------------------------ overview */
 
 async function overview() {
@@ -77,28 +80,29 @@ async function overview() {
     const draw = () => {
         const q = search.value;
         if (view === 'subjects') {
-            const list = el('div', 'b-sheet');
-            for (const subject of data.subjects.filter((s) => matches(q, s.name, s.name_en))) {
-                const row = el(subject.total > 0 ? 'a' : 'div', `b-row${subject.total > 0 ? '' : ' is-empty'}`);
-                if (subject.total > 0) row.href = `/app/bank/${encodeURIComponent(subject.key)}`;
-                const body = el('div', 'b-row__body');
-                body.append(el('strong', 'b-row__title', subject.name));
-                const meta = el('div', 'b-row__meta');
-                if (subject.total > 0) {
-                    meta.append(el('span', '', `${faDigits(subject.total)} سؤال`));
-                    if (subject.per_exam) meta.append(el('span', '', `حدود ${faDigits(subject.per_exam)} سؤال در هر آزمون`));
+            const list = el('div', 'b-cards');
+            data.subjects.filter((s) => matches(q, s.name, s.name_en)).forEach((subject, index) => {
+                const live = subject.total > 0;
+                const card = el(live ? 'a' : 'div', `b-card${live ? '' : ' is-empty'}`);
+                if (live) card.href = `/app/bank/${encodeURIComponent(subject.key)}`;
+                // Each course its own colour, cycling, so the grid is told apart at a glance.
+                card.dataset.hue = CARD_HUES[index % CARD_HUES.length];
+                card.append(el('span', 'b-card__mark', String(subject.name || '؟').trim().charAt(0)));
+                card.append(el('strong', 'b-card__title', subject.name));
+                if (live) {
+                    card.append(el('span', 'b-card__count', `${faDigits(subject.total)} سؤال`));
+                    const meta = el('div', 'b-card__meta');
                     const span = yearSpan(subject.first_year, subject.last_year, faDigits);
                     if (span) meta.append(el('span', '', span));
                     if (subject.topics > 0) meta.append(el('span', '', `${faDigits(subject.topics)} مبحث`));
-                    if (subject.old_reference > 0) meta.append(el('span', 'b-old', `${faDigits(subject.old_reference)} با رفرنس قدیم`));
+                    if (subject.per_exam) meta.append(el('span', '', `~${faDigits(subject.per_exam)} در هر آزمون`));
+                    if (subject.old_reference > 0) meta.append(el('span', 'b-old', `${faDigits(subject.old_reference)} رفرنس قدیم`));
+                    if (meta.firstChild) card.append(meta);
                 } else {
-                    meta.append(el('span', '', 'سؤال‌هایش به‌زودی'));
+                    card.append(el('span', 'b-card__count', 'به‌زودی'));
                 }
-                body.append(meta);
-                row.append(body);
-                if (subject.total > 0) row.append(el('span', 'b-row__go', '←'));
-                list.append(row);
-            }
+                list.append(card);
+            });
             if (!list.firstChild) list.append(el('p', 'f-muted b-pad', 'درسی با این نام نیست.'));
             done(list);
             return;
@@ -108,18 +112,16 @@ async function overview() {
             done(empty('هنوز آزمونی منتشر نشده', 'سؤال‌های هر سال که وارد بانک شود، این‌جا فهرست می‌شود.'));
             return;
         }
-        const list = el('div', 'b-sheet');
-        for (const sitting of sittings) {
-            const row = el('a', 'b-row');
-            row.href = `/app/exams/${encodeURIComponent(sitting.assessment_id)}`;
-            const body = el('div', 'b-row__body');
-            body.append(el('strong', 'b-row__title', sittingLabel(sitting, faDigits)));
-            const meta = el('div', 'b-row__meta');
-            meta.append(el('span', '', `${faDigits(sitting.questions)} سؤال`));
-            body.append(meta);
-            row.append(body, el('span', 'b-row__go', '←'));
-            list.append(row);
-        }
+        const list = el('div', 'b-cards b-cards--years');
+        sittings.forEach((sitting, index) => {
+            const card = el('a', 'b-card b-card--year');
+            card.href = `/app/exams/${encodeURIComponent(sitting.assessment_id)}`;
+            card.dataset.hue = CARD_HUES[index % CARD_HUES.length];
+            card.append(el('span', 'b-card__year', sitting.year ? faDigits(sitting.year) : '—'));
+            card.append(el('strong', 'b-card__title', sittingLabel(sitting, faDigits)));
+            card.append(el('span', 'b-card__count', `${faDigits(sitting.questions)} سؤال`));
+            list.append(card);
+        });
         done(list);
     };
 
