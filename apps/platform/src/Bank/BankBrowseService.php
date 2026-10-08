@@ -114,12 +114,12 @@ final class BankBrowseService
         foreach ($questions as $question) {
             $recent = $recentFrom !== null && $question['year'] >= $recentFrom;
             $topicKey = $question['topic_key'] ?? '';
-            $topics[$topicKey] ??= ['key' => $question['topic_key'], 'name' => $question['topic_name'], 'total' => 0, 'recent' => 0, 'old_reference' => 0];
+            $topics[$topicKey] ??= ['key' => $question['topic_key'], 'name' => $question['topic_name'], 'name_en' => $question['topic_name_en'], 'total' => 0, 'recent' => 0, 'old_reference' => 0];
             ++$topics[$topicKey]['total'];
             $topics[$topicKey]['recent'] += $recent ? 1 : 0;
             $topics[$topicKey]['old_reference'] += $question['old_reference'] ? 1 : 0;
             if ($question['concept_key'] !== null && $question['concept_key'] !== $question['topic_key']) {
-                $concepts[$question['concept_key']] ??= ['key' => $question['concept_key'], 'name' => $question['concept_name'], 'topic' => $question['topic_name'], 'total' => 0, 'recent' => 0];
+                $concepts[$question['concept_key']] ??= ['key' => $question['concept_key'], 'name' => $question['concept_name'], 'name_en' => $question['concept_name_en'], 'topic' => $question['topic_name'], 'total' => 0, 'recent' => 0];
                 ++$concepts[$question['concept_key']]['total'];
                 $concepts[$question['concept_key']]['recent'] += $recent ? 1 : 0;
             }
@@ -353,7 +353,7 @@ SQL);
      * Published questions, newest year first and in paper order, each with
      * the topic (its top-level concept) and concept it is filed under.
      *
-     * @return list<array{key:string,subject_key:string,sitting_id:string,year:int,round:int,number:int,topic_key:?string,topic_name:?string,concept_key:?string,concept_name:?string,old_reference:bool}>
+     * @return list<array{key:string,subject_key:string,sitting_id:string,year:int,round:int,number:int,topic_key:?string,topic_name:?string,topic_name_en:?string,concept_key:?string,concept_name:?string,concept_name_en:?string,old_reference:bool}>
      */
     private function questions(string $workspaceId, ?string $subjectId): array
     {
@@ -397,8 +397,10 @@ SQL);
                 'number' => (int) $row['number_in_sitting'],
                 'topic_key' => $topic['key'] ?? null,
                 'topic_name' => $topic['name'] ?? null,
+                'topic_name_en' => $topic['name_en'] ?? null,
                 'concept_key' => $concept['key'] ?? null,
                 'concept_name' => $concept['name'] ?? null,
+                'concept_name_en' => $concept['name_en'] ?? null,
                 'old_reference' => in_array($row['currency'], self::OLD_REFERENCE, true),
             ];
         }
@@ -406,14 +408,38 @@ SQL);
         return $rows;
     }
 
-    /** @return array<string, array{key:string,name:string,parent_id:?string}> */
+    /**
+     * Topics and concepts, each named in Persian with its English name beside
+     * it. A topic that is a book chapter and was filed under its English title
+     * takes the chapter's Persian title from the reference catalog.
+     *
+     * @return array<string, array{key:string,name:string,name_en:?string,parent_id:?string}>
+     */
     private function concepts(string $workspaceId): array
     {
-        $query = $this->database->prepare('SELECT id, concept_key, name, parent_id FROM bank_concepts WHERE workspace_id = :workspace');
+        $query = $this->database->prepare(<<<'SQL'
+SELECT concept.id, concept.concept_key, concept.name, concept.name_en, concept.parent_id,
+       (SELECT node.title_fa FROM bank_reference_nodes node
+        WHERE node.workspace_id = concept.workspace_id AND node.title = concept.name AND node.title_fa IS NOT NULL
+        ORDER BY node.title_fa_origin = 'human' DESC LIMIT 1) AS title_fa
+FROM bank_concepts concept
+WHERE concept.workspace_id = :workspace
+SQL);
         $query->execute(['workspace' => $workspaceId]);
         $concepts = [];
         foreach ($query->fetchAll() as $row) {
-            $concepts[(string) $row['id']] = ['key' => (string) $row['concept_key'], 'name' => (string) $row['name'], 'parent_id' => $row['parent_id'] === null ? null : (string) $row['parent_id']];
+            $name = (string) $row['name'];
+            $english = $row['name_en'] === null ? null : (string) $row['name_en'];
+            if ($row['title_fa'] !== null && $row['title_fa'] !== '') {
+                $english ??= $name;
+                $name = (string) $row['title_fa'];
+            }
+            $concepts[(string) $row['id']] = [
+                'key' => (string) $row['concept_key'],
+                'name' => $name,
+                'name_en' => $english !== null && $english !== $name ? $english : null,
+                'parent_id' => $row['parent_id'] === null ? null : (string) $row['parent_id'],
+            ];
         }
 
         return $concepts;

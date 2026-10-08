@@ -191,6 +191,14 @@ SQL);
         $subject = $browse->subject($f['student'], $ws, 'endodontics');
         $this->assert($subject['topics'][0]['key'] === 'endodontics/cleaning-and-shaping' && $subject['topics'][0]['total'] === 2 && count($subject['high_yield']) === 2, 'Subject topics: ' . json_encode($subject['topics'], JSON_UNESCAPED_UNICODE));
         $this->assert($subject['references'] !== [], 'The subject page lists no references.');
+        // A topic filed under a chapter's English title shows the chapter's Persian title, with the English beside it.
+        $node = $this->database->prepare('SELECT id, title FROM bank_reference_nodes WHERE workspace_id = :workspace ORDER BY title LIMIT 1');
+        $node->execute(['workspace' => $ws]);
+        $node = $node->fetch();
+        $this->database->prepare("UPDATE bank_reference_nodes SET title_fa = 'پاک‌سازی و شکل‌دهی', title_fa_origin = 'ai' WHERE id = :id")->execute(['id' => $node['id']]);
+        $this->database->prepare("UPDATE bank_concepts SET name = :title WHERE workspace_id = :workspace AND concept_key = 'endodontics/cleaning-and-shaping'")->execute(['title' => $node['title'], 'workspace' => $ws]);
+        $named = $browse->subject($f['student'], $ws, 'endodontics')['topics'][0];
+        $this->assert($named['name'] === 'پاک‌سازی و شکل‌دهی' && $named['name_en'] === $node['title'], 'The topic is not named in Persian with its English title: ' . json_encode($named, JSON_UNESCAPED_UNICODE));
         $years = $browse->references($f['student'], $ws);
         $this->assert($years[0]['year'] >= 1405, 'References are not newest year first.');
         $torabinejad = null;
