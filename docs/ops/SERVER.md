@@ -53,6 +53,13 @@ from the import map each page emits (`AssetVersioner::moduleMap()`).
 | `fanoosbale` | the Bale bot |
 | group `fanoosrt` | shared read access to releases and storage for all of the above |
 
+The host's php-fpm runs under an AppArmor profile shared with the other
+workload. Its local allowances (`/etc/apparmor.d/local/php-fpm`) must include
+`/srv/fanoos/shared/storage/** rwk,`, or every exam image answers 404 (the pool
+log says "Permission denied"). `scripts/ops/allow-storage-apparmor.sh` adds that
+one rule, keeps a dated copy of the file and reloads only the php-fpm profile;
+it was applied on 2026-10-08.
+
 ## Services and timers
 
 | Unit | What | When |

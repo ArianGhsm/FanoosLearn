@@ -189,6 +189,22 @@
     .f-account {
         padding-inline-end: var(--space-1);
     }
+
+    /* Tablet widths: icons only, tighter spacing, and a workspace label that
+       gives way first, so the bar never runs past the screen. */
+    .f-header__inner {
+        gap: var(--space-2);
+    }
+
+    .f-header__workspace {
+        min-width: 0;
+        max-width: 140px;
+        flex-shrink: 1;
+    }
+
+    .f-nav__link {
+        padding: 0 var(--space-2);
+    }
 }
 
 @media (max-width: 720px) {
