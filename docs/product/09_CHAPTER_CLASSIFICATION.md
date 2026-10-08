@@ -3,12 +3,16 @@
 How a question gets its source: which official reference, which chapter,
 which page. The procedure is the same for every exam type the catalog
 carries (دستیاری, بورد, ارتقا …), every year, and every agent or person who
-does the work. It is written so another agent (Codex or any other) can be
-handed a sitting and this document and produce the same kind of result.
+does the work. It is written so that another agent (Codex or any other) can
+be handed a year and this document and produce the same kind of result,
+without breaking what is already on the site.
 
-The governing rule is PROJECT_PRINCIPLES decision 6: classification is done
-against the book's own text, one full-book text per edition, and nothing
-else.
+The governing rules are PROJECT_PRINCIPLES decisions 6 and 7:
+classification is done against the book's own text, one full-book text per
+edition, and nothing else; and the checks below are never bypassed.
+
+Everything here was learned on 1398–1405 (2026-10-08). §8 lists the mistakes
+that were made and what now stops each of them.
 
 ## 1. What a result must be
 
@@ -24,10 +28,9 @@ A question's source is **found, not guessed**. It is accepted only with:
 `scripts/references/apply_classification.py` checks every one of these
 against the books before anything is written. A chapter chosen from chapter
 titles, a summary or a booklet, or from memory, fails that check because
-there is no page and no quote to back it. The rejected classifications of
-the past did exactly that: on the 20 endodontics questions of 1403, a third
-of the chapters assigned from titles alone (some at "0.95 confidence") were
-wrong once the book was read.
+there is no page and no quote to back it. Title-based classification was
+measured: on 1403 endodontics a third of such chapters were wrong, and on
+1404 a quarter (49 of 188) differed from the page-verified chapter.
 
 ## 2. What the work needs
 
@@ -38,20 +41,23 @@ wrong once the book was read.
 | Which file each edition's text is built from, and which editions are missing | `data/bank/reference-texts.json` |
 | The full texts | `.local/references/<edition>.txt` (git-ignored) |
 | Which chapter every page is in | `data/bank/reference-chapter-pages.json` |
-| The questions | a sitting file (`fanoos.bank.sitting/1`, docs/product/06_QUESTION_FORMAT.md) |
-| Decisions | `.local/classification/decisions/<sitting>-<subject>.json` |
+| The questions, as they are on the site | the year's sitting file (§4) |
+| Decisions | `.local/classification/decisions/<year>-<subject>.json` |
+| Server access for the import | `.local/SERVER_ACCESS.md` (git-ignored; never in this repository) |
 
-Setting up once (or after a new book arrives in the owner's library):
+Setting up once, and again whenever books are added to the owner's library:
 
 ```sh
 python scripts/references/build_reference_texts.py --library "<book library>"
 python scripts/references/build_chapter_pages.py
 ```
 
-A new exam type, year or edition is data: add the reference and its edition
-to the catalog (with its chapter list), the year's official list to
-`validity`, the edition's PDF to `reference-texts.json`, and rebuild. The
-procedure does not change.
+A new book means: its PDF named in `reference-texts.json` (the `missing`
+mark removed), both commands re-run, and the chapter map checked (every
+chapter of the edition has a run of pages). A new exam type, year or
+edition is data: the reference and its edition in the catalog (with its
+chapter list), the year's official list in `validity`, the PDF in
+`reference-texts.json`. The procedure does not change.
 
 ## 3. The procedure
 
@@ -64,104 +70,205 @@ python scripts/references/classification_batch.py --sitting=<sitting.json> \
     --subject=<subject> --out=<queries.json>
 ```
 
-It prints the official editions (and, for a missing one, the edition to
-search instead) and every question with its official answer, and writes a
-query file with the editions filled in.
+It prints the official editions (for a missing one, the edition to search
+instead, or "nothing to search"), the announced scope, and every question
+with its official answer, and writes a query file with the editions filled
+in. "No official reference for … these questions get no source" means
+exactly that: do not classify that subject for that year (§5).
 
 **Step 2 — write the search terms.** For each question, write into `terms`
 the English words the book would use for the fact the question tests:
 technical terms from the stem and from the **correct** option, the specific
-numbers, named techniques and instruments. Translate Persian into the book's
-vocabulary. Terms of several words count most when the words occur together.
-Think about what the right answer is, and search for that, not for the
-question's general topic.
+numbers, named techniques, instruments, drugs, syndromes. Translate Persian
+into the book's vocabulary. Five or six terms; terms of several words count
+most when the words occur together. Search for what makes the right answer
+right, not for the question's general topic.
 
 **Step 3 — search.**
 
 ```sh
-python scripts/references/find_in_books.py <queries.json>
+python scripts/references/find_in_books.py <queries.json> --top 3
 ```
 
-For each question: the best pages, each with its chapter and the matching
-lines. Index, contents and bibliography pages are skipped.
+For each question: the best pages, each with its chapter, the matching
+lines, and a `quote:` line — ten words from that page around the best
+match, already checked the way step 6 checks evidence.
 
 **Step 4 — decide, reading the text.** Choose the page whose text actually
 states the fact that makes the correct option correct (or the incorrect ones
-incorrect). Not the page that merely mentions the topic. If the top results
-do not state it, search again with different terms (step 2) until a page
-does, or conclude it is not in the book.
+incorrect), not a page that merely mentions the topic. If the top results do
+not state it, search again with other terms (`--top 5`, the wording of the
+book rather than of the question, the wrong options' terms) until a page
+does. Only after two or three honest attempts may a question be left
+undecided (§5).
 
-- The fact is in two chapters: take the one that teaches it (its own
-  section), not the one that refers to it in passing.
-- The page is in a chapter outside the year's announced scope (`scope` in
-  `validity`): look for the same fact inside the scope first; if it is only
-  outside, keep it and lower the confidence.
-- The question is not answerable from any official reference, or the
-  subject has no official reference that year (English, often community
-  dentistry): record `none` with the reason.
+- The fact is in two chapters: take the one that teaches it, not the one that
+  refers to it in passing.
+- The page is outside the year's announced `scope`: look for the same fact
+  inside the scope first; if it is only outside, keep it and lower the
+  confidence.
+- Review questions at the end of a chapter, the index, tables of contents
+  and reference lists are never the evidence page.
 
 **Step 5 — record.** One decision per question in
-`.local/classification/decisions/<year>-<subject>.json`:
+`.local/classification/decisions/<year>-<subject>.json` (only this year's
+files are read for a sitting, by the `<year>-` prefix):
 
 ```json
 [
  {"number": 22, "edition": "torabinejad-endodontics@6e", "chapter": "20", "page": 446,
   "confidence": 0.97,
-  "evidence": "the flap should be compressed with a saline soaked gauze and firm finger pressure for a minimum of 3 minutes ... formation of a hematoma under the flap"},
- {"number": 241, "none": "English reading passage; no official reference"}
+  "evidence": "it contains a small scissors that can also cut the suture"},
+ {"number": 118, "edition": "carranza-periodontology@14e", "chapter": "32", "page": 777,
+  "official_chapter": "25", "confidence": 0.95,
+  "evidence": "trauma from occlusion occurs in the supporting tissues and does not"},
+ {"number": 241, "none": "English language section; the official list names no reference for it"}
 ]
 ```
 
-- `page` is the PDF page as `find_in_books.py` printed it (`p446`).
-- `evidence` is copied **word for word** from that page as the search
-  printed it; omissions are marked with `...`; every fragment has at least
-  four words. A paraphrase is rejected.
+- `page` is the PDF page as the search printed it (`p446`), not the printed
+  page number.
+- `evidence` is copied **word for word** from the search output — best, the
+  `quote:` line. Several fragments are joined with `...`; every fragment has
+  at least four words. Never a paraphrase, a translation or a summary.
+  Words broken by the PDF (`efective`, `he` for "The", `dierent`, `àap`) are
+  copied as printed; avoid fragments with symbols (`≤`, `•`, `‐`, `#`,
+  superscript reference numbers) when a plain run of words is available.
 - `confidence`: 0.95+ when the quote states the answer outright; 0.85–0.94
-  when it states it but the question's wording differs or two chapters
-  teach it; below 0.85 when it is an inference — those go to the owner's
-  review queue (PROJECT_PRINCIPLES decision 5).
-- For a missing official edition, `edition` is the nearest one you searched;
-  the check carries the chapter over to the official edition by its title
-  and the source cites the official edition. When the editions were
-  reorganised (a chapter renamed, split or merged — Carranza 13 → 14 is
-  the common case), name the official edition's chapter yourself with
-  `"official_chapter": "18"`, chosen from that edition's chapter list for
-  the fact the quote states; the check confirms the chapter exists.
+  when it states it but the wording differs or two chapters teach it;
+  0.6–0.84 when it is the right section but the exact fact is inferred;
+  below 0.6 only after re-searching, and it goes to the owner's review
+  queue (PROJECT_PRINCIPLES decision 5).
+- For a missing official edition, `edition` is the nearest one searched. The
+  chapter is carried over to the official edition by title; when the
+  editions were reorganised, name it yourself with `official_chapter`
+  (§6). The check rejects a carry-over it cannot make by title.
 
 **Step 6 — check and write.**
 
 ```sh
 python scripts/references/apply_classification.py --sitting=<sitting.json> \
-    --decisions=.local/classification/decisions/ --out=<sitting-with-sources.json>
+    --decisions=.local/classification/decisions/ --out=.local/classification/sittings/<sitting>.json
 ```
 
-Every rejection is listed with its reason (wrong edition for the year,
-chapter not in the catalog, page outside the chapter, quote not on the page,
-…); fix and run again. With no rejections it writes the sitting with
-`sources` — reference, chapter node, printed page, the quote as anchor,
-confidence — ready to import with `scripts/import/import-bank.php`
-(06_QUESTION_FORMAT.md §5–6). Imported sources are `origin: ai` until the
-owner reviews them.
+Every rejection is listed with its reason; fix the decision and run again —
+never the catalog, the chapter map, the texts or the scripts. With no
+rejections it writes the sitting with `sources` (reference, chapter node,
+printed page, the quote as anchor, `origin: ai`, confidence).
 
-## 4. Handing a batch to another agent
+**Step 7 — put it on the site** (§7).
 
-Give the agent this document, the sitting file, the subject, and access to
-the repository and `.local/references/`. Its deliverable is the decisions
-file and a clean `apply_classification.py` run — nothing else. It must not
-edit the catalog, the chapter map, the texts or the scripts to make a
-decision pass; a decision that cannot pass is reported, with the reason.
+## 4. Which sitting file a year starts from
 
-## 5. When a book is missing
+The sitting given to steps 1 and 6 must carry **the same text the site
+has**, or the import rewrites the questions. The dry run (§7) proves it.
 
-`reference-texts.json` lists editions with no complete copy (`missing`),
-with the nearest available edition (`nearest`). Until the owner supplies the
-book:
+| Year | Sitting that matches the site |
+|---|---|
+| 1398–1403 | `.local/bank-sittings/<year>/residency-<year>-1.json`, made from the owner's `<year>.docx` with `scripts/import/docx_to_sitting.py` (06_QUESTION_FORMAT.md §6) |
+| 1404 | built from the hand-checked transcription: `python scripts/import/corpus_to_bank.py build --workbook=<corpus.xlsx> --year=1404 --form=A --reviewed=.local/exam-questions/dental-residency/review-1404/form-a.import.json --catalog-out=<tmp> --sitting-out=<sitting>`, images from `review-1404/assets`. The docx sitting differs in 171 stems (spacing) and must not be imported |
+| 1405 | `.local/bank-sittings/1405/residency-1405-1.json` — since 2026-10-08 it holds the workbook's visual transcription (the booklet's text layer is corrupt); the docx text is kept beside it as `.docx-text.json` for reference only |
 
-- search the nearest edition; the source is recorded against the official
-  edition's same-titled chapter, its page left empty, and the anchor says
-  which edition the quote came from;
-- an edition with no nearest edition cannot be classified; its questions
-  wait.
+A future year is added to this table when its sitting is first imported.
 
-When the book arrives: add its PDF to `reference-texts.json`, rebuild the
-text and the chapter map, and re-run those batches.
+## 5. None, undecided, and what is already there
+
+- **`none`** is only for a question that cannot have an official source:
+  the subject has no official reference that year (English; a subject the
+  year's list leaves out), or the question is about something no official
+  reference covers. Its reason says which.
+- **Not found yet is not `none`.** A question whose fact was not found after
+  re-searching is left **out of the decisions file** (undecided). Undecided
+  questions keep whatever source they already have and are retried when
+  books are added.
+- **A human-checked source is never replaced silently.** If the sitting
+  already carries a source with `origin: human`, a decision for a different
+  chapter — or `none` — is rejected unless it carries `"override_human":
+  "<why this one is better>"`. The same chapter keeps the human source as
+  it is. When the AI and the human disagree, compare both pages and keep the
+  human chapter unless the quote clearly states the fact and the other does
+  not.
+- Questions that wait for a book (radiology, community dentistry, Powers for
+  materials, any `missing` edition with no nearest) stay undecided and are
+  listed in the report.
+
+## 6. Nearest editions and `official_chapter`
+
+When an official edition is missing, search its nearest edition and cite the
+official one. Chapters with the same title are carried over automatically;
+the rest need `official_chapter`, chosen from the official edition's chapter
+list (`data/bank/reference-tocs.json`) for the fact the quote states. Pairs
+met so far:
+
+- **Carranza 14 → 13.** Reorganised throughout. Usual targets (14 → 13): 4 →
+  3, 5 → 5, 8 → 7, 9 → 11, 10 → 8, 14 → 16, 15 → 17 or 18, 17 → 20, 19 →
+  19, 22 → 23 or 24, 23 → 12, 25 → 14, 26 → 15, 31 → 49, 32 → 25, 38 → 32,
+  39 → 33, 40 → 34, 41 → 35, 45 → 70, 49 → 46, 50 → 48, 51 → 50, 52 → 51,
+  53 → 52, 61 → 60, 62 → 62 (resective) or 64 (furcation), 66 → 69, 69 →
+  45, 70 → 72. Confirm against the titles each time.
+- **Proffit 6 → 5.** 1–10 same; 11 → 11, 12 → 12, 13 and 14 → 13, 15 → 14,
+  16 → 15, 17 → 16, 18 → 17, 19 → 18, 20 → 19.
+- **McDonald & Avery 11 standing in for Nowak 6.** Different books: Nowak is
+  arranged by age (birth–3: 12–16, 3–6: 18–27, 6–12: 30–36, adolescence:
+  37–41). Choose the Nowak chapter for the topic **and** the patient's age in
+  the question; lower the confidence by about 0.1 for the mapping.
+- Burket 13 for 12, Little & Falace 10 for 9, Neville 5 for 4, McCracken 13
+  for 12, Malamed 7 for 6: titles carry over; when the check says otherwise,
+  name the chapter.
+
+When the official edition itself arrives, re-run those batches against it:
+its own page and quote replace the nearest-edition source.
+
+## 7. Putting it on the site
+
+The owner never operates the server; the agent does, through the access in
+`.local/SERVER_ACCESS.md`, on the shared host without touching the other
+workload. Per year:
+
+1. Copy the classified sitting and its images to
+   `/var/lib/fanoos/bank-import-<year>/` (owned by `fanoosweb`).
+2. **Dry run** — `import-bank.php import --dry-run`. `questions_changed`
+   must be **0** (only sources change). Anything else means the sitting does
+   not match the site (§4): stop, find the right sitting, never import.
+3. **Backup** — `scripts/ops/backup.php`, then `verify-backup.php` on it.
+4. **Import**, then **publish** (`import-bank.php publish --type=residency
+   --year=<year>`), exactly as 06_QUESTION_FORMAT.md §5 describes.
+5. Record the year in 06_QUESTION_FORMAT.md's table (how many questions have
+   chapters, what waits for which book) in a pull request.
+
+A wording correction (a garbled stem or option replaced with a verified
+transcription) is a separate, deliberate change: its dry run shows exactly
+the corrected questions as changed, the answers and option order stay, and
+06 records it.
+
+## 8. Mistakes that were made, and what stops them now
+
+| Mistake | Guard |
+|---|---|
+| Chapters chosen from titles, not text | evidence + page checked by `apply_classification.py` |
+| Paraphrased or too-short quotes rejected after a long batch | `find_in_books.py` prints a ready, pre-checked `quote:` for every hit; fragments of ≥ 4 words |
+| A quote containing ligature glyphs or a soft hyphen failed | normalised on both sides (`flat()`); prefer plain runs of words |
+| Decisions of one year read into another | only `<year>-*.json` is read for a sitting |
+| A reference that is not official that year (Craig for 1399–1401 materials) | the edition must be in that year's `validity` |
+| A carried-over chapter landed on the wrong chapter after a reorganisation | carry-over only by identical title; otherwise `official_chapter` |
+| The docx sitting of 1404 would have rewritten 171 stems | §4 table; dry run must show `questions_changed: 0` |
+| An AI pass overwrote human-checked chapters (49 on 1404) | `override_human` required to replace a human source |
+| `none` used for "not found", removing an existing source | §5: not found stays undecided |
+| Deploy requested before CI on `main` finished | WORKFLOW: request deployment only after CI on the merge commit is green |
+
+## 9. Handing a year to another agent
+
+Give the agent this document, the year, and access to the repository,
+`.local/references/` and `.local/classification/`. Its deliverables:
+
+1. the decisions files for the year, and a clean `apply_classification.py`
+   run (no rejections);
+2. the dry-run numbers, the verified backup, the import and publish output;
+3. a short report: how many questions per subject have a chapter, which are
+   undecided and why, which `override_human` were used and why;
+4. the 06 table row, in a pull request.
+
+It must not edit the catalog, the chapter map, the texts or the scripts to
+make a decision pass, must not lower a confidence threshold, and must not
+import a sitting whose dry run changes questions. A decision that cannot
+pass is reported, with the reason.
