@@ -133,8 +133,8 @@ SQL);
 }
 
 /**
- * Checks only the filesystem containing FANOOS storage; no other mount is
- * enumerated or reported.
+ * Reports only mounts whose path, filesystem type or source identifies a
+ * Google Drive or rclone mount.
  */
 function driveFilesystemMounts(): array
 {
@@ -155,7 +155,7 @@ function driveFilesystemMounts(): array
             continue;
         }
         $mountPoint = strtr($left[4], ['\\040' => ' ', '\\011' => "\t", '\\134' => '\\']);
-        if (preg_match('/(?:drive|google|rclone)/i', $right[0] . ' ' . $right[1]) === 1) {
+        if (preg_match('/(?:drive|google|rclone)/i', $mountPoint . ' ' . $right[0] . ' ' . $right[1]) === 1) {
             $mounts[] = ['mount_point' => $mountPoint, 'filesystem' => $right[0]];
         }
     }
