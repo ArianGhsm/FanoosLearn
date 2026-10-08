@@ -585,7 +585,7 @@ body.x-runner-page {
     }
 
     .x-runner-page .x-bar__position {
-        font-size: 0.95rem;
+        font-size: var(--text-base);
         font-weight: var(--weight-strong);
     }
 
@@ -840,7 +840,7 @@ body.x-runner-page {
 
     .x-runner-page .x-nav__next {
         flex: 1 !important;
-        font-size: 1rem;
+        font-size: var(--text-lg);
         font-weight: var(--weight-strong);
         background: var(--accent);
         box-shadow: none;
