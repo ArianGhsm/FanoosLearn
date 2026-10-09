@@ -1,175 +1,210 @@
 # FANOOS project principles
 
-This is the first document to read. It states what FANOOS is now, how the three
-copies of the project stay identical, and the rules every change follows.
-Where an older document disagrees with this one, this one wins and the older
-document is corrected or marked historical.
+**Current operating policy — owner decision 2026-10-09.** Read this first.
+FANOOS is operated **server-first, GitHub-governed, and laptop-independent**.
+This document supersedes previous three-copy/laptop requirements. When an
+active document or script conflicts, update it in the same change; historical
+records are not evidence of today's operating model.
 
-Decided by the owner on 2026-10-03.
+## 1. Product and enduring safeguards
 
-## 1. What we are building
+FANOOS (fanooslearn.ir) prepares students for Iranian dental residency
+(دستیاری دندانپزشکی) and related specialty exams. Its durable asset is a
+structured, source-aware question bank: official exam year, official edition,
+chapter, page, evidence, and edition-independent concepts.
 
-**FANOOS is a dental residency exam-preparation platform (دستیاری دندانپزشکی)** —
-the kind of product MedoFast is for medicine, built only for dentistry's
-residency and related national exams.
+1. The bank is the single owner of question facts; websites and bots consume
+   the platform API and do not keep competing question databases.
+2. The official reference **and edition for each exam year** must be
+   established from the catalog's year-specific validity and syllabus scope,
+   never inferred from a question's wording.
+3. Edition-specific chapters and edition-independent concepts stay distinct.
+   Past attempts keep frozen question/answer versions.
+4. Answers and explanations remain subject to entitlement, pacing, review,
+   and privacy constraints; old answers contradicted by newer editions must
+   be labeled rather than silently treated as current.
+5. AI-produced source, chapter, page, similarity, and explanations carry
+   origin and confidence. The owner reviews values below **0.85**. Human
+   decisions cannot be replaced silently.
 
-What makes it worth more than "a bigger question bank" is the bank itself:
+## 2. Two authorities: GitHub and the server
 
-> Every question knows exactly which edition of which official reference it
-> came from — chapter, section and page — what that edition says today, and
-> how its concept has recurred across the years.
-
-The product principles that follow from that:
-
-1. **The structured bank is the asset.** The UI can be copied; years of
-   questions each tied to an edition, a location in it and a concept cannot.
-   Every feature reads from the bank; nothing keeps its own copy of question
-   facts.
-2. **Reference-aware by default.** A student preparing for a given year sees
-   the questions that fit that year's official references, and an old answer
-   that a newer edition contradicts is labelled as such — never presented as
-   current.
-3. **Schema complete, UI small.** The data model is designed in full from the
-   start (`docs/product/05_DENTAL_RESIDENCY_DATA_MODEL.md`); the interface
-   shows only what the current stage needs. Adding a screen later must not
-   require re-classifying the bank.
-4. **Answers are earned, not leaked.** The pacing, daily cap on new questions
-   and per-attempt reveal rules stay. Structured explanations are content the
-   product sells; they are served one question at a time to someone entitled
-   to them.
-5. **AI classifies, people confirm.** Anything an AI assigned (source, chapter,
-   page, concept, similarity, explanation) carries a confidence and its origin.
-   Below the review threshold it goes to a human before it is shown as fact.
-
-What carries over from the platform built so far: accounts and sign-up, the
-exam runner (three modes, timer, pacing, images), per-question statistics,
-custom practice, mistakes review, progress, the visual language, the
-updater/backup/deploy machinery and the bots. What changes is the content
-model underneath them (see the data-model document, §"Relationship to the
-current platform").
-
-## 2. Three copies, always the same
-
-The project exists in three places:
-
-| Copy | What it holds | What it is for |
+| Authority | Owns | Rules |
 |---|---|---|
-| **GitHub** `ArianGhsm/FanoosLearn` | code, migrations, tests, contracts, docs, non-secret config templates | the single source of truth for everything that is not data |
-| **Laptop** working copy | a clone of GitHub plus local branches in progress | where changes are made and tested |
-| **Server** `fanooslearn.ir` | a release of GitHub `main` (exact SHA), the production database and object storage, secrets | where students use it; the source of truth for data |
+| **GitHub** `ArianGhsm/FanoosLearn` | application code, scripts, migrations, tests, data schemas/catalogs, non-secret templates, runbooks, shared principles | Reviewed version control; `main` is the authoritative code/documentation revision |
+| **Server** `fanooslearn.ir` | running release, production DB and private object store, uploaded references and exam sources, private processing inputs/outputs, secrets, verified backups | Audited runtime/data authority; private artifacts never enter the public repository |
 
-"In sync" means all of the following are true:
+**A laptop is neither necessary nor authoritative.** Agents and operators
+may work from GitHub branches, approved hosted workspaces, or a controlled
+server working checkout. No task may require the owner's laptop, an
+unpublished local branch, or an untracked laptop file to resume.
 
-- the laptop's `main` equals GitHub's `main`;
-- the server runs exactly GitHub's `main` (`/srv/fanoos/current` points at that
-  SHA's release, and the updater checkout is fast-forwarded to it);
-- no work exists only on the laptop: anything in progress is on a pushed
-  branch;
-- nothing on the server differs from its release (no hand edits).
+**Source changes flow GitHub branch → tests and PR → green CI → `main`
+→ updater deployment.** A server checkout can be used to *develop* a branch
+if isolated from the running release; it must be pushed and reviewed.
+Do not edit `/srv/fanoos/current`, immutable release directories,
+production scripts, or live files in place as a substitute for a commit.
 
-`scripts/dev/check-sync.sh` checks this and prints any gap.
+**Operational data stays on the server.** Changes to questions, decisions,
+references, assets, or database records use approved versioned operators,
+validation, a verified backup, audit logs, and idempotent imports. Never
+overwrite production from a clone. A change to GitHub alone is not a
+production data migration; a new release alone is not proof that a bank
+import happened.
 
-### Rules
+Server/code consistency means the running release and updater checkout are
+checked against the **latest deployable green `main` commit**, and any
+difference is reported until deployment. There is no laptop-sync criterion.
+Use `scripts/dev/check-sync.sh` from the server/updater environment and
+`docs/WORKFLOW.md` for the complete procedure.
 
-1. **Code moves one way: laptop → GitHub → server.** Change on a branch, push,
-   merge to `main` on green CI, then deploy that `main` through the updater.
-   Never edit files on the server, never copy files from the server back into
-   the repository, never deploy anything that is not a commit on `main`.
-2. **Start every piece of work from a fresh `main`.** `git fetch` and
-   fast-forward first; branch from there.
-3. **End every working session pushed.** A branch that is not finished is
-   still pushed (marked WIP in its commit), so the laptop is never the only
-   copy.
-4. **Merged means deployed.** After a merge to `main`, deploy it in the same
-   working session. A merged change that is not on the server is a sync gap
-   and is reported as one until it is deployed.
-5. **Data moves one way too: production stays on the server.** The production
-   database and storage are never overwritten from the laptop. The laptop
-   uses a test database built from migrations and seeds. Question content
-   reaches production only through versioned import scripts or the admin
-   interface, so every import can be repeated and audited.
-6. **Secrets live only on the server**, in the root-owned config files; the
-   repository holds templates. Nothing secret is printed, pasted or committed.
-7. **Schema changes are expand-only migrations**, applied by the updater with a
-   verified backup first. Destructive changes go through the supervised
-   contract path.
-8. **Merged branches are deleted** from GitHub after merge, so the branch list
-   shows only work that is actually open.
-9. **The owner never operates the server.** Anything the server must do is a
-   script in the repository that the updater or an operator runs.
+## 3. Server references: work with what is ready
 
-## 3. Engineering rules that stay
+The official list is `data/bank/catalog.json` and its `validity` rows.
+The production private reference library—not the laptop—is the primary
+source of owned PDFs. `scripts/ops/reference-library-inventory.php`
+is the authoritative **live availability check** for approved, verified,
+private `reference_pdf` objects.
 
-AGENTS.md remains in force for repository boundaries, secrets, tests and
-release discipline. In particular: tests are never weakened to pass, every
-durable fact has one owning module, documentation changes in the same change
-as the behaviour it describes, and legacy projects are read-only.
+Snapshot of the inventory **2026-10-09**: **44** catalog editions,
+**27** private PDFs registered and verified, **17** without a verified
+library PDF. These are time-stamped findings, not permanent invariants.
+Registration of a PDF is **not** proof that it has a complete, searchable
+text and validated chapter-page boundaries.
 
-## 4. Decisions
+### Classification eligibility
 
-Made by the owner on 2026-10-03:
+Work continuously through **eligible questions whose exact official edition
+is available on the server** with verified PDF provenance, complete
+page-marked book text, and correct chapter boundaries. A missing/unusable
+edition is **pending**; document its exact key and reason and move on to
+other eligible questions. Do not block all years/subjects on a handful of
+missing references and do not fabricate chapter/page matches from titles,
+booklets, secondary summaries, web searches, or an unavailable edition.
 
-1. **Brand and domain** — FANOOS and fanooslearn.ir stay.
-2. **The medical bank is gone.** The medical library workspace (868 exams,
-   about 40,000 questions, 1,424 images) was deleted from production on
-   2026-10-03 after a verified backup (`scripts/ops/purge-workspace.php`).
-   FANOOS holds only dental content from here on.
-3. **Exam types** — دستیاری (residency) first. بورد (board) and ارتقا
-   (promotion) come later; the schema carries exam types from the start
-   (`bank_exam_types`), so adding them is data, not a redesign.
-4. **Reviewer** — the owner confirms machine classifications.
-5. **Confidence threshold** — 0.85. Every value an AI assigns (which
-   reference, which chapter, which page, which concept, how similar two
-   questions are) comes with its own certainty between 0 and 1. At 0.85 or
-   above it is used as is; below it, it waits in the owner's review queue
-   and is not shown to students as fact. The threshold can be set per field
-   (for example stricter for pages than for chapters) once real numbers show
-   where the AI is reliable.
+Older classifications made via an explicitly documented nearest-edition
+substitution are preserved and identified as legacy/provisional where
+applicable. **No new nearest-edition substitution by default** during this
+completion pass; waiting for the exact official edition is preferred unless
+the owner separately approves a specific exception and the evidence-mapping
+workflow is documented.
 
-Made by the owner on 2026-10-08:
+The page text for an eligible edition must be read from the original book.
+The protected PDF objects are not copied into Git or published URLs. Use an
+approved, authenticated reader or secure, space-aware staging to produce
+**one** full-book page-marked text per edition, with `=== PAGE n ===` markers.
+The existing classification scripts take `--local`; the server-side
+workspace is specified in `docs/ops/SERVER.md`. The book text is private
+runtime data, not repository content. Verify available disk space **before**
+building or duplicating a book.
 
-6. **One full-book text per reference edition, in one place.** Chapter
-   classification (which reference, which chapter, which page a question
-   comes from) is done against the book's own text and nothing else.
-   - Every official edition (the catalog's `reference@edition` keys) has
-     exactly one file: `.local/references/<edition>.txt` (git-ignored), the
-     whole book from its first page to its last, with `=== PAGE n ===`
-     before each PDF page.
-   - The files are built by `scripts/references/build_reference_texts.py`
-     from the list in `data/bank/reference-texts.json`, which names, for each
-     edition, its PDF in the owner's book library (outside Git;
-     `FANOOS_BOOKS_DIR`) or marks it missing.
-   - Summaries, chapter-by-chapter extracts, CDR/DDQ/پارسه booklets and
-     translations are not references and are never used for classification.
-   - An edition with no complete copy is listed as missing; until the owner
-     supplies it, its questions are matched in the nearest edition named in
-     the list, mapped back to the official edition's chapter, and marked as
-     such.
-   - The procedure -- the same for every exam type and every agent -- is
-     docs/product/09_CHAPTER_CLASSIFICATION.md: a source is accepted only
-     with its page and a quote from that page, checked against the book by
-     `scripts/references/apply_classification.py`.
-7. **Chapter classification is one procedure for every agent, and its
-   checks are never bypassed.** Whoever classifies -- Claude, Codex or a
-   person -- follows docs/product/09_CHAPTER_CLASSIFICATION.md end to end:
-   - a source is accepted only with an official edition, a chapter, a page
-     inside that chapter and a quote from that page, all checked by
-     `apply_classification.py`; to make a decision pass, the decision
-     changes, never the catalog, the chapter map, the texts or the scripts;
-   - a question not found after honest re-searching stays undecided; `none`
-     is only for a question no official reference can cover;
-   - a human-checked chapter is replaced only with a stated reason
-     (`override_human`);
-   - a year is imported only from the sitting that matches the site, proven
-     by a dry run that changes no question, after a verified backup;
-   - every mistake found in the work becomes a guard in the scripts or a
-     line in 09 §8, so the next agent cannot repeat it.
+The binding procedure is
+`docs/product/09_CHAPTER_CLASSIFICATION.md`; source decisions must pass
+`scripts/references/apply_classification.py` against the book text and
+page-to-chapter map. The authority order is: official year validity and scope
+→ original edition text/page → exact evidence → validator → reviewed import.
+An unlocated fact stays **undecided**, not `none`; existing human-reviewed
+sources remain protected.
 
-Still open:
+## 4. Mandatory continuity and reproducibility
 
-- **Where question source files live** (scans, Word/Excel files, answer keys).
-  They must not go into this public repository. [default: a private storage
-  location outside Git, with the import scripts in Git]
-- **The university/cohort structure and the bots' class features** built for
-  the earlier product — kept, simplified or removed as the dental product
-  takes shape. [default: kept until the dental product replaces them]
+**No operation may depend solely on a chat or the assistant's memory.**
+Every task—classification, reference ingestion, question import, automation,
+site work, deployment, data repair—has a durable, discoverable handoff.
+
+Document before, during, and at the end of each meaningful operation:
+
+- purpose and scope, decision status (confirmed/proposed/inferred), input
+  identities, versions, hashes where appropriate, output location and owner;
+- relevant invariants, selection criteria, exceptions, algorithms, command
+  lines and parameters, expected output, dependencies and versioned scripts;
+- performed steps, validation evidence/results, counts, failures and fixes,
+  pending items, next safe step, rollback/recovery plan;
+- Git commit/PR and deployed SHA for code, and audited job/import/backup ID
+  for server data; record whether the server actually changed;
+- private artifacts' **safe identifiers/locations** in access-controlled
+  operational records, never secrets, raw question text or book content in
+  the public repository.
+
+**Public documentation** resides in the relevant `docs/` runbook and
+`docs/PROJECT_PRINCIPLES.md` for shared policy; **private source material,
+decision JSON, generated texts and detailed work queues** reside in the
+server's protected workspace and verified backups. Their recovery steps must
+be documented without leaking credentials or copyrighted data. A convenient
+SentinelX context checkpoint is supplemental, never the sole record.
+Keep one canonical owner for each durable fact; update older documents or
+mark them historical to prevent contradiction.
+
+A new agent must be able to recover from GitHub documentation, authorized
+server state and backups alone, **without chats or the owner's laptop**.
+Do not claim a file, backup, upload, import, or deploy completed without a
+read-back or other verifiable result.
+
+## 5. Change and release discipline
+
+1. Start from fresh `origin/main`; make a narrow named branch. A working
+   checkout on the server is allowed only outside immutable releases and
+   without touching running runtime data.
+2. Make the code, tests, migration/contract updates, and documents together.
+   New reusable decisions and error guards go into permanent files.
+3. Run available targeted checks and CI; never weaken tests, validator
+   thresholds, or reference mapping to force a desired result.
+4. Open a PR and merge only when review requirements and CI are satisfied.
+   Keep unfinished branches pushed so another chat can resume.
+5. Deploy **only** green `main` through the FANOOS updater after the
+   required preflight and verified backup. The owner does not operate the
+   host manually; an authorized agent/operator runs reproducible steps.
+6. Check release SHA, live health, and other workload isolation; record any
+   sync gap rather than pretending deployment succeeded.
+7. Before bulk bank imports: match exact site sitting, require
+   `questions_changed=0` unless a separately approved wording correction,
+   verify backup, apply with audited importer, publish and compare post-state.
+8. Production data and snapshots never go to the public repo; root-managed
+   secrets remain on the server. Schema changes are expand-only; destructive
+   steps require explicit supervised approval and recovery verification.
+
+The server is shared; do not restart or reconfigure another project's
+services. Use `docs/ops/SERVER.md` and `docs/WORKFLOW.md`.
+
+## 6. Decision register
+
+**2026-10-03 — product decisions retained:** FANOOS brand/domain; dentistry
+only (the previous medical bank was purged after backup); residency as the
+first active exam type with board/promotion represented in schema; owner as
+reviewer; confidence review threshold **0.85**.
+
+**2026-10-08 — validation decisions retained:** one complete, page-marked
+text per reference edition; classification only against the reference's own
+words; strict chapter/page/evidence checks, human override guard, exact
+site-matching sitting, `questions_changed=0` dry run, and verified backup.
+See `docs/product/09_CHAPTER_CLASSIFICATION.md` for the mistakes and guards.
+
+**2026-10-09 — new operating decisions (override previous laptop flow):**
+
+1. GitHub and server are the two authorities; laptop operations are optional
+   and **never required**.
+2. Server-stored, verified reference PDFs are the starting collection;
+   incomplete editions are set aside without blocking eligible batches.
+3. New chapter decisions use an exact available official edition and
+   page-level evidence; nearest substitutes are paused by default while
+   existing reviewed decisions are preserved.
+4. Durable server-side private workspaces, verified backups and public
+   runbooks—not chat history—carry ongoing processing across sessions.
+5. Release deployments remain controlled GitHub `main` → updater; direct
+   edits to deployed code and ad-hoc unbacked-up production writes are banned.
+
+## 7. Open implementation items (do not assume completed)
+
+- Establish and test the approved secure **read-only** bridge from registered
+  private PDF objects to the classification builder. Verify full text and
+  page-boundary integrity per edition. PDF inventory alone is insufficient.
+- Populate and back up the server's private classification workspace,
+  including original site-matching sittings and review decisions; maintain
+  the decision/provenance ledger, without exposing raw question data.
+- Reconcile historical 1398–1405 coverage notes with a current **database
+  audit**. Historical counts in `06_QUESTION_FORMAT.md` are not live counts.
+- Regularly monitor disk capacity and backup retention without deleting
+  anything outside the approved retention policy. On 2026-10-09 the host
+  reported **92% disk usage** (~4.9 GB free).
+- Any access gap or unready edition is a documented **pending dependency**,
+  not a reason to revert to a mandatory laptop workflow.

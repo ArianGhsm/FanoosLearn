@@ -41,7 +41,10 @@ request.
 
 ## How changes ship
 
-Laptop → GitHub → server, nothing else: a branch, a pull request, a merge on
-green CI, then a deploy of `main` through the updater on the same day.
+**Server-first, GitHub-governed:** make changes in an approved branch (hosted
+or isolated server checkout), push to GitHub, open a PR, require green CI,
+merge to `main`, and deploy via the updater. The owner's laptop is optional
+and never required. Production references, questions and processing artifacts
+remain private on the server.
 [`docs/WORKFLOW.md`](docs/WORKFLOW.md) has the commands and
 [`docs/ops/SERVER.md`](docs/ops/SERVER.md) the server.

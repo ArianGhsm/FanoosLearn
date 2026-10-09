@@ -1,8 +1,8 @@
 {
   "format": "fanoos.reference-texts.v1",
   "notes": [
-    "One full-book text per official edition, built by scripts/references/build_reference_texts.py into .local/references/<edition>.txt (docs/PROJECT_PRINCIPLES.md, decision 6).",
-    "pdf: path inside the owner's book library (FANOOS_BOOKS_DIR). text: a full-book text already extracted from a PDF that is no longer in the library, relative to the repository's .local/. missing: no complete copy of this edition yet; nearest names the edition used meanwhile."
+    "One full-book text per eligible official edition; on the server pass --local=/srv/fanoos/shared/research to build_reference_texts.py; production PDF approval is tracked separately by the private library inventory (PROJECT_PRINCIPLES.md).",
+    "pdf: relative path within an approved protected PDF source provided using --library/FANOOS_BOOKS_DIR (never means a raw public URL or direct content store write). text: a full-book extracted text relative to --local. missing: original edition is not yet present in the original manifest; availability must also be checked against the live private server PDF inventory. nearest denotes historical mapping information only; do not use for new classification by default."
   ],
   "editions": {
     "burket-oral-medicine@12e": { "pdf": "Diseases, Oral & Maxillofacial/برکت/Burket Oral Medicine 12th Edition 2015.pdf" },

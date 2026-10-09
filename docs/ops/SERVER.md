@@ -1,9 +1,11 @@
 # The production server
 
-What runs where on `fanooslearn.ir`, recorded on 2026-10-03. Access details
-(SSH user, keys, the pinned host key) are deliberately not here: this
-repository is public. They live in the owner's local, git-ignored
-`.local/SERVER_ACCESS.md`.
+What runs where on `fanooslearn.ir`. The operating model was revised by the
+owner on **2026-10-09**: the server and GitHub are the only required
+authorities. No laptop is required. This public repository never contains
+credentials or private customer/book data. Secrets remain in the server's
+root-managed configuration; agents use authorized SentinelX/operator access,
+not a laptop-only `.local/SERVER_ACCESS.md` prerequisite.
 
 ## Host
 
@@ -24,7 +26,8 @@ repository is public. They live in the owner's local, git-ignored
 ├── current -> releases/<sha>   the live release
 ├── staging/               where the updater builds and tests a candidate
 ├── updater-checkout/      the updater's clone of GitHub; fast-forwarded by the operator
-├── shared/storage/        object storage (exam images, protected media)
+├── shared/storage/        production private objects (exam images and reference PDFs)
+├── shared/research/       protected classification workspace (non-release; provision/backup separately)
 └── public/                web root served by nginx
 /etc/fanoos/               runtime config, root-owned, one file per consumer
 ├── platform-config.php    the web app (FPM)
@@ -36,6 +39,23 @@ repository is public. They live in the owner's local, git-ignored
 ```
 
 The database is `fanoos_prod` on the local MySQL.
+
+**Separation:** `shared/research/` is a protected, server-only *working*
+directory for page-marked reference texts, exact site-matching sittings,
+decision JSON, QA output and job/checkpoint records; it is not the
+content-addressed storage or an immutable release. The directory skeleton was provisioned on 2026-10-09 for
+`fanoosupd:fanoosupd` with mode `0700`; verified contents were empty.
+Keep book/question content out of Git, and back
+it up explicitly with verified recovery before treating working files as
+durable. Until the backup/recovery mechanism is verified, do not claim this
+working directory is backed up.
+
+Existing reference scripts accept `--local=/srv/fanoos/shared/research`
+so their expected paths are `references/<edition>.txt` and
+`classification/decisions/<year>-<subject>.json`. The site-matching
+sittings belong in `bank-sittings/<year>/`. Protected PDFs already in
+object storage are **not** duplicated as a second public library.
+A secure authorized access/staging method must be verified before extraction.
 
 nginx serves everything under `/assets/` as immutable for a year
 (`ops/nginx/fanoos-performance.conf`). A release reaches browsers only
@@ -81,7 +101,7 @@ Only GitHub `main`, only after its CI is green, only through the updater
 (`ops/updater/README.md`):
 
 1. Fast-forward the updater checkout to `origin/main` (it is pinned and does
-   not move by itself).
+   not move by itself); no laptop is involved.
 2. Queue a deploy: `scripts/ops/request-deployment.php --actor=<owner uuid>`,
    run as `fanoosupd` with `FANOOS_CONFIG_FILE=/etc/fanoos/updater-config.php`.
 3. Within a minute the updater checks CI for that exact commit, takes and
@@ -146,7 +166,7 @@ creation, protected-resource management and publishing permissions, and
 accepts only the latest verified private PDF attached to a private
 `reference_pdf` resource whose topic matches the catalog edition key.
 
-The Windows transfer script reads the ignored owner-only
+**Optional legacy ingestion channel:** The Windows transfer script reads the ignored owner-only
 `.local/reference-library/sources.json`, whose `editions` entries contain an
 `edition_key`, `kind` (`local`, `drive_mount`, or `drive_remote`) and `path`.
 It hashes local PDFs without extracting text, reads mounted Drive PDFs in
@@ -175,8 +195,59 @@ php scripts/ops/reference-library-inventory.php
 
 The operator provisions staging through the approved FANOOS import transport;
 it must not write reference files directly into object storage. A Drive mount
-is only an input source: the PDFs still need to be imported into FANOOS private
-object storage for the reference library to be complete.
+is only an optional ingestion source: the PDFs still need to be imported into
+FANOOS private object storage for the reference library to be complete.
+The Windows script is **not** the mandatory path, and no task waits for a
+laptop when the verified edition is already in the server library.
+
+### Current ready-edition inventory and classification operations
+
+The following was **measured on 2026-10-09**, not assumed from a local
+folder: official catalog **44 editions**, verified/published private PDF
+resources **27**, currently without a verified PDF **17**; all 27 registered
+objects reported `ready=true`. The library holds ~3.29 GB of registered
+reference PDFs. The filesystem was **92% used** (~4.9 GB available).
+
+A read-only inventory, run by the authorized server operator:
+
+```sh
+sudo -n -u fanoosupd sh -c 'FANOOS_CONFIG_FILE=/etc/fanoos/updater-config.php php /srv/fanoos/current/scripts/ops/reference-library-inventory.php'
+```
+
+The PDF inventory says **what objects are approved**, *not* whether their
+complete searchable `=== PAGE n ===` text and correct chapter map exist.
+To make an edition eligible for chapter classification:
+(1) check that exact official edition in the year's catalog;
+(2) confirm verified PDF, sufficient disk and authenticated access to
+the private object;
+(3) securely read/extract its full text *once* into the backed-up
+protected research workspace and check page markers;
+(4) validate `data/bank/reference-chapter-pages.json` boundaries;
+(5) run `scripts/references/find_in_books.py` and
+`apply_classification.py` with `--local` pointed at that workspace.
+Do not infer that existing private PDF registration implies steps 3–4 are
+already complete. Do not copy the whole 3.29-GB library or run large
+conversions while the disk is constrained.
+
+Process questions of other *ready exact official editions* while a book
+is absent, unreadable or incomplete; classify no new question using a
+nearest-edition substitute by default. Pending editions get an explicit
+reason and retry trigger. Preserve previously verified decisions.
+The rest of the procedure and pre-import safety checks live in
+`docs/product/09_CHAPTER_CLASSIFICATION.md`.
+
+### Server-first GitHub sync
+
+After a green merge-commit CI run and updater deployment, run:
+
+```sh
+sh /srv/fanoos/updater-checkout/scripts/dev/check-sync.sh
+```
+
+The checker reads GitHub `main`, updater HEAD and live release SHA on the
+**server**. It requires no laptop, SSH back to an owner's machine, or
+local `main` branch. A mismatch is a recorded deployment gap and cannot
+be fixed by editing a deployed release.
 
 ## Retention
 
