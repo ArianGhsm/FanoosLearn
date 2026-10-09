@@ -564,8 +564,10 @@ body.x-focus .f-page {
     /* Near-primary, not secondary: an option a student is reading should not
        be dimmer than one they have picked by more than a shade. */
     color: var(--text-primary);
-    font-weight: var(--weight-body);
-    opacity: 0.86;
+    /* All readers: choices remain secondary to the bold question, but
+       have their own real SemiBold font face for Persian and Latin. */
+    font-weight: var(--weight-medium);
+    opacity: 1;
     flex: 1;
 }
 

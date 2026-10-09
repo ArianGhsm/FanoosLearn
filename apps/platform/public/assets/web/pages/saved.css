@@ -38,6 +38,18 @@
     margin: 0;
 }
 
+/* Saved-question previews and report details use the same hierarchy as the
+   live exam. Notes and support messages retain their normal body weight. */
+.s-item__preview,
+.s-item__marks,
+.s-report__question > p {
+    font-weight: var(--weight-strong);
+}
+
+.s-report__choices {
+    font-weight: var(--weight-medium);
+}
+
 .s-item__note {
     padding: var(--space-2) var(--space-3);
     border-inline-start: 3px solid var(--accent);

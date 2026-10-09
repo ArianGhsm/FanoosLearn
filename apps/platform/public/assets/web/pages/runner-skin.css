@@ -232,7 +232,7 @@ body.x-runner-page {
     margin: 0;
     padding-block: var(--space-4) var(--space-5);
     font-size: calc((var(--reading-size) + 0.08rem) * var(--x-question-font-scale, 1));
-    font-weight: 600;
+    font-weight: var(--weight-strong);
     line-height: 2;
     color: var(--text-primary);
     border: 0;
@@ -267,7 +267,7 @@ body.x-runner-page {
     border-radius: 16px;
     background: var(--surface);
     font-size: calc(var(--reading-size) * var(--x-question-font-scale, 1));
-    font-weight: 400;
+    font-weight: var(--weight-medium);
     line-height: 1.85;
     box-shadow: none;
 }
@@ -279,7 +279,7 @@ body.x-runner-page {
 
 .x-runner-page .x-choice__text {
     opacity: 1;
-    font-weight: 400;
+    font-weight: var(--weight-medium);
 }
 
 .x-runner-page .x-choice__letter {
@@ -810,7 +810,7 @@ body.x-runner-page {
     .x-runner-page .x-question__prompt {
         padding-block: 14px 20px;
         font-size: calc(1.04rem * var(--x-question-font-scale, 1));
-        font-weight: 500;
+        font-weight: var(--weight-strong);
         line-height: 2.05;
     }
 
