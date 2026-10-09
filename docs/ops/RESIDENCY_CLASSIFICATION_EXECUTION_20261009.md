@@ -279,6 +279,23 @@ request still read `BACKUP` afterward and the live release was unchanged.
 retrigger until the incomplete request and service termination have been
 investigated; do not delete protected backups to force an update.
 
+
+### Updater request terminal status confirmed later
+
+Read-back at **2026-10-09 18:56 UTC** from `release_update_requests`
+reported the same authorized request
+`01a121ec-b0c1-7fdd-9943-e733ccdac0b9` as **`FAILED`**,
+`safe_failure_code=operator_cancelled`, lease null. The updater timer
+remained `inactive`; `current` remained `57447fb`. Disk remained
+~6.6 GB free (89% used). This is an observed *terminal failure state*,
+not evidence that the assistant successfully deployed or that a
+particular human/operator initiated the cancellation. The earlier
+`SIGTERM` journal event is consistent with interruption but does not
+identify its initiator. **No retry/new request, manual release change,
+backup deletion or direct database workaround was performed.**
+Investigate the cancellation/timer ownership and coordinate the
+documented updater restoration path before the next deployment attempt.
+
 ## Next reproducible steps
 
 1. Review the new extraction/export scripts and tests in this PR; green CI,
