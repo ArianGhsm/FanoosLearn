@@ -49,6 +49,7 @@ use Fanoos\Tests\Operations\FarazSmsGatewayTest;
 use Fanoos\Tests\Operations\ExamRankingTest;
 use Fanoos\Tests\Operations\StudyPlanLayoutTest;
 use Fanoos\Tests\Operations\QuestionBankRowTest;
+use Fanoos\Tests\Operations\ReferenceLibraryImportPolicyTest;
 use Fanoos\Tests\Operations\StudyScheduleTest;
 use Fanoos\Tests\Operations\ZibalPaymentGatewayTest;
 use Fanoos\Tests\Operations\GitHubCiVerifierContractTest;
@@ -83,6 +84,8 @@ try {
     echo "PASS backup integrity contracts\n";
     $assertions += (new QuestionBankRowTest())->run();
     echo "PASS question bank row mapping\n";
+    $assertions += (new ReferenceLibraryImportPolicyTest())->run();
+    echo "PASS reference library partial-import policy\n";
     $assertions += (new ExamRankingTest())->run();
     echo "PASS exam ranking arithmetic\n";
     $assertions += (new StudyPlanLayoutTest())->run();
