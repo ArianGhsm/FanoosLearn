@@ -264,3 +264,16 @@ audit above, plus `--year=1402 --subject=oral-radiology --stem=radiology
 this batch is already live, **do not run its apply again**: the source-only
 writer correctly rejects duplicate sources. All public docs contain metadata
 and audit hashes only, never copyrighted question/book content.
+
+### Next subject opened (research only): 1401 oral radiology
+
+An authenticated, read-only live export created
+`/srv/fanoos/shared/research/bank-sittings/1401/radiology-study.json`
+for **20** still-unsourced 1401 radiology questions, format
+`fanoos.classification.study-only/1`, SHA-256
+`c177f4f3d038167517d3201d7d5735c09ca87cbcad31cc617665e3718fb60b61`.
+The announced exact official edition is White-Pharoah 8e; use only the
+1401-specific scope from the catalog. **No 1401 search evidence, mapping,
+source insert, bank publication or assessment version change is claimed.**
+Repeat a fresh live study-only export, compare it with the protected original,
+then follow the normal page-verbatim validator and publication sequence.
