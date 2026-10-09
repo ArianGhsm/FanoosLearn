@@ -1,62 +1,120 @@
-# Working loop
+# Workflow — GitHub → server (no laptop required)
 
-How a change goes from the laptop to students, keeping the laptop, GitHub
-and the server identical (`docs/PROJECT_PRINCIPLES.md` §2).
+Owner decision: `docs/PROJECT_PRINCIPLES.md` §2–5 (2026-10-09).
+Development runs in an approved hosted checkout or an isolated worktree on
+the **server**, never in the live release directory. A laptop is optional.
+No essential state is left solely in a working directory or chat.
 
-## 1. Start
+## 1. Begin with the current state
+
+- Read `docs/PROJECT_PRINCIPLES.md`, `AGENTS.md`, and the task's runbook.
+- Inspect GitHub `main` and the server's running release SHA; identify any
+  pending deployment gap. Check current authorized production data through
+  read-only scripts when needed. Do not copy it into public GitHub.
+- Fetch `origin/main`; create a dedicated branch or separate server
+  worktree **outside** `/srv/fanoos/releases` and `/srv/fanoos/current`.
+  Never develop in the updater's active worktree while it is deploying.
 
 ```sh
-git checkout main
-git pull --ff-only
-git checkout -b <kind>/<short-name>      # feat/, fix/, design/, ops/, docs/, chore/
+git fetch --prune origin
+git switch -c docs/example origin/main
 ```
 
-## 2. Change and check
+Push the branch early, including unfinished WIP commits, so the next agent
+can find all source changes.
 
-One coherent change: code, its tests, and the documents that describe it.
+## 2. Implement and validate
+
+Make one auditable change with its tests, updated canonical documentation,
+reproduction steps, expected outputs, and an explicit result checklist.
+All private inputs and processing outputs stay in the secure server workspace,
+with durable snapshots/checkpoints and a documented recovery path.
+Do not publish secrets, copyrighted book files, question stems or user data.
 
 ```sh
-php tests/run.php                        # static, schema and rendering checks
-node --test tests/web/*.mjs              # web unit tests
-php scripts/ci/check-text.php            # encoding guard
+php tests/run.php
+node --test tests/web/*.mjs
+php scripts/ci/check-text.php
 ```
 
-The MySQL integration suite runs in CI (it needs a disposable database).
-To run it locally, point `FANOOS_DB_DSN` at a database whose name ends in
-`_test`, set `FANOOS_ALLOW_TEST_DB=1` and a test-only
-`FANOOS_LEGACY_ID_HMAC_KEY`, then `php tests/run.php`.
+Only run database integration tests against an isolated disposable
+`*_test` database, with `FANOOS_ALLOW_TEST_DB=1`. CI runs its
+separate test environment. Stop if any check fails; never lower tests to
+make a change pass.
 
-Pages can be previewed without a database through a small router that
-renders the real page classes against mocked API answers; screenshots are
-taken with headless Chrome.
+For question source classification, additionally follow
+`docs/product/09_CHAPTER_CLASSIFICATION.md` and record all validator
+results. The server's approved reference library—not the laptop—is the
+input. Skip editions that are unready and continue eligible questions.
 
-## 3. Push and merge
+## 3. Review and merge
+
+Push a named branch and open a PR with validation output and the
+server/data impact. Wait for **green CI on the PR** and required review.
+Merge to `main`, delete the merged branch, and verify **green CI on the
+merge commit** before requesting a deploy.
 
 ```sh
-git push -u origin <branch>
+git push -u origin docs/example
 gh pr create --base main
 gh pr checks --watch
-gh pr merge --merge --delete-branch     # only when every check is green
-git checkout main && git pull --ff-only
+# merge only after all required checks succeed
 ```
 
-## 4. Deploy (same session)
+A WIP PR may remain open; it is not deployed and its state must be
+documented. Do not force-merge a failed check.
 
-Wait for `main`'s own CI run to be green, then on the server
-(`docs/ops/SERVER.md`; access details in `.local/SERVER_ACCESS.md`):
+## 4. Deploy the code on the server
 
-1. fast-forward the updater checkout to `origin/main`;
-2. queue the deploy with `scripts/ops/request-deployment.php`;
-3. wait for `/srv/fanoos/current` to point at the new commit;
-4. check the site, the API and the bots, and that the other workload on the
-   host is still running.
+Follow `docs/ops/SERVER.md` and `ops/updater/README.md`. The authorized
+operator, through SentinelX or equivalent controlled access, performs:
 
-## 5. Confirm
+1. Confirm the latest GitHub `main` SHA and its **green** CI result.
+2. Fast-forward `/srv/fanoos/updater-checkout` to that SHA.
+3. Queue deployment only through the repository's
+   `scripts/ops/request-deployment.php` under the approved updater identity.
+4. Let the updater back up and verify, build/check, migrate if needed, switch
+   `current`, and perform its smoke/rollback checks.
+5. Verify the live release SHA, site/API/bot health, and no interruption to
+   the unrelated services sharing the host.
+
+**No manual edits** to `current` or `releases/<sha>`. A merge that is
+not deployed is a reported **deployment gap**, not "completed".
+
+## 5. Check GitHub/server sync (from the server)
+
+Run the read-only server-first checker, without SSH back to a laptop:
 
 ```sh
-FANOOS_SSH_TARGET=... FANOOS_SSH_KEY=... FANOOS_KNOWN_HOSTS=... \
-  sh scripts/dev/check-sync.sh
+sh /srv/fanoos/updater-checkout/scripts/dev/check-sync.sh
 ```
 
-It must end with `in sync`. Unfinished work is pushed on its branch before
-the session ends.
+It compares GitHub `origin/main` with the server's updater checkout and
+running release. A difference exits nonzero and must be resolved via the
+normal updater. Existing local development branches are **not** part of
+the sync definition.
+
+## 6. Apply data changes separately
+
+A source classification, reference ingestion, or correction is **not
+deployed by merging code**. For a private data change, inspect its exact
+inputs, run importer `check` and `--dry-run`, verify
+`questions_changed=0` unless a separately approved source transcription
+fix, perform a **verified backup**, execute the audited import and
+publication, and validate the resulting counts and existing human reviews.
+Log all identifiers, decision files, versions and remaining pending work
+in the protected server workspace and update the public, non-sensitive
+runbook with verified totals.
+
+## 7. Handoff after every session
+
+Update the task-specific runbook and operational checkpoint with:
+
+- purpose, working Git branch/PR/SHA and server release SHA;
+- exact versioned commands and safe paths; data/audit/backup IDs;
+- success/failure evidence, counts, exceptions, remaining dependencies;
+- what the next agent should read and execute to resume safely.
+
+A chat summary alone is not a handoff. A laptop artifact alone is not
+a handoff. If a step cannot run, state precisely what is blocked and
+persist that blocker in the appropriate runbook.
