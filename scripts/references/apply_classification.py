@@ -144,6 +144,8 @@ def main() -> int:
     parser.add_argument('--decisions', required=True, help='a decisions file, or a directory of them')
     parser.add_argument('--out', required=True)
     parser.add_argument('--partial', action='store_true', help='write the accepted decisions even if some were rejected')
+    parser.add_argument('--allow-nearest', action='store_true',
+                        help='historical audit only: permit previously approved nearest-edition substitutions')
     parser.add_argument('--local', default=str(REPO / '.local'))
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding='utf-8')
@@ -187,7 +189,9 @@ def main() -> int:
             edition, chapter = d.get('edition', ''), str(d.get('chapter', ''))
             names = official.get(q['subject'], set())
             cite, cite_chapter = edition, chapter
-            if edition not in names:
+            if edition not in names and not args.allow_nearest:
+                why = 'nearest-edition substitutions are paused; use exact official edition or keep pending'
+            if edition not in names and why is None:
                 stand_in_for = [e for e in names if texts.get(e, {}).get('nearest') == edition and 'missing' in texts.get(e, {})]
                 if not stand_in_for:
                     why = f'{edition} is not an official {exam_type} {year} reference for {q["subject"]}'
