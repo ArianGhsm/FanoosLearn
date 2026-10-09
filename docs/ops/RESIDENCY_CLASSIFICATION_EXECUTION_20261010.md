@@ -213,6 +213,26 @@ and adjacent `.sha256` receipt were created; hash and member-count
 verification both passed (~635 KB). This additional reference is ready
 for future valid Malamed 6e questions after precise evidence is found.
 
+## GitHub CI infrastructure incident and mitigation
+
+During PR #184 validation, all four application/static CI jobs passed,
+but the MySQL integration job **never reached its tests**: GitHub Actions'
+Docker daemon returned `toomanyrequests` on three consecutive attempts to
+pull the public `mysql:8.4` service image from Docker Hub. Job
+`114029217517` in run `37992268375` and job `114029645508` in run
+`37992395095` both failed while initializing the MySQL container, before
+repository checkout. This is not evidence of passing (or failing)
+database integration tests.
+
+To keep the **identical MySQL 8.4 test service and all existing integration
+checks**, `.github/workflows/ci.yml` now requests Docker's official-image
+mirror `public.ecr.aws/docker/library/mysql:8.4` instead. This is a
+registry-only dependency change; no tests, credentials, quality gates,
+schema or other production code are weakened. The new mirror tag and
+database test behavior must be verified by a fully green GitHub CI run
+*before merging* this PR. If the mirror cannot initialize, revise or
+revert this proposal; never mark the failed MySQL job as green.
+
 ## Next safe actions
 
 1. For an eligible subject/year beyond the listed batches, verify exact
