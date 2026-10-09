@@ -224,11 +224,12 @@ laptop when the verified edition is already in the server library.
 
 ### Current ready-edition inventory and classification operations
 
-The following was **measured on 2026-10-09**, not assumed from a local
-folder: official catalog **44 editions**, verified/published private PDF
-resources **27**, currently without a verified PDF **17**; all 27 registered
-objects reported `ready=true`. The library holds ~3.29 GB of registered
-reference PDFs. The filesystem was **92% used** (~4.9 GB available).
+The following was **measured after the audited 2026-10-09 reference import**,
+not assumed from a local folder: official catalog **44 editions**,
+verified/published private PDF resources **33**, currently without a verified
+PDF **11**; all 33 registered objects reported `ready=true`. The library
+holds 4,038,641,513 bytes (~4.04 GB) of registered reference PDFs. The
+filesystem was **84% used** (~9.6 GiB available).
 
 A read-only inventory, run by the authorized server operator:
 
