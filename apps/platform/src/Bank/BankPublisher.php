@@ -99,6 +99,18 @@ SQL);
     }
 
     /**
+     * Read-only preview used to ensure that republishing sources changes no
+     * frozen question content except the source-derived explanation.
+     * Does not create any assessment, version or audit event.
+     *
+     * @return list<array<string,mixed>>
+     */
+    public function previewQuestionDefinitions(string $workspaceId, string $sittingId): array
+    {
+        return $this->questions($workspaceId, $sittingId)[0];
+    }
+
+    /**
      * The sitting's questions in exam order, shaped as the runner's
      * definition expects.
      *

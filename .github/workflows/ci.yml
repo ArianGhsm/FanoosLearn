@@ -69,6 +69,8 @@ jobs:
               raise SystemExit(f"Unsupported Python runtime: {sys.version}")
           print(sys.version)
           PY
+      - name: Exact-reference and source-only mapping safety tests
+        run: python3 -m unittest discover -s tests/references -p 'test_*.py' -q
       - name: Install protected-media rasterization binaries and Python dependencies
         run: |
           sudo apt-get update && sudo apt-get install -y --no-install-recommends qpdf poppler-utils
