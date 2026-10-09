@@ -31,18 +31,18 @@ chapter, page, evidence, and edition-independent concepts.
 
 | Authority | Owns | Rules |
 |---|---|---|
-| **GitHub** \`ArianGhsm/FanoosLearn\` | application code, scripts, migrations, tests, data schemas/catalogs, non-secret templates, runbooks, shared principles | Reviewed version control; \`main\` is the authoritative code/documentation revision |
-| **Server** \`fanooslearn.ir\` | running release, production DB and private object store, uploaded references and exam sources, private processing inputs/outputs, secrets, verified backups | Audited runtime/data authority; private artifacts never enter the public repository |
+| **GitHub** `ArianGhsm/FanoosLearn` | application code, scripts, migrations, tests, data schemas/catalogs, non-secret templates, runbooks, shared principles | Reviewed version control; `main` is the authoritative code/documentation revision |
+| **Server** `fanooslearn.ir` | running release, production DB and private object store, uploaded references and exam sources, private processing inputs/outputs, secrets, verified backups | Audited runtime/data authority; private artifacts never enter the public repository |
 
 **A laptop is neither necessary nor authoritative.** Agents and operators
 may work from GitHub branches, approved hosted workspaces, or a controlled
 server working checkout. No task may require the owner's laptop, an
 unpublished local branch, or an untracked laptop file to resume.
 
-**Source changes flow GitHub branch → tests and PR → green CI → \`main\`
+**Source changes flow GitHub branch → tests and PR → green CI → `main`
 → updater deployment.** A server checkout can be used to *develop* a branch
 if isolated from the running release; it must be pushed and reviewed.
-Do not edit \`/srv/fanoos/current\`, immutable release directories,
+Do not edit `/srv/fanoos/current`, immutable release directories,
 production scripts, or live files in place as a substitute for a commit.
 
 **Operational data stays on the server.** Changes to questions, decisions,
@@ -53,18 +53,18 @@ production data migration; a new release alone is not proof that a bank
 import happened.
 
 Server/code consistency means the running release and updater checkout are
-checked against the **latest deployable green \`main\` commit**, and any
+checked against the **latest deployable green `main` commit**, and any
 difference is reported until deployment. There is no laptop-sync criterion.
-Use \`scripts/dev/check-sync.sh\` from the server/updater environment and
-\`docs/WORKFLOW.md\` for the complete procedure.
+Use `scripts/dev/check-sync.sh` from the server/updater environment and
+`docs/WORKFLOW.md` for the complete procedure.
 
 ## 3. Server references: work with what is ready
 
-The official list is \`data/bank/catalog.json\` and its \`validity\` rows.
+The official list is `data/bank/catalog.json` and its `validity` rows.
 The production private reference library—not the laptop—is the primary
-source of owned PDFs. \`scripts/ops/reference-library-inventory.php\`
+source of owned PDFs. `scripts/ops/reference-library-inventory.php`
 is the authoritative **live availability check** for approved, verified,
-private \`reference_pdf\` objects.
+private `reference_pdf` objects.
 
 Snapshot of the inventory **2026-10-09**: **44** catalog editions,
 **27** private PDFs registered and verified, **17** without a verified
@@ -92,18 +92,18 @@ workflow is documented.
 The page text for an eligible edition must be read from the original book.
 The protected PDF objects are not copied into Git or published URLs. Use an
 approved, authenticated reader or secure, space-aware staging to produce
-**one** full-book page-marked text per edition, with \`=== PAGE n ===\` markers.
-The existing classification scripts take \`--local\`; the server-side
-workspace is specified in \`docs/ops/SERVER.md\`. The book text is private
+**one** full-book page-marked text per edition, with `=== PAGE n ===` markers.
+The existing classification scripts take `--local`; the server-side
+workspace is specified in `docs/ops/SERVER.md`. The book text is private
 runtime data, not repository content. Verify available disk space **before**
 building or duplicating a book.
 
 The binding procedure is
-\`docs/product/09_CHAPTER_CLASSIFICATION.md\`; source decisions must pass
-\`scripts/references/apply_classification.py\` against the book text and
+`docs/product/09_CHAPTER_CLASSIFICATION.md`; source decisions must pass
+`scripts/references/apply_classification.py` against the book text and
 page-to-chapter map. The authority order is: official year validity and scope
 → original edition text/page → exact evidence → validator → reviewed import.
-An unlocated fact stays **undecided**, not \`none\`; existing human-reviewed
+An unlocated fact stays **undecided**, not `none`; existing human-reviewed
 sources remain protected.
 
 ## 4. Mandatory continuity and reproducibility
@@ -126,8 +126,8 @@ Document before, during, and at the end of each meaningful operation:
   operational records, never secrets, raw question text or book content in
   the public repository.
 
-**Public documentation** resides in the relevant \`docs/\` runbook and
-\`docs/PROJECT_PRINCIPLES.md\` for shared policy; **private source material,
+**Public documentation** resides in the relevant `docs/` runbook and
+`docs/PROJECT_PRINCIPLES.md` for shared policy; **private source material,
 decision JSON, generated texts and detailed work queues** reside in the
 server's protected workspace and verified backups. Their recovery steps must
 be documented without leaking credentials or copyrighted data. A convenient
@@ -142,7 +142,7 @@ read-back or other verifiable result.
 
 ## 5. Change and release discipline
 
-1. Start from fresh \`origin/main\`; make a narrow named branch. A working
+1. Start from fresh `origin/main`; make a narrow named branch. A working
    checkout on the server is allowed only outside immutable releases and
    without touching running runtime data.
 2. Make the code, tests, migration/contract updates, and documents together.
@@ -151,20 +151,20 @@ read-back or other verifiable result.
    thresholds, or reference mapping to force a desired result.
 4. Open a PR and merge only when review requirements and CI are satisfied.
    Keep unfinished branches pushed so another chat can resume.
-5. Deploy **only** green \`main\` through the FANOOS updater after the
+5. Deploy **only** green `main` through the FANOOS updater after the
    required preflight and verified backup. The owner does not operate the
    host manually; an authorized agent/operator runs reproducible steps.
 6. Check release SHA, live health, and other workload isolation; record any
    sync gap rather than pretending deployment succeeded.
 7. Before bulk bank imports: match exact site sitting, require
-   \`questions_changed=0\` unless a separately approved wording correction,
+   `questions_changed=0` unless a separately approved wording correction,
    verify backup, apply with audited importer, publish and compare post-state.
 8. Production data and snapshots never go to the public repo; root-managed
    secrets remain on the server. Schema changes are expand-only; destructive
    steps require explicit supervised approval and recovery verification.
 
 The server is shared; do not restart or reconfigure another project's
-services. Use \`docs/ops/SERVER.md\` and \`docs/WORKFLOW.md\`.
+services. Use `docs/ops/SERVER.md` and `docs/WORKFLOW.md`.
 
 ## 6. Decision register
 
@@ -176,8 +176,8 @@ reviewer; confidence review threshold **0.85**.
 **2026-10-08 — validation decisions retained:** one complete, page-marked
 text per reference edition; classification only against the reference's own
 words; strict chapter/page/evidence checks, human override guard, exact
-site-matching sitting, \`questions_changed=0\` dry run, and verified backup.
-See \`docs/product/09_CHAPTER_CLASSIFICATION.md\` for the mistakes and guards.
+site-matching sitting, `questions_changed=0` dry run, and verified backup.
+See `docs/product/09_CHAPTER_CLASSIFICATION.md` for the mistakes and guards.
 
 **2026-10-09 — new operating decisions (override previous laptop flow):**
 
@@ -190,7 +190,7 @@ See \`docs/product/09_CHAPTER_CLASSIFICATION.md\` for the mistakes and guards.
    existing reviewed decisions are preserved.
 4. Durable server-side private workspaces, verified backups and public
    runbooks—not chat history—carry ongoing processing across sessions.
-5. Release deployments remain controlled GitHub \`main\` → updater; direct
+5. Release deployments remain controlled GitHub `main` → updater; direct
    edits to deployed code and ad-hoc unbacked-up production writes are banned.
 
 ## 7. Open implementation items (do not assume completed)
@@ -202,7 +202,7 @@ See \`docs/product/09_CHAPTER_CLASSIFICATION.md\` for the mistakes and guards.
   including original site-matching sittings and review decisions; maintain
   the decision/provenance ledger, without exposing raw question data.
 - Reconcile historical 1398–1405 coverage notes with a current **database
-  audit**. Historical counts in \`06_QUESTION_FORMAT.md\` are not live counts.
+  audit**. Historical counts in `06_QUESTION_FORMAT.md` are not live counts.
 - Regularly monitor disk capacity and backup retention without deleting
   anything outside the approved retention policy. On 2026-10-09 the host
   reported **92% disk usage** (~4.9 GB free).
