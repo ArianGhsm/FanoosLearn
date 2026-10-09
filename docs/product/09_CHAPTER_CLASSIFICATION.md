@@ -58,7 +58,7 @@ Do not copy entire PDFs from the server to a laptop. Use the builder's
 needed editions, not the entire library at once:
 
 ```sh
-python scripts/references/build_reference_texts.py --library "<approved server book input>" \\
+python scripts/references/build_reference_texts.py --library "<approved server book input>" \
     --local=/srv/fanoos/shared/research --only <edition>
 python scripts/references/build_chapter_pages.py --library "<approved server book input>" --only <edition>
 ```
@@ -155,7 +155,7 @@ undecided (§5).
   and reference lists are never the evidence page.
 
 **Step 5 — record.** One decision per question in
-`.local/classification/decisions/<year>-<subject>.json` (only this year's
+`/srv/fanoos/shared/research/classification/decisions/<year>-<subject>.json` (only this year's
 files are read for a sitting, by the `<year>-` prefix):
 
 ```json
@@ -183,10 +183,11 @@ files are read for a sitting, by the `<year>-` prefix):
   0.6–0.84 when it is the right section but the exact fact is inferred;
   below 0.6 only after re-searching, and it goes to the owner's review
   queue (PROJECT_PRINCIPLES decision 5).
-- For a missing official edition, `edition` is the nearest one searched. The
-  chapter is carried over to the official edition by title; when the
-  editions were reorganised, name it yourself with `official_chapter`
-  (§6). The check rejects a carry-over it cannot make by title.
+- **New batches use the exact official edition only.** For auditing earlier
+  nearest-edition assignments, the `--include-nearest` batch flag and
+  `--allow-nearest` apply flag must be explicitly supplied; the chapter
+  carry-over logic and `official_chapter` are historical (§6). Do not
+  silently use these exceptions for new decisions.
 
 **Step 6 — check and write.**
 
