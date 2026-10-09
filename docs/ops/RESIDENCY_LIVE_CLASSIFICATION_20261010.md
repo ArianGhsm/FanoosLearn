@@ -224,14 +224,17 @@ data. No missing figure, unsupported analogy or substitute edition was used.
 - The source-only transaction preview reported **14** inserts and
   `questions_changed=choices_changed=answers_changed=0`; the *entire*
   published 1402 exam preflight matched **243** unchanged frozen questions.
-- A requested additional full backup encountered a Sentinel relay timeout;
-  inspection showed **no new finalized backup**, so it was **not** accepted as
-  successful. The independently verified existing protected full backup
-  `/var/backups/fanoos/20261009T220905Z-eee036a3` (54 files)
-  was created **after the previous source publication** and was still within
-  the importer's enforced **four-hour** freshness window. The source-only
-  importer independently revalidated it at apply. Do not claim a newly
-  completed full backup for this batch.
+- An additional full-backup request lost its Sentinel transport response,
+  and an initial on-host inspection found no new finalized backup. **The same
+  already-running backup later completed**: finalized protected
+  `/var/backups/fanoos/20261009T233920Z-f8f4ee51`, independently
+  verified **54 files** with READY at 23:39:23 UTC. This later backup was
+  **not** used as the pre-apply recovery point: the source-only import
+  completed at 23:39:18 UTC, and relied on the earlier independently
+  verified full backup `20261009T220905Z-eee036a3` (54 files), which was
+  created after the previous source publication and met the importer's
+  strict four-hour freshness window. Do not treat a relay timeout as proof
+  that a host-side background task failed; check for delayed finalization.
 - The atomic production source-only importer committed **14**
   `bank_question_sources` rows with zero question, choice or official
   answer changes. Private receipt
