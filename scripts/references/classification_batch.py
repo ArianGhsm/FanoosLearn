@@ -27,11 +27,13 @@ def official_editions(catalog: dict, exam_type: str, year: int, subject: str) ->
     return [v for v in catalog['validity'] if v.get('exam_type') == exam_type and int(v['year']) == year and v['subject'] == subject]
 
 
-def searchable(edition: str, texts: dict) -> str | None:
-    """The edition to search for an official one: itself, or its named nearest."""
+def searchable(edition: str, texts: dict, include_nearest: bool = False) -> str | None:
+    """Exact edition by default; historical nearest substitutes require opt-in."""
     entry = texts.get(edition, {})
     if 'missing' not in entry:
         return edition
+    if not include_nearest:
+        return None
     nearest = entry.get('nearest')
     return nearest if nearest and 'missing' not in texts.get(nearest, {}) else None
 
@@ -42,6 +44,8 @@ def main() -> int:
     parser.add_argument('--exam-type', help="defaults to the sitting's own exam_type")
     parser.add_argument('--subject', required=True)
     parser.add_argument('--out', required=True)
+    parser.add_argument('--include-nearest', action='store_true',
+                        help='historical audit only; default skips absent exact official editions')
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding='utf-8')
 
@@ -54,8 +58,8 @@ def main() -> int:
     rows = official_editions(catalog, exam_type, year, args.subject)
     search = []
     for row in rows:
-        found = searchable(row['edition'], texts)
-        note = 'text' if found == row['edition'] else (f'MISSING, search {found}' if found else 'MISSING, nothing to search')
+        found = searchable(row['edition'], texts, args.include_nearest)
+        note = 'text' if found == row['edition'] else (f'MISSING, legacy nearest {found}' if found else 'MISSING, pending exact edition')
         print(f"OFFICIAL {row['edition']} [{note}] scope: {row.get('scope', '')}")
         if found and found not in search:
             search.append(found)
