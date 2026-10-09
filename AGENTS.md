@@ -1,97 +1,97 @@
-# FANOOS agent rules
+# FANOOS agent rules — server-first
 
-Rules for every person or coding agent working on this repository.
+These rules bind every human or AI agent. **Start with
+\`docs/PROJECT_PRINCIPLES.md\`** (owner's 2026-10-09 operating decision);
+where these or any old runbook differ, the principles prevail.
 
 ## 0. Read first
 
-1. `docs/PROJECT_PRINCIPLES.md` — what FANOOS is (a dental residency
-   exam-preparation platform built on a reference-aware question bank), the
-   rule that the laptop, GitHub and the server stay identical, and the open
-   decisions. Where this file and the principles disagree, the principles win.
-2. `docs/product/05_DENTAL_RESIDENCY_DATA_MODEL.md` — the bank's design.
-3. `docs/WORKFLOW.md` — the working loop, from branch to deploy.
-4. `docs/ops/SERVER.md` — what runs on the server and how it is deployed.
-5. `docs/product/09_CHAPTER_CLASSIFICATION.md` — before assigning any
-   question a reference, chapter or page.
+1. \`docs/PROJECT_PRINCIPLES.md\` — two authorities (GitHub and server),
+   durable continuity and classification evidence.
+2. \`docs/product/05_DENTAL_RESIDENCY_DATA_MODEL.md\` — model.
+3. \`docs/WORKFLOW.md\` — GitHub PR, CI, updater deployment.
+4. \`docs/ops/SERVER.md\` — production layout, protected data and operators.
+5. \`docs/product/09_CHAPTER_CLASSIFICATION.md\` — mandatory before
+   assigning a source, chapter or page.
 
-## 1. Boundaries
+## 1. Authorities and environment
 
-- The only writable repository is `ArianGhsm/FanoosLearn`. It is **public**:
-  nothing that grants access (credentials, tokens, keys, SSH users, key
-  paths) is ever committed.
-- FANOOS has its own runtime, database, storage, deployment, credentials and
-  bot identities. Other projects (Dentistry1402TUMS, IntegratedDent1402Tums
-  and others) are read-only references; FANOOS never depends on their
-  runtime, database, files or secrets. The production host is shared with
-  another workload, which FANOOS work never touches.
-- Nothing about a specific university, cohort, course or reference is
-  hard-coded in application logic; it belongs in data.
+- Only \`ArianGhsm/FanoosLearn\` is writable FANOOS source control. This
+  repository is **public**; never commit private exam text/images, full
+  copyrighted reference books, tokens, credentials, runtime state or
+  identifiable production data.
+- The **server** is the authority for production DB, storage, uploaded PDFs,
+  protected source artifacts, processing workspaces and verified backups.
+  Prefer authorized SentinelX/operator access for server inspection.
+- **No laptop prerequisite:** a local computer is optional, not part of
+  source-of-truth or sync checks. A separate authorized server worktree or
+  hosted checkout may create and test branches; push to GitHub before ending.
+- Immutable releases at \`/srv/fanoos/releases/<sha>/\` and
+  \`/srv/fanoos/current\` are **not working directories**. All code ships
+  from reviewed green \`main\` through the updater.
+- The host runs unrelated workloads. Never depend on, inspect unnecessarily,
+  restart, or modify those workloads. Keep FANOOS data and identities
+  isolated.
 
-## 2. Sources of truth
+## 2. Work protocol and documentation
 
-- **GitHub `main`** — code, migrations, tests, contracts, docs, config
-  templates, operator scripts.
-- **The production database and storage** — all production data.
-- **Backups** — verified copies of production; Git is not a backup.
-- Secrets, runtime data, logs, caches, uploads and backups stay out of Git.
-  Owner-only notes on the laptop go in the git-ignored `.local/`.
+Before each task, read the existing owner runbook and prior checkpoints.
+Distinguish proposal, test, verified output, production change and pending
+step. Document goal, exact inputs/versions, execution commands, decisions,
+invariants, errors/fixes, output/backup IDs, validation, remaining work,
+Git SHA/PR, and server state. Keep reusable logic in versioned scripts and
+shared policy in \`docs/PROJECT_PRINCIPLES.md\`; task-specific details go
+to the relevant \`docs/\` runbook and access-controlled server records.
 
-## 3. Working loop
+**Everything must be recoverable in a new chat without history.**
+A SentinelX context is only a convenience copy, never the sole handoff.
+Never report a change as complete without verifying its persisted state.
 
-Work happens on the laptop and reaches the server only through GitHub
-(details and commands in `docs/WORKFLOW.md`):
+## 3. Reference and question processing
 
-1. Fetch and fast-forward `main`; branch from it.
-2. Make one coherent change, with its tests and its documentation.
-3. Run the checks (`php tests/run.php` static, `node --test tests/web/*.mjs`,
-   plus the integration suite in CI).
-4. Push, open a pull request, merge when CI is green, delete the branch.
-5. Deploy the merged `main` through the updater in the same session, verify
-   the live site, and run `scripts/dev/check-sync.sh`.
+- Fetch live private reference inventory with
+  \`scripts/ops/reference-library-inventory.php\` and match each question
+  to the official year/subject/edition in the catalog.
+- Work with **eligible verified server editions** first. Set missing or
+  incomplete editions aside as pending; no fabricated chapters and **no
+  new nearest-edition fallback by default**. Preserve previously audited
+  legacy assignments and human-reviewed sources.
+- A verified PDF is **not automatically searchable text**: check complete
+  page-marked book text and chapter-page mapping before deciding.
+- Use \`scripts/references/\` search and evidence validator end-to-end.
+  Every decision needs the book's own verbatim evidence, chapter, PDF page,
+  edition and confidence; unanswered matches remain undecided, not \`none\`.
+- Re-import only the site-matching sitting after
+  \`questions_changed=0\` dry run and verified backup. Raw questions,
+  decisions, reference text and reports stay in protected server storage,
+  never Git. Do not write directly into content-addressed object storage.
+- Avoid duplicating large PDFs, especially while disk usage is high.
+  Missing secure reader or workspace is a dependency to document and
+  implement under the normal PR process, not a reason to demand a laptop.
 
-Every session ends with everything pushed. A merged change that is not on
-the server is a gap to report.
+## 4. GitHub-to-server delivery
 
-## 4. Reuse first
+1. Fetch latest \`main\`; create a focused branch.
+2. Commit reproducible changes with tests and docs; push WIP branches.
+3. Run targeted checks, then a PR; merge only on green CI and review.
+4. Have the authorized operator deploy \`main\` via the updater, with its
+   backup and rollback logic; never patch a deployed release.
+5. Check live SHA, service health, and \`scripts/dev/check-sync.sh\`
+   **on the server**. Record an unresolved sync gap rather than hiding it.
+6. Data imports are separate approved, auditable actions and require their
+   own verified backup and post-import count check.
 
-Before building behaviour that may already exist (here, in git history, or
-in a reference project), find the proven version and adapt it. Do not create
-a second source of the same fact. When something new is unavoidable, say why
-in the change.
+Integration tests use an isolated \`*_test\` DB; never point them at
+production. Do not weaken tests, access checks, validators or thresholds to
+get a green result. Migrations are expand-only; destructive production
+changes require explicit authorization and a verified restoration path.
 
-## 5. Contracts and ownership
+## 5. Ownership and boundaries
 
-Before cross-module work read `contracts/REGISTRY.md`,
-`docs/fanoos-migration/02_MODULE_AND_DATA_OWNERSHIP.md` and
-`02_TARGET_ARCHITECTURE.md`. Every durable fact has one owning module; the
-web, the bots and any future app are clients of the platform API, never
-stores of their own. A contract change ships with its compatibility tests
-and its `contracts/openapi` update.
-
-## 6. Safety
-
-- Never commit or print secrets: `.env` files, tokens, keys, passwords,
-  session or payment state, production data, logs, backups.
-- Schema changes are expand-only migrations applied by the updater after a
-  verified backup; destructive ones go through the supervised contract path.
-- Never overwrite production data from a development checkout. Bulk changes
-  to production data are repository scripts with a dry run, run by the
-  operator after a verified backup.
-- The owner never operates the server by hand; anything the server must do
-  is a script in this repository.
-
-## 7. Tests
-
-Never weaken a test or CI to make a change pass. A change is done when CI is
-green, it is deployed, and the live site behaves.
-
-## 8. Documentation
-
-When behaviour, data, contracts, runtime or deployment change, the matching
-document changes in the same pull request. Historical documents live in
-`docs/archive/` and are not maintained.
-
-## 9. Scope
-
-Do what the task asks. Product features, redesigns, auth or payment changes
-and broad cleanups happen when the owner asks for them, not as side effects.
+Before cross-module changes read \`contracts/REGISTRY.md\` and
+\`docs/fanoos-migration/02_MODULE_AND_DATA_OWNERSHIP.md\`. Every durable
+fact has one owner; applications/bots are API clients. A contract change
+requires compatibility tests and a matching \`contracts/openapi\` update.
+Product work not requested by the owner is out of scope. Old migration
+history in \`docs/archive/\` is historical, not an instruction to restore
+a laptop or obsolete runtime model.
