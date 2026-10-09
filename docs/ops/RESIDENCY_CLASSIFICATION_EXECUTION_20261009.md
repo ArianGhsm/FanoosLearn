@@ -1,5 +1,11 @@
 # Residency chapter classification — server-first execution log (2026-10-09)
 
+**Historical execution checkpoint.** For the verified 2026-10-10 continuation,
+74 read-only source mappings and current server deployment/sync status, see
+[`RESIDENCY_CLASSIFICATION_EXECUTION_20261010.md`](RESIDENCY_CLASSIFICATION_EXECUTION_20261010.md).
+The old updater cancellation and the 22-decision total below describe the
+2026-10-09 state, **not today's active site or latest classification total**.
+
 Status: **started**. Verified study decisions exist on the server; **not imported
 into the production bank**. All private question text, answer choices, and
 copyrighted reference text remain outside the public repository.
