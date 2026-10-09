@@ -38,8 +38,36 @@ export function bidiTextSegments(input) {
     return result;
 }
 
+/**
+ * Insert a *display-only* thin separator where the source joins a Latin term
+ * directly to a Persian word. Never change question storage, answers, or the
+ * plain-text offsets used to highlight passages.
+ */
+export function readableBidiSegments(input) {
+    const source = bidiTextSegments(input);
+    const result = [];
+    const persianLetter = /[\u0622-\u064A\u067E\u0686\u0698\u06AF\u06CC\u06A9]/;
+    for (let index = 0; index < source.length; index += 1) {
+        const part = source[index];
+        if (part.latin) {
+            const before = source[index - 1]?.text ?? '';
+            const after = source[index + 1]?.text ?? '';
+            const endsWithPersian = before !== '' && persianLetter.test(before.slice(-1));
+            const startsWithPersian = after !== '' && persianLetter.test(after.slice(0, 1));
+            const detachedDigitWord = /[0-9۰-۹]$/.test(before) && /^[A-Z][a-z]{2,}/.test(part.text)
+                && !/[A-Za-z][0-9۰-۹]$/.test(before);
+            if (endsWithPersian || detachedDigitWord) result.push({ text: ' ', latin: false });
+            result.push(part);
+            if (startsWithPersian) result.push({ text: ' ', latin: false });
+        } else {
+            result.push(part);
+        }
+    }
+    return result;
+}
+
 export function bidiNodes(text) {
-    return bidiTextSegments(text).map((part) => part.latin
+    return readableBidiSegments(text).map((part) => part.latin
         ? el('bdi', { attrs: { dir: 'ltr' }, text: part.text })
         : document.createTextNode(part.text));
 }
