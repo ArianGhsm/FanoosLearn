@@ -287,6 +287,21 @@ its own page and quote replace the nearest-edition source.
 
 ## 7. Putting it on the site
 
+**New source-only workflow for existing published, unsourced questions
+(2026-10-10):** Follow
+`docs/ops/SOURCE_ONLY_PUBLICATION_20261010.md`. The vetted
+`scripts/references/import_verified_sources.php` inserts **only**
+`bank_question_sources`, with exact-edition/scope, current live
+question+choice+answer matching, all-or-nothing rollback-only preview,
+verified full backup, and private post-commit receipt. Apply one validated
+batch, verify live source count and published content, then proceed to the
+next. A study-only JSON file must **never** be passed to the full
+`import-bank.php` sitting importer. No `publish` action is needed when
+an already published question acquires a source-only row. The historic
+complete-sitting procedure below is only for true full-sitting updates,
+not this source-completion operation.
+
+
 The authorized agent/operator works on the FANOOS server using the
 versioned procedures in `docs/ops/SERVER.md` and access-controlled runtime
 configuration. No laptop or `.local/SERVER_ACCESS.md` is required.
