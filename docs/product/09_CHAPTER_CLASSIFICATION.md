@@ -86,6 +86,28 @@ contents in `reference-texts.json` as `chapter_pdf_starts`, with the source
 page documented. The builder requires one strictly ordered start for every
 catalog chapter. Proffit 5e uses this rule (contents on PDF pages 18–20).
 
+## 2a. Inventory before a new completion pass
+
+Before step 1, use the **site-matching** sitting for the year (§4) and
+produce a read-only list of questions with no `sources`:
+
+```sh
+python scripts/references/inventory_unclassified.py \
+  --sitting=.local/bank-sittings/1405/residency-1405-1.json \
+  --out=.local/classification/inventory-1405.json
+python -m unittest discover -s tests/references -p 'test_*.py'
+```
+
+This inventory counts human/AI/existing-other sources separately, groups
+unclassified question **keys** by subject, and lists each subject's official
+edition keys from the catalog. It contains no question stem or answer.
+An absent official validity row is flagged for investigation; the script
+does **not** declare the question `none`. Run it again after an import to
+measure the actual change. The inventory cannot replace the book-text,
+chapter/page/evidence checks below, and it only reflects the sitting you
+pass; to determine live coverage, first establish that the sitting matches
+the site (§4, §7).
+
 ## 3. The procedure
 
 One batch is one sitting and one subject (10–30 questions).
