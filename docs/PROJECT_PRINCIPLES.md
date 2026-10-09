@@ -72,10 +72,11 @@ source of owned PDFs. `scripts/ops/reference-library-inventory.php`
 is the authoritative **live availability check** for approved, verified,
 private `reference_pdf` objects.
 
-Snapshot after the audited 2026-10-09 reference import: **44** catalog
-editions, **33** private PDFs registered and verified, **11** without a
-verified library PDF. The 33 PDFs total **4,038,641,513 bytes**. These are
-time-stamped findings, not permanent invariants.
+Snapshot after the audited Telegram and Konkur.in reference imports on
+2026-10-09: **44** catalog editions, **38** private PDFs registered and
+verified, **6** without a verified library PDF. The 38 PDFs total
+**4,567,132,880 bytes**. These are time-stamped findings, not permanent
+invariants.
 Registration of a PDF is **not** proof that it has a complete, searchable
 text and validated chapter-page boundaries.
 
