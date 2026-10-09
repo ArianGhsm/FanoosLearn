@@ -34,15 +34,10 @@
     "row 153 (1398, مواد دندانی): edition not stated; recorded as 4th edition from the year 2013 — the 2013 edition is the 4th; the 5th is 2024",
     "row 167 (1397, زبان انگلیسی): \"سطح Upper Intermediate\" is a scope statement, not a book; kept out of the reference list",
     "row 168 (1397, سلامت دهان و دندانپزشکی اجتماعی): workbook says \"3rd Ed.\" for 2005; recorded as 2nd edition — the owner confirmed 1397 meant the 2013 edition (the 2nd, Oxford University Press); the book has no 3rd edition, so \"3rd Ed., 2005\" in the workbook is a slip",
-    "row 193 (1406, زبان انگلیسی): \"تمامی کتب مرجع معرفی‌شده به عنوان رفرنس دروس آزمون ورودی دندانپزشکی به زبان انگلیسی\" is a scope statement, not a book; kept out of the reference list",
+    "row 177 (1398, بیماری‌های دهان و فک و صورت): workbook says \"12th Ed. [sic; actual 9th]\" for 2018; recorded as 9th edition — the 2018 edition is the 9th (Little, Miller, Rhodus); the book has no 12th edition, so \"12th Ed.\" in the workbook is a typo",
+    "row 206 (1406, زبان انگلیسی): \"تمامی کتب مرجع معرفی‌شده به عنوان رفرنس دروس آزمون ورودی دندانپزشکی به زبان انگلیسی\" is a scope statement, not a book; kept out of the reference list",
     "1403 dental-materials phillips-materials@13e: scope \"Part II: Direct Restorative Materials\" read as chapters فصول 5–8 — Part II (Direct Restorative Materials) is chapters 5–8 in the publisher's contents",
     "1398 oral-pathology neville-oral-pathology@4e: scope \"فصول 4،18،19 از منابع حذف شدند.\" names no chapter list; kept as text only",
-    "1398 orthodontics proffit-orthodontics@5e: scope \"فصول 10 و17 به منابع آزمون 98 اضافه شد.\" names no chapter list; kept as text only",
-    "1398 oral-medicine burket-oral-medicine@12e: scope \"ویرایش‌های Burket 2015 و Falace 2018؛ حذف فصل پیگمانتاسیون و افزودن بیماری‌های غدد بزاقی؛ فهرست کامل فصل‌ها در دسترس نیست.\" names no chapter list; kept as text only",
-    "1398 oral-medicine little-falace-dental-management@9e: scope \"ویرایش‌های Burket 2015 و Falace 2018؛ حذف فصل پیگمانتاسیون و افزودن بیماری‌های غدد بزاقی؛ فهرست کامل فصل‌ها در دسترس نیست.\" names no chapter list; kept as text only",
-    "1398 oral-surgery malamed-local-anesthesia@6e: scope \"افزوده‌شدن منبع در اطلاعیه؛ فهرست فصل‌ها مشخص نشده.\" names no chapter list; kept as text only",
-    "1398 operative-dentistry sturdevant-operative@7e: scope \"منابع با برچسب کوتاه «Art 2018» و «Craig 2018»؛ جزئیات کامل در PDF مفقود است.\" names no chapter list; kept as text only",
-    "1398 operative-dentistry craig-restorative-materials@14e: scope \"منابع با برچسب کوتاه «Art 2018» و «Craig 2018»؛ جزئیات کامل در PDF مفقود است.\" names no chapter list; kept as text only",
     "1398 community-dentistry national-oral-health@1394: scope \"در اطلاعیه به عنوان منبع معرفی شده؛ مشخصات کامل در PDF مفقود است.\" names no chapter list; kept as text only",
     "1398 dental-materials van-noort-materials@4e: scope \"اطلاعیه می‌گوید Noort جایگزین منبع قبلی شده؛ ویرایش/فصل‌ها در پست نیامده است.\" names no chapter list; kept as text only",
     "1397 dental-materials mccabe-walls-materials@9e: scope \"فصول منتخب؛ فهرست کامل در PDF اصلی (نسخهٔ متن استخراجیِ قدیمی در بعضی اعداد RTL وارونگی دارد).\" names no chapter list; kept as text only",
@@ -72075,42 +72070,227 @@
     {
       "exam_type": "residency",
       "year": 1398,
+      "subject": "endodontics",
+      "edition": "torabinejad-endodontics@5e",
+      "official": true,
+      "scope": "تمام فصول کتاب",
+      "evidence": "Official 1398 partial list, 2018-10-09; Telegram dental student channel message 3416",
+      "source_document": "منابع دستیاری دندان 98.pdf (three-page partial list; SHA-256 F3F304ED79D64EAE50D9833EAF5DF1EB2D8681ACD12937C0665011BCF3B033C5)",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "23"
+        },
+        {
+          "number": "24"
+        },
+        {
+          "number": "25"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1398,
       "subject": "operative-dentistry",
       "edition": "craig-restorative-materials@14e",
-      "official": false,
-      "scope": "منابع با برچسب کوتاه «Art 2018» و «Craig 2018»؛ جزئیات کامل در PDF مفقود است.",
-      "evidence": "Partial change notice · https://t.me/dparseh86/1628",
-      "source_document": null
+      "official": true,
+      "scope": "فصول 9 و 10 (فقط صفحات 171 تا 178) و 13 کتاب",
+      "evidence": "Official 1398 partial list, 2018-10-09; Telegram dental student channel message 3416",
+      "source_document": "منابع دستیاری دندان 98.pdf (three-page partial list; SHA-256 F3F304ED79D64EAE50D9833EAF5DF1EB2D8681ACD12937C0665011BCF3B033C5)",
+      "scope_chapters": [
+        {
+          "number": "9"
+        },
+        {
+          "number": "10",
+          "partial": "فقط صفحات 171–178"
+        },
+        {
+          "number": "13"
+        }
+      ]
     },
     {
       "exam_type": "residency",
       "year": 1398,
       "subject": "operative-dentistry",
       "edition": "sturdevant-operative@7e",
-      "official": false,
-      "scope": "منابع با برچسب کوتاه «Art 2018» و «Craig 2018»؛ جزئیات کامل در PDF مفقود است.",
-      "evidence": "Partial change notice · https://t.me/dparseh86/1628",
-      "source_document": null
+      "official": true,
+      "scope": "فصل 1 (صفحات 1 تا 15، اول اکلوژن) و فصول 2 و 3 و 4 و 5 و 10 کتاب",
+      "evidence": "Official 1398 partial list, 2018-10-09; Telegram dental student channel message 3416",
+      "source_document": "منابع دستیاری دندان 98.pdf (three-page partial list; SHA-256 F3F304ED79D64EAE50D9833EAF5DF1EB2D8681ACD12937C0665011BCF3B033C5)",
+      "scope_chapters": [
+        {
+          "number": "1",
+          "partial": "صفحات 1–15، اول اکلوژن"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "10"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1398,
+      "subject": "operative-dentistry",
+      "edition": "summit-operative@4e",
+      "official": true,
+      "scope": "فصول 6 و 7 و 9 (از مبحث باندینگ تا صفحه 217) و 10 و 11 کتاب",
+      "evidence": "Official 1398 partial list, 2018-10-09; Telegram dental student channel message 3416",
+      "source_document": "منابع دستیاری دندان 98.pdf (three-page partial list; SHA-256 F3F304ED79D64EAE50D9833EAF5DF1EB2D8681ACD12937C0665011BCF3B033C5)",
+      "scope_chapters": [
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "9",
+          "partial": "از مبحث باندینگ تا صفحه 217"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        }
+      ]
     },
     {
       "exam_type": "residency",
       "year": 1398,
       "subject": "oral-medicine",
       "edition": "burket-oral-medicine@12e",
-      "official": false,
-      "scope": "ویرایش‌های Burket 2015 و Falace 2018؛ حذف فصل پیگمانتاسیون و افزودن بیماری‌های غدد بزاقی؛ فهرست کامل فصل‌ها در دسترس نیست.",
-      "evidence": "Partial change notice · https://t.me/dparseh86/1628",
-      "source_document": null
+      "official": true,
+      "scope": "فصول 4 و 5 و 7 و 10 کتاب",
+      "evidence": "Official 1398 partial list, 2018-10-09; Telegram dental student channel message 3416",
+      "source_document": "منابع دستیاری دندان 98.pdf (three-page partial list; SHA-256 F3F304ED79D64EAE50D9833EAF5DF1EB2D8681ACD12937C0665011BCF3B033C5)",
+      "scope_chapters": [
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "10"
+        }
+      ]
     },
     {
       "exam_type": "residency",
       "year": 1398,
       "subject": "oral-medicine",
       "edition": "little-falace-dental-management@9e",
-      "official": false,
-      "scope": "ویرایش‌های Burket 2015 و Falace 2018؛ حذف فصل پیگمانتاسیون و افزودن بیماری‌های غدد بزاقی؛ فهرست کامل فصل‌ها در دسترس نیست.",
-      "evidence": "Partial change notice · https://t.me/dparseh86/1628",
-      "source_document": null
+      "official": true,
+      "scope": "فصول 2 و 4 و 12 و 14 و 15 و 16 و 17 کتاب (فقط مباحث ملاحظات دندانپزشکی)",
+      "evidence": "Official 1398 partial list, 2018-10-09; Telegram dental student channel message 3416",
+      "source_document": "منابع دستیاری دندان 98.pdf (three-page partial list; SHA-256 F3F304ED79D64EAE50D9833EAF5DF1EB2D8681ACD12937C0665011BCF3B033C5)",
+      "scope_chapters": [
+        {
+          "number": "2"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        }
+      ]
     },
     {
       "exam_type": "residency",
@@ -72125,22 +72305,522 @@
     {
       "exam_type": "residency",
       "year": 1398,
+      "subject": "oral-radiology",
+      "edition": "white-pharoah-radiology@7e",
+      "official": true,
+      "scope": "فصول 1 تا 25 کتاب",
+      "evidence": "Official 1398 partial list, 2018-10-09; Telegram dental student channel message 3416",
+      "source_document": "منابع دستیاری دندان 98.pdf (three-page partial list; SHA-256 F3F304ED79D64EAE50D9833EAF5DF1EB2D8681ACD12937C0665011BCF3B033C5)",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "23"
+        },
+        {
+          "number": "24"
+        },
+        {
+          "number": "25"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1398,
+      "subject": "oral-surgery",
+      "edition": "hupp-oral-surgery@6e",
+      "official": true,
+      "scope": "کلیه فصول کتاب",
+      "evidence": "Official 1398 partial list, 2018-10-09; Telegram dental student channel message 3416",
+      "source_document": "منابع دستیاری دندان 98.pdf (three-page partial list; SHA-256 F3F304ED79D64EAE50D9833EAF5DF1EB2D8681ACD12937C0665011BCF3B033C5)",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "23"
+        },
+        {
+          "number": "24"
+        },
+        {
+          "number": "25"
+        },
+        {
+          "number": "26"
+        },
+        {
+          "number": "27"
+        },
+        {
+          "number": "28"
+        },
+        {
+          "number": "29"
+        },
+        {
+          "number": "30"
+        },
+        {
+          "number": "32"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1398,
       "subject": "oral-surgery",
       "edition": "malamed-local-anesthesia@6e",
-      "official": false,
-      "scope": "افزوده‌شدن منبع در اطلاعیه؛ فهرست فصل‌ها مشخص نشده.",
-      "evidence": "Partial change notice · https://t.me/dparseh86/1628",
-      "source_document": null
+      "official": true,
+      "scope": "کلیه فصول کتاب",
+      "evidence": "Official 1398 partial list, 2018-10-09; Telegram dental student channel message 3416",
+      "source_document": "منابع دستیاری دندان 98.pdf (three-page partial list; SHA-256 F3F304ED79D64EAE50D9833EAF5DF1EB2D8681ACD12937C0665011BCF3B033C5)",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1398,
+      "subject": "oral-surgery",
+      "edition": "malamed-medical-emergencies@7e",
+      "official": true,
+      "scope": "فصول 1 و 2 و 3، از فصل 5 تا آخر فصل 13، و فصول 30 و 31 کتاب",
+      "evidence": "Official 1398 partial list, 2018-10-09; Telegram dental student channel message 3416",
+      "source_document": "منابع دستیاری دندان 98.pdf (three-page partial list; SHA-256 F3F304ED79D64EAE50D9833EAF5DF1EB2D8681ACD12937C0665011BCF3B033C5)",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "30"
+        },
+        {
+          "number": "31"
+        }
+      ]
     },
     {
       "exam_type": "residency",
       "year": 1398,
       "subject": "orthodontics",
       "edition": "proffit-orthodontics@5e",
-      "official": false,
-      "scope": "فصول 10 و17 به منابع آزمون 98 اضافه شد.",
-      "evidence": "Partial change notice · https://t.me/dparseh86/1628",
-      "source_document": null
+      "official": true,
+      "scope": "فصول 1 و 3 و 4 و 5 و 6 و 7 و 11 و 12 و 13؛ فصل 2 صفحات 20 تا 50؛ فصل 8 صفحات 278 تا 289 و صفحه 295 تا آخر فصل؛ فصل 10 صفحات 347 تا 353؛ فصل 17 صفحات 606 تا 613",
+      "evidence": "Official 1398 partial list, 2018-10-09; Telegram dental student channel message 3416",
+      "source_document": "منابع دستیاری دندان 98.pdf (three-page partial list; SHA-256 F3F304ED79D64EAE50D9833EAF5DF1EB2D8681ACD12937C0665011BCF3B033C5)",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2",
+          "partial": "فصل 2 صفحات 20–50"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8",
+          "partial": "فصل 8 صفحات 278–289 و صفحه 295 تا"
+        },
+        {
+          "number": "10",
+          "partial": "فصل 10 صفحات 347–353"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "17",
+          "partial": "فصل 17 صفحات 606–613"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1398,
+      "subject": "pediatric-dentistry",
+      "edition": "mcdonald-avery-pediatric@10e",
+      "official": true,
+      "scope": "فصول 1 و 2 و 3 و 4 و 7 و 8 و 9 و 10 و 11 و 13 و 15 و 16 و 19 و 22 و 25 و 26 و 27",
+      "evidence": "Official 1398 partial list, 2018-10-09; Telegram dental student channel message 3416",
+      "source_document": "منابع دستیاری دندان 98.pdf (three-page partial list; SHA-256 F3F304ED79D64EAE50D9833EAF5DF1EB2D8681ACD12937C0665011BCF3B033C5)",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "25"
+        },
+        {
+          "number": "26"
+        },
+        {
+          "number": "27"
+        }
+      ]
+    },
+    {
+      "exam_type": "residency",
+      "year": 1398,
+      "subject": "periodontics",
+      "edition": "carranza-periodontology@12e",
+      "official": true,
+      "scope": "فصول 1 و 3 و 7 و 14 و 15 و 16 و 17 و 18 و 20 و 21 و 23 و 25 و 29 و 31 و 33 و 34 و 35 و 41 و 42 و 44 و 45 و 46 و 52، به علاوه قسمت‌های Online Only کتاب",
+      "evidence": "Official 1398 partial list, 2018-10-09; Telegram dental student channel message 3416",
+      "source_document": "منابع دستیاری دندان 98.pdf (three-page partial list; SHA-256 F3F304ED79D64EAE50D9833EAF5DF1EB2D8681ACD12937C0665011BCF3B033C5)",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "23"
+        },
+        {
+          "number": "25"
+        },
+        {
+          "number": "29"
+        },
+        {
+          "number": "31"
+        },
+        {
+          "number": "33"
+        },
+        {
+          "number": "34"
+        },
+        {
+          "number": "35"
+        },
+        {
+          "number": "41"
+        },
+        {
+          "number": "42"
+        },
+        {
+          "number": "44"
+        },
+        {
+          "number": "45"
+        },
+        {
+          "number": "46"
+        },
+        {
+          "number": "52"
+        }
+      ]
     },
     {
       "exam_type": "residency",
@@ -72304,11 +72984,12 @@
           "number": "9"
         },
         {
-          "number": "10"
+          "number": "10",
+          "partial": "صص 162–211"
         },
         {
           "number": "13",
-          "partial": "فصل 13 (صص 328–347)"
+          "partial": "صص 328–347"
         }
       ]
     },
@@ -72333,7 +73014,8 @@
           "number": "3"
         },
         {
-          "number": "4"
+          "number": "4",
+          "partial": "صص 41–136"
         },
         {
           "number": "13"
@@ -72345,7 +73027,8 @@
           "number": "15"
         },
         {
-          "number": "16"
+          "number": "16",
+          "partial": "صص 339–454"
         }
       ]
     },
@@ -72363,17 +73046,19 @@
           "number": "6"
         },
         {
-          "number": "7"
+          "number": "7",
+          "partial": "صص 131–181"
         },
         {
           "number": "9",
-          "partial": "فصل 9 (صص 207–217)"
+          "partial": "صص 207–217"
         },
         {
           "number": "10"
         },
         {
-          "number": "11"
+          "number": "11",
+          "partial": "صص 249–316"
         }
       ]
     },

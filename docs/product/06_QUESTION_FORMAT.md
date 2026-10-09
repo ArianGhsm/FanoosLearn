@@ -282,7 +282,7 @@ Imported and published on 2026-10-07:
 
 | Year | Questions | Published | Notes |
 |---|---:|---:|---|
-| 1398 (B) | 247 | 245 | chapters for 85 (2026-10-08; the recorded 1398 list names only the references that changed that year, so endodontics, prosthodontics, periodontics, pediatrics and most surgery have no official edition yet) |
+| 1398 (B) | 247 | 245 | chapters for 85 as of 2026-10-08. On 2026-10-09 the dated three-page official partial list was recovered: 13 editions in eight subjects now have their announced scope in the catalog. The document omits pathology, prosthodontics, community dentistry and dental materials; those remain unconfirmed (prosthodontics has no 1398 row). This catalog update does not itself reclassify the questions. |
 | 1399 | 249 | 248 | chapters for 184 (2026-10-08) |
 | 1400 | 250 | 249 | chapters for 188 (2026-10-08) |
 | 1401 | 249 | 249 | chapters for 196 (2026-10-08; Carranza, Burket, Falace and Neville through the nearest edition, pediatrics through McDonald 11e mapped to Nowak 6e chapters; four questions left unclassified) |
