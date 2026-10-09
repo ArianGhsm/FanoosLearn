@@ -71,6 +71,13 @@ class ScopeChaptersTest(unittest.TestCase):
         self.assertEqual(partial(result), ['1', '13'])
         self.assertEqual(partial(resolve('فصل 9 صفحات 276 تا 278 و 288 تا 291', TWENTY)), ['9'])
 
+    def test_1398_list_phrasing(self):
+        result = resolve('فصل 1 (صفحات 1 تا 15، اول اکلوژن) و فصول 2 و 3 و 4 و 5 و 10 کتاب', TWENTY)
+        self.assertEqual(numbers(result), ['1', '2', '3', '4', '5', '10'])
+        self.assertEqual(partial(result), ['1'])
+        result = resolve('فصول 1 و 2 و 3، از فصل 5 تا آخر فصل 13، و فصول 30 و 31 کتاب', [str(n) for n in range(1, 32)])
+        self.assertEqual(numbers(result), ['1', '2', '3', *[str(n) for n in range(5, 14)], '30', '31'])
+
     def test_notices_that_only_change_a_list_are_unreadable(self):
         for text in ['فصول 4،18،19 از منابع حذف شدند.', 'فصول 10 و17 به منابع آزمون 98 اضافه شد.',
                      'Part II: Direct Restorative Materials', 'ذکر شده به عنوان منبع؛ فصل/صفحه مشخص نشده',

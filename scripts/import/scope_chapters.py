@@ -57,6 +57,7 @@ def resolve(scope: str | None, chapters: list[str]) -> list[dict] | None:
     # The official lists' own phrasing: «فصل 1 تا پایان فصل 9», «13 تا 26»,
     # «فصل های 4-10-12-14» (a list, not ranges), «کلیه فصول».
     text = text.replace('تا پایان فصل', 'تا')
+    text = text.replace('تا آخر فصل', 'تا')
     text = re.sub(rf'{NUMBER}(?:\s*-\s*{NUMBER}){{2,}}', lambda m: '، '.join(re.findall(NUMBER, m.group(0))), text)
     text = re.sub(rf'({NUMBER})\s*تا\s*({NUMBER})', lambda m: f'{m.group(1)}–{m.group(2)}', text)
     if text.startswith('کلیه فصول'):
@@ -72,7 +73,7 @@ def resolve(scope: str | None, chapters: list[str]) -> list[dict] | None:
 
     def note_limit(m: re.Match) -> str:
         inner = m.group(2).strip()
-        if re.search(r'فصل\s*\d', inner) or not (re.search(r'از\s*ص', inner) or any(w in inner for w in PARTIAL)):
+        if re.search(r'فصل\s*\d', inner) or not (re.search(r'(?:از\s*)?(?:صفحات|صفحه|صص|ص)\s*\d', inner) or any(w in inner for w in PARTIAL)):
             return m.group(0)
         limited[m.group(1)] = inner
         return m.group(1)

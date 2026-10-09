@@ -306,6 +306,12 @@ def build() -> dict:
         identity = (record['year'], subject, record['edition'])
         if identity in validity:
             previous = validity[identity]
+            # An official row transcribed from the dated PDF supersedes an
+            # earlier partial notice for the same edition. Combining their
+            # scopes would falsely make the notice's shorthand official.
+            if record['official'] and not previous['official']:
+                validity[identity] = record
+                return
             if previous['scope'] != record['scope'] and record['scope']:
                 previous['scope'] = '; '.join(x for x in [previous['scope'], record['scope']] if x)
             previous['official'] = previous['official'] or record['official']
