@@ -195,11 +195,58 @@ was created with 0600 permissions; adjacent SHA-256 receipt passed
 `sha256sum -c`, and archive listing contained six files. Archive size
 approximately 739 KB. As above, this is not an independent offsite backup.
 
-**Consolidated research: 17 accepted chapter decisions (9 community + 8
-radiology), zero final validator rejections, and 13 undecided in these 30
-studied questions. NONE of these 17 have been imported into production.**
+**Intermediate research checkpoint: 17 accepted chapter decisions (9 community
+1405 + 8 radiology 1405), zero final validator rejections, 13 undecided
+among 30 questions. The third 1403 community batch adds another five accepted.**
 The baseline backlog remains 491 until an audited, backed-up **source-only**
 import and post-import DB count verifies otherwise.
+
+
+## Third protected question batch (1403/community-dentistry)
+
+The exact official reference is again `national-oral-health@1394` with
+official 1403 scope chapters 1–16; reuse the same verified 330-page
+full-book text, rather than re-extracting or duplicating the PDF.
+
+- A read-only DB export created
+  `/srv/fanoos/shared/research/bank-sittings/1403/community-study.json`,
+  **10 unsourced** questions Q221–Q230, SHA-256
+  `502ca8cccde725417dc4ce243e59d51c029a6da06ba3c349b3bd4c57f75e73ee`.
+- Queries at
+  `/srv/fanoos/shared/research/classification/reports/1403-community-queries.json`
+  were searched with the ordinary `find_in_books.py --local` workflow.
+- Private decision file
+  `/srv/fanoos/shared/research/classification/decisions/1403-community-dentistry.json`;
+  SHA-256 `14a7f705124cf96f6fc19633ee859f4b2c50cd27bb80dda1d94b18cc3c9b3460`.
+- Verified study output
+  `/srv/fanoos/shared/research/classification/sittings/1403-community-validated.json`;
+  SHA-256 `81e6d36634b71ac9451dc58b2ec4173af79a5ab2e63a9a406664dad063c7747f`.
+
+The existing book-text validator reported **5 accepted, 0 rejected,
+5 undecided**. Accepted chapter assignments:
+
+| Question | Chapter | PDF page | Supporting fact |
+|---|---:|---:|---|
+| 221 | 6 | 86 | 1391 survey mean DMFT for 12-year-olds: 2.09 |
+| 222 | 2 | 33 | PHC's five principles |
+| 225 | 12 | 169 | Safe recreation spaces as an Ottawa Charter action |
+| 226 | 14 | 198 | PRECEDE predisposing, reinforcing and enabling factors |
+| 230 | 10 | 135 | Cohort studies for prognosis questions |
+
+Pending Q223, Q224, Q227, Q228 and Q229; do not assign chapters
+solely from topical similarity, particularly when a book's two-column
+text interleaves concepts.
+
+The private six-artifact archive
+`/var/backups/fanoos/research/20261009-1403-community-first-batch.tar.gz`
+was created with 0600 permissions and an adjacent SHA-256 receipt.
+`sha256sum -c` passed and listing confirmed six items (~458 KB).
+It is on-host recovery only, not independent/offsite storage.
+
+**Updated consolidated research across three protected batches:** 22 accepted
+source/chapter/page decisions, 0 final validator rejections, 18 undecided
+among 40 studied questions. All are **pending audited production import**;
+live bank backlog remains unchanged until verified by a new DB query.
 
 ## Deployment status and safety blocker
 
