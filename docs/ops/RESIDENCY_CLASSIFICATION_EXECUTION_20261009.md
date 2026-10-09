@@ -78,6 +78,16 @@ page text and the correct concept, never inferred from raw similarity
 scores alone. A successful page/quote check does not remove the need for
 subject-matter review where a fact is ambiguous.
 
+**Workspace isolation hardening (2026-10-09):** The export script now
+**requires** an explicit `--workspace=<uuid>` and scopes questions,
+choices and official answers to that workspace. A read-only regression
+export into a new protected file for 1405 community-dentistry returned
+the same 10 questions and the **same SHA-256
+`8020c2e8a23508dd8b0937bd8e6eeb533dcc545ffd3d82f34a658211530302f8`**
+as the original, so previous decisions remain matched to the exact input.
+For every future batch pass a verified authorized dentistry workspace ID;
+the historical exports were created before this added guard.
+
 ## First protected question batch (1405/community-dentistry)
 
 New script: `scripts/references/export_server_candidates.php`.
@@ -88,8 +98,10 @@ deliberately **not importable**. It never overwrites published questions.
 
 ```sh
 # As authorized fanoosupd, with FANOOS_CONFIG_FILE pointing to
-# /etc/fanoos/updater-config.php:
+# /etc/fanoos/updater-config.php, use the explicit dentistry
+# workspace UUID read from the authorized production database:
 php scripts/references/export_server_candidates.php \
+  --workspace=<dentistry-workspace-uuid> \
   --year=1405 --subject=community-dentistry \
   --out=/srv/fanoos/shared/research/bank-sittings/1405/community-study.json
 python3 scripts/references/classification_batch.py \
