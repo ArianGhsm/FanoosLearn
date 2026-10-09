@@ -43,8 +43,9 @@ The database is `fanoos_prod` on the local MySQL.
 **Separation:** `shared/research/` is a protected, server-only *working*
 directory for page-marked reference texts, exact site-matching sittings,
 decision JSON, QA output and job/checkpoint records; it is not the
-content-addressed storage or an immutable release. Make it mode 0700 for the
-authorized FANOOS operator, keep book/question content out of Git, and back
+content-addressed storage or an immutable release. The directory skeleton was provisioned on 2026-10-09 for
+`fanoosupd:fanoosupd` with mode `0700`; verified contents were empty.
+Keep book/question content out of Git, and back
 it up explicitly with verified recovery before treating working files as
 durable. Until the backup/recovery mechanism is verified, do not claim this
 working directory is backed up.
