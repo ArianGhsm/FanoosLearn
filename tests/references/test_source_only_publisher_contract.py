@@ -15,7 +15,7 @@ class PublisherSafetyContracts(unittest.TestCase):
         cls.cli = CLI.read_text()
 
     def test_only_source_row_insert(self):
-        statements = re.findall(r"(?:INSERT INTO|UPDATE|DELETE FROM|REPLACE INTO)\s+([a-z_]+)",
+        statements = re.findall(r"(?<!FOR )(?:INSERT INTO|UPDATE|DELETE FROM|REPLACE INTO)\s+([a-z_]+)",
                                 self.service, flags=re.IGNORECASE | re.MULTILINE)
         self.assertEqual([s.lower() for s in statements], ["bank_question_sources"])
 
