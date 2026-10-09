@@ -101,8 +101,10 @@ SQL);
                 ++$explained;
             }
             unset($prior['explanation'], $later['explanation']);
-            if ($prior !== $later) {
-                throw new RuntimeException('Non-citation frozen assessment content changed.');
+            foreach (array_unique(array_merge(array_keys($prior), array_keys($later))) as $name) {
+                if (($prior[$name] ?? null) !== ($later[$name] ?? null)) {
+                    throw new RuntimeException('Non-citation frozen assessment content changed.');
+                }
             }
         }
         echo json_encode(['mode' => 'post', 'year' => $year, 'before' => $oldNo,
