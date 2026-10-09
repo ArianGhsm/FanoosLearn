@@ -224,7 +224,8 @@ See `docs/product/09_CHAPTER_CLASSIFICATION.md` for the mistakes and guards.
 - Reconcile historical 1398–1405 coverage notes with a current **database
   audit**. Historical counts in `06_QUESTION_FORMAT.md` are not live counts.
 - Regularly monitor disk capacity and backup retention without deleting
-  anything outside the approved retention policy. On 2026-10-09 the host
-  reported **92% disk usage** (~4.9 GB free).
+  anything outside the approved retention policy. After the audited reference
+  imports on 2026-10-09, the live inventory reported **87% disk usage** (~7.5
+  GiB free); see `docs/ops/SERVER.md` for the dated snapshot.
 - Any access gap or unready edition is a documented **pending dependency**,
   not a reason to revert to a mandatory laptop workflow.
