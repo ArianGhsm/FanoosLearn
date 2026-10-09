@@ -151,8 +151,10 @@ The Windows transfer script reads the ignored owner-only
 `edition_key`, `kind` (`local`, `drive_mount`, or `drive_remote`) and `path`.
 It hashes local PDFs without extracting text, reads mounted Drive PDFs in
 place, and can copy a mapped PDF from the configured `gdrive` remote directly
-into FANOOS staging. It runs the server dry run and transfers only PDFs the
-library needs. `-Apply` makes a verified full backup, imports, checks the
+into FANOOS staging. Local SCP uploads first land in a per-run mode-0700
+temporary directory, then the server installs them into protected staging and
+removes the temporary copy. The script runs the server dry run and transfers only PDFs the library
+needs. `-Apply` makes a verified full backup, imports, checks the
 final private inventory for every available edition, reports editions still
 pending, and removes the temporary staging directory. `-AllowPartial` is
 required to apply when the catalog has unavailable editions. Without

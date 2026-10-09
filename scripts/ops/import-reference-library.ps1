@@ -21,13 +21,30 @@ function Invoke-FanoosSsh([string]$Command) {
 }
 
 function Copy-ToFanoosStage([string]$LocalPath, [string]$RemoteFile) {
-    $destination = "$($script:sshTarget):$($script:remoteStage)/$RemoteFile"
-    $result = & $script:scpPath @script:sshOptions $LocalPath $destination 2>&1
+    if ($RemoteFile -notmatch '^(manifest\.json|[a-z0-9@-]+\.pdf)$') {
+        throw 'The generated FANOOS transfer filename failed its safety check.'
+    }
+    if (-not $script:uploadDirectoryCreated) {
+        $uploadDirectory = Quote-RemoteArgument $script:uploadDirectory
+        Invoke-FanoosSsh "mkdir -m 0700 -- $uploadDirectory" | Out-Null
+        $script:uploadDirectoryCreated = $true
+    }
+    $uploadPath = "$($script:uploadDirectory)/$RemoteFile"
+    $uploadDestination = "$($script:sshTarget):$uploadPath"
+    $result = & $script:scpPath @script:sshOptions $LocalPath $uploadDestination 2>&1
     if ($LASTEXITCODE -ne 0) {
+        try {
+            $upload = Quote-RemoteArgument $uploadPath
+            Invoke-FanoosSsh "rm -f -- $upload" | Out-Null
+        } catch {
+            Write-Warning 'A temporary local upload file may need operator cleanup.'
+        }
         throw "Could not transfer staged file $RemoteFile."
     }
-    $remote = Quote-RemoteArgument "$($script:remoteStage)/$RemoteFile"
-    Invoke-FanoosSsh "sudo -n chown fanoosupd:fanoosrt -- $remote && sudo -n chmod 0640 -- $remote" | Out-Null
+    $upload = Quote-RemoteArgument $uploadPath
+    $destination = Quote-RemoteArgument "$($script:remoteStage)/$RemoteFile"
+    $installCommand = "if [ -f $upload ] && [ ! -L $upload ]; then sudo -n install -o fanoosupd -g fanoosrt -m 0640 -- $upload $destination; status=`$?; rm -f -- $upload; exit `$status; else exit 1; fi"
+    Invoke-FanoosSsh $installCommand | Out-Null
 }
 
 function Invoke-ReferenceDryRun {
@@ -66,6 +83,15 @@ function Remove-ReferenceStage {
     }
     $stage = Quote-RemoteArgument $script:remoteStage
     Invoke-FanoosSsh "sudo -n -u fanoosupd rm -rf -- $stage" | Out-Null
+}
+
+function Remove-LocalTransferStage {
+    if ($script:uploadDirectory -notmatch '^/tmp/fanoos-reference-import-[a-f0-9]{32}$') {
+        throw 'The generated local transfer path failed its safety check.'
+    }
+    $directory = Quote-RemoteArgument $script:uploadDirectory
+    Invoke-FanoosSsh "rm -rf -- $directory" | Out-Null
+    $script:uploadDirectoryCreated = $false
 }
 
 $sshTarget = $env:FANOOS_SSH_TARGET
@@ -113,6 +139,9 @@ $script:scpPath = $scpPath
 $script:sshOptions = $sshOptions
 $script:remoteStage = $remoteStage
 $script:allowPartial = [bool]$AllowPartial
+$script:uploadToken = [Guid]::NewGuid().ToString('N')
+$script:uploadDirectory = "/tmp/fanoos-reference-import-$($script:uploadToken)"
+$script:uploadDirectoryCreated = $false
 $localManifest = Join-Path ([IO.Path]::GetTempPath()) "fanoos-reference-import-$batch.json"
 $remoteStageCreated = $false
 $transferredAnyPdfs = $false
@@ -268,6 +297,9 @@ try {
         }
         Remove-ReferenceStage
         $remoteStageCreated = $false
+        if ($script:uploadDirectoryCreated) {
+            Remove-LocalTransferStage
+        }
         if (@($dryRun.missing_source_editions).Count -gt 0) {
             Write-Warning ('These editions remain pending because no exact full-book PDF was available: ' + (@($dryRun.missing_source_editions) -join ', '))
         }
@@ -276,8 +308,18 @@ try {
         Write-Output ($dryRun | ConvertTo-Json -Depth 8)
         Remove-ReferenceStage
         $remoteStageCreated = $false
+        if ($script:uploadDirectoryCreated) {
+            Remove-LocalTransferStage
+        }
     }
 } finally {
+    if ($script:uploadDirectoryCreated) {
+        try {
+            Remove-LocalTransferStage
+        } catch {
+            Write-Warning 'A temporary local transfer directory needs operator cleanup.'
+        }
+    }
     if ($remoteStageCreated -and -not $transferredAnyPdfs) {
         try {
             Remove-ReferenceStage
