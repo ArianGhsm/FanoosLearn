@@ -137,7 +137,9 @@ SQL);
                         $fields[] = $name;
                     }
                 }
-                $diffs[] = ['index' => $i, 'fields' => $fields];
+                if ($fields !== []) {
+                    $diffs[] = ['index' => $i, 'fields' => $fields];
+                }
             }
         }
         if ($diffs !== []) {
