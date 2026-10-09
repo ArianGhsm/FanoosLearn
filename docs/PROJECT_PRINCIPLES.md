@@ -198,14 +198,19 @@ See `docs/product/09_CHAPTER_CLASSIFICATION.md` for the mistakes and guards.
    runbooks—not chat history—carry ongoing processing across sessions.
 5. Release deployments remain controlled GitHub `main` → updater; direct
    edits to deployed code and ad-hoc unbacked-up production writes are banned.
-6. Keep at most five completed full FANOOS backups on the server. Include the
-   database and non-reference object storage; omit PDF objects used only by
-   the private reference library. PDFs remain in live FANOOS storage. A
-   disaster restore needs an audited step to repopulate their existing object
-   IDs and storage keys from the owner's original PDFs; the ordinary library
-   importer is not a substitute. The daily database transfer uses a private
-   temporary directory and removes it on process exit. This policy applies
-   only to FANOOS and does not change other projects' backup policy.
+6. On the IranServer host, keep at most five newest completed, verified
+   server-local backup sets per project, aggregated across that project's
+   server-local backup destinations. Each project backup job removes older
+   completed sets after the new set has been verified; incomplete or failed
+   sets are not treated as valid recovery points. The separate Restic/Arvan
+   object-storage repository is excluded and keeps its own retention policy.
+   For FANOOS, full backups include the database and non-reference object
+   storage; omit PDF objects used only by the private reference library. PDFs
+   remain in live FANOOS storage. A disaster restore needs an audited step to
+   repopulate their existing object IDs and storage keys from the owner's
+   original PDFs; the ordinary library importer is not a substitute. The
+   daily database transfer uses a private temporary directory and removes it
+   on process exit.
 7. The current FANOOS production host is provided by IranServer. SentinelX
    is optional tooling; authorized direct access to the IranServer host is
    valid when authenticated and host-key verified. The provider name itself
