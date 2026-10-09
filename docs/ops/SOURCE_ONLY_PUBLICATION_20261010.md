@@ -32,10 +32,12 @@ Authority: `docs/PROJECT_PRINCIPLES.md`,
 - If one source is rejected, **none** of that batch's source rows commit.
   Re-running an already imported batch fails instead of overwriting AI or
   human-reviewed sources. Never suppress these failures.
-- Source-only inserts become available to the existing already-published
-  question bank immediately. The normal `import-bank.php publish` action
-  is **not needed for source-only updates** and could change broader exam
-  state; do not run it for this workflow.
+- Source-only inserts become available in the **bank** immediately; however,
+  already-published assessments use immutable **version snapshots**. Students
+  will not see new source explanations in the existing version until the
+  authorized BankPublisher review/publish process produces a new assessment
+  version. Publication is a separate audited action, **not** a side effect
+  of the source-only row insertion. Preserve all previous versions/attempts.
 
 ## Allowed research batches
 
@@ -120,11 +122,24 @@ because the actual announced syllabus scope is missing. The other
    full published question count, remaining unsourced backlog, and site
    `/health`. Confirm questions/options/answers were not changed via
    comparison to original study re-export. Record exact backup ID,
-   release SHA, batch receipt SHA and the verified before/after counts in
-   this document. Repeat steps 2–7 immediately for each other eligible
-   batch; use **a distinct receipt path** for each batch. Do not run a
-   general question-bank importer or republish already published sittings.
-8. Update the canonical operations documentation and checkpoint. Do not
+   release SHA, batch receipt SHA and verified before/after counts.
+8. **Update the frozen student assessment version** after validated bank-source
+   inserts, using the *official* `import-bank.php publish --type=residency
+   --year=YYYY --round=1 --workspace=UUID --actor=AUTHORIZED_UUID
+   --reviewer=AUTHORIZED_UUID` path. This action deliberately creates a **new
+   published version** (draft → review → publish) and preserves earlier
+   attempts/versions. Before invoking, compare existing frozen questions,
+   options and answers to current bank questions and confirm no content drift;
+   after invoking, compare new and previous question definitions **excluding
+   source-derived explanation/location**, assert they are identical, and
+   confirm only new source citations appear. Do not republish blindly if
+   existing assessment content already differs. For years with more than one
+   accepted batch (e.g. 1405), apply both batches and publish one new version
+   after their individual preflight+receipt checks to avoid redundant versions.
+9. Repeat steps 2–8 for other eligible years, using a distinct receipt per
+   batch and logging each new assessment version ID. Do not send study-only
+   files to the general question-bank importer.
+10. Update the canonical operations documentation and checkpoint. Do not
    claim offsite backup merely from an on-host archive.
 
 **Important:** This document may describe the implementation before
