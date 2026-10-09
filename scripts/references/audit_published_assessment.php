@@ -8,6 +8,13 @@ declare(strict_types=1);
  * published version. After BankPublisher runs, every field except the
  * source-derived "explanation" must match the previous published version.
  */
+use Fanoos\Platform\Audit\AuditLogger;
+use Fanoos\Platform\Authorization\AccessGate;
+use Fanoos\Platform\Authorization\ScopeAuthorizer;
+use Fanoos\Platform\Bank\BankPublisher;
+use Fanoos\Platform\Content\ExamQuestionRateGuard;
+use Fanoos\Platform\Content\ExamService;
+use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Support\DatabaseConnection;
 
 require dirname(__DIR__, 2) . '/apps/platform/bootstrap.php';
@@ -46,7 +53,7 @@ try {
     }
     $db = DatabaseConnection::fromEnvironment();
     $meta = $db->prepare(<<<'SQL'
-SELECT a.id,a.current_version_no
+SELECT a.id,a.current_version_no,s.id AS sitting_id
 FROM bank_exam_sittings s
 JOIN bank_exam_types t ON t.id=s.exam_type_id AND t.workspace_id=s.workspace_id
 JOIN exam_assessments a ON a.id=s.assessment_id AND a.workspace_id=s.workspace_id
@@ -102,6 +109,30 @@ SQL);
             'after' => $newNo, 'question_content_identical' => true,
             'questions' => count($old), 'updated_explanations' => $explained], JSON_UNESCAPED_UNICODE) . PHP_EOL;
     } else {
+        // Entire sitting preflight: BankPublisher must be about to freeze the
+        // same non-explanation data as the last published assessment version.
+        // This catches unrelated historic edits outside the target subject.
+        $authorization = new ScopeAuthorizer($db);
+        $access = new AccessGate($db, $authorization);
+        $auditLogger = new AuditLogger($db);
+        $exams = new ExamService(
+            $db, $access, $authorization,
+            new EntitlementService($db, $access, $auditLogger),
+            $auditLogger, new ExamQuestionRateGuard($db),
+        );
+        $proposed = (new BankPublisher($db, $exams))
+            ->previewQuestionDefinitions($ws, (string) $exam['sitting_id']);
+        $oldPublished = $load($currentNo);
+        if (count($proposed) !== count($oldPublished)) {
+            throw new RuntimeException('Publishing would change total exam question count.');
+        }
+        foreach ($oldPublished as $i => $oldQuestion) {
+            $newQuestion = $proposed[$i];
+            unset($oldQuestion['explanation'], $newQuestion['explanation']);
+            if ($oldQuestion !== $newQuestion) {
+                throw new RuntimeException('Publishing would change frozen exam content outside source explanations.');
+            }
+        }
         $frozen = [];
         foreach ($load($currentNo) as $q) {
             $frozen[(string) ($q['id'] ?? '')] = $q;
@@ -126,7 +157,8 @@ SQL);
         }
         echo json_encode(['mode' => 'preflight', 'year' => $year,
             'subject' => $subject, 'version' => $currentNo,
-            'matched_study_questions' => $count, 'question_content_identical' => true],
+            'matched_study_questions' => $count, 'full_sitting_questions' => count($oldPublished),
+            'question_content_identical' => true],
             JSON_UNESCAPED_UNICODE) . PHP_EOL;
     }
 } catch (Throwable $error) {
