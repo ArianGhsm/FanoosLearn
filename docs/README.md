@@ -3,8 +3,8 @@
 ## Read first
 
 - [`PROJECT_PRINCIPLES.md`](PROJECT_PRINCIPLES.md) — what FANOOS is, the
-  three-copy sync rule, open decisions.
-- [`WORKFLOW.md`](WORKFLOW.md) — branch, check, merge, deploy, confirm.
+  GitHub/server source-of-truth rule, continuity and reference readiness.
+- [`WORKFLOW.md`](WORKFLOW.md) — laptop-independent branch, check, merge, server deploy, confirm.
 - [`ops/SERVER.md`](ops/SERVER.md) — the production server.
 
 ## Product
@@ -30,6 +30,8 @@
 
 ## Operations
 
+- [`product/09_CHAPTER_CLASSIFICATION.md`](product/09_CHAPTER_CLASSIFICATION.md)
+  — page-evidence rules; eligible server-held reference editions first.
 - [`ops/SERVER.md`](ops/SERVER.md), [`../ops/updater/README.md`](../ops/updater/README.md),
   [`../ops/backup/README.md`](../ops/backup/README.md).
 
