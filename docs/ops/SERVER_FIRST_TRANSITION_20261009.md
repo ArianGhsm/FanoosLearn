@@ -11,6 +11,15 @@ verified editions on the server. Absent/incomplete editions are pending.
 This document records the transition and its remaining technical prerequisites.
 It does not authorize a shortcut around the existing classification validator.
 
+## Owner clarification — production host and access route
+
+The owner confirms that the current FANOOS production server is hosted by
+**IranServer (ایران‌سرور)**. SentinelX is optional tooling, not a separate
+server and not a required access path. An authorized direct operator/SSH
+route may be used when its host identity is verified and credentials are
+available in the protected execution context. The provider name alone does
+not verify an SSH host key; never bypass strict host-key checking.
+
 ## Evidence observed on 2026-10-09
 
 - Production reference library inventory (run on the server via the

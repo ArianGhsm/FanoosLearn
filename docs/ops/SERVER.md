@@ -4,13 +4,17 @@ What runs where on `fanooslearn.ir`. The operating model was revised by the
 owner on **2026-10-09**: the server and GitHub are the only required
 authorities. No laptop is required. This public repository never contains
 credentials or private customer/book data. Secrets remain in the server's
-root-managed configuration; agents use authorized SentinelX/operator access,
-not a laptop-only `.local/SERVER_ACCESS.md` prerequisite.
+root-managed configuration. The production host is provided by **IranServer
+(ایران‌سرور)**. Use the authorized route configured for that host; SentinelX
+is optional access tooling, not the host or a prerequisite. Authorized direct
+operator/SSH access is supported when the host identity and credentials are
+verified. A laptop-only `.local/SERVER_ACCESS.md` is not a prerequisite.
 
 ## Host
 
 | | |
 |---|---|
+| Hosting provider | IranServer (ایران‌سرور) |
 | Domain | `fanooslearn.ir` (DNS points straight at the host) |
 | OS | Ubuntu 24.04 LTS |
 | Size | 2 vCPU, 3.8 GB RAM, 58 GB disk |

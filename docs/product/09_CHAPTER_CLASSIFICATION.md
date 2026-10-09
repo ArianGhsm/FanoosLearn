@@ -45,7 +45,7 @@ measured: on 1403 endodontics a third of such chapters were wrong, and on
 | Which chapter every page is in | `data/bank/reference-chapter-pages.json` |
 | The questions, as they are on the site | the year's sitting file (§4) |
 | Decisions | protected server `/srv/fanoos/shared/research/classification/decisions/<year>-<subject>.json` (must be durably backed up) |
-| Server access for the import | authorized SentinelX/operator workflow in `docs/ops/SERVER.md`, not laptop-only SSH |
+| Server access for the import | authorized access to the IranServer production host (direct authenticated operator/SSH access or SentinelX when available); see `docs/ops/SERVER.md` |
 
 **Preflight on the server:** run the private reference-library inventory;
 check that the exact official edition has an approved PDF, authenticated

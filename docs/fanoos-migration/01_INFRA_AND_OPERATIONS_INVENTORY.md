@@ -4,7 +4,10 @@
 
 This document records the legacy operational controls that should inform FANOOS. It does not authorize deployment to legacy hosts, reuse of legacy credentials, or copying production data. No server was contacted and no live deploy, backup, restore, upload, payment, bot-send, or health mutation was run during Prompt 1.
 
-The user has stated that a new FANOOS server is not available yet. Prompt 4 must inspect the actual new host when access is provided and adapt the controls below to observed reality.
+At the time of this legacy inventory, the user stated that a FANOOS server
+was not yet available. The owner later confirmed the current production host
+is provided by IranServer; Prompt 4's inspection notes and `docs/ops/SERVER.md`
+describe the later live environment.
 
 ## Current topology
 
@@ -18,6 +21,11 @@ The user has stated that a new FANOOS server is not available yet. Prompt 4 must
 | VoiceTranscriberBot | Python/systemd release deployment with loopback health | Independent SQLite under `/var/lib/voice-transcriber` plus cache/artifacts | Separate Telegram egress service/proxy and external STT/AI/payment providers |
 
 The Integrated operational document describes an Ubuntu 24.04 ParsPack host with 2 vCPU, 2 GB RAM, and 50 GB disk. Treat this as time-stamped legacy evidence, not a FANOOS capacity decision. No IP address, credential, token, or channel identifier is included here.
+
+The owner later confirmed that the current FANOOS production host is hosted
+by IranServer (ایران‌سرور). The ParsPack description above is legacy
+Integrated-system evidence and must not be used as the current FANOOS host
+or capacity record; see `docs/ops/SERVER.md` for the current FANOOS topology.
 
 ## Runtime components and dependencies
 

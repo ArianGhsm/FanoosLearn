@@ -32,7 +32,13 @@ chapter, page, evidence, and edition-independent concepts.
 | Authority | Owns | Rules |
 |---|---|---|
 | **GitHub** `ArianGhsm/FanoosLearn` | application code, scripts, migrations, tests, data schemas/catalogs, non-secret templates, runbooks, shared principles | Reviewed version control; `main` is the authoritative code/documentation revision |
-| **Server** `fanooslearn.ir` | running release, production DB and private object store, uploaded references and exam sources, private processing inputs/outputs, secrets, verified backups | Audited runtime/data authority; private artifacts never enter the public repository |
+| **Server** `fanooslearn.ir` on **IranServer (ایران‌سرور)** | running release, production DB and private object store, uploaded references and exam sources, private processing inputs/outputs, secrets, verified backups | Audited runtime/data authority; private artifacts never enter the public repository |
+
+IranServer is the current hosting provider for the FANOOS production host.
+It identifies where the host runs; it is not an access credential or proof
+of a particular SSH host key. Use the authorized, authenticated access route
+configured for the host. SentinelX may provide that access when available,
+but it is optional; authorized direct operator access is also valid.
 
 **A laptop is neither necessary nor authoritative.** Agents and operators
 may work from GitHub branches, approved hosted workspaces, or a controlled
@@ -200,6 +206,10 @@ See `docs/product/09_CHAPTER_CLASSIFICATION.md` for the mistakes and guards.
    importer is not a substitute. The daily database transfer uses a private
    temporary directory and removes it on process exit. This policy applies
    only to FANOOS and does not change other projects' backup policy.
+7. The current FANOOS production host is provided by IranServer. SentinelX
+   is optional tooling; authorized direct access to the IranServer host is
+   valid when authenticated and host-key verified. The provider name itself
+   is not proof of host identity.
 
 ## 7. Open implementation items (do not assume completed)
 

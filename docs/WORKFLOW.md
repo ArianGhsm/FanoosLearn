@@ -67,7 +67,9 @@ documented. Do not force-merge a failed check.
 ## 4. Deploy the code on the server
 
 Follow `docs/ops/SERVER.md` and `ops/updater/README.md`. The authorized
-operator, through SentinelX or equivalent controlled access, performs:
+operator connects to the IranServer-hosted FANOOS production host using the
+authorized route configured for that host (direct authenticated SSH/operator
+access or SentinelX when available), then performs:
 
 1. Confirm the latest GitHub `main` SHA and its **green** CI result.
 2. Fast-forward `/srv/fanoos/updater-checkout` to that SHA.
@@ -77,6 +79,10 @@ operator, through SentinelX or equivalent controlled access, performs:
    `current`, and perform its smoke/rollback checks.
 5. Verify the live release SHA, site/API/bot health, and no interruption to
    the unrelated services sharing the host.
+
+The provider name does not replace host-key verification. Direct SSH must
+use a pinned trusted host key and protected credentials; never disable strict
+host-key checking to make a connection succeed.
 
 **No manual edits** to `current` or `releases/<sha>`. A merge that is
 not deployed is a reported **deployment gap**, not "completed".
