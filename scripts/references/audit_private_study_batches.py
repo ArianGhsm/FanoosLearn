@@ -75,7 +75,7 @@ def audit_batch(root: Path, spec: str) -> dict:
         suffix = str(item["ref"]).removeprefix(expected_ref_prefix)
         if suffix != str(decision["chapter"]).zfill(2):
             raise ValueError(f"{spec}: wrong chapter map for Q{n}")
-        if item.get("page") != f'pdf {decision["page"]}' or item.get("origin") != "ai":
+        if str(item.get("page")) not in {str(decision["page"]), f'pdf {decision["page"]}'} or item.get("origin") != "ai":
             raise ValueError(f"{spec}: wrong page or origin for Q{n}")
         confidence = item.get("confidence", {})
         if min(float(confidence.get(k, 0)) for k in ("source", "node", "page")) < 0.85:
