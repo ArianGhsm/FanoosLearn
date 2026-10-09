@@ -274,9 +274,11 @@ python scripts/import/docx_to_sitting.py --docx=1400.docx --year=1400 --form=A -
   form B numbering. The others are form A (1405 has one form).
 - **Chapters** are not assigned here; that is a later re-import of the same
   sitting with sources, found in the books' full texts
-  (`.local/references/<edition>.txt`, built by
-  `scripts/references/build_reference_texts.py`; PROJECT_PRINCIPLES
-  decision 6).
+  (server-side private `references/<edition>.txt` under
+  `/srv/fanoos/shared/research`, built or verified by
+  `scripts/references/build_reference_texts.py --local=/srv/fanoos/shared/research`
+  from an approved private reference input; PROJECT_PRINCIPLES decisions
+  6–7 and 2026-10-09 server-first policy).
 
 Imported and published on 2026-10-07:
 
@@ -292,3 +294,24 @@ Imported and published on 2026-10-07:
 | 1405 | 250 | 246 | chapters for 200 (2026-10-08, checked against the books; radiology and community dentistry wait for their books). The booklet's text layer is corrupt, so on 2026-10-08 the wording of 166 questions was replaced by the workbook's visual transcription (same question and option order; Q81, Q92 and Q191 keep their figure-based text) |
 
 "Published" leaves out the questions the official key deleted.
+
+## 7. Server-first continuation (owner decision 2026-10-09)
+
+The private production DB, published questions, original references and
+question assets are **server-owned**. No laptop copy is required to continue
+classification or to deploy changes. Code/scripts/docs are owned by GitHub;
+site-matching sittings and decision files are held in an approved, backed-up
+private server research workspace as specified in `docs/ops/SERVER.md`.
+This path must be provisioned and its recovery checked before treating
+new private work files as durable.
+
+Live library inventory on 2026-10-09: **27 ready reference PDFs out of 44
+catalog editions**, 17 awaiting a verified PDF. A PDF is not necessarily
+an extracted full-book text. Progress on eligible exact-edition questions
+continues; missing or incompletely parsed editions are tracked as pending,
+not filled with guesswork or new nearest-edition mappings by default.
+
+The year table above is an **as-of historical report**, not a live query of
+`bank_question_sources`. Do not claim a new classification total without
+an authorized read-only database audit, a clean book-evidence check,
+`questions_changed=0` dry run and successful audited import/publish.
