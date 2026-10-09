@@ -22,7 +22,12 @@ where these or any old runbook differ, the principles prevail.
   identifiable production data.
 - The **server** is the authority for production DB, storage, uploaded PDFs,
   protected source artifacts, processing workspaces and verified backups.
-  Prefer authorized SentinelX/operator access for server inspection.
+  FANOOS production is hosted by **IranServer (ایران‌سرور)**. Use the
+  authorized access route available for that host: direct authenticated
+  operator/SSH access is valid when its host key is pinned and credentials
+  are protected; SentinelX is optional and is not the server itself.
+- A provider name does not authenticate a host. Never bypass SSH host-key
+  verification or put access credentials/host-key material in Git.
 - **No laptop prerequisite:** a local computer is optional, not part of
   source-of-truth or sync checks. A separate authorized server worktree or
   hosted checkout may create and test branches; push to GitHub before ending.
