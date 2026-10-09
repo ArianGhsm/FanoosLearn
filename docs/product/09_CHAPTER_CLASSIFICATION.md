@@ -102,6 +102,21 @@ contents in `reference-texts.json` as `chapter_pdf_starts`, with the source
 page documented. The builder requires one strictly ordered start for every
 catalog chapter. Proffit 5e uses this rule (contents on PDF pages 18–20).
 
+### Private post-validator audit (server-first)
+
+For multiple read-only study-only batches, also run
+`python3 scripts/references/audit_private_study_batches.py` with one
+`--batch=YEAR:subject:stem` per batch, `--local` pointed at the protected
+server research workspace and `--out` under its `classification/reports/`
+folder. This independently checks *no changes* to the study question stems,
+choices or answers, exact question identity, source-node reference and
+chapter, mapped PDF/printed page, origin and confidence. It does **not**
+import or publish production sources and never exports copyrighted text.
+See `docs/ops/RESIDENCY_CLASSIFICATION_EXECUTION_20261010.md` for the
+exact command and verifiable expected counts. Run the original
+`apply_classification.py` evidence validator before auditing. A study-only
+sitting is deliberately **not** an importable bank sitting.
+
 ## 3. The procedure
 
 One batch is one sitting and one subject (10–30 questions).
