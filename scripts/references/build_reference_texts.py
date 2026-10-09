@@ -11,12 +11,14 @@ to its last, with a marker before every PDF page:
 Chapter classification reads these files and nothing else -- no summaries,
 no chapter-by-chapter extracts, no translations.
 
-An edition is built from a PDF in the owner's book library (--library, or
-FANOOS_BOOKS_DIR) or, where that PDF is no longer kept, from a full-book text
-already extracted from it (relative to the repository's .local/). A missing
-edition is reported, not invented.
+An edition is built from a *securely authorized and verified* original PDF
+supplied from the server's private reference library (--library, or
+FANOOS_BOOKS_DIR), or from a previously extracted full-book text (under
+--local). The source bridge from protected object storage must be reviewed
+and space-checked first. No laptop or full public PDF copy is required.
+A missing or unready edition is reported, not invented.
 
-    python scripts/references/build_reference_texts.py --library "D:/.../Books"
+    python scripts/references/build_reference_texts.py --library "/path/to/approved/server-reference-input" --local /srv/fanoos/shared/research
     python scripts/references/build_reference_texts.py --only proffit-orthodontics@6e
 """
 from __future__ import annotations
@@ -72,7 +74,7 @@ def from_text(edition: str, source: Path) -> tuple[str, int, int]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
-    parser.add_argument('--library', default=os.environ.get('FANOOS_BOOKS_DIR'), help='the owner\'s book library (PDFs)')
+    parser.add_argument('--library', default=os.environ.get('FANOOS_BOOKS_DIR'), help='approved protected server reference source (PDFs)')
     parser.add_argument('--local', default=str(REPO / '.local'), help='the git-ignored .local directory')
     parser.add_argument('--only', action='append', help='build just this edition (repeatable)')
     parser.add_argument('--force', action='store_true', help='rebuild files that already exist')
