@@ -6,6 +6,10 @@ use Fanoos\Platform\Operations\BackupManifest;
 use Fanoos\Platform\Operations\FileTreeSnapshot;
 use Fanoos\Platform\Operations\MySqlDsn;
 use Fanoos\Platform\Operations\ProcessRunner;
+use Fanoos\Platform\Operations\BackupRetention;
+use Fanoos\Platform\Operations\ReferencePdfBackupPolicy;
+use Fanoos\Platform\Operations\ReferencePdfBackupPruner;
+use Fanoos\Platform\Support\DatabaseConnection;
 use Fanoos\Platform\Support\JsonLogger;
 use Fanoos\Platform\Support\RuntimeConfig;
 
@@ -32,6 +36,9 @@ try {
     }
 
     $database = MySqlDsn::parse($config->requireString('FANOOS_DB_DSN'));
+    $metadataDatabase = DatabaseConnection::fromEnvironment();
+    $referenceObjects = ReferencePdfBackupPolicy::excludedObjects($metadataDatabase);
+    $excludedKeys = ReferencePdfBackupPolicy::verifiedStorageKeys($resolvedStorage, $referenceObjects);
     $name = gmdate('Ymd\THis\Z') . '-' . bin2hex(random_bytes(4));
     $partial = $resolvedBackup . DIRECTORY_SEPARATOR . $name . '.partial';
     $final = $resolvedBackup . DIRECTORY_SEPARATOR . $name;
@@ -47,17 +54,38 @@ try {
         '--single-transaction', '--quick', '--hex-blob', '--routines', '--triggers', '--events',
         '--no-tablespaces', '--set-gtid-purged=OFF', $database['database'],
     ], $partial . DIRECTORY_SEPARATOR . 'database.sql');
-    FileTreeSnapshot::copy($resolvedStorage, $partial . DIRECTORY_SEPARATOR . 'objects');
+    $currentReferenceObjects = ReferencePdfBackupPolicy::excludedObjects($metadataDatabase);
+    if ($referenceObjects !== $currentReferenceObjects) {
+        throw new RuntimeException('Reference PDF inventory changed during backup; retry the backup.');
+    }
+    FileTreeSnapshot::copy($resolvedStorage, $partial . DIRECTORY_SEPARATOR . 'objects', $excludedKeys);
+    $finalReferenceObjects = ReferencePdfBackupPolicy::excludedObjects($metadataDatabase);
+    if ($referenceObjects !== $finalReferenceObjects) {
+        throw new RuntimeException('Reference PDF inventory changed during backup; retry the backup.');
+    }
+    $excludedBytes = array_sum(array_column($referenceObjects, 'byte_size'));
     $manifestDigest = BackupManifest::write($partial, [
         'database' => $database['database'],
         'release' => $config->optionalString('FANOOS_RELEASE_SHA', 'unknown'),
+        'reference_pdf_backup_policy' => 'exclude_reference_only_objects',
+        'reference_pdf_objects_excluded' => count($referenceObjects),
+        'reference_pdf_bytes_excluded' => $excludedBytes,
     ]);
     file_put_contents($partial . DIRECTORY_SEPARATOR . 'READY', $manifestDigest . PHP_EOL, LOCK_EX);
     if (!rename($partial, $final)) {
         throw new RuntimeException('Backup could not be atomically finalized.');
     }
 
-    JsonLogger::write('info', 'backup.completed', ['backup_id' => $name]);
+    BackupManifest::verify($final);
+    $sanitizedBackups = ReferencePdfBackupPruner::pruneCompletedBackups($resolvedBackup, $referenceObjects);
+    $pruned = BackupRetention::pruneCompletedFullBackups($resolvedBackup, 5);
+    JsonLogger::write('info', 'backup.completed', [
+        'backup_id' => $name,
+        'reference_pdf_objects_excluded' => count($referenceObjects),
+        'reference_pdf_bytes_excluded' => $excludedBytes,
+        'reference_pdf_backups_sanitized' => count($sanitizedBackups),
+        'pruned_full_backup_count' => count($pruned),
+    ]);
     echo $final . PHP_EOL;
 } catch (Throwable $error) {
     JsonLogger::write('error', 'backup.failed', ['error_type' => $error::class]);

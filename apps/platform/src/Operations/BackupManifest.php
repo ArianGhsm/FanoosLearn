@@ -21,10 +21,46 @@ final class BackupManifest
         ];
         $path = rtrim($backupRoot, '/\\') . DIRECTORY_SEPARATOR . 'manifest.json';
         $json = json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . PHP_EOL;
-        if (file_put_contents($path, $json, LOCK_EX) === false) {
-            throw new RuntimeException('Backup manifest could not be written.');
+        self::replaceFile($path, $json, 'Backup manifest');
+
+        return hash('sha256', $json);
+    }
+
+    /**
+     * Rewrite a previously verified manifest after removing listed payload files.
+     *
+     * @param array{format:int, created_at:string, metadata:array<string,mixed>, files:array<string,array{bytes:int,sha256:string}>} $manifest
+     * @param list<string> $removedRelativePaths
+     * @param array<string,scalar|null> $metadata
+     */
+    public static function rewriteWithoutFiles(
+        string $backupRoot,
+        array $manifest,
+        array $removedRelativePaths,
+        array $metadata,
+    ): string {
+        $files = $manifest['files'];
+        foreach ($removedRelativePaths as $relativePath) {
+            if ($relativePath === ''
+                || str_starts_with($relativePath, '/')
+                || str_contains($relativePath, '\\')
+                || preg_match('#(?:^|/)\\.{1,2}(?:/|$)#', $relativePath) === 1
+                || !array_key_exists($relativePath, $files)) {
+                throw new RuntimeException('Backup manifest removal path is invalid.');
+            }
+            unset($files[$relativePath]);
         }
-        @chmod($path, 0640);
+        ksort($files, SORT_STRING);
+        $updated = [
+            'format' => $manifest['format'],
+            'created_at' => $manifest['created_at'],
+            'metadata' => $metadata,
+            'files' => $files,
+        ];
+        $json = json_encode($updated, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . PHP_EOL;
+        $root = rtrim($backupRoot, '/\\');
+        self::replaceFile($root . DIRECTORY_SEPARATOR . 'manifest.json', $json, 'Backup manifest');
+        self::replaceFile($root . DIRECTORY_SEPARATOR . 'READY', hash('sha256', $json) . PHP_EOL, 'Backup completion marker');
 
         return hash('sha256', $json);
     }
@@ -85,5 +121,19 @@ final class BackupManifest
         ksort($files, SORT_STRING);
 
         return $files;
+    }
+
+    private static function replaceFile(string $path, string $contents, string $label): void
+    {
+        $temporaryPath = $path . '.tmp-' . bin2hex(random_bytes(6));
+        if (file_put_contents($temporaryPath, $contents, LOCK_EX) === false) {
+            @unlink($temporaryPath);
+            throw new RuntimeException($label . ' could not be written.');
+        }
+        @chmod($temporaryPath, 0640);
+        if (!rename($temporaryPath, $path)) {
+            @unlink($temporaryPath);
+            throw new RuntimeException($label . ' could not be finalized.');
+        }
     }
 }

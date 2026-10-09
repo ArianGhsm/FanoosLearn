@@ -1,18 +1,19 @@
 #!/usr/bin/env bash
 # Daily database-only backup, sent to the owner on Bale.
 #
-# The full backup (scripts/ops/backup.php) keeps the database *and* object
-# storage beside the server it protects, so it does not survive the server.
+# The full backup (scripts/ops/backup.php) keeps the database and non-reference
+# object storage beside the server it protects, so it does not survive the server.
 # This one leaves the machine: a gzipped mysqldump of the FANOOS database,
 # delivered to the owner's Bale chat by the FANOOS Bale bot every day. It is
-# the database only -- uploaded objects and question images are in the full
-# backup, not here -- because that is what fits in a chat and what cannot be
-# rebuilt from anything else.
+# the database only -- non-reference uploaded objects and question images are
+# in the full backup, not here -- because that is what fits in a chat and what
+# cannot be rebuilt from anything else.
 #
 # Bale caps what a bot can send, so the dump goes in parts of at most
 # PART_BYTES; `cat fanoos-db-*.part-* > dump.sql.gz` puts it back together,
 # and the first message carries the SHA-256 to check the result against.
-# The last KEEP_DAYS dumps are also kept locally.
+# A successful dump is removed from the server after delivery; the full backup
+# series in /var/backups/fanoos is the sole retained on-server backup set.
 #
 # Environment (EnvironmentFile, root:fanoosupd 0640 -- it holds the bot token):
 #   FANOOS_BACKUP_BALE_TOKEN     the FANOOS Bale bot's token
@@ -20,23 +21,19 @@
 #                                started the bot once, or Bale refuses)
 #   FANOOS_BACKUP_DB_NAME        default fanoos_prod
 #   FANOOS_BACKUP_MYSQL_CNF      default /etc/fanoos/mysql-migrator.cnf
-#   FANOOS_BACKUP_DIR            default /var/backups/fanoos/db-daily
 set -euo pipefail
 
 : "${FANOOS_BACKUP_BALE_TOKEN:?FANOOS_BACKUP_BALE_TOKEN is required}"
 : "${FANOOS_BACKUP_BALE_CHAT_ID:?FANOOS_BACKUP_BALE_CHAT_ID is required}"
 DB="${FANOOS_BACKUP_DB_NAME:-fanoos_prod}"
 CNF="${FANOOS_BACKUP_MYSQL_CNF:-/etc/fanoos/mysql-migrator.cnf}"
-DIR="${FANOOS_BACKUP_DIR:-/var/backups/fanoos/db-daily}"
-KEEP_DAYS="${FANOOS_BACKUP_KEEP_DAYS:-7}"
 PART_BYTES="${FANOOS_BACKUP_PART_BYTES:-19000000}"
 API="https://tapi.bale.ai/bot${FANOOS_BACKUP_BALE_TOKEN}"
 
 umask 077
-mkdir -p "$DIR"
 stamp="$(TZ=Asia/Tehran date +%Y%m%d-%H%M)"
-dump="$DIR/fanoos-db-$stamp.sql.gz"
-work="$(mktemp -d)"
+work="$(mktemp -d /var/tmp/fanoos-db-to-bale.XXXXXX)"
+dump="$work/fanoos-db-$stamp.sql.gz"
 trap 'rm -rf "$work"' EXIT
 
 send_text() {
@@ -48,6 +45,7 @@ send_text() {
 
 fail() {
     # The owner hears about a missed backup the same way they get a good one.
+    rm -f -- "$dump" "$dump.partial"
     send_text "⚠️ بکاپ روزانه‌ی دیتابیس فانوس انجام نشد: $1" >/dev/null
     echo "backup failed: $1" >&2
     exit 1
@@ -87,5 +85,5 @@ for part in "${parts[@]}"; do
     [ "$code" = "200" ] || fail "sending part $index of $count failed (HTTP $code)"
 done
 
-find "$DIR" -maxdepth 1 -name 'fanoos-db-*.sql.gz' -mtime +"$KEEP_DAYS" -delete
-echo "sent $dump ($size bytes, $count parts, sha256 $sum)"
+rm -f -- "$dump"
+echo "sent FANOOS database backup $stamp ($size bytes, $count parts, sha256 $sum); removed local dump"

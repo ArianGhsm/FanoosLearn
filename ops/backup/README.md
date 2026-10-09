@@ -8,10 +8,13 @@
 - The FANOOS Bale bot sends the dump to the owner in parts of up to 19 MB,
   after a message that gives the size, the part count and the SHA-256.
 - A failed run sends a warning message instead of the file.
-- The last 7 dumps are kept locally in `/var/backups/fanoos/db-daily`.
+- The dump and send parts live in a private `/var/tmp` work directory. A
+  successful delivery, failure, or normal process exit removes that directory.
 
-This covers the **database only**. Uploaded objects and question images are
-in the full backup (`scripts/ops/backup.php`), which stays on the server.
+This covers the **database only**. Non-reference uploaded objects and question
+images are in the full backup (`scripts/ops/backup.php`), which stays on the
+server. Reference-only PDF objects are deliberately excluded from full
+backups and remain in live private storage.
 
 ## Restoring
 
