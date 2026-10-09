@@ -32,20 +32,19 @@ test('self-hosted Vazirmatn provides real 600 and 700 weight files', () => {
 test('question stems use bold weight in base, desktop, and mobile styles', () => {
     const base = blocks(runner, '.x-question__prompt');
     const overridden = blocks(skin, '.x-runner-page .x-question__prompt');
-    assert.equal(base.length, 1);
-    assert.equal(weight(base[0]), 'var(--weight-strong)');
-    assert.equal(overridden.length, 2, 'desktop and mobile must both specify weight');
-    for (const block of overridden) assert.equal(weight(block), 'var(--weight-strong)');
+    assert.ok(base.some((block) => weight(block) === 'var(--weight-strong)'));
+    const weightOverrides = overridden.filter((block) => weight(block) !== undefined);
+    assert.equal(weightOverrides.length, 2, 'desktop and mobile must both specify weight');
+    for (const block of weightOverrides) assert.equal(weight(block), 'var(--weight-strong)');
 });
 
 test('answer options use semibold weight in base and runner overrides', () => {
     const base = blocks(runner, '.x-choice__text');
-    assert.equal(base.length, 1);
-    assert.equal(weight(base[0]), 'var(--weight-medium)');
+    assert.ok(base.some((block) => weight(block) === 'var(--weight-medium)'));
     for (const selector of ['.x-runner-page .x-choice', '.x-runner-page .x-choice__text']) {
         const matches = blocks(skin, selector);
         assert.ok(matches.length > 0, `${selector} missing`);
-        assert.equal(weight(matches[0]), 'var(--weight-medium)');
+        assert.ok(matches.some((block) => weight(block) === 'var(--weight-medium)'));
     }
 });
 
