@@ -123,7 +123,14 @@ because the actual announced syllabus scope is missing. The other
    `/health`. Confirm questions/options/answers were not changed via
    comparison to original study re-export. Record exact backup ID,
    release SHA, batch receipt SHA and verified before/after counts.
-8. **Update the frozen student assessment version** after validated bank-source
+8. **Frozen-assessment preflight**: run
+   `scripts/references/audit_published_assessment.php --workspace=UUID
+   --year=YYYY --subject=SUBJECT --stem=STEM` (read-only). All 10/20
+   reviewed study questions must match the currently published frozen
+   version's stem, options and official answers. This preflight passed for
+   all seven eligible batches on 2026-10-10 (7/7, including both 1405
+   subjects). Stop if a question differs; never force publication.
+9. **Update the frozen student assessment version** after validated bank-source
    inserts, using the *official* `import-bank.php publish --type=residency
    --year=YYYY --round=1 --workspace=UUID --actor=AUTHORIZED_UUID
    --reviewer=AUTHORIZED_UUID` path. This action deliberately creates a **new
@@ -136,10 +143,15 @@ because the actual announced syllabus scope is missing. The other
    existing assessment content already differs. For years with more than one
    accepted batch (e.g. 1405), apply both batches and publish one new version
    after their individual preflight+receipt checks to avoid redundant versions.
-9. Repeat steps 2–8 for other eligible years, using a distinct receipt per
+10. After publishing, re-run the frozen-assessment audit with
+    `--previous=<old_version_no> --current=<new_version_no>`. It rejects
+    changes to any field of the entire exam's frozen question list **except
+    the source-derived explanation**. Record the old and new version
+    numbers, and ensure existing attempt history is preserved.
+11. Repeat steps 2–10 for other eligible years, using a distinct receipt per
    batch and logging each new assessment version ID. Do not send study-only
    files to the general question-bank importer.
-10. Update the canonical operations documentation and checkpoint. Do not
+12. Update the canonical operations documentation and checkpoint. Do not
    claim offsite backup merely from an on-host archive.
 
 **Important:** This document may describe the implementation before
