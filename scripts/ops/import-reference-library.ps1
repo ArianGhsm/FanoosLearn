@@ -50,7 +50,7 @@ function Get-DriveRemotePdfInfo([string]$DrivePath, [string]$RemoteFile) {
     $destination = Quote-RemoteArgument "$($script:remoteStage)/$RemoteFile"
     $copyCommand = "sudo -n rclone --config /root/.config/rclone/rclone.conf copyto $source $destination"
     Invoke-FanoosSsh $copyCommand | Out-Null
-    $infoCommand = "sudo -n chown fanoosupd:fanoosrt -- $destination && sudo -n chmod 0640 -- $destination && stat -c '%s' -- $destination && sha256sum -- $destination | cut -d ' ' -f 1 && head -c 5 -- $destination"
+    $infoCommand = "sudo -n chown fanoosupd:fanoosrt -- $destination && sudo -n chmod 0640 -- $destination && sudo -n stat -c '%s' -- $destination && sudo -n sha256sum -- $destination | cut -d ' ' -f 1 && sudo -n head -c 5 -- $destination"
     $info = Invoke-FanoosSsh $infoCommand
     $parts = $info -split "`r?`n"
     if ($parts.Count -ne 3 -or $parts[0] -notmatch '^[0-9]+$' -or
