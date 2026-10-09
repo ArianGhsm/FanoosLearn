@@ -194,3 +194,86 @@ official assessment review/publish and all-question content diff.
 Record new backup ID, private receipt SHA, version increment and updated
 backlog here. Research question/book text remains **only** on protected
 server storage; public GitHub records process and hashes only.
+
+## Continuation: 1402 oral radiology (completed 2026-10-10)
+
+**Production publication confirmed, not research-only.** The 1402 official
+source is exactly `white-pharoah-radiology@8e`, announced scope chapters
+1–9, 12 and 15–28. From the still-unsourced 1402 oral-radiology subject,
+20 live questions (numbers 211–230) were exported as protected *study-only*
+data. No missing figure, unsupported analogy or substitute edition was used.
+
+- Original production study export:
+  `/srv/fanoos/shared/research/bank-sittings/1402/radiology-study.json`;
+  SHA-256 `0f1e529c1d42c4bcdd4eea08601b78121299776bc0393831527cf31f925c400e`.
+  The separately regenerated live export was **byte-identical** before import.
+- Private search queries, source evidence and exact chapter/page decisions:
+  `classification/reports/1402-radiology-queries.json`,
+  `classification/reports/1402-radiology-search-20261010.txt`,
+  `classification/decisions/1402-oral-radiology.json`,
+  `classification/sittings/1402-radiology-validated.json` under the protected
+  research root. Unmodified `apply_classification.py` accepted **14**,
+  rejected **0**, and left **6 undecided**; private exact-book audit confirmed
+  all 20 study questions and 14 mappings without answer/content modification.
+- Private provenance audit:
+  `classification/reports/residency-1402-radiology-audit-20261010.json`,
+  SHA-256 `156fa753eac5589343a3020443b39dd703f072f02b02acb86408ca1bff95f441`.
+  Seven-file research archive
+  `/var/backups/fanoos/research/20261010-1402-radiology-first-batch.tar.gz`
+  has a separately verified adjacent `.sha256`. On-host only, not offsite.
+- The source-only transaction preview reported **14** inserts and
+  `questions_changed=choices_changed=answers_changed=0`; the *entire*
+  published 1402 exam preflight matched **243** unchanged frozen questions.
+- An additional full-backup request lost its Sentinel transport response,
+  and an initial on-host inspection found no new finalized backup. **The same
+  already-running backup later completed**: finalized protected
+  `/var/backups/fanoos/20261009T233920Z-f8f4ee51`, independently
+  verified **54 files** with READY at 23:39:23 UTC. This later backup was
+  **not** used as the pre-apply recovery point: the source-only import
+  completed at 23:39:18 UTC, and relied on the earlier independently
+  verified full backup `20261009T220905Z-eee036a3` (54 files), which was
+  created after the previous source publication and met the importer's
+  strict four-hour freshness window. Do not treat a relay timeout as proof
+  that a host-side background task failed; check for delayed finalization.
+- The atomic production source-only importer committed **14**
+  `bank_question_sources` rows with zero question, choice or official
+  answer changes. Private receipt
+  `classification/reports/1402-radiology-source-publish-20261010.json`,
+  SHA-256 `e0d7b9e45ecfb4e604b51f08a921c9e54e9fc3fbef709440a7565367b759d8e1`.
+  A two-member receipt archive
+  `/var/backups/fanoos/research/20261010-1402-radiology-publication-receipt.tar.gz`
+  and matching `.sha256` passed checksum verification.
+- **Independent live database readback: 402 residency questions still lack
+  source chapters**, versus 416 before the batch. Total cumulative
+  newly chaptered questions across these publication stages: **89**;
+  residency chaptered now **1593 of 1995**.
+- The authorized, canonical assessment review/publish flow appended
+  **1402 version 3 → 4**; all **243** frozen questions remained identical
+  in every field except **14 source-derived explanations**. All earlier
+  versions and attempts remain preserved. The local public-site health
+  probe returned HTTP **200**.
+- Six remaining 1402 radiology questions are held for further evidence.
+  The 1398 community mappings remain held for missing official syllabus
+  scope. Continue with an eligible exact edition (for example 1401 or 1400
+  radiology) after independent live preflight. This section supersedes the
+  earlier 416-pending checkpoint; do not repeat the 1402 batch.
+
+**Reproduction:** use the source-only runbook, protected study/export and
+audit above, plus `--year=1402 --subject=oral-radiology --stem=radiology
+--expected=14`; the same `--audit` file must pass hash comparison. Since
+this batch is already live, **do not run its apply again**: the source-only
+writer correctly rejects duplicate sources. All public docs contain metadata
+and audit hashes only, never copyrighted question/book content.
+
+### Next subject opened (research only): 1401 oral radiology
+
+An authenticated, read-only live export created
+`/srv/fanoos/shared/research/bank-sittings/1401/radiology-study.json`
+for **20** still-unsourced 1401 radiology questions, format
+`fanoos.classification.study-only/1`, SHA-256
+`c177f4f3d038167517d3201d7d5735c09ca87cbcad31cc617665e3718fb60b61`.
+The announced exact official edition is White-Pharoah 8e; use only the
+1401-specific scope from the catalog. **No 1401 search evidence, mapping,
+source insert, bank publication or assessment version change is claimed.**
+Repeat a fresh live study-only export, compare it with the protected original,
+then follow the normal page-verbatim validator and publication sequence.
