@@ -1,6 +1,7 @@
 param(
     [string]$Sources = '.local/reference-library/sources.json',
-    [switch]$Apply
+    [switch]$Apply,
+    [switch]$AllowPartial
 )
 
 $ErrorActionPreference = 'Stop'
@@ -31,13 +32,32 @@ function Copy-ToFanoosStage([string]$LocalPath, [string]$RemoteFile) {
 
 function Invoke-ReferenceDryRun {
     $stage = Quote-RemoteArgument $script:remoteStage
-    $command = "sudo -n -u fanoosweb env FANOOS_CONFIG_FILE=/etc/fanoos/platform-config.php php /srv/fanoos/current/scripts/ops/import-reference-library.php --dry-run --staging=$stage"
+    $partial = if ($script:allowPartial) { ' --allow-partial' } else { '' }
+    $command = "sudo -n -u fanoosweb env FANOOS_CONFIG_FILE=/etc/fanoos/platform-config.php php /srv/fanoos/current/scripts/ops/import-reference-library.php --dry-run --staging=$stage$partial"
     $raw = Invoke-FanoosSsh $command
     try {
         return $raw | ConvertFrom-Json
     } catch {
         throw 'The FANOOS dry-run did not return valid JSON.'
     }
+}
+
+function Get-DriveRemotePdfInfo([string]$DrivePath, [string]$RemoteFile) {
+    if ($DrivePath -notmatch '^gdrive:رفرنس‌ها/[^/\\]+\.pdf$' -or $DrivePath.Contains('..')) {
+        throw 'A server-side Drive source must be one PDF directly inside the configured references folder.'
+    }
+    $source = Quote-RemoteArgument $DrivePath
+    $destination = Quote-RemoteArgument "$($script:remoteStage)/$RemoteFile"
+    $copyCommand = "sudo -n rclone --config /root/.config/rclone/rclone.conf copyto $source $destination"
+    Invoke-FanoosSsh $copyCommand | Out-Null
+    $infoCommand = "sudo -n chown fanoosupd:fanoosrt -- $destination && sudo -n chmod 0640 -- $destination && stat -c '%s' -- $destination && sha256sum -- $destination | cut -d ' ' -f 1 && head -c 5 -- $destination"
+    $info = Invoke-FanoosSsh $infoCommand
+    $parts = $info -split "`r?`n"
+    if ($parts.Count -ne 3 -or $parts[0] -notmatch '^[0-9]+$' -or
+        $parts[1] -notmatch '^[a-f0-9]{64}$' -or $parts[2] -ne '%PDF-') {
+        throw 'The server-side Drive copy failed PDF, size or checksum verification.'
+    }
+    return @{ bytes = [long]$parts[0]; sha256 = $parts[1]; staged = $true }
 }
 
 function Remove-ReferenceStage {
@@ -92,21 +112,33 @@ $script:sshPath = $sshPath
 $script:scpPath = $scpPath
 $script:sshOptions = $sshOptions
 $script:remoteStage = $remoteStage
+$script:allowPartial = [bool]$AllowPartial
 $localManifest = Join-Path ([IO.Path]::GetTempPath()) "fanoos-reference-import-$batch.json"
 $remoteStageCreated = $false
 $transferredAnyPdfs = $false
 
 try {
+    $stage = Quote-RemoteArgument $remoteStage
+    Invoke-FanoosSsh "sudo -n -u fanoosupd install -d -m 2770 -g fanoosrt -- $stage" | Out-Null
+    $remoteStageCreated = $true
+
     foreach ($source in $sourceMap.editions) {
         $key = [string]$source.edition_key
         $kind = [string]$source.kind
         if ($key -notin $officialKeys -or $sourcesByEdition.ContainsKey($key) -or
-            $key -notmatch '^[a-z0-9@-]+$' -or $kind -notin @('local', 'drive_mount')) {
+            $key -notmatch '^[a-z0-9@-]+$' -or $kind -notin @('local', 'drive_mount', 'drive_remote')) {
             throw 'The private reference source map has an unknown or duplicate edition.'
         }
         $file = "$key.pdf"
         if ($kind -eq 'local') {
-            $resolved = Resolve-Path -LiteralPath ([string]$source.path)
+            $resolved = Resolve-Path -LiteralPath ([string]$source.path) -ErrorAction SilentlyContinue
+            if ($null -eq $resolved -and $AllowPartial) {
+                $sourcesByEdition[$key] = @{ kind = 'missing'; path = $null; file = $file }
+                continue
+            }
+            if ($null -eq $resolved) {
+                throw "A local reference source is missing for $key."
+            }
             $localPath = $resolved.Path
             if (-not (Test-Path -LiteralPath $localPath -PathType Leaf)) {
                 throw "A local reference source is missing for $key."
@@ -126,7 +158,7 @@ try {
             $digest = (Get-FileHash -LiteralPath $localPath -Algorithm SHA256).Hash.ToLowerInvariant()
             $bytes = [long]$fileInfo.Length
             $sourcesByEdition[$key] = @{ kind = 'local'; path = $localPath; file = $file }
-        } else {
+        } elseif ($kind -eq 'drive_mount') {
             $drivePath = [string]$source.path
             if ([string]::IsNullOrWhiteSpace($drivePath)) {
                 throw "A mounted Drive path is missing for $key."
@@ -137,6 +169,13 @@ try {
             $bytes = [long]$remoteInfo.bytes
             $digest = [string]$remoteInfo.sha256
             $sourcesByEdition[$key] = @{ kind = 'drive_mount'; path = $drivePath; file = $file }
+        } else {
+            $drivePath = [string]$source.path
+            $remoteInfo = Get-DriveRemotePdfInfo $drivePath $file
+            $bytes = [long]$remoteInfo.bytes
+            $digest = [string]$remoteInfo.sha256
+            $sourcesByEdition[$key] = @{ kind = 'drive_remote_staged'; path = $drivePath; file = $file }
+            $transferredAnyPdfs = $true
         }
         if ($bytes -lt 1 -or $digest -notmatch '^[a-f0-9]{64}$') {
             throw "A reference source size or checksum is invalid for $key."
@@ -152,9 +191,6 @@ try {
     $utf8 = New-Object System.Text.UTF8Encoding($false)
     [IO.File]::WriteAllText($localManifest, (ConvertTo-Json -InputObject $manifest -Depth 8), $utf8)
 
-    $stage = Quote-RemoteArgument $remoteStage
-    Invoke-FanoosSsh "sudo -n -u fanoosupd install -d -m 2770 -g fanoosrt -- $stage" | Out-Null
-    $remoteStageCreated = $true
     Copy-ToFanoosStage $localManifest 'manifest.json'
 
     $dryRun = Invoke-ReferenceDryRun
@@ -164,7 +200,9 @@ try {
     if (@($dryRun.missing_source_editions).Count -gt 0) {
         $missing = @($dryRun.missing_source_editions) -join ', '
         Write-Output ($dryRun | ConvertTo-Json -Depth 8)
-        throw "FANOOS is missing verified PDF sources for: $missing"
+        if (-not $AllowPartial) {
+            throw "FANOOS is missing verified PDF sources for: $missing"
+        }
     }
 
     if ($Apply) {
@@ -182,7 +220,7 @@ try {
         }
 
         $dryRun = Invoke-ReferenceDryRun
-        if (@($dryRun.missing_source_editions).Count -gt 0 -or
+        if ((-not $AllowPartial -and @($dryRun.missing_source_editions).Count -gt 0) -or
             @($dryRun.items | Where-Object { $_.action -in @('upload_new_resource', 'upload_new_version') -and -not $_.source_available }).Count -gt 0) {
             Write-Output ($dryRun | ConvertTo-Json -Depth 8)
             throw 'FANOOS dry-run still has unresolved or unstaged reference PDFs.'
@@ -200,7 +238,8 @@ try {
             Invoke-FanoosSsh "sudo -n -u fanoosupd env FANOOS_CONFIG_FILE=/etc/fanoos/updater-config.php php /srv/fanoos/current/scripts/ops/verify-backup.php $backupArg" | Out-Null
 
             $stageArg = Quote-RemoteArgument $remoteStage
-            $applyCommand = "sudo -n -u fanoosweb env FANOOS_CONFIG_FILE=/etc/fanoos/platform-config.php php /srv/fanoos/current/scripts/ops/import-reference-library.php --apply --verified-backup=$backupArg --staging=$stageArg"
+            $partial = if ($AllowPartial) { ' --allow-partial' } else { '' }
+            $applyCommand = "sudo -n -u fanoosweb env FANOOS_CONFIG_FILE=/etc/fanoos/platform-config.php php /srv/fanoos/current/scripts/ops/import-reference-library.php --apply --verified-backup=$backupArg --staging=$stageArg$partial"
             $applyOutput = Invoke-FanoosSsh $applyCommand | ConvertFrom-Json
             if ($applyOutput.mode -ne 'applied') {
                 throw 'FANOOS did not confirm reference-library apply mode.'
@@ -222,12 +261,16 @@ try {
                 $finalByKey[$key] = $row
             }
         }
-        $missingAfterImport = @($officialKeys | Where-Object { -not $finalByKey.ContainsKey($_) })
+        $expectedReadyKeys = @($dryRun.expected_ready_editions)
+        $missingAfterImport = @($expectedReadyKeys | Where-Object { -not $finalByKey.ContainsKey($_) })
         if ($missingAfterImport.Count -gt 0) {
             throw ('FANOOS post-import inventory is incomplete: ' + ($missingAfterImport -join ', '))
         }
         Remove-ReferenceStage
         $remoteStageCreated = $false
+        if (@($dryRun.missing_source_editions).Count -gt 0) {
+            Write-Warning ('These editions remain pending because no exact full-book PDF was available: ' + (@($dryRun.missing_source_editions) -join ', '))
+        }
         Write-Output ($inventory | ConvertTo-Json -Depth 8)
     } else {
         Write-Output ($dryRun | ConvertTo-Json -Depth 8)

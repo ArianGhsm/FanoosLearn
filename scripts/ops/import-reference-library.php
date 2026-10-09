@@ -10,6 +10,7 @@ use Fanoos\Platform\Content\ContentUploadService;
 use Fanoos\Platform\Content\ProtectedResourceAuthorizer;
 use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Operations\BackupManifest;
+use Fanoos\Platform\Operations\ReferenceLibraryImportPolicy;
 use Fanoos\Platform\Storage\FilesystemObjectStore;
 use Fanoos\Platform\Storage\UploadInspector;
 use Fanoos\Platform\Support\DatabaseConnection;
@@ -40,11 +41,12 @@ function fail(string $message, int $status = 1): never
 try {
     $dryRun = option('dry-run') === '1';
     $apply = option('apply') === '1';
+    $allowPartial = option('allow-partial') === '1';
     $stagingOption = option('staging');
     $backupOption = option('verified-backup');
     if ($dryRun === $apply || !is_string($stagingOption) || $stagingOption === ''
         || ($apply && (!is_string($backupOption) || $backupOption === ''))) {
-        fail('Usage: php scripts/ops/import-reference-library.php (--dry-run | --apply --verified-backup=<verified-backup-directory>) --staging=<staging-directory>', 2);
+        fail('Usage: php scripts/ops/import-reference-library.php (--dry-run | --apply --verified-backup=<verified-backup-directory>) --staging=<staging-directory> [--allow-partial]', 2);
     }
 
     $stagingRoot = realpath($stagingOption);
@@ -142,8 +144,8 @@ try {
         ];
     }
 
-    $missingEditions = array_values(array_diff(array_keys($officialEditions), array_keys($manifestByEdition)));
-    if ($missingEditions !== [] && !$dryRun) {
+    $missingEditions = ReferenceLibraryImportPolicy::missingKeys(array_keys($officialEditions), array_keys($manifestByEdition));
+    if (!$dryRun && ReferenceLibraryImportPolicy::blocksApply($missingEditions, $allowPartial)) {
         fail('Manifest is incomplete for the official catalog: ' . implode(', ', $missingEditions));
     }
 
@@ -302,17 +304,19 @@ SQL);
     if ($dryRun) {
         echo json_encode([
             'mode' => 'dry_run',
+            'allow_partial' => $allowPartial,
             'workspace_name' => (string) $library['name'],
             'official_editions' => count($officialEditions),
             'manifest_editions' => count($manifestByEdition),
             'missing_source_editions' => $missingSourceEditions,
+            'expected_ready_editions' => ReferenceLibraryImportPolicy::expectedReadyKeys(array_keys($officialEditions), $missingSourceEditions),
             'bytes_to_upload' => $bytesToUpload,
             'items' => $items,
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) . PHP_EOL;
         exit(0);
     }
 
-    if ($missingSourceEditions !== []) {
+    if (ReferenceLibraryImportPolicy::blocksApply($missingSourceEditions, $allowPartial)) {
         fail('PDF source or a verified matching private PDF is required for: ' . implode(', ', $missingSourceEditions));
     }
 
@@ -349,6 +353,10 @@ SQL);
 
     $applied = [];
     foreach ($items as $item) {
+        if ($item['action'] === 'source_missing') {
+            $applied[] = $item + ['result' => 'left_pending'];
+            continue;
+        }
         if ($item['action'] === 'already_present') {
             $applied[] = $item + ['result' => 'skipped'];
             continue;
@@ -404,8 +412,11 @@ SQL);
 
     echo json_encode([
         'mode' => 'applied',
+        'allow_partial' => $allowPartial,
         'workspace_name' => (string) $library['name'],
         'official_editions' => count($officialEditions),
+        'missing_source_editions' => $missingSourceEditions,
+        'expected_ready_editions' => ReferenceLibraryImportPolicy::expectedReadyKeys(array_keys($officialEditions), $missingSourceEditions),
         'items' => $applied,
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) . PHP_EOL;
 } catch (Throwable $error) {
