@@ -150,6 +150,43 @@ These are verified **on-host** snapshots, not a claimed independent offsite
 backup. The original 2026-10-09 archives remain historical checkpoints.
 No PDF was duplicated, no unrelated workload was touched or restarted.
 
+## Additional eligible-reference screening: 1398 oral surgery
+
+A read-only database audit found 16 *unsourced* 1398 oral-surgery questions.
+The official syllabus lists three exact references:
+
+- `hupp-oral-surgery@6e` — **not available as approved server PDF**
+- `malamed-medical-emergencies@7e` — **not available as approved server PDF**
+- `malamed-local-anesthesia@6e` — **verified private server PDF**, all chapters
+
+The verified Malamed local-anesthesia 6e PDF was read in place and processed
+without copying the original. The full page-marked private text has **428 PDF
+pages and 21 chapter runs**, text SHA-256
+`e6b0043989be850cb64826446d0cb8991626d013eb6d95d44696e0365b4dce96`;
+verified source PDF SHA-256
+`2026eff83ef2d2543725becb3685e8cb492f1dcf9f5d7a7ae72a28024ef67bf6`.
+Paths:
+`references/malamed-local-anesthesia@6e.{txt,provenance.json}`,
+`bank-sittings/1398/surgery-study.json` and
+`classification/reports/1398-surgery-{queries,q112-search}.json`
+(the last name is `1398-surgery-q112-search.json`).
+
+A targeted search tested whether the local-anesthesia edition actually
+stated the precise **onset interval of maximum epinephrine vasoconstriction**
+needed for Q112. The nearby text discussed hemostasis and general
+anesthesia wait times, **but did not provide an unambiguous answer to that
+specific vasoconstriction timing question**. Other questions mainly
+depended on the two absent exact official references. Consequently **no
+oral-surgery decision was accepted or fabricated** from this pass. This
+screening is **in addition to**, not included within, the 90-question/
+74-accepted eight-batch audit above.
+
+A five-file protected on-host archive
+`/var/backups/fanoos/research/20261010-1398-surgery-reference-study.tar.gz`
+and adjacent `.sha256` receipt were created; hash and member-count
+verification both passed (~635 KB). This additional reference is ready
+for future valid Malamed 6e questions after precise evidence is found.
+
 ## Next safe actions
 
 1. For an eligible subject/year beyond the listed batches, verify exact
