@@ -1,17 +1,28 @@
 # Fanoos backup and restore runbook
 
-Status: code and integrity tests complete; database restore rehearsal awaits staging
+Status: backup retention and reference-PDF exclusion are implemented; database restore rehearsal awaits staging
 
-Last updated: 2026-09-06
+Last updated: 2026-10-09
 
 ## Backup set and threat model
 
 A usable Fanoos backup is one completed directory containing:
 
 - `database.sql`: a MySQL-native logical dump;
-- `objects/`: a non-symlink snapshot of uploaded bytes;
+- `objects/`: a non-symlink snapshot of uploaded bytes, excluding PDF objects
+  used only by resources marked `format_key=reference_pdf`;
 - `manifest.json`: exact relative paths, byte sizes, and SHA-256 digests plus release/database metadata;
 - `READY`: completion marker containing the manifest digest.
+
+Reference PDFs remain in live private storage and are deliberately excluded
+from every full backup. An object also used by any non-reference resource is
+kept. Restoring the database and objects therefore restores the reference
+catalog metadata but not reference PDF bytes. Reconstituting those bytes
+requires an audited restoration step from the owner's original PDFs, mapped
+back to the existing object IDs and storage keys. The library importer's
+database inventory alone does not prove that object bytes exist, so its normal
+dry run is not a restoration check. That dedicated rehydration step is not yet
+automated.
 
 Release source is not duplicated because GitHub retains it by commit SHA. Secrets are not included: private config, MySQL client defaults, bot tokens, and signing keys require a separately protected credential-recovery procedure. Losing the download signing key invalidates tokens but not stored bytes.
 
@@ -50,7 +61,19 @@ php scripts/ops/verify-backup.php <completed-backup-directory>
 
 The first command prints the completed directory only after finalization. The second recomputes every inventory entry and rejects missing, added, resized, or changed payload files. Also compare the `READY` digest with the manifest digest before off-host transfer.
 
-Provisional objectives are daily RPO and a four-hour restore rehearsal RTO; these are goals, not demonstrated guarantees. Begin with daily plus pre-deploy backups. Decide retention only after measuring real database/object growth against the 2 GB account quota; no automated deletion is included because an unreviewed retention command could destroy the last good copy.
+At most five completed full backups are retained on the FANOOS server. Each
+successful full backup removes older completed sets after verifying the new
+set. Daily database copies are sent to the owner's Bale chat and removed from
+the server after delivery. These are retention rules, not demonstrated RPO or
+restore-time guarantees; the restore rehearsal remains required. To clean
+reference PDFs from existing completed snapshots without creating another
+backup, first review the dry run and then apply it as the FANOOS updater
+operator:
+
+```bash
+php scripts/ops/prune-reference-pdfs-from-backups.php --dry-run
+php scripts/ops/prune-reference-pdfs-from-backups.php --apply
+```
 
 ## Isolated restore rehearsal
 

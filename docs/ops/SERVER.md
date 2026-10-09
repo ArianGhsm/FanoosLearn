@@ -35,7 +35,7 @@ not a laptop-only `.local/SERVER_ACCESS.md` prerequisite.
 ├── telegram.env, bale.env the bots
 ├── backup-bale.env        the daily Bale backup
 └── mysql-migrator.cnf     the migration database account
-/var/backups/fanoos/       verified backups (one per deploy) and db-daily/
+/var/backups/fanoos/       up to five verified full backups
 ```
 
 The database is `fanoos_prod` on the local MySQL.
@@ -115,10 +115,26 @@ Only GitHub `main`, only after its CI is green, only through the updater
 
 ## Backups
 
-- **Per deploy:** a full backup (database and storage), verified before any
-  migration runs, kept in `/var/backups/fanoos/<timestamp>-<id>/`.
-- **Daily:** a database dump at 04:00 Tehran in `/var/backups/fanoos/db-daily/`,
-  also sent to the owner on Bale.
+- **Per deploy:** a full backup (database and non-reference object storage),
+  verified before any migration runs, kept in
+  `/var/backups/fanoos/<timestamp>-<id>/`. PDF objects used only by resources
+  marked `format_key=reference_pdf` are omitted; shared objects also used by a
+  non-reference resource remain included. The PDFs remain in live private
+  storage. A restore that needs them requires an audited repair that restores
+  the original bytes to their existing object IDs and storage keys. The normal
+  library importer does not verify that those object bytes exist, so it is not
+  a substitute; the dedicated rehydration operation is not yet automated.
+- **Daily:** a database dump at 04:00 Tehran is sent to the owner on Bale.
+  Its temporary server copy is removed after successful delivery; it is not a
+  substitute for the full database-and-object backup.
+- **Retention:** no more than five completed FANOOS full backups are kept.
+  `backup.php` applies this after creating a verified backup; incomplete
+  `.partial` directories do not count. Reference-only PDF objects are removed
+  from retained backup snapshots and their manifests are refreshed.
+  Before a deploy that would add a sixth completed set, use
+  `ONLY_BACKUPS=1 KEEP_BACKUPS=4 sh scripts/ops/prune-retention.sh --dry-run`
+  and then apply the same command without `--dry-run`; this leaves room for
+  the required pre-deploy backup without exceeding five.
 - Verify any backup with `scripts/ops/verify-backup.php <dir>`; rehearse a
   restore with `scripts/ops/restore-test.php`.
 
@@ -128,6 +144,8 @@ Only GitHub `main`, only after its CI is green, only through the updater
 |---|---|
 | `scripts/ops/request-deployment.php` | queue a deploy of `main` |
 | `scripts/ops/backup.php`, `verify-backup.php`, `restore-test.php` | backups |
+| `scripts/ops/cancel-backup-deployment.php` | cancel a stopped deployment request still in `BACKUP`, with an audit event |
+| `scripts/ops/prune-reference-pdfs-from-backups.php` | dry-run by default; remove verified reference-only PDFs from completed backups with `--apply` |
 | `scripts/ops/rebuild-question-stats.php` | recompute the per-question counters from attempts |
 | `scripts/ops/purge-workspace.php` | remove a workspace (dry run by default); `--images-only` as `fanoosweb` |
 | `scripts/ops/bootstrap-owner.php` | create the first owner account |
@@ -251,13 +269,15 @@ be fixed by editing a deployed release.
 
 ## Retention
 
-Nothing prunes itself: every deploy adds a release and every import or deploy
-adds a backup. `scripts/ops/prune-retention.sh` (run as root, `--dry-run`
-first) keeps the live release and the five newest others, the ten newest
-completed full backups, and removes older full backups and the
+Every deploy adds a release and every import or deploy adds a backup. The
+backup script keeps at most the five newest completed full backups.
+`scripts/ops/prune-retention.sh` (run as root, `--dry-run` first) keeps the
+live release and the five newest others, the five newest completed full backups,
+and removes older full backups and the
 `/var/lib/fanoos/bank-import-*` staging folders. A full backup counts only
 after its `READY` marker is written; an in-progress `.partial` backup is left
-untouched. Daily database dumps under `db-daily/` are separate and are not
-pruned by this script.
+untouched. `KEEP_BACKUPS` cannot be set above five. `ONLY_BACKUPS=1` limits a
+retention run to the backup directories, leaving releases and staging alone.
+Daily database dumps sent to Bale are not retained under `/var/backups/fanoos/`.
 On 2026-10-08 it took the disk from 85% to 77%. Run it when the disk passes
 80%.
