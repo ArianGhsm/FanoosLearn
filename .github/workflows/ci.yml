@@ -80,7 +80,10 @@ jobs:
     runs-on: ubuntu-latest
     services:
       mysql:
-        image: mysql:8.4
+        # Docker Official Images are mirrored in AWS Public ECR; using the
+        # mirror avoids Docker Hub unauthenticated pull limits on CI runners.
+        # Same MySQL 8.4 official-image family; integration tests stay intact.
+        image: public.ecr.aws/docker/library/mysql:8.4
         env:
           MYSQL_ROOT_PASSWORD: root-test-password
           MYSQL_DATABASE: fanoos_ci_test
