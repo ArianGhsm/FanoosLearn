@@ -49,7 +49,7 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(audit.audit_batch(self.root, "1402:community-dentistry:community")["accepted"], 1)
 
     def test_changed_answer_rejected(self):
-        self.question = {**self.question, "answer": {"choice": 1}}
+        self.body["questions"][0]["answer"] = {"choice": 1}
         self.src.write_text(json.dumps(self.body))
         with self.assertRaisesRegex(ValueError, "question or answer content changed"):
             audit.audit_batch(self.root, "1402:community-dentistry:community")
