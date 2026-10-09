@@ -109,7 +109,8 @@ python3 scripts/references/apply_classification.py \
 Input study file SHA-256:
 `8020c2e8a23508dd8b0937bd8e6eeb533dcc545ffd3d82f34a658211530302f8`.
 
-Eight real candidate decisions passed the **original book-evidence validator**:
+Nine real candidate decisions passed the **original book-evidence validator**:
+- Q221 chapter 2 PDF p33
 - Q222 chapter 4 PDF p57
 - Q223 chapter 5 PDF p67
 - Q224 chapter 7 PDF p101
@@ -119,19 +120,20 @@ Eight real candidate decisions passed the **original book-evidence validator**:
 - Q228 chapter 13 PDF p187
 - Q230 chapter 16 PDF p222
 
-**8 accepted, 0 rejected, 2 undecided** (Q221 and Q229). Both
-undecided questions remain untouched until specific evidence is found.
+**9 accepted, 0 rejected, 1 undecided** (Q229). The
+undecided question remains untouched until specific evidence is found.
 Decisions file SHA-256:
-`df152336d582a272e45085c032a87cdaef645663c52d71c3a93012967c49c2b1`.
+`007876757f56ae64244189136492e7e60cadd6836c9c7bd27f44a9fd652431dd`.
 Validated study sitting SHA-256:
-`6cc82a999ec1e7c4609de9b61eab6d921d0b49ee0be2833b08dad85120d49115`.
+`d2e9974aebb64619bcdff770be1ee61d428487e5547a9e5175ae3b05aa6a97a7`.
 
 ## Private checkpoint backup
 
 A local archive of the six private study/text/decision/report artifacts was
-created and verified without duplicating the PDF:
+created and verified without duplicating the PDF. The initial eight-decision
+archive is retained, and the updated nine-decision checkpoint is:
 
-`/var/backups/fanoos/research/20261009-1405-community-first-batch.tar.gz`
+`/var/backups/fanoos/research/20261009-1405-community-batch-v2.tar.gz`
 
 With its adjacent `.sha256` receipt. Archive size ~458 KB; verification
 `sha256sum -c` succeeded and `tar -tzf` listed six members. Permissions
@@ -171,7 +173,7 @@ investigated; do not delete protected backups to force an update.
 4. Take and verify the required production backup, use a no-op/zero-text-change
    dry run, protect reviewed human rows, then import the accepted decisions;
    only afterward remeasure the DB and republish as appropriate.
-5. Continue Q221 and Q229 only with specific original-book support.
+5. Continue Q229 only with specific original-book support.
    For next years, skip absent official editions; never guess a nearest.
 6. Set up tested independent/offsite retention for private research results,
    and update this log with actual audit IDs, import counts and post-state.
