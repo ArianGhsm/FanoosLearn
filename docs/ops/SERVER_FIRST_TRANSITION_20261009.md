@@ -48,8 +48,11 @@ The new **server-only, access-controlled working area** is
   classification/reports/             inventory/validation counts (private)
 ```
 
-This structure can be provisioned with mode 0700 under a dedicated authorized
-FANOOS operator account. **It is not automatically covered by the normal DB
+**Provisioned on 2026-10-09:** the above directories were created on the
+server with owner `fanoosupd:fanoosupd` and mode `0700`, verified by
+read-back. They are presently an **empty workspace**: no verified book
+texts, sittings or classification decisions were migrated in this task.
+**It is not automatically covered by the normal DB
 and content-object backup**. Set up a tested protected backup/restore for this
 working area before placing irreplaceable files there, or mirror its durable
 artifacts through an existing audited private backup mechanism. Empty folders
