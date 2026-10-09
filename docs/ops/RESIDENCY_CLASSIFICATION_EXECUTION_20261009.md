@@ -140,6 +140,67 @@ With its adjacent `.sha256` receipt. Archive size ~458 KB; verification
 are `0600` under `fanoosupd`. This is an **on-host recovery copy only**;
 verified independent/offsite backup remains a separate task.
 
+
+## Second protected question batch (1405/oral-radiology)
+
+`white-pharoah-radiology@8e` is the **exact official 1405 reference**, with
+declared scope chapters 1–9, 12, 15–28. The approved private server PDF was
+read **in place**, without creating a second PDF. `extract_server_reference.py`
+successfully checked and extracted **1,958 PDF pages**, **33 mapped chapters**
+and **2,443,310 bytes** of page-marked text. The complete reference is under
+`/srv/fanoos/shared/research/references/white-pharoah-radiology@8e.txt`
+alongside its private provenance receipt.
+
+- Source verified PDF SHA-256:
+  `228ceb46982c3057d8a7d78b1d10759e72ed1a3a385a76a9affc38e45874c25a`
+- Extracted page-marked text SHA-256:
+  `916a3d59afc3c3dd3f1577cf649eeb35eedcf21590b9e5be1b493de9c8de0c96`
+- Private DB-derived study-only input (20 initially unclassified questions):
+  `/srv/fanoos/shared/research/bank-sittings/1405/radiology-study.json`;
+  SHA-256 `b577a82cd9d0c6f79942e5e6975b029ed7d58985868cb1746f2b7502217591e7`.
+- Private search terms:
+  `/srv/fanoos/shared/research/classification/reports/1405-radiology-queries.json`
+- Private validated evidence decisions:
+  `/srv/fanoos/shared/research/classification/decisions/1405-oral-radiology.json`;
+  SHA-256 `f28ff5b6f38edb35e1fe971aa25e08304bde31cedbe83db4f951817f7694b991`.
+- Private validated study sitting:
+  `/srv/fanoos/shared/research/classification/sittings/1405-radiology-validated.json`;
+  SHA-256 `9c0f6801c00ea31e5b018abc301640a58f2545c582ec079d37fdf953b5b81de4`.
+
+The original book-evidence validator `apply_classification.py` returned
+**8 accepted, 0 rejected, 12 undecided**. Accepted numbers, chapters and
+PDF pages:
+
+| Question | Chapter | PDF page | Supporting fact |
+|---|---:|---:|---|
+| 195 | 7 | 319 | Bisecting-angle projection approximates tooth length |
+| 197 | 9 | 429 | Focal-trough location shifts with extensive machine use |
+| 198 | 12 | 607 | Steep articular eminence is a risk for TMJ internal derangement |
+| 199 | 15 | 742 | D4 bone, posterior maxilla, 150–350 HU |
+| 205 | 23 | 1163 | Calcifying odontogenic cyst, calcifications and root resorption |
+| 206 | 21 | 1017 | Dens evaginatus with worn cusp, pulpal necrosis and periapical radiolucency |
+| 208 | 25 | 1385 | Sickle-cell anaemia, calvarial changes and hair-on-end appearance |
+| 210 | 28 | 1561 | Residual air space distinguishes sinus odontogenic cyst from mucocele |
+
+Q198's first decision quote was rejected due to missing literal parentheses;
+its **evidence string only** was corrected to match the book's printed
+text, and subsequent validation succeeded with zero rejections.
+No validators, catalog values, chapter boundaries or original source text
+were altered. The other 12 questions remain unresolved; do not accept a
+topic-only page hit as evidence for an answer.
+
+A protected, on-host six-file recovery archive
+`/var/backups/fanoos/research/20261009-1405-radiology-first-batch.tar.gz`
+was created with 0600 permissions; adjacent SHA-256 receipt passed
+`sha256sum -c`, and archive listing contained six files. Archive size
+approximately 739 KB. As above, this is not an independent offsite backup.
+
+**Consolidated research: 17 accepted chapter decisions (9 community + 8
+radiology), zero final validator rejections, and 13 undecided in these 30
+studied questions. NONE of these 17 have been imported into production.**
+The baseline backlog remains 491 until an audited, backed-up **source-only**
+import and post-import DB count verifies otherwise.
+
 ## Deployment status and safety blocker
 
 The previously merged operating-policy commit `09bd78e` had green CI and
