@@ -208,11 +208,14 @@ Private receipt:
 `/srv/fanoos/shared/research/classification/reports/1402-radiology-source-publish-20261010.json`,
 SHA-256 `e0d7b9e45ecfb4e604b51f08a921c9e54e9fc3fbef709440a7565367b759d8e1`.
 
-**Fresh-backup caveat:** the attempt to generate an additional backup timed out
-over the Sentinel relay and produced no new finalized backup. The apply used
-the already completed, independently verified 54-file post-prior-publication
-backup `20261009T220905Z-eee036a3`, which met the writer's four-hour
-freshness guard. All other checkpoints are described in
+**Full-backup chronology:** the additional backup timed out over the
+Sentinel relay but **later finalized on-host** as
+`20261009T233920Z-f8f4ee51`, with READY and an independently verified
+54-file manifest. Because it finalized **after** the 14-row source apply,
+that backup was not relied upon to authorize the mutation. The apply instead
+used the already completed, independently verified 54-file
+post-prior-publication backup `20261009T220905Z-eee036a3`, still within
+the enforced four-hour freshness window. All other checkpoints are described in
 `RESIDENCY_LIVE_CLASSIFICATION_20261010.md`. This documentation change
 contains no private questions or book text; future workers must not reapply
 a completed batch.
