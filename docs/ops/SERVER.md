@@ -119,6 +119,10 @@ Only GitHub `main`, only after its CI is green, only through the updater
 
 ## Backups
 
+- **Shared-host retention:** across all of a project's server-local backup
+  destinations, keep at most the five newest completed, verified sets. Project
+  jobs prune older completed sets after verification. Restic/Arvan
+  object-storage backups are governed separately and excluded from this cap.
 - **Per deploy:** a full backup (database and non-reference object storage),
   verified before any migration runs, kept in
   `/var/backups/fanoos/<timestamp>-<id>/`. PDF objects used only by resources
