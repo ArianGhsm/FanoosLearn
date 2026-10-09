@@ -16,7 +16,7 @@ class PublisherSafetyContracts(unittest.TestCase):
 
     def test_only_source_row_insert(self):
         statements = re.findall(r"(?:INSERT INTO|UPDATE|DELETE FROM|REPLACE INTO)\s+([a-z_]+)",
-                                self.service, flags=re.IGNORECASE)
+                                self.service, flags=re.IGNORECASE | re.MULTILINE)
         self.assertEqual([s.lower() for s in statements], ["bank_question_sources"])
 
     def test_explicit_scope_gate_and_no_human_override(self):
