@@ -2,8 +2,9 @@
 """Start one classification batch: one sitting, one subject.
 
 Prints the subject's questions with their official answer, and the editions
-the official reference list names for that exam type, year and subject --
-with the nearest available edition for any edition whose text is missing --
+the official reference list names for that exam type, year and subject.
+Missing exact editions are skipped by default; historical nearest searches
+require --include-nearest explicitly.
 and writes a query file for find_in_books.py with every question's editions
 filled in and its terms left empty for the classifier to write.
 
