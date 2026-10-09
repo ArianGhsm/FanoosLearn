@@ -140,11 +140,47 @@ source-only transaction dry run predicts **11** new rows and **zero
 question/answer changes**; the complete currently published 1403 frozen
 assessment preflight passed for all 250 questions.
 
-**Publication status for this new radiology batch at document creation:**
-pending the separately initiated new full backup's completion and
-verification. Do not claim these 11 imported until a real apply receipt
-and a database readback confirm it. After apply, publish an additional
-reviewed 1403 assessment version and compare frozen questions again.
+**Actual 1403 radiology source-only publication: COMPLETED.**
+
+- Separate fresh full DB + non-reference object backup made **after** the
+  previous 64 links had been published:
+  `/var/backups/fanoos/20261009T220140Z-db6146e1`. Its completed
+  manifest was verified independently using
+  `scripts/ops/verify-backup.php`: **54 files**. The SentinelX background
+  job reported a relay timeout, but the finalized non-partial backup
+  directory and independent verifier both confirmed success; no claim is
+  based solely on the timed-out background task.
+- The original 20-question study export was regenerated and compared
+  byte-identically with the live production question/answer data. The
+  `import_verified_sources.php` database preview returned exactly 11
+  new source rows, `questions_changed=choices_changed=answers_changed=0`.
+- With the independently verified new full backup and private audit as
+  inputs, **11 `bank_question_sources` rows were committed atomically**.
+  Receipt:
+  `classification/reports/1403-radiology-source-publish-20261010.json`;
+  SHA-256
+  `943c8075bad8db101c6a5e8859c63e83c1aa114405d821d83666cdb754ed0609`.
+  The source-only CLI reported `applied=true`, 11 rows, 0 question/
+  choice/answer changes.
+- Live readback after the transaction: **416 unchaptered** residency
+  questions, down from 427.
+- The current 1403 assessment version 3 was compared against the
+  BankPublisher candidate for all 250 questions; no non-explanation
+  difference. The canonical owner-authorized review/publish workflow
+  created **version 4** of the same already-published assessment.
+  Read-only *postpublish* diff verified all 250 frozen questions unchanged
+  except **11 newly sourced explanations**. `/health` responded 200.
+- Protected two-member publication-receipt archive with verified SHA:
+  `/var/backups/fanoos/research/20261010-1403-radiology-publication-receipt.tar.gz`
+  plus adjacent `.sha256`.
+
+**Final measured cumulative effect:** 64 earlier plus 11 radiology 1403
+= **75 newly chaptered/published** questions; chaptered residency now
+**1579 / 1995**, **416 still unchaptered**. This is the live database
+backlog, not a projection. The 10 research decisions from 1398 community
+remain on hold because official syllabus scope was not verified, and 25
+question-level research decisions remain unresolved across the nine studied
+batches (16 old + 9 new). Continue only with exact ready editions.
 
 ## Recovery and continuation
 
