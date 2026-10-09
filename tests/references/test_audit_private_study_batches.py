@@ -65,6 +65,12 @@ class AuditTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "wrong page or origin"):
             audit.audit_batch(self.root, "1402:community-dentistry:community")
 
+    def test_confidence_drift_rejected(self):
+        self.source["confidence"]["node"] = 0.95
+        self.save()
+        with self.assertRaisesRegex(ValueError, "unsupported confidence"):
+            audit.audit_batch(self.root, "1402:community-dentistry:community")
+
     def test_save_private_location_and_idempotence(self):
         out = self.root / "classification/reports/audit.json"
         audit.save_private(self.root, out, {"safe": True})
