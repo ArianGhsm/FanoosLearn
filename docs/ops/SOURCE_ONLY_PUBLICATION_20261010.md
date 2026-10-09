@@ -1,0 +1,140 @@
+# Controlled source-only publication — 2026-10-10
+
+**Objective:** after each evidence-validated residency question batch, safely
+publish its exact official book, chapter node and page to the live bank,
+without rewriting a question, option, image, answer key, status or user review.
+This is an *additional*, tightly constrained operation, not a sitting import.
+
+Authority: `docs/PROJECT_PRINCIPLES.md`,
+`docs/product/09_CHAPTER_CLASSIFICATION.md` and
+`docs/ops/RESIDENCY_CLASSIFICATION_EXECUTION_20261010.md`.
+
+## Implementation
+
+- `apps/platform/src/Bank/SourceOnlyPublisher.php` is a single-transaction
+  source-only writer. The **only data mutation** in it is `INSERT INTO
+  bank_question_sources`. It executes either in a rollback-only preview
+  or an atomic commit of one year/subject batch.
+- `scripts/references/import_verified_sources.php` enforces on-host private
+  research files, an exact previously verified SHA-256 provenance audit,
+  requested batch count, and (for apply) a **fresh full verified backup**.
+  Apply is restricted to the `fanoosupd` OS account, requires a unique
+  private receipt, and never accepts 1398 until its syllabus is verified.
+- Live lock (`FOR UPDATE`) and exact-match checks guarantee published
+  `bank_questions.stem`, all `bank_question_choices`, and the latest
+  `bank_official_answers` remain identical to the study input.
+- Every accepted mapping must be `ai`/primary, match the independently
+  verified decision's exact reference edition/chapter/page and evidence
+  text, have confidence at least 0.85, have **no existing source row**,
+  resolve to an existing `chapter` node, and appear in the
+  **year- and subject-specific official `bank_reference_validity`** with
+  `scope_chapters` explicitly listing that chapter.
+- If one source is rejected, **none** of that batch's source rows commit.
+  Re-running an already imported batch fails instead of overwriting AI or
+  human-reviewed sources. Never suppress these failures.
+- Source-only inserts become available to the existing already-published
+  question bank immediately. The normal `import-bank.php publish` action
+  is **not needed for source-only updates** and could change broader exam
+  state; do not run it for this workflow.
+
+## Allowed research batches
+
+The 2026-10-10 SHA-verified audit
+`/srv/fanoos/shared/research/classification/reports/residency-audit-20261010.json`
+(SHA-256 `43ec6f2d23ed1b2c2a4717be47bbf20d1609b603887607f42157df564f64c4b8`)
+contains 74 evidence-validated mappings across eight batches.
+
+**Eligible for this release: 64** mappings:
+
+| Year | Subject | stem | Expected |
+|---|---|---|---:|
+| 1399 | community-dentistry | community | 9 |
+| 1400 | community-dentistry | community | 5 |
+| 1401 | community-dentistry | community | 10 |
+| 1402 | community-dentistry | community | 7 |
+| 1403 | community-dentistry | community | 9 |
+| 1405 | community-dentistry | community | 9 |
+| 1405 | oral-radiology | radiology | 15 |
+
+**Hold:** 1398 community-dentistry (10 verified research mappings)
+because the actual announced syllabus scope is missing. The other
+16 undecided questions are also on hold. Never default to nearest editions.
+
+## Release, preflight, apply and verification
+
+1. Complete all PHP lint, 18 Python reference tests and full GitHub PR
+   CI. Merge into `main`, check the latest exact main SHA CI is green,
+   then deploy through the documented official updater only; confirm
+   `scripts/dev/check-sync.sh` and `/health`.
+2. As authorized `fanoosupd`, **regenerate the study-only export from
+   live DB** for the specific batch to a new private filename using
+   `export_server_candidates.php --workspace=<verified-uuid>
+   --year=<year> --subject=<subject>`; use `cmp -s` against its archived
+   `<stem>-study.json`. Never use `import-bank.php` for these files.
+3. Run the original `apply_classification.py` on the decisions against
+   protected page-marked book text. It must say `0 rejected`. Re-run
+   `audit_private_study_batches.py` for the original full eight batches,
+   which must say `90 questions; 74 accepted; 16 pending`.
+4. Preview a single batch with an explicit expected count (transaction
+   inserts and rolls back, checking real FK and question content):
+
+   ```sh
+   FANOOS_CONFIG_FILE=/etc/fanoos/updater-config.php php \
+     scripts/references/import_verified_sources.php \
+     --workspace="<approved dentistry workspace UUID>" \
+     --year=1403 --subject=community-dentistry --stem=community \
+     --expected=9 \
+     --audit=/srv/fanoos/shared/research/classification/reports/residency-audit-20261010.json
+   ```
+
+   Expect `applied=false`, `source_rows=9`,
+   `questions_changed=choices_changed=answers_changed=0`.
+   A real preview was performed for **all seven batches** on 2026-10-10,
+   yielding accepted counts 9,5,10,7,9,9,15 and no preflight rejection.
+5. Immediately before the first apply, take a **new** authorized full
+   FANOOS backup via `scripts/ops/backup.php`, verify using
+   `scripts/ops/verify-backup.php` and the backup manifest. Review
+   retention and free disk first (do not delete other workloads or
+   private question evidence). The importer re-verifies the full backup
+   checksum and requires the backup to be no older than four hours.
+   The research archive is a separate on-host recovery set; do not
+   confuse it with a verified database-and-objects full backup.
+6. Apply that **same, just-previewed batch** as `fanoosupd`:
+
+   ```sh
+   FANOOS_CONFIG_FILE=/etc/fanoos/updater-config.php php \
+     scripts/references/import_verified_sources.php \
+     --workspace="<approved dentistry workspace UUID>" \
+     --year=1403 --subject=community-dentistry --stem=community \
+     --expected=9 \
+     --audit=/srv/fanoos/shared/research/classification/reports/residency-audit-20261010.json \
+     --apply --backup="<full verified backup path>" \
+     --receipt=/srv/fanoos/shared/research/classification/reports/1403-community-source-publish-20261010.json
+   ```
+
+   A successful transaction adds only the new source rows and writes a
+   private unique JSON receipt. **Never claim success before checking both
+   the receipt and production database.**
+7. Re-query the exact batch joined to `bank_question_sources` and
+   `bank_reference_nodes`, confirm count and page, `origin=ai`,
+   full published question count, remaining unsourced backlog, and site
+   `/health`. Confirm questions/options/answers were not changed via
+   comparison to original study re-export. Record exact backup ID,
+   release SHA, batch receipt SHA and the verified before/after counts in
+   this document. Repeat steps 2–7 immediately for each other eligible
+   batch; use **a distinct receipt path** for each batch. Do not run a
+   general question-bank importer or republish already published sittings.
+8. Update the canonical operations documentation and checkpoint. Do not
+   claim offsite backup merely from an on-host archive.
+
+**Important:** This document may describe the implementation before
+production apply. Code deployment and database publication are separate
+milestones; state the actual result below after verified execution.
+
+## Actual execution report
+
+- Local PHP lint: pending final merged CI.
+- Source-only read-only transaction preview of all seven eligible live
+  batches: **passed**, total **64**, no question/answer changes.
+- Verified production backup, production source insertion, and post-import
+  validation: **not yet recorded at document creation**.
