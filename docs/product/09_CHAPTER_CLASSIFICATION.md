@@ -7,9 +7,10 @@ does the work. It is written so that another agent (Codex or any other) can
 be handed a year and this document and produce the same kind of result,
 without breaking what is already on the site.
 
-The governing rules are PROJECT_PRINCIPLES decisions 6 and 7:
-classification is done against the book's own text, one full-book text per
-edition, and nothing else; and the checks below are never bypassed.
+The governing rules are PROJECT_PRINCIPLES decisions 6–7 and the
+**2026-10-09 server-first policy**: classification uses the reference book's
+own exact page-marked text; its checks are never bypassed. **No laptop is
+required.**
 
 Everything here was learned on 1398–1405 (2026-10-08). §8 lists the mistakes
 that were made and what now stops each of them.
@@ -18,8 +19,9 @@ that were made and what now stops each of them.
 
 A question's source is **found, not guessed**. It is accepted only with:
 
-- an **official edition** for that exam type, year and subject (the
-  catalog's `validity`), or the nearest edition named for a missing one;
+- an **exact, verified, available official edition** for that exam type,
+  year and subject (catalog `validity`); old nearest-edition assignments
+  are historical, not the default for new completion work;
 - the **chapter** of that edition the content is in;
 - the **page** it is on, inside that chapter;
 - **evidence**: the book's own words from that page, quoted exactly;
@@ -39,18 +41,32 @@ measured: on 1403 endodontics a third of such chapters were wrong, and on
 | The official reference list per exam type, year and subject, with scope | `data/bank/catalog.json` → `validity` |
 | Each edition's chapter list | `data/bank/catalog.json` / `data/bank/reference-tocs.json` |
 | Which file each edition's text is built from, and which editions are missing | `data/bank/reference-texts.json` |
-| The full texts | `.local/references/<edition>.txt` (git-ignored) |
+| The complete page-marked full texts | server private `/srv/fanoos/shared/research/references/<edition>.txt` (`--local` points to `/srv/fanoos/shared/research`) |
 | Which chapter every page is in | `data/bank/reference-chapter-pages.json` |
 | The questions, as they are on the site | the year's sitting file (§4) |
-| Decisions | `.local/classification/decisions/<year>-<subject>.json` |
-| Server access for the import | `.local/SERVER_ACCESS.md` (git-ignored; never in this repository) |
+| Decisions | protected server `/srv/fanoos/shared/research/classification/decisions/<year>-<subject>.json` (must be durably backed up) |
+| Server access for the import | authorized SentinelX/operator workflow in `docs/ops/SERVER.md`, not laptop-only SSH |
 
-Initial setup:
+**Preflight on the server:** run the private reference-library inventory;
+check that the exact official edition has an approved PDF, authenticated
+read access, sufficient free disk space, a full page-marked text and complete
+chapter-page runs. Do **not** assume that a registered PDF is already
+searchable. The approved private-object-to-text bridge and backup of the
+research workspace must be in place first (see `docs/ops/SERVER.md`).
+Do not copy entire PDFs from the server to a laptop. Use the builder's
+`--local` argument for the secure server workspace; build **only**
+needed editions, not the entire library at once:
 
 ```sh
-python scripts/references/build_reference_texts.py --library "<book library>"
-python scripts/references/build_chapter_pages.py
+python scripts/references/build_reference_texts.py --library "<approved server book input>" \\
+    --local=/srv/fanoos/shared/research --only <edition>
+python scripts/references/build_chapter_pages.py --library "<approved server book input>" --only <edition>
 ```
+
+The documented commands illustrate the supported interfaces; the book input
+must be securely prepared from the verified private object by an approved
+operator. If that reader/input does not yet exist, mark the edition pending,
+never invent a public/local path.
 
 When a book is added, build its text as above, then update only its chapter
 map (repeat `--only` for several new editions):
@@ -97,10 +113,11 @@ python scripts/references/classification_batch.py --sitting=<sitting.json> \
     --subject=<subject> --out=<queries.json>
 ```
 
-It prints the official editions (for a missing one, the edition to search
-instead, or "nothing to search"), the announced scope, and every question
-with its official answer, and writes a query file with the editions filled
-in. "No official reference for … these questions get no source" means
+It prints official editions, announced scope and questions with official
+answers. **Default queries exclude missing exact editions.** The optional
+`--include-nearest` switch exists for auditing historical mappings, not
+for this new completion pass. No decision may be made against an absent
+exact official edition by default. "No official reference for … these questions get no source" means
 exactly that: do not classify that subject for that year (§5).
 
 **Step 2 — write the search terms.** For each question, write into `terms`
@@ -114,7 +131,7 @@ right, not for the question's general topic.
 **Step 3 — search.**
 
 ```sh
-python scripts/references/find_in_books.py <queries.json> --top 3
+python scripts/references/find_in_books.py <queries.json> --top 3 --local=/srv/fanoos/shared/research
 ```
 
 For each question: the best pages, each with its chapter, the matching
@@ -175,7 +192,9 @@ files are read for a sitting, by the `<year>-` prefix):
 
 ```sh
 python scripts/references/apply_classification.py --sitting=<sitting.json> \
-    --decisions=.local/classification/decisions/ --out=.local/classification/sittings/<sitting>.json
+    --decisions=/srv/fanoos/shared/research/classification/decisions/ \
+    --out=/srv/fanoos/shared/research/classification/sittings/<sitting>.json \
+    --local=/srv/fanoos/shared/research
 ```
 
 Every rejection is listed with its reason; fix the decision and run again —
@@ -192,9 +211,9 @@ has**, or the import rewrites the questions. The dry run (§7) proves it.
 
 | Year | Sitting that matches the site |
 |---|---|
-| 1398–1403 | `.local/bank-sittings/<year>/residency-<year>-1.json`, made from the owner's `<year>.docx` with `scripts/import/docx_to_sitting.py` (06_QUESTION_FORMAT.md §6) |
+| 1398–1403 | protected server `bank-sittings/<year>/residency-<year>-1.json` under `/srv/fanoos/shared/research`, originally made from the owner's `<year>.docx` with `scripts/import/docx_to_sitting.py` (06_QUESTION_FORMAT.md §6) |
 | 1404 | built from the hand-checked transcription: `python scripts/import/corpus_to_bank.py build --workbook=<corpus.xlsx> --year=1404 --form=A --reviewed=.local/exam-questions/dental-residency/review-1404/form-a.import.json --catalog-out=<tmp> --sitting-out=<sitting>`, images from `review-1404/assets`. The docx sitting differs in 171 stems (spacing) and must not be imported |
-| 1405 | `.local/bank-sittings/1405/residency-1405-1.json` — since 2026-10-08 it holds the workbook's visual transcription (the booklet's text layer is corrupt); the docx text is kept beside it as `.docx-text.json` for reference only |
+| 1405 | protected server `bank-sittings/1405/residency-1405-1.json` under `/srv/fanoos/shared/research` (must be migrated/verified before use) — since 2026-10-08 it holds the workbook's visual transcription (the booklet's text layer is corrupt); the docx text is kept beside it as `.docx-text.json` for reference only |
 
 A future year is added to this table when its sitting is first imported.
 
@@ -215,14 +234,18 @@ A future year is added to this table when its sitting is first imported.
   it is. When the AI and the human disagree, compare both pages and keep the
   human chapter unless the quote clearly states the fact and the other does
   not.
-- Questions that wait for a book (radiology, community dentistry, Powers for
-  materials, any `missing` edition with no nearest) stay undecided and are
-  listed in the report.
+- Questions whose **exact official edition** is unavailable, whose approved
+  PDF cannot be securely read, or whose full text/page map is not verified
+  stay undecided and are listed in the pending report. Continue eligible
+  subjects without waiting for them.
 
-## 6. Nearest editions and `official_chapter`
+## 6. Historical nearest editions and `official_chapter` (legacy)
 
-When an official edition is missing, search its nearest edition and cite the
-official one. Chapters with the same title are carried over automatically;
+**Do not use nearest-edition substitution for new classification by default
+under the 2026-10-09 owner decision.** The following preserves the rules
+needed to audit *existing* substitutions and does not authorize new ones.
+Historically, when an official edition was missing, an explicitly named
+nearest edition was searched and the official edition cited. Chapters with the same title are carried over automatically;
 the rest need `official_chapter`, chosen from the official edition's chapter
 list (`data/bank/reference-tocs.json`) for the fact the quote states. Pairs
 met so far:
@@ -248,9 +271,10 @@ its own page and quote replace the nearest-edition source.
 
 ## 7. Putting it on the site
 
-The owner never operates the server; the agent does, through the access in
-`.local/SERVER_ACCESS.md`, on the shared host without touching the other
-workload. Per year:
+The authorized agent/operator works on the FANOOS server using the
+versioned procedures in `docs/ops/SERVER.md` and access-controlled runtime
+configuration. No laptop or `.local/SERVER_ACCESS.md` is required.
+Do not touch the unrelated workload. Per year:
 
 1. Copy the classified sitting and its images to
    `/var/lib/fanoos/bank-import-<year>/` (owned by `fanoosweb`).
@@ -290,8 +314,10 @@ the corrected questions as changed, the answers and option order stay, and
 
 ## 9. Handing a year to another agent
 
-Give the agent this document, the year, and access to the repository,
-`.local/references/` and `.local/classification/`. Its deliverables:
+Give the agent this document, the year, an authorized server session and
+access to the verified PDF/text sources and the protected server research
+workspace (`/srv/fanoos/shared/research`), not to the owner's laptop.
+Its deliverables:
 
 1. the decisions files for the year, and a clean `apply_classification.py`
    run (no rejections);
