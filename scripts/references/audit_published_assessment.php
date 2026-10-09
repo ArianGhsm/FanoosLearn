@@ -126,12 +126,24 @@ SQL);
         if (count($proposed) !== count($oldPublished)) {
             throw new RuntimeException('Publishing would change total exam question count.');
         }
+        $diffs = [];
         foreach ($oldPublished as $i => $oldQuestion) {
             $newQuestion = $proposed[$i];
             unset($oldQuestion['explanation'], $newQuestion['explanation']);
             if ($oldQuestion !== $newQuestion) {
-                throw new RuntimeException('Publishing would change frozen exam content outside source explanations.');
+                $fields = [];
+                foreach (array_unique(array_merge(array_keys($oldQuestion), array_keys($newQuestion))) as $name) {
+                    if (($oldQuestion[$name] ?? null) !== ($newQuestion[$name] ?? null)) {
+                        $fields[] = $name;
+                    }
+                }
+                $diffs[] = ['index' => $i, 'fields' => $fields];
             }
+        }
+        if ($diffs !== []) {
+            // No stems/options/answer data in an error or public CI log.
+            throw new RuntimeException('Publishing would change frozen non-source fields: '
+                . json_encode(['differences' => count($diffs), 'first_five' => array_slice($diffs, 0, 5)]));
         }
         $frozen = [];
         foreach ($load($currentNo) as $q) {
