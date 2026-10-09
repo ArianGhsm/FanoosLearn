@@ -184,3 +184,35 @@ and 11 additional verified 1403 oral-radiology chapter mappings.
   queued; no edition substitutions.
 - Private research/on-host backup archives are checksum-verified but
   are **not** claimed as independent offsite backups.
+
+## Latest source-only production checkpoint: 1402 radiology
+
+As of 2026-10-10, **89** source-only mappings have been safely published
+across the ongoing campaign; the current residency backlog is **402 / 1995**
+(1593 already chaptered). The older **75 / 416** figures elsewhere in this
+document are historical checkpoint counts.
+
+The newly completed `1402:oral-radiology:radiology` batch used the
+exact announced White-Pharoah 8e edition and scope. Fourteen of the twenty
+live study questions passed the original book-page validator, six remain
+unresolved, and none was rejected. The independently regenerated live
+export matched the private study file byte-for-byte. A private SHA-256
+provenance audit, verified on-host archive, strict source-only preview,
+independently verified eligible full backup and atomic apply all passed.
+No question/choice/official-answer mutation was permitted or observed.
+
+The canonical assessment publisher appended **1402 version 3 → 4**.
+Read-only postpublish audit confirmed **243** frozen questions unchanged
+except 14 source-derived explanations; `/health` returned 200.
+Private receipt:
+`/srv/fanoos/shared/research/classification/reports/1402-radiology-source-publish-20261010.json`,
+SHA-256 `e0d7b9e45ecfb4e604b51f08a921c9e54e9fc3fbef709440a7565367b759d8e1`.
+
+**Fresh-backup caveat:** the attempt to generate an additional backup timed out
+over the Sentinel relay and produced no new finalized backup. The apply used
+the already completed, independently verified 54-file post-prior-publication
+backup `20261009T220905Z-eee036a3`, which met the writer's four-hour
+freshness guard. All other checkpoints are described in
+`RESIDENCY_LIVE_CLASSIFICATION_20261010.md`. This documentation change
+contains no private questions or book text; future workers must not reapply
+a completed batch.
