@@ -43,7 +43,10 @@ def audit_batch(root: Path, spec: str) -> dict:
     decisions = load(path_decisions)
     if source.get("format") != "fanoos.classification.study-only/1" or result.get("format") != source["format"]:
         raise ValueError(f"{spec}: only private study-only sittings permitted")
-    if source.get("year") != year_n or result.get("year") != year_n or source.get("exam_type") != "residency":
+    if (source.get("year") != year_n or result.get("year") != year_n
+            or source.get("exam_type") != "residency"
+            or result.get("exam_type") != source["exam_type"]
+            or result.get("round") != source.get("round")):
         raise ValueError(f"{spec}: year or exam type mismatch")
     original = {int(q["number"]): q for q in source["questions"]}
     mapped = {int(q["number"]): q for q in result["questions"]}
@@ -56,7 +59,7 @@ def audit_batch(root: Path, spec: str) -> dict:
         if original[number] != without_new_sources:
             raise ValueError(f"{spec}: question or answer content changed, Q{number}")
     wanted = {int(d["number"]): d for d in decisions if "edition" in d}
-    if len(wanted) != len(decisions) or len(wanted) != len(decisions):
+    if len(wanted) != len(decisions):
         raise ValueError(f"{spec}: duplicate or unsupported decisions")
     if not wanted.keys() <= original.keys():
         raise ValueError(f"{spec}: decision question not in exact sitting")
@@ -78,7 +81,9 @@ def audit_batch(root: Path, spec: str) -> dict:
         if str(item.get("page")) not in {str(decision["page"]), f'pdf {decision["page"]}'} or item.get("origin") != "ai":
             raise ValueError(f"{spec}: wrong page or origin for Q{n}")
         confidence = item.get("confidence", {})
-        if min(float(confidence.get(k, 0)) for k in ("source", "node", "page")) < 0.85:
+        if (min(float(confidence.get(k, 0)) for k in ("source", "node", "page")) < 0.85
+                or any(abs(float(confidence.get(k, 0)) - float(decision["confidence"])) > .0005
+                       for k in ("source", "node", "page"))):
             raise ValueError(f"{spec}: unsupported confidence for Q{n}")
         pages[str(n)] = {"ref": item["ref"], "pdf_page": int(decision["page"])}
     return {
@@ -126,6 +131,8 @@ def main():
                         help="YEAR:subject:stem; may repeat, e.g. 1405:oral-radiology:radiology")
     parser.add_argument("--out", type=Path, help="Private report path under classification/reports")
     args = parser.parse_args()
+    if len(set(args.batch)) != len(args.batch):
+        raise ValueError("Duplicate private audit batch requested")
     audited = [audit_batch(args.local, spec) for spec in args.batch]
     total = {
         "format": "fanoos.classification.provenance-audit/1",
