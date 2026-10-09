@@ -62,6 +62,32 @@ book-text/page-to-chapter validator.
 **No answer key, question, source row, publication status or other production
 data was written.** The number of missing production chapters is still 491.
 
+### Live production content recheck (read-only)
+
+After all eight decisions were validated, the authorized server operator ran
+`scripts/references/export_server_candidates.php` again against the **live
+dentistry workspace** for each of these eight year/subject batches, into
+`bank-sittings/<year>/<stem>-recheck-20261010.json` (protected, not Git).
+Every regenerated export was compared **byte for byte** to the original
+`<stem>-study.json` with `cmp -s` and all **8/8 matched**.
+
+This establishes a current read-only **question content and official answer
+identity preflight** for these exact unsourced batches: the live stems,
+choices, official answer and absence of source records matched the
+original research inputs at the time of checking. No production bank
+source rows were added or updated. This is a measured preflight, **not** an
+import dry-run or authorization to bypass the verified backup/import audit.
+Any future publication must repeat it immediately before the source-only
+import because live production data can change.
+
+Reproduction: use the dentistry `workspace_id` obtained from an authorized
+database reader, the site environment's
+`FANOOS_CONFIG_FILE=/etc/fanoos/updater-config.php`, and the exporter
+with `--year=YYYY --subject=SUBJECT --workspace=<authorized-uuid>
+--out=<protected-unique-recheck-path>`. Then compare the fresh export to
+the matching private archived study file with `cmp -s`. Do not expose the
+workspace identifier or original private question text in public logs.
+
 ### Integrity and judgment caveats
 
 - **1398 community-dentistry:** the catalog names the exact 1394 national
