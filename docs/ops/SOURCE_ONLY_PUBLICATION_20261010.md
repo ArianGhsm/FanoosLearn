@@ -154,14 +154,33 @@ because the actual announced syllabus scope is missing. The other
 12. Update the canonical operations documentation and checkpoint. Do not
    claim offsite backup merely from an on-host archive.
 
-**Important:** This document may describe the implementation before
-production apply. Code deployment and database publication are separate
-milestones; state the actual result below after verified execution.
+## Actual execution report — completed 2026-10-10
 
-## Actual execution report
+The entire source-only publication workflow **has now been exercised in
+production**. See the authoritative, hash-audited execution log
+[`RESIDENCY_LIVE_CLASSIFICATION_20261010.md`](RESIDENCY_LIVE_CLASSIFICATION_20261010.md)
+for release SHA, updater request, verified full backup IDs, all private
+receipt hashes, before/after counts, student assessment version numbers
+and 11 additional verified 1403 oral-radiology chapter mappings.
 
-- Local PHP lint: pending final merged CI.
-- Source-only read-only transaction preview of all seven eligible live
-  batches: **passed**, total **64**, no question/answer changes.
-- Verified production backup, production source insertion, and post-import
-  validation: **not yet recorded at document creation**.
+- PR #186 was merged as `f7e5065`; all 5 main CI jobs passed,
+  including MySQL integration; the official updater completed its
+  request successfully, and GitHub main/live/updater sync and health
+  checks passed.
+- Seven original exact-reference batches received **64 source-only
+  inserts**, with live preflight, protected SHA-256 receipts and
+  zero question/choice/answer changes.
+- The six affected assessments were safely re-published using the
+  canonical review flow; full frozen exam comparisons confirmed
+  unchanged non-explanation content and preserved old versions.
+- A second separately verified full backup preceded the next
+  1403 oral-radiology batch: **11 additional source-only inserts**,
+  followed by the reviewed/published 1403 assessment version 4 and
+  an unchanged 250-question postpublish diff.
+- Total verified production additions: **75**, resulting in
+  **416 currently unchaptered out of 1995 residency questions**.
+  The 1398 community 10 research decisions remain excluded due to
+  missing official syllabus scope, and unresolved questions stay
+  queued; no edition substitutions.
+- Private research/on-host backup archives are checksum-verified but
+  are **not** claimed as independent offsite backups.
