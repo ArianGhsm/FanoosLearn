@@ -8,10 +8,8 @@
 # Kept, always:
 #   - the live release (/srv/fanoos/current) and the KEEP_RELEASES newest others
 #     (a release can be rebuilt from its Git commit);
-#   - the KEEP_BACKUPS newest backups, and the backup named in KEEP_ARCHIVE:
-#     by default 20261003T170919Z-6fbfdcba, the last full backup taken before
-#     the medical bank was purged on 2026-10-03 (178 MB; the next ones are
-#     75 MB and then 10 MB) -- the owner's decision of 2026-10-08.
+#   - the KEEP_BACKUPS newest completed full backups (directories with READY).
+#     Incomplete .partial backups are left untouched and do not count.
 # Removed:
 #   - older releases and backups;
 #   - /var/lib/fanoos/bank-import-* staging folders (copies of local sittings).
@@ -20,8 +18,7 @@ set -eu
 RELEASES=/srv/fanoos/releases
 BACKUPS=/var/backups/fanoos
 KEEP_RELEASES=${KEEP_RELEASES:-5}
-KEEP_BACKUPS=${KEEP_BACKUPS:-14}
-KEEP_ARCHIVE=${KEEP_ARCHIVE:-20261003T170919Z-6fbfdcba}
+KEEP_BACKUPS=${KEEP_BACKUPS:-10}
 DRY=0
 [ "${1:-}" = "--dry-run" ] && DRY=1
 
@@ -39,15 +36,19 @@ for dir in $(ls -1dt "$RELEASES"/*/ 2>/dev/null); do
     remove "$dir"
 done
 
-# Backups: names start with a UTC timestamp (20261008T101112Z-…), so they sort by time.
-archive=$KEEP_ARCHIVE
-if [ ! -d "$BACKUPS/$archive" ]; then echo "the archive backup $archive is missing; stopping"; exit 1; fi
-newest=$(ls -1 "$BACKUPS" | grep -E '^[0-9]{8}T' | sort | tail -n "$KEEP_BACKUPS")
-for name in $(ls -1 "$BACKUPS" | grep -E '^[0-9]{8}T' | sort); do
-    if [ "$name" = "$archive" ] || echo "$newest" | grep -qxF "$name"; then continue; fi
+# Backups: names start with a UTC timestamp (20261008T101112Z-…). Keep only
+# complete full snapshots; a READY marker is written after verification.
+completed=
+for dir in "$BACKUPS"/20*T*Z-*; do
+    [ -d "$dir" ] && [ -f "$dir/READY" ] || continue
+    completed="$completed\n$(basename "$dir")"
+done
+completed=$(printf '%b\n' "$completed" | sed '/^$/d' | sort)
+newest=$(printf '%s\n' "$completed" | tail -n "$KEEP_BACKUPS")
+for name in $completed; do
+    if printf '%s\n' "$newest" | grep -qxF "$name"; then continue; fi
     remove "$BACKUPS/$name"
 done
-[ -n "$archive" ] && echo "archive kept: $BACKUPS/$archive"
 
 for dir in /var/lib/fanoos/bank-import-*; do
     [ -d "$dir" ] && remove "$dir"
