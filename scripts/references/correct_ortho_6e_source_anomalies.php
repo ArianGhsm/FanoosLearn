@@ -131,7 +131,7 @@ try {
                 || $q['status'] !== 'published'
                 || hash('sha256',$q['stem']) !== $stemHash
                 || (int)$q['choice_position'] !== $keyChoice
-                || $q['answer_status'] !== 'final'
+                || $q['answer_status'] !== ($k === '1402:23' ? 'amended' : 'final')
                 || $q['origin'] !== 'ai'
                 || $q['edition_key'] !== '6e'
                 || (string)$q['chapter'] !== $oldCh || $q['page'] !== $oldPage

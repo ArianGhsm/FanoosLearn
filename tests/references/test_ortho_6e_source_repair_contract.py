@@ -25,6 +25,9 @@ class OrthodonticsOriginal6eSourceRepairTests(unittest.TestCase):
                      "'1399:7'", "'1402:21'","'1404:11'","count($seen) !== 8"]:
             self.assertIn(word,self.code)
 
+    def test_preserve_amended_official_status_of_1402_q23(self):
+        self.assertIn("$k === '1402:23' ? 'amended' : 'final'", self.code)
+
     def test_production_requires_backup_receipt_and_transactional_atomicity(self):
         for word in ["BackupManifest::verify", "database.sql",
                      "posix_geteuid()", "if ($apply) $db->commit(); else $db->rollBack();",
