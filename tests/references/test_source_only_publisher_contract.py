@@ -61,7 +61,7 @@ class PublisherSafetyContracts(unittest.TestCase):
 
     def test_1398_exception_is_limited_to_three_proven_subjects(self):
         """Only three evidence-reviewed 1398 subjects pass exact-edition guards."""
-        self.assertIn("$year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1'], true)", self.cli)
+        self.assertIn("$year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1', 'endodontics-location-final'], true)", self.cli)
         self.assertIn("$year === 1398 && $subject === 'endodontics'", self.service)
         self.assertIn("$decision['edition'] !== 'torabinejad-endodontics@5e'", self.service)
         self.assertIn("1398 endodontics requires exact announced Torabinejad 5e", self.service)
