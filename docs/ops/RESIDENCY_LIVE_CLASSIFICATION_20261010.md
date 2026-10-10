@@ -277,3 +277,69 @@ The announced exact official edition is White-Pharoah 8e; use only the
 source insert, bank publication or assessment version change is claimed.**
 Repeat a fresh live study-only export, compare it with the protected original,
 then follow the normal page-verbatim validator and publication sequence.
+
+## Continuation: 1401 oral radiology source-only publication (2026-10-10)
+
+**Completed and independently checked in production.** The year-specific
+official reference was exactly `white-pharoah-radiology@8e`, with the
+documented **chapters 1–25** official scope. Twenty still-unsourced
+questions numbered **191–210** were exported from the authenticated
+live database to protected read-only study format.
+
+- Original protected study:
+  `/srv/fanoos/shared/research/bank-sittings/1401/radiology-study.json`;
+  SHA-256 `c177f4f3d038167517d3201d7d5735c09ca87cbcad31cc617665e3718fb60b61`.
+  A second live export yielded **the same SHA-256**. Exact copied fields
+  were rechecked by the atomic source-only writer.
+- The protected research search terms, original decisions and validated
+  output are at `classification/reports/1401-radiology-queries.json`,
+  `classification/decisions/1401-oral-radiology.json`, and
+  `classification/sittings/1401-radiology-validated.json`. The original
+  `apply_classification.py` accepted **9**, rejected **0**, leaving
+  **11 undecided**. One provisional Q208 passage initially passed
+  source-page validation but the independent audit detected an invalid
+  printed-page extraction (`page="10"` instead of the PDF page).
+  It was removed from the accepted decision set and the validator/audit
+  were rerun; **no Q208 source was inserted**.
+- Private independent content and provenance audit:
+  `classification/reports/residency-1401-radiology-audit-20261010.json`;
+  SHA-256 `ca117329fcc164596ad0dd77c34dcf736855c0b1a857592ce15532762f5edddb`,
+  outcome **20 study questions; 9 accepted; 11 pending**.
+- Protected six-member research archive:
+  `/var/backups/fanoos/research/20261010-1401-radiology-first-batch.tar.gz`,
+  plus verified adjacent SHA256. Book or original question text remains
+  on the protected server, never on GitHub.
+- Live source-only DB preview: **9** new rows, **zero** changes to
+  stems, choices, and official answers. Complete frozen exam preflight
+  confirmed **249** questions' non-explanation content unchanged,
+  version **4**.
+- Immediately before apply, independently reverified full protected
+  post-1402-deployment backup
+  `/var/backups/fanoos/20261009T235234Z-9ad31034`:
+  **54 verified files**, less than four hours old, created *after* the
+  preceding 1402 source inserts. This was the actual pre-apply backup;
+  it contains database and non-reference objects, not offsite PDFs.
+- The production importer atomically inserted **9**
+  `bank_question_sources` with
+  `questions_changed=choices_changed=answers_changed=0`.
+  Private receipt `classification/reports/1401-radiology-source-publish-20261010.json`,
+  SHA-256 `c5fa47da77a23c880a71d521c04781b4ed576ccc0e11d98caba7b253a70fd7e0`.
+  The matching two-member protected publication archive and SHA verification
+  completed: `/var/backups/fanoos/research/20261010-1401-radiology-publication-receipt.tar.gz`.
+- Independent live readback now shows **393** unchaptered residency
+  questions, down from **402**. Campaign total new mappings:
+  **98**; live residency chaptered **1602 of 1995**.
+- The authorized canonical assessment review/publish flow appended
+  **1401 version 4 → 5**; full old/new comparison confirmed all
+  **249** question definitions identical except **9** source-derived
+  explanations. No prior version or attempt history was deleted.
+  `/health` returned HTTP **200**.
+
+**Continuation:** Do not re-import or republish the completed 1401 batch.
+The eleven unresolved 1401 questions stay queued, including any whose
+book citation conflicts with printed-page extraction or official answer.
+Proceed with another exact edition/year (for example 1400 radiology)
+only after a fresh study export and an official syllabus-scope check.
+The figures earlier in this document are historical checkpoints, not
+the latest count. Reproduce the procedure using
+`docs/ops/SOURCE_ONLY_PUBLICATION_20261010.md`.
