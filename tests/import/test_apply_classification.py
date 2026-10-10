@@ -14,6 +14,14 @@ class ApplyClassificationTest(unittest.TestCase):
     def setUpClass(cls):
         cls.catalog = json.loads((REPO / 'data' / 'bank' / 'catalog.json').read_text(encoding='utf-8'))
 
+    def test_cli_allows_unambiguous_original_pdf_page_labels(self):
+        import subprocess
+        result = subprocess.run(
+            [sys.executable, str(REPO / "scripts/references/apply_classification.py"), "--help"],
+            check=True, capture_output=True, text=True,
+        )
+        self.assertIn("--pdf-pages", result.stdout)
+
     def test_evidence_is_quoted_fragments(self):
         self.assertEqual(fragments('the flap should be compressed ... a hematoma under the flap'),
                          ['the flap should be compressed', 'a hematoma under the flap'])
