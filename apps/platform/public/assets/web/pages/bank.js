@@ -6,7 +6,9 @@
  */
 import { api, describeError } from '../foundation/api.js';
 import { faDigits } from './question-stats.js';
-import { chapterCoverage, droppedReferences, matches, previousYear, referenceChange, scopeText, share, sittingLabel, yearSpan } from './bank-rules.js';
+import { chapterCoverage, droppedReferences, groupSittings, matches, previousYear, referenceChange, scopeText, share, sittingLabel, specialtiesByType, specialtyFirst, yearSpan } from './bank-rules.js';
+import { goalPicker, readGoal } from './exam-goal.js';
+import { CARD_HUES, paperGroup } from './bank-papers.js';
 
 const workspaceId = document.querySelector('meta[name="fanoos-workspace"]')?.content ?? '';
 const base = `/workspaces/${encodeURIComponent(workspaceId)}`;
@@ -59,32 +61,88 @@ function studyButton(text, body, tone = 'ghost') {
     return button;
 }
 
-/* The information hues (foundation/tokens.css), cycled across the cards. */
-const CARD_HUES = ['subject', 'accent', 'tag', 'difficulty', 'source', 'success', 'info'];
 
 /* ------------------------------------------------------------ overview */
 
+/*
+ * The bank's front page: «آزمون من» narrows it to one exam (and, for a
+ * specialty exam, puts the specialty first), and three views -- by book and
+ * chapter (the default: the official references, chapter by chapter, with
+ * how many questions each gave), by subject and topic, and by exam paper,
+ * grouped by exam and year with a specialty exam's ten papers together.
+ */
 async function overview() {
     const search = document.getElementById('bank-search');
     const tabs = [...document.querySelectorAll('[data-view]')];
-    let view = 'subjects';
+    const slot = document.getElementById('goal-slot');
+    let view = 'books';
+    let all;
     let data;
+    let goal;
+    const books = new Map(); // exam type ('' for every exam) -> GET /bank/books
     try {
-        data = await api.get(`${base}/bank`);
+        all = await api.get(`${base}/bank`);
+        goal = readGoal(all.types.map((t) => t.key));
+        data = goal.type ? await api.get(`${base}/bank?type=${encodeURIComponent(goal.type)}`) : all;
     } catch (error) {
         done();
         fail(error);
         return;
     }
+    const typeQuery = () => (goal.type ? `?type=${encodeURIComponent(goal.type)}` : '');
 
-    const draw = () => {
+    slot.replaceChildren(goalPicker({
+        types: all.types,
+        specialties: specialtiesByType(all.sittings),
+        goal,
+        onChange: async (next) => {
+            goal = next;
+            root.setAttribute('aria-busy', 'true');
+            try {
+                data = goal.type ? await api.get(`${base}/bank${typeQuery()}`) : all;
+                errorBox.hidden = true;
+                draw();
+            } catch (error) {
+                done();
+                fail(error);
+            }
+        },
+    }));
+
+    const draw = async () => {
         const q = search.value;
+        const typeName = all.types.find((t) => t.key === goal.type)?.name;
+        if (view === 'books') {
+            if (!books.has(goal.type)) {
+                root.setAttribute('aria-busy', 'true');
+                try {
+                    books.set(goal.type, await api.get(`${base}/bank/books${typeQuery()}`));
+                } catch (error) {
+                    done();
+                    fail(error);
+                    return;
+                }
+            }
+            if (view !== 'books') return; // the reader moved on while it loaded
+            done(...bookView(books.get(goal.type), q, goal));
+            return;
+        }
         if (view === 'subjects') {
+            if (goal.type && data.total === 0) {
+                const box = empty(`سؤال‌های ${typeName} هنوز وارد بانک نشده`, 'منابع اعلام‌شده‌اش آماده است؛ یا «آزمون من» را روی همه‌ی آزمون‌ها بگذار.');
+                const link = el('a', 'f-btn f-btn--ghost', `منابع ${typeName}`);
+                link.href = `/app/references?type=${encodeURIComponent(goal.type)}`;
+                box.append(link);
+                done(box);
+                return;
+            }
             const list = el('div', 'b-cards');
-            data.subjects.filter((s) => matches(q, s.name, s.name_en)).forEach((subject, index) => {
+            // A specialty exam's subjects are its specialties: show only those with questions, the goal's first.
+            const rows = specialtyFirst(data.subjects.filter((s) => matches(q, s.name, s.name_en) && (!goal.type || s.total > 0)), goal.specialty);
+            rows.forEach((subject, index) => {
                 const live = subject.total > 0;
-                const card = el(live ? 'a' : 'div', `b-card${live ? '' : ' is-empty'}`);
-                if (live) card.href = `/app/bank/${encodeURIComponent(subject.key)}`;
+                const card = el(live ? 'a' : 'div', `b-card${live ? '' : ' is-empty'}${subject.key === goal.specialty ? ' is-goal' : ''}`);
+                if (live) card.href = `/app/bank/${encodeURIComponent(subject.key)}${typeQuery()}`;
                 // Each course its own colour, cycling, so the grid is told apart at a glance.
                 card.dataset.hue = CARD_HUES[index % CARD_HUES.length];
                 card.append(el('span', 'b-card__mark', String(subject.name || '؟').trim().charAt(0)));
@@ -107,28 +165,16 @@ async function overview() {
             done(list);
             return;
         }
-        const sittings = data.sittings.filter((s) => matches(q, sittingLabel(s, faDigits), s.year));
-        if (sittings.length === 0) {
-            done(empty('هنوز آزمونی منتشر نشده', 'سؤال‌های هر سال که وارد بانک شود، این‌جا فهرست می‌شود.'));
+        const groups = groupSittings(all.sittings, goal)
+            .map((group) => ({ ...group, sittings: group.sittings.filter((s) => matches(q, s.type, s.year, s.subject_name, sittingLabel(s, faDigits))) }))
+            .filter((group) => group.sittings.length > 0);
+        if (groups.length === 0) {
+            done(empty('آزمونی پیدا نشد', goal.type ? 'برای این آزمون هنوز سؤالی منتشر نشده، یا جست‌وجو چیزی پیدا نکرد.' : 'سؤال‌های هر سال که وارد بانک شود، این‌جا فهرست می‌شود.'));
             return;
         }
-        const list = el('div', 'b-cards b-cards--years');
-        sittings.forEach((sitting, index) => {
-            const card = el('a', 'b-card b-card--year');
-            card.href = `/app/exams/${encodeURIComponent(sitting.assessment_id)}`;
-            card.dataset.hue = CARD_HUES[index % CARD_HUES.length];
-            card.append(el('span', 'b-card__year', sitting.year ? faDigits(sitting.year) : '—'));
-            card.append(el('strong', 'b-card__title', sittingLabel(sitting, faDigits)));
-            card.append(el('span', 'b-card__count', `${faDigits(sitting.questions)} سؤال`));
-            list.append(card);
-        });
-        done(list);
+        done(...groups.map(paperGroup));
     };
 
-    if (data.total === 0 && data.subjects.length > 0) {
-        errorBox.hidden = true;
-        root.before(Object.assign(el('p', 'f-muted b-note', 'سؤال‌های آزمون‌ها در حال ورود به بانک است؛ درس‌ها و منابع از همین حالا آماده است.')));
-    }
     for (const tab of tabs) {
         tab.addEventListener('click', () => {
             view = tab.dataset.view;
@@ -143,7 +189,122 @@ async function overview() {
     draw();
 }
 
+/*
+ * بانک به تفکیک کتاب و فصل: per subject, the books its questions come from
+ * (the latest official list's first), each chapter with its count and a
+ * study button; chapters no question came from wait behind a button.
+ */
+function bookView(data, q, goal) {
+    const subjects = specialtyFirst(data.subjects, goal.specialty)
+        .map((subject) => ({
+            ...subject,
+            books: matches(q, subject.name, subject.name_en) ? subject.books : subject.books.filter((book) => matches(q, book.title, book.authors)
+                || book.chapters.some((chapter) => matches(q, chapter.title, chapter.title_fa))),
+        }))
+        .filter((subject) => subject.books.length > 0);
+    if (subjects.length === 0) {
+        return [empty(q ? 'چیزی پیدا نشد' : 'هنوز سؤالی به فصل کتاب وصل نشده', q ? 'درس، کتاب یا فصل دیگری را جست‌وجو کن.' : 'فصل‌بندی سؤال‌ها که پیش برود، این‌جا کتاب به کتاب دیده می‌شود.')];
+    }
+    const note = el('p', 'f-muted b-note', data.listed_year
+        ? `کتاب‌های فهرست رسمی ${faDigits(data.listed_year)} اول آمده‌اند؛ عدد هر فصل، سؤال‌هایی است که جایشان در آن فصل پیدا شده.`
+        : 'عدد هر فصل، سؤال‌هایی است که جایشان در آن فصل پیدا شده.');
+    return [note, ...subjects.map((subject) => {
+        const section = el('section', 'k-subject');
+        const head = el('header', 'k-subject__head');
+        const link = el('a', 'r-subject__link', 'مبحث‌ها');
+        link.href = `/app/bank/${encodeURIComponent(subject.key)}${goal.type ? `?type=${encodeURIComponent(goal.type)}` : ''}`;
+        head.append(el('h2', 'k-subject__name', subject.name), link);
+        const list = el('div', 'r-books');
+        for (const book of subject.books) list.append(bookChapters(book, subject.key, goal.type));
+        section.append(head, list);
+        return section;
+    })];
+}
+
+/* How many of a book's chapters show before «همه‌ی فصل‌ها». */
+const TOP_CHAPTERS = 5;
+
+function bookChapters(book, subjectKey, type) {
+    const card = el('article', `r-book r-book--${spineOf(book.edition_ref)}`);
+    const spine = el('span', 'r-book__spine');
+    spine.setAttribute('aria-hidden', 'true');
+    const body = el('div', 'r-book__body');
+    const title = el('h3', 'r-book__title', book.title);
+    title.dir = 'auto';
+    body.append(title);
+    const meta = el('div', 'r-book__meta');
+    const edition = el('span', 'r-tag r-tag--edition', book.edition);
+    edition.dir = 'auto';
+    meta.append(edition);
+    if (book.published_year) meta.append(el('span', 'r-tag', `چاپ ${faDigits(book.published_year)}`));
+    if (book.listed_year) meta.append(badge('new', `در فهرست ${faDigits(book.listed_year)}`));
+    meta.append(el('span', 'r-tag', `${faDigits(book.questions)} سؤال`));
+    body.append(meta);
+    const scope = (extra) => ({ subject: subjectKey, edition: book.edition_ref, ...(type ? { type } : {}), ...extra });
+    body.append(studyButton('تمرین همه‌ی سؤال‌های این کتاب', scope({})));
+
+    // The most-asked chapters first; the whole book, in its own order, one tap away.
+    const asked = book.chapters.filter((chapter) => chapter.questions > 0);
+    const most = Math.max(1, ...asked.map((chapter) => chapter.questions));
+    const top = [...asked].sort((a, b) => b.questions - a.questions).slice(0, TOP_CHAPTERS);
+    const line = (chapter) => chapterLine(chapter, most, chapter.questions > 0 ? scope({ chapter: chapter.key }) : null);
+    const short = el('ol', 'r-chapters__list k-chapters');
+    short.append(...top.map(line));
+    const whole = el('ol', 'r-chapters__list k-chapters');
+    whole.hidden = true;
+    whole.append(...book.chapters.map(line));
+    if (top.length > 0) {
+        body.append(el('p', 'k-top', top.length < asked.length ? `پرسؤال‌ترین فصل‌ها` : 'فصل‌هایی که سؤال داشته‌اند'), short);
+    }
+    if (book.chapters.length > top.length) {
+        const label = `همه‌ی ${faDigits(book.chapters.length)} فصل کتاب، به ترتیب`;
+        const more = el('button', 'r-chapters__more', label);
+        more.type = 'button';
+        more.setAttribute('aria-expanded', 'false');
+        more.addEventListener('click', () => {
+            whole.hidden = !whole.hidden;
+            short.hidden = !whole.hidden;
+            more.setAttribute('aria-expanded', String(!whole.hidden));
+            more.textContent = whole.hidden ? label : 'فقط پرسؤال‌ترین فصل‌ها';
+        });
+        body.append(more, whole);
+    }
+    card.append(spine, body);
+    return card;
+}
+
+/* One chapter: its number, Persian and English titles, a bar of its share of the book's questions, and a study button. */
+function chapterLine(chapter, most, studyBody) {
+    const item = el('li', studyBody ? 'r-ch k-ch' : 'r-ch k-ch is-out');
+    item.append(el('span', 'r-ch__number', chapter.number ? faDigits(chapter.number) : '–'));
+    const text = el('div', 'r-ch__text');
+    text.append(...bilingual(chapter, 'r-ch'));
+    if (studyBody) {
+        const bar = el('span', 'k-ch__bar');
+        bar.setAttribute('aria-hidden', 'true');
+        const fill = el('span', 'k-ch__fill');
+        fill.style.inlineSize = `${share(chapter.questions, most)}%`;
+        bar.append(fill);
+        text.append(bar);
+    }
+    item.append(text);
+    if (studyBody) {
+        const side = el('div', 'k-ch__side');
+        side.append(el('span', 'k-ch__count', `${faDigits(chapter.questions)} سؤال`), studyButton('تمرین', studyBody));
+        item.append(side);
+    }
+    return item;
+}
+
 /* ------------------------------------------------------------- subject */
+
+/* The exam type a subject page is narrowed to (?type=, set by the bank's «آزمون من»), or ''. */
+const subjectType = new URLSearchParams(window.location.search).get('type') ?? '';
+
+/** A study request for this subject page, narrowed to its exam type. */
+function slice(body) {
+    return subjectType ? { ...body, type: subjectType } : body;
+}
 
 function topicTable(rows, subject, total, recentFrom, withTopic) {
     const table = el('div', 'b-sheet b-topics');
@@ -160,7 +321,7 @@ function topicTable(rows, subject, total, recentFrom, withTopic) {
         if (row.old_reference > 0) meta.append(el('span', 'b-old', `${faDigits(row.old_reference)} رفرنس قدیم`));
         body.append(meta);
         line.append(body);
-        if (row.key !== null) line.append(studyButton('شروع', { subject, topic: row.key }));
+        if (row.key !== null) line.append(studyButton('شروع', slice({ subject, topic: row.key })));
         table.append(line);
     }
     return table;
@@ -170,7 +331,7 @@ async function subject() {
     const key = root.dataset.subject;
     let data;
     try {
-        data = await api.get(`${base}/bank/subjects/${encodeURIComponent(key)}`);
+        data = await api.get(`${base}/bank/subjects/${encodeURIComponent(key)}${subjectType ? `?type=${encodeURIComponent(subjectType)}` : ''}`);
     } catch (error) {
         done();
         fail(error);
@@ -180,6 +341,14 @@ async function subject() {
 
     const head = el('header', 'b-head');
     head.append(el('h1', '', `بانک سؤال ${data.subject.name}`));
+    if (data.type) {
+        // Narrowed by «آزمون من»; one tap shows every exam's questions.
+        const scope = el('p', 'b-scope');
+        const every = el('a', '', 'همه‌ی آزمون‌ها');
+        every.href = `/app/bank/${encodeURIComponent(key)}`;
+        scope.append(el('span', '', `فقط سؤال‌های ${data.type_name} · `), every);
+        head.append(scope);
+    }
     const facts = el('ul', 'b-facts');
     const fact = (label, value) => {
         const li = el('li');
@@ -199,14 +368,14 @@ async function subject() {
         const modes = el('section', 'f-card b-panel');
         modes.append(el('h2', '', 'مطالعه‌ی جامع'), el('p', 'f-muted', 'همه‌ی سؤال‌های این درس، از جدیدترین سال به قدیمی‌تر.'));
         const actions = el('div', 'b-actions');
-        actions.append(studyButton('شروع مطالعه‌ی جامع', { subject: key }, 'primary'));
+        actions.append(studyButton('شروع مطالعه‌ی جامع', slice({ subject: key }), 'primary'));
         if (data.recent_from !== null && data.first_year < data.recent_from) {
-            actions.append(studyButton(`فقط از ${faDigits(data.recent_from)} به بعد`, { subject: key, recent: true }));
+            actions.append(studyButton(`فقط از ${faDigits(data.recent_from)} به بعد`, slice({ subject: key, recent: true })));
         }
         modes.append(actions);
         if (data.years.length > 1) {
             const years = el('div', 'b-years');
-            for (const year of data.years) years.append(studyButton(`${faDigits(year.year)} (${faDigits(year.total)} سؤال)`, { subject: key, year: year.year }));
+            for (const year of data.years) years.append(studyButton(`${faDigits(year.year)} (${faDigits(year.total)} سؤال)`, slice({ subject: key, year: year.year })));
             modes.append(el('p', 'f-tiny', 'یا یک سال:'), years);
         }
         parts.push(modes);
@@ -374,6 +543,8 @@ function chapterRow(chapter, editionRef, out) {
     text.append(...bilingual(chapter, 'r-ch'));
     if (chapter.partial) text.append(el('span', 'r-ch__partial', `بخشی از فصل: ${faDigits(chapter.partial)}`));
     if (chapter.sections > 0 && editionRef) text.append(outlineToggle(editionRef, chapter));
+    // «سؤال‌های این فصل»: every exam's questions found in this chapter.
+    if (chapter.questions > 0 && editionRef) text.append(studyButton(`سؤال‌های این فصل · ${faDigits(chapter.questions)}`, { edition: editionRef, chapter: chapter.key }));
     item.append(text);
     return item;
 }
@@ -463,7 +634,8 @@ async function references() {
     const changesOnly = document.getElementById('ref-changes');
     const params = new URLSearchParams(window.location.search);
     const types = [...new Map(years.map((year) => [year.type_key, year.type])).entries()];
-    let type = types.some(([key]) => key === params.get('type')) ? params.get('type') : types[0][0];
+    const goal = readGoal(types.map(([key]) => key));
+    let type = [params.get('type'), goal.type].find((key) => types.some(([known]) => known === key)) ?? types[0][0];
     const asked = Number(params.get('year'));
     let index = years.findIndex((year) => year.type_key === type && year.year === asked);
     if (index < 0) index = years.findIndex((year) => year.type_key === type);
@@ -535,7 +707,7 @@ async function references() {
         const year = years[index];
         const before = previousYear(years, index);
         const earlier = new Map((before?.subjects ?? []).map((subject) => [subject.key, subject]));
-        const subjects = year.subjects.map((subject) => {
+        const subjects = specialtyFirst(year.subjects, goal.type === type ? goal.specialty : '').map((subject) => {
             const previous = before ? (earlier.get(subject.key) ?? { references: [] }) : null;
             // A list's journals and articles come after its books.
             const books = subject.references.map((ref) => ({ ref, change: referenceChange(ref, previous) }))

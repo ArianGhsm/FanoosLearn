@@ -104,3 +104,64 @@ export function chapterCoverage(chapters) {
 export function scopeText(scope, faDigits) {
     return faDigits(String(scope ?? '').replace(/(\d)\s*[,،]\s*(?=\d)/g, '$1، '));
 }
+
+/*
+ * «آزمون من»: the exam a student is preparing for -- an exam type and, for a
+ * specialty exam, optionally one specialty. Empty means every exam. It only
+ * narrows what a page shows first; every page can still show the rest.
+ */
+export const ALL_EXAMS = Object.freeze({ type: '', specialty: '' });
+
+/** A stored goal, kept only if its type still exists. */
+export function normalizeGoal(goal, typeKeys) {
+    const type = typeof goal?.type === 'string' ? goal.type : '';
+    if (type === '' || !typeKeys.includes(type)) return { ...ALL_EXAMS };
+    return { type, specialty: typeof goal?.specialty === 'string' ? goal.specialty : '' };
+}
+
+/** "همه‌ی آزمون‌ها", "دستیاری", "بورد · اندودانتیکس". */
+export function goalLabel(goal, types, specialtyName) {
+    const type = types.find((t) => t.key === goal.type);
+    if (!type) return 'همه‌ی آزمون‌ها';
+    return goal.specialty && specialtyName ? `${type.name} · ${specialtyName}` : type.name;
+}
+
+/**
+ * Published papers grouped as a student looks for them: by exam and year,
+ * newest first, each group's specialty papers inside it. A goal with a
+ * specialty keeps only that specialty's papers of its own exam type.
+ */
+export function groupSittings(sittings, goal = ALL_EXAMS) {
+    const groups = [];
+    const byKey = new Map();
+    for (const sitting of sittings) {
+        if (goal.type && sitting.type_key !== goal.type) continue;
+        if (goal.specialty && sitting.type_key === goal.type && sitting.subject_key && sitting.subject_key !== goal.specialty) continue;
+        const key = `${sitting.type_key}:${sitting.year}`;
+        if (!byKey.has(key)) {
+            const group = { type: sitting.type, type_key: sitting.type_key, year: sitting.year, sittings: [] };
+            byKey.set(key, group);
+            groups.push(group);
+        }
+        byKey.get(key).sittings.push(sitting);
+    }
+    return groups.sort((a, b) => b.year - a.year);
+}
+
+/** For each exam type whose papers are one specialty each, its specialties by name. */
+export function specialtiesByType(sittings) {
+    const out = {};
+    for (const sitting of sittings) {
+        if (!sitting.subject_key) continue;
+        const list = (out[sitting.type_key] ??= []);
+        if (!list.some((s) => s.key === sitting.subject_key)) list.push({ key: sitting.subject_key, name: sitting.subject_name });
+    }
+    for (const list of Object.values(out)) list.sort((a, b) => a.name.localeCompare(b.name, 'fa'));
+    return out;
+}
+
+/** A list with the goal's specialty first, the rest in their order. */
+export function specialtyFirst(rows, specialty, keyOf = (row) => row.key) {
+    if (!specialty) return rows;
+    return [...rows.filter((row) => keyOf(row) === specialty), ...rows.filter((row) => keyOf(row) !== specialty)];
+}

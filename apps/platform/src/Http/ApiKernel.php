@@ -596,7 +596,10 @@ final class ApiKernel
                 throw new PlatformException('bank_unavailable', 'The bank is not available.', 503);
             }
             if ($request->method === 'GET' && $suffix === '/bank') {
-                return ['status' => 200, 'data' => $this->bank->overview($session->userId, $workspaceId)];
+                return ['status' => 200, 'data' => $this->bank->overview($session->userId, $workspaceId, isset($request->query['type']) ? (string) $request->query['type'] : null)];
+            }
+            if ($request->method === 'GET' && $suffix === '/bank/books') {
+                return ['status' => 200, 'data' => $this->bank->books($session->userId, $workspaceId, isset($request->query['type']) ? (string) $request->query['type'] : null)];
             }
             if ($request->method === 'GET' && $suffix === '/bank/references') {
                 return ['status' => 200, 'data' => $this->bank->references($session->userId, $workspaceId)];
@@ -610,7 +613,7 @@ final class ApiKernel
                 )];
             }
             if ($request->method === 'GET' && preg_match('#^/bank/subjects/([a-z0-9_-]{1,60})$#', $suffix, $match)) {
-                return ['status' => 200, 'data' => $this->bank->subject($session->userId, $workspaceId, $match[1])];
+                return ['status' => 200, 'data' => $this->bank->subject($session->userId, $workspaceId, $match[1], isset($request->query['type']) ? (string) $request->query['type'] : null)];
             }
             if ($request->method === 'POST' && $suffix === '/bank/study') {
                 return ['status' => 201, 'data' => $this->bank->study($session->userId, $workspaceId, $request->body)];

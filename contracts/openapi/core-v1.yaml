@@ -335,26 +335,32 @@ paths:
   /workspaces/{workspaceId}/bank:
     get:
       operationId: readBankOverview
-      description: 'بانک سؤال: the workspace bank by subject (top-level bank_subjects with total published questions, per_exam average, first_year, last_year, topics, old_reference) and its published sittings by year. Counts only published questions; machine classification only when reviewed or at confidence >= 0.85. Needs exam.take.'
-      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+      description: 'بانک سؤال: the workspace bank by subject (top-level bank_subjects with total published questions, per_exam average, first_year, last_year, topics, old_reference) and its published sittings by year ([{type, type_key, year, round, subject_key, subject_name, assessment_id, questions}]; subject_key/subject_name name a one-specialty paper, null for a paper of every subject). With ?type=<exam type key> the subjects, totals and sittings are that exam type''s only. types lists every active exam type [{key, name, questions}] whatever the filter; type echoes the filter. Counts only published questions; machine classification only when reviewed or at confidence >= 0.85. Needs exam.take. 404 bank_type_not_found for an unknown type.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/BankType' }]
       responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/bank/subjects/{subjectKey}:
     get:
       operationId: readBankSubject
-      description: 'One subject: totals, years, recent_from (latest year minus 4), topics (top-level concepts) most-asked first with total/recent/old_reference, high_yield concepts, and the references named for it in the two latest years.'
-      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: subjectKey, in: path, required: true, schema: { type: string, pattern: '^[a-z0-9_-]{1,60}$' } }]
+      description: 'One subject: totals, years, recent_from (latest year minus 4), topics (top-level concepts) most-asked first with total/recent/old_reference, high_yield concepts, and the residency references named for it in the two latest years. With ?type=<exam type key>, only that exam type''s questions (type and type_name echo it).'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: subjectKey, in: path, required: true, schema: { type: string, pattern: '^[a-z0-9_-]{1,60}$' } }, { $ref: '#/components/parameters/BankType' }]
       responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/bank/study:
     post:
       operationId: createBankStudySet
       description: 'Opens a slice of a subject as the caller''s own study set, newest year first and kept in that order (definition ordered=true, not shuffled): the whole subject, one topic or concept key, one year, or only the recent years. Only questions the caller may already open are included (CustomPracticeService::createFromQuestions), at most 500.'
       parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
-      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [subject], properties: { subject: { type: string }, topic: { type: string }, year: { type: integer }, recent: { type: boolean } } } } } }
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [subject], properties: { subject: { type: string, description: 'required unless edition is given' }, type: { type: string, description: 'an exam type key: only that exam type''s questions' }, edition: { type: string, description: 'reference@edition: only questions sourced to this book (across subjects when no subject is given); 404 bank_chapter_not_found when unknown' }, chapter: { type: string, description: 'a chapter key of that edition: only questions sourced to this chapter' }, topic: { type: string }, year: { type: integer }, recent: { type: boolean } } } } } }
       responses: { '201': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/bank/books:
+    get:
+      operationId: readBankBooks
+      description: 'بانک به تفکیک کتاب و فصل: {type, listed_year, types, subjects: [{key, name, name_en, books: [{edition_ref, title, authors, edition, published_year, listed_year, questions, chapters: [{key, number, title, title_fa, title_fa_reviewed, questions}]}]}]}. For each subject, the editions its published questions are sourced to (sources set or reviewed by a person, or at confidence >= 0.85), each chapter with how many questions come from it (a section source counts for its chapter); listed_year is set when the book is on the latest official list of the exam type (residency when none is given). With ?type= only that exam type''s questions.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/BankType' }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/bank/references:
     get:
       operationId: readBankReferences
-      description: 'منابع آزمون: the references named for each exam year of the active exam types ([{type, type_key, year, subjects}]), newest year first and in exam-type order within a year, subject by subject, with edition, authors, chapter scope, whether the announcement is official, and the edition''s chapters in chapter order (chapters: [{key, number, title, title_fa, title_fa_reviewed, sections, in_scope, partial}], with the reference's edition_ref; empty when the catalog has no chapter list for it). in_scope says whether the year''s announcement covers the chapter (null when it names no chapter list); partial carries its words when only some pages count; title_fa_reviewed is false for a machine translation.'
+      description: 'منابع آزمون: the references named for each exam year of the active exam types ([{type, type_key, year, subjects}]), newest year first and in exam-type order within a year, subject by subject, with edition, authors, chapter scope, whether the announcement is official, and the edition''s chapters in chapter order (chapters: [{key, number, title, title_fa, title_fa_reviewed, sections, in_scope, partial, questions}], questions being how many published questions of any exam are sourced to the chapter, with the reference's edition_ref; empty when the catalog has no chapter list for it). in_scope says whether the year''s announcement covers the chapter (null when it names no chapter list); partial carries its words when only some pages count; title_fa_reviewed is false for a machine translation.'
       parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
       responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/bank/chapter-outline:
@@ -688,6 +694,7 @@ components:
     VersionId: { name: versionId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
     PositionIndex: { name: position, in: path, required: true, description: 1-based position in the attempt's per-attempt question order., schema: { type: integer, minimum: 1 } }
     Csrf: { name: X-CSRF-Token, in: header, required: true, schema: { type: string } }
+    BankType: { name: type, in: query, required: false, description: An exam type key (residency, board, promotion, national ...); omitted for every exam., schema: { type: string, pattern: '^[a-z0-9_-]{1,40}$' } }
   responses:
     Success: { description: Successful response, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
     Error: { description: Error response, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
