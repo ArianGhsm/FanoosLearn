@@ -20,7 +20,7 @@ require dirname(__DIR__, 2) . '/apps/platform/bootstrap.php';
 try {
     $args = [];
     foreach (array_slice($argv, 1) as $arg) {
-        if (!preg_match('/^--(workspace|year|subject|stem|expected|audit|apply|backup|receipt)(?:=(.*))?$/D', $arg, $m)
+        if (!preg_match('/^--(workspace|year|subject|stem|expected|audit|apply|backup|receipt|package-root)(?:=(.*))?$/D', $arg, $m)
             || isset($args[$m[1]])) {
             throw new RuntimeException('Unexpected/repeated option.');
         }
@@ -47,14 +47,30 @@ try {
     }
     $root = realpath('/srv/fanoos/shared/research');
     $reportDir = $root === false ? false : realpath($root . '/classification/reports');
-    $auditPath = (string) ($args['audit'] ?? '');
-    if ($root === false || $reportDir === false || realpath(dirname($auditPath)) !== $reportDir
-        || is_link($auditPath) || !is_file($auditPath)) {
-        throw new RuntimeException('Audit must be a protected private report under the approved research root.');
+    $inputRoot = $root;
+    $auditDir = $reportDir;
+    if (isset($args['package-root'])) {
+        // A coordinator-created, immutable snapshot, never a research worker's
+        // mutable source folder. All original inputs remain SHA-pinned by audit.
+        $candidate = (string) $args['package-root'];
+        $label = basename($candidate);
+        if ($root === false || preg_match('/^W0[1-8]-audit-stage$/D', $label) !== 1
+            || $candidate !== "{$root}/classification/coordinator/{$label}"
+            || is_link($candidate) || realpath($candidate) !== $candidate) {
+            throw new RuntimeException('Package root must be an exact coordinator WNN audit stage.');
+        }
+        $inputRoot = $candidate;
+        $auditDir = realpath($candidate . '/classification/reports');
     }
-    $studyPath = "{$root}/bank-sittings/{$year}/{$stem}-study.json";
-    $validatedPath = "{$root}/classification/sittings/{$year}-{$stem}-validated.json";
-    $decisionsPath = "{$root}/classification/decisions/{$year}-{$subject}.json";
+    $auditPath = (string) ($args['audit'] ?? '');
+    if ($root === false || $reportDir === false || $auditDir === false
+        || realpath(dirname($auditPath)) !== $auditDir
+        || is_link($auditPath) || !is_file($auditPath)) {
+        throw new RuntimeException('Audit must be a protected private report under the approved input root.');
+    }
+    $studyPath = "{$inputRoot}/bank-sittings/{$year}/{$stem}-study.json";
+    $validatedPath = "{$inputRoot}/classification/sittings/{$year}-{$stem}-validated.json";
+    $decisionsPath = "{$inputRoot}/classification/decisions/{$year}-{$subject}.json";
     $read = static function (string $path): array {
         if (!is_file($path) || is_link($path)) {
             throw new RuntimeException('Expected verified private file is unavailable.');
