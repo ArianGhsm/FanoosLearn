@@ -2,7 +2,7 @@
 """Build a private page-text index directly from one verified server PDF.
 
 Read-only against MySQL and the immutable private PDF. Writes only under the
-operator-owned private research directory; no PDF copies, no public exports.
+operation-specific private research temp directory; no PDF copies, no public exports.
 The index is a regenerable search/validation cache, never a source independent
 of the exact PDF and SHA-256 in its provenance receipt. Use --apply after
 reviewing the read-only report and disk space. A PDF whose pages are not
@@ -194,11 +194,12 @@ def atomic_text(path: Path, body: str) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--edition", required=True)
-    parser.add_argument("--local", type=Path, default=Path("/srv/fanoos/shared/research"))
+    parser.add_argument("--local", type=Path, required=True,
+                        help="operation-specific private temp directory under protected research/tmp")
     parser.add_argument("--storage-root", type=Path, default=Path("/srv/fanoos/shared/storage"))
     parser.add_argument("--mysql-defaults", type=Path, default=Path("/etc/fanoos/mysql-migrator.cnf"))
     parser.add_argument("--database", default="fanoos_prod")
-    parser.add_argument("--apply", action="store_true", help="write private text after all checks; default dry run")
+    parser.add_argument("--apply", action="store_true", help="write temporary page text after all checks; default dry run")
     parser.add_argument("--min-ratio", type=float, default=0.80)
     args = parser.parse_args()
 

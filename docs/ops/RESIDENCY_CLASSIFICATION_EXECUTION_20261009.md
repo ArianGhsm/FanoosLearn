@@ -10,6 +10,11 @@ Status: **started**. Verified study decisions exist on the server; **not importe
 into the production bank**. All private question text, answer choices, and
 copyrighted reference text remain outside the public repository.
 
+The extraction, search and validator commands below record the historical
+2026-10-09 run. New runs use a unique `research/tmp/<operation-id>/` cache and
+remove it after the validator and independent audit finish; see the current
+procedure in `docs/product/09_CHAPTER_CLASSIFICATION.md`.
+
 ## Baseline measured from the live DB
 
 The query uses `bank_questions` joined through `bank_exam_sittings` to

@@ -54,6 +54,17 @@ to the relevant `docs/` runbook and access-controlled server records.
 A SentinelX context is only a convenience copy, never the sole handoff.
 Never report a change as complete without verifying its persisted state.
 
+Task-only scripts and generated files belong in a unique private
+`/srv/fanoos/shared/research/tmp/<operation-id>/` directory. Use automatic
+cleanup (`trap`/`finally`) or delete the exact directory after validation and
+audit. Reusable scripts belong in versioned `scripts/` and stay there; never
+leave one-off scripts, full-book text dumps, Python bytecode or duplicate
+checkouts after their operation ends. Preserve durable decisions, concise
+provenance/audit receipts, official PDFs, human reviews and verified backups.
+Run research Python commands with `python3 -B` to avoid bytecode caches.
+Before cleanup, confirm the workstream is closed, list the exact paths, and
+check its recovery point. Do not clean an active batch or use a blanket delete.
+
 ## 3. Reference and question processing
 
 - Fetch live private reference inventory with
@@ -63,11 +74,12 @@ Never report a change as complete without verifying its persisted state.
   PDF is the canonical source. Never treat a standalone `.txt`, local text
   corpus, OCR export or chapter extract as an alternate authority. Build the
   protected page-text index directly from the current approved PDF object with
-  `scripts/references/extract_server_reference.py`; keep its provenance receipt
-  beside it and confirm the PDF SHA-256 before each new batch. The index is a
-  regenerable search/validation cache, not a replacement source. Check selected
-  evidence on the exact PDF page, especially where columns, Persian shaping,
-  figures or OCR affect reading order.
+  `scripts/references/extract_server_reference.py` in the operation's private
+  temporary directory; record the PDF SHA-256 in the batch audit receipt and
+  remove the index when that batch and every concurrent use of the edition
+  finish. The index is a regenerable search/validation cache, not a replacement
+  source. Check selected evidence on the exact PDF page, especially where
+  columns, Persian shaping, figures or OCR affect reading order.
 - Work with **eligible verified server editions** first. Set missing or
   incomplete editions aside as pending; no fabricated chapters and **no
   new nearest-edition fallback by default**. Preserve previously audited

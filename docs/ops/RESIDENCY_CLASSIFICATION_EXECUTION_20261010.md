@@ -4,6 +4,10 @@
 questions against approved exact official reference editions already available
 on the server; do not wait for the remaining unready editions or use a laptop.
 **Status:** verified private **research decisions**, not production imports.
+The `references/<edition>.txt` paths below describe caches used during the
+2026-10-10 operation. New batches place them under one operation-specific
+`research/tmp/` directory and remove them after the independent audit receipt
+is saved.
 
 Read first:
 - `docs/PROJECT_PRINCIPLES.md` — GitHub/server authority, exact-edition rule
@@ -122,8 +126,8 @@ workspace identifier or original private question text in public logs.
 Protected server root: `/srv/fanoos/shared/research`.
 
 - Inputs: `bank-sittings/<year>/<stem>-study.json`
-- PDF-derived page indexes and provenance: `references/<edition>.txt` and
-  `references/<edition>.provenance.json`
+- Historical PDF-derived cache files: `references/<edition>.txt` and
+  `references/<edition>.provenance.json` (temporary; see current cleanup rule)
 - Search terms: `classification/reports/<year>-<stem>-queries.json`
 - Decisions: `classification/decisions/<year>-<subject>.json`
 - Validator outputs: `classification/sittings/<year>-<stem>-validated.json`
@@ -132,13 +136,23 @@ Protected server root: `/srv/fanoos/shared/research`.
   SHA-256:
   `43ec6f2d23ed1b2c2a4717be47bbf20d1609b603887607f42157df564f64c4b8`.
 
-For any future evaluation, run all decision files through the **original**
-`apply_classification.py` first, with `--local` pointed to this protected
-root. Then audit the full bank-study integrity and source maps (read-only):
+For any future evaluation, re-extract the two exact PDFs into a unique private
+temporary directory, run the original validator, then audit the full study
+integrity and source maps (read-only). Delete that operation directory after
+the audit receipt is safely written:
 
 ```sh
-python3 scripts/references/audit_private_study_batches.py \
+set -e
+sudo -u fanoosupd install -d -m 0700 /srv/fanoos/shared/research/tmp
+AUDIT_RESEARCH_DIR=$(sudo -u fanoosupd mktemp -d /srv/fanoos/shared/research/tmp/residency-audit-XXXXXX)
+trap 'sudo -u fanoosupd rm -rf -- "$AUDIT_RESEARCH_DIR"' EXIT
+sudo -u fanoosupd python3 -B scripts/references/extract_server_reference.py \
+  --edition=national-oral-health@1394 --local="$AUDIT_RESEARCH_DIR" --apply
+sudo -u fanoosupd python3 -B scripts/references/extract_server_reference.py \
+  --edition=white-pharoah-radiology@8e --local="$AUDIT_RESEARCH_DIR" --apply
+sudo -u fanoosupd python3 -B scripts/references/audit_private_study_batches.py \
   --local=/srv/fanoos/shared/research \
+  --references-local="$AUDIT_RESEARCH_DIR" \
   --batch=1398:community-dentistry:community \
   --batch=1399:community-dentistry:community \
   --batch=1400:community-dentistry:community \
@@ -147,7 +161,7 @@ python3 scripts/references/audit_private_study_batches.py \
   --batch=1403:community-dentistry:community \
   --batch=1405:community-dentistry:community \
   --batch=1405:oral-radiology:radiology \
-  --out=/srv/fanoos/shared/research/classification/reports/residency-audit-20261010.json
+  --out=/srv/fanoos/shared/research/classification/reports/residency-audit-20261010-pdf-provenance.json
 ```
 
 Expected audit: `batch_count=8`, `questions=90`, `accepted=74`,

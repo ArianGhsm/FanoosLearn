@@ -48,7 +48,7 @@ measured: on 1403 endodontics a third of such chapters were wrong, and on
 | Each edition's chapter list | `data/bank/catalog.json` / `data/bank/reference-tocs.json` |
 | Exact edition status and historical nearest-edition notes | `data/bank/reference-texts.json`; live PDF eligibility always comes from the server inventory |
 | The canonical source | current approved, verified private PDF object for that exact edition |
-| The generated page-text index and PDF provenance receipt | server private `/srv/fanoos/shared/research/references/<edition>.txt` and `.provenance.json` (`--local` points to `/srv/fanoos/shared/research`); both are regenerated from the PDF, never supplied as independent source files |
+| Temporary page-text index and PDF provenance receipt | `/srv/fanoos/shared/research/tmp/<operation-id>/references/<edition>.txt` and `.provenance.json`; generated from the exact PDF and deleted after active use, validation and audit finish |
 | Which chapter every page is in | `data/bank/reference-chapter-pages.json` |
 | The questions, as they are on the site | the year's sitting file (§4) |
 | Decisions | protected server `/srv/fanoos/shared/research/classification/decisions/<year>-<subject>.json` (must be durably backed up) |
@@ -60,17 +60,19 @@ read access and sufficient free disk space. Then extract directly from that
 verified object. The generated index must cover every PDF page and its
 provenance receipt must identify the same current PDF SHA-256. Do **not** use
 a separately collected `.txt` even if it claims to be from that edition.
-Do not copy entire PDFs from protected storage. Use the protected server
-workspace and process **only** needed editions, not the entire library at
-once:
+Do not copy entire PDFs from protected storage. Use one private operation
+directory under the server workspace and process **only** needed editions,
+not the entire library at once. Record the unique operation path in the task
+handoff:
 
 ```sh
-sudo -u fanoosupd python3 scripts/references/extract_server_reference.py \
-    --edition=<edition> --local=/srv/fanoos/shared/research
-sudo -u fanoosupd python3 scripts/references/extract_server_reference.py \
-    --edition=<edition> --local=/srv/fanoos/shared/research --apply
-python3 scripts/references/build_chapter_pages.py \
-    --local=/srv/fanoos/shared/research --only <edition>
+sudo -u fanoosupd install -d -m 0700 /srv/fanoos/shared/research/tmp/<operation-id>
+sudo -u fanoosupd python3 -B scripts/references/extract_server_reference.py \
+    --edition=<edition> --local="/srv/fanoos/shared/research/tmp/<operation-id>"
+sudo -u fanoosupd python3 -B scripts/references/extract_server_reference.py \
+    --edition=<edition> --local="/srv/fanoos/shared/research/tmp/<operation-id>" --apply
+sudo -u fanoosupd python3 -B scripts/references/build_chapter_pages.py \
+    --local="/srv/fanoos/shared/research/tmp/<operation-id>" --only <edition>
 ```
 
 The first extractor call is a read-only preflight; the second writes only the
@@ -86,8 +88,8 @@ When a book is added, extract its index from the exact PDF as above, then
 update only its chapter map:
 
 ```sh
-python3 scripts/references/build_chapter_pages.py \
-    --local=/srv/fanoos/shared/research --only <edition>
+sudo -u fanoosupd python3 -B scripts/references/build_chapter_pages.py \
+    --local="/srv/fanoos/shared/research/tmp/<operation-id>" --only <edition>
 ```
 
 A new book means: the live inventory verifies the exact PDF, the
@@ -123,9 +125,10 @@ catalog chapter. Proffit 5e uses this rule (contents on PDF pages 18–20).
 ### Private post-validator audit (server-first)
 
 For multiple read-only study-only batches, also run
-`python3 scripts/references/audit_private_study_batches.py` with one
+`python3 -B scripts/references/audit_private_study_batches.py` with one
 `--batch=YEAR:subject:stem` per batch, `--local` pointed at the protected
-server research workspace and `--out` under its `classification/reports/`
+server research workspace, `--references-local` pointed at the operation's
+temporary PDF-index directory, and `--out` under its `classification/reports/`
 folder. This independently checks *no changes* to the study question stems,
 choices or answers, exact question identity, source-node reference and
 chapter, mapped PDF/printed page, origin and confidence. It does **not**
@@ -151,9 +154,16 @@ One batch is one sitting and one subject (10–30 questions).
 
 **Step 1 — open the batch.**
 
+Create one protected, unique task directory and use it for generated search
+files and PDF page indexes:
+
 ```sh
-python scripts/references/classification_batch.py --sitting=<sitting.json> \
-    --subject=<subject> --out=<queries.json>
+sudo -u fanoosupd install -d -m 0700 /srv/fanoos/shared/research/tmp/<operation-id>
+```
+
+```sh
+sudo -u fanoosupd python3 -B scripts/references/classification_batch.py --sitting=<sitting.json> \
+    --subject=<subject> --out="/srv/fanoos/shared/research/tmp/<operation-id>/queries.json"
 ```
 
 It prints official editions, announced scope and questions with official
@@ -174,7 +184,7 @@ right, not for the question's general topic.
 **Step 3 — search.**
 
 ```sh
-python scripts/references/find_in_books.py <queries.json> --top 3 --local=/srv/fanoos/shared/research
+sudo -u fanoosupd python3 -B scripts/references/find_in_books.py "/srv/fanoos/shared/research/tmp/<operation-id>/queries.json" --top 3 --local="/srv/fanoos/shared/research/tmp/<operation-id>"
 ```
 
 For each question: the best pages, each with its chapter, the matching
@@ -239,16 +249,39 @@ files are read for a sitting, by the `<year>-` prefix):
 **Step 6 — check and write.**
 
 ```sh
-python scripts/references/apply_classification.py --sitting=<sitting.json> \
+sudo -u fanoosupd python3 -B scripts/references/apply_classification.py --sitting=<sitting.json> \
     --decisions=/srv/fanoos/shared/research/classification/decisions/ \
     --out=/srv/fanoos/shared/research/classification/sittings/<sitting>.json \
-    --local=/srv/fanoos/shared/research
+    --local="/srv/fanoos/shared/research/tmp/<operation-id>"
 ```
 
 Every rejection is listed with its reason; fix the decision and run again —
 never the catalog, the chapter map, the texts or the scripts. With no
 rejections it writes the sitting with `sources` (reference, chapter node,
 printed page, the quote as anchor, `origin: ai`, confidence).
+Run the private study audit while the temporary index is still available:
+
+```sh
+sudo -u fanoosupd python3 -B scripts/references/audit_private_study_batches.py \
+    --local=/srv/fanoos/shared/research \
+    --references-local=/srv/fanoos/shared/research/tmp/<operation-id> \
+    --batch=<year>:<subject>:<stem> \
+    --out=/srv/fanoos/shared/research/classification/reports/<audit>.json
+```
+
+The durable audit records the source PDF SHA-256 and page count. After the
+audit receipt is safely written and no concurrent batch uses those editions,
+inspect the exact operation directory and remove it. This deletes the page
+indexes, query JSON and sidecars; retain the sitting, decisions and concise
+audit receipt. Reusable scripts stay in the repository; task-only scripts and
+outputs do not.
+
+After confirming this is the single operation directory and no active batch
+uses it, remove only that exact directory:
+
+```sh
+sudo -u fanoosupd rm -rf -- /srv/fanoos/shared/research/tmp/<operation-id>
+```
 
 **Step 7 — put it on the site** (§7).
 
@@ -381,7 +414,9 @@ Give the agent this document, the year, an authorized server session and
 read access to the exact verified PDF through the approved extraction tool,
 plus the protected server research workspace
 (`/srv/fanoos/shared/research`), not to the owner's laptop. The generated
-page-text index is only a cache tied to that PDF's provenance receipt.
+page-text index is only a cache tied to that PDF's provenance receipt; store
+it under the batch's unique `tmp/<operation-id>/` path and remove it after the
+validator/audit handoff is complete and no active batch shares it.
 Its deliverables:
 
 1. the decisions files for the year, and a clean `apply_classification.py`

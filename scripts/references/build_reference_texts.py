@@ -11,7 +11,7 @@ Run only on the authorized FANOOS server account, for the editions needed by
 the current batch. Missing or unusable exact editions are reported as pending.
 
     sudo -u fanoosupd python3 scripts/references/build_reference_texts.py \\
-        --only proffit-orthodontics@6e --local=/srv/fanoos/shared/research
+        --only proffit-orthodontics@6e --local=/srv/fanoos/shared/research/tmp/<operation-id>
 """
 from __future__ import annotations
 
@@ -53,7 +53,7 @@ def from_text(edition: str, source: Path) -> tuple[str, int, int]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
-    parser.add_argument('--local', default='/srv/fanoos/shared/research', help='protected server research workspace')
+    parser.add_argument('--local', required=True, help='operation-specific private temp directory under protected research/tmp')
     parser.add_argument('--only', action='append', required=True,
                         help='exact edition to extract from its verified server PDF (repeatable; required)')
     args = parser.parse_args()
@@ -76,6 +76,7 @@ def main() -> int:
             continue
         command = [
             sys.executable,
+            '-B',
             str(REPO / 'scripts' / 'references' / 'extract_server_reference.py'),
             '--edition', edition,
             '--local', args.local,

@@ -2,7 +2,9 @@
 
 The page-marked `.txt` files named in this historical log are generated
 indexes from exact verified server PDFs; the original PDFs and their SHA-256
-identities are authoritative.
+identities are authoritative. They are historical cache artifacts; new
+classification batches use a private per-operation index and clean it after
+validation/audit.
 
 ## Authorization and release
 

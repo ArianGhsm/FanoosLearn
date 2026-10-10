@@ -142,7 +142,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
     parser.add_argument('queries')
     parser.add_argument('--top', type=int, default=3)
-    parser.add_argument('--local', default='/srv/fanoos/shared/research')
+    parser.add_argument('--local', required=True,
+                        help='operation-specific private temp directory under protected research/tmp')
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding='utf-8')
 

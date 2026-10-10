@@ -274,12 +274,13 @@ python scripts/import/docx_to_sitting.py --docx=1400.docx --year=1400 --form=A -
   form B numbering. The others are form A (1405 has one form).
 - **Chapters** are not assigned here; that is a later re-import of the same
   sitting with sources found on the exact official reference PDFs. The
-  server-side private `references/<edition>.txt` under
-  `/srv/fanoos/shared/research` is only a page-aligned search index extracted
-  from the current approved PDF object by
+  server-side temporary `references/<edition>.txt` under the active
+  `/srv/fanoos/shared/research/tmp/<operation-id>/` is only a page-aligned
+  search index extracted from the current approved PDF object by
   `scripts/references/extract_server_reference.py`, with a matching
   `.provenance.json` receipt. It is not an independent source and may not be
-  replaced by a separately collected text file. The exact PDF page remains
+  replaced by a separately collected text file. Delete the temporary index
+  and receipt after the batch's audit is complete. The exact PDF page remains
   authoritative (PROJECT_PRINCIPLES decisions 6–7 and the 2026-10-09
   server-first policy).
 

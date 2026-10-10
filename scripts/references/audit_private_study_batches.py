@@ -66,7 +66,8 @@ def _printed_labels(text: str) -> set[int]:
 
 
 def _verify_pdf_printed_page(root: Path, edition: str, pdf_page: int, value: str,
-                             cache: dict[str, dict[int, str]]) -> bool:
+                             cache: dict[str, dict[int, str]],
+                             references_root: Path | None = None) -> bool:
     """Accept book-printed labels only with actual-page AND adjacent-page evidence.
 
     Deliberately stricter than the primary text validator: a stray chapter
@@ -80,7 +81,8 @@ def _verify_pdf_printed_page(root: Path, edition: str, pdf_page: int, value: str
     if not 1 <= pdf_page or not 1 <= printed:
         return False
     if edition not in cache:
-        cache[edition] = _page_segments(root / "references" / f"{edition}.txt")
+        reference_root = references_root or root
+        cache[edition] = _page_segments(reference_root / "references" / f"{edition}.txt")
     pages = cache[edition]
     if printed not in _printed_labels(pages.get(pdf_page, "")):
         return False
@@ -90,7 +92,7 @@ def _verify_pdf_printed_page(root: Path, edition: str, pdf_page: int, value: str
     )
     return corroborated >= 2
 
-def audit_batch(root: Path, spec: str) -> dict:
+def audit_batch(root: Path, spec: str, references_root: Path | None = None) -> dict:
     m = BATCH.fullmatch(spec)
     if not m:
         raise ValueError(f"Invalid batch spec {spec!r}: expected YEAR:subject:stem")
@@ -124,8 +126,16 @@ def audit_batch(root: Path, spec: str) -> dict:
         raise ValueError(f"{spec}: duplicate or unsupported decisions")
     if not wanted.keys() <= original.keys():
         raise ValueError(f"{spec}: decision question not in exact sitting")
+    source_pdf_provenance = {}
+    reference_root = references_root or root
     for edition in sorted({str(decision["edition"]) for decision in wanted.values()}):
-        verify_current_pdf_index(root, edition)
+        receipt = verify_current_pdf_index(reference_root, edition)
+        if receipt:
+            source_pdf_provenance[edition] = {
+                "sha256": receipt.get("source_sha256"),
+                "pdf_pages": receipt.get("pdf_pages"),
+                "index_sha256": receipt.get("text_sha256"),
+            }
     actual = {n for n, q in mapped.items() if q.get("sources")}
     if actual != wanted.keys():
         raise ValueError(f"{spec}: validated source set and decision set differ")
@@ -147,7 +157,8 @@ def audit_batch(root: Path, spec: str) -> dict:
         label = str(item.get("page"))
         pdf_number = int(decision["page"])
         if label not in {str(pdf_number), f"pdf {pdf_number}"} and not _verify_pdf_printed_page(
-                root, str(decision["edition"]), pdf_number, label, reference_page_cache):
+                root, str(decision["edition"]), pdf_number, label, reference_page_cache,
+                reference_root):
             raise ValueError(f"{spec}: wrong page or origin for Q{n}")
         confidence = item.get("confidence", {})
         if (min(float(confidence.get(k, 0)) for k in ("source", "node", "page")) < 0.85
@@ -166,6 +177,7 @@ def audit_batch(root: Path, spec: str) -> dict:
         "study_sha256": digest(path_input),
         "decisions_sha256": digest(path_decisions),
         "validated_sha256": digest(path_output),
+        "source_pdf_provenance": source_pdf_provenance,
         "mapped": pages,
     }
 
@@ -196,13 +208,17 @@ def save_private(root: Path, out: Path, data: dict) -> None:
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--local", type=Path, default=Path("/srv/fanoos/shared/research"))
+    parser.add_argument("--references-local", type=Path,
+                        help="operation-specific temp directory holding PDF-derived indexes")
     parser.add_argument("--batch", action="append", required=True,
                         help="YEAR:subject:stem; may repeat, e.g. 1405:oral-radiology:radiology")
     parser.add_argument("--out", type=Path, help="Private report path under classification/reports")
     args = parser.parse_args()
     if len(set(args.batch)) != len(args.batch):
         raise ValueError("Duplicate private audit batch requested")
-    audited = [audit_batch(args.local, spec) for spec in args.batch]
+    if args.references_local is None:
+        raise ValueError("--references-local is required; place page indexes in the operation temp directory")
+    audited = [audit_batch(args.local, spec, args.references_local) for spec in args.batch]
     total = {
         "format": "fanoos.classification.provenance-audit/1",
         "research_only": True,

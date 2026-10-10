@@ -1,7 +1,7 @@
 {
   "format": "fanoos.reference-texts.v2",
   "notes": [
-    "The exact verified private server PDF is the canonical source. `pdf: verified-server-pdf` means resolve the current approved PDF object for this exact edition through scripts/references/extract_server_reference.py; it is not a local path. The resulting page-marked .txt is a private, regenerable search/validation index tied to that PDF SHA-256, never an independent source.",
+    "The exact verified private server PDF is the canonical source. `pdf: verified-server-pdf` means resolve the current approved PDF object for this exact edition through scripts/references/extract_server_reference.py; it is not a local path. The resulting page-marked .txt is a private, regenerable search/validation index tied to that PDF SHA-256, stored only in an operation-specific temporary directory and removed after the batch audit; it is never an independent source.",
     "Live PDF availability is time-sensitive and is determined by scripts/ops/reference-library-inventory.php, not this manifest. The 2026-10-10 inventory found 35 of these 36 listed official editions ready; hupp-oral-surgery@6e remains pending. `missing` records a known exact-edition gap; `nearest` preserves historical audit information only and does not authorize a new substitution."
   ],
   "editions": {

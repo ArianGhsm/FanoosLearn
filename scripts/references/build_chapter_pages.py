@@ -256,7 +256,8 @@ def locate(pages: list[tuple[int, str]], chapter_list: list[list[str]],
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
-    parser.add_argument('--local', default='/srv/fanoos/shared/research')
+    parser.add_argument('--local', required=True,
+                        help='operation-specific private temp directory under protected research/tmp')
     parser.add_argument('--only', action='append', required=True,
                         help='rebuild only this edition (repeatable; required) and preserve all other page maps')
     args = parser.parse_args()

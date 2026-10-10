@@ -102,9 +102,10 @@ classification. Read it through the authenticated, read-only bridge in
 `scripts/references/extract_server_reference.py`; do not copy the PDF out of
 protected storage. That script verifies the current approved object, its
 size, PDF signature and SHA-256, then creates **one** complete, page-marked
-text index per edition (`=== PAGE n ===`) in the protected research workspace.
-The matching `.provenance.json` binds that index to the exact PDF and its
-SHA-256. This `.txt` is generated working data for search and validation only:
+text index per edition (`=== PAGE n ===`) in the operation's private
+`research/tmp/<operation-id>/references/` directory. The matching
+`.provenance.json` binds that index to the exact PDF and its SHA-256. This
+`.txt` is generated working data for search and validation only:
 it is never an independent source, must not be hand-edited or replaced by a
 separately collected text file. If stale or mismatched, stop and investigate
 the PDF/edition change; the extractor fails closed instead of overwriting the
@@ -118,7 +119,7 @@ disk space **before** building or duplicating any artifact.
 
 The binding procedure is
 `docs/product/09_CHAPTER_CLASSIFICATION.md`; source decisions must pass
-`scripts/references/apply_classification.py` against the PDF-derived index
+`scripts/references/apply_classification.py` against the temporary PDF-derived index
 and page-to-chapter map. The authority order is: official year validity and
 scope → exact verified edition PDF/page → matching generated page index →
 verbatim evidence → validator → reviewed import.
@@ -158,10 +159,13 @@ Document before, during, and at the end of each meaningful operation:
 
 **Public documentation** resides in the relevant `docs/` runbook and
 `docs/PROJECT_PRINCIPLES.md` for shared policy; **private source material,
-decision JSON, generated texts and detailed work queues** reside in the
-server's protected workspace and verified backups. Their recovery steps must
-be documented without leaking credentials or copyrighted data. A convenient
-SentinelX context checkpoint is supplemental, never the sole record.
+durable decisions and final audit receipts** reside in the server's protected
+workspace and verified backups. Generated text, search output and detailed
+work queues exist only in the operation temp directory while a task is active,
+then are removed after their non-copyrighted hashes and results are recorded.
+Their recovery steps must be documented without leaking credentials or
+copyrighted data. A convenient SentinelX context checkpoint is supplemental,
+never the sole record.
 Keep one canonical owner for each durable fact; update older documents or
 mark them historical to prevent contradiction.
 
@@ -169,6 +173,33 @@ A new agent must be able to recover from GitHub documentation, authorized
 server state and backups alone, **without chats or the owner's laptop**.
 Do not claim a file, backup, upload, import, or deploy completed without a
 read-back or other verifiable result.
+
+### Generated-artifact lifecycle
+
+- Create task-only scripts, extracted page indexes, search dumps, logs and
+  intermediate files inside one uniquely named, mode-`0700` directory under
+  `/srv/fanoos/shared/research/tmp/<operation-id>/`. Use `trap`/`finally` for
+  cleanup where possible; never scatter scratch files through the repository,
+  home directory or shared reference root.
+- A PDF-derived page index is a temporary cache for an active classification
+  batch. After the batch's validator and independent audit receipts are safely
+  recorded, remove its `.txt` index and matching cache receipt when no other
+  active batch uses that edition. Delete search-output text once its decisions
+  and audit receipt are complete. Keep source-PDF SHA-256, page count, chapter
+  map identity, decisions and concise non-copyrighted audit receipts.
+- One-off scripts are deleted after their validated output is recorded.
+  Reusable scripts are intentional versioned source code: review and keep them
+  in `scripts/`, then remove only their temporary outputs after each run.
+- Clean Python bytecode and temporary checkouts after use. Before deleting any
+  private artifact, check for active work, preview exact paths, and verify the
+  required recovery point. Never use a blanket recursive delete. Preserve
+  official source documents, original PDFs, validated decisions, human reviews,
+  publication receipts and verified backups.
+- Run research commands with `python3 -B`; temporary bytecode has no value and
+  must not accumulate in the private workspace or nested checkouts.
+- Current legacy artifacts stay until their active handoffs are complete and
+  their replacement/restore path is verified; this rule does not authorize
+  deleting an in-progress workstream's inputs.
 
 ## 5. Change and release discipline
 
@@ -204,7 +235,8 @@ first active exam type with board/promotion represented in schema; owner as
 reviewer; confidence review threshold **0.85**.
 
 **2026-10-08 — validation decisions retained:** one complete, page-marked
-search index generated from the exact reference PDF per edition;
+search index generated from the exact reference PDF per edition during an
+active batch and removed after validation/audit;
 classification only against the reference's own words; strict
 chapter/page/evidence checks, human override guard, exact site-matching
 sitting, `questions_changed=0` dry run, and verified backup.
@@ -244,18 +276,19 @@ See `docs/product/09_CHAPTER_CLASSIFICATION.md` for the mistakes and guards.
 **2026-10-10 — PDF source-of-truth decision:** for book-based question
 classification, the exact current approved server PDF is authoritative.
 Search, chapter mapping and evidence validation must refresh/verify the
-page-text index against that PDF's SHA-256. A `.txt` index is a private,
-regenerable cache only; standalone text corpora and hand-edited text are not
-classification inputs. If the exact PDF is absent, stale, unreadable or lacks
-complete page coverage, leave the edition pending until its PDF-derived path
-is ready. The exam sitting source and reference-book source remain distinct:
+temporary page-text index against that PDF's SHA-256. A `.txt` index exists
+only while a batch is active and must be deleted after validation/audit; it is
+never a durable project file. Standalone text corpora and hand-edited text
+are not classification inputs. If the exact PDF is absent, stale, unreadable
+or lacks complete page coverage, leave the edition pending until its PDF-
+derived path is ready. The exam sitting source and reference-book source remain distinct:
 the sitting source verifies question wording, while the reference PDF verifies
 chapter/page/evidence.
 
 ## 7. Open implementation items (do not assume completed)
 
 - Before each classification batch, run the PDF extraction preflight for the
-  exact edition and confirm the protected index and provenance receipt match
+  exact edition and confirm the temporary index and provenance receipt match
   the current approved PDF SHA-256. The bridge is implemented; this is a
   per-edition readiness check, not proof that every catalog PDF is searchable.
 - Add a reviewed, page-by-page OCR path for verified PDFs without a complete

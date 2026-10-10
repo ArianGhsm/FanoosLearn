@@ -14,8 +14,9 @@ It does not authorize a shortcut around the existing classification validator.
 **Current clarification (2026-10-10):** the source bridge described below as
 future work was implemented as `scripts/references/extract_server_reference.py`.
 It reads the current verified PDF object in place and creates a protected,
-page-marked search index plus a PDF-SHA-bound provenance receipt. The PDF is
-the source of truth; the `.txt` is a generated cache, not a standalone source.
+temporary page-marked search index plus a PDF-SHA-bound provenance receipt.
+The PDF is the source of truth; the `.txt` is a generated cache, not a
+standalone source, and is removed when the task's audit is complete.
 This dated log remains historical for its inventory and workspace findings.
 
 ## Owner clarification — production host and access route
@@ -57,8 +58,8 @@ The new **server-only, access-controlled working area** is
 
 ```
 /srv/fanoos/shared/research/
-  references/<edition>.txt            generated page-text index from verified PDF
-  references/<edition>.provenance.json  source PDF SHA-256 and extraction receipt
+  tmp/<operation-id>/references/<edition>.txt            temporary PDF page index
+  tmp/<operation-id>/references/<edition>.provenance.json temporary source receipt
   bank-sittings/<year>/<sitting>.json  exact site-matching private source file
   classification/decisions/           one decision batch per year and subject
   classification/sittings/            validated classified sittings
@@ -75,11 +76,14 @@ working area before placing irreplaceable files there, or mirror its durable
 artifacts through an existing audited private backup mechanism. Empty folders
 do not prove content was migrated.
 
-Scripts accept the `--local` argument pointing to that root. The implemented
+Scripts accept the `--local` argument pointing to the operation's private
+temporary directory. The implemented
 secure source bridge reads the approved object file associated with
 `content_resource_metadata.topic=<edition>` through an authorized accessor and
 never exposes that object to public URLs. Use a space-aware, single-edition
 workflow and verify the page markers and matching PDF-SHA provenance receipt.
+After the batch's validator and audit receipt are recorded, delete the
+operation directory if no active batch shares it.
 
 ## Reproducible continuation
 

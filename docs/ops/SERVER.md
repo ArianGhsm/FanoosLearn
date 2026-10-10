@@ -45,28 +45,29 @@ verified. A laptop-only `.local/SERVER_ACCESS.md` is not a prerequisite.
 The database is `fanoos_prod` on the local MySQL.
 
 **Separation:** `shared/research/` is a protected, server-only *working*
-directory for page-text indexes extracted from verified reference PDFs and
-their provenance receipts, exact site-matching sittings,
-decision JSON, QA output and job/checkpoint records; it is not the
+directory for unique temporary PDF-processing jobs and durable, access-
+controlled sittings, decisions, QA receipts and job/checkpoint records; it is not the
 content-addressed storage or an immutable release. The directory skeleton was provisioned on 2026-10-09 for
 `fanoosupd:fanoosupd` with mode `0700`; verified contents were empty.
 Keep book/question content out of Git, and back
 it up explicitly with verified recovery before treating working files as
 durable. Until the backup/recovery mechanism is verified, do not claim this
-working directory is backed up.
+working directory is backed up. `research/tmp/<operation-id>/` contains only
+disposable active-job indexes and scratch outputs; never treat them as durable
+inputs or backup material.
 
-Existing reference scripts accept `--local=/srv/fanoos/shared/research`
-so their expected paths are the generated `references/<edition>.txt` index,
-its `references/<edition>.provenance.json` receipt and
-`classification/decisions/<year>-<subject>.json`. The site-matching
-sittings belong in `bank-sittings/<year>/`. Protected PDFs already in
-object storage are **not** duplicated as a second public library.
-`scripts/references/extract_server_reference.py` reads the current approved
-PDF object in place, checks its database identity and SHA-256, and writes only
-the page-text index and receipt here. The index is not an independent input:
-re-extract and verify it from the current PDF before classification. A secure
-authorized reader and sufficient workspace/backup capacity must be verified
-before extraction.
+Reference scripts accept `--local` for the protected workspace. Put any
+generated page index and temporary reports under
+`tmp/<operation-id>/references/`; put durable site-matching sittings in
+`bank-sittings/<year>/` and validated decisions/receipts in `classification/`.
+Protected PDFs already in object storage are **not** duplicated. The extractor
+reads the current approved PDF object in place and verifies its SHA-256. A
+page-text index is only a cache for active work; after the validator and audit
+receipts are recorded and no concurrent batch uses it, delete the index and
+its cache receipt. Preserve the PDF SHA-256 and other concise provenance in the
+durable audit. Verify a backup before removing any workstream inputs. Never
+leave one-off scripts, reference indexes, search-output text, Python bytecode
+or nested Git checkouts under `shared/research` after their workstream closes.
 
 nginx serves everything under `/assets/` as immutable for a year
 (`ops/nginx/fanoos-performance.conf`). A release reaches browsers only

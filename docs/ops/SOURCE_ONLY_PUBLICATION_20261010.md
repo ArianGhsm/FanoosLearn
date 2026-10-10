@@ -73,12 +73,16 @@ because the actual announced syllabus scope is missing. The other
    `export_server_candidates.php --workspace=<verified-uuid>
    --year=<year> --subject=<subject>`; use `cmp -s` against its archived
    `<stem>-study.json`. Never use `import-bank.php` for these files.
-3. Refresh the protected page-text index directly from the exact verified
-   reference PDF and confirm its provenance receipt; then run the original
+3. Refresh the protected page-text index in the batch's private temporary
+   directory directly from the exact verified reference PDF and confirm its
+   provenance receipt; then run the original
    `apply_classification.py` on the decisions against that index. It must say
    `0 rejected`. Re-run
    `audit_private_study_batches.py` for the original full eight batches,
    which must say `90 questions; 74 accepted; 16 pending`.
+   After the private audit receipt records PDF/index hashes, delete the
+   operation's temporary page indexes and search/query files if no concurrent
+   batch uses the same editions.
 4. Preview a single batch with an explicit expected count (transaction
    inserts and rolls back, checking real FK and question content):
 

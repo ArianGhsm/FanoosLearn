@@ -21,7 +21,7 @@ Nothing is taken on trust. A decision is accepted only when
 - the page lies inside that chapter (data/bank/reference-chapter-pages.json);
 - every fragment of the evidence (split on "...", each of at least four
   words) is printed on that page in the private index extracted from the
-  exact verified server PDF (`.local/references/<edition>.txt`);
+  exact verified server PDF (`<operation-temp>/references/<edition>.txt`);
 - the confidence is a number from 0 to 1;
 - it does not replace a human-checked source with a different chapter (or
   with none) unless it says why in "override_human".
@@ -149,7 +149,8 @@ def main() -> int:
     parser.add_argument('--partial', action='store_true', help='write the accepted decisions even if some were rejected')
     parser.add_argument('--allow-nearest', action='store_true',
                         help='historical audit only: permit previously approved nearest-edition substitutions')
-    parser.add_argument('--local', default='/srv/fanoos/shared/research')
+    parser.add_argument('--local', required=True,
+                        help='operation-specific private temp directory under protected research/tmp')
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding='utf-8')
 
