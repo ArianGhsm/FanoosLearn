@@ -184,17 +184,39 @@ def main() -> int:
     parser.add_argument("--storage-root", type=Path, default=Path("/srv/fanoos/shared/storage"))
     parser.add_argument("--mysql-defaults", type=Path, default=Path("/etc/fanoos/mysql-migrator.cnf"))
     parser.add_argument("--database", default="fanoos_prod")
+    parser.add_argument("--expected-sha256",
+                        help="require this exact source PDF SHA-256 before reading a page")
+    parser.add_argument("--page", type=int,
+                        help="write exactly one selected PDF page to stdout, without creating a file")
+    parser.add_argument("--require-map", action="store_true",
+                        help="require a contiguous chapter map bound to this exact PDF SHA-256")
     parser.add_argument("--check-readable", action="store_true",
                         help="scan each PDF page transiently in memory and report counts only")
     parser.add_argument("--min-ratio", type=float, default=0.80)
     args = parser.parse_args()
     if not 0.5 <= args.min_ratio <= 1:
         raise ValueError("invalid minimum searchable-page ratio")
+    if args.expected_sha256 is not None and not re.fullmatch(r"[a-f0-9]{64}", args.expected_sha256):
+        raise ValueError("invalid expected PDF SHA-256")
+    if args.page is not None and args.check_readable:
+        raise ValueError("request one page or run readability preflight, not both")
 
     pdf = open_verified_reference(args.edition, args.storage_root, args.mysql_defaults, args.database)
+    if args.expected_sha256 is not None and pdf.source_sha256 != args.expected_sha256:
+        raise ValueError("approved PDF SHA-256 differs from the pinned source edition")
     mapping = json.loads((Path(__file__).resolve().parents[2] /
                           "data/bank/reference-chapter-pages.json").read_text(encoding="utf-8"))
     map_entry = mapping.get("editions", {}).get(pdf.edition, {})
+    if args.require_map:
+        map_hash = map_entry.get("source_pdf_sha256")
+        if map_hash != pdf.source_sha256:
+            raise ValueError("chapter map is not bound to the exact approved PDF")
+        chapter_coverage({"editions": {pdf.edition: map_entry}}, pdf.edition, pdf.page_count)
+    if args.page is not None:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stdout.write(pdf.page_text(args.page))
+        return 0
+
     try:
         coverage = chapter_coverage({"editions": {pdf.edition: map_entry}}, pdf.edition, pdf.page_count)
         chapter_map_valid = bool(map_entry.get("runs"))

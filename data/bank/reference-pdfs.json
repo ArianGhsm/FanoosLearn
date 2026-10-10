@@ -1,50 +1,146 @@
 {
   "format": "fanoos.reference-pdfs.v1",
   "notes": [
-    "The exact verified private server PDF is the sole book source for chapter, page and evidence work. `pdf: verified-server-pdf` means resolve the current approved PDF object for this exact edition through scripts/references/verified_reference_pdf.py; it is not a local path. The workflow reads only requested PDF pages and never writes extracted page text, a full-book text version or a search index. A selected short evidence quote may be retained with its PDF page in a durable decision.",
-    "Live PDF availability is time-sensitive and is determined by scripts/ops/reference-library-inventory.php, not this manifest. The 2026-10-10 inventory found 35 of these 36 listed official editions ready; hupp-oral-surgery@6e remains pending. `missing` records a known exact-edition gap; `nearest` preserves historical audit information only and does not authorize a new substitution."
+    "The exact approved private server PDF is the only reference-book source. The workflow reads requested PDF pages one at a time and never writes page text, full-book text, OCR output or a search index. A selected short evidence quote may be saved with its exact PDF page in a durable decision.",
+    "Availability is time-sensitive. `pdf: verified-server-pdf` is only a catalog disposition; scripts/references/verified_reference_pdf.py and scripts/ops/reference-library-inventory.php verify the current approved PDF at use time. `missing` records an edition to leave pending; `nearest` is historical information and never authorizes a new substitution by default."
   ],
   "editions": {
-    "burket-oral-medicine@12e": { "pdf": "verified-server-pdf" },
-    "burket-oral-medicine@13e": { "pdf": "verified-server-pdf" },
-    "carranza-periodontology@12e": { "pdf": "verified-server-pdf", "nearest": "carranza-periodontology@13e" },
-    "carranza-periodontology@13e": { "pdf": "verified-server-pdf" },
-    "carranza-periodontology@14e": { "pdf": "verified-server-pdf" },
-    "craig-restorative-materials@14e": { "pdf": "verified-server-pdf" },
-    "goldstein-esthetics@3e": { "pdf": "verified-server-pdf" },
-    "hupp-oral-surgery@6e": { "missing": "No approved, verified private PDF for the exact 2014 6th edition was present in the 2026-10-10 live inventory; the 2019 7th edition is not an exact substitute.", "nearest": "hupp-oral-surgery@7e" },
-    "hupp-oral-surgery@7e": { "pdf": "verified-server-pdf" },
-    "little-falace-dental-management@9e": { "pdf": "verified-server-pdf" },
-    "little-falace-dental-management@10e": { "pdf": "verified-server-pdf" },
-    "malamed-local-anesthesia@6e": { "pdf": "verified-server-pdf" },
-    "malamed-local-anesthesia@7e": { "pdf": "verified-server-pdf" },
-    "malamed-medical-emergencies@7e": { "pdf": "verified-server-pdf" },
-    "mccracken-rpd@12e": { "pdf": "verified-server-pdf" },
-    "mccracken-rpd@13e": { "pdf": "verified-server-pdf" },
-    "mcdonald-avery-pediatric@10e": { "pdf": "verified-server-pdf", "nearest": "mcdonald-avery-pediatric@11e" },
-    "mcdonald-avery-pediatric@11e": { "pdf": "verified-server-pdf" },
-    "national-oral-health@1394": { "pdf": "verified-server-pdf" },
-    "neville-oral-pathology@4e": { "pdf": "verified-server-pdf" },
-    "neville-oral-pathology@5e": { "pdf": "verified-server-pdf" },
-    "nowak-pediatric@6e": { "pdf": "verified-server-pdf" },
-    "phillips-materials@13e": { "pdf": "verified-server-pdf" },
-    "powers-wataha-materials@11e": { "pdf": "verified-server-pdf" },
-    "proffit-orthodontics@5e": {
-      "pdf": "verified-server-pdf",
-      "chapter_pdf_starts": { "1": 23, "2": 41, "3": 87, "4": 113, "5": 135, "6": 171, "7": 241, "8": 299, "9": 333, "10": 368, "11": 416, "12": 467, "13": 493, "14": 551, "15": 577, "16": 603, "17": 627, "18": 644, "19": 706 },
-      "chapter_start_evidence": "Printed chapter starts in the PDF contents on PDF pages 18-20; printed page plus 21 gives the PDF page."
+    "burket-oral-medicine@12e": {
+      "pdf": "verified-server-pdf"
     },
-    "proffit-orthodontics@6e": { "pdf": "verified-server-pdf" },
-    "rosenstiel-fixed@6e": { "pdf": "verified-server-pdf" },
-    "shillingburg-fixed@4e": { "pdf": "verified-server-pdf" },
-    "sturdevant-operative@7e": { "pdf": "verified-server-pdf" },
-    "summit-operative@4e": { "pdf": "verified-server-pdf" },
-    "torabinejad-endodontics@5e": { "pdf": "verified-server-pdf" },
-    "torabinejad-endodontics@6e": { "pdf": "verified-server-pdf" },
-    "van-noort-materials@4e": { "pdf": "verified-server-pdf" },
-    "van-noort-materials@5e": { "pdf": "verified-server-pdf" },
-    "white-pharoah-radiology@7e": { "pdf": "verified-server-pdf", "nearest": "white-pharoah-radiology@8e" },
-    "white-pharoah-radiology@8e": { "pdf": "verified-server-pdf" },
-    "zarb-edentulous@13e": { "pdf": "verified-server-pdf" }
+    "burket-oral-medicine@13e": {
+      "pdf": "verified-server-pdf"
+    },
+    "carranza-periodontology@12e": {
+      "nearest": "carranza-periodontology@13e",
+      "pdf": "verified-server-pdf"
+    },
+    "carranza-periodontology@13e": {
+      "pdf": "verified-server-pdf"
+    },
+    "carranza-periodontology@14e": {
+      "pdf": "verified-server-pdf"
+    },
+    "craig-restorative-materials@14e": {
+      "pdf": "verified-server-pdf"
+    },
+    "goldstein-esthetics@3e": {
+      "pdf": "verified-server-pdf"
+    },
+    "hupp-oral-surgery@6e": {
+      "nearest": "hupp-oral-surgery@7e",
+      "missing": "No approved, verified private PDF for the exact 2014 6th edition was present in the 2026-10-10 live inventory; the 2019 7th edition is not an exact substitute."
+    },
+    "hupp-oral-surgery@7e": {
+      "pdf": "verified-server-pdf"
+    },
+    "little-falace-dental-management@10e": {
+      "pdf": "verified-server-pdf"
+    },
+    "little-falace-dental-management@9e": {
+      "pdf": "verified-server-pdf"
+    },
+    "malamed-local-anesthesia@6e": {
+      "pdf": "verified-server-pdf"
+    },
+    "malamed-local-anesthesia@7e": {
+      "pdf": "verified-server-pdf"
+    },
+    "malamed-medical-emergencies@7e": {
+      "pdf": "verified-server-pdf"
+    },
+    "mccracken-rpd@12e": {
+      "pdf": "verified-server-pdf"
+    },
+    "mccracken-rpd@13e": {
+      "pdf": "verified-server-pdf"
+    },
+    "mcdonald-avery-pediatric@10e": {
+      "nearest": "mcdonald-avery-pediatric@11e",
+      "pdf": "verified-server-pdf"
+    },
+    "mcdonald-avery-pediatric@11e": {
+      "pdf": "verified-server-pdf"
+    },
+    "national-oral-health@1394": {
+      "pdf": "verified-server-pdf"
+    },
+    "neville-oral-pathology@4e": {
+      "pdf": "verified-server-pdf"
+    },
+    "neville-oral-pathology@5e": {
+      "pdf": "verified-server-pdf"
+    },
+    "nowak-pediatric@6e": {
+      "pdf": "verified-server-pdf"
+    },
+    "phillips-materials@13e": {
+      "pdf": "verified-server-pdf"
+    },
+    "powers-wataha-materials@11e": {
+      "pdf": "verified-server-pdf"
+    },
+    "proffit-orthodontics@5e": {
+      "chapter_pdf_starts": {
+        "1": 23,
+        "2": 41,
+        "3": 87,
+        "4": 113,
+        "5": 135,
+        "6": 171,
+        "7": 241,
+        "8": 299,
+        "9": 333,
+        "10": 368,
+        "11": 416,
+        "12": 467,
+        "13": 493,
+        "14": 551,
+        "15": 577,
+        "16": 603,
+        "17": 627,
+        "18": 644,
+        "19": 706
+      },
+      "chapter_start_evidence": "Printed chapter starts in the PDF contents on PDF pages 18-20; printed page plus 21 gives the PDF page.",
+      "pdf": "verified-server-pdf"
+    },
+    "proffit-orthodontics@6e": {
+      "pdf": "verified-server-pdf"
+    },
+    "rosenstiel-fixed@6e": {
+      "pdf": "verified-server-pdf"
+    },
+    "shillingburg-fixed@4e": {
+      "pdf": "verified-server-pdf"
+    },
+    "sturdevant-operative@7e": {
+      "pdf": "verified-server-pdf"
+    },
+    "summit-operative@4e": {
+      "pdf": "verified-server-pdf"
+    },
+    "torabinejad-endodontics@5e": {
+      "pdf": "verified-server-pdf"
+    },
+    "torabinejad-endodontics@6e": {
+      "pdf": "verified-server-pdf"
+    },
+    "van-noort-materials@4e": {
+      "pdf": "verified-server-pdf"
+    },
+    "van-noort-materials@5e": {
+      "pdf": "verified-server-pdf"
+    },
+    "white-pharoah-radiology@7e": {
+      "nearest": "white-pharoah-radiology@8e",
+      "pdf": "verified-server-pdf"
+    },
+    "white-pharoah-radiology@8e": {
+      "pdf": "verified-server-pdf"
+    },
+    "zarb-edentulous@13e": {
+      "pdf": "verified-server-pdf"
+    }
   }
 }

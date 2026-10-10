@@ -109,7 +109,7 @@ REFERENCES = [
     (['foundations and applications'], 'powers-wataha-materials', 'Dental Materials: Foundations and Applications', 'Powers JM, Wataha JC', 'dental-materials',
      {'2017': ('11e', '11th edition', 2017)}),
     (['introduction to dental materials'], 'van-noort-materials', 'Introduction to Dental Materials', 'van Noort R', 'dental-materials',
-     {'2013': ('4e', '4th edition', 2013), '2024': ('5e', '5th edition', 2024)}),
+     {'2013': ('4e', '4th edition', 2013), '2014': ('4e', '4th edition', 2013), '2024': ('5e', '5th edition', 2024)}),
     (['phillip'], 'phillips-materials', "Phillips' Science of Dental Materials", 'Shen C, Rawls HR, Esquivel-Upshaw JF', 'dental-materials',
      {'2022': ('13e', '13th edition', 2022)}),
     (['contemporary fixed'], 'rosenstiel-fixed', 'Contemporary Fixed Prosthodontics', 'Rosenstiel SF, Land MF, Walter R', 'prosthodontics',
@@ -139,6 +139,7 @@ CONFIRMED = {
     ('sturdevant-operative', '2018'): 'the 2018 edition is the 7th (Ritter, Boushell, Walter)',
     ('craig-restorative-materials', '2018'): 'the 14th edition was published in 2018 with a 2019 copyright',
     ('van-noort-materials', '2013'): 'the 2013 edition is the 4th; the 5th is 2024',
+    ('van-noort-materials', '2014'): 'the supplied 1398 notice prints 2014 for the 4th edition; this identifies the canonical 4e rather than a new edition',
     ('daly-public-health', '2005'): 'the owner confirmed 1397 meant the 2013 edition (the 2nd, Oxford University Press); the book has no 3rd edition, so "3rd Ed., 2005" in the workbook is a slip',
 }
 
@@ -254,7 +255,8 @@ def build() -> dict:
         data = json.loads(extra.read_text(encoding='utf-8'))
         for r in data['rows']:
             rows.append([r['year'], r.get('period'), r['subject'], r['title'], r.get('authors'), r.get('pub_year'), r.get('edition'),
-                         r.get('scope'), data.get('evidence'), None, data.get('source_document'), None])
+                         r.get('scope'), r.get('evidence', data.get('evidence')), None,
+                         r.get('source_document', data.get('source_document')), None])
     notes: list[str] = []
     validity: dict[tuple, dict] = {}
     used: dict[str, set] = {}

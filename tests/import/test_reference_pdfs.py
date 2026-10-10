@@ -30,7 +30,7 @@ class ReferencePdfsTest(unittest.TestCase):
     def test_manifest_prohibits_pdf_text_exports_and_indexes(self):
         manifest = json.loads((REPO / "data/bank/reference-pdfs.json").read_text(encoding="utf-8"))
         notes = " ".join(manifest["notes"]).lower()
-        self.assertIn("never writes extracted page text", notes)
+        self.assertIn("never writes page text", notes)
         self.assertIn("search index", notes)
 
     def test_no_pdf_edition_text_files_are_tracked(self):

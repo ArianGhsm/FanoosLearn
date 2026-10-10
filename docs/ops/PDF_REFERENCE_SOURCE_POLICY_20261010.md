@@ -34,6 +34,13 @@ of the PDF. Full pages and books are never serialized.
 5. If the PDF is absent or a needed page cannot be read, leave the item
    pending and review the original PDF visually. Do not OCR or export text.
 
+The PHP page-label checks use the same bridge with `--page` and
+`--require-map`; they receive one PDF page over a process pipe, compare it in
+memory and discard it. Operational correction scripts must pin the PDF edition
+and page, and may keep only the PDF SHA-256 plus concise evidence in their
+private receipt. They must not depend on a research `.txt` file or a whole-book
+text hash.
+
 Readability preflight:
 
 ```sh
@@ -80,14 +87,14 @@ active reader. Both were removed; receipt:
 The direct-PDF implementation and this rule are on the working branch. They
 have not yet been merged or deployed. Until the reviewed release reaches the
 server, do not run the old deployed extraction tool that writes `.txt` page
-indexes. Of 32 existing chapter maps, 21 are bound to exact PDF hashes (20
-from verified cleanup provenance, one rebuilt directly). Eleven have no source
-hash; eight have page-range gaps or overlaps, with one map in both groups; four
-map page counts also differ from the current PDFs. Search/validation/audit
-fail closed for the 12 maps that fail either check. The other 20 have matching
-hashes and contiguous ranges. This task changed no
-live question/source rows, answers, assessments or PDF objects and did not
-deploy a release.
+indexes. The merged catalog currently has 33 chapter maps: 24 carry a PDF hash,
+and 27 have contiguous page coverage. Nine lack a source hash; six have page
+gaps or overlaps, with five maps in both groups. Search, validation and audit
+fail closed for the 10 maps that fail either check. The other 23 have both a
+recorded source hash and contiguous coverage; runtime still compares each hash
+to the exact current approved PDF. Recheck page count and hash through the
+server bridge before using a map. This task changed no live question/source
+rows, answers, assessments or PDF objects and did not deploy a release.
 
 ## Resume
 

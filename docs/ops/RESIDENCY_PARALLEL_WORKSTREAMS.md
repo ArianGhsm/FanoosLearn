@@ -1,5 +1,6 @@
 # Residency parallel classification — workstream ownership and single-writer publication
 
+> **1398 reference-list update (2026-10-10):** The later four-page, owner-supplied complete notice adds official reference-validity scopes for oral pathology, prosthodontics, community dentistry and dental materials (six additional references; 19 total across 12 clinical subjects). The earlier “1398 syllabus missing” remarks below are historical checkpoints and are superseded **only for source-list validity**, not for unverified question citations. See [1398 complete notice](RESIDENCY_1398_COMPLETE_NOTICE_20261010.md).\n\n
 **Policy date:** 2026-10-10. **Status:** coordination runbook; research packages are NOT production approvals.  
 **Authorities:** [Project principles](../PROJECT_PRINCIPLES.md), [classification method](../product/09_CHAPTER_CLASSIFICATION.md), [controlled source-only publication](SOURCE_ONLY_PUBLICATION_20261010.md), and [live publication checkpoints](RESIDENCY_LIVE_CLASSIFICATION_20261010.md).
 

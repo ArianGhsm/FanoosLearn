@@ -1,6 +1,8 @@
 """Synthetic PDF reader checks; no book text or temporary text files."""
 import hashlib
 import importlib.util
+import io
+import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import sys
@@ -65,6 +67,56 @@ class VerifiedReferencePdfTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "outside"):
                 pdf.page_text(3)
             run.assert_not_called()
+
+    def test_cli_emits_one_page_only_for_the_hash_bound_map(self):
+        class FakePdf:
+            edition = "proffit-orthodontics@6e"
+            source_sha256 = "5f18cc196553b691635b0c136f9761a4e7c478bf115424d1c7f26f04b5b50015"
+            source_bytes = 123
+            page_count = 746
+
+            def bookmarks(self):
+                return []
+
+            def page_text(self, number):
+                self.requested = number
+                return "Synthetic single PDF page\n"
+
+        class Capture(io.StringIO):
+            def reconfigure(self, **_options):
+                pass
+
+        pdf = FakePdf()
+        output = Capture()
+        argv = ["verified_reference_pdf.py", "--edition", pdf.edition,
+                "--page", "491", "--require-map",
+                "--expected-sha256", pdf.source_sha256]
+        with patch.object(module, "open_verified_reference", return_value=pdf), \
+             patch.object(module.sys, "argv", argv), \
+             patch.object(module.sys, "stdout", output):
+            self.assertEqual(module.main(), 0)
+        self.assertEqual(pdf.requested, 491)
+        self.assertEqual(output.getvalue(), "Synthetic single PDF page\n")
+
+        rejected_output = Capture()
+        argv = ["verified_reference_pdf.py", "--edition", pdf.edition,
+                "--page", "491", "--require-map",
+                "--expected-sha256", "0" * 64]
+        with patch.object(module, "open_verified_reference", return_value=pdf), \
+             patch.object(module.sys, "argv", argv), \
+             patch.object(module.sys, "stdout", rejected_output):
+            with self.assertRaisesRegex(ValueError, "differs from the pinned"):
+                module.main()
+        self.assertEqual(rejected_output.getvalue(), "")
+
+    def test_proffit_sixth_edition_boundaries_follow_its_pdf_pages(self):
+        mapping = json.loads((HERE / "data/bank/reference-chapter-pages.json").read_text(encoding="utf-8"))
+        edition = mapping["editions"]["proffit-orthodontics@6e"]
+        self.assertEqual(edition["runs"][:3], [[None, 1, 11], ["1", 12, 27], ["2", 28, 69]])
+        self.assertEqual(edition["runs"][-2:], [["20", 667, 719], [None, 720, 746]])
+        self.assertEqual(module.chapter_coverage(mapping, "proffit-orthodontics@6e", 746),
+                         {"mapped_chapters": 20, "mapped_pages": 746})
+        self.assertRegex(edition["source_pdf_sha256"], r"^[a-f0-9]{64}$")
 
 
 if __name__ == "__main__":

@@ -285,10 +285,11 @@ PDF verifies chapter, page and evidence.
 
 ## 7. Open implementation items (do not assume completed)
 
-- Rebuild the 12 ineligible chapter maps directly from their current approved
-  PDFs. Eleven lack `source_pdf_sha256`; eight have gaps/overlaps in page runs
-  (one map is in both groups). Search, apply and audit fail closed for them.
-  Twenty maps currently have both a matching PDF hash and contiguous coverage.
+- Rebuild the 10 ineligible chapter maps directly from their current approved
+  PDFs. Nine lack `source_pdf_sha256`; six have gaps or overlaps in page runs,
+  with five maps in both groups. Search, apply and audit fail closed for them.
+  Twenty-three maps currently carry a PDF hash and contiguous coverage; each
+  use still verifies that hash against the exact current approved PDF.
 - Before each classification batch, verify the exact edition's current
   approved PDF SHA-256 and page count with the read-only PDF bridge. The bridge
   does not create text outputs. If a page is unreadable, inspect the original

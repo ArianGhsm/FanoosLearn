@@ -8,6 +8,10 @@ The `.txt` paths and index hashes in the historical results below describe
 temporary files that were created by the previous workflow and removed on
 2026-10-10. They are retained here only as history; do not recreate them. The
 current branch reads exact PDF pages directly and stores no page-text copy.
+The accepted-decision counts below came from the old text-index validator. They
+are historical research results, not a claim that those decisions were checked
+under the current page-at-a-time PDF procedure. Revalidate any pending reuse
+directly against the exact approved PDF page.
 
 Read first:
 - `docs/PROJECT_PRINCIPLES.md` — GitHub/server authority, exact-edition rule
@@ -61,8 +65,9 @@ References are resolved into the validated source-node form
 The earlier 2026-10-09 report held 22 accepted decisions (1403 community 5,
 1405 community 9, 1405 radiology 8). This pass produced **52 additional
 accepted** decisions: new 1398–1402 community-dentistry batches (41), plus
-4 more 1403 community and 7 more 1405 radiology. All passed the original
-book-text/page-to-chapter validator.
+4 more 1403 community and 7 more 1405 radiology. These results passed the
+then-current text-index/page-to-chapter validator and are retained as history;
+direct PDF page revalidation is required before further use.
 
 **No answer key, question, source row, publication status or other production
 data was written.** The number of missing production chapters is still 491.
@@ -98,8 +103,9 @@ workspace identifier or original private question text in public logs.
 - **1398 community-dentistry:** the catalog names the exact 1394 national
   reference, whose PDF is present, but its historical announced syllabus
   scope is incomplete (the source announcement's detailed PDF is missing).
-  Ten study mappings are *book-evidence validated*, but the exact syllabus
-  boundary needs independent confirmation **before production publication**.
+  Ten study mappings passed the historical text-index evidence check, but
+  require direct PDF page revalidation. The exact syllabus boundary needs
+  independent confirmation **before production publication**.
   Do not infer that the year had a documented chapters 1–16 scope.
 - The national book's extracted two-column Persian text sometimes interleaves
   columns. Search hits alone are insufficient: each selection required the

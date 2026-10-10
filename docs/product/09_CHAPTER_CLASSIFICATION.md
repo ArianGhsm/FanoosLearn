@@ -1,5 +1,6 @@
 # Chapter classification
 
+> **1398 reference-list update (2026-10-10):** The later four-page, owner-supplied complete notice adds official reference-validity scopes for oral pathology, prosthodontics, community dentistry and dental materials (six additional references; 19 total across 12 clinical subjects). The earlier “1398 syllabus missing” remarks below are historical checkpoints and are superseded **only for source-list validity**, not for unverified question citations. See [1398 complete notice](../ops/RESIDENCY_1398_COMPLETE_NOTICE_20261010.md).\n\n
 How a question gets its source: which official reference, which chapter,
 which page. The procedure is the same for every exam type the catalog
 carries (دستیاری, بورد, ارتقا …), every year, and every agent or person who
@@ -198,8 +199,10 @@ files are read for a sitting, by the `<year>-` prefix):
 ]
 ```
 
-- `page` is the PDF page number; a verified printed page number may be saved
-  as the display label, but the audit always checks the exact PDF page.
+- `page` in a decision and its audit receipt is the PDF page number. A printed
+  page label may be saved for display only after it is checked on that exact
+  PDF page and neighboring pages; retain the PDF page number and source PDF
+  SHA-256 in the audit.
 - `evidence` is copied **word for word from the original PDF page**, using
   the search output's `quote:` line only as a candidate. Several fragments are
   joined with `...`; every fragment has at least four words. Never a
@@ -229,7 +232,8 @@ sudo -u fanoosupd python3 -B scripts/references/apply_classification.py --sittin
 Every rejection is listed with its reason; fix the decision and run again —
 never the catalog, chapter map or scripts. With no
 rejections it writes the sitting with `sources` (reference, chapter node,
-printed page, the quote as anchor, `origin: ai`, confidence).
+verified page label, the quote as anchor, `origin: ai`, confidence). The audit
+receipt records the exact PDF page separately from any printed label.
 Run the private study audit against the original PDF:
 
 ```sh

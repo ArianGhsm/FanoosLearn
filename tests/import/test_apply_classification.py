@@ -16,6 +16,14 @@ class ApplyClassificationTest(unittest.TestCase):
     def setUpClass(cls):
         cls.catalog = json.loads((REPO / 'data' / 'bank' / 'catalog.json').read_text(encoding='utf-8'))
 
+    def test_cli_allows_unambiguous_original_pdf_page_labels(self):
+        import subprocess
+        result = subprocess.run(
+            [sys.executable, str(REPO / "scripts/references/apply_classification.py"), "--help"],
+            check=True, capture_output=True, text=True,
+        )
+        self.assertIn("--pdf-pages", result.stdout)
+
     def test_evidence_is_quoted_fragments(self):
         self.assertEqual(fragments('the flap should be compressed ... a hematoma under the flap'),
                          ['the flap should be compressed', 'a hematoma under the flap'])
@@ -69,18 +77,25 @@ class ApplyClassificationTest(unittest.TestCase):
 
         with patch('apply_classification.open_verified_reference', return_value=FakePdf()):
             books = Books(Path('/unused/storage'), Path('/unused/mysql.cnf'), 'test')
-            self.assertIsNone(books.page('fictional-book@1e', 1, {'runs': [[None, 1, 2]]}))
+            self.assertIsNone(books.page('fictional-book@1e', 1, {'runs': [['1', 1, 2]]}))
             self.assertIn('no verified PDF source hash', books.unavailable['fictional-book@1e'])
 
             books = Books(Path('/unused/storage'), Path('/unused/mysql.cnf'), 'test')
-            valid = {'runs': [[None, 1, 2]], 'source_pdf_sha256': 'a' * 64}
+            valid = {'runs': [['1', 1, 2]], 'source_pdf_sha256': 'a' * 64}
             self.assertEqual(books.page('fictional-book@1e', 2, valid), 'Synthetic PDF page 2')
 
         with patch('apply_classification.open_verified_reference', return_value=FakePdf()):
             books = Books(Path('/unused/storage'), Path('/unused/mysql.cnf'), 'test')
-            mismatched = {'runs': [[None, 1, 2]], 'source_pdf_sha256': 'b' * 64}
+            mismatched = {'runs': [['1', 1, 2]], 'source_pdf_sha256': 'b' * 64}
             self.assertIsNone(books.page('fictional-book@1e', 1, mismatched))
             self.assertIn('different PDF', books.unavailable['fictional-book@1e'])
+
+        with patch('apply_classification.open_verified_reference', return_value=FakePdf()):
+            books = Books(Path('/unused/storage'), Path('/unused/mysql.cnf'), 'test')
+            gapped = {'runs': [[None, 1, 1], ['1', 2, 2]], 'source_pdf_sha256': 'a' * 64}
+            gapped['runs'][1][1] = 3
+            self.assertIsNone(books.page('fictional-book@1e', 1, gapped))
+            self.assertIn('gap/overlap', books.unavailable['fictional-book@1e'])
 
     def test_validated_sitting_write_leaves_no_atomic_staging_file(self):
         with TemporaryDirectory() as tmp:

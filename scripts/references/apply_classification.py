@@ -46,7 +46,7 @@ import re
 import sys
 import tempfile
 from pathlib import Path
-from verified_reference_pdf import open_verified_reference
+from verified_reference_pdf import chapter_coverage, open_verified_reference
 
 REPO = Path(__file__).resolve().parents[2]
 BANK = REPO / 'data' / 'bank'
@@ -101,8 +101,7 @@ class Books:
                 pdf = open_verified_reference(
                     edition, self.storage_root, self.mysql_defaults, self.database)
                 page_runs = map_entry.get('runs', [])
-                if page_runs and page_runs[-1][2] != pdf.page_count:
-                    raise ValueError('chapter map does not match current PDF page count')
+                chapter_coverage({'editions': {edition: map_entry}}, edition, pdf.page_count)
                 map_hash = map_entry.get('source_pdf_sha256')
                 if not isinstance(map_hash, str) or not re.fullmatch(r'[a-f0-9]{64}', map_hash):
                     raise ValueError('chapter map has no verified PDF source hash; rebuild it from the current PDF')
@@ -182,6 +181,8 @@ def main() -> int:
     parser.add_argument('--partial', action='store_true', help='write the accepted decisions even if some were rejected')
     parser.add_argument('--allow-nearest', action='store_true',
                         help='historical audit only: permit previously approved nearest-edition substitutions')
+    parser.add_argument('--pdf-pages', action='store_true',
+                        help='store PDF page numbers rather than printed page labels')
     parser.add_argument('--storage-root', type=Path, default=Path('/srv/fanoos/shared/storage'))
     parser.add_argument('--mysql-defaults', type=Path, default=Path('/etc/fanoos/mysql-migrator.cnf'))
     parser.add_argument('--database', default='fanoos_prod')
@@ -232,7 +233,9 @@ def main() -> int:
             if edition not in names and why is None:
                 # Keep explicitly recorded historical nearest-edition audits
                 # possible even after the exact edition's PDF is later added.
-                stand_in_for = [e for e in names if pdfs.get(e, {}).get('nearest') == edition]
+                stand_in_for = [e for e in names
+                                if pdfs.get(e, {}).get('nearest') == edition
+                                and 'missing' in pdfs.get(e, {})]
                 if not stand_in_for:
                     why = f'{edition} is not an official {exam_type} {year} reference for {q["subject"]}'
                 else:
@@ -267,9 +270,12 @@ def main() -> int:
                 pieces = fragments(str(d.get('evidence', '')))
                 if not pieces or any(len(p.split()) < 4 for p in pieces):
                     why = 'evidence must be quoted fragments of at least four words each, joined by "..."'
+                    del text
                 else:
                     page_text = flat(text)
+                    del text
                     missing = [p for p in pieces if flat(p) not in page_text]
+                    del page_text
                     if missing:
                         why = f'evidence not on page {page}: "{missing[0][:80]}"'
             confidence = d.get('confidence')
@@ -277,7 +283,7 @@ def main() -> int:
                 why = 'confidence must be a number from 0 to 1'
             if why is None:
                 cite_node = chapter_nodes(catalog, cite)[cite_chapter]
-                printed = printed_page(text)
+                printed = None if args.pdf_pages else printed_page(text)
                 accepted[n] = {
                     'ref': f"{cite}#{cite_node['key']}",
                     'page': printed if printed else f'pdf {page}',

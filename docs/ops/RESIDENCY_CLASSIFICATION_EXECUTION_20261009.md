@@ -67,6 +67,9 @@ latest approved exact PDF and wrote a page-marked text index plus provenance
 receipt. This created a temporary text derivative; those live files were
 removed on 2026-10-10 and the writing tool was retired. The old commands below
 must not be rerun.
+Decisions from that run are historical text-index results. Before relying on
+one in new work, revalidate its cited page directly against the exact current
+approved PDF with the page-at-a-time bridge.
 
 Use the current read-only verification command instead; it checks the current
 PDF and reports page/readability counts without writing page text:

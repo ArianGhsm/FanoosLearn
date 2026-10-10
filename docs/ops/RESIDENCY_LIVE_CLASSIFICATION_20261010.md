@@ -1,10 +1,12 @@
 # Live residency chapter-source publication checkpoint — 2026-10-10
 
-This historical log records page-text `.txt` indexes that were generated
-from exact server PDFs during the earlier workflow. Those live indexes and the
-archived W08 copy have been removed. The current branch reads selected PDF
-pages directly and writes no text copy; its changes still need merge/deploy to
-replace the old live release.
+> **1398 reference-list update (2026-10-10):** The later four-page, owner-supplied complete notice adds official reference-validity scopes for oral pathology, prosthodontics, community dentistry and dental materials (six additional references; 19 total across 12 clinical subjects). The earlier “1398 syllabus missing” remarks below are historical checkpoints and are superseded **only for source-list validity**, not for unverified question citations. See [1398 complete notice](RESIDENCY_1398_COMPLETE_NOTICE_20261010.md).
+
+Historical cache note: earlier runs generated temporary page-marked text from
+verified reference PDFs. Cleanup removed the live derivatives and the
+discovered W08 archive copy. The current working branch reads one exact PDF
+page at a time and creates no PDF text file or index; it is not yet merged or
+deployed. Search-output filenames below are history, not files to reuse.
 
 ## Authorization and release
 
@@ -89,7 +91,7 @@ SHA-256 for each, in table order:
 
 The original eight-batch SHA-256 research audit was
 `43ec6f2d23ed1b2c2a4717be47bbf20d1609b603887607f42157df564f64c4b8`;
-its decisions were already checked against the exact PDF pages and
+its decisions were already checked against the page-marked books and
 existing chapter map. An archive of seven receipts and its verified
 SHA-256 checksum are at
 `/var/backups/fanoos/research/20261010-source-publication-seven-receipts.tar.gz{,.sha256}`.
@@ -365,7 +367,7 @@ The owner separately finalized residency `english` **by original official answer
 
 W01 1400 oral-radiology still has **14** originally validated sources in 20 source-free questions. Independent live re-export SHA `1c0447f57a14bc49f24de97e98d3e919e89f7a6bdb6997b1a17de49fec64b85a` matched the protected research original. Post-release full 249-question frozen assessment preflight version4 and 14-source rollback preview both passed, with zero changes to stem/choice/answer. **NO 1400 ATOMIC APPLY OCCURRED**: the real execution was blocked by the connected tool's safety check, and no 1400 W01 receipt exists. Do not count its 14 research mappings as imported. Do not bypass the safety control or blindly repeat operations.
 
-The page-auditor defect causing legitimate book-printed labels to be rejected when differing from PDF page numbers was corrected with stricter exact-book plus two-neighbor corroboration, three synthetic regression tests, and all GitHub PR/main CI green via merged PR #194. Owner's English policy was merged by PR #193. Official updater request `01a124d1-4542-7b3a-9e70-a9184fed5927` **SUCCEEDED** UTC `2026-10-10 08:00:21.892859`; live SHA `a803983c0732e5a6aecc18002152853bb433c8b1`, checkout/main `in sync`, public `/health` reported `ok`. Official post-1399 full backup `/var/backups/fanoos/20261010T080004Z-b1d7fb76` independently verified **54** files. In the protected coordinator, read-only original-book neighbor review `printed-page-independent-review-20261010.json` (SHA256 `abe48fab12f05192493af4e144ee582b5c4a9963645af39cc20462a3dcb4d198`) corroborated **13 of 14** previously flagged page label discrepancies, holding one. **Original auditor acceptance and question-content approval remain independent required gates.** W05's two Nowak decisions now independently pass the repaired original auditor but are not source-published. W04 clinical inference and W03 canonical map gaps remain blocked.
+The page-auditor defect causing legitimate book-printed labels to be rejected when differing from PDF page indexes was corrected with stricter exact-book plus two-neighbor corroboration, three synthetic regression tests, and all GitHub PR/main CI green via merged PR #194. Owner's English policy was merged by PR #193. Official updater request `01a124d1-4542-7b3a-9e70-a9184fed5927` **SUCCEEDED** UTC `2026-10-10 08:00:21.892859`; live SHA `a803983c0732e5a6aecc18002152853bb433c8b1`, checkout/main `in sync`, public `/health` reported `ok`. Official post-1399 full backup `/var/backups/fanoos/20261010T080004Z-b1d7fb76` independently verified **54** files. In the protected coordinator, read-only original-book neighbor review `printed-page-independent-review-20261010.json` (SHA256 `abe48fab12f05192493af4e144ee582b5c4a9963645af39cc20462a3dcb4d198`) corroborated **13 of 14** previously flagged page label discrepancies, holding one. **Original auditor acceptance and question-content approval remain independent required gates.** W05's two Nowak decisions now independently pass the repaired original auditor but are not source-published. W04 clinical inference and W03 canonical map gaps remain blocked.
 
 Current private operational recovery document:
 `/srv/fanoos/shared/research/ops/residency-parallel-finalization-20261010.md`.
@@ -384,7 +386,7 @@ For **each** study year, a fresh live export confirmed the accepted question ID 
 | 1405 | 1 | `20261010T085148Z-11dea211` | `45ea3743113223825397d2107f122d3adc627765a41d42af3ecc80e5aff00c51` | v4→v5, 246 questions, 1 new source explanation |
 | 1399 | 1 | `20261010T085523Z-6bdf3c44` | `5adbc1052d2aaa941d5c725450cb394bc41a17e048bd45bc26484378cfce59fe` | v5→v6, 248 questions, 1 new source explanation |
 
-All preserved official voided answer exclusions from the historical frozen exams. The exact receipt filenames in protected `classification/reports/` are `YEAR-community-W02-source-publish-20261010.json`; the full book/PDF text and original questions were kept private. A relay job for the 1400 pre-apply full backup timed out, but the finalized physical backup was subsequently independently verified as a valid 54-file set; a relay timeout is not itself evidence of backup corruption.
+All preserved official voided answer exclusions from the historical frozen exams. The exact receipt filenames in protected `classification/reports/` are `YEAR-community-W02-source-publish-20261010.json`; original PDFs and questions remain private, temporary page text has been removed, and only short decision evidence is retained. A relay job for the 1400 pre-apply full backup timed out, but the finalized physical backup was subsequently independently verified as a valid 54-file set; a relay timeout is not itself evidence of backup corruption.
 
 **Post-W02 checkpoint:** 1995 residency questions, 1622 with actual source rows, 373 raw without source rows. Of those 373, **159 published residency English questions are officially key-final/reference-exempt** under `docs/PROJECT_PRINCIPLES.md` §3A (158 `final`, 1 `amended`); the true remaining non-English source-review queue is **214**. These are time-stamped counts and should be refreshed after future imports. **Never rerun any of the four completed W02 source applies**. The private reproducibility ledger is `/srv/fanoos/shared/research/ops/residency-parallel-57-dispositions-20261010.md`.
 

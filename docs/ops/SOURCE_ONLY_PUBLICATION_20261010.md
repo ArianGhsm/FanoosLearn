@@ -1,5 +1,6 @@
 # Controlled source-only publication — 2026-10-10
 
+> **1398 reference-list update (2026-10-10):** The later four-page, owner-supplied complete notice adds official reference-validity scopes for oral pathology, prosthodontics, community dentistry and dental materials (six additional references; 19 total across 12 clinical subjects). The earlier “1398 syllabus missing” remarks below are historical checkpoints and are superseded **only for source-list validity**, not for unverified question citations. See [1398 complete notice](RESIDENCY_1398_COMPLETE_NOTICE_20261010.md).\n\n
 **Objective:** after each evidence-validated residency question batch, safely
 publish its exact official book, chapter node and page to the live bank,
 without rewriting a question, option, image, answer key, status or user review.
