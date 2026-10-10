@@ -59,3 +59,12 @@ Topic/source location alone cannot change, certify or automatically replace the 
 ## Publication state
 
 The permanent documentation and independent classification audit are not the same as a successful production-source transaction. **No new 1398 prosthodontics source rows have been confirmed in production** by this checkpoint; coordinator-only source import preview/verified backup/apply receipt/frozen assessment version and live DB readback remain mandatory before calling site publication complete. Do not report 30 published sources or newly published frozen assessment without those actual receipts.
+
+
+## Verified live source publication: 29/29 active questions
+
+**This supersedes the earlier 'no production sources' note in this document.** Following exact original-book/topic classification 30/30, the source-only publisher imported **29 new source/chapter/PDF-page links** for the **29 active published** 1398 prosthodontics questions. The 30th question, **Q97**, has an officially *voided* answer and remains *draft*, correctly absent from the frozen test. Its chapter/page remains documented in the table above; no student answer/status was modified.
+
+The read-only source-only preview returned 29 candidate rows, `questions_changed=choices_changed=answers_changed=0`. A new full backup `20261010T194609Z-12a9cd88` passed `verify-backup.php` (54 files). Atomic apply receipt `/srv/fanoos/shared/research/classification/reports/W06-prosthodontics-1398-29source-20261010.json` completed at `2026-10-10T19:48:31Z`: `applied=true`, `source_rows=29`, all question/choice/answer changes zero. Approved coordinator audit SHA256 `33b2bf3a558d025d7aab2c1333d84332ab32aefd924cdf813db1e5ce5e33a4b6`; validated SHA256 `49ab5db2dfefdab9e543f63f4d79f59783e65834680933a145a0d01bac299c15`; original live 30-question study remained SHA256 `7da095a7659e303437643cea5f1c03cb427a38e5d81bb2ec7d0afa8ec5502aee` before apply.
+
+**Production readback:** 30 original questions, 29 with source rows and status `published`, one source-free `draft` officially voided Q97. Frozen exam preflight on active 29 against immutable assessment version **10** passed: 29 study questions matched, 245 full assessment questions unchanged. No new assessment version was published by this W06 source insert. Live site health was `status=ok`; source metadata is live in the bank, but explanations in the already-frozen version 10 require the separately authorized BankPublisher review/version workflow. Never claim frozen-version publication or altered official answer keys without receipts.
