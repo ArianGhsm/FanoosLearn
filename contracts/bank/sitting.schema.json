@@ -54,7 +54,7 @@
           "type": "object",
           "required": ["status"],
           "properties": {
-            "choice": { "type": ["integer", "null"], "minimum": 1, "description": "1-based choice number; null only when voided." },
+            "choice": { "type": ["integer", "null"], "minimum": 1, "description": "1-based choice number; null when voided, or when disputed with no valid key yet (kept in the bank, never scored)." },
             "also_correct": { "type": "array", "items": { "type": "integer", "minimum": 1 }, "minItems": 1, "uniqueItems": true, "description": "Other 1-based choices the official key also accepts (\"multiple correct\"); any of them scores. Not the same as choice; only with preliminary, final or amended." },
             "status": { "enum": ["preliminary", "final", "amended", "disputed", "voided"] },
             "source": { "type": "string" }
@@ -66,6 +66,7 @@
         "cognitive_level": { "enum": ["recall", "understanding", "application", "analysis"] },
         "difficulty": { "type": "integer", "minimum": 1, "maximum": 5, "description": "Expert-rated." },
         "status": { "enum": ["draft", "reviewed", "published", "withdrawn"] },
+        "booklet_source": { "type": "string", "maxLength": 300, "description": "The reference the printed booklet names beside the question, as written. A hint for classification, never a source." },
         "sources": {
           "type": "array",
           "items": {

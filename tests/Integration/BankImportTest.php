@@ -190,6 +190,21 @@ SQL);
         $this->assert($this->scalar('SELECT COUNT(*) FROM bank_questions WHERE workspace_id = :ws AND question_key LIKE :prefix', ['ws' => $ws, 'prefix' => 'board-1404-10-%']) === 2, 'Board specialty slot keys missing.');
         $this->assert($this->scalar("SELECT is_active FROM bank_exam_types WHERE workspace_id = :ws AND type_key = 'board'", ['ws' => $ws]) == 1, 'Board not active in catalog.');
 
+        // A paper with no valid key yet (board 1403): the question is kept with a disputed, empty
+        // answer and the booklet's own source note; the paper publishes without it.
+        $unkeyed = $board;
+        $unkeyed['year'] = 1403;
+        $unkeyed['round'] = 2;
+        $unkeyed['questions'][0]['answer'] = ['choice' => null, 'status' => 'disputed', 'source' => 'کلید معتبر نیست'];
+        $unkeyed['questions'][0]['booklet_source'] = 'کارانزا 2019';
+        $this->assert($importer->validate($ws, $unkeyed) === [], 'A disputed question without a key must validate: ' . json_encode($importer->validate($ws, $unkeyed), JSON_UNESCAPED_UNICODE));
+        $importer->import($ws, $unkeyed);
+        $this->assert($this->scalar("SELECT COUNT(*) FROM bank_questions WHERE question_key = 'board-1403-2-001' AND booklet_source = 'کارانزا 2019'", []) === 1, 'The booklet source was not kept.');
+        $this->assert($this->scalar("SELECT COUNT(*) FROM bank_official_answers a JOIN bank_questions q ON q.id = a.question_id WHERE q.question_key = 'board-1403-2-001' AND a.status = 'disputed' AND a.choice_position IS NULL", []) === 1, 'The unkeyed answer was not recorded as disputed.');
+        $voidedWithChoice = $unkeyed;
+        $voidedWithChoice['questions'][1]['answer'] = ['choice' => 2, 'status' => 'voided'];
+        $this->assert($this->mentions($importer->validate($ws, $voidedWithChoice), 'questions[1].answer.choice'), 'A voided answer with a choice was accepted.');
+
         // A reviewed source survives a later AI pass.
         $this->database->prepare("UPDATE bank_question_sources s JOIN bank_questions q ON q.id = s.question_id SET s.reviewed_by_user_id = :user, s.reviewed_at = UTC_TIMESTAMP(6), s.page = '257' WHERE q.question_key = :key")
             ->execute(['user' => $f['reviewer'], 'key' => $key]);
