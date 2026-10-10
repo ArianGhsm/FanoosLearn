@@ -76,10 +76,10 @@ class AuditTests(unittest.TestCase):
         """Book printed 101 on PDF 117; printed-label mismatch is legitimate."""
         (self.root / "references").mkdir()
         book = self.root / "references/fictional-book@1e.txt"
-        book.write_text("=== PAGE 116 ===\\n100\\nSynthetic text\\n"
-                        "=== PAGE 117 ===\\n101\\nSynthetic text\\n"
-                        "=== PAGE 118 ===\\n102\\nSynthetic text\\n"
-                        "=== PAGE 119 ===\\n103\\nSynthetic text\\n")
+        book.write_text("=== PAGE 116 ===\n100\nSynthetic text\n"
+                        "=== PAGE 117 ===\n101\nSynthetic text\n"
+                        "=== PAGE 118 ===\n102\nSynthetic text\n"
+                        "=== PAGE 119 ===\n103\nSynthetic text\n")
         self.decision["page"] = 117
         self.source["page"] = "101"
         self.save()
@@ -94,10 +94,10 @@ class AuditTests(unittest.TestCase):
     def test_printed_page_without_two_consistent_neighbors_rejected(self):
         (self.root / "references").mkdir()
         book = self.root / "references/fictional-book@1e.txt"
-        book.write_text("=== PAGE 116 ===\\n100\\nSynthetic text\\n"
-                        "=== PAGE 117 ===\\n101\\nSynthetic text\\n"
-                        "=== PAGE 118 ===\\nPage footer not readable\\n"
-                        "=== PAGE 119 ===\\nNo footer\\n")
+        book.write_text("=== PAGE 116 ===\n100\nSynthetic text\n"
+                        "=== PAGE 117 ===\n101\nSynthetic text\n"
+                        "=== PAGE 118 ===\nPage footer not readable\n"
+                        "=== PAGE 119 ===\nNo footer\n")
         self.decision["page"] = 117
         self.source["page"] = "101"
         self.save()
