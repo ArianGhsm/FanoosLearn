@@ -33,7 +33,8 @@ try {
     $stem = (string) ($options['stem'] ?? '');
     $post = isset($options['previous']) || isset($options['current']);
     if (!preg_match('/^[0-9a-f-]{36}$/D', $ws) || $year === false
-        || $year < 1399 || $year > 1500
+        || ($year < 1399 && !($year === 1398 && $subject === 'endodontics' && $stem === 'endodontics'))
+        || $year > 1500
         || !preg_match('/^[a-z][a-z0-9-]+$/D', $subject)
         || !preg_match('/^[a-z][a-z0-9-]+$/D', $stem)
         || (isset($options['previous']) !== isset($options['current']))) {
