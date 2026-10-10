@@ -198,7 +198,7 @@ SQL);
             throw new RuntimeException('Chapter is outside official-year scope: ' . $id);
         }
         $choices->execute(['qid' => $real['question_id']]);
-        $gotChoices = $choices->fetchAll(PDO::FETCH_ASSOC);
+        $gotChoices = array_map(static fn(array $c): array => ['position' => (int) $c['position'], 'text' => (string) $c['text'], 'image' => $c['image'] === null ? null : (string) $c['image']], $choices->fetchAll(PDO::FETCH_ASSOC));
         if ($gotChoices !== $question['choices']) {
             throw new RuntimeException('Original choices or images changed: ' . $id);
         }
