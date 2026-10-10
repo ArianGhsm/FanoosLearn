@@ -15,8 +15,10 @@ use Fanoos\Platform\Support\DatabaseConnection;
 require dirname(__DIR__, 2) . '/apps/platform/bootstrap.php';
 
 $root = '/srv/fanoos/shared/research/classification/coordinator/W03-location-final-20261010';
-$originalBook = $root . '/references/torabinejad-endodontics@6e.txt';
-$bookSha = 'bb87e637a0544ad793e96bf65bd1c607059470819ee82ffc8c34cddda67e455b';
+$originalBook = '/srv/fanoos/shared/storage/private/01/01a1037b-0322-7c8f-8904-7c9334fb9cbe/01/01a1218c-f646-7c72-8283-5e6e9b3e0fa0/01a1218c-f646-75bc-8142-17ee6088c90a.bin';
+$bookSha = '09333f079cb3300550cc0702985aae216d952eacabdaac005e1c66fafebe13e0';
+$proofPath = $root . '/classification/reports/1404-endo-human-exact-pdf-page-proof-20261010.json';
+$proofSha = '3c1bff9ec82b3e661b7bae87df86b280c982ddd977dba7037285086cb24eb76a';
 $targets = [
     27 => ['chapter' => '12', 'pdf' => 246, 'page' => 'pdf 246',
         'proof' => 'the main canal or canals of the distal root'],
@@ -47,18 +49,36 @@ try {
     }
     if (is_link($originalBook) || !is_file($originalBook)
         || hash_file('sha256', $originalBook) !== $bookSha) {
-        throw new RuntimeException('Exact original-book extracted evidence SHA does not match.');
+        throw new RuntimeException('Original authorized Torabinejad 6e PDF hash mismatch.');
     }
-    $raw = (string) file_get_contents($originalBook);
+    if (is_link($proofPath) || !is_file($proofPath)
+        || hash_file('sha256', $proofPath) !== $proofSha) {
+        throw new RuntimeException('Immutable original PDF page proof is unavailable or changed.');
+    }
+    $proofData = json_decode((string) file_get_contents($proofPath), true, 64, JSON_THROW_ON_ERROR);
+    if (($proofData['format'] ?? '') !== 'fanoos.endodontics.original-pdf-page-proof/1'
+        || ($proofData['edition'] ?? '') !== 'torabinejad-endodontics@6e'
+        || ($proofData['source_pdf_sha256'] ?? '') !== $bookSha
+        || (int) ($proofData['total_pdf_pages'] ?? 0) !== 501) {
+        throw new RuntimeException('Untrusted original PDF evidence provenance.');
+    }
+    $pages = [];
+    foreach ($proofData['pages'] ?? [] as $item) {
+        $n = (int) ($item['pdf_page'] ?? 0);
+        $body = (string) ($item['page_text'] ?? '');
+        if (isset($pages[$n]) || !in_array($n, [246, 281], true)
+            || hash('sha256', $body) !== ($item['page_text_sha256'] ?? '')) {
+            throw new RuntimeException('Original PDF page proof integrity mismatch.');
+        }
+        $pages[$n] = $body;
+    }
     $normalize = static fn(string $v): string => trim((string) preg_replace('/\s+/u', ' ', mb_strtolower($v)));
     foreach ($targets as $n => $target) {
-        $page = $target['pdf'];
-        if (!preg_match('/^=== PAGE ' . $page . ' ===\s*$(.*?)(?=^=== PAGE \d+ ===|\z)/ms', $raw, $match)
-            || !str_contains($normalize($match[1]), $normalize($target['proof']))) {
+        if (!isset($pages[$target['pdf']])
+            || !str_contains($normalize($pages[$target['pdf']]), $normalize($target['proof']))) {
             throw new RuntimeException('Exact Torabinejad 6e citation not supported: Q' . $n);
         }
     }
-    unset($raw);
     if ($apply) {
         $backup = realpath((string) $args['backup']);
         if ($backup === false || !str_starts_with($backup . '/', '/var/backups/fanoos/')) {
@@ -149,7 +169,7 @@ SQL);
     }
     $receipt = ['format' => 'fanoos.endodontics.human-page-only/1',
         'applied' => $apply, 'count' => 2, 'rows' => $rows,
-        'book_text_sha256' => $bookSha,
+        'source_pdf_sha256' => $bookSha, 'private_page_proof_sha256' => $proofSha,
         'changed_columns' => ['bank_question_sources.page'],
         'question_option_answer_human_provenance_mutations' => 0,
         'utc' => gmdate('c')];
