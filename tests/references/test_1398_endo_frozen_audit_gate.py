@@ -1,4 +1,4 @@
-"""Regression guard: frozen-assessment audit accepts only exact 1398 endodontics and periodontics."""
+"""Regression guard: frozen-assessment audit permits three 1398 evidence-reviewed subjects."""
 
 from pathlib import Path
 import unittest
@@ -16,6 +16,7 @@ class Endodontics1398FrozenAuditGate(unittest.TestCase):
             code,
         )
         self.assertIn("$subject === 'periodontics' && $stem === 'periodontics'", code)
+        self.assertIn("$subject === 'community-dentistry' && $stem === 'community'", code)
         self.assertIn("question_content_identical", code)
         self.assertIn("Non-citation frozen assessment content changed", code)
         self.assertIn("Published official answer missing", (ROOT / "apps/platform/src/Bank/SourceOnlyPublisher.php").read_text(encoding="utf-8"))

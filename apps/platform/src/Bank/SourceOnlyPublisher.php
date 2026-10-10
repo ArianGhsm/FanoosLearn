@@ -21,7 +21,7 @@ final class SourceOnlyPublisher
         array $study, array $validated, array $decisions, bool $apply,
         ?string $referenceTextRoot = null,
     ): int {
-        if (($year < 1399 && !($year === 1398 && in_array($subject, ['endodontics', 'periodontics'], true))) || $year > 1500
+        if (($year < 1399 && !($year === 1398 && in_array($subject, ['endodontics', 'periodontics', 'community-dentistry'], true))) || $year > 1500
             || ($study['format'] ?? '') !== 'fanoos.classification.study-only/1'
             || ($validated['format'] ?? '') !== ($study['format'] ?? '')
             || ($study['exam_type'] ?? '') !== 'residency'
@@ -49,7 +49,8 @@ final class SourceOnlyPublisher
                 throw new RuntimeException('Unsupported source decision or human override.');
             }
             // Official 1398 source announcement independently identifies exact Torabinejad 5e
-            // for endodontics, and original Carranza 12e for periodontics.
+            // for endodontics, original Carranza 12e for periodontics, and the national
+            // oral-health 1394 text (chapters 1–16) for community dentistry.
             // Every other 1398 subject remains blocked by the year gate.
             if ($year === 1398 && $subject === 'endodontics'
                 && $decision['edition'] !== 'torabinejad-endodontics@5e') {
@@ -58,6 +59,10 @@ final class SourceOnlyPublisher
             if ($year === 1398 && $subject === 'periodontics'
                 && $decision['edition'] !== 'carranza-periodontology@12e') {
                 throw new RuntimeException('1398 periodontics requires exact announced Carranza 12e.');
+            }
+            if ($year === 1398 && $subject === 'community-dentistry'
+                && $decision['edition'] !== 'national-oral-health@1394') {
+                throw new RuntimeException('1398 community dentistry requires the exact national oral-health 1394 edition.');
             }
             $wanted[$n] = $decision;
         }
