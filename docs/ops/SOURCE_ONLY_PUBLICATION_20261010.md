@@ -219,3 +219,31 @@ the enforced four-hour freshness window. All other checkpoints are described in
 `RESIDENCY_LIVE_CLASSIFICATION_20261010.md`. This documentation change
 contains no private questions or book text; future workers must not reapply
 a completed batch.
+
+## Follow-up source-only checkpoint: 1401 oral radiology
+
+The completed `1401:oral-radiology:radiology` source-only batch was applied
+on 2026-10-10 against exact White-Pharoah 8e and its year-specific
+official scope (chapters 1–25). A fresh 20-question live export had the
+same SHA256 as the original private study; the unmodified page evidence
+validator and independent provenance audit confirmed **9 accepted, zero
+rejected, eleven pending**. An initially suggested Q208 source was
+**excluded** after the independent page-origin auditor detected a
+printed-page mismatch; do not bypass this protection.
+
+Production dry run and subsequent atomic apply each reported exactly
+**9 new sources and zero question/choice/answer changes**. The pre-apply
+recovery point was the independently reverified 54-file full backup
+`20261009T235234Z-9ad31034`, created after prior source publication and
+within the source publisher's four-hour freshness policy. Receipt:
+`classification/reports/1401-radiology-source-publish-20261010.json`,
+SHA256 `c5fa47da77a23c880a71d521c04781b4ed576ccc0e11d98caba7b253a70fd7e0`,
+and a verified protected receipt archive.
+
+The canonical assessed exam moved **1401 version 4 → 5**, and the
+full **249-question** frozen-exam postdiff found no differences outside
+9 new source explanations. Live residency backlog fell from **402 to
+393**, leaving **1602 / 1995** chaptered; the cumulative new-mapping
+count is **98**. Site health HTTP 200. See the full permanent checkpoint
+in `RESIDENCY_LIVE_CLASSIFICATION_20261010.md`. Never run the
+completed 1401 source apply again.
