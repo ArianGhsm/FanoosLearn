@@ -281,6 +281,20 @@ SQL);
         $this->assert(($byNumber['1']['in_scope'] ?? null) === true && ($byNumber['20']['in_scope'] ?? null) === false && is_string($byNumber['2']['partial'] ?? null),
             'The 1405 orthodontics scope is not marked chapter by chapter: ' . json_encode($proffit['chapters'] ?? null, JSON_UNESCAPED_UNICODE));
         $set = $browse->study($f['student'], $ws, ['subject' => 'endodontics', 'topic' => 'endodontics/cleaning-and-shaping']);
+        // بانک به تفکیک کتاب و فصل: the sourced book, its chapter's count, and that chapter as a study set.
+        $books = $browse->books($f['student'], $ws);
+        $endoBooks = array_values(array_filter($books['subjects'], static fn (array $s): bool => $s['key'] === 'endodontics'))[0]['books'] ?? [];
+        $torabinejadBook = array_values(array_filter($endoBooks, static fn (array $b): bool => $b['edition_ref'] === 'torabinejad@6e'))[0] ?? null;
+        $ch14 = $torabinejadBook === null ? null : (array_values(array_filter($torabinejadBook['chapters'], static fn (array $c): bool => $c['key'] === 'ch14'))[0] ?? null);
+        $this->assert($ch14 !== null && $ch14['questions'] >= 1 && $torabinejadBook['questions'] >= $ch14['questions'], 'The book view does not count chapter 14: ' . json_encode($torabinejadBook, JSON_UNESCAPED_UNICODE));
+        $chapterSet = $browse->study($f['student'], $ws, ['edition' => 'torabinejad@6e', 'chapter' => 'ch14']);
+        $this->assert($chapterSet['question_count'] === $ch14['questions'], 'A chapter did not open as a study set of its questions.');
+        try {
+            $browse->study($f['student'], $ws, ['edition' => 'torabinejad@6e', 'chapter' => 'ch99']);
+            $this->assert(false, 'An unknown chapter opened.');
+        } catch (PlatformException $e) {
+            $this->assert($e->errorCode === 'bank_chapter_not_found', 'An unknown chapter gave ' . $e->errorCode);
+        }
         $this->assert($set['question_count'] === 2, 'The study set does not hold the topic: ' . json_encode($set, JSON_UNESCAPED_UNICODE));
         $studyAttempt = $exams->startAttempt($f['student'], $ws, $set['assessment_id']);
         $first = (string) $exams->readQuestion($f['student'], $ws, $studyAttempt['attempt_id'], 1)['question']['id'];
