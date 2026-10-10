@@ -10,7 +10,7 @@ class OriginalNeville4PageOperatorSafety(unittest.TestCase):
         cls.code = FILE.read_text()
 
     def test_only_source_page_metadata_updated(self):
-        changes = re.findall(r"\\b(?:UPDATE|INSERT\\s+INTO|DELETE\\s+FROM)\\s+(bank_[a-z_]+)\\b", self.code, re.I)
+        changes = re.findall(r"\b(?:UPDATE|INSERT\s+INTO|DELETE\s+FROM)\s+(bank_[a-z_]+)\b", self.code, re.I)
         self.assertEqual(changes, ["bank_question_sources"])
         for guard in ["SET page=:page", "page IS NULL", "origin='ai'", "reviewed_at IS NULL", "reviewed_by_user_id IS NULL", "rowCount()!==1"]:
             self.assertIn(guard, self.code)
