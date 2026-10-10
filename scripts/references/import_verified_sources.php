@@ -33,7 +33,7 @@ try {
     $expected = filter_var($args['expected'] ?? null, FILTER_VALIDATE_INT);
     $apply = isset($args['apply']);
     if (preg_match('/^[0-9a-f-]{36}$/D', $ws) !== 1 || $year === false
-        || ($year < 1399 && !(($year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1'], true)) || ($year === 1398 && $subject === 'periodontics' && $stem === 'periodontics') || ($year === 1398 && $subject === 'community-dentistry' && $stem === 'community') || ($year === 1398 && $subject === 'prosthodontics' && $stem === 'prosthodontics')))
+        || ($year < 1399 && !(($year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1'], true)) || ($year === 1398 && $subject === 'periodontics' && in_array($stem, ['periodontics', 'periodontics-followup'], true)) || ($year === 1398 && $subject === 'community-dentistry' && $stem === 'community') || ($year === 1398 && $subject === 'prosthodontics' && $stem === 'prosthodontics')))
         || $year > 1500 || $expected === false || $expected < 1 || $expected > 250
         || preg_match('/^[a-z][a-z0-9-]{1,59}$/D', $subject) !== 1
         || preg_match('/^[a-z][a-z0-9-]{1,59}$/D', $stem) !== 1) {
@@ -76,6 +76,9 @@ try {
     $studyPath = "{$inputRoot}/bank-sittings/{$year}/{$stem}-study.json";
     $validatedPath = "{$inputRoot}/classification/sittings/{$year}-{$stem}-validated.json";
     $decisionsPath = "{$inputRoot}/classification/decisions/{$year}-{$subject}.json";
+    if ($year === 1398 && $subject === 'periodontics' && $stem === 'periodontics-followup') {
+        $decisionsPath = "{$inputRoot}/classification/decisions/1398-periodontics-followup.json";
+    }
     $read = static function (string $path): array {
         if (!is_file($path) || is_link($path)) {
             throw new RuntimeException('Expected verified private file is unavailable.');
