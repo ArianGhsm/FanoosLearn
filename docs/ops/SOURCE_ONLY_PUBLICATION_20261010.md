@@ -247,3 +247,30 @@ full **249-question** frozen-exam postdiff found no differences outside
 count is **98**. Site health HTTP 200. See the full permanent checkpoint
 in `RESIDENCY_LIVE_CLASSIFICATION_20261010.md`. Never run the
 completed 1401 source apply again.
+
+## Parallel coordinator import without overwriting historical decisions (2026-10-10)
+
+An **optional** `--package-root` was added to `scripts/references/import_verified_sources.php` in PR #196 (SHA `541631221633a7889bd854224fc0496a8f998678`). Previously, the importer could only read from `/srv/fanoos/shared/research/bank-sittings` and `classification/{decisions,sittings}`. Several worker handoffs include **additional as-yet-unsourced questions in years already partly published**. Replacing the original canonical JSON to import them would destroy the versioned reconstruction trail; this must never happen.
+
+The alternate input root is strictly limited to one **existing coordinator audit-stage directory**:
+`/srv/fanoos/shared/research/classification/coordinator/WNN-audit-stage`, where NN is 01–08. It must be the resolved real, nonsymlink path. The stage must contain `bank-sittings/YEAR/STEM-study.json`, `classification/decisions/YEAR-SUBJECT.json`, `classification/sittings/YEAR-STEM-validated.json`, and a matching independently generated audit under `classification/reports/`. The importer checks the exact three input SHA-256 digests and acceptance count in that audit, plus immutable stems/choices/official answers, exact official edition and syllabus scope, no existing live source row, and full reviewed transaction guards.
+
+Example read-only preview for an eligible W02 batch:
+
+```sh
+FANOOS_CONFIG_FILE=/etc/fanoos/updater-config.php php scripts/references/import_verified_sources.php \
+ --workspace=YOUR_AUTHORIZED_WORKSPACE_ID --year=1402 \
+ --subject=community-dentistry --stem=community --expected=3 \
+ --package-root=/srv/fanoos/shared/research/classification/coordinator/W02-audit-stage \
+ --audit=/srv/fanoos/shared/research/classification/coordinator/W02-audit-stage/classification/reports/W02-canonical-verified-20261010.json
+```
+
+Do **not** apply until the independent coordinator confirms live no-source status and a full frozen-exam preflight for the actual year, verifies a fresh complete backup containing `database.sql`, and has exclusive publication authority. For `--apply`, pass the original importer’s mandatory `--backup=/var/backups/fanoos/VERIFIED_FULL_SET` and a **new** private `--receipt=/srv/fanoos/shared/research/classification/reports/UNIQUE.json`. Receipts always live under the standard private reports directory; the stage only supplies vetted **inputs** and **audit**. Never pass a WNN research worker's mutable folder as `--package-root`; never weaken the source-only publisher or rewrite earlier completed canonical decision files.
+
+A book-printed page number differing from its PDF index may pass the **independent** original-book neighbor auditor but is **not** automatically accepted by the production source-only writer. Such a proposed row stays pending until separately reviewed support for this format is available. Do not alter page evidence to force a successful apply.
+
+### Workspace sidecar cleanup rule
+
+After inspecting role, age, hashes, and reproducibility, zero-byte `*.bak.*` edit sidecars under protected ops/reports/decisions/coordinator directories and rebuildable caches may be removed with a private path-by-path receipt. Never use a blanket recursive cleanup in worker WNN evidence, book-page text, original PDFs, manifests, immutable research packages, receipt ledgers, assessments, or verified recovery sets. Retain nonempty `*.bak.*` files unless their *unique* content has been archived with an independently checked, recoverable checksum; disk recovery takes priority over tidiness.
+
+On 2026-10-10 a narrow cleanup deleted **10 empty** edit backups, reclaiming **zero bytes** while reducing clutter. Private report: `ops/cleanup-ephemeral-sidecars-20261010.json` (SHA256 `380429578c9f899651280a1e5985399758d2a5de44605f324d9c3b57cdaa57a5`). All production facts, references, current decisions, receipts and complete backups were left untouched. This is a reproducible dated result, not a direction to delete every backup named `.bak.`.
