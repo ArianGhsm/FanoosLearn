@@ -104,6 +104,21 @@ Keep the source DOCX and prepared JSON/images outside Git (private storage), fol
 
 ## 2. One question in the sitting file
 
+**Where a question comes from, to the page (owner, 2026-10-11).** Every source
+names the exact book page so a descriptive answer can be written from it
+later: `pdf_page` (the page of the PDF file, 1-based, as read from the
+verified server PDF), `printed_page` (the label printed on that page) and
+`pdf_sha256` (that PDF file; it requires `pdf_page`). `page` is the legacy
+text field ("523" or "pdf 257"); the importer fills it from `printed_page`
+when it is absent. An explanation records the page it was written from in
+`explanation.from` ({ref, pdf_page, pdf_sha256}), kept by value on the
+explanation (migration 0043).
+
+**Re-importing a sitting.** A question's `sources` and `concepts` are
+replaced only when the file lists them; a file without those keys (a wording
+correction, an amended key) leaves the classification as it is. Reviewed
+rows are never replaced.
+
 ```json
 {
   "number": 1,
@@ -119,7 +134,8 @@ Keep the source DOCX and prepared JSON/images outside Git (private storage), fol
   "difficulty": 2,
   "sources": [{
     "ref": "torabinejad@6e#ch14.working-length",
-    "page": "256", "table": "14-2", "figure": null, "box": null,
+    "page": "256", "pdf_page": 271, "printed_page": "256", "pdf_sha256": "<64 hex>",
+    "table": "14-2", "figure": null, "box": null,
     "anchor": "Working Length Determination",
     "primary": true,
     "confidence": { "source": 0.97, "node": 0.92, "page": 0.71 },
@@ -128,6 +144,7 @@ Keep the source DOCX and prepared JSON/images outside Git (private storage), fol
   "concepts": [{ "key": "endodontics/…/apical-constriction", "primary": true, "confidence": 0.94, "origin": "ai" }],
   "explanation": {
     "short": "…", "reference": "…", "location": "Torabinejad 6e · فصل ۱۴",
+    "from": { "ref": "torabinejad@6e", "pdf_page": 271, "pdf_sha256": "<64 hex>" },
     "why_wrong": { "1": "…", "3": "…", "4": "…" },
     "tip": "…", "trap": "…",
     "confidence": 0.86, "origin": "ai"

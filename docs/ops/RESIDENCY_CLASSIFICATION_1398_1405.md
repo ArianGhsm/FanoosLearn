@@ -31,7 +31,12 @@ least one `bank_question_sources` row. *Paged*: one of them has a page.
 
 English is citation-exempt by the owner's decision (PROJECT_PRINCIPLES §3A).
 The `page` column holds printed-page labels and, where none was proven,
-`pdf N` PDF-page values.
+`pdf N` PDF-page values. Migration 0043 adds separate `pdf_page`,
+`printed_page` and `pdf_sha256`; `scripts/references/backfill_source_pages.php`
+(dry run first, then `--apply` with a verified backup and a new receipt)
+copies the existing values into them, and `--bind-pdf` records the edition's
+one verified PDF for the PDF pages. Printed-only rows still need their PDF
+page found before an explanation is written from them.
 
 ## Known open items (from the last per-subject reports)
 

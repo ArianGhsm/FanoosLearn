@@ -69,7 +69,7 @@ of it into migrations, with tests, in its own change.
 | `bank_questions` | the question itself | `sitting_id` (null for non-exam questions), `number_in_sitting`, `subject_id`, `stem`, `stem_images`, `question_type`, `is_negative_stem`, `is_multiple_statement`, `cognitive_level`, `expert_difficulty`, `status` (draft / reviewed / published), `version` |
 | `bank_question_choices` | ordered choices | `question_id`, `position`, `text`, `image` |
 | `bank_official_answers` | the official key, with its history | `question_id`, `choice_position` (null when voided), `also_correct_positions` (other accepted choices, JSON), `status` (final / amended / disputed / voided), `source`, `recorded_at` |
-| `bank_question_sources` | where in which edition the question comes from | `question_id`, `edition_id`, `node_id`, `page`, `table_ref`, `figure_ref`, `box_ref`, `anchor_text`, `is_primary`, confidences (`source`, `node`, `page`), `origin` (ai / human), `reviewed_by`, `reviewed_at` |
+| `bank_question_sources` | where in which edition the question comes from | `question_id`, `edition_id`, `node_id`, `page` (legacy text), `pdf_page`, `printed_page`, `pdf_sha256` (the exact PDF file), `table_ref`, `figure_ref`, `box_ref`, `anchor_text`, `is_primary`, confidences (`source`, `node`, `page`), `origin` (ai / human), `reviewed_by`, `reviewed_at` |
 | `bank_question_concepts` | the concept(s) it tests | `question_id`, `concept_id`, `is_primary`, `confidence`, `origin` |
 | `bank_question_similarity` | how two questions relate | `question_a`, `question_b`, `relation` (exact_repeat / near_duplicate / same_concept), `confidence`, `origin` |
 | `bank_question_currency` | is the official answer still right under a given edition | `question_id`, `against_edition_id`, `status` (current / valid_old_edition / changed_in_newer / outdated / contradicted / removed_from_syllabus), `note`, `reviewed_by` |
@@ -87,7 +87,7 @@ pairs and the concept links, not stored by hand.
 
 | Table | Purpose | Key fields |
 |---|---|---|
-| `bank_explanations` | the structured answer, versioned | `question_id`, `version`, `short`, `reference_explanation`, `source_location` (text), `exam_tip`, `common_trap`, `origin`, `reviewed_by`, `published` |
+| `bank_explanations` | the structured answer, versioned | `question_id`, `version`, `short`, `reference_explanation`, `source_location` (text), `source_edition_id` / `source_pdf_page` / `source_pdf_sha256` (the book page it was written from), `exam_tip`, `common_trap`, `origin`, `reviewed_by`, `published` |
 | `bank_explanation_choices` | why each other choice is wrong | `explanation_id`, `choice_position`, `text` |
 
 "Why is choice 2 wrong?" is a read of a stored row, never a live AI call.

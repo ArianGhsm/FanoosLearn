@@ -65,8 +65,12 @@ final class BankImportTest
         $broken['questions'][1]['number'] = 1;
         $broken['questions'][1]['concepts'][0]['key'] = 'endodontics/no-such-concept';
         $broken['questions'][1]['sources'][0]['confidence']['node'] = 1.4;
+        $broken['questions'][0]['sources'][0]['pdf_page'] = 0;
+        $broken['questions'][1]['sources'][0]['pdf_sha256'] = str_repeat('a', 64); // a file named without its page
+        $broken['questions'][0]['explanation']['from']['ref'] = 'no-such@1e';
         $problems = $importer->validate($ws, $broken);
-        foreach (['questions[0].answer.choice', 'questions[1].number', 'questions[1].concepts[0].key', 'questions[1].sources[0].confidence.node'] as $path) {
+        foreach (['questions[0].answer.choice', 'questions[1].number', 'questions[1].concepts[0].key', 'questions[1].sources[0].confidence.node',
+            'questions[0].sources[0].pdf_page', 'questions[1].sources[0].pdf_sha256', 'questions[0].explanation.from.ref'] as $path) {
             $this->assert($this->mentions($problems, $path), "No problem reported at {$path}: " . json_encode($problems));
         }
         try {
@@ -84,6 +88,22 @@ final class BankImportTest
         $this->assert($key === 'residency-1404-1-001', 'Question keys are not type-year-round-number.');
         $this->assert($this->scalar('SELECT COUNT(*) FROM bank_question_choices c JOIN bank_questions q ON q.id = c.question_id WHERE q.question_key = :key', ['key' => $key]) === 4, 'Choices were not stored.');
         $this->assert($this->scalar('SELECT COUNT(*) FROM bank_explanation_choices e JOIN bank_explanations x ON x.id = e.explanation_id JOIN bank_questions q ON q.id = x.question_id WHERE q.question_key = :key', ['key' => $key]) === 3, 'Why-wrong reasons were not stored.');
+
+        // The exact book page: PDF page and printed label apart, and the page an explanation was written from.
+        $pages = $this->database->prepare('SELECT s.pdf_page, s.printed_page, s.page FROM bank_question_sources s JOIN bank_questions q ON q.id = s.question_id WHERE q.question_key = :key');
+        $pages->execute(['key' => $key]);
+        $this->assert($pages->fetch(PDO::FETCH_ASSOC) == ['pdf_page' => 271, 'printed_page' => '256', 'page' => '256'], 'The source page fields were not stored apart.');
+        $this->assert($this->scalar('SELECT x.source_pdf_page FROM bank_explanations x JOIN bank_questions q ON q.id = x.question_id WHERE q.question_key = :key AND x.is_current = TRUE', ['key' => $key]) === 271, 'The explanation does not record the page it was written from.');
+
+        // A file without the source list (a wording fix, a new key) leaves the classification alone.
+        $bare = $sitting;
+        foreach ($bare['questions'] as &$bareQuestion) {
+            unset($bareQuestion['sources'], $bareQuestion['concepts']);
+        }
+        unset($bareQuestion);
+        $sourcesBefore = $this->count('bank_question_sources', $ws);
+        $importer->import($ws, $bare);
+        $this->assert($this->count('bank_question_sources', $ws) === $sourcesBefore && $sourcesBefore > 0, 'Re-importing a sitting without sources erased its sources.');
 
         $again = $importer->import($ws, $sitting);
         $this->assert($again['answers_recorded'] === 0 && $again['questions_changed'] === 0 && $again['explanations'] === 0, 'Re-importing an unchanged sitting changed something: ' . json_encode($again));

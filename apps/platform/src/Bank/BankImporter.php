@@ -528,6 +528,7 @@ SQL);
                     $this->checkConfidence($source['confidence'][$field] ?? null, "{$at}.confidence.{$field}");
                 }
                 $this->checkOrigin($source, $at);
+                $this->checkBookPage($source, $at);
             }
             foreach ($this->arrayOf($question, 'concepts', $here) as $c => $concept) {
                 $at = "{$here}.concepts[{$c}]";
@@ -548,6 +549,14 @@ SQL);
                         }
                     }
                     $this->checkMachineFields($explanation, "{$here}.explanation");
+                    if (isset($explanation['from'])) {
+                        $from = $explanation['from'];
+                        if (!is_array($from) || $this->resolveEdition($workspaceId, (string) ($from['ref'] ?? '')) === null) {
+                            $this->fail("{$here}.explanation.from.ref", 'must name a known reference@edition');
+                        } else {
+                            $this->checkBookPage($from, "{$here}.explanation.from");
+                        }
+                    }
                 }
             }
             foreach ($this->arrayOf($question, 'currency', $here) as $c => $row) {
@@ -749,8 +758,13 @@ SQL);
                 ++$counts['answers_recorded'];
             }
 
-            // Sources and concepts: unreviewed rows are replaced, reviewed ones stay.
-            $this->database->prepare('DELETE FROM bank_question_sources WHERE question_id = :question AND reviewed_by_user_id IS NULL')->execute(['question' => $questionId]);
+            // Sources and concepts: when the file lists them, unreviewed rows are
+            // replaced and reviewed ones stay. A file without the list leaves the
+            // question's sources and concepts as they are, so re-importing a
+            // sitting (a wording fix, a new answer key) never erases its classification.
+            if (array_key_exists('sources', $question)) {
+                $this->database->prepare('DELETE FROM bank_question_sources WHERE question_id = :question AND reviewed_by_user_id IS NULL')->execute(['question' => $questionId]);
+            }
             foreach ($question['sources'] ?? [] as $source) {
                 $ref = (string) $source['ref'];
                 $nodeId = str_contains($ref, '#') ? $this->resolveNode($workspaceId, $ref) : null;
@@ -759,12 +773,16 @@ SQL);
                     continue;
                 }
                 $this->database->prepare(<<<'SQL'
-INSERT INTO bank_question_sources (id, workspace_id, question_id, edition_id, node_id, page, table_ref, figure_ref, box_ref, anchor_text, is_primary,
+INSERT INTO bank_question_sources (id, workspace_id, question_id, edition_id, node_id, page, pdf_page, printed_page, pdf_sha256, table_ref, figure_ref, box_ref, anchor_text, is_primary,
     confidence_source, confidence_node, confidence_page, origin, created_at)
-VALUES (:id, :workspace, :question, :edition, :node, :page, :table_ref, :figure, :box, :anchor, :primary, :c_source, :c_node, :c_page, :origin, :at)
+VALUES (:id, :workspace, :question, :edition, :node, :page, :pdf_page, :printed_page, :pdf_sha256, :table_ref, :figure, :box, :anchor, :primary, :c_source, :c_node, :c_page, :origin, :at)
 SQL)->execute([
                     'id' => Uuid::v7(), 'workspace' => $workspaceId, 'question' => $questionId, 'edition' => $editionId, 'node' => $nodeId,
-                    'page' => isset($source['page']) ? (string) $source['page'] : null, 'table_ref' => $source['table'] ?? null,
+                    'page' => isset($source['page']) ? (string) $source['page'] : (isset($source['printed_page']) ? (string) $source['printed_page'] : null),
+                    'pdf_page' => $source['pdf_page'] ?? null,
+                    'printed_page' => isset($source['printed_page']) ? (string) $source['printed_page'] : null,
+                    'pdf_sha256' => isset($source['pdf_sha256']) ? strtolower((string) $source['pdf_sha256']) : null,
+                    'table_ref' => $source['table'] ?? null,
                     'figure' => $source['figure'] ?? null, 'box' => $source['box'] ?? null, 'anchor' => $source['anchor'] ?? null,
                     'primary' => ($source['primary'] ?? true) ? 1 : 0,
                     'c_source' => $source['confidence']['source'] ?? null, 'c_node' => $source['confidence']['node'] ?? null,
@@ -772,7 +790,9 @@ SQL)->execute([
                 ]);
                 ++$counts['sources'];
             }
-            $this->database->prepare('DELETE FROM bank_question_concepts WHERE question_id = :question AND reviewed_by_user_id IS NULL')->execute(['question' => $questionId]);
+            if (array_key_exists('concepts', $question)) {
+                $this->database->prepare('DELETE FROM bank_question_concepts WHERE question_id = :question AND reviewed_by_user_id IS NULL')->execute(['question' => $questionId]);
+            }
             foreach ($question['concepts'] ?? [] as $concept) {
                 $conceptId = $this->lookup($workspaceId, 'bank_concepts', 'concept_key', (string) $concept['key']);
                 $this->database->prepare('INSERT IGNORE INTO bank_question_concepts (workspace_id, question_id, concept_id, is_primary, confidence, origin) VALUES (:workspace, :question, :concept, :primary, :confidence, :origin)')
@@ -823,13 +843,17 @@ SQL)->execute([
      */
     private function writeExplanation(string $workspaceId, string $questionId, array $explanation): bool
     {
-        $current = $this->database->prepare('SELECT id, version, short_answer, reference_explanation, source_location, exam_tip, common_trap, reviewed_by_user_id FROM bank_explanations WHERE question_id = :question AND is_current = TRUE');
+        $current = $this->database->prepare('SELECT id, version, short_answer, reference_explanation, source_location, source_edition_id, source_pdf_page, source_pdf_sha256, exam_tip, common_trap, reviewed_by_user_id FROM bank_explanations WHERE question_id = :question AND is_current = TRUE');
         $current->execute(['question' => $questionId]);
         $row = $current->fetch() ?: null;
         $fields = [
             'short_answer' => $explanation['short'] ?? null,
             'reference_explanation' => $explanation['reference'] ?? null,
             'source_location' => $explanation['location'] ?? null,
+            // The book page the explanation was written from, by value.
+            'source_edition_id' => isset($explanation['from']['ref']) ? $this->resolveEdition($workspaceId, (string) $explanation['from']['ref']) : null,
+            'source_pdf_page' => $explanation['from']['pdf_page'] ?? null,
+            'source_pdf_sha256' => isset($explanation['from']['pdf_sha256']) ? strtolower((string) $explanation['from']['pdf_sha256']) : null,
             'exam_tip' => $explanation['tip'] ?? null,
             'common_trap' => $explanation['trap'] ?? null,
         ];
@@ -847,7 +871,7 @@ SQL)->execute([
             $storedWhy = array_map('strval', array_column($stored->fetchAll(), 'why_wrong', 'position'));
             $same = $storedWhy == $whyWrong;
             foreach ($fields as $name => $value) {
-                $same = $same && $row[$name] === $value;
+                $same = $same && ($row[$name] === null ? null : (string) $row[$name]) === ($value === null ? null : (string) $value);
             }
             if ($same) {
                 return false;
@@ -856,8 +880,8 @@ SQL)->execute([
         }
         $id = Uuid::v7();
         $this->database->prepare(<<<'SQL'
-INSERT INTO bank_explanations (id, workspace_id, question_id, version, is_current, short_answer, reference_explanation, source_location, exam_tip, common_trap, confidence, origin, created_at)
-VALUES (:id, :workspace, :question, :version, TRUE, :short_answer, :reference_explanation, :source_location, :exam_tip, :common_trap, :confidence, :origin, :at)
+INSERT INTO bank_explanations (id, workspace_id, question_id, version, is_current, short_answer, reference_explanation, source_location, source_edition_id, source_pdf_page, source_pdf_sha256, exam_tip, common_trap, confidence, origin, created_at)
+VALUES (:id, :workspace, :question, :version, TRUE, :short_answer, :reference_explanation, :source_location, :source_edition_id, :source_pdf_page, :source_pdf_sha256, :exam_tip, :common_trap, :confidence, :origin, :at)
 SQL)->execute($fields + [
             'id' => $id, 'workspace' => $workspaceId, 'question' => $questionId, 'version' => $row === null ? 1 : (int) $row['version'] + 1,
             'confidence' => $explanation['confidence'] ?? null, 'origin' => $explanation['origin'] ?? 'ai', 'at' => $this->now(),
@@ -871,6 +895,29 @@ SQL)->execute($fields + [
     }
 
     // ================================================================ helpers
+
+    /**
+     * A book page as the sitting format names it: pdf_page (the page of the
+     * PDF file, 1-based), printed_page (the label printed on it) and
+     * pdf_sha256 (the file those numbers belong to).
+     *
+     * @param array<string, mixed> $where
+     */
+    private function checkBookPage(array $where, string $at): void
+    {
+        if (isset($where['pdf_page']) && (!is_int($where['pdf_page']) || $where['pdf_page'] < 1 || $where['pdf_page'] > 100000)) {
+            $this->fail("{$at}.pdf_page", 'must be a PDF page number (1 or more)');
+        }
+        if (isset($where['printed_page']) && (!is_scalar($where['printed_page']) || mb_strlen((string) $where['printed_page']) > 20 || trim((string) $where['printed_page']) === '')) {
+            $this->fail("{$at}.printed_page", 'must be the printed page label, at most 20 characters');
+        }
+        if (isset($where['pdf_sha256']) && preg_match('/^[0-9a-fA-F]{64}$/', (string) $where['pdf_sha256']) !== 1) {
+            $this->fail("{$at}.pdf_sha256", 'must be the 64-character SHA-256 of the PDF file');
+        }
+        if (isset($where['pdf_sha256']) && !isset($where['pdf_page'])) {
+            $this->fail("{$at}.pdf_sha256", 'names a PDF file without a pdf_page in it');
+        }
+    }
 
     /**
      * Insert or update the row matched by $match; returns its id. Tables

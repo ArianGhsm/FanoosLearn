@@ -73,7 +73,10 @@
             "required": ["ref"],
             "properties": {
               "ref": { "type": "string", "description": "reference@edition or reference@edition#node, e.g. torabinejad@6e#ch14.working-length." },
-              "page": { "type": ["string", "integer"] },
+              "page": { "type": ["string", "integer"], "description": "Legacy page text; prefer pdf_page and printed_page." },
+              "pdf_page": { "type": "integer", "minimum": 1, "description": "The page of the PDF file (1-based), read from the verified server PDF." },
+              "printed_page": { "type": ["string", "integer"], "maxLength": 20, "description": "The page label printed on that page." },
+              "pdf_sha256": { "type": "string", "pattern": "^[0-9a-fA-F]{64}$", "description": "SHA-256 of the PDF file pdf_page refers to; requires pdf_page." },
               "table": { "type": "string" },
               "figure": { "type": "string" },
               "box": { "type": "string" },
@@ -106,6 +109,17 @@
             "short": { "type": "string" },
             "reference": { "type": "string" },
             "location": { "type": "string", "maxLength": 400 },
+            "from": {
+              "type": "object",
+              "required": ["ref"],
+              "description": "The book page the explanation was written from.",
+              "properties": {
+                "ref": { "type": "string", "description": "reference@edition" },
+                "pdf_page": { "type": "integer", "minimum": 1, "description": "The page of the PDF file (1-based), read from the verified server PDF." },
+                "printed_page": { "type": ["string", "integer"], "maxLength": 20, "description": "The page label printed on that page." },
+                "pdf_sha256": { "type": "string", "pattern": "^[0-9a-fA-F]{64}$", "description": "SHA-256 of the PDF file pdf_page refers to; requires pdf_page." }
+              }
+            },
             "why_wrong": { "type": "object", "patternProperties": { "^[1-9][0-9]?$": { "type": "string" } }, "additionalProperties": false },
             "tip": { "type": "string" },
             "trap": { "type": "string" },
