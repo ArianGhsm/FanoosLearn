@@ -598,6 +598,19 @@ final class ApiKernel
             if ($request->method === 'GET' && $suffix === '/bank') {
                 return ['status' => 200, 'data' => $this->bank->overview($session->userId, $workspaceId, isset($request->query['type']) ? (string) $request->query['type'] : null)];
             }
+            if ($request->method === 'GET' && $suffix === '/bank/visuals') {
+                return ['status' => 200, 'data' => $this->bank->visuals($session->userId, $workspaceId, array_map('strval', array_intersect_key($request->query, array_flip(['subject', 'kind', 'edition', 'chapter']))))];
+            }
+            if ($request->method === 'GET' && preg_match('#^/bank/visuals/([a-z0-9][a-z0-9_.-]{0,79})$#', $suffix, $match)) {
+                return ['status' => 200, 'data' => $this->bank->visual($session->userId, $workspaceId, $match[1])];
+            }
+            if ($request->method === 'GET' && preg_match('#^/bank/visuals/([a-z0-9][a-z0-9_.-]{0,79})/image$#', $suffix, $match)) {
+                if ($this->examImages === null) {
+                    throw new PlatformException('bank_visual_not_found', 'Image was not found.', 404);
+                }
+                $image = $this->examImages->open($this->bank->visualImage($session->userId, $workspaceId, $match[1]));
+                return new BinaryResponse(200, $image['stream'], $image['mime'], $image['length'], [], 'inline', 'private, max-age=86400');
+            }
             if ($request->method === 'GET' && $suffix === '/bank/books') {
                 return ['status' => 200, 'data' => $this->bank->books($session->userId, $workspaceId, isset($request->query['type']) ? (string) $request->query['type'] : null)];
             }

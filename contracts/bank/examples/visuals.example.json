@@ -1,0 +1,41 @@
+{
+  "format": "fanoos.bank.visuals/1",
+  "notes": "Example visuals file (contracts/bank/visuals.schema.json): a published mind map and a draft capsule for Torabinejad 6e chapter 14.",
+  "visuals": [
+    {
+      "key": "endodontics.working-length.map",
+      "kind": "mindmap",
+      "title": "طول کارکرد: محل پایان آماده‌سازی",
+      "subject": "endodontics",
+      "tree": {
+        "text": "طول کارکرد",
+        "children": [
+          { "text": "تنگی اپیکالی", "note": "۰٫۵ تا ۱ میلی‌متر کوتاه‌تر از فورامن", "children": [
+            { "text": "محل ایده‌آل پایان آماده‌سازی و پرکردن" }
+          ] },
+          { "text": "روش‌های تعیین", "children": [
+            { "text": "آپکس‌یاب الکترونیکی" },
+            { "text": "رادیوگرافی" },
+            { "text": "حس لمسی" }
+          ] }
+        ]
+      },
+      "chapters": ["torabinejad@6e#ch14"],
+      "concepts": ["endodontics/cleaning-and-shaping/working-length"],
+      "questions": ["residency-1404-1-001"],
+      "from": { "ref": "torabinejad@6e", "pdf_page_from": 270, "pdf_page_to": 272 },
+      "status": "published",
+      "origin": "ai",
+      "confidence": 0.9
+    },
+    {
+      "key": "endodontics.working-length.capsule",
+      "kind": "capsule",
+      "title": "کپسول طول کارکرد",
+      "subject": "endodontics",
+      "markdown": "# طول کارکرد\n**تنگی اپیکالی** باریک‌ترین بخش کانال است.\n\n- آپکس‌یاب\n- رادیوگرافی\n",
+      "chapters": ["torabinejad@6e#ch14"],
+      "status": "draft"
+    }
+  ]
+}

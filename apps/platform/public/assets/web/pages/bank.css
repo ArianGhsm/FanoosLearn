@@ -1252,3 +1252,14 @@ a.b-card:focus-visible {
         gap: 2px;
     }
 }
+
+.k-ch__maps {
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-pill);
+    background: var(--hue-tag-soft);
+    color: var(--text-primary);
+    font-size: var(--text-xs);
+    line-height: 1.9;
+    white-space: nowrap;
+    text-decoration: none;
+}

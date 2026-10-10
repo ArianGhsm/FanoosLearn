@@ -54,6 +54,7 @@ final class AccountMergePlanner
         'bank_question_similarity' => [['reviewed_by_user_id', self::HISTORY, null]],
         'bank_question_currency' => [['reviewed_by_user_id', self::HISTORY, null]],
         'bank_explanations' => [['reviewed_by_user_id', self::HISTORY, null]],
+        'bank_visuals' => [['reviewed_by_user_id', self::HISTORY, null]],
         // Derived counters: dropped, then rebuilt for the target from the
         // attempts that moved (QuestionStatsRecorder::rebuild).
         'exam_question_user_stats' => [['user_id', self::DROP, null]],

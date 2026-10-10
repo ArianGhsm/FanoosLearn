@@ -322,6 +322,36 @@ SQL);
         $torabinejadBook = array_values(array_filter($endoBooks, static fn (array $b): bool => $b['edition_ref'] === 'torabinejad@6e'))[0] ?? null;
         $ch14 = $torabinejadBook === null ? null : (array_values(array_filter($torabinejadBook['chapters'], static fn (array $c): bool => $c['key'] === 'ch14'))[0] ?? null);
         $this->assert($ch14 !== null && $ch14['questions'] >= 1 && $torabinejadBook['questions'] >= $ch14['questions'], 'The book view does not count chapter 14: ' . json_encode($torabinejadBook, JSON_UNESCAPED_UNICODE));
+        // Visual study material: only the published mind map reaches students, with its tree,
+        // chapter and question; the chapter's book view counts it; a draft is not found.
+        $visuals = json_decode((string) file_get_contents($this->root . '/contracts/bank/examples/visuals.example.json'), true, 64, JSON_THROW_ON_ERROR);
+        $this->assert($importer->validate($ws, $visuals) === [], 'The visuals example does not validate: ' . json_encode($importer->validate($ws, $visuals), JSON_UNESCAPED_UNICODE));
+        $visualCounts = $importer->import($ws, $visuals);
+        $this->assert($visualCounts['visuals'] === 2 && $visualCounts['links'] === 4, 'Visual counts: ' . json_encode($visualCounts));
+        $again = $importer->import($ws, $visuals);
+        $this->assert($again['visuals_changed'] === 0, 'Re-importing unchanged visuals made new versions.');
+        $listed = $browse->visuals($f['student'], $ws);
+        $this->assert(count($listed) === 1 && $listed[0]['key'] === 'endodontics.working-length.map' && $listed[0]['chapters'] === ['torabinejad@6e#ch14'], 'Published visuals: ' . json_encode($listed, JSON_UNESCAPED_UNICODE));
+        $this->assert($browse->visuals($f['student'], $ws, ['edition' => 'torabinejad@6e', 'chapter' => 'ch14']) !== [] && $browse->visuals($f['student'], $ws, ['kind' => 'capsule']) === [], 'Visual filters are wrong.');
+        $map = $browse->visual($f['student'], $ws, 'endodontics.working-length.map');
+        $this->assert($map['format'] === 'tree' && $map['tree']['text'] === 'طول کارکرد' && $map['questions'] === ['residency-1404-1-001'] && $map['from']['pdf_page_from'] === 270, 'The mind map: ' . json_encode($map, JSON_UNESCAPED_UNICODE));
+        try {
+            $browse->visual($f['student'], $ws, 'endodontics.working-length.capsule');
+            $this->assert(false, 'A draft visual reached a student.');
+        } catch (PlatformException $e) {
+            $this->assert($e->errorCode === 'bank_visual_not_found', 'A draft visual gave ' . $e->errorCode);
+        }
+        $broken = $visuals;
+        $broken['visuals'][0]['markdown'] = 'two bodies';
+        $broken['visuals'][1]['chapters'] = ['torabinejad@6e#ch99'];
+        foreach (['visuals[0]', 'visuals[1].chapters[0]'] as $path) {
+            $this->assert($this->mentions($importer->validate($ws, $broken), $path), "No visual problem reported at {$path}");
+        }
+        $mapped = $browse->books($f['student'], $ws);
+        $endoMapped = array_values(array_filter($mapped['subjects'], static fn (array $s): bool => $s['key'] === 'endodontics'))[0]['books'] ?? [];
+        $ch14Mapped = array_values(array_filter(array_values(array_filter($endoMapped, static fn (array $b): bool => $b['edition_ref'] === 'torabinejad@6e'))[0]['chapters'] ?? [], static fn (array $c): bool => $c['key'] === 'ch14'))[0] ?? null;
+        $this->assert(($ch14Mapped['visuals'] ?? 0) === 1, 'The book view does not count the mind map of the chapter.');
+
         $chapterSet = $browse->study($f['student'], $ws, ['edition' => 'torabinejad@6e', 'chapter' => 'ch14']);
         $this->assert($chapterSet['question_count'] === $ch14['questions'], 'A chapter did not open as a study set of its questions.');
         try {

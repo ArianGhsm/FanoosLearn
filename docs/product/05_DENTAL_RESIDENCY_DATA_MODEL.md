@@ -87,6 +87,8 @@ pairs and the concept links, not stored by hand.
 
 | Table | Purpose | Key fields |
 |---|---|---|
+| `bank_visuals` | a mind map, flowchart, diagram, table or capsule (10_VISUALS.md), versioned | `visual_key`, `kind`, `title`, `subject_id`, `body_format` (tree / markdown / image), `body`, `image`, `source_edition_id` / `source_pdf_page_from` / `source_pdf_page_to` / `source_pdf_sha256`, `status` (draft / published), `origin`, `confidence`, `reviewed_by` |
+| `bank_visual_links` | what a visual explains | `visual_id` and one of `node_id`, `concept_id`, `question_id` |
 | `bank_explanations` | the structured answer, versioned | `question_id`, `version`, `short`, `reference_explanation`, `source_location` (text), `source_edition_id` / `source_pdf_page` / `source_pdf_sha256` (the book page it was written from), `exam_tip`, `common_trap`, `origin`, `reviewed_by`, `published` |
 | `bank_explanation_choices` | why each other choice is wrong | `explanation_id`, `choice_position`, `text` |
 

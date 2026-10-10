@@ -210,6 +210,17 @@ final class WebRouter
                 : $this->page(200, (new CustomPracticePage($this->renderer))->render($viewer));
         }
 
+        if ($path === '/app/visuals' || preg_match('#^/app/visuals/[a-z0-9][a-z0-9_.-]{0,79}$#', $path) === 1) {
+            if ($viewer === null) {
+                return $this->redirect('/login');
+            }
+            if ($viewer->workspaceId === null) {
+                return $this->redirect('/app');
+            }
+            $page = new VisualsPage($this->renderer);
+            return $this->page(200, $path === '/app/visuals' ? $page->library($viewer) : $page->visual($viewer, substr($path, strlen('/app/visuals/'))));
+        }
+
         if ($path === '/app/bank' || $path === '/app/references' || preg_match('#^/app/bank/[a-z0-9_-]{1,60}$#', $path) === 1) {
             if ($viewer === null) {
                 return $this->redirect('/login');
