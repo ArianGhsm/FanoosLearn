@@ -12,7 +12,7 @@ class Endodontics1398FrozenAuditGate(unittest.TestCase):
         code = AUDIT.read_text(encoding="utf-8")
         self.assertIn("$year < 1399", code)
         self.assertIn(
-            "$year === 1398 && $subject === 'endodontics' && $stem === 'endodontics'",
+            "$year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9'], true)",
             code,
         )
         self.assertIn("question_content_identical", code)

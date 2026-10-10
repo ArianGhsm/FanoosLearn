@@ -33,7 +33,7 @@ try {
     $expected = filter_var($args['expected'] ?? null, FILTER_VALIDATE_INT);
     $apply = isset($args['apply']);
     if (preg_match('/^[0-9a-f-]{36}$/D', $ws) !== 1 || $year === false
-        || ($year < 1399 && !($year === 1398 && $subject === 'endodontics' && $stem === 'endodontics'))
+        || ($year < 1399 && !($year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9'], true)))
         || $year > 1500 || $expected === false || $expected < 1 || $expected > 250
         || preg_match('/^[a-z][a-z0-9-]{1,59}$/D', $subject) !== 1
         || preg_match('/^[a-z][a-z0-9-]{1,59}$/D', $stem) !== 1) {

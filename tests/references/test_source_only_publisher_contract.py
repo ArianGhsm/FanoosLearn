@@ -59,7 +59,7 @@ class PublisherSafetyContracts(unittest.TestCase):
 
     def test_1398_exception_is_exact_endodontics_only(self):
         """Other 1398 subjects and other editions must remain blocked."""
-        self.assertIn("$year === 1398 && $subject === 'endodontics' && $stem === 'endodontics'", self.cli)
+        self.assertIn("$year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9'], true)", self.cli)
         self.assertIn("$year === 1398 && $subject === 'endodontics'", self.service)
         self.assertIn("$decision['edition'] !== 'torabinejad-endodontics@5e'", self.service)
         self.assertIn("1398 endodontics requires exact announced Torabinejad 5e", self.service)
