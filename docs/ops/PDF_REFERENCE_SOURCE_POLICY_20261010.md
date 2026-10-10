@@ -104,6 +104,13 @@ sidecars, `.pyc`, `.tmp` or `.partial` files, and zero full-book text members in
 the three research archives scanned. The seven remaining `.txt` files are
 checksum, license and dependency manifests only.
 
+The two W08 worktrees under `classification/parallel/W08/` remain because they
+are clean checkouts of separate open remote branches: [PR #203](https://github.com/ArianGhsm/FanoosLearn/pull/203)
+and [PR #233](https://github.com/ArianGhsm/FanoosLearn/pull/233). They are
+not scratch outputs from a finished local run; remove each only after its PR
+is closed or merged and the protected W08 handoff is preserved. Their
+remaining `.txt` files are license/dependency manifests, not book copies.
+
 The direct-PDF implementation and this rule are on open PR #255 and have not
 yet been merged or deployed. The live release at this check was
 `69ff7223a46298489a15cd35745dd4d77305089c` and still contains the legacy
