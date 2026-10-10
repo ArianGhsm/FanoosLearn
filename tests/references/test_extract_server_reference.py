@@ -28,6 +28,14 @@ class PrivateBookExtractionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "gap"):
             module.chapter_coverage(mapping, "book@1e", 7)
 
+    def test_proffit_sixth_edition_frontmatter_boundary(self):
+        import json
+        mapping = json.loads((HERE / "data/bank/reference-chapter-pages.json").read_text(encoding="utf-8"))
+        runs = mapping["editions"]["proffit-orthodontics@6e"]["runs"]
+        self.assertEqual(runs[:3], [[None, 1, 11], ["1", 12, 27], ["2", 28, 69]])
+        self.assertEqual(module.chapter_coverage(mapping, "proffit-orthodontics@6e", 739),
+                         {"mapped_chapters": 20, "mapped_pages": 739})
+
     def test_page_markers(self):
         result = module.create_text("book@1e", ["hello", "world"], "a" * 64)
         self.assertIn("=== PAGE 1 ===\nhello", result)
