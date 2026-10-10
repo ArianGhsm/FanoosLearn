@@ -195,7 +195,6 @@ body.x-focus .f-page {
     color: var(--text-secondary);
     font-size: var(--text-xs);
     font-weight: 700;
-    font-variant-numeric: tabular-nums;
     flex: none;
 }
 
@@ -1447,7 +1446,6 @@ body.x-focus .f-page {
 
 .x-settings__value {
     color: var(--text-tertiary);
-    font-variant-numeric: tabular-nums;
 }
 
 .x-settings__slider {
@@ -1829,7 +1827,6 @@ body.x-focus .f-page {
     flex: none;
     min-width: 3.5ch;
     font-size: var(--text-xs);
-    font-variant-numeric: tabular-nums;
     color: var(--text-tertiary);
     text-align: end;
 }

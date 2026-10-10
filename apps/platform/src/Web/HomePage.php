@@ -126,12 +126,12 @@ HTML;
      */
     private function menu(): string
     {
-        // Groups of three and six, so a phone's three-across grid has no half rows.
+        // Each group is one row (home.css); on a phone the row scrolls sideways.
         $groups = [
             'بانک و آزمون' => [
-                ['/app/bank', 'بانک سؤال', 'درس به درس، سال به سال', 'subject', '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H10v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M10 4h4v16h-4z"/><path d="m14.5 4.6 3.9-1 2.6 15.4-3.9 1z"/>'],
+                ['/app/bank', 'بانک سؤال', 'به تفکیک درس و سال', 'subject', '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H10v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M10 4h4v16h-4z"/><path d="m14.5 4.6 3.9-1 2.6 15.4-3.9 1z"/>'],
                 ['/app/exams', 'آزمون‌ها', 'آزمون‌های سال‌های قبل', 'accent', '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>'],
-                ['/app/exams/custom', 'آزمون‌ساز', 'درس، مبحث و تعداد دلخواه', 'tag', '<path d="M4 6h10M4 12h16M4 18h7"/><circle cx="17" cy="6" r="2"/><circle cx="14" cy="18" r="2"/>'],
+                ['/app/exams/custom', 'آزمون‌ساز', 'درس و مبحث دلخواه', 'tag', '<path d="M4 6h10M4 12h16M4 18h7"/><circle cx="17" cy="6" r="2"/><circle cx="14" cy="18" r="2"/>'],
                 ['/app/exams/mistakes', 'مرور اشتباه‌ها', 'هر چه غلط زده‌ای', 'danger', '<path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/><path d="M12 8v4l3 2"/>'],
                 ['/app/calendar', 'تقویم آزمون‌ها', 'آزمون‌های زمان‌دار', 'source', '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>'],
                 ['/app/references', 'منابع آزمون', 'کتاب و فصل هر سال', 'difficulty', '<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/>'],
@@ -145,7 +145,7 @@ HTML;
                 ['/app/progress', 'پیشرفت', 'نمودار و گزارش', 'accent', '<path d="M4 4v16h16"/><path d="m7.5 14.5 3.5-3.5 3 3 5-5.5"/>'],
                 ['/app/points', 'امتیاز و رتبه', 'هدف روزانه و سکه', 'warning', '<path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/>'],
                 ['/app/rooms', 'اتاق مطالعه', 'با دوستانت بخوان', 'tag', '<circle cx="9" cy="9" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M14 19a4 4 0 0 1 7 0"/>'],
-                ['/app/saved', 'ذخیره‌ها', 'بوکمارک، یادداشت، هایلایت', 'source', '<path d="M6 4h12v17l-6-4-6 4z"/>'],
+                ['/app/saved', 'ذخیره‌ها', 'نشان‌ها و یادداشت‌ها', 'source', '<path d="M6 4h12v17l-6-4-6 4z"/>'],
                 ['/app/store', 'فروشگاه', 'اشتراک و کد تخفیف', 'success', '<path d="M5 8h14l-1.1 11.1a1 1 0 0 1-1 .9H7.1a1 1 0 0 1-1-.9z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/>'],
                 ['/app/affiliate', 'کسب درآمد', 'معرفی فانوس به دوستان', 'accent', '<path d="M12 3v18M8 7h6a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h7"/>'],
             ],

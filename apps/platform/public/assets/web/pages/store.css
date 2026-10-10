@@ -27,7 +27,6 @@
     margin: var(--space-2) 0;
     font-size: var(--text-xl);
     font-weight: var(--weight-strong);
-    font-variant-numeric: tabular-nums;
 }
 
 .f-product .f-btn {
