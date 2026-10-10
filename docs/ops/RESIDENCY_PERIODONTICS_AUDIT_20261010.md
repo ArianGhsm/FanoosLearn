@@ -1,3 +1,41 @@
+> **Superseding live status — 2026-10-10, 12:18 UTC:** Exact-page repairs and 1398 second source-only batch were published and independently audited since the preceding snapshot below. **160 residency periodontics questions; 144 sourced; 16 without a source.** Source presence is NOT equivalent to accurate exact-edition original-page validation, so the subject is **not scientifically closed**.
+
+## Latest verified live periodontics publication
+
+### Carranza 13e: five 1399 historical page fields corrected, source chapter retained
+
+| 1399 item | Existing 13e chapter | Verified original PDF page | Verified printed page |
+|---|---:|---:|---:|
+| Q113 | 45 | 1050 | 496 |
+| Q114 | 51 | 1182 | 549 |
+| Q120 | 17 | 616 | 244 |
+| Q126 | 20 | 656 | 270 |
+| Q129 | 23 | 708 | 306 |
+
+Original private 13e book text SHA-256 `baa5b5efd320bd286e101b7243dda7550392897bb6b2155261eeb83071d81814`. Reviewed operator [PR #231](https://github.com/ArianGhsm/FanoosLearn/pull/231), merged SHA `2e1890da5ca36ba45e7c5297c5293661094eb9ac`, all five PR CI jobs green; official updater subsequently deployed canonical main `b69b9bfb0f316961276304982ec1ffb520393fb5`, health OK. Verified full backup `/var/backups/fanoos/20261010T120645Z-2ac1eec3` (54 files).
+
+Atomic production receipt `/srv/fanoos/shared/research/classification/reports/periodontics-13e-page-repair-20261010/1399-five-page-apply-receipt-20261010.json`, SHA-256 `db0e133786706d7e09ed9dec529605312e192313421486faa4fb8f4e93b272f7`. **Independent comparison of all 20 source rows** confirmed ONLY these five `bank_question_sources.page` fields changed from NULL. Full 1399 frozen assessment remained published version **8**, with unchanged original SHA-256 `d36cc9097b8d096004128a967c5e15e279973927f2ea47b020c5876205158b85`. Other sources, stems, choices, official keys, previous assessments, attempt history, and historical anchors unchanged. Independent post-audit SHA-256 `6fef339de62e522545cafaf43e53d0cfc9959e72aa5fa20e38df5cd937756d38`; protected recovery archive SHA-256 `a43a63ce40c17729f361ece49bd1f939d8e426b061678183f506c3c53ad5a296`.
+
+### Carranza 12e: 1398 Q134 and Q137 source-only insertions and exam publication
+
+After original Q141/Q144 publication (previous section), a fresh **18-source-free** question study identified two additional exact Carranza12e, chapter **15**, original PDF **594**, book-printed page **229**: Q134 (recorded correct probing depth 2 mm after accounting for 3-mm visible recession and 5-mm actual attachment level) and Q137 (loss of stippling in early gingivitis). Primary validator accepted **2**, rejected **0**, pending **16**. The exact original source and printed page neighbors corroborated both.
+
+An independent frozen-input second batch was introduced by [PR #236](https://github.com/ArianGhsm/FanoosLearn/pull/236), merged `986bae8610f963c8be60cd2cc92788e69a5a706b`, required CI green (run `38050961356`). Official updater request `01a125bb-5cf9-7122-a065-a068092074bb` **SUCCEEDED**, live health SHA matched `986bae8...`; full verified backup `/var/backups/fanoos/20261010T121615Z-541d6a2f` contained 54 files. Original first-batch Q141/Q144 immutable inputs and receipts were not overwritten. Protected independent followup provenance audit SHA-256 `7ad7fd4ac36ebf6aeb83d300b549d45fdba7dc5363da14c89ea815abeb93fd75`.
+
+Source-only insertion preview and atomic apply both succeeded: exactly Q134 and Q137 got the new source link, **zero question/choice/answer edits**. Receipt `/srv/fanoos/shared/research/classification/reports/1398-periodontics-followup-source-publish-20261010.json`, SHA-256 `e0478158c2e4fa12966ac07961b6794e2c054bbb0dc17bf01492d2fd023f04fd`. Read-only post-commit query showed exactly **four** 1398 periodontics source rows Q134 ch15 p229, Q137 ch15 p229, Q141 ch15 p230, Q144 ch45 p487. **Sixteen** other 1398 periodontics questions remain unsourced.
+
+Full 1398 published frozen residency assessment was republished from version **8 to 9**, 245 questions. Independent immutable post-audit established **all non-explanation content identical**; **23** source-derived explanations changed, attributable to concurrent already-verified published sources in **19 orthodontics, two oral pathology, and two new periodontics Q134/Q137**. No unseen stem/choice/key differences. Protected independent post-audit SHA-256 `f573cfd0f2d03b66dcf4b0f2758f1bf03708203069d4ab9e97bb3651c531c2a3`. Protected recovery archive SHA-256 `80883db517cab84d71e37ab3075bb8016130c23ff380aa8c01cfe133b21e284b`.
+
+### Exact-book scientific holds still preventing whole-subject closure
+
+- **1398:** 16 unclassified items. The source-book evidence conflicts with some recorded final answers or options: Q135 keyed answer text is malformed (book's gingival enlargement Grade II); Q138 original book says cellular intrinsic-fiber cementum fills resorption lacunae but keyed answer is acellular extrinsic; Q145 Fones brushing is circular, not vibratory as keyed; Q148 genetics is not an environmental factor. Other cases lack sufficiently direct answer-defining evidence. Preserved private per-item no-key-change ledger: `classification/reports/periodontics-1398-16-scientific-holds-20261010.json`, SHA-256 `676e966057bbe168578dd30b93e9bccb1de3672fa3cb9fe1520c7cf67df4fe9d`. **Never rewrite official answers to make classification appear complete.**
+- **1399–1403:** 100 pre-existing Carranza13e source rows, now **5** validated live printed-page fields and **95** still NULL. The Q119 1399 historical chapter 48 contradicts direct original-13e ch47 PDF1073 p507. Five other current 13e chapter links fall outside announced year-specific scope. Existing nearest-14e historical anchors remain intact pending separately approved source/chapter/page-only correction.
+- **1404–1405:** all **40** existing Carranza14e page fields are placeholder-like and unverified; four current assigned chapters are outside year-specific syllabus. The approved private source object is only a **105-page supplementary extract**, not the complete original edition, and Google Drive has the same partial object. No correct full-original-book page/answer audit is possible yet. No nearest-edition substitution is allowed.
+
+**Read-back count:** 160 residency-periodontics questions; 144 have a source record, 16 source-free. Only the specifically listed 1398 source links and five 1399 printed pages are original-book evidence-verified and published in these audits. The remaining 135 older source rows must never be described as exact-page approved. On-host research backups are *not* offsite copies. The private overall original 160-item ledger from the earlier checkpoint is historical and must be re-generated after these changes, rather than mistaken for the latest counts.
+
+---
+
 > **Updated verified production checkpoint, 2026-10-10 UTC10:28.** The original 2026-10-10 research-only snapshot below is historical for 1398 source availability: exact Carranza12e became ready, and two validated question source rows were subsequently published. The following new section is the current result; do not reuse the earlier unsourced count or "12e pending" state as live.
 
 ## Verified periodontics production completion checkpoint (1398 partial; subject remains open)
