@@ -68,7 +68,17 @@ final class BackupRetention
                     new DateTimeZone('UTC'),
                 );
                 $ready = $entry->getPathname() . DIRECTORY_SEPARATOR . 'READY';
-                if ($created !== false && is_file($ready) && !is_link($ready)) {
+                $manifest = $entry->getPathname() . DIRECTORY_SEPARATOR . 'manifest.json';
+                if ($created !== false
+                    && is_file($ready)
+                    && !is_link($ready)
+                    && is_file($manifest)
+                    && !is_link($manifest)) {
+                    try {
+                        BackupManifest::verify($entry->getPathname());
+                    } catch (\Throwable) {
+                        continue;
+                    }
                     $backups[] = [
                         'path' => $entry->getPathname(),
                         'name' => $name,

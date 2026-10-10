@@ -47,9 +47,12 @@ final class BackupContractTest
                 '20261002T000000Z-eeee5555',
             ];
             foreach ($fullNames as $name) {
-                mkdir($fullRoot . DIRECTORY_SEPARATOR . $name, 0700);
-                file_put_contents($fullRoot . DIRECTORY_SEPARATOR . $name . DIRECTORY_SEPARATOR . 'READY', 'verified');
+                self::writeFullBackup($fullRoot, $name);
             }
+            $corruptFull = '20261012T000000Z-ffff6666';
+            mkdir($fullRoot . DIRECTORY_SEPARATOR . $corruptFull, 0700);
+            file_put_contents($fullRoot . DIRECTORY_SEPARATOR . $corruptFull . DIRECTORY_SEPARATOR . 'manifest.json', '{}');
+            file_put_contents($fullRoot . DIRECTORY_SEPARATOR . $corruptFull . DIRECTORY_SEPARATOR . 'READY', 'corrupted manifest');
 
             $recentResearch = '20261010-recent-checkpoint.tar.gz';
             $oldResearch = '20261010-old-checkpoint.tar.gz';
@@ -84,8 +87,9 @@ final class BackupContractTest
             self::assert(
                 is_file($researchRoot . DIRECTORY_SEPARATOR . $receipt)
                     && is_file($incomplete)
-                    && is_file($corrupt),
-                'Publication receipts and incomplete or unverifiable archives must remain untouched.',
+                    && is_file($corrupt)
+                    && is_dir($fullRoot . DIRECTORY_SEPARATOR . $corruptFull),
+                'Publication receipts and incomplete or unverifiable backups must remain untouched.',
             );
 
             $projectRoot = dirname(__DIR__, 2);
@@ -158,5 +162,13 @@ final class BackupContractTest
         $timestamp = (new \DateTimeImmutable($modifiedAt))->getTimestamp();
         touch($archive, $timestamp);
         touch($archive . '.sha256', $timestamp);
+    }
+
+    private static function writeFullBackup(string $root, string $name): void
+    {
+        $backup = $root . DIRECTORY_SEPARATOR . $name;
+        mkdir($backup, 0700);
+        $digest = BackupManifest::write($backup, ['test_fixture' => true]);
+        file_put_contents($backup . DIRECTORY_SEPARATOR . 'READY', $digest . PHP_EOL);
     }
 }
