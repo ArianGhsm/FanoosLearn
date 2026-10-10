@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'scripts' / 'import
 import json  # noqa: E402
 import tempfile  # noqa: E402
 import zipfile  # noqa: E402
-from docx_to_sitting import BOOKLET, QUESTION, answer_of, build, key_from_table, norm, subject_of  # noqa: E402
+from docx_to_sitting import ANSWER, BOOKLET, QUESTION, answer_of, build, key_from_table, norm, subject_of  # noqa: E402
 
 
 def write_docx(path: Path, lines: list[str]) -> None:
@@ -27,6 +27,9 @@ class DocxToSittingTest(unittest.TestCase):
         self.assertIsNone(answer_of('پاسخ'))
         self.assertEqual(answer_of('پاسخ کلیدی: گزینه 1 (الف) — کلید اولیه'), {'choice': 1, 'status': 'preliminary'})
         self.assertEqual(answer_of('پاسخ کلیدی: نامشخص (کلید کامل معتبر یافت نشده است)'), {'choice': None, 'status': 'disputed'})
+        self.assertEqual(answer_of('پاسخ نهایی: ب'), {'choice': 2, 'status': 'final'})
+        self.assertEqual(answer_of('پاسخ نهایی: الف و ج'), {'choice': 1, 'status': 'final', 'also_correct': [3]})
+        self.assertIsNone(ANSWER.match('پاسخ‌نامه کلیدی بورد پریودانتیکس — ۱۴۰۰'))
 
     def test_question_numbers_and_booklet_sources_in_the_newer_layouts(self):
         for line in ['سؤال 1 ـ کدام صحیح است؟', 'سؤال 001 | کدام صحیح است؟', norm('۱. کدام صحیح است؟')]:
@@ -42,6 +45,7 @@ class DocxToSittingTest(unittest.TestCase):
                 'سؤال 1 ـ اولین سؤال؟', 'الف) یک', 'ب) دو', 'ج) سه', 'د) چهار', 'پاسخ کلیدی: نامشخص (کلید کامل معتبر یافت نشده است)',
                 'منبع درج‌شده در دفترچه: کارانزا ۲۰۱۹',
                 'سؤال 2 ـ دومین سؤال؟', 'الف) یک', 'ب) دو', 'ج) سه', 'د) چهار', 'پاسخ کلیدی: گزینه 2 (ب) — کلید اولیه',
+                'پاسخ‌نامه کلیدی بورد پریودانتیکس — ۱۴۰۳', 'کلید اولیه: الف = ۱، ب = ۲',
             ])
             report = build(docx, 1403, Path(tmp), 'A', None, exam_type='board', round_=2, subject='periodontics', expected=2)
             sitting = json.loads((Path(tmp) / 'board-1403-2.json').read_text(encoding='utf-8'))

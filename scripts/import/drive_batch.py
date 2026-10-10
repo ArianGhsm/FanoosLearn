@@ -17,7 +17,10 @@ docs/ops/QUESTION_IMPORT.md is the runbook.
      `import --dry-run` it. Writes <staging>/report.json and prints one line
      per paper. Nothing is written to the bank.
 
-       python3 scripts/import/drive_batch.py prepare --manifest=<manifest.json> --batch=<name>
+       python3 scripts/import/drive_batch.py prepare --manifest=<manifest.json> --batch=<name> [--reuse=<earlier batch>]
+
+     --reuse takes each paper's .docx from an earlier batch's folder when it
+     is there (Drive downloads are slow from the host), instead of Drive.
 
   3. import: with a verified full backup, import every prepared paper that
      had no error, and with --publish put each on the site as an exam.
@@ -147,7 +150,11 @@ def prepare(args) -> None:
         work.mkdir()
         row = {**entry, 'sitting': name}
         try:
-            rclone('copyto', f"gdrive:{entry['drive_path']}", str(work / 'paper.docx'))
+            earlier = STAGING / args.reuse / name / 'paper.docx' if args.reuse else None
+            if earlier is not None and earlier.is_file():
+                shutil.copy(earlier, work / 'paper.docx')
+            else:
+                rclone('copyto', f"gdrive:{entry['drive_path']}", str(work / 'paper.docx'))
             converted = build(work / 'paper.docx', entry['year'], work, entry.get('form', 'A'), None, frozenset(entry.get('leave_out', [])),
                               entry['type'], entry['round'], entry.get('subject'), entry.get('expected'))
             row.update({k: converted[k] for k in ('questions', 'voided', 'no_valid_key', 'preliminary', 'booklet_sources', 'images')})
@@ -227,6 +234,7 @@ def main() -> None:
     p = steps.add_parser('prepare')
     p.add_argument('--manifest', required=True)
     p.add_argument('--batch', required=True)
+    p.add_argument('--reuse')
     i = steps.add_parser('import')
     i.add_argument('--batch', required=True)
     i.add_argument('--backup', required=True)
