@@ -25,6 +25,13 @@ class ScopeChaptersTest(unittest.TestCase):
                          [n for n in TWENTY if n not in {'4', '8', '18', '19'}])
         self.assertEqual(numbers(resolve('تمام فصول به جز ۱، ۲', TWENTY)), TWENTY[2:])
 
+    def test_specialty_list_wordings(self):
+        self.assertEqual(numbers(resolve('همه‌ی فصول', TWENTY)), TWENTY)
+        self.assertEqual(numbers(resolve('همه‌ی کتاب به جز فصول 3، 5', TWENTY)), [n for n in TWENTY if n not in {'3', '5'}])
+        self.assertEqual(numbers(resolve('کلیه فصول غیر از فصل 16', TWENTY)), [n for n in TWENTY if n != '16'])
+        self.assertEqual(numbers(resolve('All chapters, except for chapters 1-5', TWENTY)), TWENTY[5:])
+        self.assertEqual(numbers(resolve('Chapters: 4, 6, 7', TWENTY)), ['4', '6', '7'])
+
     def test_whole_book_without_a_chapter_list_is_unknown(self):
         self.assertIsNone(resolve('تمام فصول', []))
 

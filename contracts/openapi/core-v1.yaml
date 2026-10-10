@@ -354,7 +354,7 @@ paths:
   /workspaces/{workspaceId}/bank/references:
     get:
       operationId: readBankReferences
-      description: 'منابع آزمون: the references named for each exam year of the active exam types, newest year first, subject by subject, with edition, authors, chapter scope, whether the announcement is official, and the edition''s chapters in chapter order (chapters: [{key, number, title, title_fa, title_fa_reviewed, sections, in_scope, partial}], with the reference's edition_ref; empty when the catalog has no chapter list for it). in_scope says whether the year''s announcement covers the chapter (null when it names no chapter list); partial carries its words when only some pages count; title_fa_reviewed is false for a machine translation.'
+      description: 'منابع آزمون: the references named for each exam year of the active exam types ([{type, type_key, year, subjects}]), newest year first and in exam-type order within a year, subject by subject, with edition, authors, chapter scope, whether the announcement is official, and the edition''s chapters in chapter order (chapters: [{key, number, title, title_fa, title_fa_reviewed, sections, in_scope, partial}], with the reference's edition_ref; empty when the catalog has no chapter list for it). in_scope says whether the year''s announcement covers the chapter (null when it names no chapter list); partial carries its words when only some pages count; title_fa_reviewed is false for a machine translation.'
       parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
       responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/bank/chapter-outline:

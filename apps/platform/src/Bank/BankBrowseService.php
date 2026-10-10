@@ -193,8 +193,8 @@ final class BankBrowseService
     }
 
     /**
-     * منابع آزمون: the references named for each exam year, newest year
-     * first, subject by subject.
+     * منابع آزمون: the references named for each exam type and year, newest
+     * year first (residency before the other types within a year), subject by subject.
      *
      * @return list<array<string, mixed>>
      */
@@ -219,7 +219,7 @@ SQL);
         $years = [];
         foreach ($rows as $row) {
             $key = $row['type_key'] . ':' . $row['exam_year'];
-            $years[$key] ??= ['type' => (string) $row['type_name'], 'year' => (int) $row['exam_year'], 'subjects' => []];
+            $years[$key] ??= ['type' => (string) $row['type_name'], 'type_key' => (string) $row['type_key'], 'year' => (int) $row['exam_year'], 'subjects' => []];
             $subjects = &$years[$key]['subjects'];
             $subjects[$row['subject_key']] ??= ['key' => (string) $row['subject_key'], 'name' => (string) $row['subject_name'], 'references' => []];
             $subjects[$row['subject_key']]['references'][] = [
@@ -493,8 +493,10 @@ SQL);
     }
 
     /**
-     * The references named for this subject in the two latest years that
-     * name any, so the student sees what changed.
+     * The residency references named for this subject in the two latest
+     * years that name any, so the student sees what changed. The subject
+     * page is the residency bank's; board, promotion and national lists are
+     * on منابع آزمون.
      *
      * @return list<array<string, mixed>>
      */
@@ -503,7 +505,7 @@ SQL);
         $query = $this->database->prepare(<<<'SQL'
 SELECT validity.exam_year, reference.title, edition.edition_label, validity.scope
 FROM bank_reference_validity validity
-JOIN bank_exam_types type ON type.id = validity.exam_type_id AND type.is_active = TRUE
+JOIN bank_exam_types type ON type.id = validity.exam_type_id AND type.is_active = TRUE AND type.type_key = 'residency'
 JOIN bank_reference_editions edition ON edition.id = validity.edition_id
 JOIN bank_references reference ON reference.id = edition.reference_id
 WHERE validity.workspace_id = :workspace AND validity.subject_id = :subject

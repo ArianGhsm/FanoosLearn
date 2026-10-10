@@ -69,15 +69,16 @@ HTML;
 <a class="c-back" href="/app/bank">→ بانک سؤال</a>
 <header class="r-hero">
     <div>
-        <span class="r-hero__eyebrow">فهرست اعلام‌شده‌ی هر سال</span>
+        <span class="r-hero__eyebrow">فهرست اعلام‌شده‌ی هر آزمون و هر سال</span>
         <h1>منابع آزمون</h1>
-        <p class="r-hero__lead">کتاب‌ها و فصل‌هایی که برای هر سال اعلام شده، درس به درس: کدام کتاب، کدام ویرایش، کدام فصل‌ها، و چه چیزی نسبت به سال قبل عوض شده.</p>
+        <p class="r-hero__lead">کتاب‌ها و فصل‌هایی که برای دستیاری، بورد، ارتقا و آزمون ملی هر سال اعلام شده، درس به درس: کدام کتاب، کدام ویرایش، کدام فصل‌ها، و چه چیزی نسبت به سال قبل عوض شده.</p>
     </div>
     <dl class="r-summary" id="ref-summary" aria-live="polite"></dl>
 </header>
 <div class="f-notice f-notice--error" id="bank-error" hidden>
     <div class="f-notice__body"><p id="bank-error-text"></p></div>
 </div>
+<div class="r-types" id="ref-types" role="group" aria-label="نوع آزمون" hidden></div>
 <nav class="r-years" id="ref-years" role="tablist" aria-label="سال آزمون"></nav>
 <div class="r-tools" id="ref-tools" hidden>
     <input class="f-input r-search" id="ref-search" type="search" placeholder="جست‌وجوی درس، کتاب یا نویسنده…" autocomplete="off" aria-label="جست‌وجو در منابع">

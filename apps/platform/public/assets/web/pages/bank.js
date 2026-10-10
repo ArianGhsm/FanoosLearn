@@ -261,12 +261,17 @@ const CHANGES = {
     scope: ['scope', 'محدوده تغییر کرد'],
 };
 
+/* The journals and articles a specialty list names are one entry, not a book. */
+function isArticles(ref) {
+    return String(ref.edition_ref ?? '').startsWith('announced-articles-');
+}
+
 function badge(kind, text) {
     return el('span', `r-badge r-badge--${kind}`, text);
 }
 
 function bookCard(ref, change = null) {
-    const card = el('article', `r-book r-book--${spineOf(ref.edition_ref)}`);
+    const card = el('article', `r-book r-book--${isArticles(ref) ? 'articles' : spineOf(ref.edition_ref)}`);
     const spine = el('span', 'r-book__spine');
     spine.setAttribute('aria-hidden', 'true');
     const body = el('div', 'r-book__body');
@@ -433,9 +438,10 @@ function outlineToggle(editionRef, chapter) {
 /* ---------------------------------------------------------- references */
 
 /*
- * منابع آزمون: one year at a time, chosen on a strip of years (kept in the
- * address as ?year=), a summary of the year against the one before it, and
- * one card per subject. Search and "only what changed" narrow the cards.
+ * منابع آزمون: one exam type (دستیاری، بورد، ارتقا، آزمون ملی) and one year at
+ * a time, chosen on a switch and a strip of years (kept in the address as
+ * ?type=&year=), a summary of the year against the one before it, and one
+ * card per subject. Search and "only what changed" narrow the cards.
  */
 async function references() {
     let years;
@@ -450,32 +456,69 @@ async function references() {
         done(empty('منبعی ثبت نشده', 'منابع هر سال که وارد شود، این‌جا می‌آید.'));
         return;
     }
+    const typeSwitch = document.getElementById('ref-types');
     const strip = document.getElementById('ref-years');
     const summary = document.getElementById('ref-summary');
     const search = document.getElementById('ref-search');
     const changesOnly = document.getElementById('ref-changes');
-    const severalTypes = new Set(years.map((year) => year.type)).size > 1;
-    const asked = Number(new URLSearchParams(window.location.search).get('year'));
-    let index = Math.max(0, years.findIndex((year) => year.year === asked));
+    const params = new URLSearchParams(window.location.search);
+    const types = [...new Map(years.map((year) => [year.type_key, year.type])).entries()];
+    let type = types.some(([key]) => key === params.get('type')) ? params.get('type') : types[0][0];
+    const asked = Number(params.get('year'));
+    let index = years.findIndex((year) => year.type_key === type && year.year === asked);
+    if (index < 0) index = years.findIndex((year) => year.type_key === type);
+    let tabs = [];
 
-    const tabs = years.map((year, i) => {
-        const tab = el('button', 'r-year');
-        tab.type = 'button';
-        tab.setAttribute('role', 'tab');
-        tab.setAttribute('aria-label', `${year.type} ${faDigits(year.year)}`);
-        tab.append(el('span', 'r-year__number', faDigits(year.year)));
-        if (severalTypes) tab.append(el('span', 'r-year__type', year.type));
-        tab.addEventListener('click', () => {
-            index = i;
-            const url = new URL(window.location.href);
-            url.searchParams.set('year', String(year.year));
-            window.history.replaceState(null, '', url);
+    const remember = () => {
+        const url = new URL(window.location.href);
+        url.searchParams.set('type', type);
+        url.searchParams.set('year', String(years[index].year));
+        window.history.replaceState(null, '', url);
+    };
+
+    // The exam types, when there is more than one; each keeps its own strip of years.
+    const typeButtons = types.map(([key, name]) => {
+        const button = el('button', 'r-type', name);
+        button.type = 'button';
+        button.setAttribute('aria-pressed', String(key === type));
+        button.addEventListener('click', () => {
+            if (key === type) return;
+            type = key;
+            index = years.findIndex((year) => year.type_key === type);
+            typeButtons.forEach((other, i) => other.setAttribute('aria-pressed', String(types[i][0] === type)));
+            remember();
+            buildStrip();
             draw();
-            tab.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
         });
-        strip.append(tab);
-        return tab;
+        return button;
     });
+    if (types.length > 1) {
+        typeSwitch.append(...typeButtons);
+        typeSwitch.hidden = false;
+    }
+
+    function buildStrip() {
+        strip.replaceChildren();
+        tabs = [];
+        years.forEach((year, i) => {
+            if (year.type_key !== type) return;
+            const tab = el('button', 'r-year');
+            tab.type = 'button';
+            tab.setAttribute('role', 'tab');
+            tab.setAttribute('aria-label', `${year.type} ${faDigits(year.year)}`);
+            tab.dataset.index = String(i);
+            tab.append(el('span', 'r-year__number', faDigits(year.year)));
+            tab.addEventListener('click', () => {
+                index = i;
+                remember();
+                draw();
+                tab.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+            });
+            strip.append(tab);
+            tabs.push(tab);
+        });
+    }
+    buildStrip();
     search.addEventListener('input', () => draw());
     changesOnly.addEventListener('click', () => {
         changesOnly.setAttribute('aria-pressed', String(changesOnly.getAttribute('aria-pressed') !== 'true'));
@@ -484,16 +527,19 @@ async function references() {
     document.getElementById('ref-tools').hidden = false;
 
     function draw() {
-        tabs.forEach((tab, i) => {
-            tab.classList.toggle('is-active', i === index);
-            tab.setAttribute('aria-selected', String(i === index));
+        tabs.forEach((tab) => {
+            const on = Number(tab.dataset.index) === index;
+            tab.classList.toggle('is-active', on);
+            tab.setAttribute('aria-selected', String(on));
         });
         const year = years[index];
         const before = previousYear(years, index);
         const earlier = new Map((before?.subjects ?? []).map((subject) => [subject.key, subject]));
         const subjects = year.subjects.map((subject) => {
             const previous = before ? (earlier.get(subject.key) ?? { references: [] }) : null;
-            const books = subject.references.map((ref) => ({ ref, change: referenceChange(ref, previous) }));
+            // A list's journals and articles come after its books.
+            const books = subject.references.map((ref) => ({ ref, change: referenceChange(ref, previous) }))
+                .sort((a, b) => isArticles(a.ref) - isArticles(b.ref));
             return { subject, books, dropped: droppedReferences(subject, previous) };
         });
 
