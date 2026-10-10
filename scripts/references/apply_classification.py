@@ -146,6 +146,7 @@ def main() -> int:
     parser.add_argument('--partial', action='store_true', help='write the accepted decisions even if some were rejected')
     parser.add_argument('--allow-nearest', action='store_true',
                         help='historical audit only: permit previously approved nearest-edition substitutions')
+    parser.add_argument('--pdf-pages', action='store_true')
     parser.add_argument('--local', default=str(REPO / '.local'))
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding='utf-8')
@@ -237,7 +238,7 @@ def main() -> int:
                 why = 'confidence must be a number from 0 to 1'
             if why is None:
                 cite_node = chapter_nodes(catalog, cite)[cite_chapter]
-                printed = printed_page(text)
+                printed = None if args.pdf_pages else printed_page(text)
                 accepted[n] = {
                     'ref': f"{cite}#{cite_node['key']}",
                     'page': printed if printed else f'pdf {page}',
