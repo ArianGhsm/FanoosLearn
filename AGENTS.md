@@ -13,6 +13,8 @@ where these or any old runbook differ, the principles prevail.
 4. `docs/ops/SERVER.md` — production layout, protected data and operators.
 5. `docs/product/09_CHAPTER_CLASSIFICATION.md` — mandatory before
    assigning a source, chapter or page.
+6. `docs/ops/PDF_REFERENCE_SOURCE_POLICY_20261010.md` — PDF source-of-truth
+   rule and current extraction/index contract for reference classification.
 
 ## 1. Authorities and environment
 
@@ -57,12 +59,23 @@ Never report a change as complete without verifying its persisted state.
 - Fetch live private reference inventory with
   `scripts/ops/reference-library-inventory.php` and match each question
   to the official year/subject/edition in the catalog.
+- For book-based source/chapter/page work, the exact verified private server
+  PDF is the canonical source. Never treat a standalone `.txt`, local text
+  corpus, OCR export or chapter extract as an alternate authority. Build the
+  protected page-text index directly from the current approved PDF object with
+  `scripts/references/extract_server_reference.py`; keep its provenance receipt
+  beside it and confirm the PDF SHA-256 before each new batch. The index is a
+  regenerable search/validation cache, not a replacement source. Check selected
+  evidence on the exact PDF page, especially where columns, Persian shaping,
+  figures or OCR affect reading order.
 - Work with **eligible verified server editions** first. Set missing or
   incomplete editions aside as pending; no fabricated chapters and **no
   new nearest-edition fallback by default**. Preserve previously audited
   legacy assignments and human-reviewed sources.
-- A verified PDF is **not automatically searchable text**: check complete
-  page-marked book text and chapter-page mapping before deciding.
+- A verified PDF may lack a complete text layer: verify page coverage and
+  chapter-page mapping before deciding. If PDF text extraction is incomplete,
+  use only a reviewed PDF-derived OCR workflow; otherwise keep that edition
+  pending. Never fall back to an unrelated text copy.
 - Use `scripts/references/` search and evidence validator end-to-end.
   Every decision needs the book's own verbatim evidence, chapter, PDF page,
   edition and confidence; unanswered matches remain undecided, not `none`.

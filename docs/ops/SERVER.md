@@ -45,7 +45,8 @@ verified. A laptop-only `.local/SERVER_ACCESS.md` is not a prerequisite.
 The database is `fanoos_prod` on the local MySQL.
 
 **Separation:** `shared/research/` is a protected, server-only *working*
-directory for page-marked reference texts, exact site-matching sittings,
+directory for page-text indexes extracted from verified reference PDFs and
+their provenance receipts, exact site-matching sittings,
 decision JSON, QA output and job/checkpoint records; it is not the
 content-addressed storage or an immutable release. The directory skeleton was provisioned on 2026-10-09 for
 `fanoosupd:fanoosupd` with mode `0700`; verified contents were empty.
@@ -55,11 +56,17 @@ durable. Until the backup/recovery mechanism is verified, do not claim this
 working directory is backed up.
 
 Existing reference scripts accept `--local=/srv/fanoos/shared/research`
-so their expected paths are `references/<edition>.txt` and
+so their expected paths are the generated `references/<edition>.txt` index,
+its `references/<edition>.provenance.json` receipt and
 `classification/decisions/<year>-<subject>.json`. The site-matching
 sittings belong in `bank-sittings/<year>/`. Protected PDFs already in
 object storage are **not** duplicated as a second public library.
-A secure authorized access/staging method must be verified before extraction.
+`scripts/references/extract_server_reference.py` reads the current approved
+PDF object in place, checks its database identity and SHA-256, and writes only
+the page-text index and receipt here. The index is not an independent input:
+re-extract and verify it from the current PDF before classification. A secure
+authorized reader and sufficient workspace/backup capacity must be verified
+before extraction.
 
 nginx serves everything under `/assets/` as immutable for a year
 (`ops/nginx/fanoos-performance.conf`). A release reaches browsers only
@@ -262,14 +269,17 @@ sudo -n -u fanoosupd sh -c 'FANOOS_CONFIG_FILE=/etc/fanoos/updater-config.php ph
 ```
 
 The PDF inventory says **what objects are approved**, *not* whether their
-complete searchable `=== PAGE n ===` text and correct chapter map exist.
+complete searchable page index and correct chapter map exist. The index is
+generated from the exact PDF by `extract_server_reference.py` and stored with
+its matching provenance receipt; it is not an independent source file.
 To make an edition eligible for chapter classification:
 (1) check that exact official edition in the year's catalog;
 (2) confirm verified PDF, sufficient disk and authenticated access to
 the private object;
-(3) securely read/extract its full text *once* into the backed-up
-protected research workspace and check page markers;
-(4) validate `data/bank/reference-chapter-pages.json` boundaries;
+(3) run the read-only PDF extraction preflight, then generate its page-text
+index and SHA-bound receipt in the backed-up protected research workspace;
+(4) visually check the cited page in the exact original PDF and validate
+`data/bank/reference-chapter-pages.json` boundaries;
 (5) run `scripts/references/find_in_books.py` and
 `apply_classification.py` with `--local` pointed at that workspace.
 Do not infer that existing private PDF registration implies steps 3–4 are

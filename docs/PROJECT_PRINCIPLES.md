@@ -83,8 +83,8 @@ text and validated chapter-page boundaries.
 ### Classification eligibility
 
 Work continuously through **eligible questions whose exact official edition
-is available on the server** with verified PDF provenance, complete
-page-marked book text, and correct chapter boundaries. A missing/unusable
+is available on the server** with verified PDF provenance, a complete
+PDF-derived page index, and correct chapter boundaries. A missing/unusable
 edition is **pending**; document its exact key and reason and move on to
 other eligible questions. Do not block all years/subjects on a handful of
 missing references and do not fabricate chapter/page matches from titles,
@@ -97,20 +97,31 @@ completion pass; waiting for the exact official edition is preferred unless
 the owner separately approves a specific exception and the evidence-mapping
 workflow is documented.
 
-The page text for an eligible edition must be read from the original book.
-The protected PDF objects are not copied into Git or published URLs. Use an
-approved, authenticated reader or secure, space-aware staging to produce
-**one** full-book page-marked text per edition, with `=== PAGE n ===` markers.
+The exact verified server PDF is the canonical source for every book-based
+classification. Read it through the authenticated, read-only bridge in
+`scripts/references/extract_server_reference.py`; do not copy the PDF out of
+protected storage. That script verifies the current approved object, its
+size, PDF signature and SHA-256, then creates **one** complete, page-marked
+text index per edition (`=== PAGE n ===`) in the protected research workspace.
+The matching `.provenance.json` binds that index to the exact PDF and its
+SHA-256. This `.txt` is generated working data for search and validation only:
+it is never an independent source, must not be hand-edited or replaced by a
+separately collected text file. If stale or mismatched, stop and investigate
+the PDF/edition change; the extractor fails closed instead of overwriting the
+existing index. Rebuild only through a reviewed, protected refresh after the
+old index and receipt are safely preserved. Verify selected evidence on the original PDF page;
+the PDF remains authoritative if extraction order, OCR or layout is unclear.
 The existing classification scripts take `--local`; the server-side
-workspace is specified in `docs/ops/SERVER.md`. The book text is private
-runtime data, not repository content. Verify available disk space **before**
-building or duplicating a book.
+workspace is specified in `docs/ops/SERVER.md`. The index and provenance
+receipt are private runtime data, not repository content. Verify available
+disk space **before** building or duplicating any artifact.
 
 The binding procedure is
 `docs/product/09_CHAPTER_CLASSIFICATION.md`; source decisions must pass
-`scripts/references/apply_classification.py` against the book text and
-page-to-chapter map. The authority order is: official year validity and scope
-→ original edition text/page → exact evidence → validator → reviewed import.
+`scripts/references/apply_classification.py` against the PDF-derived index
+and page-to-chapter map. The authority order is: official year validity and
+scope → exact verified edition PDF/page → matching generated page index →
+verbatim evidence → validator → reviewed import.
 An unlocated fact stays **undecided**, not `none`; existing human-reviewed
 sources remain protected.
 
@@ -193,9 +204,10 @@ first active exam type with board/promotion represented in schema; owner as
 reviewer; confidence review threshold **0.85**.
 
 **2026-10-08 — validation decisions retained:** one complete, page-marked
-text per reference edition; classification only against the reference's own
-words; strict chapter/page/evidence checks, human override guard, exact
-site-matching sitting, `questions_changed=0` dry run, and verified backup.
+search index generated from the exact reference PDF per edition;
+classification only against the reference's own words; strict
+chapter/page/evidence checks, human override guard, exact site-matching
+sitting, `questions_changed=0` dry run, and verified backup.
 See `docs/product/09_CHAPTER_CLASSIFICATION.md` for the mistakes and guards.
 
 **2026-10-09 — new operating decisions (override previous laptop flow):**
@@ -229,11 +241,26 @@ See `docs/product/09_CHAPTER_CLASSIFICATION.md` for the mistakes and guards.
    valid when authenticated and host-key verified. The provider name itself
    is not proof of host identity.
 
+**2026-10-10 — PDF source-of-truth decision:** for book-based question
+classification, the exact current approved server PDF is authoritative.
+Search, chapter mapping and evidence validation must refresh/verify the
+page-text index against that PDF's SHA-256. A `.txt` index is a private,
+regenerable cache only; standalone text corpora and hand-edited text are not
+classification inputs. If the exact PDF is absent, stale, unreadable or lacks
+complete page coverage, leave the edition pending until its PDF-derived path
+is ready. The exam sitting source and reference-book source remain distinct:
+the sitting source verifies question wording, while the reference PDF verifies
+chapter/page/evidence.
+
 ## 7. Open implementation items (do not assume completed)
 
-- Establish and test the approved secure **read-only** bridge from registered
-  private PDF objects to the classification builder. Verify full text and
-  page-boundary integrity per edition. PDF inventory alone is insufficient.
+- Before each classification batch, run the PDF extraction preflight for the
+  exact edition and confirm the protected index and provenance receipt match
+  the current approved PDF SHA-256. The bridge is implemented; this is a
+  per-edition readiness check, not proof that every catalog PDF is searchable.
+- Add a reviewed, page-by-page OCR path for verified PDFs without a complete
+  text layer. Until that path passes coverage and visual checks, leave those
+  editions pending rather than using a separately sourced text file.
 - Populate and back up the server's private classification workspace,
   including original site-matching sittings and review decisions; maintain
   the decision/provenance ledger, without exposing raw question data.

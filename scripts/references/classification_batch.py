@@ -29,14 +29,14 @@ def official_editions(catalog: dict, exam_type: str, year: int, subject: str) ->
 
 
 def searchable(edition: str, texts: dict, include_nearest: bool = False) -> str | None:
-    """Exact edition by default; historical nearest substitutes require opt-in."""
+    """List only exact PDF-backed editions; live PDF checks happen at search time."""
     entry = texts.get(edition, {})
-    if 'missing' not in entry:
+    if entry.get('pdf') == 'verified-server-pdf':
         return edition
-    if not include_nearest:
+    if not include_nearest or 'missing' not in entry:
         return None
     nearest = entry.get('nearest')
-    return nearest if nearest and 'missing' not in texts.get(nearest, {}) else None
+    return nearest if nearest and texts.get(nearest, {}).get('pdf') == 'verified-server-pdf' else None
 
 
 def main() -> int:
@@ -60,7 +60,7 @@ def main() -> int:
     search = []
     for row in rows:
         found = searchable(row['edition'], texts, args.include_nearest)
-        note = 'text' if found == row['edition'] else (f'MISSING, legacy nearest {found}' if found else 'MISSING, pending exact edition')
+        note = 'PDF source listed' if found == row['edition'] else (f'MISSING, legacy nearest {found}' if found else 'MISSING, pending exact edition')
         print(f"OFFICIAL {row['edition']} [{note}] scope: {row.get('scope', '')}")
         if found and found not in search:
             search.append(found)

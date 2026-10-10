@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Build complete page-marked book text directly from one verified server PDF.
+"""Build a private page-text index directly from one verified server PDF.
 
 Read-only against MySQL and the immutable private PDF. Writes only under the
 operator-owned private research directory; no PDF copies, no public exports.
-Use --apply after reviewing the --dry-run report and disk space. A PDF whose
-pages are not text-searchable is explicitly rejected, not OCR-invented.
+The index is a regenerable search/validation cache, never a source independent
+of the exact PDF and SHA-256 in its provenance receipt. Use --apply after
+reviewing the read-only report and disk space. A PDF whose pages are not
+text-searchable is explicitly rejected, not OCR-invented.
 """
 from __future__ import annotations
 
@@ -81,7 +83,9 @@ def verify_file(root: Path, key: str, expected_hash: str, expected_size: int) ->
 def chapter_coverage(mapping: dict, edition: str, pages: int) -> dict:
     runs = mapping.get("editions", {}).get(edition, {}).get("runs", [])
     if not runs:
-        raise ValueError("edition has no page/chapter mapping")
+        # A new verified PDF can be extracted before its chapter map is built.
+        # It remains ineligible for classification until that map is complete.
+        return {"mapped_chapters": 0, "mapped_pages": 0}
     previous_end = 0
     chapters = set()
     for item in runs:
@@ -120,10 +124,56 @@ def page_texts(source: Path, min_ratio: float) -> list[str]:
     return [p.strip() for p in parts]
 
 
+def pdf_bookmarks(source: Path, page_count: int) -> list[list]:
+    """Read the original PDF outline in place when PyMuPDF is available."""
+    try:
+        import pymupdf
+    except ImportError:
+        return []
+    with pymupdf.open(source) as pdf:
+        if pdf.page_count != page_count:
+            raise ValueError("PDF outline page count differs from extracted page count")
+        return [
+            [int(level), str(title), int(page)]
+            for level, title, page in pdf.get_toc()
+            if isinstance(level, int) and isinstance(title, str)
+            and isinstance(page, int) and 1 <= page <= page_count
+        ]
+
+
 def create_text(edition: str, pages: list[str], source_hash: str) -> str:
     header = (f"# FANOOS reference text\n# edition: {edition}\n"
               f"# verified_source_sha256: {source_hash}\n# pages: {len(pages)}\n")
     return header + "".join(f"\n=== PAGE {i} ===\n{body}\n" for i, body in enumerate(pages, 1))
+
+
+def validate_existing_index(target: Path, receipt_path: Path, edition: str,
+                            source_hash: str, generated_text: str, page_count: int) -> bool:
+    """Refuse stale, detached or hand-edited page text; return whether it exists."""
+    if target.is_symlink() or receipt_path.is_symlink():
+        raise ValueError("refusing a symbolic-link reference index or provenance receipt")
+    if not target.exists():
+        if receipt_path.exists():
+            raise ValueError("orphaned provenance receipt exists without its PDF-derived index")
+        return False
+
+    current_bytes = target.read_bytes()
+    current_hash = hashlib.sha256(current_bytes).hexdigest()
+    expected_hash = hashlib.sha256(generated_text.encode("utf-8")).hexdigest()
+    if current_hash != expected_hash:
+        raise ValueError("existing edition index differs from the current verified PDF; investigate before replacement")
+    if not receipt_path.is_file():
+        raise ValueError("existing index has no provenance receipt tying it to a verified PDF")
+
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    if (receipt.get("format") != "fanoos.server-reference-extraction.v1"
+            or receipt.get("edition") != edition
+            or receipt.get("source_sha256") != source_hash
+            or receipt.get("text_sha256") != current_hash
+            or receipt.get("pdf_pages") != page_count
+            or receipt.get("status") != "applied"):
+        raise ValueError("existing index provenance does not match the current verified PDF")
+    return True
 
 
 def atomic_text(path: Path, body: str) -> None:
@@ -157,24 +207,24 @@ def main() -> int:
     storage_key, sha, byte_size = verified_row(args.edition, args.mysql_defaults, args.database)
     book = verify_file(args.storage_root, storage_key, sha, byte_size)
     pages = page_texts(book, args.min_ratio)
+    bookmarks = pdf_bookmarks(book, len(pages))
     mapping = json.loads((REPO / "data/bank/reference-chapter-pages.json").read_text(encoding="utf-8"))
     coverage = chapter_coverage(mapping, args.edition, len(pages))
     content = create_text(args.edition, pages, sha)
     target = args.local / "references" / f"{args.edition}.txt"
+    receipt_path = target.with_suffix(".provenance.json")
+    already_current = validate_existing_index(target, receipt_path, args.edition, sha, content, len(pages))
     details = {"format": "fanoos.server-reference-extraction.v1", "edition": args.edition,
                "source_sha256": sha, "source_bytes": byte_size,
                "pdf_pages": len(pages), **coverage,
+               "pdf_bookmarks": bookmarks,
                "text_sha256": hashlib.sha256(content.encode("utf-8")).hexdigest(),
                "text_bytes": len(content.encode("utf-8")),
-               "status": "applied" if args.apply else "checked_only"}
+               "status": "applied" if args.apply else ("current" if already_current else "checked_only")}
     if args.apply:
-        if target.is_symlink():
-            raise ValueError("refusing to replace a symbolic link")
-        if target.exists() and hashlib.sha256(target.read_bytes()).hexdigest() != details["text_sha256"]:
-            raise ValueError("existing edition text differs; investigate before replacement")
-        if not target.exists():
+        if not already_current:
             atomic_text(target, content)
-        atomic_text(target.with_suffix(".provenance.json"), json.dumps(details, ensure_ascii=False, indent=2) + "\n")
+        atomic_text(receipt_path, json.dumps(details, ensure_ascii=False, indent=2) + "\n")
     print(json.dumps(details, ensure_ascii=False, sort_keys=True))
     return 0
 

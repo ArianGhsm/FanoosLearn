@@ -20,7 +20,8 @@ Nothing is taken on trust. A decision is accepted only when
 - the chapter is a chapter of that edition in the catalog;
 - the page lies inside that chapter (data/bank/reference-chapter-pages.json);
 - every fragment of the evidence (split on "...", each of at least four
-  words) is printed on that page of .local/references/<edition>.txt;
+  words) is printed on that page in the private index extracted from the
+  exact verified server PDF (`.local/references/<edition>.txt`);
 - the confidence is a number from 0 to 1;
 - it does not replace a human-checked source with a different chapter (or
   with none) unless it says why in "override_human".
@@ -42,6 +43,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from reference_index import verify_current_pdf_index
 
 REPO = Path(__file__).resolve().parents[2]
 BANK = REPO / 'data' / 'bank'
@@ -74,6 +76,7 @@ class Books:
             if not path.exists():
                 self.pages[edition] = {}
             else:
+                verify_current_pdf_index(self.local, edition)
                 raw = path.read_text(encoding='utf-8')
                 marks = list(PAGE.finditer(raw))
                 self.pages[edition] = {
@@ -146,7 +149,7 @@ def main() -> int:
     parser.add_argument('--partial', action='store_true', help='write the accepted decisions even if some were rejected')
     parser.add_argument('--allow-nearest', action='store_true',
                         help='historical audit only: permit previously approved nearest-edition substitutions')
-    parser.add_argument('--local', default=str(REPO / '.local'))
+    parser.add_argument('--local', default='/srv/fanoos/shared/research')
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding='utf-8')
 
@@ -192,7 +195,9 @@ def main() -> int:
             if edition not in names and not args.allow_nearest:
                 why = 'nearest-edition substitutions are paused; use exact official edition or keep pending'
             if edition not in names and why is None:
-                stand_in_for = [e for e in names if texts.get(e, {}).get('nearest') == edition and 'missing' in texts.get(e, {})]
+                # Keep explicitly recorded historical nearest-edition audits
+                # possible even after the exact edition's PDF is later added.
+                stand_in_for = [e for e in names if texts.get(e, {}).get('nearest') == edition]
                 if not stand_in_for:
                     why = f'{edition} is not an official {exam_type} {year} reference for {q["subject"]}'
                 else:
@@ -222,7 +227,7 @@ def main() -> int:
                     why = f'page {page} is not in chapter {chapter} of {edition}'
             text = books.page(edition, int(page)) if why is None else None
             if why is None and text is None:
-                why = f'{edition} has no text for page {page}'
+                why = f'{edition} has no current PDF-derived page index for page {page}'
             if why is None:
                 pieces = fragments(str(d.get('evidence', '')))
                 if not pieces or any(len(p.split()) < 4 for p in pieces):

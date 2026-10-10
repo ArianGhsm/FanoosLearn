@@ -12,7 +12,11 @@ import json
 import os
 from pathlib import Path
 import re
+import sys
 import tempfile
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from reference_index import verify_current_pdf_index
 
 BATCH = re.compile(r"^(13[0-9]{2}|14[0-9]{2}):([a-z][a-z0-9-]*):([a-z][a-z0-9-]*)$")
 
@@ -31,13 +35,17 @@ def load(path: Path):
 
 
 def _page_segments(book: Path) -> dict[int, str]:
-    """Read page-marked *private* reference text; never export quotations."""
+    """Read a private page-text index extracted from the verified PDF.
+
+    The index is a search/validation cache; the exact PDF page remains the
+    classification source. Never export quotations from the private book.
+    """
     if not book.is_file():
-        raise ValueError("The exact reference text is missing for printed-page verification")
+        raise ValueError("The exact reference text is missing; a PDF-derived page index is required for printed-page verification")
     raw = book.read_text(encoding="utf-8")
     markers = list(re.finditer(r"^=== PAGE (\d+) ===\s*$", raw, flags=re.MULTILINE))
     if not markers:
-        raise ValueError("The exact reference text has no PDF page markers")
+        raise ValueError("The PDF-derived page index has no PDF page markers")
     return {
         int(marker.group(1)): raw[marker.end():markers[i + 1].start() if i + 1 < len(markers) else len(raw)]
         for i, marker in enumerate(markers)
@@ -116,6 +124,8 @@ def audit_batch(root: Path, spec: str) -> dict:
         raise ValueError(f"{spec}: duplicate or unsupported decisions")
     if not wanted.keys() <= original.keys():
         raise ValueError(f"{spec}: decision question not in exact sitting")
+    for edition in sorted({str(decision["edition"]) for decision in wanted.values()}):
+        verify_current_pdf_index(root, edition)
     actual = {n for n, q in mapped.items() if q.get("sources")}
     if actual != wanted.keys():
         raise ValueError(f"{spec}: validated source set and decision set differ")

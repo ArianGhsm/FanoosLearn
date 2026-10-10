@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Work out which chapter every page of every reference edition belongs to.
 
-Reads .local/references/<edition>.txt (build_reference_texts.py) and the
-edition's chapter list (data/bank/reference-tocs.json), and writes
+Reads the protected, page-marked index generated from the verified server PDF
+by extract_server_reference.py, plus the edition's chapter list
+(data/bank/reference-tocs.json), and writes
 data/bank/reference-chapter-pages.json: for each edition, the runs of PDF
 pages that belong to each chapter. Classification turns "the answer is on
 page 412" into "chapter 14" with it.
@@ -14,7 +15,6 @@ Each page votes for its chapter from what the book prints on it:
 A page with no vote takes its neighbours' chapter only when both agree. A
 page nobody can place stays unplaced -- it is reported, never guessed.
 
-    python scripts/references/build_chapter_pages.py
     python scripts/references/build_chapter_pages.py --only proffit-orthodontics@5e
 """
 from __future__ import annotations
@@ -25,6 +25,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from reference_index import verify_current_pdf_index
 
 REPO = Path(__file__).resolve().parents[2]
 TOCS = REPO / 'data' / 'bank' / 'reference-tocs.json'
@@ -255,14 +256,14 @@ def locate(pages: list[tuple[int, str]], chapter_list: list[list[str]],
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
-    parser.add_argument('--local', default=str(REPO / '.local'))
-    parser.add_argument('--library', help='book library; use complete PDF chapter outlines when available')
-    parser.add_argument('--only', action='append', help='rebuild only this edition and preserve all other page maps')
+    parser.add_argument('--local', default='/srv/fanoos/shared/research')
+    parser.add_argument('--only', action='append', required=True,
+                        help='rebuild only this edition (repeatable; required) and preserve all other page maps')
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding='utf-8')
 
     tocs = json.loads(TOCS.read_text(encoding='utf-8'))['editions']
-    texts = json.loads(TEXTS.read_text(encoding='utf-8'))['editions'] if args.library else {}
+    texts = json.loads(TEXTS.read_text(encoding='utf-8'))['editions']
     requested = set(args.only or [])
     result = json.loads(OUT.read_text(encoding='utf-8'))['editions'] if requested and OUT.exists() else {}
     built = set()
@@ -274,15 +275,19 @@ def main() -> int:
         if not chapter_list:
             print(f'no chapter list  {edition}')
             continue
+        verify_current_pdf_index(Path(args.local), edition)
         pages = pages_of(path)
         chapter_pairs = [[str(c[0]), c[1]] for c in chapter_list]
         starts = {}
-        if args.library and 'chapter_pdf_starts' in texts.get(edition, {}):
+        if 'chapter_pdf_starts' in texts.get(edition, {}):
             starts = documented_openings(texts[edition]['chapter_pdf_starts'], chapter_pairs, len(pages))
-        elif args.library and 'pdf' in texts.get(edition, {}):
-            import pymupdf
-            with pymupdf.open(Path(args.library) / texts[edition]['pdf']) as pdf:
-                starts = bookmark_openings(pdf.get_toc(), chapter_pairs)
+        else:
+            receipt_path = path.with_suffix('.provenance.json')
+            if receipt_path.is_file():
+                receipt = json.loads(receipt_path.read_text(encoding='utf-8'))
+                outline = receipt.get('pdf_bookmarks', [])
+                if isinstance(outline, list):
+                    starts = bookmark_openings(outline, chapter_pairs)
         located = locate(pages, chapter_pairs, starts)
         result[edition] = located
         built.add(edition)
@@ -296,7 +301,7 @@ def main() -> int:
 
     OUT.write_text(json.dumps({
         'format': 'fanoos.reference-chapter-pages.v1',
-        'notes': ['runs: [chapter, first PDF page, last PDF page] in .local/references/<edition>.txt, in book order; chapter null = front or back matter. supported_pages: pages in the run whose own text voted for the chapter. Built by scripts/references/build_chapter_pages.py.'],
+        'notes': ['runs: [chapter, first PDF page, last PDF page] in the private PDF-derived page index for the verified edition, in book order; chapter null = front or back matter. supported_pages: pages in the run whose own text voted for the chapter. Built by scripts/references/build_chapter_pages.py.'],
         'editions': result,
     }, ensure_ascii=False) + '\n', encoding='utf-8', newline='\n')
     return 0

@@ -11,6 +11,13 @@ verified editions on the server. Absent/incomplete editions are pending.
 This document records the transition and its remaining technical prerequisites.
 It does not authorize a shortcut around the existing classification validator.
 
+**Current clarification (2026-10-10):** the source bridge described below as
+future work was implemented as `scripts/references/extract_server_reference.py`.
+It reads the current verified PDF object in place and creates a protected,
+page-marked search index plus a PDF-SHA-bound provenance receipt. The PDF is
+the source of truth; the `.txt` is a generated cache, not a standalone source.
+This dated log remains historical for its inventory and workspace findings.
+
 ## Owner clarification — production host and access route
 
 The owner confirms that the current FANOOS production server is hosted by
@@ -50,7 +57,8 @@ The new **server-only, access-controlled working area** is
 
 ```
 /srv/fanoos/shared/research/
-  references/<edition>.txt            full page-marked text after verification
+  references/<edition>.txt            generated page-text index from verified PDF
+  references/<edition>.provenance.json  source PDF SHA-256 and extraction receipt
   bank-sittings/<year>/<sitting>.json  exact site-matching private source file
   classification/decisions/           one decision batch per year and subject
   classification/sittings/            validated classified sittings
@@ -67,24 +75,25 @@ working area before placing irreplaceable files there, or mirror its durable
 artifacts through an existing audited private backup mechanism. Empty folders
 do not prove content was migrated.
 
-Scripts currently accept the `--local` argument pointing to that root.
-The future secure source bridge must read the approved object file associated
-with `content_resource_metadata.topic=<edition>` through an authorized,
-audited accessor and never expose those objects to public URLs.
-Use a space-aware, single-edition workflow and verify PDF page markers.
+Scripts accept the `--local` argument pointing to that root. The implemented
+secure source bridge reads the approved object file associated with
+`content_resource_metadata.topic=<edition>` through an authorized accessor and
+never exposes that object to public URLs. Use a space-aware, single-edition
+workflow and verify the page markers and matching PDF-SHA provenance receipt.
 
 ## Reproducible continuation
 
 1. Run `scripts/ops/reference-library-inventory.php` with the authorized
    server runtime config; record current approved edition keys.
 2. Verify a secure reader and backed-up protected workspace; only then
-   materialize or convert one eligible edition.
-3. Independently verify full text, chapter starts/ends, official year scope,
+   extract one eligible edition directly from its verified server PDF.
+3. Independently verify complete page-index coverage, chapter starts/ends,
+   official year scope,
    and the exact site-matching sitting and current source assignments.
 4. Select one subject/year with an eligible *exact* official reference.
    Use `classification_batch.py` (nearest fallback disabled by default),
    `find_in_books.py`, and `apply_classification.py` with `--local`.
-5. Accept only decisions with exact page text evidence, chapter and
+5. Accept only decisions with evidence verified on the exact PDF page, chapter and
    confidence; keep absent/unfound questions pending; preserve human reviews.
 6. Generate an inventory report, validate `questions_changed=0`,
    verified backup, audited import, publish and post-state counts.

@@ -7,10 +7,12 @@ best, with the chapter each page belongs to and the lines that matched. A
 person (or the model doing the classification) reads those lines and decides;
 this tool only finds and shows, it never decides.
 
-Pages come from .local/references/<edition>.txt and chapters from
-data/bank/reference-chapter-pages.json (PROJECT_PRINCIPLES decision 6).
-Index, contents and bibliography pages are skipped: they name everything and
-explain nothing.
+Pages are searched in the private, page-marked index generated directly from
+the exact verified server PDF by extract_server_reference.py. The PDF remains
+the authority; the index only locates candidate pages and quotes. Chapters
+come from data/bank/reference-chapter-pages.json (PROJECT_PRINCIPLES decision
+6). Index, contents and bibliography pages are skipped: they name everything
+and explain nothing.
 
     python scripts/references/find_in_books.py queries.json [--top 3]
 
@@ -31,6 +33,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from apply_classification import flat as evidence_flat  # noqa: E402  (the same check the quotes must pass)
+from reference_index import verify_current_pdf_index  # noqa: E402
 CHAPTERS = REPO / 'data' / 'bank' / 'reference-chapter-pages.json'
 PAGE = re.compile(r'^=== PAGE (\d+) ===$', re.M)
 TOKEN = re.compile(r'[^\W_]+', re.UNICODE)
@@ -139,7 +142,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
     parser.add_argument('queries')
     parser.add_argument('--top', type=int, default=3)
-    parser.add_argument('--local', default=str(REPO / '.local'))
+    parser.add_argument('--local', default='/srv/fanoos/shared/research')
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding='utf-8')
 
@@ -152,8 +155,9 @@ def main() -> int:
             if edition not in books:
                 path = Path(args.local) / 'references' / f'{edition}.txt'
                 if not path.exists():
-                    print(f'   {edition}: no text')
+                    print(f'   {edition}: no PDF-derived page index')
                     continue
+                verify_current_pdf_index(Path(args.local), edition)
                 books[edition] = Book(path, runs.get(edition, {}).get('runs', []))
             book = books[edition]
             for score, i in book.search(q['terms'], args.top):

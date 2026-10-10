@@ -1,5 +1,9 @@
 # Live residency chapter-source publication checkpoint — 2026-10-10
 
+The page-marked `.txt` files named in this historical log are generated
+indexes from exact verified server PDFs; the original PDFs and their SHA-256
+identities are authoritative.
+
 ## Authorization and release
 
 Owner requested merge/deploy first, then continue exact-official-edition

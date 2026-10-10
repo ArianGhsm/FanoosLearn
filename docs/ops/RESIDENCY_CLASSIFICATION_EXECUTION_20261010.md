@@ -26,7 +26,9 @@ Checked through authorized SentinelX server access on 2026-10-10:
   chapter** (unchanged by this private research pass).
 - Live reference inventory previously confirmed **27 verified private PDFs
   out of 44 catalog editions**. A PDF is not automatically text-searchable;
-  only verified page-marked texts may be used for a decision.
+  only a complete page-marked index extracted from the exact verified PDF,
+  with a matching provenance receipt, may support a decision. These private
+  `.txt` artifacts are derived indexes, not independent source files.
 - Source PDF evidence used here:
   `national-oral-health@1394` (330 PDF pages; 24 page-mapped chapters);
   `white-pharoah-radiology@8e` (1,958 pages; 33 mapped chapters).
@@ -120,7 +122,7 @@ workspace identifier or original private question text in public logs.
 Protected server root: `/srv/fanoos/shared/research`.
 
 - Inputs: `bank-sittings/<year>/<stem>-study.json`
-- Edition texts and provenance: `references/<edition>.txt` and
+- PDF-derived page indexes and provenance: `references/<edition>.txt` and
   `references/<edition>.provenance.json`
 - Search terms: `classification/reports/<year>-<stem>-queries.json`
 - Decisions: `classification/decisions/<year>-<subject>.json`
