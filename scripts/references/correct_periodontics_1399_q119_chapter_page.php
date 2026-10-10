@@ -55,9 +55,11 @@ try {
     $snapshot = json_decode((string) file_get_contents($originalPath), true, 64, JSON_THROW_ON_ERROR);
     $saved = $snapshot['question'] ?? null;
     if (!is_array($saved) || ($saved['year'] ?? null) !== 1399 || ($saved['number'] ?? null) !== 119
-        || ($saved['old_chapter'] ?? null) !== '48' || ($saved['page'] ?? 'not-null') !== null
-        || ($saved['origin'] ?? null) !== 'ai' || ($saved['reviewed_at'] ?? 1) !== null
-        || ($saved['reviewed_by_user_id'] ?? 1) !== null
+        || ($saved['old_chapter'] ?? null) !== '48'
+        || !array_key_exists('page', $saved) || $saved['page'] !== null
+        || ($saved['origin'] ?? null) !== 'ai'
+        || !array_key_exists('reviewed_at', $saved) || $saved['reviewed_at'] !== null
+        || !array_key_exists('reviewed_by_user_id', $saved) || $saved['reviewed_by_user_id'] !== null
         || ($saved['answer_position'] ?? null) !== 1
         || ($saved['answer_status'] ?? null) !== 'final') {
         throw new RuntimeException('Expected preserved historical Q119 source and official key.');
