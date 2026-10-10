@@ -259,7 +259,7 @@ SQL);
             unlink($receiptName);
         }
     }
-    fwrite(STDERR, 'Carranza 13e page-only repair refused: ' . $error->getMessage() . PHP_EOL;
+    fwrite(STDERR, 'Carranza 13e page-only repair refused: ' . $error->getMessage() . PHP_EOL);
     exit(1);
 } finally {
     if ($locked && $db instanceof PDO) {
