@@ -25,6 +25,15 @@ These are read-only production measurements on October 10, 2026. Source existenc
 - **Q111**: exact 13e chapter **62**, PDF page **1395** (printed **641.e3**), matches existing chapter 62; the original text relates removal of widow's peaks to gradualizing marginal bone. Existing production page is NULL.
 - **Q119**: exact 13e chapter **47**, PDF page **1073** (printed **507**), **conflicts with current recorded chapter 48**. Original text explicitly equates targeted oral hygiene to the Bass technique, the official keyed answer. Existing production page is NULL. **Do not change source metadata until an audited, approved correction path exists.**
 
+Five more 1399 questions independently checked against their **current official answer** and original 13e chapter/page/text:
+- Q113 — ch45, PDF p1050, printed p496: acute periodontal abscess amoxicillin loading/dosing.
+- Q114 — ch51, PDF p1182, printed p549: ultrasonic instrumentation and dysphagia.
+- Q120 — ch17, PDF p616, printed p244: early lesion predominantly lymphocytes.
+- Q126 — ch20, PDF p656, printed p270: biopsy in necrotizing gingivitis differential, including tuberculosis.
+- Q129 — ch23, PDF p708, printed p306: most severe degenerative changes in lateral pocket epithelium.
+
+Thus **seven exact-edition page-evidence research checks** are recorded (two above plus five here); they are neither imported nor independently approved for existing-row correction. Five-item private evidence report: `classification/reports/periodontics-1399-exact13-five-more-20261010.json`, SHA-256 `aa49845d6503ce2ab42748db1a920f14276c9e101b410920ba2ce47b6eb09e3f`. The isolated one-member on-host evidence archive `/var/backups/fanoos/research/20261010-periodontics-five-more-evidence.tar.gz`, SHA-256 `750c4f336f9f3c8d5d886c904d61840eb3add50fcf6c45544e8b70b8eb040923`, passed archive-member and external `sha256sum -c` verification. As with the main archive, this is not an offsite copy.
+
 Both checked direct text presence, edition map and official answer. Protected JSON with page-verbatim evidence, `classification/reports/periodontics-1399-exact-book-evidence-20261010.json`, SHA-256 `01909be8c1b263c15c8a8edda499fbaf08ec58d2d895a662adc0a30921f444c2`. No original-book excerpts or private questions are committed to Git.
 
 A 20-question original-book *search*, not 20 accepted mappings, has been staged:
