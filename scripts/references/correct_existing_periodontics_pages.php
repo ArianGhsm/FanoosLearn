@@ -87,11 +87,25 @@ try {
                 throw new RuntimeException('Specific answer evidence is absent on exact page: ' . $number);
             }
         }
+        // The common helper rejects original page headers longer than 90 chars
+        // (e.g. ch51 PDF1182). Independently corroborate all three consecutive
+        // book-PDF page headers before accepting an original printed label.
+        $pageHeaderIs = static function (string $book, int $pdf, int $print): bool {
+            if (!preg_match('/^=== PAGE ' . $pdf . ' ===\\h*$(.*?)(?=^=== PAGE \\d+ ===|\\z)/ms', $book, $match)) {
+                return false;
+            }
+            $lines = array_values(array_filter(array_map('trim', preg_split('/\\R/u', $match[1]) ?: [])));
+            $firstLine = (string) ($lines[0] ?? '');
+            return preg_match('/(?:^|\\s)' . $print . '(?:\\s|$)/u', $firstLine) === 1;
+        };
+        $neighborHeadersVerified = $pageHeaderIs($fullText, $t['pdf'] - 1, (int) $t['printed'] - 1)
+            && $pageHeaderIs($fullText, $t['pdf'], (int) $t['printed'])
+            && $pageHeaderIs($fullText, $t['pdf'] + 1, (int) $t['printed'] + 1);
         if (!PrintedBookPageEvidence::corroborates(
             '/srv/fanoos/shared/research', 'carranza-periodontology@13e',
             $t['pdf'], $t['printed']
-        )) {
-            throw new RuntimeException('Printed page not verified against neighboring original book pages: ' . $number);
+        ) && !$neighborHeadersVerified) {
+            throw new RuntimeException('Printed page not independently verified on original consecutive page headers: ' . $number);
         }
     }
     unset($fullText);
