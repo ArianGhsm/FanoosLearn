@@ -27,7 +27,11 @@ docs/ops/QUESTION_IMPORT.md is the runbook.
      Writes a receipt next to the report.
 
        python3 scripts/import/drive_batch.py import --batch=<name> --backup=/var/backups/fanoos/<id>
-           [--publish --actor=<uuid> --reviewer=<uuid>]
+           [--publish --actor=<uuid> --reviewer=<uuid>] [--only=<regex of sittings>]
+
+     --only imports a chosen part of the batch (a paper with no valid key,
+     say, can stay out of the site while the rest goes on); each --only
+     run writes its own receipt.
 
 A paper that already exists and would change (questions_changed > 0) is
 never imported by this tool: a wording correction of a live paper is a
@@ -36,6 +40,7 @@ separate, approved operation (06 §5).
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -201,12 +206,14 @@ def run_import(args) -> None:
         sys.exit(f'backup not verified: {verify.stdout}{verify.stderr}')
     if args.publish and not (args.actor and args.reviewer):
         sys.exit('--publish needs --actor and --reviewer')
-    receipt_path = batch / 'receipt.json'
+    receipt_path = batch / (f'receipt-{hashlib.sha256(args.only.encode()).hexdigest()[:8]}.json' if args.only else 'receipt.json')
     if receipt_path.exists():
         sys.exit(f'{receipt_path} exists: this batch was imported already')
     done = []
     for row in report['papers']:
         if row['status'] != 'ready':
+            continue
+        if args.only and not re.fullmatch(args.only, row['sitting']):
             continue
         work = batch / row['sitting']
         code, out = bank('import', f'--workspace={workspace}', f"--file={work / (row['sitting'] + '.json')}", f"--assets={work / 'assets'}")
@@ -241,6 +248,7 @@ def main() -> None:
     i.add_argument('--publish', action='store_true')
     i.add_argument('--actor')
     i.add_argument('--reviewer')
+    i.add_argument('--only', help='import only the ready papers whose sitting matches this regex (e.g. "board-1401-.*|national-1405-1")')
     args = parser.parse_args()
     if args.step != 'discover' and not re.fullmatch(r'[a-z0-9][a-z0-9-]{2,60}', args.batch):
         sys.exit('--batch must be a short lowercase name')

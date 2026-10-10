@@ -221,6 +221,12 @@
       "name": "زبان انگلیسی",
       "name_en": "English",
       "order": 12
+    },
+    {
+      "key": "basic-sciences",
+      "name": "علوم پایه",
+      "name_en": "Basic Sciences",
+      "order": 13
     }
   ],
   "concepts": [],
