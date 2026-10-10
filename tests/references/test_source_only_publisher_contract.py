@@ -36,6 +36,27 @@ class PublisherSafetyContracts(unittest.TestCase):
         self.assertIn("$db->commit();", self.service)
         self.assertIn("if ($apply)", self.service)
 
+
+    def test_parallel_coordinator_stage_is_narrowly_scoped(self):
+        """Alternate immutable inputs cannot bypass the source-only writer."""
+        for marker in [
+            "'package-root'", "W0[1-8]-audit-stage",
+            "classification/coordinator/", "realpath($candidate)",
+            "realpath(dirname($auditPath)) !== $auditDir",
+            'realpath($candidate) !== $candidate',
+        ]:
+            self.assertIn(marker, self.cli)
+        # Receipt and verified full backup must remain under original root.
+        self.assertIn("realpath(dirname($receipt)) !== $reportDir", self.cli)
+        self.assertIn("BackupManifest::verify", self.cli)
+        # Whether canonical or staged, compare all three protected blobs
+        # to the pinned provenance audit before calling atomic publisher.
+        for marker in ["hash_file('sha256', $studyPath)",
+                       "hash_file('sha256', $validatedPath)",
+                       "hash_file('sha256', $decisionsPath)"]:
+            self.assertIn(marker, self.cli)
+        self.assertIn("SourceOnlyPublisher::run", self.cli)
+
     def test_apply_requires_fresh_verified_backup_and_receipt(self):
         for marker in ["BackupManifest::verify", "database.sql",
                        "posix_geteuid", "research", "receipt",
