@@ -108,7 +108,7 @@ under its `classification/reports/` folder. It independently re-reads the cited
 PDF pages and checks question identity, answer integrity, chapter, page,
 short evidence quote, origin and confidence. It does not import or publish.
 
-See `docs/ops/RESIDENCY_CLASSIFICATION_EXECUTION_20261010.md` for the
+See `docs/ops/RESIDENCY_CLASSIFICATION_1398_1405.md` (and the per-batch records it points to in Git history) for the
 exact command and verifiable expected counts. Run the original
 `apply_classification.py` evidence validator before auditing. A study-only
 sitting is deliberately **not** an importable bank sitting.

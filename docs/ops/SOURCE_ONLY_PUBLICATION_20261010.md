@@ -8,7 +8,7 @@ This is an *additional*, tightly constrained operation, not a sitting import.
 
 Authority: `docs/PROJECT_PRINCIPLES.md`,
 `docs/product/09_CHAPTER_CLASSIFICATION.md` and
-`docs/ops/RESIDENCY_CLASSIFICATION_EXECUTION_20261010.md`.
+`docs/ops/RESIDENCY_CLASSIFICATION_1398_1405.md` (per-batch execution logs are in Git history).
 
 ## Implementation
 
@@ -162,7 +162,7 @@ because the actual announced syllabus scope is missing. The other
 
 The entire source-only publication workflow **has now been exercised in
 production**. See the authoritative, hash-audited execution log
-[`RESIDENCY_LIVE_CLASSIFICATION_20261010.md`](RESIDENCY_LIVE_CLASSIFICATION_20261010.md)
+[`RESIDENCY_CLASSIFICATION_1398_1405.md`](RESIDENCY_CLASSIFICATION_1398_1405.md)
 for release SHA, updater request, verified full backup IDs, all private
 receipt hashes, before/after counts, student assessment version numbers
 and 11 additional verified 1403 oral-radiology chapter mappings.
@@ -220,7 +220,7 @@ that backup was not relied upon to authorize the mutation. The apply instead
 used the already completed, independently verified 54-file
 post-prior-publication backup `20261009T220905Z-eee036a3`, still within
 the enforced four-hour freshness window. All other checkpoints are described in
-`RESIDENCY_LIVE_CLASSIFICATION_20261010.md`. This documentation change
+`RESIDENCY_CLASSIFICATION_1398_1405.md`. This documentation change
 contains no private questions or book text; future workers must not reapply
 a completed batch.
 
@@ -249,7 +249,7 @@ full **249-question** frozen-exam postdiff found no differences outside
 9 new source explanations. Live residency backlog fell from **402 to
 393**, leaving **1602 / 1995** chaptered; the cumulative new-mapping
 count is **98**. Site health HTTP 200. See the full permanent checkpoint
-in `RESIDENCY_LIVE_CLASSIFICATION_20261010.md`. Never run the
+in `RESIDENCY_CLASSIFICATION_1398_1405.md`. Never run the
 completed 1401 source apply again.
 
 ## Parallel coordinator import without overwriting historical decisions (2026-10-10)
