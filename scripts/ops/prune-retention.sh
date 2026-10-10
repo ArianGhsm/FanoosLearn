@@ -8,15 +8,15 @@
 # Kept, always:
 #   - the live release (/srv/fanoos/current) and the KEEP_RELEASES newest others
 #     (a release can be rebuilt from its Git commit);
-#   - the KEEP_BACKUPS newest completed full backups (directories with READY).
-#     Incomplete .partial backups are left untouched and do not count.
+#   - the KEEP_BACKUPS newest completed, verified FANOOS backup sets across
+#     full backups and private research archives. Incomplete sets do not count.
 # Removed:
 #   - older releases and backups;
 #   - /var/lib/fanoos/bank-import-* staging folders (copies of local sittings).
 set -eu
 
 RELEASES=/srv/fanoos/releases
-BACKUPS=/var/backups/fanoos
+SCRIPT_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 KEEP_RELEASES=${KEEP_RELEASES:-5}
 KEEP_BACKUPS=${KEEP_BACKUPS:-5}
 ONLY_BACKUPS=${ONLY_BACKUPS:-0}
@@ -52,19 +52,10 @@ if [ "$ONLY_BACKUPS" != 1 ]; then
     done
 fi
 
-# Backups: names start with a UTC timestamp (20261008T101112Z-…). Keep only
-# complete full snapshots; a READY marker is written after verification.
-completed=
-for dir in "$BACKUPS"/20*T*Z-*; do
-    [ -d "$dir" ] && [ -f "$dir/READY" ] || continue
-    completed="$completed\n$(basename "$dir")"
-done
-completed=$(printf '%b\n' "$completed" | sed '/^$/d' | sort)
-newest=$(printf '%s\n' "$completed" | tail -n "$KEEP_BACKUPS")
-for name in $completed; do
-    if printf '%s\n' "$newest" | grep -qxF "$name"; then continue; fi
-    remove "$BACKUPS/$name"
-done
+retention_mode=--apply
+[ "$DRY" = 1 ] && retention_mode=--dry-run
+FANOOS_CONFIG_FILE=${FANOOS_CONFIG_FILE:-/etc/fanoos/updater-config.php} \
+    KEEP_BACKUPS="$KEEP_BACKUPS" php "$SCRIPT_ROOT/scripts/ops/prune-completed-backups.php" "$retention_mode"
 
 if [ "$ONLY_BACKUPS" != 1 ]; then
     for dir in /var/lib/fanoos/bank-import-*; do

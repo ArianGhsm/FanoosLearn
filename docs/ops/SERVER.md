@@ -121,7 +121,7 @@ Only GitHub `main`, only after its CI is green, only through the updater
 
 - **Shared-host retention:** across all of a project's server-local backup
   destinations, keep at most the five newest completed, verified sets. Project
-  jobs prune older completed sets after verification. Restic/Arvan
+  jobs and retention timers prune older completed sets after verification. Restic/Arvan
   object-storage backups are governed separately and excluded from this cap.
 - **Per deploy:** a full backup (database and non-reference object storage),
   verified before any migration runs, kept in
@@ -135,16 +135,34 @@ Only GitHub `main`, only after its CI is green, only through the updater
 - **Daily:** a database dump at 04:00 Tehran is sent to the owner on Bale.
   Its temporary server copy is removed after successful delivery; it is not a
   substitute for the full database-and-object backup.
-- **Retention:** no more than five completed FANOOS full backups are kept.
-  `backup.php` applies this after creating a verified backup; incomplete
-  `.partial` directories do not count. Reference-only PDF objects are removed
-  from retained backup snapshots and their manifests are refreshed.
+- **Retention:** the five-set FANOOS limit includes completed full backups in
+  `/var/backups/fanoos/` and verified research recovery archives in
+  `/var/backups/fanoos/research/`. `backup.php` applies the shared cap after a
+  verified full backup, and `fanoos-backup-retention.timer` reapplies it hourly
+  for manual research checkpoints. A research archive counts only when its
+  `.sha256` receipt verifies. Incomplete `.partial` directories, missing or
+  invalid checksum pairs, and publication receipts are left untouched and do
+  not count as recovery sets. Reference-only PDF objects are removed from
+  retained full snapshots and their manifests are refreshed.
   Before a deploy that would add a sixth completed set, use
   `ONLY_BACKUPS=1 KEEP_BACKUPS=4 sh scripts/ops/prune-retention.sh --dry-run`
   and then apply the same command without `--dry-run`; this leaves room for
   the required pre-deploy backup without exceeding five.
-- Verify any backup with `scripts/ops/verify-backup.php <dir>`; rehearse a
-  restore with `scripts/ops/restore-test.php`.
+- Verify any full backup with `scripts/ops/verify-backup.php <dir>`; rehearse a
+  restore with `scripts/ops/restore-test.php`. Research archive checksums are
+  validated by `scripts/ops/prune-completed-backups.php` before retention.
+
+After the first green updater deployment containing the retention units, install
+and enable the hourly timer from the trusted updater checkout:
+
+```sh
+sudo install -o root -g root -m 0644 /srv/fanoos/updater-checkout/ops/backup/fanoos-backup-retention.service.example /etc/systemd/system/fanoos-backup-retention.service
+sudo install -o root -g root -m 0644 /srv/fanoos/updater-checkout/ops/backup/fanoos-backup-retention.timer.example /etc/systemd/system/fanoos-backup-retention.timer
+sudo systemd-analyze verify /etc/systemd/system/fanoos-backup-retention.service /etc/systemd/system/fanoos-backup-retention.timer
+sudo systemctl daemon-reload
+sudo systemctl enable --now fanoos-backup-retention.timer
+sudo systemctl is-active fanoos-backup-retention.timer
+```
 
 ## Operator scripts
 
@@ -152,6 +170,7 @@ Only GitHub `main`, only after its CI is green, only through the updater
 |---|---|
 | `scripts/ops/request-deployment.php` | queue a deploy of `main` |
 | `scripts/ops/backup.php`, `verify-backup.php`, `restore-test.php` | backups |
+| `scripts/ops/prune-completed-backups.php` | dry-run by default; enforce the five-set full/research backup limit with `--apply` |
 | `scripts/ops/cancel-backup-deployment.php` | cancel a stopped deployment request still in `BACKUP`, with an audit event |
 | `scripts/ops/prune-reference-pdfs-from-backups.php` | dry-run by default; remove verified reference-only PDFs from completed backups with `--apply` |
 | `scripts/ops/rebuild-question-stats.php` | recompute the per-question counters from attempts |
@@ -278,14 +297,15 @@ be fixed by editing a deployed release.
 ## Retention
 
 Every deploy adds a release and every import or deploy adds a backup. The
-backup script keeps at most the five newest completed full backups.
-`scripts/ops/prune-retention.sh` (run as root, `--dry-run` first) keeps the
-live release and the five newest others, the five newest completed full backups,
-and removes older full backups and the
+backup script keeps at most the five newest completed FANOOS backup sets across
+full backups and verified research archives. `scripts/ops/prune-retention.sh`
+(`--dry-run` first) keeps the live release and the five newest others, enforces
+the project-wide five-set cap, and removes older eligible backups and the
 `/var/lib/fanoos/bank-import-*` staging folders. A full backup counts only
 after its `READY` marker is written; an in-progress `.partial` backup is left
-untouched. `KEEP_BACKUPS` cannot be set above five. `ONLY_BACKUPS=1` limits a
-retention run to the backup directories, leaving releases and staging alone.
-Daily database dumps sent to Bale are not retained under `/var/backups/fanoos/`.
-On 2026-10-08 it took the disk from 85% to 77%. Run it when the disk passes
-80%.
+untouched. Research archives count only with a valid adjacent SHA-256 sidecar;
+missing or corrupt pairs and publication receipts remain untouched. The
+`fanoos-backup-retention.timer` runs this backup-only retention hourly.
+`KEEP_BACKUPS` cannot be set above five. `ONLY_BACKUPS=1` limits a retention
+run to the backup sets, leaving releases and staging alone. Daily database
+dumps sent to Bale are temporary and are removed after delivery.

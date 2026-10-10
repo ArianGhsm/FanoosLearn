@@ -200,8 +200,8 @@ See `docs/product/09_CHAPTER_CLASSIFICATION.md` for the mistakes and guards.
    edits to deployed code and ad-hoc unbacked-up production writes are banned.
 6. On the IranServer host, keep at most five newest completed, verified
    server-local backup sets per project, aggregated across that project's
-   server-local backup destinations. Each project backup job removes older
-   completed sets after the new set has been verified; incomplete or failed
+   server-local backup destinations. Each project backup job or retention
+   timer removes older completed sets after verification; incomplete or failed
    sets are not treated as valid recovery points. The separate Restic/Arvan
    object-storage repository is excluded and keeps its own retention policy.
    For FANOOS, full backups include the database and non-reference object
