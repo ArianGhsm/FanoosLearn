@@ -114,6 +114,17 @@ page-to-chapter map. The authority order is: official year validity and scope
 An unlocated fact stays **undecided**, not `none`; existing human-reviewed
 sources remain protected.
 
+
+## 3A. Dentistry-residency English: final answer key is sufficient (owner decision 2026-10-10)
+
+**Permanent explicit exemption.** For the `english` subject of dentistry residency exams, the official sitting and its **recorded official final/amended answer key** constitute the complete deliverable. The official reference-validity catalog assigns **no book or chapter reference** to English. Do not invent a reference, edition, chapter, page, passage, AI confidence or placeholder `bank_question_sources` row. English is **complete without a source row**, and must not enter book-based chapter-classification work queues or generate outstanding classification alerts.
+
+**Preserve everything:** question stems, passages, options, images, choices, `bank_official_answers` including `final` versus `amended` status, any `also_correct`, manual reviews, prior frozen assessment versions and student attempts remain untouched. This decision is about the *presence of source metadata*, not a mandate to change historical answer keys. A missing, withdrawn, disputed or voided official answer is a **separate answer-integrity issue** that must be reported and resolved against a legitimate official key; never mark it complete merely because it is English.
+
+**Completion measurement:** maintain both unmodified raw counts and an explicit exemption-aware classification denominator. Never artificially insert source rows to make a database `NOT EXISTS(bank_question_sources)` query appear smaller. Report at least (i) all residency questions, (ii) raw questions without source records, (iii) the English questions with a verified eligible final/amended key exempted from book/chapter citations, and (iv) non-English unsourced candidates still requiring exact-edition evidence or official-scope investigation. For the verified 2026-10-10 snapshot: **1,995** total residency questions, **1,602** with source rows, **393** without source rows; of the latter **159** are English and **234** are non-English. All 159 English currently have answer records (158 `final`, one `amended`, none with null choice/voided/missing answer). Their English exemption is now **policy-final**; this alone makes **zero** changes to source tables, answer tables or old exams. These totals are time-stamped, not permanent future counts.
+
+The rule applies to other exam types only after separate confirmation that their English section has the same official no-reference requirement; do not silently generalize dentistry-residency policy to unrelated subjects, years or exams. Update related operations dashboards/runbooks to show exempted English separately from the true evidence-dependent backlog.
+
 ## 4. Mandatory continuity and reproducibility
 
 **No operation may depend solely on a chat or the assistant's memory.**
