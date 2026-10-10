@@ -73,6 +73,42 @@ obstructed-airway clinical scenario and official key merit separate review.
 4. Record verified accepted/applied/assessment/CI/merge/deploy facts
    separately. Never claim this provisional page-map PR published a source.
 
+## Legacy cited sources: live read-only quality inventory
+
+A fresh dentistry-residency `oral-surgery` production read found **144 existing
+source rows**, 4 in 1398 and 20 each in 1399–1405. Their edition IDs
+all have a matching official year/subject validity row. This is an
+**assignment inventory**, not a claim that every historical original-book
+quote was independently revalidated.
+
+Quality flags across the 144 rows (categories overlap):
+
+- **9 lack a source page** (1398:4, 1399:4, 1404:1).
+- **38 have at least one source/chapter/page confidence below 0.85**.
+- **1 lacks its stored anchor quote**.
+- **1 has origin `human`** (1404); preserve it, including its missing page,
+  unless a separately authorized human review explicitly changes it.
+- **8 no-page LA6 rows** (1398 Q125–128; 1399 Q138,145–147) have old
+  annotations stating evidence came from **nearest LA7**, though official
+  edition is LA6. They need independent exact-LA6 page/quote re-research;
+  the existing official-edition identifier alone is **not** proof that
+  the precise 6e page was ever checked. Never import nearest 7e evidence
+  as exact 6e source.
+
+Protected per-question evidence-preserving database inventory:
+`/srv/fanoos/shared/research/classification/parallel/W08/followup-malamed7/classification/reports/1398-1405-existing-surgery-sources-20261010.tsv`
+(144 lines, SHA-256
+`da42f1490c815a406a9bcff678a55470da2962d5eaca3d17497450811908b8d7`).
+It includes no question stems/choices/answers and makes no DB changes.
+
+**Outstanding surgery tasks:** 14 completely unsourced 1398 cases (Hupp6
+approved exact PDF still missing, plus independent Malamed evidence/answer
+problems); 8 historical LA7-derived no-page annotations requiring exact LA6
+reassessment; the 1404 human no-page row for separate owner review; and
+the remaining lower-confidence/page-evidence audit queue. Publication of
+the two newly validated research sources requires the original
+source-only transaction and frozen-assessment gates.
+
 ## Concurrent-work caution
 
 At inspection the updater checkout was at `2411fc1`, while live release was
