@@ -73,7 +73,7 @@ try {
     $query = $db->prepare(<<<'SQL'
 SELECT q.id,q.stem,q.question_key,q.status AS question_status,
 s.id AS source_id,s.page,s.origin,s.is_primary,s.anchor_text,
-n.number AS chapter,e.edition_key,r.reference_key,
+n.number AS chapter,e.id AS edition_id,e.edition_key,r.reference_key,
 a.choice_position,a.status AS answer_status,a.also_correct_positions
 FROM bank_questions q
 JOIN bank_exam_sittings si ON si.id=q.sitting_id AND si.workspace_id=q.workspace_id
