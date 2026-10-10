@@ -598,6 +598,9 @@ final class ApiKernel
             if ($request->method === 'GET' && $suffix === '/bank') {
                 return ['status' => 200, 'data' => $this->bank->overview($session->userId, $workspaceId, isset($request->query['type']) ? (string) $request->query['type'] : null)];
             }
+            if ($request->method === 'GET' && $suffix === '/bank/books') {
+                return ['status' => 200, 'data' => $this->bank->books($session->userId, $workspaceId, isset($request->query['type']) ? (string) $request->query['type'] : null)];
+            }
             if ($request->method === 'GET' && $suffix === '/bank/references') {
                 return ['status' => 200, 'data' => $this->bank->references($session->userId, $workspaceId)];
             }

@@ -34,7 +34,8 @@ final class BankPage
 </div>
 
 <div class="b-tabs" role="tablist" aria-label="نمای بانک">
-    <button class="x-chip is-active" type="button" role="tab" aria-selected="true" data-view="subjects">به تفکیک درس</button>
+    <button class="x-chip is-active" type="button" role="tab" aria-selected="true" data-view="books">به تفکیک کتاب و فصل</button>
+    <button class="x-chip" type="button" role="tab" aria-selected="false" data-view="subjects">به تفکیک درس و مبحث</button>
     <button class="x-chip" type="button" role="tab" aria-selected="false" data-view="years">به تفکیک آزمون و سال</button>
 </div>
 

@@ -21,6 +21,7 @@ of the counted rows at ✅.
 | # | Option | Who | FANOOS |
 |---|---|---|---|
 | 0 | «آزمون من»: the exam a student prepares for (an exam type, and for a specialty exam optionally one specialty) | P | ✅ a chip on the bank and the exams page, kept in the browser like the theme; default every exam; it narrows the bank's subjects and papers (`?type=` on the bank API), puts the specialty first and opens منابع آزمون on that exam; one tap back to every exam |
+| 0b | Bank by book and chapter (به تفکیک کتاب و فصل) | P | ✅ the bank's default view: per subject, the books its questions are sourced to (the latest official list's first, marked «در فهرست»), the five most-asked chapters with counts and a study button, the whole book one tap away; «سؤال‌های این فصل» on منابع آزمون opens a chapter's questions from every exam |
 | 1 | Past exams by year and sitting (به تفکیک دوره و سال) | M P | ✅ each bank sitting is published as an exam; the bank's «به تفکیک آزمون و سال» and the exams page group them by exam and year, a specialty exam's papers side by side |
 | 2 | Bank by subject (به تفکیک درس), one page per subject | M P | ✅ /app/bank, به تفکیک درس |
 | 3 | Topics inside a subject with question counts, most-asked first (مطالعه مبحثی) | M P | ✅ topics with counts, most-asked first, one-tap study of a topic |
