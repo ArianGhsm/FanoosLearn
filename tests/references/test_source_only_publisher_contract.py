@@ -57,6 +57,16 @@ class PublisherSafetyContracts(unittest.TestCase):
             self.assertIn(marker, self.cli)
         self.assertIn("SourceOnlyPublisher::run", self.cli)
 
+    def test_1398_exception_is_exact_endodontics_only(self):
+        """Other 1398 subjects and other editions must remain blocked."""
+        self.assertIn("$year === 1398 && $subject === 'endodontics' && $stem === 'endodontics'", self.cli)
+        self.assertIn("$year === 1398 && $subject === 'endodontics'", self.service)
+        self.assertIn("$decision['edition'] !== 'torabinejad-endodontics@5e'", self.service)
+        self.assertIn("1398 endodontics requires exact announced Torabinejad 5e", self.service)
+        # Global guard remains in effect for every other 1398 subject.
+        self.assertIn("$year < 1399", self.service)
+        self.assertIn("$year < 1399", self.cli)
+
     def test_apply_requires_fresh_verified_backup_and_receipt(self):
         for marker in ["BackupManifest::verify", "database.sql",
                        "posix_geteuid", "research", "receipt",
