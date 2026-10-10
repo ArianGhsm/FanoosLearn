@@ -15,7 +15,7 @@ class ReferencePdfsTest(unittest.TestCase):
         known = {f"{ref['key']}@{edition['key']}" for ref in catalog["references"]
                  for edition in ref.get("editions", [])}
         official = {row["edition"] for row in catalog["validity"]
-                    if 1398 <= int(row["year"]) <= 1405}
+                    if row.get("is_official", True)}
 
         self.assertEqual(sorted(official - set(listed)), [], "an official edition has no PDF disposition")
         self.assertEqual(sorted(set(listed) - known), [], "manifest names an unknown edition")

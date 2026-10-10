@@ -14,13 +14,14 @@ final class PrintedBookPageEvidence
     private const MAX_PAGE_TEXT_BYTES = 2_000_000;
 
     public static function corroborates(
-        string $edition, int $pdfPage, string $printedPage, ?string $expectedPdfSha256 = null
+        string $edition, int $pdfPage, string $printedPage, ?string $expectedPdfSha256 = null,
+        bool $allowLongHeader = false,
     ): bool
     {
         if (!self::validRequest($edition, $pdfPage, $printedPage)) {
             return false;
         }
-        $target = self::readPageLabels($edition, $pdfPage, $expectedPdfSha256);
+        $target = self::readPageLabels($edition, $pdfPage, $expectedPdfSha256, $allowLongHeader);
         if ($target === null || !in_array((int) $printedPage, $target, true)) {
             return false;
         }
@@ -32,7 +33,7 @@ final class PrintedBookPageEvidence
             if ($neighborPage < 1 || $neighborPrinted < 1) {
                 continue;
             }
-            $labels = self::readPageLabels($edition, $neighborPage, $expectedPdfSha256);
+            $labels = self::readPageLabels($edition, $neighborPage, $expectedPdfSha256, $allowLongHeader);
             if ($labels !== null && in_array($neighborPrinted, $labels, true)) {
                 ++$neighbors;
             }
@@ -70,7 +71,7 @@ final class PrintedBookPageEvidence
     }
 
     /** @return list<int>|null */
-    public static function pageLabelsFromText(string $text): array
+    public static function pageLabelsFromText(string $text, bool $allowLongHeader = false): array
     {
         $lines = array_values(array_filter(array_map(
             'trim', preg_split('/\R/u', $text) ?: []
@@ -78,7 +79,7 @@ final class PrintedBookPageEvidence
         $edge = array_merge(array_slice($lines, 0, 3), array_slice($lines, -3));
         $numbers = [];
         foreach ($edge as $line) {
-            if (mb_strlen($line) >= 90) {
+            if (!$allowLongHeader && mb_strlen($line) >= 90) {
                 continue;
             }
             if (preg_match('/^([0-9]{1,4})(?:\s|$)/u', $line, $match)
@@ -116,13 +117,15 @@ final class PrintedBookPageEvidence
     }
 
     /** @return list<int>|null */
-    private static function readPageLabels(string $edition, int $pdfPage, ?string $expectedPdfSha256): ?array
+    private static function readPageLabels(
+        string $edition, int $pdfPage, ?string $expectedPdfSha256, bool $allowLongHeader
+    ): ?array
     {
         $text = self::readPage($edition, $pdfPage, $expectedPdfSha256);
         if ($text === null) {
             return null;
         }
-        $labels = self::pageLabelsFromText($text);
+        $labels = self::pageLabelsFromText($text, $allowLongHeader);
         unset($text);
         return $labels;
     }

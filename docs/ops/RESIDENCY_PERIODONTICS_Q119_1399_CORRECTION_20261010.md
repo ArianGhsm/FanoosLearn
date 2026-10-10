@@ -1,3 +1,7 @@
+> **Applied and independently verified on production 2026-10-10 15:41 UTC.** This supersedes the prepublication wording below. Original Carranza13e Q119 is now **ch47, original PDF1073, printed p507** (from old ch48/NULL), with unchanged official Bass answer, choices and human provenance. The live release was `11fe481ffcae19268c6b4af3464860c3e844df0a`, updater request `01a12675-bde2-7af3-a27f-9c4d958db30e` succeeded and full verified pre-apply backup `/var/backups/fanoos/20261010T154006Z-a2f1d052` contained 54 files. **Production receipt** SHA-256 `8790adbb21c04181250916c21c0414d98512e802a658106f825fc7b887bc53af`. **Independent 20/20 source-row post-diff** SHA-256 `505d14035eb381ff1ff582f0642551d2505920ee8fed015b8e6b2d423173bc20` confirmed only Q119 node_id and page updated; 19 other sources unchanged; frozen published 1399 assessment version 8 SHA-256 `d36cc9097b8d096004128a967c5e15e279973927f2ea47b020c5876205158b85` remained identical. Complete 160-question live ledger v3 SHA-256 `6ae42bdd40c3c1b6429a60d049d25e6b82ae8ff23ca8cb2e2b3152bd4dafd5e0`. **This does not finish the whole subject.**
+
+---
+
 # Q119 (1399 periodontics): exact original Carranza13e chapter/page conflict
 
 **Original question:** targeted oral hygiene is synonymous with which toothbrushing method? The bank's recorded official choice 1 is Bass, but its existing AI-generated source link is Carranza13e **chapter 48** and **NULL page**.

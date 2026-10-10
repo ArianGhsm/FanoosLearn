@@ -54,3 +54,44 @@ The Shillingburg 4e global map has gaps at PDF pages 1 and 55. Independent origi
 For the 11 validated private rows, the central single-writer coordinator must independently refresh the live unsourced study, pin an immutable stage, verify no existing source rows or competing writer, run source-only transaction preview, finish a **new complete verified full backup**, apply only the approved batch with a unique protected receipt, and read back all question-source rows and immutability invariants. Full frozen assessment pre/post diff may change only source-derived explanations, with a new version published when appropriate; site health and exact deploy SHA must be checked. The W06 research owner does **not** directly modify production DB.
 
 The case cannot truthfully be marked 30/30 or closed while these 19 evidence holds and historical page/scope anomalies remain.
+
+## Newer verified W06 checkpoint: 13 approved research citations / 17 scientific holds
+
+**This section supersedes the earlier 11/19 research counts in this dated document.** The untouched original study still has all 30 prosthodontics questions (1398), and no bank question, option, key, human decision, historical attempt or source row has been changed by W06.
+
+After inspecting the exact approved Shillingburg 4e text, two more cases passed the unchanged original primary validator and the independent frozen-question provenance auditor, bringing private research validation to **13 accepted, zero rejected, 17 pending**:
+
+- Q86 — Shillingburg Fixed 4e, chapter 21, **PDF page 412**. Early moisture exposure weakens glass-ionomer cement; this supports the unchanged official choice 4.
+- Q90 — Shillingburg Fixed 4e, chapter 23, **PDF page 444**. Excess infiltration glass can increase chroma; this supports the unchanged official choice 1.
+
+The approved research question numbers are **80, 81, 86, 90, 91, 94, 99, 100, 101, 102, 103, 104, 109**. Every item has an original official-edition chapter/page witness and a `pdf N` page label, not an unverified printed-page guess.
+
+Exact protected private receipts:
+- `W06/1398-prosthodontics-decisions-candidate-v9.json`: SHA256 `0cf57363ad576b3d03decade7e931ce33314a6b982d79824cdf699c48c015d88`
+- `W06/1398-prosthodontics-v9-pdf-validated.json`: SHA256 `87aa2ce0ce8fd0f9b16b3ff006dfaac4527486b9251e37abb9ddee2a3c0f5eb5`
+- `W06/research-stage-v9/classification/reports/1398-prosthodontics-v9-independent-audit.json`: SHA256 `ca1ed12cc3c4e52c209519c67d836aedd2e3139ec30685a95271dadc8e268479`
+- `W06/1398-prosthodontics-all30-disposition-v9-20261010.json`: SHA256 `4a83b95aef43167afe169af45ce65b3dd591611c16f3d4fef8f24baee283cb31`
+
+The **17 scientifically held questions** are Q82, Q83, Q84, Q85, Q87, Q88, Q89, Q92, Q93, Q95, Q96, Q97, Q98, Q105, Q106, Q107, Q108. Evidence-based blockers include direct contradictions between original chapter text and the stored official key; voided Q97 must remain voided; the supporting original Zarb chapter 19 for Q108 is excluded from the 1398 official scope; and Q95 still needs proof for the exact three-tooth span.
+
+Particularly important original-book counterevidence, with **no answer-key mutation**:
+- Q83: Zarb 13e ch8 PDF190 describes the *posterior palatal seal* compensating for processing shrinkage, not the keyed rugae.
+- Q85: Zarb 13e ch8 PDF188 associates mandibular grimacing with the buccal shelf, not the keyed hamular notch.
+- Q88: Shillingburg 4e ch15 PDF253 reports **low** bis-acryl volumetric shrinkage and limited polishability, whereas the stored key selects high shrinkage.
+- Q89: Shillingburg 4e ch21 PDF403–404 describes a buccal shift caused by the maxillary palatal cusp's buccal incline, whereas the stored selected option is a contact associated with a lingual shift.
+- Q98: Shillingburg 4e ch7 PDF103 places the key mesial to the distal pontic, contrary to the keyed distal-of-mesial-pontic option.
+- Q107: McCracken 12e ch8 PDF105–106 normally locates Class II mandibular indirect retention at the mesio-occlusal first-premolar rest opposite the free-end base, not the keyed lateral-incisor cingulum.
+- Q105: McCracken 12e ch5 PDF46 identifies Kennedy classes II and IV, but the stored choice 4 is not a valid class pair.
+
+The corrected complete **29-chapter Shillingburg 4e page map** was merged separately in PR [#259](https://github.com/ArianGhsm/FanoosLearn/pull/259), commit `01363c26a6a85270c68f732100dc95fcc1b08367`, after five green CI jobs. A read-only impact audit of 72 existing Shillingburg 4e citations found three historical chapter mismatches: 1400 Q103 PDF137 9→8, 1401 Q102 PDF125 9→8, 1405 Q108 PDF391 21→20. These require separate protected source-only transaction(s), not silent edits.
+
+**Publication remains pending:** The 13 private citations have *not* received a coordinator-only immutable publication stage, freshly verified full backup, source-only production receipt, and frozen assessment postdiff. Therefore neither 13 newly published source rows nor a complete 30/30 exam may be claimed. The 17 holds must be resolved via authentic official reference/answer review, preserving all original bank and historical data.
+
+
+## Held-case exact-book audit (latest)
+
+The private W06 report `1398-prosthodontics-all17-original-book-holds-v11.json` (SHA256 `fcfba3bde4e6ca53ab5f6be57e05c5c817d83839b883c436e879b0f9316ea22d`) confirms **all 17 held questions have a literal same-edition quotation at the specified original PDF page and matching chapter**, including Q95 where the page covers only an analogous *two*-tooth situation. Mechanical quote matches **do not validate any answer key**: the publication status remains **13 research approved, 17 scientific holds, zero W06 production inserts**. Original stems, choices, keys, voids, human decisions and attempts are unchanged.
+
+New exact-book findings: Q82 Zarb13e ch10 PDF231 specifies simple articulator for zero-degree monoplane, while the keyed ramp needs semiadjustable; Q92 Zarb13e ch10 PDF218 recommends anterior selection before **final**, not necessarily preliminary, impressions; Q93 Shillingburg4e ch17 PDF331 permits digital rescan and still requires provisional; Q96 Shillingburg4e ch2 PDF32 reports lateral molar disocclusion averages working 0.5mm vs nonworking 1.0mm, not the keyed either-side claim. Q84 Zarb13e ch3 PDF51 describes **less** vertical chewing movement with aging. Q88 Shillingburg4e ch15 PDF253 shows bis-acryl **low shrinkage** and **limited polishability**, unlike the keyed high shrinkage. Q97 remains officially **voided** and Q95 exact three-tooth abutments remain unsupported.
+
+Crucially, Q108 **also** appears in permitted McCracken RPD12e ch24 PDF323, not just Zarb's excluded ch19; McCracken expressly distinguishes interim obturation to separate nasal/oral cavities from immediate surgical obturation to hold the dressing. The excluded-book obstacle is no longer the only issue, but the existing Q108 answer choice3 still conflicts with that official-source evidence. No answer change is authorized.

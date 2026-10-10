@@ -1,0 +1,93 @@
+{
+  "format": "fanoos.research.reference-rows/1",
+  "exam_types": [
+    "board",
+    "promotion"
+  ],
+  "notes": "The prosthodontics list of the medical education assessment center row «منابع آزمون ارتقاء و دانشنامه/ گواهینامه تخصصی پروتزهای دندانی ۱۴۰۵ و ۱۴۰۶» (sanjeshp.ir, Content.aspx?click=26), which names 1406 as well as 1405; the same rows as the 1405 prosthodontics list in dental-specialty-references-1405.json. No other 1406 specialty list had been published on 2026-10-10.",
+  "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
+  "source_document": "منابع آزمون ارتقاء و دانشنامه/ گواهینامه تخصصی پروتزهای دندانی ۱۴۰۵ و ۱۴۰۶.pdf",
+  "rows": [
+    {
+      "year": "1406",
+      "subject": "پروتزهای دندانی",
+      "title": "Functional Occlusion from TMJ to Smile Design",
+      "authors": "Dawson PE",
+      "pub_year": "2007",
+      "edition": "",
+      "scope": "همه‌ی کتاب به جز فصول 23، 24، 25، 26، 27، 28، 32، 45، 46، 47"
+    },
+    {
+      "year": "1406",
+      "subject": "پروتزهای دندانی",
+      "title": "Contemporary Fixed Prosthodontics",
+      "authors": "Rosenstiel SF; Land MF",
+      "pub_year": "2023",
+      "edition": "",
+      "scope": "همه‌ی فصول"
+    },
+    {
+      "year": "1406",
+      "subject": "پروتزهای دندانی",
+      "title": "Management of Temporomandibular Disorders and Occlusion",
+      "authors": "Okeson JP",
+      "pub_year": "2020",
+      "edition": "8th Ed.",
+      "scope": "فصول 8، 9، 10، 11، 12، 13، 15"
+    },
+    {
+      "year": "1406",
+      "subject": "پروتزهای دندانی",
+      "title": "Zarb's Prosthodontic Treatment for Edentulous Patients",
+      "authors": "Zarb G",
+      "pub_year": "2017",
+      "edition": "14th Ed.",
+      "scope": "همه‌ی فصول"
+    },
+    {
+      "year": "1406",
+      "subject": "پروتزهای دندانی",
+      "title": "Stewart's Clinical Removable Partial Prosthodontics",
+      "authors": "Phoenix RD; Cagna DR; DeFreest CF",
+      "pub_year": "2008",
+      "edition": "4th Ed.",
+      "scope": "همه‌ی فصول"
+    },
+    {
+      "year": "1406",
+      "subject": "پروتزهای دندانی",
+      "title": "Clinical Maxillofacial Prosthetics",
+      "authors": "Taylor TD",
+      "pub_year": "2000",
+      "edition": "",
+      "scope": "همه‌ی فصول"
+    },
+    {
+      "year": "1406",
+      "subject": "پروتزهای دندانی",
+      "title": "Misch's Contemporary Implant Dentistry",
+      "authors": "Misch CE",
+      "pub_year": "2021",
+      "edition": "4th edition",
+      "scope": "فصول 1 تا 25 به جز 4، 5، 9، 10، 13 و 14؛ و فصول 33 و 41 و 42"
+    },
+    {
+      "year": "1406",
+      "subject": "پروتزهای دندانی",
+      "title": "Dental Implant Prosthetics",
+      "authors": "Misch CE",
+      "pub_year": "2015",
+      "edition": "2nd edition",
+      "scope": "فصول 18، 26، 28 و 29"
+    },
+    {
+      "year": "1406",
+      "subject": "پروتزهای دندانی",
+      "title": "مقاله‌ها و ژورنال‌های اعلام‌شده",
+      "authors": "",
+      "pub_year": "1406",
+      "edition": "",
+      "scope": "مجله‌های سال 2025: Journal of Prosthetic Dentistry، Dental Research Journal، Frontiers in Dentistry، Journal of Dentistry (Shiraz University of Medical Sciences) و JODDD."
+    }
+  ]
+}

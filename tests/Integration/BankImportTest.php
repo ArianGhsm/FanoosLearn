@@ -231,6 +231,9 @@ SQL);
         $this->assert($named['name'] === 'پاک‌سازی و شکل‌دهی' && $named['name_en'] !== null, 'The topic is not named in Persian with its English title: ' . json_encode($named, JSON_UNESCAPED_UNICODE));
         $years = $browse->references($f['student'], $ws);
         $this->assert($years[0]['year'] >= 1405, 'References are not newest year first.');
+        $this->assert($years[0]['type_key'] === 'residency', 'Residency is not first within the newest year.');
+        $types = array_unique(array_column($years, 'type_key'));
+        $this->assert(in_array('national', $types, true) && in_array('board', $types, true) && in_array('promotion', $types, true), 'The national, board and promotion lists are missing: ' . implode(',', $types));
         $torabinejad = null;
         foreach ($years[0]['subjects'] as $row) {
             foreach ($row['references'] as $ref) {

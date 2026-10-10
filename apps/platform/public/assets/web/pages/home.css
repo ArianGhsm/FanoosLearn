@@ -117,7 +117,6 @@
     flex: none;
     font-size: var(--text-xs);
     color: var(--text-tertiary);
-    font-variant-numeric: tabular-nums;
 }
 
 .f-course-row__go {
@@ -230,6 +229,7 @@
 
 .f-today__item:hover {
     border-color: var(--border-strong);
+    text-decoration: none;
     transform: translateY(-1px);
 }
 
@@ -240,7 +240,6 @@
 
 .f-today__value {
     font-size: var(--text-xl);
-    font-variant-numeric: tabular-nums;
 }
 
 .f-today__bar {
@@ -286,10 +285,25 @@
     color: var(--text-secondary);
 }
 
+/*
+ * Each group is one row, at every width, six tiles wide, so a tile is the
+ * same size in every group. Where six do not fit (a phone) the row scrolls
+ * sideways, a tile at a time. A tile's words stay on one line.
+ */
 .f-menu__grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - 5 * var(--space-3)) / 6);
     gap: var(--space-3);
+    padding: 4px 2px 8px;
+    margin: -4px -2px -8px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+}
+
+.f-menu__grid::-webkit-scrollbar {
+    display: none;
 }
 
 .f-tile {
@@ -298,7 +312,8 @@
     display: grid;
     align-content: start;
     gap: 2px;
-    padding: var(--space-4);
+    min-width: 0;
+    padding: var(--space-4) var(--space-3);
     border: 1px solid transparent;
     border-radius: var(--radius-lg);
     background: var(--surface);
@@ -306,6 +321,10 @@
     color: var(--text-primary);
     text-decoration: none;
     transition: border-color var(--motion-fast) var(--ease), transform var(--motion-fast) var(--ease), box-shadow var(--motion-fast) var(--ease);
+}
+
+.f-tile {
+    scroll-snap-align: start;
 }
 
 .f-tile:hover,
@@ -350,6 +369,13 @@
     fill: var(--hue-soft);
 }
 
+.f-tile__label,
+.f-tile__hint {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
 .f-tile__label {
     font-weight: var(--weight-strong);
 }
@@ -373,7 +399,7 @@
     }
 
     .f-menu__grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-auto-columns: calc((100% - 2 * var(--space-2)) / 3.4);
         gap: var(--space-2);
     }
 

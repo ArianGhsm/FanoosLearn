@@ -334,7 +334,6 @@
     color: var(--text-primary);
     text-decoration: none;
     font-size: var(--text-sm);
-    font-variant-numeric: tabular-nums;
 }
 
 .f-stats[hidden] {

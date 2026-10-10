@@ -84,17 +84,39 @@ receipt, with a source hash matching Neville 4e's current approved PDF and no
 active reader. Both were removed; receipt:
 `/srv/fanoos/shared/research/classification/reports/artifact-cleanup-recurrence-20261010.json`.
 
-The direct-PDF implementation and this rule are on the working branch. They
-have not yet been merged or deployed. Until the reviewed release reaches the
-server, do not run the old deployed extraction tool that writes `.txt` page
-indexes. The merged catalog currently has 33 chapter maps: 24 carry a PDF hash,
-and 27 have contiguous page coverage. Nine lack a source hash; six have page
-gaps or overlaps, with five maps in both groups. Search, validation and audit
+At 19:45 UTC, the next exact-path scan found seven more complete page-text
+copies (McCracken/Carranza/Neville/Shillingburg/Zarb) plus a 206-byte W06 Q86
+proof note. No reader/classifier process was active. The current inventory
+confirmed all seven corresponding private PDFs as approved and SHA-verified;
+the Q86 quote already had a private JSON decision, which was checked against
+PDF page 412 in memory. All eight files were removed, reclaiming 38,853,134
+logical bytes. Receipt:
+`/srv/fanoos/shared/research/classification/reports/artifact-cleanup-pdf-text-20261010-1945.json`.
+
+At 19:50 UTC, an additional private JSON proof bundle containing full text for
+PDF pages 246 and 281 of Torabinejad 6e was found. Both exact pages were read
+again directly from the current approved 501-page PDF and matched the needed
+short evidence quotes; the page-text bundle was removed (12,860 bytes). Receipt:
+`/srv/fanoos/shared/research/classification/reports/artifact-cleanup-page-proof-20261010-1950.json`.
+
+The post-cleanup readback found **zero** `@edition.txt` files, text provenance
+sidecars, `.pyc`, `.tmp` or `.partial` files, and zero full-book text members in
+the three research archives scanned. The seven remaining `.txt` files are
+checksum, license and dependency manifests only.
+
+The direct-PDF implementation and this rule are on open PR #255 and have not
+yet been merged or deployed. The live release at this check was
+`69ff7223a46298489a15cd35745dd4d77305089c` and still contains the legacy
+`extract_server_reference.py`; do not invoke it. The merged catalog currently
+has 33 chapter maps: 24 carry a PDF hash,
+and 28 have contiguous page coverage. Nine lack a source hash; five have page
+gaps or overlaps, with four maps in both groups. Search, validation and audit
 fail closed for the 10 maps that fail either check. The other 23 have both a
 recorded source hash and contiguous coverage; runtime still compares each hash
 to the exact current approved PDF. Recheck page count and hash through the
-server bridge before using a map. This task changed no live question/source
-rows, answers, assessments or PDF objects and did not deploy a release.
+server bridge before using a map. Cleanup changed no live question/source rows,
+answers, assessments or PDF objects; it removed only generated research text
+artifacts. No release was deployed.
 
 ## Resume
 

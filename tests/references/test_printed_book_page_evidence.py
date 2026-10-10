@@ -53,6 +53,24 @@ class PrintedBookPageEvidenceTests(unittest.TestCase):
         self.assertFalse(self.verified(pages, printed="102x"))
         self.assertFalse(self.verified(pages, printed="-1"))
 
+    def test_long_running_header_needs_neighbor_corroboration(self):
+        long_header = "Long running section title " * 5 + "549"
+        code = (
+            "require $argv[1];"
+            "echo json_encode(["
+            "Fanoos\\Platform\\Bank\\PrintedBookPageEvidence::pageLabelsFromText($argv[2]),"
+            "Fanoos\\Platform\\Bank\\PrintedBookPageEvidence::pageLabelsFromText($argv[2],true)"
+            "]);"
+        )
+        run = subprocess.run(
+            ["php", "-r", code, str(VERIFIER), long_header],
+            text=True, capture_output=True, check=True
+        )
+        self.assertEqual(json.loads(run.stdout), [[], [549]])
+        self.assertTrue(self.verified({1180: [547], 1181: [548], 1182: [549],
+                                      1183: [550], 1184: [551]},
+                                     pdf_page=1182, printed="549"))
+
 
 class PdfOnlySourceWriterContracts(unittest.TestCase):
     def test_writer_rechecks_printed_page_from_exact_verified_pdf(self):

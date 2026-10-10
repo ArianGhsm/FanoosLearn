@@ -72,11 +72,15 @@ source of owned PDFs. `scripts/ops/reference-library-inventory.php`
 is the authoritative **live availability check** for approved, verified,
 private `reference_pdf` objects.
 
-Snapshot after the audited Telegram and Konkur.in imports on 2026-10-09
-and web-source import on 2026-10-10: **44** catalog editions, **42** private
-PDFs registered and verified, **2** without a verified library PDF. The 42
-PDFs total **4,712,822,240 bytes**. These are time-stamped findings, not
-permanent invariants.
+Residency-only snapshot after the audited Telegram and Konkur.in imports on
+2026-10-09 and web-source import on 2026-10-10: **44** catalog editions, **42**
+private PDFs registered and verified, **2** without a verified library PDF.
+The later 2026-10-10 national/board/promotion catalog import expanded the live
+catalog to **94 official editions**. Its matching inventory snapshot still has
+**42** approved private PDFs and **52** pending; `data/bank/reference-pdfs.json`
+records a disposition for every official edition. The 42 PDFs total
+**4,712,822,240 bytes**. These are time-stamped findings, not permanent
+invariants.
 Registration of a PDF is **not** proof that it has readable page content or
 validated chapter-page boundaries.
 
@@ -286,8 +290,8 @@ PDF verifies chapter, page and evidence.
 ## 7. Open implementation items (do not assume completed)
 
 - Rebuild the 10 ineligible chapter maps directly from their current approved
-  PDFs. Nine lack `source_pdf_sha256`; six have gaps or overlaps in page runs,
-  with five maps in both groups. Search, apply and audit fail closed for them.
+  PDFs. Nine lack `source_pdf_sha256`; five have gaps or overlaps in page runs,
+  with four maps in both groups. Search, apply and audit fail closed for them.
   Twenty-three maps currently carry a PDF hash and contiguous coverage; each
   use still verifies that hash against the exact current approved PDF.
 - Before each classification batch, verify the exact edition's current
