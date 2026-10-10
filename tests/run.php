@@ -19,6 +19,7 @@ use Fanoos\Tests\Core\PaymentReconcileTest;
 use Fanoos\Tests\Core\RepresentativeApprovalTest;
 use Fanoos\Tests\Core\StudentRegistrationTest;
 use Fanoos\Tests\Core\StudyRoomTest;
+use Fanoos\Tests\Content\ExamImageStoreCleanupTest;
 use Fanoos\Tests\Integration\EngagementTest;
 use Fanoos\Tests\Integration\TenantIsolationTest;
 use Fanoos\Tests\Integration\MigrationSafetyTest;
@@ -80,6 +81,8 @@ try {
     echo "PASS account merge plan covers every user column\n";
     $assertions += (new StorageSecurityTest())->run();
     echo "PASS storage security contracts\n";
+    $assertions += (new ExamImageStoreCleanupTest())->run();
+    echo "PASS exam-image temporary staging cleanup\n";
     $assertions += (new BackupContractTest())->run();
     echo "PASS backup integrity contracts\n";
     $assertions += (new QuestionBankRowTest())->run();

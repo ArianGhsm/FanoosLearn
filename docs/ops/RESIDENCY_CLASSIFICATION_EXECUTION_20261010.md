@@ -4,10 +4,10 @@
 questions against approved exact official reference editions already available
 on the server; do not wait for the remaining unready editions or use a laptop.
 **Status:** verified private **research decisions**, not production imports.
-The `references/<edition>.txt` paths below describe caches used during the
-2026-10-10 operation. New batches place them under one operation-specific
-`research/tmp/` directory and remove them after the independent audit receipt
-is saved.
+The `.txt` paths and index hashes in the historical results below describe
+temporary files that were created by the previous workflow and removed on
+2026-10-10. They are retained here only as history; do not recreate them. The
+current branch reads exact PDF pages directly and stores no page-text copy.
 
 Read first:
 - `docs/PROJECT_PRINCIPLES.md` — GitHub/server authority, exact-edition rule
@@ -29,10 +29,9 @@ Checked through authorized SentinelX server access on 2026-10-10:
 - 1,995 residency questions, of which **1,504 chaptered and 491 missing a
   chapter** (unchanged by this private research pass).
 - Live reference inventory previously confirmed **27 verified private PDFs
-  out of 44 catalog editions**. A PDF is not automatically text-searchable;
-  only a complete page-marked index extracted from the exact verified PDF,
-  with a matching provenance receipt, may support a decision. These private
-  `.txt` artifacts are derived indexes, not independent source files.
+  out of 44 catalog editions**. The current reader verifies the exact approved
+  PDF and requests only cited pages; an unreadable page is reviewed visually or
+  left pending. No text derivative is part of the current workflow.
 - Source PDF evidence used here:
   `national-oral-health@1394` (330 PDF pages; 24 page-mapped chapters);
   `white-pharoah-radiology@8e` (1,958 pages; 33 mapped chapters).
@@ -126,8 +125,9 @@ workspace identifier or original private question text in public logs.
 Protected server root: `/srv/fanoos/shared/research`.
 
 - Inputs: `bank-sittings/<year>/<stem>-study.json`
-- Historical PDF-derived cache files: `references/<edition>.txt` and
-  `references/<edition>.provenance.json` (temporary; see current cleanup rule)
+- Previous PDF-derived cache files: removed by the 2026-10-10 cleanup; see
+  `classification/reports/artifact-cleanup-20261010.json` for the private
+  path/hash receipt.
 - Search terms: `classification/reports/<year>-<stem>-queries.json`
 - Decisions: `classification/decisions/<year>-<subject>.json`
 - Validator outputs: `classification/sittings/<year>-<stem>-validated.json`
@@ -135,24 +135,20 @@ Protected server root: `/srv/fanoos/shared/research`.
   `classification/reports/residency-audit-20261010.json`
   SHA-256:
   `43ec6f2d23ed1b2c2a4717be47bbf20d1609b603887607f42157df564f64c4b8`.
+- PDF text-cache cleanup receipts:
+  `classification/reports/artifact-cleanup-20261010.json`,
+  `classification/reports/pdf-text-archive-cleanup-20261010.json`, and
+  `classification/reports/artifact-cleanup-followup-20261010.json`, and
+  `classification/reports/artifact-cleanup-recurrence-20261010.json`.
 
-For any future evaluation, re-extract the two exact PDFs into a unique private
-temporary directory, run the original validator, then audit the full study
-integrity and source maps (read-only). Delete that operation directory after
-the audit receipt is safely written:
+For any future evaluation, verify the two exact PDFs and run the audit directly
+against their current pages; no temporary PDF-text index or sidecar is needed:
 
 ```sh
-set -e
-sudo -u fanoosupd install -d -m 0700 /srv/fanoos/shared/research/tmp
-AUDIT_RESEARCH_DIR=$(sudo -u fanoosupd mktemp -d /srv/fanoos/shared/research/tmp/residency-audit-XXXXXX)
-trap 'sudo -u fanoosupd rm -rf -- "$AUDIT_RESEARCH_DIR"' EXIT
-sudo -u fanoosupd python3 -B scripts/references/extract_server_reference.py \
-  --edition=national-oral-health@1394 --local="$AUDIT_RESEARCH_DIR" --apply
-sudo -u fanoosupd python3 -B scripts/references/extract_server_reference.py \
-  --edition=white-pharoah-radiology@8e --local="$AUDIT_RESEARCH_DIR" --apply
+sudo -u fanoosupd python3 -B scripts/references/verify_reference_pdfs.py \
+  --only national-oral-health@1394 --only white-pharoah-radiology@8e
 sudo -u fanoosupd python3 -B scripts/references/audit_private_study_batches.py \
   --local=/srv/fanoos/shared/research \
-  --references-local="$AUDIT_RESEARCH_DIR" \
   --batch=1398:community-dentistry:community \
   --batch=1399:community-dentistry:community \
   --batch=1400:community-dentistry:community \
@@ -201,14 +197,12 @@ The official syllabus lists three exact references:
 - `malamed-medical-emergencies@7e` — **not available as approved server PDF**
 - `malamed-local-anesthesia@6e` — **verified private server PDF**, all chapters
 
-The verified Malamed local-anesthesia 6e PDF was read in place and processed
-without copying the original. The full page-marked private text has **428 PDF
-pages and 21 chapter runs**, text SHA-256
-`e6b0043989be850cb64826446d0cb8991626d013eb6d95d44696e0365b4dce96`;
-verified source PDF SHA-256
+The verified Malamed local-anesthesia 6e PDF was read in place. The previous
+workflow temporarily created a page-text index for its **428 PDF pages and 21
+chapter runs**; the index and provenance sidecar were removed on 2026-10-10.
+Verified source PDF SHA-256:
 `2026eff83ef2d2543725becb3685e8cb492f1dcf9f5d7a7ae72a28024ef67bf6`.
-Paths:
-`references/malamed-local-anesthesia@6e.{txt,provenance.json}`,
+Durable files:
 `bank-sittings/1398/surgery-study.json` and
 `classification/reports/1398-surgery-{queries,q112-search}.json`
 (the last name is `1398-surgery-q112-search.json`).

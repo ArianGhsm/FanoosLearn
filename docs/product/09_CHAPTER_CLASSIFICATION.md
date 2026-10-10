@@ -9,14 +9,13 @@ without breaking what is already on the site.
 
 Keep the two PDFs distinct: the official exam sitting PDF (when available)
 is evidence for the question's wording and figures; the exact official
-reference-book PDF is evidence for its chapter, page and source. The generated
-text index only helps locate those pages.
+reference-book PDF is evidence for its chapter, page and source. Page lookup may inspect one requested PDF page in memory; no text version,
+OCR export or search index is created.
 
 The governing rules are PROJECT_PRINCIPLES decisions 6–7 and the
-**2026-10-09 server-first policy**: the exact verified server PDF is the
-source of truth. A complete page-marked index extracted from that PDF is
-used only to search and validate evidence; its provenance must match the
-approved PDF SHA-256. **No laptop is required.**
+**PDF-only reference policy**: the exact verified server PDF is the source.
+Search, chapter mapping and validation inspect requested PDF pages in memory;
+no text version, OCR export or index is created. **No laptop is required.**
 
 Everything here was learned on 1398–1405 (2026-10-08). §8 lists the mistakes
 that were made and what now stops each of them.
@@ -46,58 +45,37 @@ measured: on 1403 endodontics a third of such chapters were wrong, and on
 |---|---|
 | The official reference list per exam type, year and subject, with scope | `data/bank/catalog.json` → `validity` |
 | Each edition's chapter list | `data/bank/catalog.json` / `data/bank/reference-tocs.json` |
-| Exact edition status and historical nearest-edition notes | `data/bank/reference-texts.json`; live PDF eligibility always comes from the server inventory |
-| The canonical source | current approved, verified private PDF object for that exact edition |
-| Temporary page-text index and PDF provenance receipt | `/srv/fanoos/shared/research/tmp/<operation-id>/references/<edition>.txt` and `.provenance.json`; generated from the exact PDF and deleted after active use, validation and audit finish |
+| Exact edition status and historical nearest-edition notes | `data/bank/reference-pdfs.json`; live PDF eligibility always comes from the server inventory |
+| The canonical source and page reader | current approved, verified private PDF object; `scripts/references/verified_reference_pdf.py` reads one page at a time and writes no PDF text |
 | Which chapter every page is in | `data/bank/reference-chapter-pages.json` |
 | The questions, as they are on the site | the year's sitting file (§4) |
 | Decisions | protected server `/srv/fanoos/shared/research/classification/decisions/<year>-<subject>.json` (must be durably backed up) |
 | Server access for the import | authorized access to the IranServer production host (direct authenticated operator/SSH access or SentinelX when available); see `docs/ops/SERVER.md` |
 
 **Preflight on the server:** run the private reference-library inventory;
-check that the exact official edition has one approved PDF, authenticated
-read access and sufficient free disk space. Then extract directly from that
-verified object. The generated index must cover every PDF page and its
-provenance receipt must identify the same current PDF SHA-256. Do **not** use
-a separately collected `.txt` even if it claims to be from that edition.
-Do not copy entire PDFs from protected storage. Use one private operation
-directory under the server workspace and process **only** needed editions,
-not the entire library at once. Record the unique operation path in the task
-handoff:
+check that the exact official edition has one approved PDF and authenticated
+read access. The verifier checks the object and can inspect pages one at a time,
+retaining only a readability count. It writes no page text, OCR output, search
+index or provenance sidecar. Do not copy the PDF or create a text export.
 
 ```sh
-sudo -u fanoosupd install -d -m 0700 /srv/fanoos/shared/research/tmp/<operation-id>
-sudo -u fanoosupd python3 -B scripts/references/extract_server_reference.py \
-    --edition=<edition> --local="/srv/fanoos/shared/research/tmp/<operation-id>"
-sudo -u fanoosupd python3 -B scripts/references/extract_server_reference.py \
-    --edition=<edition> --local="/srv/fanoos/shared/research/tmp/<operation-id>" --apply
+sudo -u fanoosupd python3 -B scripts/references/verify_reference_pdfs.py \
+    --only <edition> --check-readable
 sudo -u fanoosupd python3 -B scripts/references/build_chapter_pages.py \
-    --local="/srv/fanoos/shared/research/tmp/<operation-id>" --only <edition>
+    --only <edition>
 ```
 
-The first extractor call is a read-only preflight; the second writes only the
-PDF-derived index and provenance receipt. It opens the verified private object
-in place and does not create a second PDF. If the exact PDF cannot be read,
-the text layer is incomplete, or the page/chapter map is unverified, mark the
-edition pending. Never substitute a path to a public or independently sourced
-text file. If an existing index differs from the current PDF, stop and
-investigate the edition/object change; the extractor intentionally refuses to
-overwrite it automatically.
+A low readable-page ratio, missing exact PDF or unverified page map leaves the
+edition pending. Inspect the original PDF visually where needed; do not use a
+separately collected text file or OCR output.
 
-When a book is added, extract its index from the exact PDF as above, then
-update only its chapter map:
+A new book means: the live inventory verifies the exact PDF, its
+`reference-pdfs.json` entry requires `verified-server-pdf`, and its chapter map
+is built directly from that PDF. The map records page ranges and PDF SHA-256,
+not page text. A full rebuild requires reviewing changed boundaries in existing
+editions before replacing their maps. Check that every chapter has a run of
+pages.
 
-```sh
-sudo -u fanoosupd python3 -B scripts/references/build_chapter_pages.py \
-    --local="/srv/fanoos/shared/research/tmp/<operation-id>" --only <edition>
-```
-
-A new book means: the live inventory verifies the exact PDF, the
-`reference-texts.json` entry requires `verified-server-pdf`, its page-text
-index and receipt are generated from that object, and its chapter pages are
-built. A full rebuild requires reviewing changed boundaries in existing
-editions before replacing their maps. Check that every chapter of the edition
-has a run of pages.
 Inspect the first chapter, the
 last chapter and any weakly supported boundaries too: a complete count alone
 does not prove the page ranges are right. A chapter opening printed inside a
@@ -108,31 +86,27 @@ method from the book's own pages and add a regression test before classifying;
 never adjust a range merely to make a particular decision pass. A new exam
 type, year or edition is data: the reference and its edition in the catalog (with its
 chapter list), the year's official list in `validity`, the PDF in
-`reference-texts.json`. The procedure does not change.
+`reference-pdfs.json`. The procedure does not change.
 
-When the PDF has an ordered bookmark for every chapter, the extractor stores
-its outline in the private provenance receipt and the chapter builder uses
-those bookmarks as page boundaries. A partial or unordered bookmark list
-falls back to chapter openings in the PDF-derived page index; missing
-chapters remain visible in the builder's report. The Persian national book uses its own Persian words for
-`terms` and `evidence`; the search and quote check preserve Persian letters.
-When the PDF has no chapter bookmarks and its opening labels omit the chapter
-number, record the PDF page starts transcribed from that edition's printed
-contents in `reference-texts.json` as `chapter_pdf_starts`, with the source
-page documented. The builder requires one strictly ordered start for every
+When the PDF has an ordered bookmark for every chapter, the builder reads
+that PDF outline directly. Otherwise, it reads one page at a time and discards
+the page text after detecting chapter openings; missing chapters remain visible
+in the report. If opening labels omit chapter numbers, recorded starts in
+`reference-pdfs.json` may be transcribed from the printed contents with source
+PDF pages documented. The builder requires one strictly ordered start for every
 catalog chapter. Proffit 5e uses this rule (contents on PDF pages 18–20).
+
 
 ### Private post-validator audit (server-first)
 
-For multiple read-only study-only batches, also run
+For multiple read-only study-only batches, run
 `python3 -B scripts/references/audit_private_study_batches.py` with one
 `--batch=YEAR:subject:stem` per batch, `--local` pointed at the protected
-server research workspace, `--references-local` pointed at the operation's
-temporary PDF-index directory, and `--out` under its `classification/reports/`
-folder. This independently checks *no changes* to the study question stems,
-choices or answers, exact question identity, source-node reference and
-chapter, mapped PDF/printed page, origin and confidence. It does **not**
-import or publish production sources and never exports copyrighted text.
+server research workspace, PDF storage/database access configured, and `--out`
+under its `classification/reports/` folder. It independently re-reads the cited
+PDF pages and checks question identity, answer integrity, chapter, page,
+short evidence quote, origin and confidence. It does not import or publish.
+
 See `docs/ops/RESIDENCY_CLASSIFICATION_EXECUTION_20261010.md` for the
 exact command and verifiable expected counts. Run the original
 `apply_classification.py` evidence validator before auditing. A study-only
@@ -154,8 +128,8 @@ One batch is one sitting and one subject (10–30 questions).
 
 **Step 1 — open the batch.**
 
-Create one protected, unique task directory and use it for generated search
-files and PDF page indexes:
+Create one protected, unique task directory for temporary query JSON and
+search output. Never write PDF page text or an index there:
 
 ```sh
 sudo -u fanoosupd install -d -m 0700 /srv/fanoos/shared/research/tmp/<operation-id>
@@ -184,23 +158,21 @@ right, not for the question's general topic.
 **Step 3 — search.**
 
 ```sh
-sudo -u fanoosupd python3 -B scripts/references/find_in_books.py "/srv/fanoos/shared/research/tmp/<operation-id>/queries.json" --top 3 --local="/srv/fanoos/shared/research/tmp/<operation-id>"
+sudo -u fanoosupd python3 -B scripts/references/find_in_books.py "/srv/fanoos/shared/research/tmp/<operation-id>/queries.json" --top 3
 ```
 
-For each question: the best pages, each with its chapter, the matching
-lines, and a `quote:` line — ten words from that page around the best
-match, already checked the way step 6 checks evidence.
+For each question, search reads the current verified PDF page by page and
+prints only selected page numbers and short candidate quotes. The query file
+and any redirected search output are temporary and are removed after the
+operation. No PDF text file or index is written.
 
-**Step 4 — decide on the PDF page.** Use the generated index to locate
-candidate PDF pages, then check the exact page in the original PDF. Choose a
-page that states the fact making the correct option correct (or the incorrect
-ones incorrect), not one that merely mentions the topic. Confirm that column
-order, Persian shaping, figures and text-layer/OCR artifacts have not changed
-the meaning. A search hit or index quote alone is not a decision. If the top
-results do not state the fact, search again with other terms (`--top 5`, the
-book's wording rather than the question's, or the wrong options' terms) until
-a page does. Only after two or three honest attempts may a question be left
-undecided (§5).
+**Step 4 — decide from the PDF page.** Open each candidate page in the
+original PDF and verify that it states the fact making the correct option
+correct (or the incorrect options incorrect), rather than merely mentioning
+the topic. Check column order, Persian shaping and figures visually. A search
+hit or short quote alone is not a decision. If page text is unreadable, review
+the PDF visually; do not export OCR or build a text copy. If repeated searches
+do not locate support, leave the question undecided (§5).
 
 - The fact is in two chapters: take the one that teaches it, not the one that
   refers to it in passing.
@@ -226,8 +198,8 @@ files are read for a sitting, by the `<year>-` prefix):
 ]
 ```
 
-- `page` is the PDF page as the search index printed it (`p446`), not the printed
-  page number.
+- `page` is the PDF page number; a verified printed page number may be saved
+  as the display label, but the audit always checks the exact PDF page.
 - `evidence` is copied **word for word from the original PDF page**, using
   the search output's `quote:` line only as a candidate. Several fragments are
   joined with `...`; every fragment has at least four words. Never a
@@ -251,33 +223,31 @@ files are read for a sitting, by the `<year>-` prefix):
 ```sh
 sudo -u fanoosupd python3 -B scripts/references/apply_classification.py --sitting=<sitting.json> \
     --decisions=/srv/fanoos/shared/research/classification/decisions/ \
-    --out=/srv/fanoos/shared/research/classification/sittings/<sitting>.json \
-    --local="/srv/fanoos/shared/research/tmp/<operation-id>"
+    --out=/srv/fanoos/shared/research/classification/sittings/<sitting>.json
 ```
 
 Every rejection is listed with its reason; fix the decision and run again —
-never the catalog, the chapter map, the texts or the scripts. With no
+never the catalog, chapter map or scripts. With no
 rejections it writes the sitting with `sources` (reference, chapter node,
 printed page, the quote as anchor, `origin: ai`, confidence).
-Run the private study audit while the temporary index is still available:
+Run the private study audit against the original PDF:
 
 ```sh
 sudo -u fanoosupd python3 -B scripts/references/audit_private_study_batches.py \
     --local=/srv/fanoos/shared/research \
-    --references-local=/srv/fanoos/shared/research/tmp/<operation-id> \
     --batch=<year>:<subject>:<stem> \
     --out=/srv/fanoos/shared/research/classification/reports/<audit>.json
 ```
 
-The durable audit records the source PDF SHA-256 and page count. After the
-audit receipt is safely written and no concurrent batch uses those editions,
-inspect the exact operation directory and remove it. This deletes the page
-indexes, query JSON and sidecars; retain the sitting, decisions and concise
-audit receipt. Reusable scripts stay in the repository; task-only scripts and
-outputs do not.
+The audit re-reads cited pages and records the PDF SHA-256 and page count; it
+creates no PDF text file. After the validated sitting and durable audit receipt
+are recorded, remove the exact operation directory so its query files and
+search output do not accumulate. Keep the sitting, decisions and concise audit
+receipt. One-off scripts and temporary outputs are removed when their
+operation ends; reusable scripts stay versioned in the repository.
 
-After confirming this is the single operation directory and no active batch
-uses it, remove only that exact directory:
+After confirming this is the single operation directory, remove only that
+exact directory:
 
 ```sh
 sudo -u fanoosupd rm -rf -- /srv/fanoos/shared/research/tmp/<operation-id>
@@ -316,7 +286,7 @@ A future year is added to this table when its sitting is first imported.
   human chapter unless the quote clearly states the fact and the other does
   not.
 - Questions whose **exact official edition** is unavailable, whose approved
-PDF cannot be securely read, or whose PDF-derived page index/chapter map is not verified
+PDF cannot be securely read, or whose direct-PDF chapter map is not verified
   stay undecided and are listed in the pending report. Continue eligible
   subjects without waiting for them.
 
@@ -413,12 +383,10 @@ the corrected questions as changed, the answers and option order stay, and
 Give the agent this document, the year, an authorized server session and
 read access to the exact verified PDF through the approved extraction tool,
 plus the protected server research workspace
-(`/srv/fanoos/shared/research`), not to the owner's laptop. The generated
-page-text index is only a cache tied to that PDF's provenance receipt; store
-it under the batch's unique `tmp/<operation-id>/` path and remove it after the
-validator/audit handoff is complete and no running batch shares it. If a
-follow-up resumes later, rebuild the index from the current approved PDF
-instead of retaining a full-book text cache.
+(`/srv/fanoos/shared/research`), not to the owner's laptop. The page reader opens the current approved PDF directly and writes no text
+copy or index. Only the temporary query file and any redirected search output
+need cleanup after the operation; preserve decisions, short page quotes, PDF
+SHA-256 and durable audit receipts.
 Its deliverables:
 
 1. the decisions files for the year, and a clean `apply_classification.py`

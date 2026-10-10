@@ -1,10 +1,10 @@
 # Live residency chapter-source publication checkpoint — 2026-10-10
 
-The page-marked `.txt` files named in this historical log are generated
-indexes from exact verified server PDFs; the original PDFs and their SHA-256
-identities are authoritative. They are historical cache artifacts; new
-classification batches use a private per-operation index and clean it after
-validation/audit.
+This historical log records page-text `.txt` indexes that were generated
+from exact server PDFs during the earlier workflow. Those live indexes and the
+archived W08 copy have been removed. The current branch reads selected PDF
+pages directly and writes no text copy; its changes still need merge/deploy to
+replace the old live release.
 
 ## Authorization and release
 
@@ -89,7 +89,7 @@ SHA-256 for each, in table order:
 
 The original eight-batch SHA-256 research audit was
 `43ec6f2d23ed1b2c2a4717be47bbf20d1609b603887607f42157df564f64c4b8`;
-its decisions were already checked against the page-marked books and
+its decisions were already checked against the exact PDF pages and
 existing chapter map. An archive of seven receipts and its verified
 SHA-256 checksum are at
 `/var/backups/fanoos/research/20261010-source-publication-seven-receipts.tar.gz{,.sha256}`.
@@ -365,7 +365,7 @@ The owner separately finalized residency `english` **by original official answer
 
 W01 1400 oral-radiology still has **14** originally validated sources in 20 source-free questions. Independent live re-export SHA `1c0447f57a14bc49f24de97e98d3e919e89f7a6bdb6997b1a17de49fec64b85a` matched the protected research original. Post-release full 249-question frozen assessment preflight version4 and 14-source rollback preview both passed, with zero changes to stem/choice/answer. **NO 1400 ATOMIC APPLY OCCURRED**: the real execution was blocked by the connected tool's safety check, and no 1400 W01 receipt exists. Do not count its 14 research mappings as imported. Do not bypass the safety control or blindly repeat operations.
 
-The page-auditor defect causing legitimate book-printed labels to be rejected when differing from PDF page indexes was corrected with stricter exact-book plus two-neighbor corroboration, three synthetic regression tests, and all GitHub PR/main CI green via merged PR #194. Owner's English policy was merged by PR #193. Official updater request `01a124d1-4542-7b3a-9e70-a9184fed5927` **SUCCEEDED** UTC `2026-10-10 08:00:21.892859`; live SHA `a803983c0732e5a6aecc18002152853bb433c8b1`, checkout/main `in sync`, public `/health` reported `ok`. Official post-1399 full backup `/var/backups/fanoos/20261010T080004Z-b1d7fb76` independently verified **54** files. In the protected coordinator, read-only original-book neighbor review `printed-page-independent-review-20261010.json` (SHA256 `abe48fab12f05192493af4e144ee582b5c4a9963645af39cc20462a3dcb4d198`) corroborated **13 of 14** previously flagged page label discrepancies, holding one. **Original auditor acceptance and question-content approval remain independent required gates.** W05's two Nowak decisions now independently pass the repaired original auditor but are not source-published. W04 clinical inference and W03 canonical map gaps remain blocked.
+The page-auditor defect causing legitimate book-printed labels to be rejected when differing from PDF page numbers was corrected with stricter exact-book plus two-neighbor corroboration, three synthetic regression tests, and all GitHub PR/main CI green via merged PR #194. Owner's English policy was merged by PR #193. Official updater request `01a124d1-4542-7b3a-9e70-a9184fed5927` **SUCCEEDED** UTC `2026-10-10 08:00:21.892859`; live SHA `a803983c0732e5a6aecc18002152853bb433c8b1`, checkout/main `in sync`, public `/health` reported `ok`. Official post-1399 full backup `/var/backups/fanoos/20261010T080004Z-b1d7fb76` independently verified **54** files. In the protected coordinator, read-only original-book neighbor review `printed-page-independent-review-20261010.json` (SHA256 `abe48fab12f05192493af4e144ee582b5c4a9963645af39cc20462a3dcb4d198`) corroborated **13 of 14** previously flagged page label discrepancies, holding one. **Original auditor acceptance and question-content approval remain independent required gates.** W05's two Nowak decisions now independently pass the repaired original auditor but are not source-published. W04 clinical inference and W03 canonical map gaps remain blocked.
 
 Current private operational recovery document:
 `/srv/fanoos/shared/research/ops/residency-parallel-finalization-20261010.md`.

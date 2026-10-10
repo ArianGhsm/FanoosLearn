@@ -2,65 +2,96 @@
 
 ## Owner instruction
 
-For book-based chapter, page and evidence classification, the exact current
-approved server PDF is the source of truth. A separate collected text file,
-OCR export or manually edited transcription is not an alternate source. The
-official exam sitting source and the reference-book source serve different
-purposes: the sitting source verifies the question; the exact reference PDF
-verifies its chapter, page and evidence.
+For chapter, page and evidence classification, the exact current approved
+private server PDF is the sole reference-book source. Never create or store a
+text copy, complete text stream, OCR export, page index or corpus derived from
+a PDF. Do not copy the PDF out of protected storage. The official sitting
+source verifies question wording; the exact reference PDF verifies its
+chapter, page and evidence.
 
-## Implemented source path
+A selected short quote may be stored in a decision because the validator and
+reviewer need evidence for that page. It is a citation, not a textual version
+of the PDF. Full pages and books are never serialized.
+
+## Direct-PDF workflow implemented on the working branch
 
 1. `scripts/ops/reference-library-inventory.php` identifies current approved
-   private PDF objects. The live inventory on 2026-10-10 contained 42 ready
-   PDFs for 44 catalog editions.
-2. `scripts/references/extract_server_reference.py` resolves the exact edition
-   in the production DB, checks private storage confinement, size, PDF
-   signature and SHA-256, then reads the PDF in place.
-3. It creates one page-aligned private search index plus a
-   `.provenance.json` receipt containing the source PDF SHA-256 and index
-   SHA-256 inside `research/tmp/<operation-id>/`. It does not copy the PDF.
-   Existing indexes that differ from the current verified PDF are refused for
-   investigation instead of overwritten.
-4. Search, chapter-map generation, classification validation and the private
-   audit recheck the current PDF when run against
-   an operation directory under `/srv/fanoos/shared/research`. Evidence must
-   also be checked on the exact PDF page. After validator and audit receipts
-   are recorded, delete the page index and sidecar when no concurrent batch
-   uses that edition. The generated text index is a cache, not an independent
-   source.
-5. The reference manifest now names only verified-server-PDF sources for
-   currently ready editions. On the 2026-10-10 inventory, 35 of its 36
-   listed editions were ready; exact Hupp 6e remains pending. The live
-   inventory, not this dated snapshot, controls future availability.
+   private PDF objects. The live inventory observed on 2026-10-10 contained
+   42 ready PDFs for 44 catalog editions.
+2. `scripts/references/verified_reference_pdf.py` resolves the exact edition
+   through the production DB and verifies private-storage confinement, size,
+   PDF signature, page count and current PDF SHA-256.
+3. A tool requests a single numbered page from that PDF. Poppler writes only
+   that page to stdout; the caller checks it in memory and discards it. No
+   output file, whole-book text stream, `.txt` index, OCR file or search cache
+   is created. Search keeps only selected page numbers and short snippets;
+   chapter mapping keeps votes and page runs; audit receipts keep PDF hash,
+   page count and decisions.
+4. `scripts/references/apply_classification.py` and
+   `scripts/references/audit_private_study_batches.py` re-open the current
+   approved PDF and validate the evidence on the cited PDF page. The chapter
+   map stores page ranges and source-PDF hashes, not extracted page text.
+5. If the PDF is absent or a needed page cannot be read, leave the item
+   pending and review the original PDF visually. Do not OCR or export text.
 
-## Limits and safeguards
+Readability preflight:
 
-- The current extractor requires a complete enough PDF text layer. An
-  unsearchable or incomplete edition stays pending until a reviewed,
-  page-by-page PDF-derived OCR path is implemented and checked.
-- Page indexes and provenance receipts, raw questions, decisions and book
-  content remain in protected server storage, never Git. Page indexes and
-  their `.provenance.json` cache sidecars live only under a per-operation
-  `research/tmp/` directory and are deleted after the validated audit receipt
-  is written and no concurrent batch uses them.
-- On 2026-10-10, cleanup removed 43 PDF-index paths (35 files and 8 links),
-  36 matching provenance sidecars, 16 transient search/validation text files
-  and 25 Python bytecode files. All index hashes matched the current approved
-  PDF inventory first. It reclaimed an estimated 149,016,576 allocated bytes;
-  the remaining seven research `.txt` files are checksum, license or
-  dependency manifests. Six affected checksum manifests were updated and
-  verified. The private path/hash receipt is
-  `classification/reports/artifact-cleanup-20261010.json`. No live
-  question/source rows, answers, assessments or PDF objects changed, and no
-  release was deployed.
+```sh
+sudo -u fanoosupd python3 -B scripts/references/verify_reference_pdfs.py \
+  --only <edition> --check-readable
+```
 
-## Resume steps
+Build only the requested edition's page-to-chapter map after reviewing the
+original PDF pages:
+
+```sh
+sudo -u fanoosupd python3 -B scripts/references/build_chapter_pages.py \
+  --only <edition>
+```
+
+## Historical cleanup and release state
+
+The previous workflow did create temporary full-book page-text indexes. On
+2026-10-10, cleanup removed 43 index paths (35 files and 8 links), 36
+provenance sidecars, 16 search/validation text outputs and 25 Python bytecode
+files. It reclaimed an estimated 149,016,576 allocated bytes. The seven
+remaining `.txt` files in the protected research tree are checksum, license
+or dependency manifests. Six checksum manifests were updated and verified.
+The private path/hash receipt is
+`/srv/fanoos/shared/research/classification/reports/artifact-cleanup-20261010.json`.
+A later archive scan found one more copy inside the W08 Malamed 7 recovery
+package. That member and two empty edit backups were removed; the package
+checksum was rebuilt and verified. Receipt:
+`/srv/fanoos/shared/research/classification/reports/pdf-text-archive-cleanup-20261010.json`.
+Thus it would be inaccurate to say no text indexes were ever created; the
+live working copies and the discovered archived copy have been removed.
+
+A follow-up scan then found 10 regenerated page-text files, 8 cache receipts
+and 3 search-output logs in the live research workspace. No classification
+process was running; two of those indexes lacked valid PDF provenance. Cleanup
+removed those 21 files (33,961,422 logical bytes) and recorded exact paths and
+hashes in `/srv/fanoos/shared/research/classification/reports/artifact-cleanup-followup-20261010.json`.
+
+A later scan at 13:47 UTC found one more 4,857,402-byte index and its cache
+receipt, with a source hash matching Neville 4e's current approved PDF and no
+active reader. Both were removed; receipt:
+`/srv/fanoos/shared/research/classification/reports/artifact-cleanup-recurrence-20261010.json`.
+
+The direct-PDF implementation and this rule are on the working branch. They
+have not yet been merged or deployed. Until the reviewed release reaches the
+server, do not run the old deployed extraction tool that writes `.txt` page
+indexes. Of 32 existing chapter maps, 21 are bound to exact PDF hashes (20
+from verified cleanup provenance, one rebuilt directly). Eleven have no source
+hash; eight have page-range gaps or overlaps, with one map in both groups; four
+map page counts also differ from the current PDFs. Search/validation/audit
+fail closed for the 12 maps that fail either check. The other 20 have matching
+hashes and contiguous ranges. This task changed no
+live question/source rows, answers, assessments or PDF objects and did not
+deploy a release.
+
+## Resume
 
 Read `docs/PROJECT_PRINCIPLES.md`, `docs/product/09_CHAPTER_CLASSIFICATION.md`
-and `docs/ops/SERVER.md`. Before classifying a batch, create a unique protected
-temp directory, refresh the exact edition index from the verified PDF, confirm
-the source/index hashes and chapter map, then review the selected PDF page.
-After the independent audit is recorded and no other active batch uses the
-edition, remove the temporary index and directory. Keep the concise PDF hash
-and validation receipt with the batch record.
+and `docs/ops/SERVER.md`. Verify the live PDF inventory and exact SHA-256,
+then inspect only the pages needed. Keep decisions and concise audit receipts;
+there is no PDF-text cache to create or clean up.

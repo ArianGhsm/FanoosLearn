@@ -109,6 +109,8 @@ final class ExamQuestionImageTest
         $key = $store->put($png);
         $this->assert($key === hash('sha256', $png) . '.png', 'The key is not the content hash.');
         $this->assert($store->put($png) === $key, 'Storing the same bytes twice gave two keys.');
+        $staging = glob($root . '/exam-images/*/*/*.tmp');
+        $this->assert($staging === [], 'Successful image writes must remove their temporary staging file.');
         $opened = $store->open($key);
         $this->assert($opened['mime'] === 'image/png' && $opened['length'] === strlen($png), 'The stored image did not come back as it went in.');
         fclose($opened['stream']);

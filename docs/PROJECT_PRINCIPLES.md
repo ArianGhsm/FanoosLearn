@@ -77,14 +77,14 @@ and web-source import on 2026-10-10: **44** catalog editions, **42** private
 PDFs registered and verified, **2** without a verified library PDF. The 42
 PDFs total **4,712,822,240 bytes**. These are time-stamped findings, not
 permanent invariants.
-Registration of a PDF is **not** proof that it has a complete, searchable
-text and validated chapter-page boundaries.
+Registration of a PDF is **not** proof that it has readable page content or
+validated chapter-page boundaries.
 
 ### Classification eligibility
 
 Work continuously through **eligible questions whose exact official edition
-is available on the server** with verified PDF provenance, a complete
-PDF-derived page index, and correct chapter boundaries. A missing/unusable
+is available on the server** with verified PDF provenance and correct chapter
+boundaries. A missing/unusable
 edition is **pending**; document its exact key and reason and move on to
 other eligible questions. Do not block all years/subjects on a handful of
 missing references and do not fabricate chapter/page matches from titles,
@@ -97,32 +97,25 @@ completion pass; waiting for the exact official edition is preferred unless
 the owner separately approves a specific exception and the evidence-mapping
 workflow is documented.
 
-The exact verified server PDF is the canonical source for every book-based
+The exact verified server PDF is the sole book source for every
 classification. Read it through the authenticated, read-only bridge in
-`scripts/references/extract_server_reference.py`; do not copy the PDF out of
-protected storage. That script verifies the current approved object, its
-size, PDF signature and SHA-256, then creates **one** complete, page-marked
-text index per edition (`=== PAGE n ===`) in the operation's private
-`research/tmp/<operation-id>/references/` directory. The matching
-`.provenance.json` binds that index to the exact PDF and its SHA-256. This
-`.txt` is generated working data for search and validation only:
-it is never an independent source, must not be hand-edited or replaced by a
-separately collected text file. If stale or mismatched, stop and investigate
-the PDF/edition change; the extractor fails closed instead of overwriting the
-existing index. Rebuild only through a reviewed, protected refresh after the
-old index and receipt are safely preserved. Verify selected evidence on the original PDF page;
-the PDF remains authoritative if extraction order, OCR or layout is unclear.
-The existing classification scripts take `--local`; the server-side
-workspace is specified in `docs/ops/SERVER.md`. The index and provenance
-receipt are private runtime data, not repository content. Verify available
-disk space **before** building or duplicating any artifact.
+`scripts/references/verified_reference_pdf.py`; do not copy the PDF out of
+protected storage. The bridge verifies the current approved object, byte size,
+PDF signature and SHA-256. Search, chapter mapping and evidence validation
+request one PDF page at a time and discard its transient in-memory text after
+checking it. They never write extracted page text, a whole-book text stream,
+an OCR export or a search index. Store only the PDF SHA-256, PDF page number,
+chapter map and the short quote needed to substantiate a decision. If a page
+cannot be read or the exact PDF is missing, leave the item pending and review
+the original PDF visually; do not create a text substitute. Verify available
+disk space before any operation that intentionally writes a durable artifact.
 
 The binding procedure is
 `docs/product/09_CHAPTER_CLASSIFICATION.md`; source decisions must pass
-`scripts/references/apply_classification.py` against the temporary PDF-derived index
-and page-to-chapter map. The authority order is: official year validity and
-scope → exact verified edition PDF/page → matching generated page index →
-verbatim evidence → validator → reviewed import.
+`scripts/references/apply_classification.py` against the exact verified PDF
+page and the page-to-chapter map. The authority order is: official year
+validity and scope → exact verified edition PDF/page → short verbatim evidence
+from that page → validator → reviewed import.
 An unlocated fact stays **undecided**, not `none`; existing human-reviewed
 sources remain protected.
 
@@ -176,18 +169,18 @@ read-back or other verifiable result.
 
 ### Generated-artifact lifecycle
 
-- Create task-only scripts, extracted page indexes, search dumps, logs and
-  intermediate files inside one uniquely named, mode-`0700` directory under
-  `/srv/fanoos/shared/research/tmp/<operation-id>/`. Use `trap`/`finally` for
-  cleanup where possible; never scatter scratch files through the repository,
-  home directory or shared reference root.
-- A PDF-derived page index is a temporary cache for one operation, never a
-  standing copy of a book. After validation/audit output and its recovery
-  receipt are recorded, remove the `.txt` index, matching provenance sidecar,
-  search dumps and logs when no running batch uses them. A pending follow-up
-  does not make a regenerable index durable: rebuild it from the current
-  approved PDF when work resumes. Keep source-PDF SHA-256, page count, chapter
-  map identity, decisions and concise non-copyrighted audit receipts.
+- Across every FANOOS component, a temporary file must have one owner,
+  operation and cleanup point. Use a unique scoped temporary path and
+  `finally`/`trap` cleanup on both success and failure; for atomic writes,
+  remove the staging file after rename or error. Never scatter scratch files
+  through the repository, home directory, release tree or shared data roots.
+  Keep only outputs explicitly designated as durable product data, reports,
+  backups or audit receipts.
+- For PDF classification, never create a `.txt` copy, full-book text stream,
+  OCR export or search index. Read a selected page directly from the exact
+  verified PDF, in memory, and discard it immediately after the check. A
+  pending follow-up does not justify retaining page text. Keep PDF SHA-256,
+  PDF page count, chapter map identity, decisions and concise audit receipts.
 - Do not leave free-form `.txt` outputs in the research workspace. Its only
   persistent `.txt` exceptions are checksum manifests, licenses and dependency
   manifests; keep durable narrative in Markdown and machine-readable receipts
@@ -241,13 +234,13 @@ only (the previous medical bank was purged after backup); residency as the
 first active exam type with board/promotion represented in schema; owner as
 reviewer; confidence review threshold **0.85**.
 
-**2026-10-08 — validation decisions retained:** one complete, page-marked
-search index generated from the exact reference PDF per edition during an
-active batch and removed after validation/audit;
-classification only against the reference's own words; strict
-chapter/page/evidence checks, human override guard, exact site-matching
-sitting, `questions_changed=0` dry run, and verified backup.
-See `docs/product/09_CHAPTER_CLASSIFICATION.md` for the mistakes and guards.
+**2026-10-08 — historical validation procedure:** the earlier workflow
+created a temporary page-marked text index from the exact PDF, then removed
+it after validation/audit. That procedure is retired by the 2026-10-10 owner
+instruction below. Its remaining controls still apply: classify only against
+the reference's own words; use strict chapter/page/evidence checks, the human
+override guard, exact site-matching sittings, `questions_changed=0` dry runs
+and verified backups. See `docs/product/09_CHAPTER_CLASSIFICATION.md`.
 
 **2026-10-09 — new operating decisions (override previous laptop flow):**
 
@@ -282,25 +275,24 @@ See `docs/product/09_CHAPTER_CLASSIFICATION.md` for the mistakes and guards.
 
 **2026-10-10 — PDF source-of-truth decision:** for book-based question
 classification, the exact current approved server PDF is authoritative.
-Search, chapter mapping and evidence validation must refresh/verify the
-temporary page-text index against that PDF's SHA-256. A `.txt` index exists
-only while a batch is active and must be deleted after validation/audit; it is
-never a durable project file. Standalone text corpora and hand-edited text
-are not classification inputs. If the exact PDF is absent, stale, unreadable
-or lacks complete page coverage, leave the edition pending until its PDF-
-derived path is ready. The exam sitting source and reference-book source remain distinct:
-the sitting source verifies question wording, while the reference PDF verifies
-chapter/page/evidence.
+Search, chapter mapping and evidence validation verify the current PDF's
+SHA-256 and inspect only selected pages directly. No text file, text corpus,
+OCR export or index may be generated from a PDF. If the exact PDF is absent or
+a required page cannot be read, leave the item pending for direct visual review
+of the original PDF. The exam sitting source and reference-book source remain
+distinct: the sitting source verifies question wording, while the reference
+PDF verifies chapter, page and evidence.
 
 ## 7. Open implementation items (do not assume completed)
 
-- Before each classification batch, run the PDF extraction preflight for the
-  exact edition and confirm the temporary index and provenance receipt match
-  the current approved PDF SHA-256. The bridge is implemented; this is a
-  per-edition readiness check, not proof that every catalog PDF is searchable.
-- Add a reviewed, page-by-page OCR path for verified PDFs without a complete
-  text layer. Until that path passes coverage and visual checks, leave those
-  editions pending rather than using a separately sourced text file.
+- Rebuild the 12 ineligible chapter maps directly from their current approved
+  PDFs. Eleven lack `source_pdf_sha256`; eight have gaps/overlaps in page runs
+  (one map is in both groups). Search, apply and audit fail closed for them.
+  Twenty maps currently have both a matching PDF hash and contiguous coverage.
+- Before each classification batch, verify the exact edition's current
+  approved PDF SHA-256 and page count with the read-only PDF bridge. The bridge
+  does not create text outputs. If a page is unreadable, inspect the original
+  PDF visually or leave it pending; do not add an OCR/export path.
 - Populate and back up the server's private classification workspace,
   including original site-matching sittings and review decisions; maintain
   the decision/provenance ledger, without exposing raw question data.

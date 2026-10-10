@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 FILE = Path(__file__).resolve().parents[2] / "scripts/references/audit_private_study_batches.py"
 spec = importlib.util.spec_from_file_location("audit_private_study_batches", FILE)
@@ -22,6 +23,7 @@ class AuditTests(unittest.TestCase):
         self.src = self.root / "bank-sittings/1402/community-study.json"
         self.out = self.root / "classification/sittings/1402-community-validated.json"
         self.dec = self.root / "classification/decisions/1402-community-dentistry.json"
+        self.chapter_map = self.root / "reference-chapter-pages.json"
         self.question = {"number": 222, "stem": "Synthetic sample question?",
                          "choices": ["alpha", "beta"], "answer": {"choice": 2}}
         self.body = {"format": "fanoos.classification.study-only/1",
@@ -32,7 +34,31 @@ class AuditTests(unittest.TestCase):
         self.decision = {"number": 222, "edition": "fictional-book@1e",
                          "chapter": "4", "page": 17, "confidence": .97,
                          "evidence": "this is a clearly synthetic page quote"}
+        self.fake_pdf = self.FakePdf()
+        self.chapter_map.write_text(json.dumps({"editions": {"fictional-book@1e": {
+            "runs": [[None, 1, 1], ["4", 2, 120]],
+            "source_pdf_sha256": self.fake_pdf.source_sha256,
+        }}}))
+        self.chapter_patch = patch.object(audit, "CHAPTERS", self.chapter_map)
+        self.chapter_patch.start()
+        self.addCleanup(self.chapter_patch.stop)
+        self.pdf_patch = patch.object(audit, "open_verified_reference", return_value=self.fake_pdf)
+        self.pdf_patch.start()
+        self.addCleanup(self.pdf_patch.stop)
         self.save()
+
+    class FakePdf:
+        source_sha256 = "a" * 64
+        page_count = 120
+
+        def __init__(self):
+            self.pages = {}
+
+        def page_text(self, number):
+            if number in self.pages:
+                return self.pages[number]
+            labels = {116: "100", 117: "101", 118: "102", 119: "103"}
+            return f"{labels.get(number, '')}\nThis is a clearly synthetic page quote.\nSynthetic source page with more words."
 
     def save(self):
         self.src.write_text(json.dumps(self.body))
@@ -72,14 +98,14 @@ class AuditTests(unittest.TestCase):
             audit.audit_batch(self.root, "1402:community-dentistry:community")
 
 
-    def test_printed_page_from_original_text_requires_neighbor_support(self):
+    def test_printed_page_from_original_pdf_requires_neighbor_support(self):
         """Book printed 101 on PDF 117; printed-label mismatch is legitimate."""
-        (self.root / "references").mkdir()
-        book = self.root / "references/fictional-book@1e.txt"
-        book.write_text("=== PAGE 116 ===\n100\nSynthetic text\n"
-                        "=== PAGE 117 ===\n101\nSynthetic text\n"
-                        "=== PAGE 118 ===\n102\nSynthetic text\n"
-                        "=== PAGE 119 ===\n103\nSynthetic text\n")
+        self.fake_pdf.pages = {
+            116: "100\nSynthetic page text with enough content for this test.",
+            117: "101\nThis is a clearly synthetic page quote.\nSynthetic source page with more words.",
+            118: "102\nSynthetic page text with enough content for this test.",
+            119: "103\nSynthetic page text with enough content for this test.",
+        }
         self.decision["page"] = 117
         self.source["page"] = "101"
         self.save()
@@ -92,23 +118,29 @@ class AuditTests(unittest.TestCase):
             audit.audit_batch(self.root, "1402:community-dentistry:community")
 
     def test_printed_page_without_two_consistent_neighbors_rejected(self):
-        (self.root / "references").mkdir()
-        book = self.root / "references/fictional-book@1e.txt"
-        book.write_text("=== PAGE 116 ===\n100\nSynthetic text\n"
-                        "=== PAGE 117 ===\n101\nSynthetic text\n"
-                        "=== PAGE 118 ===\nPage footer not readable\n"
-                        "=== PAGE 119 ===\nNo footer\n")
+        self.fake_pdf.pages = {
+            116: "100\nSynthetic page text with enough content for this test.",
+            117: "101\nThis is a clearly synthetic page quote.\nSynthetic source page with more words.",
+            118: "Page footer not readable\nSynthetic page text with enough content for this test.",
+            119: "No footer\nSynthetic page text with enough content for this test.",
+        }
         self.decision["page"] = 117
         self.source["page"] = "101"
         self.save()
         with self.assertRaisesRegex(ValueError, "wrong page or origin"):
             audit.audit_batch(self.root, "1402:community-dentistry:community")
 
-    def test_printed_page_missing_book_rejected(self):
+    def test_printed_page_without_pdf_label_rejected(self):
+        self.fake_pdf.pages = {
+            116: "No numeric label\nSynthetic page text with enough content for this test.",
+            117: "No numeric label\nThis is a clearly synthetic page quote.\nSynthetic source page with more words.",
+            118: "No numeric label\nSynthetic page text with enough content for this test.",
+            119: "No numeric label\nSynthetic page text with enough content for this test.",
+        }
         self.decision["page"] = 117
         self.source["page"] = "101"
         self.save()
-        with self.assertRaisesRegex(ValueError, "exact reference text is missing"):
+        with self.assertRaisesRegex(ValueError, "wrong page or origin"):
             audit.audit_batch(self.root, "1402:community-dentistry:community")
 
     def test_save_private_location_and_idempotence(self):

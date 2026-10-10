@@ -1,12 +1,14 @@
 """The checks apply_classification.py makes before a source is believed."""
 import json
 import sys
-import unittest
 from pathlib import Path
+from tempfile import TemporaryDirectory
+import unittest
+from unittest.mock import patch
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / 'scripts' / 'references'))
-from apply_classification import carry_over, chapter_nodes, flat, fragments, human_guard, printed_page  # noqa: E402
+from apply_classification import Books, carry_over, chapter_nodes, flat, fragments, human_guard, printed_page, save_sitting  # noqa: E402
 
 
 class ApplyClassificationTest(unittest.TestCase):
@@ -49,15 +51,43 @@ class ApplyClassificationTest(unittest.TestCase):
         self.assertEqual(human_guard({'sources': [{'ref': 'x#ch1', 'origin': 'ai'}]}, 'x#ch2', {}), (None, False))
 
     def test_find_in_books_quotes_pass_the_evidence_check(self):
-        from find_in_books import Book
+        from find_in_books import page_score, quote_page
         page = 'Apical patency is a technique that advocated the repeated placement of small hand files to or beyond the foramen. ' * 3
-        book = Book.__new__(Book)
-        book.pages = [(1, page)]
-        book.flat = [' '.join(page.lower().split())]
-        quote = book.quote(0, ['apical patency', 'small hand files'])
+        quote = quote_page(page, ['apical patency', 'small hand files'])
         self.assertIsNotNone(quote)
         self.assertGreaterEqual(len(quote.split()), 4)
         self.assertIn(flat(quote), flat(page))
+        self.assertGreater(page_score(page, ['apical patency', 'small hand files']), 0)
+
+    def test_page_validation_requires_a_hash_bound_map_and_reads_the_pdf_page(self):
+        class FakePdf:
+            page_count = 2
+            source_sha256 = 'a' * 64
+
+            def page_text(self, page):
+                return f'Synthetic PDF page {page}'
+
+        with patch('apply_classification.open_verified_reference', return_value=FakePdf()):
+            books = Books(Path('/unused/storage'), Path('/unused/mysql.cnf'), 'test')
+            self.assertIsNone(books.page('fictional-book@1e', 1, {'runs': [[None, 1, 2]]}))
+            self.assertIn('no verified PDF source hash', books.unavailable['fictional-book@1e'])
+
+            books = Books(Path('/unused/storage'), Path('/unused/mysql.cnf'), 'test')
+            valid = {'runs': [[None, 1, 2]], 'source_pdf_sha256': 'a' * 64}
+            self.assertEqual(books.page('fictional-book@1e', 2, valid), 'Synthetic PDF page 2')
+
+        with patch('apply_classification.open_verified_reference', return_value=FakePdf()):
+            books = Books(Path('/unused/storage'), Path('/unused/mysql.cnf'), 'test')
+            mismatched = {'runs': [[None, 1, 2]], 'source_pdf_sha256': 'b' * 64}
+            self.assertIsNone(books.page('fictional-book@1e', 1, mismatched))
+            self.assertIn('different PDF', books.unavailable['fictional-book@1e'])
+
+    def test_validated_sitting_write_leaves_no_atomic_staging_file(self):
+        with TemporaryDirectory() as tmp:
+            output = Path(tmp) / 'validated.json'
+            save_sitting(output, {'format': 'synthetic'})
+            self.assertEqual(json.loads(output.read_text(encoding='utf-8')), {'format': 'synthetic'})
+            self.assertEqual(list(Path(tmp).glob('*.tmp')), [])
 
 
 if __name__ == '__main__':

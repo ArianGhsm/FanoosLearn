@@ -272,17 +272,12 @@ python scripts/import/docx_to_sitting.py --docx=1400.docx --year=1400 --form=A -
     the source (1398 Q22, Q187).
 - **Numbering:** 1398 and 1402 are form B documents, so their sittings follow
   form B numbering. The others are form A (1405 has one form).
-- **Chapters** are not assigned here; that is a later re-import of the same
-  sitting with sources found on the exact official reference PDFs. The
-  server-side temporary `references/<edition>.txt` under the active
-  `/srv/fanoos/shared/research/tmp/<operation-id>/` is only a page-aligned
-  search index extracted from the current approved PDF object by
-  `scripts/references/extract_server_reference.py`, with a matching
-  `.provenance.json` receipt. It is not an independent source and may not be
-  replaced by a separately collected text file. Delete the temporary index
-  and receipt after the batch's audit is complete. The exact PDF page remains
-  authoritative (PROJECT_PRINCIPLES decisions 6–7 and the 2026-10-09
-  server-first policy).
+- **Chapters** are assigned later from the exact official reference PDF. The
+  reader verifies that current approved PDF and inspects one requested page at
+  a time in memory. It creates no text copy, page index, OCR export or search
+  corpus. Decisions retain only the cited PDF page and the short quote needed
+  to substantiate it; the original PDF remains authoritative
+  (PROJECT_PRINCIPLES decisions 6–7 and the PDF-only reference policy).
 
 Imported and published on 2026-10-07:
 
@@ -310,11 +305,11 @@ This path must be provisioned and its recovery checked before treating
 new private work files as durable.
 
 Historical live library inventory on 2026-10-09: **27 ready reference PDFs
-out of 44 catalog editions**, 17 awaiting a verified PDF. A PDF is not
-necessarily text-searchable. Current procedure extracts the private
-page-aligned index directly from the exact approved PDF; a missing or
-incompletely parsed edition remains pending, never replaced by a separately
-collected text source or new nearest-edition mapping by default.
+out of 44 catalog editions**, 17 awaiting a verified PDF. The current procedure
+reads selected pages directly from the exact approved PDF and does not create
+a text derivative. A missing PDF or unreadable page remains pending; never
+replace it with a separately collected text source or a new nearest-edition
+mapping by default.
 
 The year table above is an **as-of historical report**, not a live query of
 `bank_question_sources`. Do not claim a new classification total without

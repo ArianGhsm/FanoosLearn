@@ -52,25 +52,20 @@ content-addressed storage or an immutable release. The directory skeleton was pr
 Keep book/question content out of Git, and back
 it up explicitly with verified recovery before treating working files as
 durable. Until the backup/recovery mechanism is verified, do not claim this
-working directory is backed up. `research/tmp/<operation-id>/` contains only
-disposable active-job indexes and scratch outputs; never treat them as durable
-inputs or backup material.
+working directory is backed up. `research/tmp/<operation-id>/` holds only
+disposable query inputs, temporary search output and operation scratch; it
+never holds PDF page text, OCR output or a search index.
 
-Reference scripts accept `--local` for the protected workspace. Put any
-generated page index and temporary reports under
-`tmp/<operation-id>/references/`; put durable site-matching sittings in
+Reference tools read the current approved PDF object in place and verify its
+SHA-256. They inspect one requested page at a time in memory and write no text
+derivative. Put temporary query files and any redirected output under the
+unique operation directory; put durable site-matching sittings in
 `bank-sittings/<year>/` and validated decisions/receipts in `classification/`.
-Protected PDFs already in object storage are **not** duplicated. The extractor
-reads the current approved PDF object in place and verifies its SHA-256. A
-page-text index is only a cache for active work; after the validator and audit
-receipts are recorded and no concurrent batch uses it, delete the index and
-its cache receipt. Preserve the PDF SHA-256 and other concise provenance in the
-durable audit. After an operation ends, remove its generated indexes, search
-text, one-off scripts and bytecode when no running batch uses them and the
-recovery path is verified. Recreate an index from the approved PDF when a
-pending review resumes; preserve the review decisions and handoff. Keep unique
-source material until a verified recovery exists. Never leave temporary
-checkouts under `shared/research` after their task ends.
+After each operation, remove its temporary files on both success and failure.
+Preserve concise PDF hashes, page/chapter references and audit receipts. Keep
+unique source material until a verified recovery exists. Never leave
+one-off scripts, bytecode or temporary checkouts under `shared/research`
+after their task ends.
 
 nginx serves everything under `/assets/` as immutable for a year
 (`ops/nginx/fanoos-performance.conf`). A release reaches browsers only
@@ -151,10 +146,12 @@ Only GitHub `main`, only after its CI is green, only through the updater
   `/var/backups/fanoos/research/`. `backup.php` applies the shared cap after a
   verified full backup, and `fanoos-backup-retention.timer` reapplies it hourly
   for manual research checkpoints. A research archive counts only when its
-  `.sha256` receipt verifies. Incomplete `.partial` directories, missing or
-  invalid checksum pairs, and publication receipts are left untouched and do
-  not count as recovery sets. Reference-only PDF objects are removed from
-  retained full snapshots and their manifests are refreshed.
+  `.sha256` receipt verifies. `backup.php` removes its own exact `.partial`
+  staging tree on a caught failure; incomplete trees left by abrupt process
+  termination, missing/invalid checksum pairs and publication receipts are
+  not treated as recovery sets and remain for reviewed recovery handling.
+  Reference-only PDF objects are removed from retained full snapshots and
+  their manifests are refreshed.
   Before a deploy that would add a sixth completed set, use
   `ONLY_BACKUPS=1 KEEP_BACKUPS=4 sh scripts/ops/prune-retention.sh --dry-run`
   and then apply the same command without `--dry-run`; this leaves room for
@@ -272,23 +269,20 @@ A read-only inventory, run by the authorized server operator:
 sudo -n -u fanoosupd sh -c 'FANOOS_CONFIG_FILE=/etc/fanoos/updater-config.php php /srv/fanoos/current/scripts/ops/reference-library-inventory.php'
 ```
 
-The PDF inventory says **what objects are approved**, *not* whether their
-complete searchable page index and correct chapter map exist. The index is
-generated from the exact PDF by `extract_server_reference.py` and stored with
-its matching provenance receipt; it is not an independent source file.
-To make an edition eligible for chapter classification:
+The PDF inventory says **what objects are approved**, not whether their
+chapter map is bound to the current PDF. No page-text index or OCR file is
+created. To make an edition eligible for chapter classification:
 (1) check that exact official edition in the year's catalog;
-(2) confirm verified PDF, sufficient disk and authenticated access to
-the private object;
-(3) run the read-only PDF extraction preflight, then generate its page-text
-index and SHA-bound receipt in the backed-up protected research workspace;
-(4) visually check the cited page in the exact original PDF and validate
-`data/bank/reference-chapter-pages.json` boundaries;
-(5) run `scripts/references/find_in_books.py` and
-`apply_classification.py` with `--local` pointed at that workspace.
-Do not infer that existing private PDF registration implies steps 3–4 are
-already complete. Do not copy the whole 3.29-GB library or run large
-conversions while the disk is constrained.
+(2) verify the current approved PDF, SHA-256, page count and authenticated
+read access to the private object;
+(3) run `scripts/references/build_chapter_pages.py --only <edition>` to read
+PDF pages directly and create only the page/chapter map JSON with that PDF hash;
+(4) visually check the cited PDF pages and chapter boundaries;
+(5) run `find_in_books.py`, `apply_classification.py` and
+`audit_private_study_batches.py`, which re-read only cited pages from the PDF.
+An edition whose map has no current source PDF hash stays pending until rebuilt.
+Do not infer that PDF registration proves the map is current. Do not copy the
+PDF library or create text exports while the disk is constrained.
 
 Process questions of other *ready exact official editions* while a book
 is absent, unreadable or incomplete; classify no new question using a
@@ -318,8 +312,10 @@ full backups and verified research archives. `scripts/ops/prune-retention.sh`
 (`--dry-run` first) keeps the live release and the five newest others, enforces
 the project-wide five-set cap, and removes older eligible backups and the
 `/var/lib/fanoos/bank-import-*` staging folders. A full backup counts only
-after its `READY` marker is written; an in-progress `.partial` backup is left
-untouched. Research archives count only with a valid adjacent SHA-256 sidecar;
+after its `READY` marker is written; the running backup removes its exact
+`.partial` staging tree on a caught failure. A leftover from abrupt process
+termination is not counted or restored and needs reviewed cleanup. Research
+archives count only with a valid adjacent SHA-256 sidecar;
 missing or corrupt pairs and publication receipts remain untouched. The
 `fanoos-backup-retention.timer` runs this backup-only retention hourly.
 `KEEP_BACKUPS` cannot be set above five. `ONLY_BACKUPS=1` limits a retention

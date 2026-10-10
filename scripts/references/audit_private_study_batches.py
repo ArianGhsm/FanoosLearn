@@ -16,9 +16,11 @@ import sys
 import tempfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from reference_index import verify_current_pdf_index
+from apply_classification import flat, fragments
+from verified_reference_pdf import chapter_coverage, open_verified_reference
 
 BATCH = re.compile(r"^(13[0-9]{2}|14[0-9]{2}):([a-z][a-z0-9-]*):([a-z][a-z0-9-]*)$")
+CHAPTERS = Path(__file__).resolve().parents[2] / "data/bank/reference-chapter-pages.json"
 
 
 def digest(path: Path) -> str:
@@ -34,24 +36,6 @@ def load(path: Path):
 
 
 
-def _page_segments(book: Path) -> dict[int, str]:
-    """Read a private page-text index extracted from the verified PDF.
-
-    The index is a search/validation cache; the exact PDF page remains the
-    classification source. Never export quotations from the private book.
-    """
-    if not book.is_file():
-        raise ValueError("The exact reference text is missing; a PDF-derived page index is required for printed-page verification")
-    raw = book.read_text(encoding="utf-8")
-    markers = list(re.finditer(r"^=== PAGE (\d+) ===\s*$", raw, flags=re.MULTILINE))
-    if not markers:
-        raise ValueError("The PDF-derived page index has no PDF page markers")
-    return {
-        int(marker.group(1)): raw[marker.end():markers[i + 1].start() if i + 1 < len(markers) else len(raw)]
-        for i, marker in enumerate(markers)
-    }
-
-
 def _printed_labels(text: str) -> set[int]:
     """Strictly recognize short numeric running heads/feet, not body numbers."""
     lines = [line.strip() for line in text.splitlines() if line.strip()]
@@ -65,9 +49,7 @@ def _printed_labels(text: str) -> set[int]:
     return numbers
 
 
-def _verify_pdf_printed_page(root: Path, edition: str, pdf_page: int, value: str,
-                             cache: dict[str, dict[int, str]],
-                             references_root: Path | None = None) -> bool:
+def _verify_pdf_printed_page(pdf, pdf_page: int, value: str) -> bool:
     """Accept book-printed labels only with actual-page AND adjacent-page evidence.
 
     Deliberately stricter than the primary text validator: a stray chapter
@@ -80,19 +62,19 @@ def _verify_pdf_printed_page(root: Path, edition: str, pdf_page: int, value: str
         return False
     if not 1 <= pdf_page or not 1 <= printed:
         return False
-    if edition not in cache:
-        reference_root = references_root or root
-        cache[edition] = _page_segments(reference_root / "references" / f"{edition}.txt")
-    pages = cache[edition]
-    if printed not in _printed_labels(pages.get(pdf_page, "")):
+    if printed not in _printed_labels(pdf.page_text(pdf_page)):
         return False
     corroborated = sum(
-        printed + step in _printed_labels(pages.get(pdf_page + step, ""))
-        for step in (-2, -1, 1, 2) if pdf_page + step > 0 and printed + step > 0
+        printed + step in _printed_labels(pdf.page_text(pdf_page + step))
+        for step in (-2, -1, 1, 2)
+        if 1 <= pdf_page + step <= pdf.page_count and printed + step > 0
     )
     return corroborated >= 2
 
-def audit_batch(root: Path, spec: str, references_root: Path | None = None) -> dict:
+def audit_batch(root: Path, spec: str,
+                storage_root: Path = Path("/srv/fanoos/shared/storage"),
+                mysql_defaults: Path = Path("/etc/fanoos/mysql-migrator.cnf"),
+                database: str = "fanoos_prod") -> dict:
     m = BATCH.fullmatch(spec)
     if not m:
         raise ValueError(f"Invalid batch spec {spec!r}: expected YEAR:subject:stem")
@@ -126,21 +108,28 @@ def audit_batch(root: Path, spec: str, references_root: Path | None = None) -> d
         raise ValueError(f"{spec}: duplicate or unsupported decisions")
     if not wanted.keys() <= original.keys():
         raise ValueError(f"{spec}: decision question not in exact sitting")
+    chapter_maps = json.loads(CHAPTERS.read_text(encoding="utf-8"))["editions"]
     source_pdf_provenance = {}
-    reference_root = references_root or root
+    verified_pdfs = {}
     for edition in sorted({str(decision["edition"]) for decision in wanted.values()}):
-        receipt = verify_current_pdf_index(reference_root, edition)
-        if receipt:
-            source_pdf_provenance[edition] = {
-                "sha256": receipt.get("source_sha256"),
-                "pdf_pages": receipt.get("pdf_pages"),
-                "index_sha256": receipt.get("text_sha256"),
-            }
+        pdf = open_verified_reference(edition, storage_root, mysql_defaults, database)
+        map_entry = chapter_maps.get(edition, {})
+        chapter_coverage({"editions": {edition: map_entry}}, edition, pdf.page_count)
+        mapped_source = map_entry.get("source_pdf_sha256")
+        if not isinstance(mapped_source, str) or not re.fullmatch(r"[a-f0-9]{64}", mapped_source):
+            raise ValueError(f"{spec}: chapter map for {edition} has no verified PDF source hash")
+        if mapped_source != pdf.source_sha256:
+            raise ValueError(f"{spec}: chapter map belongs to a different PDF for {edition}")
+        verified_pdfs[edition] = pdf
+        source_pdf_provenance[edition] = {
+            "sha256": pdf.source_sha256,
+            "pdf_pages": pdf.page_count,
+            "source": "verified-server-pdf",
+        }
     actual = {n for n, q in mapped.items() if q.get("sources")}
     if actual != wanted.keys():
         raise ValueError(f"{spec}: validated source set and decision set differ")
     pages = {}
-    reference_page_cache: dict[str, dict[int, str]] = {}
     for n, decision in wanted.items():
         assigned = mapped[n]["sources"]
         if len(assigned) != 1:
@@ -156,9 +145,15 @@ def audit_batch(root: Path, spec: str, references_root: Path | None = None) -> d
             raise ValueError(f"{spec}: wrong page or origin for Q{n}")
         label = str(item.get("page"))
         pdf_number = int(decision["page"])
+        pdf = verified_pdfs[str(decision["edition"])]
+        page_text = pdf.page_text(pdf_number)
+        evidence_parts = fragments(str(decision.get("evidence", "")))
+        if (not evidence_parts or any(len(part.split()) < 4 or flat(part) not in flat(page_text)
+                                      for part in evidence_parts)):
+            raise ValueError(f"{spec}: evidence quote is not printed on PDF page {pdf_number}")
+        del page_text
         if label not in {str(pdf_number), f"pdf {pdf_number}"} and not _verify_pdf_printed_page(
-                root, str(decision["edition"]), pdf_number, label, reference_page_cache,
-                reference_root):
+                pdf, pdf_number, label):
             raise ValueError(f"{spec}: wrong page or origin for Q{n}")
         confidence = item.get("confidence", {})
         if (min(float(confidence.get(k, 0)) for k in ("source", "node", "page")) < 0.85
@@ -208,17 +203,17 @@ def save_private(root: Path, out: Path, data: dict) -> None:
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--local", type=Path, default=Path("/srv/fanoos/shared/research"))
-    parser.add_argument("--references-local", type=Path,
-                        help="operation-specific temp directory holding PDF-derived indexes")
+    parser.add_argument("--storage-root", type=Path, default=Path("/srv/fanoos/shared/storage"))
+    parser.add_argument("--mysql-defaults", type=Path, default=Path("/etc/fanoos/mysql-migrator.cnf"))
+    parser.add_argument("--database", default="fanoos_prod")
     parser.add_argument("--batch", action="append", required=True,
                         help="YEAR:subject:stem; may repeat, e.g. 1405:oral-radiology:radiology")
     parser.add_argument("--out", type=Path, help="Private report path under classification/reports")
     args = parser.parse_args()
     if len(set(args.batch)) != len(args.batch):
         raise ValueError("Duplicate private audit batch requested")
-    if args.references_local is None:
-        raise ValueError("--references-local is required; place page indexes in the operation temp directory")
-    audited = [audit_batch(args.local, spec, args.references_local) for spec in args.batch]
+    audited = [audit_batch(args.local, spec, args.storage_root, args.mysql_defaults, args.database)
+               for spec in args.batch]
     total = {
         "format": "fanoos.classification.provenance-audit/1",
         "research_only": True,
