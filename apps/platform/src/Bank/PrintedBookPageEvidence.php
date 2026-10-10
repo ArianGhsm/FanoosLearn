@@ -30,7 +30,16 @@ final class PrintedBookPageEvidence
             return false;
         }
         $raw = file_get_contents($path);
-        if ($raw === false || preg_match_all(
+        return $raw !== false && self::corroboratesPageMarkedText($raw, $pdfPage, $printedPage);
+    }
+
+    /** Pure page-neighbor test for original-book audit parity and regression tests. */
+    public static function corroboratesPageMarkedText(string $raw, int $pdfPage, string $printedPage): bool
+    {
+        if ($pdfPage < 1 || !preg_match('/^[1-9][0-9]{0,3}$/D', $printedPage)) {
+            return false;
+        }
+        if (preg_match_all(
             '/^=== PAGE ([1-9][0-9]*) ===\h*$/m',
             $raw, $matches, PREG_OFFSET_CAPTURE
         ) < 1) {
