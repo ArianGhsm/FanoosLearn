@@ -91,6 +91,8 @@ def audit_batch(root: Path, spec: str) -> dict:
     path_input = root / "bank-sittings" / year / f"{stem}-study.json"
     path_output = root / "classification" / "sittings" / f"{year}-{stem}-validated.json"
     path_decisions = root / "classification" / "decisions" / f"{year}-{subject}.json"
+    if (year_n, subject, stem) == (1398, "periodontics", "periodontics-followup"):
+        path_decisions = root / "classification" / "decisions" / "1398-periodontics-followup.json"
     source = load(path_input)
     result = load(path_output)
     decisions = load(path_decisions)
