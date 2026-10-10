@@ -364,3 +364,20 @@ The page-auditor defect causing legitimate book-printed labels to be rejected wh
 Current private operational recovery document:
 `/srv/fanoos/shared/research/ops/residency-parallel-finalization-20261010.md`.
 This release log supersedes older **393 raw / 234 non-English** as-of counts earlier in the report, without erasing them as historical checkpoints. To continue safely, prioritize authorized W01 1400 14-row atomic source apply and new 1400 assessment version after exact live recheck, verified backup and exclusive publisher guard; then W02 and remaining independently confirmed eligible batches. **Do not treat English exemption as a new source insert.**
+
+## Parallel W02 community-dentistry fully published (2026-10-10)
+
+All **eight** accepted W02 community source decisions were independently revalidated, reconciled to source-free live question IDs and imported **without overwriting earlier completed canonical decision JSON**. The audited optional coordinator-stage importer was introduced by PR #196 and officially deployed at release `541631221633a7889bd854224fc0496a8f998678` after green PR/main CI, synchronized host checkout, verified complete deploy backup and public health `ok`. Inputs stayed in `classification/coordinator/W02-audit-stage/`; original worker source files remained immutable. Canonical SHA-pinned W02 audit in the protected stage: `W02-canonical-verified-20261010.json`, SHA256 `cf67d9ff2e2e0995fe778f6fbede4080d2433b6a86b3ea7b872401e4343e3383`.
+
+For **each** study year, a fresh live export confirmed the accepted question ID was still source-free and its original stem, choices and answer exactly matched the worker-reviewed study; other already-sourced questions in the historical study were neither reclassified nor modified. The individual rollback-only source-only previews, complete frozen assessment preflights and unique atomic receipts verified `questions_changed=choices_changed=answers_changed=0`:
+
+| Year | New source rows | Protected pre-apply full backup (54 verified files each) | Receipt SHA256 | Frozen exam before → after |
+| --- | ---: | --- | --- | --- |
+| 1402 | 3 | `20261010T084322Z-4ae68199` | `46802e3dcbe675d574858a29e3d167c652842250c9f67fac8fdbbfea4543dbe2` | v4→v5, 243 questions, 3 new source explanations |
+| 1400 | 3 | `20261010T084747Z-561c8c90` | `bf0f2f9705adce73f40a9918ffc5757e6bbd5297b1b04856b56b0673a11c7741` | v4→v5, 249 questions, 3 new source explanations |
+| 1405 | 1 | `20261010T085148Z-11dea211` | `45ea3743113223825397d2107f122d3adc627765a41d42af3ecc80e5aff00c51` | v4→v5, 246 questions, 1 new source explanation |
+| 1399 | 1 | `20261010T085523Z-6bdf3c44` | `5adbc1052d2aaa941d5c725450cb394bc41a17e048bd45bc26484378cfce59fe` | v5→v6, 248 questions, 1 new source explanation |
+
+All preserved official voided answer exclusions from the historical frozen exams. The exact receipt filenames in protected `classification/reports/` are `YEAR-community-W02-source-publish-20261010.json`; the full book/PDF text and original questions were kept private. A relay job for the 1400 pre-apply full backup timed out, but the finalized physical backup was subsequently independently verified as a valid 54-file set; a relay timeout is not itself evidence of backup corruption.
+
+**Post-W02 checkpoint:** 1995 residency questions, 1622 with actual source rows, 373 raw without source rows. Of those 373, **159 published residency English questions are officially key-final/reference-exempt** under `docs/PROJECT_PRINCIPLES.md` §3A (158 `final`, 1 `amended`); the true remaining non-English source-review queue is **214**. These are time-stamped counts and should be refreshed after future imports. **Never rerun any of the four completed W02 source applies**. The private reproducibility ledger is `/srv/fanoos/shared/research/ops/residency-parallel-57-dispositions-20261010.md`.
