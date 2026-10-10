@@ -44,6 +44,7 @@ $db = null;
 $receiptHandle = false;
 $receiptName = null;
 $lockHeld = false;
+$committed = false;
 try {
     $opts = [];
     foreach (array_slice($argv, 1) as $argument) {
@@ -231,6 +232,7 @@ SQL);
     if ($apply) {
         $receipt['backup_id'] = basename($backup);
         $db->commit();
+        $committed = true;
         $write = json_encode($receipt, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) . "\n";
         if (fwrite($receiptHandle, $write) !== strlen($write) || !fflush($receiptHandle)) {
             throw new RuntimeException('Database committed; private receipt failed: investigate before retry.');
@@ -247,7 +249,7 @@ SQL);
     }
     if ($receiptHandle !== false) {
         fclose($receiptHandle);
-        if (is_string($receiptName) && is_file($receiptName)) {
+        if (!$committed && is_string($receiptName) && is_file($receiptName)) {
             unlink($receiptName);
         }
     }
