@@ -14,6 +14,7 @@ import {
 import { renderMarkdown } from './markdown.js';
 import { highlightSegments } from './runner-study.js';
 import { choiceShareLabel, statsLines } from './question-stats.js';
+import { questionFacts } from './question-facts.js';
 
 const DIFFICULTY_LABELS = { easy: 'آسان', medium: 'متوسط', hard: 'دشوار' };
 const CHOICE_LETTERS = ['الف', 'ب', 'ج', 'د', 'ه', 'و', 'ز', 'ح', 'ط', 'ی'];
@@ -805,37 +806,43 @@ function renderReportForm(question, report, actions) {
 }
 
 /*
- * The chips above a question's stem: what it is about, and how hard.
- *
- * Each name appears once (a bank question's topic falls back to its
- * subject, which is also its tag), and a chip is drawn only for what is
- * known -- the difficulty, for one, appears once enough people have answered
- * the question or its author set it.
+ * The boxes above a question's stem, in the order a student asks about a
+ * question: which exam and year it was asked in, its subject and topic, how
+ * hard it is, and -- on a line of its own, because a chapter name is long --
+ * the reference chapter it comes from. Each box is drawn only for what is
+ * known (question-facts.js): the chapter only once the question is
+ * classified, the difficulty once enough people answered or an author set it.
  */
 function renderQuestionMeta(question) {
-    const chips = [];
-    const seen = new Set();
-    const add = (kind, text) => {
-        const value = typeof text === 'string' ? text.trim() : '';
-        if (value === '' || seen.has(value)) return;
-        seen.add(value);
-        chips.push(el('span', { className: `x-chip x-chip--${kind}`, text: faText(value) }));
-    };
+    const facts = questionFacts(question);
+    const chip = (kind, iconName, label, title = null) => el('span', {
+        className: `x-chip x-chip--${kind}`,
+        attrs: title ? { title } : {},
+    }, icon(iconName), el('span', { className: 'x-chip__text', text: faText(label) }));
 
-    add('subject', question.topic);
-    // Tags often repeat the subject (a bank question's topic falls back to
-    // its subject): each name is shown once.
-    (Array.isArray(question.tags) ? question.tags : []).slice(0, 3).forEach((tag) => add('tag', tag));
+    const chips = [];
+    if (facts.exam) chips.push(chip('exam', 'calendar', facts.number ? `${facts.exam} · ${facts.number}` : facts.exam));
+    if (facts.subject) chips.push(chip('subject', 'book', facts.subject));
+    if (facts.topic) chips.push(chip('tag', 'tag', facts.topic));
 
     // Measured from everyone's answers once enough are in; otherwise the
     // question's own authored difficulty. Shown only when known.
     const difficulty = question.stats?.difficulty ?? question.difficulty;
     const level = typeof difficulty === 'string' ? difficulty.trim().toLowerCase() : '';
-    if (DIFFICULTY_LABELS[level]) {
-        chips.push(el('span', { className: `x-chip x-chip--level is-${level}`, text: DIFFICULTY_LABELS[level] }));
-    }
+    if (DIFFICULTY_LABELS[level]) chips.push(chip(`level is-${level}`, 'gauge', DIFFICULTY_LABELS[level]));
 
-    return el('div', { className: 'x-question__meta' }, ...chips);
+    // The chapter in Persian; under it, in the book's own language, the
+    // chapter's English title and the book and edition it is from.
+    const original = [facts.chapterEn, facts.book].filter(Boolean).join(' — ');
+    const source = facts.chapter === null ? null : el('p', { className: 'x-source' },
+        el('span', { className: 'x-source__icon' }, icon('book')),
+        el('span', { className: 'x-source__body' },
+            el('span', { className: 'x-source__chapter' }, ...bidiNodes(faText(facts.chapter))),
+            original ? el('span', { className: 'x-source__book', attrs: { dir: 'ltr', title: original }, text: original }) : null));
+
+    return el('div', { className: 'x-question__meta' },
+        chips.length ? el('div', { className: 'x-question__chips' }, ...chips) : null,
+        source);
 }
 
 /*
@@ -946,7 +953,11 @@ export function renderSubmitDialog(state, actions) {
     const blanks = unansweredPositions(state);
     return el('div', { className: 'x-dialog', attrs: { role: 'dialog', 'aria-modal': 'true', 'aria-label': 'ثبت نهایی', tabindex: '-1' } },
         el('div', { className: 'x-dialog__panel x-dialog__panel--narrow' },
-            el('h2', { text: 'ثبت نهایی آزمون' }),
+            // A header like every other dialog: on a phone the sheet drops its
+            // top padding for the sticky head, so a bare title sat on the edge.
+            el('header', { className: 'x-dialog__head' },
+                el('h2', { text: 'ثبت نهایی آزمون' }),
+                el('button', { className: 'x-dialog__close', type: 'button', text: '✕', attrs: { 'aria-label': 'بستن' }, on: { click: actions.close } })),
             blanks.length === 0
                 ? el('p', { text: 'به همه سؤال‌ها پاسخ داده‌ای. بعد از ثبت، پاسخ درست و توضیح هر سؤال را می‌بینی.' })
                 : el('div', {},

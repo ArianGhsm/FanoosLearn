@@ -230,8 +230,15 @@ SQL);
         $attempt = $exams->startAttempt($f['student'], $ws, $published['assessment_id']);
         $answers = [];
         foreach ([1, 2] as $position) {
-            $id = (string) $exams->readQuestion($f['student'], $ws, $attempt['attempt_id'], $position)['question']['id'];
+            $question = $exams->readQuestion($f['student'], $ws, $attempt['attempt_id'], $position)['question'];
+            $id = (string) $question['id'];
             $answers[$id] = $id === $key ? 2 : 1; // the amended answer (choice 3) and choice 2
+            // The boxes above the question: exam, year, number, and the chapter only where it may be shown as fact.
+            $bank = $question['bank'] ?? null;
+            $this->assert($bank !== null && $bank['exam_key'] === 'residency' && $bank['year'] === 1404 && $bank['number'] === ($id === $key ? 1 : 2), 'The question does not carry its exam and year: ' . json_encode($bank, JSON_UNESCAPED_UNICODE));
+            $this->assert($id === $key
+                ? ($bank['chapter']['number'] ?? null) === '14' && $bank['chapter']['title'] === 'Cleaning and Shaping' && $bank['chapter']['edition'] !== ''
+                : $bank['chapter'] === null, 'The chapter shown is wrong (a reviewed source names its top chapter; 0.84 shows none): ' . json_encode($bank['chapter'] ?? null, JSON_UNESCAPED_UNICODE));
         }
         $scored = $exams->submitAttempt($f['student'], $ws, $attempt['attempt_id'], 1, $answers);
         $this->assert($scored['correct_count'] === 2, 'The published answers do not match the bank: ' . json_encode($scored));

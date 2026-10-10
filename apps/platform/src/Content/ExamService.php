@@ -7,6 +7,7 @@ namespace Fanoos\Platform\Content;
 use Fanoos\Platform\Audit\AuditLogger;
 use Fanoos\Platform\Authorization\AccessGate;
 use Fanoos\Platform\Authorization\ScopeAuthorizer;
+use Fanoos\Platform\Bank\BankQuestionFacts;
 use Fanoos\Platform\Engagement\PointsService;
 use Fanoos\Platform\Engagement\QuestionDifficulty;
 use Fanoos\Platform\Entitlements\EntitlementService;
@@ -21,6 +22,7 @@ final class ExamService
     private readonly QuestionStatsRecorder $questionStats;
     private readonly PointsService $points;
     private readonly QuestionDifficulty $difficulty;
+    private readonly BankQuestionFacts $bankFacts;
 
     public function __construct(
         private readonly PDO $database,
@@ -33,6 +35,7 @@ final class ExamService
         $this->questionStats = new QuestionStatsRecorder($database);
         $this->points = new PointsService($database);
         $this->difficulty = new QuestionDifficulty($database);
+        $this->bankFacts = new BankQuestionFacts($database);
     }
 
     /**
@@ -1338,7 +1341,8 @@ SQL, ['workspace' => $workspaceId, 'assessment' => $assessmentId, 'version' => $
 
     /**
      * A question as a student in an attempt receives it: safeQuestion() plus
-     * how it has gone (QuestionStatsRecorder) -- the one shape both
+     * how it has gone (QuestionStatsRecorder) and, for a bank question, its
+     * exam, year and reference chapter (BankQuestionFacts) -- the one shape both
      * startAttempt()'s first question and readQuestion() return.
      *
      * @param array<string, mixed> $question
@@ -1348,6 +1352,10 @@ SQL, ['workspace' => $workspaceId, 'assessment' => $assessmentId, 'version' => $
     {
         $safe = $this->safeQuestion($question);
         $safe['stats'] = $this->questionStats->forQuestion($workspaceId, $userId, (string) $question['id']);
+        $bank = $this->bankFacts->forQuestion($workspaceId, (string) $question['id']);
+        if ($bank !== null) {
+            $safe['bank'] = $bank;
+        }
 
         return $safe;
     }
