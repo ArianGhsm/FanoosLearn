@@ -7,7 +7,7 @@
   "editions": {
     "burket-oral-medicine@12e": { "pdf": "Diseases, Oral & Maxillofacial/برکت/Burket Oral Medicine 12th Edition 2015.pdf" },
     "burket-oral-medicine@13e": { "pdf": "Diseases, Oral & Maxillofacial/برکت/Burket's Oral Medicine 13th Ed Michael Glick.pdf" },
-    "carranza-periodontology@12e": { "missing": "The 2015 12th edition PDF and its complete text are not in the owner's library; the 2019 13th edition is not an exact substitute.", "nearest": "carranza-periodontology@13e" },
+    "carranza-periodontology@12e": {"text":"references/carranza-periodontology@12e.txt","source_pdf_sha256":"1332e1f92ec1dea1ee99c7382993ce3f191407099d7650ebb97c79b989553263","description":"Exact approved private server source, 1766 PDF pages. Extract using scripts/references/extract_server_reference.py on the authorized FANOOS host; no public PDF path."},
     "carranza-periodontology@13e": { "pdf": "Periodontics/Newman and Carranza Clinical Periodontology 13th Edition 2019.pdf" },
     "carranza-periodontology@14e": { "text": "dental-reference-corpus/text/residency/Periodontics/Carranza_s_Clinical_Periodontology_14thEd_2023.txt" },
     "craig-restorative-materials@14e": { "pdf": "Dental materials/کریگ/Craig's Restorative Dental Materials .pdf" },
