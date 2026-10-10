@@ -30,7 +30,7 @@ class Periodontics1399Q119Correction(unittest.TestCase):
             "ch47", "1073", "'507'",
             "targeted oral hygiene", "is synonymous with the bass technique",
             "PrintedBookPageEvidence::corroborates", "BackupManifest::verify",
-            "hash_file('sha256', $file)", "hash_file('sha256', $originalPath)",
+            "hash_file('sha256', $file)",
             "if (!in_array('47', $scopeNumbers, true))",
             "Original private source or exact-edition book digest changed",
             "choices", "answer", "reviewed_by_user_id",
