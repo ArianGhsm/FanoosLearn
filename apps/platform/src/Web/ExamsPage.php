@@ -36,6 +36,15 @@ final class ExamsPage
     </div>
 </header>
 
+<section class="x-papers" id="papers" aria-labelledby="papers-title" hidden>
+    <div class="x-papers__head">
+        <h2 id="papers-title">آزمون‌های گذشته، به تفکیک آزمون و سال</h2>
+        <div id="goal-slot"></div>
+    </div>
+    <div id="papers-list"></div>
+</section>
+<h2 class="x-papers__more" id="catalog-title" hidden>همه‌ی آزمون‌ها و تمرین‌ها، با وضعیت تلاش‌هایت</h2>
+
 <div class="x-catalog__filters" role="group" aria-label="فیلتر آزمون‌ها" id="catalog-filters" hidden>
     <button class="x-chip is-active" type="button" data-kind="">همه</button>
     <button class="x-chip" type="button" data-kind="practice">تمرین</button>
@@ -53,7 +62,7 @@ HTML;
         return $this->renderer->render([
             'title' => 'آزمون‌ها | فانوس',
             'description' => 'آزمون‌های فضای آموزشی شما.',
-            'stylesheets' => ['/assets/web/pages/exams.css'],
+            'stylesheets' => ['/assets/web/pages/exams.css', '/assets/web/pages/bank.css'],
             'modules' => ['/assets/web/pages/exams.js'],
             'viewer' => $viewer,
             'activeNav' => 'exams',
