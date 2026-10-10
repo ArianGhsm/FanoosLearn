@@ -1,3 +1,40 @@
+> **Latest live revision 2026-10-10 18:25 UTC** — **160 residency periodontics questions; 144 source rows; 16 source-free; exactly 15 published sources with independently validated original-edition printed page and official answer** (4 in Carranza12e 1398, 11 in Carranza13e 1399). The other **129** source rows must NOT be marked exact-page final. This section supersedes prior 10/160 and 6/1399 progress statistics elsewhere in this historical audit.
+
+## Second five exact Carranza 13e page-only production corrections (1399)
+
+The following **additional** five cases were verified directly against their original 1,991-page approved Carranza 13e and each printed-page label independently corroborated from neighboring original pages.
+
+| Question 1399 | Original chapter unchanged | Original PDF page | Corrected printed page | Original answer-defining evidence |
+|---|---:|---:|---:|---|
+| Q115 | 12 | 506 | 182 | Smoking: decreased bleeding on probing; increased attachment loss |
+| Q118 | 33 | 882 | 408 | CBCT better visualizes fenestrations than 2D/digital intraoral images |
+| Q122 | 72 | 1611 | 721 | Merin class C, medically deferred periodontal surgery, 1–3-month recall |
+| Q123 | 52 | 1196 | 559 | Metronidazole inhibits warfarin metabolism and prolongs prothrombin time |
+| Q125 | 3 | 96 | 46 | Transseptal and alveolar-crest fibers form as the tooth emerges |
+
+- Original approved PDF SHA-256 `f0e411898ae010688ca5c0d21afe312cef6f5dae86d0e2e45648bc51ca8e2adf`, exact protected book text SHA-256 `baa5b5efd320bd286e101b7243dda7550392897bb6b2155261eeb83071d81814`.
+- Original protected full live-question/choices/answer/source snapshot SHA-256 `5a3eb3c985e6a0f5d4a4d27da45c5a0c3f6f04fe2b24df7628f2ae5ad3e3e781`. Narrow source-page-only operator/tests/docs: [PR #268](https://github.com/ArianGhsm/FanoosLearn/pull/268) merged commit `6d7c9b7b4478ac320c4c4e6ccbe0a882d607a073`. Both branch CI and canonical main `1347f3c371b5826833def67e564922fefe0c121f` CI green.
+- First deployment request was refused by the canonical SHA CI guard after another workstream advanced `main`; no writes. Retried only after green CI: official deployment request `01a1270b-df57-723e-9d67-aa9f7606e758` **SUCCEEDED**, live site health matched `1347f3c...`, full before-change backup `/var/backups/fanoos/20261010T182345Z-1ff944bb` passed verification of **54 files**.
+- Production page-only atomic apply receipt in protected `classification/reports/periodontics-1399-next5-exact13e-20261010/second-five-source-pages-apply-20261010.json`, SHA-256 `ca73f81de9d20491c4ff5d2e7d4a8c294a076dd81cb85245e557f38a8b795d64`. **Independent all-20-source-row before/after check** proved exactly five `bank_question_sources.page` transitions from NULL to these printed pages, with 15 other sources, edition, node, historical anchor, AI/human review, confidence values and question stem hashes identical. Private postdiff SHA-256 `113fe6d48590b85ede26907decffb4ff9ee687975c292d75dde7f30ed0e4dde8`. Frozen whole-year 1399 published assessment remained **version 8** and full definition SHA-256 `d36cc9097b8d096004128a967c5e15e279973927f2ea47b020c5876205158b85`. No choices, answers, human decisions or attempts were changed.
+
+### Current machine-verifiable 160-item disposition (v4)
+
+Protected `/srv/fanoos/shared/research/classification/reports/periodontics-completion-ledger-v4-20261010.json`, SHA-256 `7823cdc96e12001d563d85173f7e668f89e098a7bc701524c27d29fb2d3d84b4`.
+
+| Status | Count |
+|---|---:|
+| Original 12e / 1398 print-page-validated and published | 4 |
+| Original 13e / 1399 print-page-validated and published | 11 |
+| 1398 source-free with original-book/official-key scientific holds | 16 |
+| 1399–1403 older 13e source rows with no verified page and within chapter scope | 84 |
+| 1399–1403 13e source rows with NULL page and chapter outside year-specific official scope | 5 |
+| 1404–1405 old 14e sources with placeholder-like page labels; full original 14e absent | 40 |
+| **Total** | **160** |
+
+**Scientific closure remains blocked:** 16 source-free 12e cases include clinically incompatible or malformed official options; 89 existing 13e sources still need answer-specific primary-book verification (including five out-of-official-scope chapter links); 40 14e existing page labels are unvalidated because the registered source is merely 105 supplementary PDF pages rather than the complete official edition. Do not change question content or official answers, treat existing legacy source metadata as approved, or infer textbook pages without the correct edition. Prior sections record historically true earlier milestones rather than current production counts.
+
+---
+
 > **Latest verified checkpoint — 2026-10-10 15:42 UTC.** The prior 12:18 UTC counts remain accurate for total/source presence, but the classification below supersedes its Q119 conflict. **160 questions; 144 source rows; 16 unsourced; 10 validated original-edition printed pages published.** The other 134 source rows are not exact-page verified.
 
 ## Final production Q119 correction and full 160-question ledger v3
