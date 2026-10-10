@@ -36,13 +36,27 @@ with an invented local path.
 
 | Exam question | Exact 1398 reference | Chapter | Original PDF page | Textbook corroboration | Status |
 |---|---|---:|---:|---|---|
-| 123 | `malamed-medical-emergencies@7e` | 3, Preparation | 109 | "Alternative drug. Isoproterenol" under symptomatic bradycardia | Candidate; original validator still required |
-| 124 | `malamed-medical-emergencies@7e` | 11, Foreign Body Airway Obstruction | 211 | "underlying esophagus are lesser risks" in the cricothyrotomy explanation | Candidate; original validator still required |
+| 123 | `malamed-medical-emergencies@7e` | 3, Preparation | 110 | Atropine-refractory bradycardia discussion; alternative drug is isoproterenol (PDF p. 109) | Research-validated; original validator and independent audit passed |
+| 124 | `malamed-medical-emergencies@7e` | 11, Foreign Body Airway Obstruction | 211 | "underlying esophagus are lesser risks" in the cricothyrotomy explanation | Research-validated; original validator and independent audit passed |
 
-The quoted phrases are short finding aids. Actual decisions must use complete
-page-verbatim evidence, exact source-node/chapter, approved official year scope,
-valid confidence and original `apply_classification.py` acceptance, with an
-independent content/page auditor. These two chapters (3 and 11) are included
+**Verified 2026-10-10:** original unmodified `extract_server_reference.py`
+read the authenticated 561-page approved PDF and created protected page-marked
+text with 31 mapped chapters; source SHA-256
+`cc2ca3fb90039656483f6f2ddc22b482331613a9ab8889c79407f1e28baa184c`,
+text SHA-256 `526864224d2436661bfd2950593cb44927cb4cee780c22b55b9fd3c76949e146`.
+The original `apply_classification.py` validated **2 accepted, 0 rejected,
+14 undecided** against private exact-edition text. The independent unmodified
+`audit_private_study_batches.py` then passed **16 inputs, 2 accepted,
+14 pending** with all stems, options and official answers unchanged. Private
+new, isolated research package:
+`/srv/fanoos/shared/research/classification/parallel/W08/followup-malamed7/`;
+audit receipt `classification/reports/1398-surgery-malamed7-audit-20261010.json`.
+Original W08 decisions/manifests remain untouched. Do not publish these
+research results without the separate source-only production safety gates.
+
+The quoted phrases are finding aids. The 2 validated decisions contain
+page-verbatim evidence, official reference/chapter, confidence >=0.95 and
+were verified by the independent content/page auditor. Both chapters (3 and 11) are included
 in the catalog's official 1398 syllabus. They do not settle Q122, whose
 obstructed-airway clinical scenario and official key merit separate review.
 
@@ -50,18 +64,13 @@ obstructed-airway clinical scenario and official key merit separate review.
 
 1. Review this map against the original PDF chapter openings; verify that no
    chapter boundary was inferred from a table of contents or index.
-2. In the isolated W08/private work area, use the **unmodified**
-   `extract_server_reference.py` against the approved resource after the map
-   is available in an isolated checkout. It must confirm the complete 561-page
-   book and all chapter runs.
-3. Create only source proposals for supported Q123/Q124, run the original
-   `apply_classification.py` and an independent all-question immutability
-   audit. Keep other questions pending.
-4. A separate authorized coordinator alone may review fresh live
+2. Completed in isolated W08 checkout: original text extraction and original
+   validator plus independent SHA-pinned study content audit; keep others pending.
+3. A separate authorized coordinator alone may review fresh live
    no-source/answer match, original page evidence, verified full backup and
    source-only preview before any atomic production insert. Publishing frozen
    assessment versions requires a full unchanged-content diff.
-5. Record verified accepted/applied/assessment/CI/merge/deploy facts
+4. Record verified accepted/applied/assessment/CI/merge/deploy facts
    separately. Never claim this provisional page-map PR published a source.
 
 ## Concurrent-work caution
