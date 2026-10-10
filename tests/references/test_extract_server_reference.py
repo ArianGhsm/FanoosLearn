@@ -33,8 +33,9 @@ class PrivateBookExtractionTests(unittest.TestCase):
         mapping = json.loads((HERE / "data/bank/reference-chapter-pages.json").read_text(encoding="utf-8"))
         runs = mapping["editions"]["proffit-orthodontics@6e"]["runs"]
         self.assertEqual(runs[:3], [[None, 1, 11], ["1", 12, 27], ["2", 28, 69]])
-        self.assertEqual(module.chapter_coverage(mapping, "proffit-orthodontics@6e", 739),
-                         {"mapped_chapters": 20, "mapped_pages": 739})
+        self.assertEqual(runs[-2:], [["20", 667, 719], [None, 720, 746]])
+        self.assertEqual(module.chapter_coverage(mapping, "proffit-orthodontics@6e", 746),
+                         {"mapped_chapters": 20, "mapped_pages": 746})
 
     def test_page_markers(self):
         result = module.create_text("book@1e", ["hello", "world"], "a" * 64)
