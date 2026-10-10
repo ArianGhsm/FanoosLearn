@@ -34,9 +34,13 @@
   — page-evidence rules; eligible server-held reference editions first.
 - [`ops/SERVER.md`](ops/SERVER.md), [`../ops/updater/README.md`](../ops/updater/README.md),
   [`../ops/backup/README.md`](../ops/backup/README.md).
+- [`ops/RESIDENCY_CLASSIFICATION_1398_1405.md`](ops/RESIDENCY_CLASSIFICATION_1398_1405.md)
+  — where residency classification stands, and how to read its removed per-batch records.
+- [`ops/REFERENCE_LISTS_NATIONAL_SPECIALTY_20261010.md`](ops/REFERENCE_LISTS_NATIONAL_SPECIALTY_20261010.md)
+  — the national, board and promotion reference lists.
 
 ## Archive
 
-[`archive/`](archive/) holds documents from earlier stages (UI rebuilds,
-review rounds, the parallel-worker workflow, the cPanel-era handoffs). They
-are kept for history and are not maintained.
+[`archive/`](archive/) keeps only the four earlier documents that tests and
+code comments still cite. Everything else from earlier stages was removed on
+2026-10-11 and is in Git history (`git show cd64979:docs/archive/<path>`).
