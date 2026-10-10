@@ -71,6 +71,46 @@ class AuditTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unsupported confidence"):
             audit.audit_batch(self.root, "1402:community-dentistry:community")
 
+
+    def test_printed_page_from_original_text_requires_neighbor_support(self):
+        """Book printed 101 on PDF 117; printed-label mismatch is legitimate."""
+        (self.root / "references").mkdir()
+        book = self.root / "references/fictional-book@1e.txt"
+        book.write_text("=== PAGE 116 ===\n100\nSynthetic text\n"
+                        "=== PAGE 117 ===\n101\nSynthetic text\n"
+                        "=== PAGE 118 ===\n102\nSynthetic text\n"
+                        "=== PAGE 119 ===\n103\nSynthetic text\n")
+        self.decision["page"] = 117
+        self.source["page"] = "101"
+        self.save()
+        result = audit.audit_batch(self.root, "1402:community-dentistry:community")
+        self.assertEqual(result["accepted"], 1)
+        # A chapter/table number on one page may look like a printed page.
+        self.source["page"] = "10"
+        self.save()
+        with self.assertRaisesRegex(ValueError, "wrong page or origin"):
+            audit.audit_batch(self.root, "1402:community-dentistry:community")
+
+    def test_printed_page_without_two_consistent_neighbors_rejected(self):
+        (self.root / "references").mkdir()
+        book = self.root / "references/fictional-book@1e.txt"
+        book.write_text("=== PAGE 116 ===\n100\nSynthetic text\n"
+                        "=== PAGE 117 ===\n101\nSynthetic text\n"
+                        "=== PAGE 118 ===\nPage footer not readable\n"
+                        "=== PAGE 119 ===\nNo footer\n")
+        self.decision["page"] = 117
+        self.source["page"] = "101"
+        self.save()
+        with self.assertRaisesRegex(ValueError, "wrong page or origin"):
+            audit.audit_batch(self.root, "1402:community-dentistry:community")
+
+    def test_printed_page_missing_book_rejected(self):
+        self.decision["page"] = 117
+        self.source["page"] = "101"
+        self.save()
+        with self.assertRaisesRegex(ValueError, "exact reference text is missing"):
+            audit.audit_batch(self.root, "1402:community-dentistry:community")
+
     def test_save_private_location_and_idempotence(self):
         out = self.root / "classification/reports/audit.json"
         audit.save_private(self.root, out, {"safe": True})
