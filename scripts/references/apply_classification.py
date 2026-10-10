@@ -264,6 +264,8 @@ def main() -> int:
                 if not in_chapter:
                     why = f'page {page} is not in chapter {chapter} of {edition}'
             text = books.page(edition, int(page), runs.get(edition, {})) if why is None else None
+            # The printed label is read now: the page text is discarded below once checked.
+            printed = None if (text is None or args.pdf_pages) else printed_page(text)
             if why is None and text is None:
                 why = f'{edition} has no readable page {page} in its current approved PDF'
             if why is None:
@@ -283,10 +285,14 @@ def main() -> int:
                 why = 'confidence must be a number from 0 to 1'
             if why is None:
                 cite_node = chapter_nodes(catalog, cite)[cite_chapter]
-                printed = None if args.pdf_pages else printed_page(text)
                 accepted[n] = {
                     'ref': f"{cite}#{cite_node['key']}",
                     'page': printed if printed else f'pdf {page}',
+                    # The exact book page (migration 0043): the PDF page, its printed label, and the file.
+                    # (Only for the cited edition's own file; a historical nearest-edition page is not its page.)
+                    **({'pdf_page': int(page)} if cite == edition else {}),
+                    **({'printed_page': printed} if printed and cite == edition else {}),
+                    **({'pdf_sha256': books.pdfs[edition].source_sha256} if cite == edition and edition in books.pdfs else {}),
                     'anchor': str(d['evidence'])[:500],
                     'primary': True,
                     'origin': 'ai',

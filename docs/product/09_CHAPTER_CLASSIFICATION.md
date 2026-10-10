@@ -199,6 +199,11 @@ files are read for a sitting, by the `<year>-` prefix):
 ]
 ```
 
+- **Every accepted source carries the exact book page** (migration 0043):
+  `pdf_page`, the verified file's `pdf_sha256`, and `printed_page` when the
+  label was read on that page; `apply_classification.py` writes all three for
+  the cited edition's own PDF. A descriptive answer is later written from
+  that page, so a source without `pdf_page` is incomplete.
 - `page` in a decision and its audit receipt is the PDF page number. A printed
   page label may be saved for display only after it is checked on that exact
   PDF page and neighboring pages; retain the PDF page number and source PDF
