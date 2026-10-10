@@ -33,7 +33,7 @@ try {
     $stem = (string) ($options['stem'] ?? '');
     $post = isset($options['previous']) || isset($options['current']);
     if (!preg_match('/^[0-9a-f-]{36}$/D', $ws) || $year === false
-        || ($year < 1399 && !(($year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1'], true)) || ($year === 1398 && $subject === 'periodontics' && $stem === 'periodontics') || ($year === 1398 && $subject === 'community-dentistry' && $stem === 'community') || ($year === 1398 && $subject === 'prosthodontics' && $stem === 'prosthodontics')))
+        || ($year < 1399 && !(($year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1', 'endodontics-location-final'], true)) || ($year === 1398 && $subject === 'periodontics' && $stem === 'periodontics') || ($year === 1398 && $subject === 'community-dentistry' && $stem === 'community') || ($year === 1398 && $subject === 'prosthodontics' && $stem === 'prosthodontics')))
         || $year > 1500
         || !preg_match('/^[a-z][a-z0-9-]+$/D', $subject)
         || !preg_match('/^[a-z][a-z0-9-]+$/D', $stem)
