@@ -25,3 +25,7 @@ The 6e extraction initially **correctly failed** its contiguous page-map gate: o
 5. Publish only verifiable effects and append unique immutable receipts; do not count any existing row as revalidated until its original book page and answer linkage actually pass.
 
 Current branch is a reference map/test/documentation fix only: **no production question sources were edited, no assessment version advanced**.
+
+### Verified 6e book-tail correction
+
+Follow-up to the frontmatter correction: the exact private 6e PDF is **746** PDF pages. Re-running the strict original extractor on the repaired frontmatter map correctly detected an unmapped final seven pages. The original PDF was individually inspected: chapter 20 ends on PDF page **719**; the index runs from **720–739**; pages **740–746** contain the printed "This page intentionally left blank" marker. Map these pages as nonchapter back matter, and shorten chapter 20 to 667–719. The contiguous validator must cover 746 pages and 20 real chapters; neither the index nor deliberately blank pages are question evidence. Research must not proceed under an invalidly shortened 739-page map.
