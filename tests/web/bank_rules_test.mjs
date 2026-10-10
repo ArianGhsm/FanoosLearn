@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fold, matches, share, sittingLabel, yearSpan } from '../../apps/platform/public/assets/web/pages/bank-rules.js';
+import { chapterCoverage, droppedReferences, fold, matches, previousYear, referenceChange, scopeText, share, sittingLabel, yearSpan } from '../../apps/platform/public/assets/web/pages/bank-rules.js';
 import { faDigits } from '../../apps/platform/public/assets/web/pages/question-stats.js';
 
 test('search folds Arabic letter forms, Persian digits and ZWNJ', () => {
@@ -28,4 +28,55 @@ test('a topic bar is its share of the subject, never invisible', () => {
 test('a sitting names its round only when there is more than one', () => {
     assert.equal(sittingLabel({ type: 'دستیاری', year: 1404, round: 1 }, faDigits), 'دستیاری ۱۴۰۴');
     assert.equal(sittingLabel({ type: 'دستیاری', year: 1404, round: 2 }, faDigits), 'دستیاری ۱۴۰۴ · نوبت ۲');
+});
+
+const ref = (editionRef, scope = null) => ({ edition_ref: editionRef, scope });
+const yearsList = [
+    { type: 'دستیاری', year: 1405, subjects: [] },
+    { type: 'بورد', year: 1404, subjects: [] },
+    { type: 'دستیاری', year: 1403, subjects: [] },
+];
+
+test('the year before is the next older year of the same exam type', () => {
+    assert.equal(previousYear(yearsList, 0).year, 1403);
+    assert.equal(previousYear(yearsList, 1), null);
+    assert.equal(previousYear(yearsList, 2), null);
+    assert.equal(previousYear(yearsList, 9), null);
+});
+
+test('a reference is new, a new edition, a new scope, or unchanged', () => {
+    const before = { references: [ref('white@7e', 'همه'), ref('craig@14e', 'فصل 1')] };
+    assert.equal(referenceChange(ref('white@8e', 'همه'), before), 'edition');
+    assert.equal(referenceChange(ref('craig@14e', 'فصل 2'), before), 'scope');
+    assert.equal(referenceChange(ref('craig@14e', 'فصل 1'), before), null);
+    assert.equal(referenceChange(ref('powers@11e'), before), 'new');
+    assert.equal(referenceChange(ref('powers@11e'), null), null);
+});
+
+test('a scope change is read from the named chapters, not from how the words are spelt', () => {
+    const chapters = (...inside) => ['1', '2', '3'].map((number) => ({ number, in_scope: inside.includes(number), partial: null }));
+    const named = (scope, ...inside) => ({ edition_ref: 'carr@12e', scope, chapters: chapters(...inside) });
+    const before = { references: [named('فصول 1 و 2', '1', '2')] };
+    assert.equal(referenceChange(named('فصل‌های ۱ و ۲', '1', '2'), before), null);
+    assert.equal(referenceChange(named('فصول 1 تا 3', '1', '2', '3'), before), 'scope');
+    assert.equal(referenceChange({ edition_ref: 'carr@12e', scope: 'تمام فصول', chapters: [] }, before), null);
+    assert.equal(referenceChange(ref('carr@12e', 'تمام  فصول'), { references: [ref('carr@12e', 'تمام فصول')] }), null);
+});
+
+test('a dropped reference is one whose book is gone in every edition', () => {
+    const before = { references: [ref('white@7e'), ref('van-noort@4e')] };
+    const now = { references: [ref('white@8e')] };
+    assert.deepEqual(droppedReferences(now, before).map((r) => r.edition_ref), ['van-noort@4e']);
+    assert.deepEqual(droppedReferences(now, null), []);
+});
+
+test('chapter coverage counts announced chapters only when the year names them', () => {
+    assert.deepEqual(chapterCoverage([{ in_scope: true }, { in_scope: false }, { in_scope: true }]), { total: 3, inScope: 2 });
+    assert.deepEqual(chapterCoverage([{ in_scope: null }, { in_scope: null }]), { total: 2, inScope: null });
+    assert.deepEqual(chapterCoverage(undefined), { total: 0, inScope: null });
+});
+
+test('a scope reads in Persian digits with room after each comma between numbers', () => {
+    assert.equal(scopeText('فصول 4,5،8 و 13–30', faDigits), 'فصول ۴، ۵، ۸ و ۱۳–۳۰');
+    assert.equal(scopeText(null, faDigits), '');
 });

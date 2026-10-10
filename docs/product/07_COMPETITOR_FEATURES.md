@@ -27,7 +27,7 @@ of the counted rows at ✅.
 | 5 | Subject header: questions per exam, questions in the bank, years covered | M | ✅ questions in the bank, per exam, years, old-reference count |
 | 6 | Comprehensive mode: every question of a subject in year order (مطالعه جامع) | M | ✅ the whole subject newest year first, or only recent years, or one year |
 | 7 | Reference awareness: questions marked when their reference is old (رفرنس قدیم) | M P | ✅ «رفرنس قدیم» counted per subject and topic (from reviewed currency) |
-| 8 | Exam references by year (منابع آزمون دستیاری ۱۳۹۷–۱۴۰۵) | P | ✅ /app/references, year by year, subject by subject, with chapter scope |
+| 8 | Exam references by year (منابع آزمون دستیاری ۱۳۹۷–۱۴۰۵) | P | ✅ /app/references: a strip of years (`?year=`), the year's numbers, one card per subject with each book's edition, announced scope, chapter coverage and chapters; badges for what changed against the year before (new book, new edition, new scope, dropped book), search and "only what changed" |
 | 9 | Authored questions and authored exams (تالیفی) | M P | ✅ any exam kind can be authored and published |
 | 10 | Search across subjects, topics and exams (جستجو) | M | ✅ search on the bank page across subjects and years |
 

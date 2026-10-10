@@ -6,7 +6,7 @@
  */
 import { api, describeError } from '../foundation/api.js';
 import { faDigits } from './question-stats.js';
-import { matches, share, sittingLabel, yearSpan } from './bank-rules.js';
+import { chapterCoverage, droppedReferences, matches, previousYear, referenceChange, scopeText, share, sittingLabel, yearSpan } from './bank-rules.js';
 
 const workspaceId = document.querySelector('meta[name="fanoos-workspace"]')?.content ?? '';
 const base = `/workspaces/${encodeURIComponent(workspaceId)}`;
@@ -229,9 +229,9 @@ async function subject() {
         refs.append(el('h2', '', 'منابع این درس'));
         for (const year of data.references) {
             refs.append(el('h3', 'b-ref__year', `دستیاری ${faDigits(year.year)}`));
-            const ul = el('ul', 'b-refs');
-            for (const ref of year.references) ul.append(referenceItem(ref));
-            refs.append(ul);
+            const list = el('div', 'r-books');
+            for (const ref of year.references) list.append(bookCard(ref));
+            refs.append(list);
         }
         const all = el('a', 'c-link', 'همه‌ی منابع، سال به سال ←');
         all.href = '/app/references';
@@ -241,47 +241,136 @@ async function subject() {
     done(...parts);
 }
 
-function referenceItem(ref) {
-    const li = el('li', 'b-ref');
-    li.append(el('strong', '', ref.title));
-    const meta = el('span', 'f-muted', [ref.edition, ref.authors].filter(Boolean).join(' · '));
-    li.append(meta);
-    if (ref.scope) li.append(el('span', 'b-ref__scope', ref.scope));
-    if (ref.official === false) li.append(el('span', 'b-old', 'اعلام غیررسمی'));
-    if (Array.isArray(ref.chapters) && ref.chapters.length > 0) li.append(chapterList(ref.chapters, ref.edition_ref));
-    return li;
+/*
+ * One book, as منابع آزمون and a subject's page show it: a spine in the
+ * book's own colour, the title and authors as the publisher prints them, the
+ * edition, what changed since the year before, the year's announced scope,
+ * how much of the book that scope covers, and the chapters on demand.
+ */
+const SPINES = ['accent', 'info', 'subject', 'tag', 'source', 'difficulty'];
+
+function spineOf(editionRef) {
+    let hash = 0;
+    for (const char of String(editionRef ?? '').split('@')[0]) hash = (hash * 31 + char.codePointAt(0)) >>> 0;
+    return SPINES[hash % SPINES.length];
+}
+
+const CHANGES = {
+    new: ['new', 'تازه در این سال'],
+    edition: ['edition', 'ویرایش جدید'],
+    scope: ['scope', 'محدوده تغییر کرد'],
+};
+
+function badge(kind, text) {
+    return el('span', `r-badge r-badge--${kind}`, text);
+}
+
+function bookCard(ref, change = null) {
+    const card = el('article', `r-book r-book--${spineOf(ref.edition_ref)}`);
+    const spine = el('span', 'r-book__spine');
+    spine.setAttribute('aria-hidden', 'true');
+    const body = el('div', 'r-book__body');
+    const title = el('h3', 'r-book__title', ref.title);
+    title.dir = 'auto';
+    body.append(title);
+    if (ref.authors) {
+        const authors = el('p', 'r-book__authors', ref.authors);
+        authors.dir = 'auto';
+        body.append(authors);
+    }
+    const meta = el('div', 'r-book__meta');
+    const edition = el('span', 'r-tag r-tag--edition', ref.edition);
+    edition.dir = 'auto';
+    meta.append(edition);
+    if (ref.published_year) meta.append(el('span', 'r-tag', `چاپ ${faDigits(ref.published_year)}`));
+    if (change && CHANGES[change]) meta.append(badge(...CHANGES[change]));
+    if (ref.official === false) meta.append(badge('unofficial', 'اعلام غیررسمی'));
+    body.append(meta);
+    if (ref.scope) {
+        const scope = el('div', 'r-scope');
+        scope.append(el('span', 'r-scope__label', 'محدوده‌ی اعلام‌شده'), el('p', 'r-scope__text', scopeText(ref.scope, faDigits)));
+        body.append(scope);
+    }
+    const chapters = Array.isArray(ref.chapters) ? ref.chapters : [];
+    if (chapters.length > 0) body.append(coverage(chapters), chapterPanel(chapters, ref.edition_ref));
+    card.append(spine, body);
+    return card;
+}
+
+/* "۲۴ فصل از ۲۸ فصل کتاب" with a bar, or the chapter count when the year names no chapters. */
+function coverage(chapters) {
+    const { total, inScope } = chapterCoverage(chapters);
+    const wrap = el('div', 'r-meter');
+    if (inScope === null) {
+        wrap.append(el('span', 'r-meter__label', `${faDigits(total)} فصل`));
+        return wrap;
+    }
+    const bar = el('span', 'r-meter__bar');
+    bar.setAttribute('aria-hidden', 'true');
+    const fill = el('span', 'r-meter__fill');
+    fill.style.inlineSize = `${share(inScope, total)}%`;
+    bar.append(fill);
+    wrap.append(bar, el('span', 'r-meter__label', `${faDigits(inScope)} فصل از ${faDigits(total)} فصل کتاب`));
+    return wrap;
 }
 
 /*
- * The edition's chapters, Persian title over the publisher's English one.
- * When the year's announcement names its chapters, the ones outside it are
- * dimmed and the ones it limits to some pages say so.
+ * The chapters, Persian title over the publisher's English one. When the
+ * year names its chapters, the ones outside it wait behind their own button,
+ * and the ones it limits to some pages say so.
  */
-function chapterList(chapters, editionRef) {
-    const scoped = chapters.some((chapter) => chapter.in_scope === true);
-    const inScope = chapters.filter((chapter) => chapter.in_scope === true).length;
-    const details = el('details', 'b-chapters');
-    const summary = [`فهرست فصل‌ها · ${faDigits(chapters.length)} فصل`];
-    if (scoped) summary.push(`${faDigits(inScope)} فصل در منبع این سال`);
-    details.append(el('summary', '', summary.join(' · ')));
-    const ol = el('ol', 'b-chapters__list');
+function chapterPanel(chapters, editionRef) {
+    const { inScope } = chapterCoverage(chapters);
+    const wrap = el('div', 'r-chapters');
+    const toggle = el('button', 'r-chapters__toggle');
+    toggle.type = 'button';
+    toggle.setAttribute('aria-expanded', 'false');
+    const chevron = el('span', 'r-chevron');
+    chevron.setAttribute('aria-hidden', 'true');
+    toggle.append(el('span', '', 'فهرست فصل‌ها'), chevron);
+    const panel = el('div', 'r-chapters__panel');
+    panel.hidden = true;
+    const inside = el('ol', 'r-chapters__list');
+    const outside = el('ol', 'r-chapters__list r-chapters__list--out');
+    outside.hidden = true;
     for (const chapter of chapters) {
-        const item = el('li', 'b-chapter');
-        if (scoped && chapter.in_scope === false) item.classList.add('is-out');
-        item.append(el('span', 'b-chapter__number', chapter.number ? faDigits(chapter.number) : '–'));
-        const text = el('div', 'b-chapter__text');
-        text.append(...bilingual(chapter, 'b-chapter'));
-        if (scoped && chapter.in_scope === false) text.append(el('span', 'b-chapter__tag', 'خارج از منبع'));
-        if (chapter.partial) text.append(el('span', 'b-chapter__tag b-chapter__tag--partial', `بخشی از فصل: ${faDigits(chapter.partial)}`));
-        if (chapter.sections > 0 && editionRef) text.append(outlineToggle(editionRef, chapter));
-        item.append(text);
-        ol.append(item);
+        const out = inScope !== null && chapter.in_scope === false;
+        (out ? outside : inside).append(chapterRow(chapter, editionRef, out));
     }
-    details.append(ol);
+    panel.append(inside);
+    if (outside.children.length > 0) {
+        const label = `${faDigits(outside.children.length)} فصل خارج از محدوده`;
+        const more = el('button', 'r-chapters__more', `نمایش ${label}`);
+        more.type = 'button';
+        more.setAttribute('aria-expanded', 'false');
+        more.addEventListener('click', () => {
+            outside.hidden = !outside.hidden;
+            more.setAttribute('aria-expanded', String(!outside.hidden));
+            more.textContent = outside.hidden ? `نمایش ${label}` : `پنهان کردن ${label}`;
+        });
+        panel.append(more, outside);
+    }
     if (chapters.some((chapter) => chapter.title_fa && !chapter.title_fa_reviewed)) {
-        details.append(el('p', 'b-chapters__note', 'عنوان‌های فارسی را هوش مصنوعی ترجمه و یکدست کرده و هنوز متخصص بازبینی‌شان نکرده است؛ عنوان انگلیسی همان متن کتاب است.'));
+        panel.append(el('p', 'r-chapters__note', 'عنوان‌های فارسی را هوش مصنوعی ترجمه و یکدست کرده و هنوز متخصص بازبینی‌شان نکرده است؛ عنوان انگلیسی همان متن کتاب است.'));
     }
-    return details;
+    toggle.addEventListener('click', () => {
+        panel.hidden = !panel.hidden;
+        toggle.setAttribute('aria-expanded', String(!panel.hidden));
+        wrap.classList.toggle('is-open', !panel.hidden);
+    });
+    wrap.append(toggle, panel);
+    return wrap;
+}
+
+function chapterRow(chapter, editionRef, out) {
+    const item = el('li', out ? 'r-ch is-out' : 'r-ch');
+    item.append(el('span', 'r-ch__number', chapter.number ? faDigits(chapter.number) : '–'));
+    const text = el('div', 'r-ch__text');
+    text.append(...bilingual(chapter, 'r-ch'));
+    if (chapter.partial) text.append(el('span', 'r-ch__partial', `بخشی از فصل: ${faDigits(chapter.partial)}`));
+    if (chapter.sections > 0 && editionRef) text.append(outlineToggle(editionRef, chapter));
+    item.append(text);
+    return item;
 }
 
 /* A title as the page shows it: Persian over the English it translates (a Persian book's title alone). */
@@ -343,6 +432,11 @@ function outlineToggle(editionRef, chapter) {
 
 /* ---------------------------------------------------------- references */
 
+/*
+ * منابع آزمون: one year at a time, chosen on a strip of years (kept in the
+ * address as ?year=), a summary of the year against the one before it, and
+ * one card per subject. Search and "only what changed" narrow the cards.
+ */
 async function references() {
     let years;
     try {
@@ -356,33 +450,111 @@ async function references() {
         done(empty('منبعی ثبت نشده', 'منابع هر سال که وارد شود، این‌جا می‌آید.'));
         return;
     }
-    const tabs = document.getElementById('ref-years');
-    const draw = (index) => {
-        [...tabs.children].forEach((tab, i) => {
+    const strip = document.getElementById('ref-years');
+    const summary = document.getElementById('ref-summary');
+    const search = document.getElementById('ref-search');
+    const changesOnly = document.getElementById('ref-changes');
+    const severalTypes = new Set(years.map((year) => year.type)).size > 1;
+    const asked = Number(new URLSearchParams(window.location.search).get('year'));
+    let index = Math.max(0, years.findIndex((year) => year.year === asked));
+
+    const tabs = years.map((year, i) => {
+        const tab = el('button', 'r-year');
+        tab.type = 'button';
+        tab.setAttribute('role', 'tab');
+        tab.setAttribute('aria-label', `${year.type} ${faDigits(year.year)}`);
+        tab.append(el('span', 'r-year__number', faDigits(year.year)));
+        if (severalTypes) tab.append(el('span', 'r-year__type', year.type));
+        tab.addEventListener('click', () => {
+            index = i;
+            const url = new URL(window.location.href);
+            url.searchParams.set('year', String(year.year));
+            window.history.replaceState(null, '', url);
+            draw();
+            tab.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+        });
+        strip.append(tab);
+        return tab;
+    });
+    search.addEventListener('input', () => draw());
+    changesOnly.addEventListener('click', () => {
+        changesOnly.setAttribute('aria-pressed', String(changesOnly.getAttribute('aria-pressed') !== 'true'));
+        draw();
+    });
+    document.getElementById('ref-tools').hidden = false;
+
+    function draw() {
+        tabs.forEach((tab, i) => {
             tab.classList.toggle('is-active', i === index);
             tab.setAttribute('aria-selected', String(i === index));
         });
         const year = years[index];
-        const list = el('div', 'b-sheet');
-        for (const subjectRow of year.subjects) {
-            const row = el('div', 'b-refrow');
-            const title = el('a', 'b-row__title', subjectRow.name);
-            title.href = `/app/bank/${encodeURIComponent(subjectRow.key)}`;
-            const ul = el('ul', 'b-refs');
-            for (const ref of subjectRow.references) ul.append(referenceItem(ref));
-            row.append(title, ul);
-            list.append(row);
+        const before = previousYear(years, index);
+        const earlier = new Map((before?.subjects ?? []).map((subject) => [subject.key, subject]));
+        const subjects = year.subjects.map((subject) => {
+            const previous = before ? (earlier.get(subject.key) ?? { references: [] }) : null;
+            const books = subject.references.map((ref) => ({ ref, change: referenceChange(ref, previous) }));
+            return { subject, books, dropped: droppedReferences(subject, previous) };
+        });
+
+        const books = subjects.reduce((sum, row) => sum + row.books.length, 0);
+        const changes = subjects.reduce((sum, row) => sum + row.books.filter((book) => book.change).length + row.dropped.length, 0);
+        const scoped = subjects.flatMap((row) => row.books.map((book) => chapterCoverage(book.ref.chapters).inScope)).filter((n) => n !== null);
+        summary.replaceChildren();
+        const stat = (value, label, tone) => {
+            const tile = el('div', `r-stat r-stat--${tone}`);
+            tile.append(el('dt', 'r-stat__label', label), el('dd', 'r-stat__value', value));
+            summary.append(tile);
+        };
+        stat(faDigits(subjects.length), 'درس', 'accent');
+        stat(faDigits(books), 'کتاب', 'info');
+        if (scoped.length > 0) stat(faDigits(scoped.reduce((sum, n) => sum + n, 0)), 'فصل اعلام‌شده', 'subject');
+        stat(before ? faDigits(changes) : '—', before ? `تغییر نسبت به ${faDigits(before.year)}` : 'نخستین سال ثبت‌شده', 'difficulty');
+        changesOnly.disabled = before === null;
+
+        const query = search.value;
+        const onlyChanged = changesOnly.getAttribute('aria-pressed') === 'true' && before !== null;
+        const cards = [];
+        for (const row of subjects) {
+            if (onlyChanged && row.dropped.length === 0 && !row.books.some((book) => book.change)) continue;
+            const whole = matches(query, row.subject.name, row.subject.key);
+            const shown = whole ? row.books : row.books.filter((book) => matches(query, book.ref.title, book.ref.authors, book.ref.edition));
+            if (shown.length === 0) continue;
+            cards.push(subjectCard(row, shown, before));
         }
-        done(list);
-    };
-    years.forEach((year, index) => {
-        const tab = el('button', 'x-chip', `${year.type} ${faDigits(year.year)}`);
-        tab.type = 'button';
-        tab.setAttribute('role', 'tab');
-        tab.addEventListener('click', () => draw(index));
-        tabs.append(tab);
-    });
-    draw(0);
+        if (cards.length === 0) {
+            done(empty('چیزی پیدا نشد', onlyChanged ? 'در این سال، با این جست‌وجو، تغییری نسبت به سال قبل نیست.' : 'درس یا کتاب دیگری را جست‌وجو کن.'));
+            return;
+        }
+        const grid = el('div', 'r-grid');
+        grid.append(...cards);
+        done(grid);
+    }
+
+    function subjectCard(row, shown, before) {
+        const card = el('section', 'r-subject');
+        const head = el('header', 'r-subject__head');
+        const link = el('a', 'r-subject__link', 'سؤال‌ها');
+        link.href = `/app/bank/${encodeURIComponent(row.subject.key)}`;
+        link.setAttribute('aria-label', `سؤال‌های ${row.subject.name}`);
+        head.append(el('h2', 'r-subject__name', row.subject.name), el('span', 'r-subject__count', `${faDigits(row.books.length)} کتاب`), link);
+        const list = el('div', 'r-books');
+        for (const book of shown) list.append(bookCard(book.ref, book.change));
+        card.append(head, list);
+        if (row.dropped.length > 0) {
+            const dropped = el('p', 'r-dropped');
+            dropped.append(el('span', 'r-dropped__label', `کنار رفته از فهرست ${faDigits(before.year)}`));
+            for (const ref of row.dropped) {
+                const title = el('span', 'r-dropped__title', `${ref.title} · ${ref.edition}`);
+                title.dir = 'auto';
+                dropped.append(title);
+            }
+            card.append(dropped);
+        }
+        return card;
+    }
+
+    draw();
 }
 
 if (workspaceId && root) {

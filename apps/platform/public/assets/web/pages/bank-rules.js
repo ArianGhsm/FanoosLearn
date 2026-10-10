@@ -39,3 +39,68 @@ export function share(part, whole) {
 export function sittingLabel(sitting, faDigits) {
     return `${sitting.type} ${faDigits(sitting.year)}${sitting.round > 1 ? ` · نوبت ${faDigits(sitting.round)}` : ''}`;
 }
+
+/*
+ * منابع آزمون: what changed in a year's list against the year before it.
+ * `years` is the API's list, newest first; the year before is the next older
+ * one of the same exam type (a year with no list is skipped, not invented).
+ */
+export function previousYear(years, index) {
+    const year = years[index];
+    if (!year) return null;
+    return years.slice(index + 1).find((other) => other.type === year.type && other.year < year.year) ?? null;
+}
+
+const referenceKey = (ref) => String(ref.edition_ref ?? '').split('@')[0];
+
+/**
+ * 'new' (a book the subject did not have), 'edition' (the same book, another
+ * edition), 'scope' (the same edition, other announced chapters), or null
+ * (unchanged, or no earlier year to compare with).
+ */
+export function referenceChange(ref, previousSubject) {
+    if (!previousSubject) return null;
+    const same = previousSubject.references.find((other) => other.edition_ref === ref.edition_ref);
+    if (same) return sameScope(same, ref) ? null : 'scope';
+    return previousSubject.references.some((other) => referenceKey(other) === referenceKey(ref)) ? 'edition' : 'new';
+}
+
+/*
+ * Two years name the same scope when they name the same chapters (and the
+ * same parts of them); when neither names chapters, when their words agree.
+ * A year that names chapters against one that only describes them in words
+ * cannot be compared, so it is not called a change.
+ */
+function sameScope(before, now) {
+    const named = (ref) => (Array.isArray(ref.chapters) && ref.chapters.some((chapter) => chapter.in_scope === true)
+        ? ref.chapters.filter((chapter) => chapter.in_scope === true).map((chapter) => `${chapter.number}:${chapter.partial ?? ''}`).join(',')
+        : null);
+    const a = named(before);
+    const b = named(now);
+    if (a !== null && b !== null) return a === b;
+    if (a !== null || b !== null) return true;
+    return fold(before.scope) === fold(now.scope);
+}
+
+/** The books of the year before that this year's list no longer names (in any edition). */
+export function droppedReferences(subject, previousSubject) {
+    if (!previousSubject) return [];
+    const kept = new Set(subject.references.map(referenceKey));
+    return previousSubject.references.filter((ref) => !kept.has(referenceKey(ref)));
+}
+
+/** A book's chapters against the year's announcement: in scope is null when it names no chapters. */
+export function chapterCoverage(chapters) {
+    const list = Array.isArray(chapters) ? chapters : [];
+    const scoped = list.some((chapter) => chapter.in_scope === true);
+    return { total: list.length, inScope: scoped ? list.filter((chapter) => chapter.in_scope === true).length : null };
+}
+
+/*
+ * An announcement's scope as it reads in a right-to-left line: Persian
+ * digits, and a space after each comma between numbers, so "4,5,13-30"
+ * neither runs together into one left-to-right number nor wraps mid-list.
+ */
+export function scopeText(scope, faDigits) {
+    return faDigits(String(scope ?? '').replace(/(\d)\s*[,،]\s*(?=\d)/g, '$1، '));
+}
