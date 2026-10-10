@@ -33,11 +33,11 @@ try {
     $expected = filter_var($args['expected'] ?? null, FILTER_VALIDATE_INT);
     $apply = isset($args['apply']);
     if (preg_match('/^[0-9a-f-]{36}$/D', $ws) !== 1 || $year === false
-        || ($year < 1399 && !(($year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1'], true)) || ($year === 1398 && $subject === 'periodontics' && $stem === 'periodontics') || ($year === 1398 && $subject === 'community-dentistry' && $stem === 'community')))
+        || ($year < 1399 && !(($year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1'], true)) || ($year === 1398 && $subject === 'periodontics' && $stem === 'periodontics') || ($year === 1398 && $subject === 'community-dentistry' && $stem === 'community') || ($year === 1398 && $subject === 'prosthodontics' && $stem === 'prosthodontics')))
         || $year > 1500 || $expected === false || $expected < 1 || $expected > 250
         || preg_match('/^[a-z][a-z0-9-]{1,59}$/D', $subject) !== 1
         || preg_match('/^[a-z][a-z0-9-]{1,59}$/D', $stem) !== 1) {
-        throw new RuntimeException('Workspace, exact year/subject/stem and expected count required; 1398 is held outside independently verified endodontics, periodontics and community dentistry.');
+        throw new RuntimeException('Workspace, exact year/subject/stem and expected count required; 1398 is held outside independently verified endodontics, periodontics, community dentistry and prosthodontics.');
     }
     if ($apply !== isset($args['backup']) || $apply !== isset($args['receipt'])) {
         throw new RuntimeException('Apply requires both verified full backup and unique private receipt.');
