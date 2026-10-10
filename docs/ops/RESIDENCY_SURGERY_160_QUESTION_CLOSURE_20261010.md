@@ -61,3 +61,10 @@ Eight live source rows cite official Malamed LA6 but historically contain **LA7-
 A responsible single coordinator must verify Hupp6 original or an authenticated official replacement, resolve questionable answer/text cases, verify the exact Malamed7 special 1398 publication contract (current production writer disallows 1398 oral-surgery, allowing only independently approved endodontics), freeze and re-audit original question identities, obtain exclusive writer permission, run preview with official original edition, take and independently verify a complete fresh backup, source-only apply under the authorized service account, check site DB and all historical data invariants, republish the frozen assessment with full old/new unchanged-content diff, pass current-head CI, merge, use official updater, confirm health and record final immutable receipt.
 
 **Research coverage may now be treated as complete (160/160); official and student-facing published chapter-classification is 144/160 and cannot be closed yet.**
+
+
+## Private final recovery archive and runnable tests
+
+On the authorized server the complete **26-file** surgery-research package, its SHA manifest and reproduction scripts were archived as `/srv/fanoos/shared/research/classification/parallel/W08/reports/W08-surgery-160-research-final-20261010.tar.gz`, SHA-256 `c1a95802edbae510c22816d6c38e72cffd056e7d76a701512650fdde77bfb54f`. Independent in-memory archive verification checked every 26 payload SHA against the enclosed manifest. This private archive excludes the copyrighted original book PDFs and depends on the retained original W08 reference library for full reruns.
+
+The original reference/unit suite was rerun from the pinned surgery branch checkout with `python3 -m unittest discover -s tests/references -v`: **22/22 passed**. The private final 160-question integrity audit likewise passed. These on-host checks **do not** replace latest GitHub-PR CI, production publisher approval or publication tests.
