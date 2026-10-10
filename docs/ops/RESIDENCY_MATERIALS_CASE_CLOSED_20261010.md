@@ -1,7 +1,7 @@
 # Dental Materials Residency — Operational Case Closure (2026-10-10)
 
-**Subject:** `residency:dental-materials`, examinations 1398–1405 inclusive, ten questions per year.  
-**Owner scope:** dental materials only. Do not modify operative/restorative dentistry or any other residency workstream.  
+**Subject:** `residency:dental-materials`, examinations 1398–1405 inclusive, ten questions per year.
+**Owner scope:** dental materials only. Do not modify operative/restorative dentistry or any other residency workstream.
 **Requested disposition:** The user explicitly declined further human review and requested that this subject's case be closed.
 
 ## Closure decision

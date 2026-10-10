@@ -21,7 +21,10 @@ class Periodontics13eSecondFivePageRepairContract(unittest.TestCase):
             "'source_page'", "source_reviewed_by", "reviewed_at IS NULL",
             "scope_chapters", "in_array($target['chapter'], $chapters, true)",
             "GET_LOCK(", "FOR UPDATE", "BackupManifest::verify",
-            "hash_file('sha256', $snapshotFile)", "hash_file('sha256', $bookFile)",
+            "hash_file('sha256', $snapshotFile)",
+            "PrintedBookPageEvidence::pageContainsEvidence",
+            "source_pdf_sha256",
+            "f0e411898ae010688ca5c0d21afe312cef6f5dae86d0e2e45648bc51ca8e2adf",
             "question_option_answer_human_assessment_changes",
         ):
             self.assertIn(marker, self.src)
@@ -43,8 +46,8 @@ class Periodontics13eSecondFivePageRepairContract(unittest.TestCase):
         for page, printed in ((506, 182), (882, 408), (1611, 721),
                               (1196, 559), (96, 46)):
             self.assertIn(f"'pdf' => {page}, 'printed' => '{printed}'", self.src)
-        self.assertIn("preg_match('/^=== PAGE '", self.src)
-        self.assertIn("str_contains($pageText, $flatten($proof))", self.src)
+        self.assertIn("pageContainsEvidence(", self.src)
+        self.assertNotIn(".txt", self.src)
         self.assertIn("['final', 'amended']", self.src)
         self.assertIn("!== $saved['choices']", self.src)
         self.assertIn("!== $saved['source_anchor']", self.src)

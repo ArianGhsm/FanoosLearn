@@ -16,6 +16,9 @@ use Fanoos\Platform\Support\RuntimeConfig;
 $root = dirname(__DIR__, 2);
 require $root . '/apps/platform/bootstrap.php';
 
+$partial = null;
+$resolvedBackup = null;
+$failed = false;
 try {
     $config = RuntimeConfig::load();
     $storageRoot = $config->requireString('FANOOS_STORAGE_ROOT');
@@ -75,6 +78,7 @@ try {
     if (!rename($partial, $final)) {
         throw new RuntimeException('Backup could not be atomically finalized.');
     }
+    $partial = null;
 
     BackupManifest::verify($final);
     $sanitizedBackups = ReferencePdfBackupPruner::pruneCompletedBackups($resolvedBackup, $referenceObjects);
@@ -94,5 +98,18 @@ try {
 } catch (Throwable $error) {
     JsonLogger::write('error', 'backup.failed', ['error_type' => $error::class]);
     fwrite(STDERR, 'Backup failed: ' . $error->getMessage() . PHP_EOL);
+    $failed = true;
+} finally {
+    if (is_string($partial) && is_string($resolvedBackup) && is_dir($partial)) {
+        try {
+            BackupRetention::discardIncompleteStaging($partial, $resolvedBackup);
+        } catch (Throwable $cleanupError) {
+            JsonLogger::write('error', 'backup.partial_cleanup_failed', [
+                'error_type' => $cleanupError::class,
+            ]);
+        }
+    }
+}
+if ($failed) {
     exit(1);
 }

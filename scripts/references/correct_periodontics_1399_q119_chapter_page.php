@@ -21,9 +21,8 @@ require dirname(__DIR__, 2) . '/apps/platform/bootstrap.php';
 
 $base = '/srv/fanoos/shared/research/classification/reports/periodontics-13e-chapter47-correction-20261010';
 $originalPath = $base . '/q119-original-live-snapshot.json';
-$textPath = '/srv/fanoos/shared/research/references/carranza-periodontology@13e.txt';
+$sourcePdfSha = 'f0e411898ae010688ca5c0d21afe312cef6f5dae86d0e2e45648bc51ca8e2adf';
 $originalHash = 'e46bb494b6cd52f9e94bab4e88c5c44292146f5bc740dc5c0cb842314cd91e7c';
-$textHash = 'baa5b5efd320bd286e101b7243dda7550392897bb6b2155261eeb83071d81814';
 $db = null;
 $locked = false;
 $fh = false;
@@ -47,10 +46,9 @@ try {
         || (posix_getpwuid(posix_geteuid())['name'] ?? '') !== 'fanoosupd')) {
         throw new RuntimeException('Only updater service account may apply.');
     }
-    foreach ([$originalPath => $originalHash, $textPath => $textHash] as $file => $digest) {
-        if (!is_file($file) || is_link($file) || hash_file('sha256', $file) !== $digest) {
-            throw new RuntimeException('Original private source or exact-edition book digest changed.');
-        }
+    if (!is_file($originalPath) || is_link($originalPath)
+        || hash_file('sha256', $originalPath) !== $originalHash) {
+        throw new RuntimeException('Original private source snapshot changed.');
     }
     $snapshot = json_decode((string) file_get_contents($originalPath), true, 64, JSON_THROW_ON_ERROR);
     $saved = $snapshot['question'] ?? null;
@@ -64,19 +62,14 @@ try {
         || ($saved['answer_status'] ?? null) !== 'final') {
         throw new RuntimeException('Expected preserved historical Q119 source and official key.');
     }
-    $raw = (string) file_get_contents($textPath);
-    if (!preg_match('/^=== PAGE 1073 ===\h*$(.*?)(?=^=== PAGE \d+ ===|\z)/ms', $raw, $hit)) {
-        throw new RuntimeException('Correct book PDF page 1073 absent.');
+    if (!PrintedBookPageEvidence::pageContainsEvidence(
+        'carranza-periodontology@13e', 1073,
+        ['targeted oral hygiene', 'is synonymous with the bass technique'], $sourcePdfSha
+    )) {
+        throw new RuntimeException('Correct-answer passage is absent on exact original 13e PDF page.');
     }
-    $page = mb_strtolower(preg_replace('/\s+/u', ' ', $hit[1]) ?? '');
-    foreach (['targeted oral hygiene', 'is synonymous with the bass technique'] as $proof) {
-        if (!str_contains($page, $proof)) {
-            throw new RuntimeException('Correct-answer passage is absent on original 13e page.');
-        }
-    }
-    unset($raw);
     if (!PrintedBookPageEvidence::corroborates(
-        '/srv/fanoos/shared/research', 'carranza-periodontology@13e', 1073, '507'
+        'carranza-periodontology@13e', 1073, '507', $sourcePdfSha
     )) {
         throw new RuntimeException('Original printed page 507 failed neighboring page corroboration.');
     }
@@ -220,7 +213,8 @@ SQL);
         'updated_only' => ['bank_question_sources.node_id','bank_question_sources.page'],
         'question_option_answer_anchor_review_assessment_attempt_edits' => 0,
         'original_source_snapshot_sha256' => $originalHash,
-        'private_exact_book_sha256' => $textHash,'utc' => gmdate('c')
+        'source_pdf_sha256' => $sourcePdfSha,
+        'utc' => gmdate('c')
     ];
     if ($apply) {
         $report['backup_id'] = basename($backup);

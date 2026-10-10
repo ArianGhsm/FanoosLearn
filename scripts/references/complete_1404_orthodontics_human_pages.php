@@ -6,6 +6,7 @@ declare(strict_types=1);
  * orthodontics 1404 source page fields, without changing their human decision.
  * No new source, chapter, question, choices, answer or publication mutation.
  */
+use Fanoos\Platform\Bank\PrintedBookPageEvidence;
 use Fanoos\Platform\Operations\BackupManifest;
 use Fanoos\Platform\Support\DatabaseConnection;
 
@@ -21,6 +22,7 @@ try {
         $opts[$m[1]] = $m[2] ?? '1';
     }
     $ws = (string) ($opts['workspace'] ?? '');
+    $sourcePdfSha = '5f18cc196553b691635b0c136f9761a4e7c478bf115424d1c7f26f04b5b50015';
     if (!preg_match('/^[0-9a-f-]{36}$/D', $ws)) {
         throw new RuntimeException('Explicit dentistry workspace UUID required.');
     }
@@ -28,11 +30,8 @@ try {
     if ($apply !== isset($opts['backup']) || $apply !== isset($opts['receipt'])) {
         throw new RuntimeException('Apply requires both fresh backup and private receipt.');
     }
-    $reference = '/srv/fanoos/shared/research/references/proffit-orthodontics@6e.txt';
-    if (hash_file('sha256', $reference) !== 'c2e9b985eb8bf9fb916dbb2ab763ac27bd30bad89748ef76685c362aeec8aa59') {
-        throw new RuntimeException('Official 6e source text hash changed.');
-    }
-    // The original immutable PDF was independently inspected at both pages.
+    // The exact approved PDF and its hash-bound chapter map are checked at
+    // these two page labels; the underlying figure review remains human-led.
     // Q17 uses Fig. 14.35C on PDF491, without adjudicating official-key geometry.
     $review = [
         16 => [
@@ -48,6 +47,10 @@ try {
             'source_id' => '01a11bb7-1cd1-79b7-aaac-30a45317fc2a', 'answer' => 3,
         ],
     ];
+    if (!PrintedBookPageEvidence::corroborates('proffit-orthodontics@6e', 448, '438', $sourcePdfSha)
+        || !PrintedBookPageEvidence::corroborates('proffit-orthodontics@6e', 491, '481', $sourcePdfSha)) {
+        throw new RuntimeException('Human-reviewed pages do not match the exact approved PDF.');
+    }
     $backup = null;
     if ($apply) {
         if ((posix_getpwuid(posix_geteuid())['name'] ?? '') !== 'fanoosupd') {
@@ -168,7 +171,7 @@ SQL);
         'Q16'=>['chapter'=>13,'pdf_page'=>448,'printed_page'=>438],
         'Q17'=>['chapter'=>14,'pdf_page'=>491,'printed_page'=>481,
             'key_geometry_review'=>'key preserved; detailed facebow configuration not independently established'],
-        'book_text_sha256'=>'c2e9b985eb8bf9fb916dbb2ab763ac27bd30bad89748ef76685c362aeec8aa59',
+        'source_pdf_sha256'=>$sourcePdfSha,
     ];
     if ($apply) {
         $result['backup_id']=basename($backup);

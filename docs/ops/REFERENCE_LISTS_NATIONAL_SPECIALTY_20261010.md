@@ -39,8 +39,9 @@ the owner or a verified mirror is needed. Do not infer them from the 1405 lists.
 `national` (آزمون ملی); +188 validity rows (board 76, promotion 76, national
 36); 35 new books plus one «مقاله‌ها و ژورنال‌های اعلام‌شده» entry per
 specialty and year; new editions Proffit 7e, White & Pharoah 9e, Sturdevant 8e,
-Zarb 14e. Residency validity rows are byte-identical. New editions are listed as
-`missing` in `data/bank/reference-texts.json`. 28 review notes record
+Zarb 14e. Residency validity rows are byte-identical. The current
+`data/bank/reference-pdfs.json` records a live-inventory disposition for all
+official editions; unready exact editions remain `missing` and pending. 28 review notes record
 edition-from-year judgements for the owner to confirm.
 
 ## Production import

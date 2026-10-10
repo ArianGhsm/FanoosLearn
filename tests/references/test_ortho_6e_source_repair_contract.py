@@ -21,7 +21,8 @@ class OrthodonticsOriginal6eSourceRepairTests(unittest.TestCase):
     def test_exact_eight_verified_original_book_inputs(self):
         for word in ["count($input['decisions'] ?? []) !== 8",
                      "29fedfae46b69b5b3d81439d0e929a12464b9ee1cdf41498ec526b272744976d",
-                     "c2e9b985eb8bf9fb916dbb2ab763ac27bd30bad89748ef76685c362aeec8aa59",
+                     "5f18cc196553b691635b0c136f9761a4e7c478bf115424d1c7f26f04b5b50015",
+                     "PrintedBookPageEvidence::pageContainsEvidence",
                      "'1399:7'", "'1402:21'","'1404:11'","count($seen) !== 8"]:
             self.assertIn(word,self.code)
 

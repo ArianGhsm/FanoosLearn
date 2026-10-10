@@ -127,7 +127,6 @@ try {
     $written = SourceOnlyPublisher::run(
         DatabaseConnection::fromEnvironment(), $ws, $year, $subject,
         $read($studyPath), $read($validatedPath), $read($decisionsPath), $apply,
-        $inputRoot,
     );
     if ($written !== $expected) {
         throw new RuntimeException('Unexpected atomic batch count.');

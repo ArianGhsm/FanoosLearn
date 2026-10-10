@@ -11,10 +11,10 @@ class Fourth17PageSafety(unittest.TestCase):
   for w in ["89d848694c20953a423a809533f68a61fe009387d64e585b16dd14eacaecb179",
     "565b8f24e9a95cd9b9fc9d0cee07d60bdfa730bcbdd56a6ef10080b9cbca488e",
     "1ec7dace2e7e354c130d630f578db8dd1909e25b106b5671c49bef59d97b63ca",
-    "b240862242cfd48c9b90cdfa5cf8ba43a8e4ffe6900ea5d4e02b09419c40c58a",
+    "6fbc9bcba9003deda2f8fc006ccc4f23f9e15db0bcd0e237c56ddf6788578bb6",
     "count($cases)!==17","count($sources)!==159","count($answers)!==159"]:self.assertIn(w,self.s)
  def test_printed_page_evidence_key_and_scope_guards(self):
-  for w in ["PrintedBookPageEvidence::corroboratesPageMarkedText","Original answer-specific evidence missing",
+  for w in ["PrintedBookPageEvidence::pageContainsEvidence","PrintedBookPageEvidence::corroborates",
     "Not in official syllabus","bank_question_choices","bank_official_answers","answer_correspondence_reviewed"]:self.assertIn(w,self.s)
  def test_recovery_transaction_and_unique_receipt(self):
   for w in ["BackupManifest::verify","4*3600","GET_LOCK(","beginTransaction()","->commit()","->rollBack()","fopen($receipt,'x')"]:self.assertIn(w,self.s)

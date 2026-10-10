@@ -45,12 +45,13 @@ class ExactOriginalPathologyPageRepairContractTests(unittest.TestCase):
         for digest in [
             "9d6b8efd99cb942e0f2b6488dcef0b2fd6e7ae2f01fb05534eca33efa435ac4b",
             "a2b78e2b3d2c0c9434c14adb8e438037e999d73b1b39787e2888fbbb615c7037",
-            "348dafa50b9f53648dc5f7cad97547459ba70a227680ab921c5a04b1b63b6c40",
+            "4d35199b9cda526997717802e174144071d38f0179e725e7ed6a90b2f98565ac",
         ]:
             self.assertIn(digest, self.body)
         self.assertIn("hash_file('sha256'", self.body)
-        self.assertIn("Original PDF page marker missing:", self.body)
-        self.assertIn("Clinical answer-defining original passage absent:", self.body)
+        self.assertIn("PrintedBookPageEvidence::pageContainsEvidence", self.body)
+        self.assertIn("Clinical evidence or printed page is absent from the exact PDF", self.body)
+        self.assertIn("Clinical evidence or printed page is absent from the exact PDF", self.body)
 
     def test_source_only_apply_requires_fresh_complete_backup(self):
         self.assertIn("BackupManifest::verify", self.body)

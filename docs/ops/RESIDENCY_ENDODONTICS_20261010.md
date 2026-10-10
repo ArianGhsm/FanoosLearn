@@ -24,7 +24,7 @@ All **139 existing endodontic source rows** have a non-null chapter node; **two 
 
 Previous W03 research handoff (not a new publication permission):
 `/srv/fanoos/shared/research/classification/parallel/W03/HANDOFF_CHAT9.md`,
-`reports/audit-report.json`, original book page-marked texts, official-edition decisions and accepted study-only outputs.
+`reports/audit-report.json`, exact approved PDF page references, official-edition decisions and accepted study-only outputs. Temporary page text and search outputs are cleaned after the audit.
 
 - **1398**, Torabinejad 5e: 9 primary-validator-accepted **research** decisions — question → chapter → PDF page:
   Q1 → ch3 p53; Q2 → ch1 p30; Q3 → ch4 p73; Q4 → ch4 p76; Q5 → ch5 p89; Q6 → ch5 p102; Q7 → ch7 p128; Q8 → ch9 p161; Q12 → ch6 p113.
@@ -38,7 +38,7 @@ The chapter/page leads above are *PDF page indices* and deliberately distinct fr
 
 1. The 20 production-unsourced endodontics questions remain unsourced until a coordinator-authorized atomic source-only import is independently verified. Research acceptance is **not** database completion.
 2. Never reapply 1399 Q29 or a question already acquiring a source from any other chat. Requery live unsourced status, edition validity and pre-existing human sources immediately before every staged import.
-3. Independently verify exact approved PDF SHA, complete page-marked book text, chapter-page mapping including printed/PDF translation, question and recorded-key consistency, the original unchanged `apply_classification.py` validator and a second evidence/page audit. Any answer conflict or figure dependence stays `pending`.
+3. Independently verify exact approved PDF SHA and only the pages needed, chapter-page mapping, question and recorded-key consistency, the unchanged `apply_classification.py` validator and a second evidence/page audit. Any answer conflict or figure dependence stays `pending`.
 4. Worker-owned, SHA-pinned private packages stay separate from the coordinator. **No worker mutates** shared catalog/page maps, production DB, previously published assessments, another worker's artifacts, or deployed release. The 1398 page-map fix is coordinator-owned and must follow a reviewed GitHub PR.
 5. For an actual production change: fresh site-matching study export and content hash comparison, `questions_changed=choices_changed=answers_changed=0` transactional preview, verified complete production backup, unique importer receipt, live DB readback, full frozen-assessment diff, authorized publish, and only if code/docs have changed: green CI, merge, updater deployment and live health/sync verification. No step is deemed done from historical W03 claims alone.
 6. Continue searching undecided 1398 Q9–Q19 (excluding accepted Q12), but **do not infer chapters merely from subject headings** or rewrite official answers. Independently audit pre-existing 1399–1405 page evidence where possible; give human rows explicit protection.
@@ -162,7 +162,7 @@ This section **supersedes all earlier in-progress counts and Q9 hold statements 
 | 17 | 15 | 257 |
 | 18 | 2 | 42 |
 
-Q12 is explicitly corroborated in the actual original 5e PDF page 113 by the Radix entomolaris / extra mandibular molar root passage. All nine locations passed the primary source-text matcher and independent original-book provenance audit (9 accepted, 0 rejected); source text and the 494-page exact PDF had been directly extracted from the server-held source object. The prior automatically cleaned extracted-text scratch directory is not a necessary production dependency.
+Q12 is explicitly corroborated in the actual original 5e PDF page 113 by the Radix entomolaris / extra mandibular molar root passage. The historical validator reported nine accepted locations and zero rejects using temporary page-text derivatives; those outputs are history and require direct page revalidation before reuse. The PDFs remain the recovery source.
 
 The source-only importer applied exactly **nine new source links** with `questions_changed=0`, `choices_changed=0`, `answers_changed=0`. Unique private receipt: `/srv/fanoos/shared/research/classification/reports/1398-endodontics-last9-location-publish-20261010.json`, SHA256 `192bb49518ef316bb4f5d48ee0aa2abba2ebf993821073a2b297e0379c5da65e`. Independently verified complete **54-file pre-write backup** `20261010T135514Z-31e44a89`. The official published 1398 frozen exam moved **v9→v10**; full **245-question** before/after audit returned `question_content_identical=true`, with 13 source-explanation refreshes total (some other 1398 subjects were updated concurrently).
 
@@ -173,7 +173,7 @@ The source-only importer applied exactly **nine new source links** with `questio
 | 27 | 12 | 246 | human |
 | 34 | 13 | 281 | human |
 
-These two original HUMAN-source rows received **only** `bank_question_sources.page` metadata changes. Their official edition, chapter, provenance/reviewer metadata, original anchor, stems, choices, answers, historic attempts and versions remain preserved. PDF-page proof was re-extracted directly from the original 501-page authorized 6e asset and durably saved as protected private JSON at `/srv/fanoos/shared/research/classification/coordinator/W03-location-final-20261010/classification/reports/1404-endo-human-exact-pdf-page-proof-20261010.json`, SHA256 `3c1bff9ec82b3e661b7bae87df86b280c982ddd977dba7037285086cb24eb76a`. This avoids relying on transient scratch book text cleaned by the retention job.
+These two original HUMAN-source rows received **only** `bank_question_sources.page` metadata changes. Their official edition, chapter, provenance/reviewer metadata, original anchor, stems, choices, answers, historic attempts and versions remain preserved. An earlier implementation persisted the two full PDF pages in a protected JSON proof file. After confirming both short quotes directly against the original 501-page approved PDF, cleanup removed that page-text JSON; receipt: `/srv/fanoos/shared/research/classification/reports/artifact-cleanup-page-proof-20261010-1950.json`. Current code reads each requested page from the verified PDF in memory and discards it.
 
 Verified complete pre-write **54-file backup** `20261010T140503Z-ec07cc28`. Private page-only apply receipt `/srv/fanoos/shared/research/classification/coordinator/W03-location-final-20261010/classification/reports/1404-endodontics-human-page-publish-20261010.json` SHA256 `c3c5dae13578d8f0abf7d997f9bf19b72d0a79bb35ec39085ad9873ac9c28853`. The 1404 frozen assessment was published **v4→v5**; complete **247-question** post-audit returned `question_content_identical=true` with 16 source-explanation refreshes, including other subjects.
 

@@ -8,11 +8,11 @@ use Fanoos\Platform\Support\DatabaseConnection;
 require dirname(__DIR__, 2) . '/apps/platform/bootstrap.php';
 
 $root='/srv/fanoos/shared/research/classification/parallel/oral-pathology-review-20261010';
+$pdfSha='4d35199b9cda526997717802e174144071d38f0179e725e7ed6a90b2f98565ac';
 $paths=[
  'manifest'=>[$root.'/nev5-extra2-original-page-reviewed-20261010.json','af9c7418f9f87ab4e2fc38e88ef97548369ccc0728750357d6187631acad4f94'],
  'sources'=>[$root.'/after-nev4-seventh3-source.json','564a318cbea7e4f295ec75c291a9cba49ee1dfde35b7a91e74633d175ab2d8af'],
  'answers'=>[$root.'/after-nev4-seventh3-answers.json','ee5b162b01a27339966207e44acff85d3623ea35493b8742ebc1b2abe028b5c7'],
- 'original'=>[$root.'/references/neville-oral-pathology@5e.txt','348dafa50b9f53648dc5f7cad97547459ba70a227680ab921c5a04b1b63b6c40'],
 ];
 $db=null;$locked=false;$receipt=null;$handle=false;$committed=false;
 try {
@@ -33,11 +33,10 @@ try {
     ||count($manifest['cases']??[])!==2
     ||($manifest['production_source_sha256']??'')!==$paths['sources'][1]
     ||($manifest['production_answer_sha256']??'')!==$paths['answers'][1]
-    ||($manifest['full_original_book_sha256']??'')!==$paths['original'][1])throw new RuntimeException('Reviewed batch invalid');
+ )throw new RuntimeException('Reviewed batch invalid');
  $sources=[];foreach($read('sources')['rows'] as $x){$k=$x['year'].':'.$x['number'];if(isset($sources[$k]))throw new RuntimeException('Duplicate source snapshot');$sources[$k]=$x;}
  $answers=[];foreach($read('answers')['questions'] as $x){$k=$x['year'].':'.$x['number'];if(isset($answers[$k]))throw new RuntimeException('Duplicate answer snapshot');$answers[$k]=$x;}
  if(count($sources)!==159||count($answers)!==159)throw new RuntimeException('Whole-course snapshot must be complete');
- $text=(string)file_get_contents($paths['original'][0]);
  $map=json_decode((string)file_get_contents(dirname(__DIR__,2).'/data/bank/reference-chapter-pages.json'),true,64,JSON_THROW_ON_ERROR);
  $runs=$map['editions']['neville-oral-pathology@5e']['runs']??[];
  if(count($runs)<19)throw new RuntimeException('Canonical chapter map missing');
@@ -49,13 +48,8 @@ try {
      ||$x['answer_status']!=='final'&&$x['answer_status']!=='amended')throw new RuntimeException('Manifest case invalid');
   $count=0;$chapter=null;foreach($runs as $r){if($pg>=$r[1]&&$pg<=$r[2]){$count++;$chapter=$r[0];}}
   if($count!==1||(string)$chapter!==(string)$x['chapter']
-     ||!PrintedBookPageEvidence::corroboratesPageMarkedText($text,$pg,$pr))throw new RuntimeException('Book page or chapter not corroborated');
-  if(!preg_match('/^=== PAGE '.$pg.' ===\h*$(.*?)(?=^=== PAGE \d+ ===|\z)/ms',$text,$hit))throw new RuntimeException('Original page absent');
-  $norm=static fn(string $v):string=>preg_replace('/\s+/u',' ',mb_strtolower($v));
-  foreach($x['proofs'] as $proof){
-    if(!is_string($proof)||!str_contains($norm($hit[1]),$norm($proof)))
-      throw new RuntimeException('Original answer-specific book evidence missing');
-  }
+     ||!PrintedBookPageEvidence::pageContainsEvidence('neville-oral-pathology@5e',$pg,$x['proofs'],$pdfSha)
+     ||!PrintedBookPageEvidence::corroborates('neville-oral-pathology@5e',$pg,$pr,$pdfSha))throw new RuntimeException('Exact PDF page or chapter not corroborated');
   $cases[$key]=$x;
  }
  if(count($cases)!==2)throw new RuntimeException('Incomplete batch');
@@ -119,7 +113,7 @@ SQL);
  }
  $out=['format'=>'fanoos.neville5-extra2-existing-placeholder-only/1','applied'=>$apply,'count'=>count($report),
   'question_changes'=>0,'choice_changes'=>0,'answer_changes'=>0,'human_source_changes'=>0,
-  'source_snapshot_sha256'=>$paths['sources'][1],'manifest_sha256'=>$paths['manifest'][1],'items'=>$report,'utc'=>gmdate('c')];
+  'source_pdf_sha256'=>$pdfSha,'source_snapshot_sha256'=>$paths['sources'][1],'manifest_sha256'=>$paths['manifest'][1],'items'=>$report,'utc'=>gmdate('c')];
  if($apply){
   $out['backup_id']=basename($backup);$db->commit();$committed=true;
   $json=json_encode($out,JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT|JSON_THROW_ON_ERROR)."\n";

@@ -4,6 +4,14 @@
 
 **Do not close this course as 159/159 independently validated.** All **159 questions have source/chapter records**, but 25 page fields and further scientific or authorized decisions remain unresolved. This page supersedes outdated interim counts without deleting any protected research evidence.
 
+**PDF workflow correction — 2026-10-10:** Earlier page-repair operations temporarily created page-marked text derivatives. The live copies and the discovered W08 archive copy were removed, with private path/hash receipts in `PDF_REFERENCE_SOURCE_POLICY_20261010.md`. Those derivatives must not be restored or recreated. Current code reads selected pages directly from the approved PDF and keeps only concise page evidence.
+
+Later cleanup receipts document removal of seven regenerated full-book text
+copies plus a redundant W06 note, and a two-page Endodontics proof JSON that
+stored full PDF page text. The post-cleanup readback found zero book-named text
+files or sidecars. Preserve the original PDFs and the existing concise JSON
+decisions; future verification reads only the needed PDF page.
+
 ## Independently verified and deployed
 
 | Status | Confirmed value |

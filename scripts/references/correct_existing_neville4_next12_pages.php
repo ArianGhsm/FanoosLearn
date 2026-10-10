@@ -8,11 +8,11 @@ use Fanoos\Platform\Support\DatabaseConnection;
 require dirname(__DIR__, 2) . '/apps/platform/bootstrap.php';
 
 $root='/srv/fanoos/shared/research/classification/parallel/oral-pathology-review-20261010';
+$pdfSha='6fbc9bcba9003deda2f8fc006ccc4f23f9e15db0bcd0e237c56ddf6788578bb6';
 $paths=[
  'manifest'=>[$root.'/nev4-next12-answer-page-reviewed-20261010.json','addaa20964d777b1029c57340d9e7f8f46f35485592d085b5bdfd14663efa3c0'],
  'sources'=>[$root.'/after-neville5-12-live-source-baseline.json','14d879ec081dd1d25b8e4d5eceb1b1232a38e08543d08aa2d254f62d73624290'],
  'answers'=>[$root.'/after-neville5-12-question-baseline.json','e6c09bdb179f38b92659a54cdb8ec536be92f41f094f620d7b9c0137b638d966'],
- 'original'=>['/srv/fanoos/shared/research/classification/parallel/W04/references/neville-oral-pathology@4e.txt','b240862242cfd48c9b90cdfa5cf8ba43a8e4ffe6900ea5d4e02b09419c40c58a'],
 ];
 $db=null;$locked=false;$receipt=null;$handle=false;$committed=false;
 try {
@@ -33,11 +33,10 @@ try {
     ||($manifest['proposed_count']??0)!==12||count($manifest['cases']??[])!==12
     ||($manifest['source_snapshot_sha256']??'')!==$paths['sources'][1]
     ||($manifest['answer_snapshot_sha256']??'')!==$paths['answers'][1]
-    ||($manifest['original_text_sha256']??'')!==$paths['original'][1])throw new RuntimeException('Reviewed batch invalid');
+ )throw new RuntimeException('Reviewed batch invalid');
  $sources=[];foreach($read('sources')['rows'] as $x){$k=$x['year'].':'.$x['number'];if(isset($sources[$k]))throw new RuntimeException('Duplicate source snapshot');$sources[$k]=$x;}
  $answers=[];foreach($read('answers')['questions'] as $x){$k=$x['year'].':'.$x['number'];if(isset($answers[$k]))throw new RuntimeException('Duplicate answer snapshot');$answers[$k]=$x;}
  if(count($sources)!==159||count($answers)!==159)throw new RuntimeException('Whole-course snapshot must be complete');
- $text=(string)file_get_contents($paths['original'][0]);
  $map=json_decode((string)file_get_contents(dirname(__DIR__,2).'/data/bank/reference-chapter-pages.json'),true,64,JSON_THROW_ON_ERROR);
  $runs=$map['editions']['neville-oral-pathology@4e']['runs']??[];
  if(count($runs)<19)throw new RuntimeException('Canonical chapter map missing');
@@ -49,13 +48,8 @@ try {
      ||$x['answer_status']!=='final'&&$x['answer_status']!=='amended')throw new RuntimeException('Manifest case invalid');
   $count=0;$chapter=null;foreach($runs as $r){if($pg>=$r[1]&&$pg<=$r[2]){$count++;$chapter=$r[0];}}
   if($count!==1||(string)$chapter!==(string)$x['chapter']
-     ||!PrintedBookPageEvidence::corroboratesPageMarkedText($text,$pg,$pr))throw new RuntimeException('Book page or chapter not corroborated');
-  if(!preg_match('/^=== PAGE '.$pg.' ===\h*$(.*?)(?=^=== PAGE \d+ ===|\z)/ms',$text,$hit))throw new RuntimeException('Original page absent');
-  $norm=static fn(string $v):string=>preg_replace('/\s+/u',' ',mb_strtolower($v));
-  foreach($x['proofs'] as $proof){
-    if(!is_string($proof)||!str_contains($norm($hit[1]),$norm($proof)))
-      throw new RuntimeException('Original answer-specific evidence missing');
-  }
+     ||!PrintedBookPageEvidence::pageContainsEvidence('neville-oral-pathology@4e',$pg,$x['proofs'],$pdfSha)
+     ||!PrintedBookPageEvidence::corroborates('neville-oral-pathology@4e',$pg,$pr,$pdfSha))throw new RuntimeException('Exact PDF page or chapter not corroborated');
   $cases[$key]=$x;
  }
  if(count($cases)!==12)throw new RuntimeException('Incomplete batch');
@@ -119,7 +113,8 @@ SQL);
  }
  $out=['format'=>'fanoos.neville4-next12-existing-page-only/1','applied'=>$apply,'count'=>count($report),
   'question_changes'=>0,'choice_changes'=>0,'answer_changes'=>0,'human_source_changes'=>0,
-  'source_snapshot_sha256'=>$paths['sources'][1],'manifest_sha256'=>$paths['manifest'][1],'items'=>$report,'utc'=>gmdate('c')];
+  'source_pdf_sha256'=>$pdfSha,'source_snapshot_sha256'=>$paths['sources'][1],
+  'manifest_sha256'=>$paths['manifest'][1],'items'=>$report,'utc'=>gmdate('c')];
  if($apply){
   $out['backup_id']=basename($backup);$db->commit();$committed=true;
   $json=json_encode($out,JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT|JSON_THROW_ON_ERROR)."\n";

@@ -8,7 +8,7 @@ Two further answer-consistent exact-book decisions have passed the unchanged ori
 - **Q134** Carranza12e chapter 15, PDF page 594 / book printed 229: actual gingival position marks attachment at 5 mm from CEJ, visible recession is 3 mm, giving probing depth 2 mm; original answer choice 1 = 2 mm.
 - **Q137** Carranza12e chapter 15, PDF page 594 / book printed 229: the textbook explicitly describes loss of stippling as an early gingivitis sign; original answer choice 2 = early.
 
-Exact original-source PDF SHA-256 `1332e1f92ec1dea1ee99c7382993ce3f191407099d7650ebb97c79b989553263`, protected page-marked text SHA-256 `9b67b16cfaa080067bc9f03e550daa3fd71501855658922151fb2f90518f3e25`. Independent neighboring original printed page corroboration for PDF594 = 229 passed.
+Exact original-source PDF SHA-256 `1332e1f92ec1dea1ee99c7382993ce3f191407099d7650ebb97c79b989553263`. A former temporary page-text derivative was removed; current checks read the needed page directly from the PDF. Independent neighboring original printed-page corroboration for PDF594 = 229 passed in the historical audit.
 
 Protected decisions `classification/decisions/1398-periodontics-followup.json` SHA-256 `229c8ec727f03917cff9e644c3f0943ac0dc873b7fffb56afbfb7f4f305486db`. Protected validated study `classification/sittings/1398-periodontics-followup-validated.json`. The separate reference-only followup path is **strictly allowlisted** in the official importer and provenance auditor, so no prior immutable decision or source publication record needs to be rewritten.
 

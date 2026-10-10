@@ -13,6 +13,8 @@ where these or any old runbook differ, the principles prevail.
 4. `docs/ops/SERVER.md` — production layout, protected data and operators.
 5. `docs/product/09_CHAPTER_CLASSIFICATION.md` — mandatory before
    assigning a source, chapter or page.
+6. `docs/ops/PDF_REFERENCE_SOURCE_POLICY_20261010.md` — PDF source-of-truth
+   rule and direct-page-read contract for reference classification.
 
 ## 1. Authorities and environment
 
@@ -52,17 +54,48 @@ to the relevant `docs/` runbook and access-controlled server records.
 A SentinelX context is only a convenience copy, never the sole handoff.
 Never report a change as complete without verifying its persisted state.
 
+Across all components, temporary files belong to one operation and must be
+removed on success or failure. Use scoped temporary paths and `finally`/`trap`
+cleanup; use atomic replacement for durable writes. Keep a generated file only
+when it is an explicit product output, backup or audit receipt with a defined
+owner. Do not leave scratch files in the repository or runtime roots.
+
+Task-only scripts and generated files belong in a unique private
+`/srv/fanoos/shared/research/tmp/<operation-id>/` directory. Use automatic
+cleanup (`trap`/`finally`) or delete the exact directory after validation and
+audit. Reusable scripts belong in versioned `scripts/` and stay there; never
+leave one-off scripts, full-book text dumps, Python bytecode or duplicate
+checkouts after their operation ends. Preserve durable decisions, concise
+provenance/audit receipts, official PDFs, human reviews and verified backups.
+Run research Python commands with `python3 -B` to avoid bytecode caches.
+After an operation ends, remove its generated files once its validated result
+and concise recovery receipt are recorded. Before cleanup, confirm no running
+batch uses the files, list exact paths, and verify the replacement or recovery
+path. A pending follow-up never requires retaining PDF text; inspect the current
+approved PDF page directly when work resumes. Preserve pending decisions,
+durable handoffs and unique source data. Do not clean a running batch or use
+a blanket delete.
+
 ## 3. Reference and question processing
 
 - Fetch live private reference inventory with
   `scripts/ops/reference-library-inventory.php` and match each question
   to the official year/subject/edition in the catalog.
+- For book-based source/chapter/page work, the exact verified private server
+  PDF is the only book source. Never make or retain an extracted text file,
+  whole-book text stream, OCR export or search index from any PDF. Use
+  `scripts/references/verified_reference_pdf.py` to verify its current
+  approved object; tools may request one exact PDF page at a time and inspect
+  only that page in memory, then discard it. Record the PDF SHA-256 and page
+  number in the audit. Check selected evidence on the original PDF page,
+  especially where columns, Persian shaping or figures affect reading order.
 - Work with **eligible verified server editions** first. Set missing or
   incomplete editions aside as pending; no fabricated chapters and **no
   new nearest-edition fallback by default**. Preserve previously audited
   legacy assignments and human-reviewed sources.
-- A verified PDF is **not automatically searchable text**: check complete
-  page-marked book text and chapter-page mapping before deciding.
+- If a verified PDF page is not readable by the page-at-a-time reader, inspect
+  the original page in a PDF viewer or leave that question pending. Do not
+  create OCR output or a text version to fill the gap.
 - Use `scripts/references/` search and evidence validator end-to-end.
   Every decision needs the book's own verbatim evidence, chapter, PDF page,
   edition and confidence; unanswered matches remain undecided, not `none`.

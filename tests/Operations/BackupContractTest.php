@@ -32,6 +32,26 @@ final class BackupContractTest
             self::assert(isset($manifest['files']['database.sql']), 'Database dump must be inventoried.');
             self::assert(isset($manifest['files']['objects/nested/object.bin']), 'Object bytes must be inventoried.');
             self::assert(count($manifest['files']) === 2, 'Only payload files belong in the manifest.');
+            self::assert(glob($backup . DIRECTORY_SEPARATOR . 'manifest.json.tmp-*') === [], 'Manifest staging files must be cleaned after atomic replacement.');
+
+            $manifestFailure = $temporaryRoot . DIRECTORY_SEPARATOR . 'manifest-failure';
+            mkdir($manifestFailure . DIRECTORY_SEPARATOR . 'manifest.json', 0700, true);
+            self::assertThrows(
+                fn () => BackupManifest::write($manifestFailure, ['release' => 'test']),
+                'A directory occupying the manifest path must reject replacement.',
+            );
+            self::assert(glob($manifestFailure . DIRECTORY_SEPARATOR . 'manifest.json.tmp-*') === [], 'A failed manifest replacement must remove its staging file.');
+
+            $failedRoot = $temporaryRoot . DIRECTORY_SEPARATOR . 'failed-backups';
+            $failedStage = $failedRoot . DIRECTORY_SEPARATOR . '20261010T120000Z-1234abcd.partial';
+            mkdir($failedStage . DIRECTORY_SEPARATOR . 'objects', 0700, true);
+            file_put_contents($failedStage . DIRECTORY_SEPARATOR . 'database.sql', 'partial');
+            BackupRetention::discardIncompleteStaging($failedStage, $failedRoot);
+            self::assert(!file_exists($failedStage), 'A failed backup operation must remove its own partial staging tree.');
+            self::assertThrows(
+                fn () => BackupRetention::discardIncompleteStaging($backup, $failedRoot),
+                'Partial cleanup must reject a path outside the generated staging name/root.',
+            );
 
             file_put_contents($backup . DIRECTORY_SEPARATOR . 'objects' . DIRECTORY_SEPARATOR . 'nested' . DIRECTORY_SEPARATOR . 'object.bin', 'tampered');
             self::assertThrows(fn () => BackupManifest::verify($backup), 'Manifest verification must detect tampering.');

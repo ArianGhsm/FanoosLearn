@@ -20,9 +20,8 @@ require dirname(__DIR__, 2) . '/apps/platform/bootstrap.php';
 
 $dir = '/srv/fanoos/shared/research/classification/reports/periodontics-1399-next5-exact13e-20261010';
 $snapshotFile = $dir . '/five-full-immutable-verified-snapshot.json';
-$bookFile = '/srv/fanoos/shared/research/references/carranza-periodontology@13e.txt';
 $snapshotSha = '5a3eb3c985e6a0f5d4a4d27da45c5a0c3f6f04fe2b24df7628f2ae5ad3e3e781';
-$bookSha = 'baa5b5efd320bd286e101b7243dda7550392897bb6b2155261eeb83071d81814';
+$sourcePdfSha = 'f0e411898ae010688ca5c0d21afe312cef6f5dae86d0e2e45648bc51ca8e2adf';
 $targets = [
     115 => ['chapter' => '12', 'pdf' => 506, 'printed' => '182', 'answer' => 2, 'proof' => ['Gingivitis ↓ Gingival inlammation and bleeding on probing', '↑ Pocket depth, attachment loss, and bone loss']],
     118 => ['chapter' => '33', 'pdf' => 882, 'printed' => '408', 'answer' => 4, 'proof' => ['performed better than digital radiographs in the detection of early', 'furcational defects, three-wall defects, fenestrations, and dehiscence']],
@@ -53,10 +52,8 @@ try {
         throw new RuntimeException('Production mutation requires updater service account.');
     }
     if (is_link($snapshotFile) || !is_file($snapshotFile)
-        || hash_file('sha256', $snapshotFile) !== $snapshotSha
-        || is_link($bookFile) || !is_file($bookFile)
-        || hash_file('sha256', $bookFile) !== $bookSha) {
-        throw new RuntimeException('Original private snapshot or exact book digest changed.');
+        || hash_file('sha256', $snapshotFile) !== $snapshotSha) {
+        throw new RuntimeException('Original private snapshot changed.');
     }
     $original = json_decode((string) file_get_contents($snapshotFile), true, 64, JSON_THROW_ON_ERROR);
     $reviewed = [];
@@ -70,40 +67,15 @@ try {
     if (($original['year'] ?? null) !== 1399 || count($reviewed) !== count($targets)) {
         throw new RuntimeException('Exact five-question official-year snapshot required.');
     }
-    $fullText = (string) file_get_contents($bookFile);
-    $flatten = static fn(string $s): string => preg_replace('/\s+/u', ' ', mb_strtolower($s)) ?? '';
     foreach ($targets as $number => $t) {
-        if (!preg_match('/^=== PAGE ' . $t['pdf'] . ' ===\h*$(.*?)(?=^=== PAGE \d+ ===|\z)/ms', $fullText, $m)) {
-            throw new RuntimeException('Exact PDF page absent from original book: ' . $number);
-        }
-        $pageText = $flatten($m[1]);
-        foreach ($t['proof'] as $proof) {
-            if (!str_contains($pageText, $flatten($proof))) {
-                throw new RuntimeException('Specific answer evidence is absent on exact page: ' . $number);
-            }
-        }
-        // The common helper rejects original page headers longer than 90 chars
-        // (e.g. ch51 PDF1182). Independently corroborate all three consecutive
-        // book-PDF page headers before accepting an original printed label.
-        $pageHeaderIs = static function (string $book, int $pdf, int $print): bool {
-            if (!preg_match('/^=== PAGE ' . $pdf . ' ===\\h*$(.*?)(?=^=== PAGE \\d+ ===|\\z)/ms', $book, $match)) {
-                return false;
-            }
-            $lines = array_values(array_filter(array_map('trim', preg_split('/\\R/u', $match[1]) ?: [])));
-            $firstLine = (string) ($lines[0] ?? '');
-            return preg_match('/(?:^|\\s)' . $print . '(?:\\s|$)/u', $firstLine) === 1;
-        };
-        $neighborHeadersVerified = $pageHeaderIs($fullText, $t['pdf'] - 1, (int) $t['printed'] - 1)
-            && $pageHeaderIs($fullText, $t['pdf'], (int) $t['printed'])
-            && $pageHeaderIs($fullText, $t['pdf'] + 1, (int) $t['printed'] + 1);
-        if (!PrintedBookPageEvidence::corroborates(
-            '/srv/fanoos/shared/research', 'carranza-periodontology@13e',
-            $t['pdf'], $t['printed']
-        ) && !$neighborHeadersVerified) {
-            throw new RuntimeException('Printed page not independently verified on original consecutive page headers: ' . $number);
+        if (!PrintedBookPageEvidence::pageContainsEvidence(
+            'carranza-periodontology@13e', $t['pdf'], $t['proof'], $sourcePdfSha
+        ) || !PrintedBookPageEvidence::corroborates(
+            'carranza-periodontology@13e', $t['pdf'], $t['printed'], $sourcePdfSha, true
+        )) {
+            throw new RuntimeException('Answer evidence or printed page is absent from the exact PDF: ' . $number);
         }
     }
-    unset($fullText);
     if ($apply) {
         $backup = realpath((string) $opts['backup']);
         if ($backup === false || !str_starts_with($backup . '/', '/var/backups/fanoos/')) {
@@ -227,7 +199,7 @@ SQL);
         'applied' => $apply, 'count' => count($changed), 'year' => 1399, 'subject' => 'periodontics',
         'fields_updated' => ['bank_question_sources.page'],
         'question_option_answer_human_assessment_changes' => 0,
-        'snapshot_sha256' => $snapshotSha, 'private_original_book_sha256' => $bookSha,
+        'snapshot_sha256' => $snapshotSha, 'source_pdf_sha256' => $sourcePdfSha,
         'items' => $changed, 'utc' => gmdate('c'),
     ];
     if ($apply) {

@@ -8,7 +8,7 @@ The historical map omitted first/last pages and included frontmatter or appendix
 
 Pages 1–10 are nonchapter front matter. Chapter 19 is pages 891–923; the appendix, prescriptions and final blank pages are 924–983, not chapter 19. The resulting map covers all 983 pages continuously, with null runs for nonchapter pages. The historical heuristic supported_pages scores were deleted for this edition rather than being misrepresented as recalculated checks after adjusting boundaries.
 
-Protected original full-page text location: /srv/fanoos/shared/research/classification/parallel/oral-pathology-review-20261010/references/neville-oral-pathology@5e.txt; SHA-256 348dafa50b9f53648dc5f7cad97547459ba70a227680ab921c5a04b1b63b6c40. Source local page-map hash: a3cf792a52d0d6d7ca8b0aaf9b54d9be61a04a4f035c0102f6cb8fe4198b6b89.
+The original approved Neville5e PDF SHA-256 is `4d35199b9cda526997717802e174144071d38f0179e725e7ed6a90b2f98565ac`. A former temporary page-text derivative was removed during cleanup; chapter boundaries are checked from requested PDF pages and the stored map is bound to this PDF hash. Source local page-map hash: a3cf792a52d0d6d7ca8b0aaf9b54d9be61a04a4f035c0102f6cb8fe4198b6b89.
 
 This mapping change does not authorize updating any existing source, answer, question or assessment, does not alter official 1404/1405 chapter scope, and is not evidence that all existing pathology citations are valid. Research audit identified 10 exact 5e source phrase matches with page labels validated against neighboring original PDF pages. The rest require specific clinical content review and independent original-book evidence. Details: RESIDENCY_ORAL_PATHOLOGY_REFERENCE_AUDIT_20261010.md.
 

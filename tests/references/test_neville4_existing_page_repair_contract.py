@@ -19,11 +19,11 @@ class OriginalNeville4PageOperatorSafety(unittest.TestCase):
         for digest in ["06489c524c61e8fe221208117ce9cdc46e57b3d0a18e5f76215815ea1fc60f82",
                        "d8e96cf2e2517405cc6c17944f99fb1e6becc6e9aa1cecc70068c53a05f52291",
                        "62dbe2b7e06408c6d93a42ac023058fc31387eb8f6d80089f66614e40e5fe32e",
-                       "b240862242cfd48c9b90cdfa5cf8ba43a8e4ffe6900ea5d4e02b09419c40c58a"]:
+                       "6fbc9bcba9003deda2f8fc006ccc4f23f9e15db0bcd0e237c56ddf6788578bb6"]:
             self.assertIn(digest, self.code)
         for gate in ["count($cases)!==42", "count($sources)!==159", "count($answers)!==159",
-                     "PrintedBookPageEvidence::corroboratesPageMarkedText",
-                     "Original answer-specific evidence missing", "Not in official syllabus",
+                     "PrintedBookPageEvidence::pageContainsEvidence",
+                     "PrintedBookPageEvidence::corroborates", "Not in official syllabus",
                      "bank_question_choices", "bank_official_answers"]:
             self.assertIn(gate, self.code)
 

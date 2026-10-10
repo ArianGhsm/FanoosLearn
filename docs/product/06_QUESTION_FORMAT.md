@@ -272,13 +272,12 @@ python scripts/import/docx_to_sitting.py --docx=1400.docx --year=1400 --form=A -
     the source (1398 Q22, Q187).
 - **Numbering:** 1398 and 1402 are form B documents, so their sittings follow
   form B numbering. The others are form A (1405 has one form).
-- **Chapters** are not assigned here; that is a later re-import of the same
-  sitting with sources, found in the books' full texts
-  (server-side private `references/<edition>.txt` under
-  `/srv/fanoos/shared/research`, built or verified by
-  `scripts/references/build_reference_texts.py --local=/srv/fanoos/shared/research`
-  from an approved private reference input; PROJECT_PRINCIPLES decisions
-  6–7 and 2026-10-09 server-first policy).
+- **Chapters** are assigned later from the exact official reference PDF. The
+  reader verifies that current approved PDF and inspects one requested page at
+  a time in memory. It creates no text copy, page index, OCR export or search
+  corpus. Decisions retain only the cited PDF page and the short quote needed
+  to substantiate it; the original PDF remains authoritative
+  (PROJECT_PRINCIPLES decisions 6–7 and the PDF-only reference policy).
 
 Imported and published on 2026-10-07:
 
@@ -305,11 +304,12 @@ private server research workspace as specified in `docs/ops/SERVER.md`.
 This path must be provisioned and its recovery checked before treating
 new private work files as durable.
 
-Live library inventory on 2026-10-09: **27 ready reference PDFs out of 44
-catalog editions**, 17 awaiting a verified PDF. A PDF is not necessarily
-an extracted full-book text. Progress on eligible exact-edition questions
-continues; missing or incompletely parsed editions are tracked as pending,
-not filled with guesswork or new nearest-edition mappings by default.
+Historical live library inventory on 2026-10-09: **27 ready reference PDFs
+out of 44 catalog editions**, 17 awaiting a verified PDF. The current procedure
+reads selected pages directly from the exact approved PDF and does not create
+a text derivative. A missing PDF or unreadable page remains pending; never
+replace it with a separately collected text source or a new nearest-edition
+mapping by default.
 
 The year table above is an **as-of historical report**, not a live query of
 `bank_question_sources`. Do not claim a new classification total without

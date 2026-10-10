@@ -4,6 +4,8 @@
 Scope: dentistry residency, **oral-pathology only**, exam years 1398–1405.
 Do not confuse existing chapter metadata with original-edition/page-verified citation.
 
+**PDF workflow correction:** Some earlier candidate counts below came from a temporary full-book text derivative. Cleanup removed those derivatives. Treat the counts as historical leads only; re-check every cited page directly from the exact approved PDF before any new decision. Current tools read one page at a time and keep only concise decision evidence.
+
 ## Verified production read-only snapshot
 
 - 159 pathology questions total: 1398 = 20; 1399 = 19; 1400–1405 = 20 each.
@@ -12,11 +14,11 @@ Do not confuse existing chapter metadata with original-edition/page-verified cit
 - The remaining missing page belongs to a **human-origin 1404** row. Do not change it without a distinct authorized human-review path.
 - The 1398 Neville 4e catalog validity entry has official=false and no independently confirmed full syllabus. Twenty already-sourced 1398 pathology questions must not be counted as officially revalidated.
 - Five assigned chapters are outside the recorded year-specific announced chapter scopes (one in 1399, two in 1402, one in 1404, one in 1405). The identities and clinical review status are in the private report; no answer or source was altered.
-- Neville 5e (1404–1405) original page-marked text has not passed strict original-edition extraction because the chapter-page map omits PDF page 1. Of its 40 existing source rows, **22 carry mechanically implausible small numeric page labels** (including 21 equal to the chapter number); these are audit flags, not verified corrections.
+- Neville 5e (1404–1405) page checks fail closed until the chapter map covers every PDF page and is bound to the current PDF hash. Of its 40 existing source rows, **22 carry mechanically implausible small numeric page labels** (including 21 equal to the chapter number); these are audit flags, not verified corrections.
 
 ## Evidence progress using the actual Neville 4e book
 
-The protected, approved original Neville 4e page-marked book text is verified: 878 PDF pages, 19 mapped chapters. A strict normalized literal match was run against each old stored anchor after stripping the legacy nearest-edition annotation:
+The approved original Neville 4e PDF is verified at 878 pages, with 19 mapped chapters. A historical text-index pass searched each old stored anchor after stripping the legacy nearest-edition annotation; those results are leads for direct PDF page checks, not a substitute for them:
 
 - 26 source phrases occur **verbatim within the source's currently assigned Neville 4e chapter**.
 - All 26 matching PDF pages also passed a separate three-page (preceding/chosen/following) printed-label sequence check.
@@ -38,7 +40,7 @@ Verified content digests:
 | Private 159-row read-only snapshot | 9d6b8efd99cb942e0f2b6488dcef0b2fd6e7ae2f01fb05534eca33efa435ac4b |
 | Source-evidence audit report | d8a578a75fd4bb7a6ae1701bc7964c16d38ccc5b51493bd75db484cde3d6ae54 |
 | 26 original-edition page candidate report | 2d01ef3b9a2d24e9548d649130b74f6dbfb7e5bb8b95d34bfc28c85ca314e33a |
-| Original Neville 4e full text | b240862242cfd48c9b90cdfa5cf8ba43a8e4ffe6900ea5d4e02b09419c40c58a |
+| Approved original Neville 4e PDF | 6fbc9bcba9003deda2f8fc006ccc4f23f9e15db0bcd0e237c56ddf6788578bb6 |
 | Protected on-host README | 83c272a516279d87878ec03616e8f771725a30ed1833befd75e9af1743ea4800 |
 
 No private questions, options, official keys, book-page passages, PDF bytes, secrets or customer records are committed to this repository. Existing W04 research files were not changed.
@@ -46,8 +48,8 @@ No private questions, options, official keys, book-page passages, PDF bytes, sec
 ## Publication safety and next actions
 
 1. Reconfirm the 1398 *official* pathology source/scope from the original year notice. Never mark it verified from a partial change notice alone.
-2. Inspect the approved original Neville 5e PDF page 1 and repair the chapter page-map front matter **only through a separate reviewed PR and tests** before full original-text extraction and clinical research.
-3. Independently compare the 20 eligible 4e original-page candidates with complete current question, options, official answer, images and local book context, then audit the other legacy questions using the actual 4e text.
+2. Inspect the approved original Neville 5e PDF page 1 and repair the chapter page-map front matter **only through a separate reviewed PR and tests** before continuing page-at-a-time clinical research. Never perform full original-text extraction.
+3. Independently compare the 20 eligible 4e page candidates with complete current question, options, official answer, images and context read directly from the exact PDF page, then audit the other legacy questions the same way.
 4. Investigate the five out-of-syllabus assigned chapters and all suspicious 5e page labels. Protect every existing human-reviewed record and keep uncertain evidence pending.
 5. **Do not apply the source-only INSERT importer** to these questions: all 159 already have a source row. Any eventual source metadata correction needs its own reviewed, tested, readback-verified, exclusive and history-preserving update operation limited to reference/chapter/page, with original-edition evidence, a verified full backup and complete frozen-exam no-text/no-answer-change checks.
 6. Record live receipts, CI, merge and updater deployment **only if those separate gates actually complete**. This documentation-only proposal itself does not modify production data and does not imply exam republishing.

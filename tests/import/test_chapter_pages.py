@@ -11,7 +11,7 @@ sys.path.insert(0, str(REPO / 'scripts' / 'references'))
 import build_chapter_pages as chapter_pages  # noqa: E402
 from build_chapter_pages import bookmark_openings, documented_openings, locate, openings, words  # noqa: E402
 from apply_classification import flat  # noqa: E402
-from find_in_books import Book  # noqa: E402
+from find_in_books import page_score, quote_page, search_edition  # noqa: E402
 
 
 class ChapterPagesTest(unittest.TestCase):
@@ -51,22 +51,39 @@ class ChapterPagesTest(unittest.TestCase):
     def test_only_rebuild_preserves_existing_editions(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            local = root / '.local'
-            (local / 'references').mkdir(parents=True)
-            (local / 'references' / 'new@1e.txt').write_text(
-                '=== PAGE 1 ===\nCHAPTER 1\nFirst Topic\ntext\n', encoding='utf-8')
             toc = root / 'tocs.json'
             toc.write_text(json.dumps({'editions': {'new@1e': {'chapters': [['1', 'First Topic']]}}}), encoding='utf-8')
+            pdf_manifest = root / 'reference-pdfs.json'
+            pdf_manifest.write_text(json.dumps({'editions': {'new@1e': {'pdf': 'verified-server-pdf'}}}), encoding='utf-8')
             output = root / 'chapter-pages.json'
             previous = {'runs': [['7', 1, 9]], 'chapters_seen': 1, 'chapters_listed': 1,
                         'not_seen': [], 'supported_pages': {'7': '2/9'}}
             output.write_text(json.dumps({'editions': {'old@1e': previous}}), encoding='utf-8')
-            argv = ['build_chapter_pages.py', '--local', str(local), '--only', 'new@1e']
-            with patch.object(chapter_pages, 'TOCS', toc), patch.object(chapter_pages, 'OUT', output), patch.object(sys, 'argv', argv):
+            page_text = ('CHAPTER 1\nFirst Topic\nThis synthetic PDF page has enough body text to pass the page check.\n'
+                         'The example remains synthetic and contains no book content.')
+
+            class FakePdf:
+                page_count = 1
+                source_sha256 = 'a' * 64
+
+                def bookmarks(self):
+                    return []
+
+                def iter_page_texts(self):
+                    yield 1, page_text
+
+            argv = ['build_chapter_pages.py', '--only', 'new@1e']
+            with patch.object(chapter_pages, 'TOCS', toc), \
+                 patch.object(chapter_pages, 'PDFS', pdf_manifest), \
+                 patch.object(chapter_pages, 'OUT', output), \
+                 patch.object(chapter_pages, 'open_verified_reference', return_value=FakePdf()), \
+                 patch.object(sys, 'argv', argv):
                 self.assertEqual(chapter_pages.main(), 0)
             result = json.loads(output.read_text(encoding='utf-8'))['editions']
             self.assertEqual(result['old@1e'], previous)
             self.assertEqual(result['new@1e']['runs'], [['1', 1, 1]])
+            self.assertEqual(result['new@1e']['source_pdf_sha256'], 'a' * 64)
+            self.assertEqual(list(root.rglob('*.txt')), [])
 
     def test_outline_uses_ordered_chapters_across_levels(self):
         toc = [[1, '1 A Section', 1], [2, '1 First Topic', 5],
@@ -91,21 +108,25 @@ class ChapterPagesTest(unittest.TestCase):
         self.assertIn(flat('شاخص سلامت دهان و دندان'), flat(page))
         self.assertNotIn(flat('مراقبت ویژه سالمندان و کودکان'), flat(page))
 
-    def test_persian_book_search_returns_a_verifiable_quote(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / 'persian.txt'
-            path.write_text('=== PAGE 1 ===\nسلامت دهان و دندان در جامعه مهم است.\n'
-                            'بهداشت باید رعایت شود.\nاین متن صفحه اول است.\nو جمله پایانی.\n'
-                            '=== PAGE 2 ===\nشاخص سلامت دهان و دندان در جامعه برای غربالگری به کار می رود.\n'
-                            'آزمایش با این شاخص انجام می شود.\nاین متن صفحه دوم است.\nو جمله پایانی.\n',
-                            encoding='utf-8')
-            book = Book(path, [['1', 1, 2]])
-            matches = book.search(['غربالگری', 'شاخص سلامت'], 2)
-            page_index = matches[0][1]
-            self.assertEqual(book.pages[page_index][0], 2)
-            quote = book.quote(page_index, ['غربالگری', 'شاخص سلامت'])
-            self.assertIsNotNone(quote)
-            self.assertIn(flat(quote), flat(book.pages[page_index][1]))
+    def test_persian_page_search_returns_a_verifiable_quote_without_an_index(self):
+        page_one = ('سلامت دهان و دندان در جامعه مهم است.\nبهداشت باید رعایت شود.\n'
+                    'این یک صفحهٔ مصنوعی برای آزمون است.\nو جمله پایانی همین صفحه.')
+        page_two = ('شاخص سلامت دهان و دندان در جامعه برای غربالگری به کار می رود.\n'
+                    'آزمایش با این شاخص انجام می شود.\nاین صفحهٔ مصنوعی دوم است.\nو جمله پایانی صفحه.')
+
+        class FakePdf:
+            def iter_page_texts(self):
+                yield 1, page_one
+                yield 2, page_two
+
+        hits = search_edition(FakePdf(), [{'key': 'q1', 'terms': ['غربالگری', 'شاخص سلامت']}],
+                              [['1', 1, 2]], 2)['q1']
+        self.assertEqual(hits[0][2], 2)
+        quote = hits[0][5]
+        self.assertIsNotNone(quote)
+        self.assertIn(flat(quote), flat(page_two))
+        self.assertGreater(page_score(page_two, ['غربالگری', 'شاخص سلامت']), 0)
+        self.assertIsNotNone(quote_page(page_two, ['غربالگری', 'شاخص سلامت']))
 
 
 if __name__ == '__main__':

@@ -14,18 +14,17 @@ declare(strict_types=1);
  */
 use Fanoos\Platform\Operations\BackupManifest;
 use Fanoos\Platform\Support\DatabaseConnection;
+use Fanoos\Platform\Bank\PrintedBookPageEvidence;
 
 require dirname(__DIR__, 2) . '/apps/platform/bootstrap.php';
 
 $base = '/srv/fanoos/shared/research/classification/parallel/oral-pathology-review-20261010';
+$sourcePdfSha = '4d35199b9cda526997717802e174144071d38f0179e725e7ed6a90b2f98565ac';
 $sourceSnapshot = $base . '/live-existing-sources.private.json';
 $keySnapshot = $base . '/original-official-key-review.json';
-$textPath = $base . '/references/neville-oral-pathology@5e.txt';
-
 $expectedHashes = [
     $sourceSnapshot => '9d6b8efd99cb942e0f2b6488dcef0b2fd6e7ae2f01fb05534eca33efa435ac4b',
     $keySnapshot => 'a2b78e2b3d2c0c9434c14adb8e438037e999d73b1b39787e2888fbbb615c7037',
-    $textPath => '348dafa50b9f53648dc5f7cad97547459ba70a227680ab921c5a04b1b63b6c40',
 ];
 $targets = [
     '1404:46' => ['chapter' => '10', 'old' => '10', 'new' => '367', 'pdf' => 377,
@@ -91,19 +90,16 @@ try {
     if (count($storedSources) !== count($targets) || count($originals) !== count($targets)) {
         throw new RuntimeException('Five historical source+question snapshots required.');
     }
-    $fullText = (string) file_get_contents($textPath);
     foreach ($targets as $id => $target) {
         $p = $target['pdf'];
-        if (!preg_match('/^=== PAGE ' . $p . ' ===\s*$(.*?)(?=^=== PAGE \d+ ===|\z)/ms',
-            $fullText, $hit)) {
-            throw new RuntimeException('Original PDF page marker missing: ' . $id);
-        }
-        $normal = static fn(string $s): string => preg_replace('/\s+/u', ' ', mb_strtolower($s));
-        if (!str_contains($normal($hit[1]), $normal($target['proof']))) {
-            throw new RuntimeException('Clinical answer-defining original passage absent: ' . $id);
+        if (!PrintedBookPageEvidence::pageContainsEvidence(
+            'neville-oral-pathology@5e', $p, [$target['proof']], $sourcePdfSha
+        ) || !PrintedBookPageEvidence::corroborates(
+            'neville-oral-pathology@5e', $p, $target['new'], $sourcePdfSha
+        )) {
+            throw new RuntimeException('Clinical evidence or printed page is absent from the exact PDF: ' . $id);
         }
     }
-    unset($fullText);
 
     if ($apply) {
         $backup = realpath((string) $opts['backup']);
@@ -225,7 +221,7 @@ SQL);
         'applied' => $apply, 'count' => count($result), 'source_only_page_field' => true,
         'question_option_answer_review_mutations' => 0, 'items' => $result,
         'source_snapshot_sha256' => $expectedHashes[$sourceSnapshot],
-        'book_text_sha256' => $expectedHashes[$textPath],
+        'source_pdf_sha256' => $sourcePdfSha,
         'utc' => gmdate('c'),
     ];
     if ($apply) {

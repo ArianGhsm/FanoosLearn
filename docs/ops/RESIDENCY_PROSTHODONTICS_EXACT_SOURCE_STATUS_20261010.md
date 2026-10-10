@@ -14,7 +14,7 @@ Historical 1399–1405 metadata audit found **14 missing source pages**, **66 ro
 
 ## 1398 source-book evidence actually validated (11/30)
 
-The exact original approved McCracken RPD 12e PDF (389 pages), Zarb Edentulous 13e PDF (466 pages), and Shillingburg Fixed 4e PDF (585 pages) were SHA-checked against private source objects. Original page-marked texts were reconstructed in protected W06; Shillingburg was explicitly **research-only** while its global chapter map remains incomplete. The unchanged canonical `apply_classification.py` accepted **11** decisions, **0** rejected; when explicit `pdf N` page labels were used, the unchanged independent `audit_private_study_batches.py` also passed **11 accepted / 19 pending** with every question, choice and answer identical.
+The exact original approved McCracken RPD 12e PDF (389 pages), Zarb Edentulous 13e PDF (466 pages), and Shillingburg Fixed 4e PDF (585 pages) were SHA-checked against private source objects. Earlier W06 work temporarily reconstructed page-marked text; cleanup removed those derivatives. Current and future verification reads selected pages directly from the exact approved PDFs. Shillingburg remains **research-only** while its global chapter map is incomplete. The historical `apply_classification.py` pass accepted **11** decisions, **0** rejected; when explicit `pdf N` page labels were used, the independent `audit_private_study_batches.py` pass also reported **11 accepted / 19 pending** with every question, choice and answer identical. Those historical outputs do not authorize recreating text files.
 
 | 1398 question | Official edition | Chapter | Original PDF page |
 | --- | --- | ---: | ---: |

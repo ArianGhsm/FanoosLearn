@@ -11,10 +11,10 @@ class Third12PageGuard(unittest.TestCase):
   for t in ["90e4588a0ef98b434d3afb91ec67cf9a5f4f65f851d810cd13df7b47e72a150d",
             "1af3ac5c2bc0a0005786e147d54689041ab954cc9ea992459f86c25d39ca59b0",
             "3099f064e7d2d72a8929c05a9a465a27eeb8921620a76d880a7ebbda960e2cfb",
-            "b240862242cfd48c9b90cdfa5cf8ba43a8e4ffe6900ea5d4e02b09419c40c58a",
+            "6fbc9bcba9003deda2f8fc006ccc4f23f9e15db0bcd0e237c56ddf6788578bb6",
             "count($cases)!==12","count($sources)!==159","count($answers)!==159"]:self.assertIn(t,self.source)
  def test_fact_scope_recovery(self):
-  for t in ["Original answer-specific evidence missing","PrintedBookPageEvidence::corroboratesPageMarkedText",
+  for t in ["PrintedBookPageEvidence::pageContainsEvidence","PrintedBookPageEvidence::corroborates",
             "Not in official syllabus","bank_question_choices","bank_official_answers",
             "BackupManifest::verify","4*3600","GET_LOCK(","beginTransaction()","->commit()","->rollBack()"]:self.assertIn(t,self.source)
 if __name__=="__main__":unittest.main()

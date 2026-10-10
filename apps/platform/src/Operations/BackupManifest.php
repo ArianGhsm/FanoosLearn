@@ -126,14 +126,18 @@ final class BackupManifest
     private static function replaceFile(string $path, string $contents, string $label): void
     {
         $temporaryPath = $path . '.tmp-' . bin2hex(random_bytes(6));
-        if (file_put_contents($temporaryPath, $contents, LOCK_EX) === false) {
-            @unlink($temporaryPath);
-            throw new RuntimeException($label . ' could not be written.');
-        }
-        @chmod($temporaryPath, 0640);
-        if (!rename($temporaryPath, $path)) {
-            @unlink($temporaryPath);
-            throw new RuntimeException($label . ' could not be finalized.');
+        try {
+            if (file_put_contents($temporaryPath, $contents, LOCK_EX) === false) {
+                throw new RuntimeException($label . ' could not be written.');
+            }
+            @chmod($temporaryPath, 0640);
+            if (!@rename($temporaryPath, $path)) {
+                throw new RuntimeException($label . ' could not be finalized.');
+            }
+        } finally {
+            if (is_file($temporaryPath)) {
+                @unlink($temporaryPath);
+            }
         }
     }
 }

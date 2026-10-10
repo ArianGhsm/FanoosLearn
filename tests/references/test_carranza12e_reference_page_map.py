@@ -52,13 +52,14 @@ class Carranza12ePageMapTests(unittest.TestCase):
         for row in data["editions"][EDITION]["runs"]:
             self.assertNotEqual(row[0], "Index")
 
-    def test_exact_reference_marked_server_text(self) -> None:
-        manifest = json.loads((BANK / "reference-texts.json").read_text(encoding="utf-8"))
+    def test_exact_reference_is_server_pdf_and_has_no_text_entry(self) -> None:
+        manifest = json.loads((BANK / "reference-pdfs.json").read_text(encoding="utf-8"))
+        pages = json.loads((BANK / "reference-chapter-pages.json").read_text(encoding="utf-8"))
         entry = manifest["editions"][EDITION]
-        self.assertNotIn("missing", entry)
-        self.assertNotIn("nearest", entry)
-        self.assertEqual(entry["text"], "references/carranza-periodontology@12e.txt")
-        self.assertEqual(entry["source_pdf_sha256"],
+        self.assertEqual(entry["pdf"], "verified-server-pdf")
+        self.assertNotIn("text", entry)
+        self.assertTrue(all("text" not in item for item in manifest["editions"].values()))
+        self.assertEqual(pages["editions"][EDITION]["source_pdf_sha256"],
                          "1332e1f92ec1dea1ee99c7382993ce3f191407099d7650ebb97c79b989553263")
 
 

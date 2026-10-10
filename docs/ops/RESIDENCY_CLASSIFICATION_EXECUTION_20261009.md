@@ -10,6 +10,13 @@ Status: **started**. Verified study decisions exist on the server; **not importe
 into the production bank**. All private question text, answer choices, and
 copyrighted reference text remain outside the public repository.
 
+The extraction and text-index details below describe the historical
+2026-10-09 implementation only. That implementation created temporary
+page-text files which were removed in the 2026-10-10 cleanup. Do not repeat
+those steps. Current runs use the exact PDF directly and create no text
+version; see `docs/ops/PDF_REFERENCE_SOURCE_POLICY_20261010.md` and
+`docs/product/09_CHAPTER_CLASSIFICATION.md`.
+
 ## Baseline measured from the live DB
 
 The query uses `bank_questions` joined through `bank_exam_sittings` to
@@ -55,27 +62,27 @@ private, published, verified PDFs out of 44 catalog editions. We started with
 `national-oral-health@1394`, the exact official edition for community
 dentistry in 1405 (official scope chapters 1–16).
 
-New script: `scripts/references/extract_server_reference.py`. It resolves
-the **latest approved verified** PDF for an exact edition through the FANOOS
-database, checks object path confinement, byte size, PDF magic and SHA-256,
-runs `pdfinfo` and `pdftotext -layout` directly on that protected object,
-checks complete contiguous chapter/page runs, and emits a private,
-page-marked text plus provenance receipt. No second PDF or laptop is used.
+Historical run: the then-current `extract_server_reference.py` verified the
+latest approved exact PDF and wrote a page-marked text index plus provenance
+receipt. This created a temporary text derivative; those live files were
+removed on 2026-10-10 and the writing tool was retired. The old commands below
+must not be rerun.
+Decisions from that run are historical text-index results. Before relying on
+one in new work, revalidate its cited page directly against the exact current
+approved PDF with the page-at-a-time bridge.
+
+Use the current read-only verification command instead; it checks the current
+PDF and reports page/readability counts without writing page text:
 
 ```sh
-sudo -u fanoosupd python3 scripts/references/extract_server_reference.py \
-  --edition=national-oral-health@1394
-sudo -u fanoosupd python3 scripts/references/extract_server_reference.py \
-  --edition=national-oral-health@1394 --apply
+sudo -u fanoosupd python3 -B scripts/references/verify_reference_pdfs.py \
+  --only national-oral-health@1394 --check-readable
 ```
 
-Verified result: 330 PDF pages, 24 mapped chapters, 2,062,557 text bytes.
-Original verified PDF SHA-256:
+The historical index covered 330 PDF pages and 24 mapped chapters; the
+original approved PDF SHA-256 was
 `d1cc93cdc6d567cad554cdb08329914ca39e043bc183c587d637f322da20ae66`.
-Private extracted text SHA-256:
-`38f85689432568fe37d128fc539f9205916b671af11671668502b6bf39dd7cd9`.
-File and receipt:
-`/srv/fanoos/shared/research/references/national-oral-health@1394.{txt,provenance.json}`.
+No text-index file remains in the live research workspace.
 
 **Limitation:** The book's PDF contains two-column Persian text. The
 Poppler output occasionally interleaves columns and separates shaped
@@ -116,12 +123,11 @@ python3 scripts/references/classification_batch.py \
   --out=/srv/fanoos/shared/research/classification/reports/1405-community-queries.json
 python3 scripts/references/find_in_books.py \
   /srv/fanoos/shared/research/classification/reports/1405-community-queries.json \
-  --local=/srv/fanoos/shared/research --top 2
+  --top 2
 python3 scripts/references/apply_classification.py \
   --sitting=/srv/fanoos/shared/research/bank-sittings/1405/community-study.json \
   --decisions=/srv/fanoos/shared/research/classification/decisions/1405-community-dentistry.json \
-  --out=/srv/fanoos/shared/research/classification/sittings/1405-community-validated.json \
-  --local=/srv/fanoos/shared/research
+  --out=/srv/fanoos/shared/research/classification/sittings/1405-community-validated.json
 ```
 
 Input study file SHA-256:
@@ -162,17 +168,12 @@ verified independent/offsite backup remains a separate task.
 ## Second protected question batch (1405/oral-radiology)
 
 `white-pharoah-radiology@8e` is the **exact official 1405 reference**, with
-declared scope chapters 1–9, 12, 15–28. The approved private server PDF was
-read **in place**, without creating a second PDF. `extract_server_reference.py`
-successfully checked and extracted **1,958 PDF pages**, **33 mapped chapters**
-and **2,443,310 bytes** of page-marked text. The complete reference is under
-`/srv/fanoos/shared/research/references/white-pharoah-radiology@8e.txt`
-alongside its private provenance receipt.
-
-- Source verified PDF SHA-256:
-  `228ceb46982c3057d8a7d78b1d10759e72ed1a3a385a76a9affc38e45874c25a`
-- Extracted page-marked text SHA-256:
-  `916a3d59afc3c3dd3f1577cf649eeb35eedcf21590b9e5be1b493de9c8de0c96`
+declared scope chapters 1–9, 12, 15–28. The historical workflow verified its
+approved PDF in place and built a page map. It also created a 2,443,310-byte
+temporary page-text index; that file and its receipt were removed on
+2026-10-10. The current workflow reads the PDF page by page and writes no text
+copy. The approved PDF SHA-256 recorded then was
+`228ceb46982c3057d8a7d78b1d10759e72ed1a3a385a76a9affc38e45874c25a`.
 - Private DB-derived study-only input (20 initially unclassified questions):
   `/srv/fanoos/shared/research/bank-sittings/1405/radiology-study.json`;
   SHA-256 `b577a82cd9d0c6f79942e5e6975b029ed7d58985868cb1746f2b7502217591e7`.
@@ -223,8 +224,9 @@ import and post-import DB count verifies otherwise.
 ## Third protected question batch (1403/community-dentistry)
 
 The exact official reference is again `national-oral-health@1394` with
-official 1403 scope chapters 1–16; reuse the same verified 330-page
-full-book text, rather than re-extracting or duplicating the PDF.
+official 1403 scope chapters 1–16. At the time, the old workflow reused a
+verified 330-page text index; that temporary index has since been removed.
+New work reads the required pages directly from the current approved PDF.
 
 - A read-only DB export created
   `/srv/fanoos/shared/research/bank-sittings/1403/community-study.json`,
@@ -232,7 +234,7 @@ full-book text, rather than re-extracting or duplicating the PDF.
   `502ca8cccde725417dc4ce243e59d51c029a6da06ba3c349b3bd4c57f75e73ee`.
 - Queries at
   `/srv/fanoos/shared/research/classification/reports/1403-community-queries.json`
-  were searched with the ordinary `find_in_books.py --local` workflow.
+  were searched with the current direct-PDF `find_in_books.py` workflow.
 - Private decision file
   `/srv/fanoos/shared/research/classification/decisions/1403-community-dentistry.json`;
   SHA-256 `14a7f705124cf96f6fc19633ee859f4b2c50cd27bb80dda1d94b18cc3c9b3460`.

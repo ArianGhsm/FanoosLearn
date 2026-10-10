@@ -74,10 +74,13 @@ because the actual announced syllabus scope is missing. The other
    `export_server_candidates.php --workspace=<verified-uuid>
    --year=<year> --subject=<subject>`; use `cmp -s` against its archived
    `<stem>-study.json`. Never use `import-bank.php` for these files.
-3. Run the original `apply_classification.py` on the decisions against
-   protected page-marked book text. It must say `0 rejected`. Re-run
+3. Verify the current approved PDF SHA-256 and require a chapter map bound to
+   that same hash. Run `apply_classification.py`; it reads cited pages directly
+   from the exact PDF and must say `0 rejected`. Re-run
    `audit_private_study_batches.py` for the original full eight batches,
-   which must say `90 questions; 74 accepted; 16 pending`.
+   which must say `90 questions; 74 accepted; 16 pending`. The audit records
+   PDF hashes and page counts, not text/index hashes. Remove temporary query
+   and search outputs after the receipt is recorded; no PDF text file is made.
 4. Preview a single batch with an explicit expected count (transaction
    inserts and rolls back, checking real FK and question content):
 
@@ -268,7 +271,7 @@ FANOOS_CONFIG_FILE=/etc/fanoos/updater-config.php php scripts/references/import_
 
 Do **not** apply until the independent coordinator confirms live no-source status and a full frozen-exam preflight for the actual year, verifies a fresh complete backup containing `database.sql`, and has exclusive publication authority. For `--apply`, pass the original importer’s mandatory `--backup=/var/backups/fanoos/VERIFIED_FULL_SET` and a **new** private `--receipt=/srv/fanoos/shared/research/classification/reports/UNIQUE.json`. Receipts always live under the standard private reports directory; the stage only supplies vetted **inputs** and **audit**. Never pass a WNN research worker's mutable folder as `--package-root`; never weaken the source-only publisher or rewrite earlier completed canonical decision files.
 
-A book-printed page number differing from its PDF index may pass the **independent** original-book neighbor auditor but is **not** automatically accepted by the production source-only writer. Such a proposed row stays pending until separately reviewed support for this format is available. Do not alter page evidence to force a successful apply.
+A book-printed page number differing from the PDF page number may pass the **independent** original-PDF neighbor auditor but is **not** automatically accepted by the production source-only writer. Such a proposed row stays pending until separately reviewed support for this format is available. Do not alter page evidence to force a successful apply.
 
 ### Workspace sidecar cleanup rule
 

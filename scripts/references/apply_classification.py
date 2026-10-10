@@ -14,13 +14,15 @@ or that it has none:
 Nothing is taken on trust. A decision is accepted only when
 - the question exists in the sitting;
 - the edition is one the official list names for this exam type, year and
-  subject -- or the nearest edition data/bank/reference-texts.json names for
+  subject -- or the nearest edition data/bank/reference-pdfs.json names for
   a missing official one, in which case the chapter is carried over to the
   official edition by its title and the source cites the official edition;
 - the chapter is a chapter of that edition in the catalog;
 - the page lies inside that chapter (data/bank/reference-chapter-pages.json);
 - every fragment of the evidence (split on "...", each of at least four
-  words) is printed on that page of .local/references/<edition>.txt;
+  words) is printed on that page of the current exact verified server PDF;
+  only the requested page is read transiently in memory, with no text file or
+  index written;
 - the confidence is a number from 0 to 1;
 - it does not replace a human-checked source with a different chapter (or
   with none) unless it says why in "override_human".
@@ -39,13 +41,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
+import tempfile
 from pathlib import Path
+from verified_reference_pdf import chapter_coverage, open_verified_reference
 
 REPO = Path(__file__).resolve().parents[2]
 BANK = REPO / 'data' / 'bank'
-PAGE = re.compile(r'^=== PAGE (\d+) ===$', re.M)
 
 
 def flat(text: str) -> str:
@@ -63,24 +67,55 @@ def fragments(evidence: str) -> list[str]:
     return [f.strip() for f in re.split(r'\.\.\.|…', evidence) if f.strip()]
 
 
-class Books:
-    def __init__(self, local: Path):
-        self.local = local
-        self.pages: dict[str, dict[int, str]] = {}
+def save_sitting(path: Path, sitting: dict) -> None:
+    parent = path.parent.resolve(strict=True)
+    if path.is_symlink():
+        raise ValueError('validated sitting output must not be a symlink')
+    payload = json.dumps(sitting, ensure_ascii=False, indent=1) + '\n'
+    fd, temporary = tempfile.mkstemp(prefix='.validated-sitting-', suffix='.tmp', dir=parent)
+    try:
+        with os.fdopen(fd, 'w', encoding='utf-8', newline='\n') as stream:
+            os.fchmod(stream.fileno(), 0o600)
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
 
-    def page(self, edition: str, number: int) -> str | None:
-        if edition not in self.pages:
-            path = self.local / 'references' / f'{edition}.txt'
-            if not path.exists():
-                self.pages[edition] = {}
-            else:
-                raw = path.read_text(encoding='utf-8')
-                marks = list(PAGE.finditer(raw))
-                self.pages[edition] = {
-                    int(m.group(1)): raw[m.end():nxt.start() if nxt else len(raw)]
-                    for m, nxt in zip(marks, marks[1:] + [None])
-                }
-        return self.pages[edition].get(number)
+
+class Books:
+    def __init__(self, storage_root: Path, mysql_defaults: Path, database: str):
+        self.storage_root = storage_root
+        self.mysql_defaults = mysql_defaults
+        self.database = database
+        self.pdfs = {}
+        self.unavailable: dict[str, str] = {}
+
+    def page(self, edition: str, number: int, map_entry: dict) -> str | None:
+        if edition in self.unavailable:
+            return None
+        if edition not in self.pdfs:
+            try:
+                pdf = open_verified_reference(
+                    edition, self.storage_root, self.mysql_defaults, self.database)
+                page_runs = map_entry.get('runs', [])
+                chapter_coverage({'editions': {edition: map_entry}}, edition, pdf.page_count)
+                map_hash = map_entry.get('source_pdf_sha256')
+                if not isinstance(map_hash, str) or not re.fullmatch(r'[a-f0-9]{64}', map_hash):
+                    raise ValueError('chapter map has no verified PDF source hash; rebuild it from the current PDF')
+                if map_hash != pdf.source_sha256:
+                    raise ValueError('chapter map belongs to a different PDF')
+                self.pdfs[edition] = pdf
+            except (OSError, RuntimeError, ValueError) as error:
+                self.unavailable[edition] = str(error)
+                return None
+        try:
+            return self.pdfs[edition].page_text(number)
+        except (OSError, RuntimeError, ValueError):
+            self.unavailable[edition] = 'current approved PDF page could not be read'
+            return None
 
 
 def printed_page(text: str) -> str | None:
@@ -146,17 +181,20 @@ def main() -> int:
     parser.add_argument('--partial', action='store_true', help='write the accepted decisions even if some were rejected')
     parser.add_argument('--allow-nearest', action='store_true',
                         help='historical audit only: permit previously approved nearest-edition substitutions')
-    parser.add_argument('--pdf-pages', action='store_true')
-    parser.add_argument('--local', default=str(REPO / '.local'))
+    parser.add_argument('--pdf-pages', action='store_true',
+                        help='store PDF page numbers rather than printed page labels')
+    parser.add_argument('--storage-root', type=Path, default=Path('/srv/fanoos/shared/storage'))
+    parser.add_argument('--mysql-defaults', type=Path, default=Path('/etc/fanoos/mysql-migrator.cnf'))
+    parser.add_argument('--database', default='fanoos_prod')
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding='utf-8')
 
     sitting = json.loads(Path(args.sitting).read_text(encoding='utf-8'))
     year, exam_type = int(sitting['year']), sitting['exam_type']
     catalog = json.loads((BANK / 'catalog.json').read_text(encoding='utf-8'))
-    texts = json.loads((BANK / 'reference-texts.json').read_text(encoding='utf-8'))['editions']
+    pdfs = json.loads((BANK / 'reference-pdfs.json').read_text(encoding='utf-8'))['editions']
     runs = json.loads((BANK / 'reference-chapter-pages.json').read_text(encoding='utf-8'))['editions']
-    books = Books(Path(args.local))
+    books = Books(args.storage_root, args.mysql_defaults, args.database)
 
     official: dict[str, set[str]] = {}
     for v in catalog['validity']:
@@ -193,7 +231,11 @@ def main() -> int:
             if edition not in names and not args.allow_nearest:
                 why = 'nearest-edition substitutions are paused; use exact official edition or keep pending'
             if edition not in names and why is None:
-                stand_in_for = [e for e in names if texts.get(e, {}).get('nearest') == edition and 'missing' in texts.get(e, {})]
+                # Keep explicitly recorded historical nearest-edition audits
+                # possible even after the exact edition's PDF is later added.
+                stand_in_for = [e for e in names
+                                if pdfs.get(e, {}).get('nearest') == edition
+                                and 'missing' in pdfs.get(e, {})]
                 if not stand_in_for:
                     why = f'{edition} is not an official {exam_type} {year} reference for {q["subject"]}'
                 else:
@@ -221,16 +263,19 @@ def main() -> int:
                 in_chapter = any(r[0] == chapter and r[1] <= int(page) <= r[2] for r in runs.get(edition, {}).get('runs', []))
                 if not in_chapter:
                     why = f'page {page} is not in chapter {chapter} of {edition}'
-            text = books.page(edition, int(page)) if why is None else None
+            text = books.page(edition, int(page), runs.get(edition, {})) if why is None else None
             if why is None and text is None:
-                why = f'{edition} has no text for page {page}'
+                why = f'{edition} has no readable page {page} in its current approved PDF'
             if why is None:
                 pieces = fragments(str(d.get('evidence', '')))
                 if not pieces or any(len(p.split()) < 4 for p in pieces):
                     why = 'evidence must be quoted fragments of at least four words each, joined by "..."'
+                    del text
                 else:
                     page_text = flat(text)
+                    del text
                     missing = [p for p in pieces if flat(p) not in page_text]
+                    del page_text
                     if missing:
                         why = f'evidence not on page {page}: "{missing[0][:80]}"'
             confidence = d.get('confidence')
@@ -279,7 +324,7 @@ def main() -> int:
                 src['page'] = None
             q['sources'] = [{k: v for k, v in src.items() if v is not None}]
     sitting['notes'] = (sitting.get('notes') or '') + f' Sources from {len(accepted)} checked classification decisions (scripts/references/apply_classification.py).'
-    Path(args.out).write_text(json.dumps(sitting, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
+    save_sitting(Path(args.out), sitting)
     print(f'wrote {args.out}')
     return 0
 

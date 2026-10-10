@@ -5,73 +5,73 @@ declare(strict_types=1);
 namespace Fanoos\Platform\Bank;
 
 /**
- * Verify original book-printed page labels against the exact page-marked PDF
- * extraction. A printed page is never inferred from a constant PDF offset.
- * This is only a secondary verification of previously audited reference text;
- * the source-only importer still requires SHA-pinned independent provenance.
+ * Verifies one page and its printed page label against the exact approved
+ * server PDF. The Python bridge emits only that selected page to a pipe; this
+ * class keeps it in memory for the check and never creates a text file.
  */
 final class PrintedBookPageEvidence
 {
-    public static function corroborates(
-        string $referenceRoot,
-        string $edition,
-        int $pdfPage,
-        string $printedPage
-    ): bool {
-        if ($pdfPage < 1 || !preg_match('/^[1-9][0-9]{0,3}$/D', $printedPage)
-            || !preg_match('/^[a-z0-9-]+@[a-z0-9-]+$/D', $edition)) {
-            return false;
-        }
-        $path = realpath(rtrim($referenceRoot, '/') . '/references/' . $edition . '.txt');
-        $research = realpath('/srv/fanoos/shared/research');
-        if ($path === false || $research === false
-            || !str_starts_with($path, $research . '/')
-            || !is_file($path) || filesize($path) > 15000000) {
-            return false;
-        }
-        $raw = file_get_contents($path);
-        return $raw !== false && self::corroboratesPageMarkedText($raw, $pdfPage, $printedPage);
-    }
+    private const MAX_PAGE_TEXT_BYTES = 2_000_000;
 
-    /** Pure page-neighbor test for original-book audit parity and regression tests. */
-    public static function corroboratesPageMarkedText(string $raw, int $pdfPage, string $printedPage): bool
+    public static function corroborates(
+        string $edition, int $pdfPage, string $printedPage, ?string $expectedPdfSha256 = null,
+        bool $allowLongHeader = false,
+    ): bool
     {
-        if ($pdfPage < 1 || !preg_match('/^[1-9][0-9]{0,3}$/D', $printedPage)) {
+        if (!self::validRequest($edition, $pdfPage, $printedPage)) {
             return false;
         }
-        if (preg_match_all(
-            '/^=== PAGE ([1-9][0-9]*) ===\h*$/m',
-            $raw, $matches, PREG_OFFSET_CAPTURE
-        ) < 1) {
+        $target = self::readPageLabels($edition, $pdfPage, $expectedPdfSha256, $allowLongHeader);
+        if ($target === null || !in_array((int) $printedPage, $target, true)) {
             return false;
         }
-        $wanted = [$pdfPage - 2, $pdfPage - 1, $pdfPage, $pdfPage + 1, $pdfPage + 2];
-        $pages = [];
-        for ($i = 0, $n = count($matches[0]); $i < $n; ++$i) {
-            $pageNo = (int) $matches[1][$i][0];
-            if (!in_array($pageNo, $wanted, true)) {
-                continue;
-            }
-            $start = $matches[0][$i][1] + strlen($matches[0][$i][0]);
-            $end = $i + 1 < $n ? $matches[0][$i + 1][1] : strlen($raw);
-            $pages[$pageNo] = substr($raw, $start, $end - $start);
-        }
-        $printed = (int) $printedPage;
-        if (!in_array($printed, self::labels($pages[$pdfPage] ?? ''), true)) {
-            return false;
-        }
+
         $neighbors = 0;
         foreach ([-2, -1, 1, 2] as $step) {
-            if ($pdfPage + $step > 0 && $printed + $step > 0
-                && in_array($printed + $step, self::labels($pages[$pdfPage + $step] ?? ''), true)) {
+            $neighborPage = $pdfPage + $step;
+            $neighborPrinted = (int) $printedPage + $step;
+            if ($neighborPage < 1 || $neighborPrinted < 1) {
+                continue;
+            }
+            $labels = self::readPageLabels($edition, $neighborPage, $expectedPdfSha256, $allowLongHeader);
+            if ($labels !== null && in_array($neighborPrinted, $labels, true)) {
                 ++$neighbors;
             }
         }
         return $neighbors >= 2;
     }
 
-    /** @return list<int> */
-    private static function labels(string $text): array
+    /** Check short, reviewer-selected evidence on one exact PDF page. */
+    public static function pageContainsEvidence(
+        string $edition, int $pdfPage, array $evidence, ?string $expectedPdfSha256 = null
+    ): bool
+    {
+        if (!preg_match('/^[a-z0-9][a-z0-9-]*@[a-z0-9]+$/D', $edition)
+            || $pdfPage < 1 || $evidence === []) {
+            return false;
+        }
+        if ($expectedPdfSha256 !== null && !preg_match('/^[a-f0-9]{64}$/D', $expectedPdfSha256)) {
+            return false;
+        }
+        $text = self::readPage($edition, $pdfPage, $expectedPdfSha256);
+        if ($text === null) {
+            return false;
+        }
+        $normalized = self::normalize($text);
+        unset($text);
+        foreach ($evidence as $quote) {
+            if (!is_string($quote) || mb_strlen(trim($quote)) < 6
+                || !str_contains($normalized, self::normalize($quote))) {
+                unset($normalized);
+                return false;
+            }
+        }
+        unset($normalized);
+        return true;
+    }
+
+    /** @return list<int>|null */
+    public static function pageLabelsFromText(string $text, bool $allowLongHeader = false): array
     {
         $lines = array_values(array_filter(array_map(
             'trim', preg_split('/\R/u', $text) ?: []
@@ -79,14 +79,112 @@ final class PrintedBookPageEvidence
         $edge = array_merge(array_slice($lines, 0, 3), array_slice($lines, -3));
         $numbers = [];
         foreach ($edge as $line) {
-            if (mb_strlen($line) >= 90) {
+            if (!$allowLongHeader && mb_strlen($line) >= 90) {
                 continue;
             }
-            if (preg_match('/^([0-9]{1,4})(?:\s|$)/u', $line, $m)
-                || preg_match('/(?:^|\s)([0-9]{1,4})$/u', $line, $m)) {
-                $numbers[] = (int) $m[1];
+            if (preg_match('/^([0-9]{1,4})(?:\s|$)/u', $line, $match)
+                || preg_match('/(?:^|\s)([0-9]{1,4})$/u', $line, $match)) {
+                $numbers[] = (int) $match[1];
             }
         }
         return array_values(array_unique($numbers));
+    }
+
+    /** @param array<int, list<int>> $pages Page number => labels found on that page. */
+    public static function corroboratesPageLabels(array $pages, int $pdfPage, string $printedPage): bool
+    {
+        if ($pdfPage < 1 || !preg_match('/^[1-9][0-9]{0,3}$/D', $printedPage)
+            || !in_array((int) $printedPage, $pages[$pdfPage] ?? [], true)) {
+            return false;
+        }
+        $neighbors = 0;
+        foreach ([-2, -1, 1, 2] as $step) {
+            $page = $pdfPage + $step;
+            $label = (int) $printedPage + $step;
+            if ($page > 0 && $label > 0
+                && in_array($label, $pages[$page] ?? [], true)) {
+                ++$neighbors;
+            }
+        }
+        return $neighbors >= 2;
+    }
+
+    private static function validRequest(string $edition, int $pdfPage, string $printedPage): bool
+    {
+        return preg_match('/^[a-z0-9][a-z0-9-]*@[a-z0-9]+$/D', $edition) === 1
+            && $pdfPage >= 1
+            && preg_match('/^[1-9][0-9]{0,3}$/D', $printedPage) === 1;
+    }
+
+    /** @return list<int>|null */
+    private static function readPageLabels(
+        string $edition, int $pdfPage, ?string $expectedPdfSha256, bool $allowLongHeader
+    ): ?array
+    {
+        $text = self::readPage($edition, $pdfPage, $expectedPdfSha256);
+        if ($text === null) {
+            return null;
+        }
+        $labels = self::pageLabelsFromText($text, $allowLongHeader);
+        unset($text);
+        return $labels;
+    }
+
+    private static function readPage(string $edition, int $pdfPage, ?string $expectedPdfSha256): ?string
+    {
+        $root = dirname(__DIR__, 4);
+        $bridge = $root . '/scripts/references/verified_reference_pdf.py';
+        if (!is_file($bridge)) {
+            return null;
+        }
+        $command = [
+            'python3', '-B', $bridge,
+            '--edition', $edition,
+            '--page', (string) $pdfPage,
+            '--require-map',
+        ];
+        if ($expectedPdfSha256 !== null) {
+            $command[] = '--expected-sha256';
+            $command[] = $expectedPdfSha256;
+        }
+        $pipes = [];
+        $process = @proc_open($command, [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ], $pipes, $root);
+        if (!is_resource($process)) {
+            return null;
+        }
+        fclose($pipes[0]);
+        $text = '';
+        $overflow = false;
+        while (!feof($pipes[1])) {
+            $chunk = fread($pipes[1], 8192);
+            if ($chunk === false || $chunk === '') {
+                break;
+            }
+            if (!$overflow && strlen($text) + strlen($chunk) <= self::MAX_PAGE_TEXT_BYTES) {
+                $text .= $chunk;
+            } else {
+                $overflow = true;
+                $text = '';
+            }
+        }
+        fclose($pipes[1]);
+        // Error output is intentionally discarded; it may contain host paths.
+        stream_get_contents($pipes[2], 8192);
+        fclose($pipes[2]);
+        $status = proc_close($process);
+        if ($status !== 0 || $overflow) {
+            unset($text);
+            return null;
+        }
+        return $text;
+    }
+
+    private static function normalize(string $text): string
+    {
+        return trim((string) preg_replace('/\s+/u', ' ', mb_strtolower($text)));
     }
 }

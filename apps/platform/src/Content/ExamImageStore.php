@@ -63,14 +63,18 @@ final class ExamImageStore
         }
         // Written aside and renamed into place, so a reader never sees half a file.
         $temporary = $path . '.' . bin2hex(random_bytes(6)) . '.tmp';
-        if (file_put_contents($temporary, $bytes, LOCK_EX) !== strlen($bytes)) {
-            @unlink($temporary);
-            throw new RuntimeException('Could not write an exam image.');
-        }
-        chmod($temporary, 0640);
-        if (!rename($temporary, $path)) {
-            @unlink($temporary);
-            throw new RuntimeException('Could not store an exam image.');
+        try {
+            if (file_put_contents($temporary, $bytes, LOCK_EX) !== strlen($bytes)) {
+                throw new RuntimeException('Could not write an exam image.');
+            }
+            chmod($temporary, 0640);
+            if (!@rename($temporary, $path)) {
+                throw new RuntimeException('Could not store an exam image.');
+            }
+        } finally {
+            if (is_file($temporary)) {
+                @unlink($temporary);
+            }
         }
 
         return $key;

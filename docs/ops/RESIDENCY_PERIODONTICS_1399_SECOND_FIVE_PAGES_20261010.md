@@ -1,6 +1,8 @@
 # Periodontics 1399: second five independently reviewed original Carranza 13e printed pages
 
-**2026-10-10.** Exact exam-year original textbook, full 1,991 PDF pages. Approved original-book PDF SHA-256 `f0e411898ae010688ca5c0d21afe312cef6f5dae86d0e2e45648bc51ca8e2adf`; protected server text `/srv/fanoos/shared/research/references/carranza-periodontology@13e.txt`, SHA-256 `baa5b5efd320bd286e101b7243dda7550392897bb6b2155261eeb83071d81814`.
+**2026-10-10.** Exact exam-year original Carranza13e PDF, 1,991 pages, SHA-256 `f0e411898ae010688ca5c0d21afe312cef6f5dae86d0e2e45648bc51ca8e2adf`. The earlier workflow temporarily generated a page-text derivative that cleanup removed. Current operation code reads each selected page directly from this approved PDF and records its PDF SHA/page in the receipt.
+
+The historical page update used that temporary derivative; the PDF itself was the underlying exact edition. This record documents the completed operation, while the current code path rechecks each page directly and must not recreate the derivative.
 
 | Question | Existing chapter | Exact original PDF page | Printed page | Verified official answer evidence |
 |---|---:|---:|---:|---|

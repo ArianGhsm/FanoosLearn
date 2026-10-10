@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 use Fanoos\Platform\Operations\BackupManifest;
 use Fanoos\Platform\Support\DatabaseConnection;
+use Fanoos\Platform\Bank\PrintedBookPageEvidence;
 
 require dirname(__DIR__, 2) . '/apps/platform/bootstrap.php';
 
@@ -25,14 +26,11 @@ try {
         throw new RuntimeException('Apply requires backup and receipt');
     }
     $root = '/srv/fanoos/shared/research';
+    $sourcePdfSha = '5f18cc196553b691635b0c136f9761a4e7c478bf115424d1c7f26f04b5b50015';
     $file = $root . '/classification/reports/orthodontics-eight-source-repair-decisions-20261010.json';
     $sourceHash = '29fedfae46b69b5b3d81439d0e929a12464b9ee1cdf41498ec526b272744976d';
     if (!is_file($file) || is_link($file) || hash_file('sha256', $file) !== $sourceHash) {
         throw new RuntimeException('Immutable scientific decisions changed or missing');
-    }
-    $referenceText = $root . '/references/proffit-orthodontics@6e.txt';
-    if (hash_file('sha256', $referenceText) !== 'c2e9b985eb8bf9fb916dbb2ab763ac27bd30bad89748ef76685c362aeec8aa59') {
-        throw new RuntimeException('Wrong original edition text');
     }
     $input = json_decode((string) file_get_contents($file), true, 32, JSON_THROW_ON_ERROR);
     if (($input['format'] ?? '') !== 'fanoos.ortho.existing-ai-source-repair.v1'
@@ -59,6 +57,11 @@ try {
             || !is_int($d['pdf_page']) || $d['pdf_page'] < 12 || $d['pdf_page'] > 719
             || strlen((string) $d['evidence']) < 25) {
             throw new RuntimeException('Unexpected source decision or chapter');
+        }
+        if (!PrintedBookPageEvidence::pageContainsEvidence(
+            'proffit-orthodontics@6e', $d['pdf_page'], [$d['evidence']], $sourcePdfSha
+        )) {
+            throw new RuntimeException('Evidence is absent from the exact approved PDF page: ' . $k);
         }
         $seen[$k] = $d;
     }
@@ -161,6 +164,7 @@ try {
     }
     $result=['format'=>'fanoos.ortho.6e-source-repair-receipt/1','count'=>$count,
         'applied'=>$apply,'stem_option_key_human_changes'=>0,
+        'source_pdf_sha256'=>$sourcePdfSha,
         'decision_sha256'=>$sourceHash];
     if ($apply) {
         $result['backup_id']=basename($backup);

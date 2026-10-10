@@ -19,7 +19,6 @@ final class SourceOnlyPublisher
     public static function run(
         PDO $db, string $workspace, int $year, string $subject,
         array $study, array $validated, array $decisions, bool $apply,
-        ?string $referenceTextRoot = null,
     ): int {
         if (($year < 1399 && !($year === 1398 && in_array($subject, ['endodontics', 'periodontics', 'community-dentistry', 'prosthodontics'], true))) || $year > 1500
             || ($study['format'] ?? '') !== 'fanoos.classification.study-only/1'
@@ -107,9 +106,9 @@ final class SourceOnlyPublisher
             $pageLabel = (string) ($s['page'] ?? '');
             $pdfPage = (int) $d['page'];
             $validPage = in_array($pageLabel, [(string) $pdfPage, 'pdf ' . $pdfPage], true);
-            if (!$validPage && $referenceTextRoot !== null) {
+            if (!$validPage) {
                 $validPage = PrintedBookPageEvidence::corroborates(
-                    $referenceTextRoot, $edition, $pdfPage, $pageLabel
+                    $edition, $pdfPage, $pageLabel
                 );
             }
             if (!preg_match('/^([a-z0-9-]+)@([a-z0-9-]+)$/D', $edition, $m)
