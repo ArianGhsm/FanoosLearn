@@ -1,21 +1,210 @@
 {
   "format": "fanoos.research.reference-rows/1",
-  "notes": "Transcribed from the three-page, text-layer PDF titled «لیست منابع آزمون ورودی دستیاری دندانپزشکی سال ۱۳۹۸», dated 2018-10-09 (PDF metadata). This is an official but explicitly incomplete first release: it covers eight subjects and lists English only as an Upper Intermediate level. It does not cover oral pathology, prosthodontics, community dentistry or dental materials. The PDF was shared in the University of Tehran dental student Telegram channel as message 3416, with a warning that not all subjects had been announced. Preserve provisional rows for the missing subjects until their official list is found. The printed Little/Falace 2018 edition number is erroneously 12th; the 2018 book is 9th. Craig 2018 is the 14th edition with a 2019 copyright.",
+  "notes": "The original dated 2018-10-09 three-page partial notice (SHA-256 F3F304ED79D64EAE50D9833EAF5DF1EB2D8681ACD12937C0665011BCF3B033C5) covered eight clinical subjects. The supplied four-page 1398 full list (PDF title «لیست منابع آزمون ورودی دستیاری دندانپزشکی سال ۱۳۹۸», PDF created 2018-10-13, modified 2018-10-29, SHA-256 E6409765D78B6FB8ACE629F466235C33AC23026A6AF3B9E88D5C9C89743DD7D8, konkur.in watermark) includes four additional subjects: oral pathology, three prosthodontic references, community oral health and dental materials. Old row-level provenance is preserved; newly added rows identify the supplied full list. English is a level statement (Upper Intermediate), not a book. The printed Falace/Little 2018 '12th' and van Noort 2014 year are retained as transcribed claims; canonical edition identities are 9e and 4e, respectively. The supplied mirror has not been independently authenticated against a Ministry-hosted original.",
   "evidence": "Official 1398 partial list, 2018-10-09; Telegram dental student channel message 3416",
   "source_document": "منابع دستیاری دندان 98.pdf (three-page partial list; SHA-256 F3F304ED79D64EAE50D9833EAF5DF1EB2D8681ACD12937C0665011BCF3B033C5)",
   "rows": [
-    {"year":"1398","period":"33","subject":"ارتودانتیکس","title":"Contemporary Orthodontics","authors":"Proffit WR","pub_year":"2013","edition":"5th Ed.","scope":"فصول 1 و 3 و 4 و 5 و 6 و 7 و 11 و 12 و 13؛ فصل 2 صفحات 20 تا 50؛ فصل 8 صفحات 278 تا 289 و صفحه 295 تا آخر فصل؛ فصل 10 صفحات 347 تا 353؛ فصل 17 صفحات 606 تا 613"},
-    {"year":"1398","period":"33","subject":"اندودانتیکس","title":"Endodontics: Principles and Practice","authors":"Torabinejad M; Walton RE","pub_year":"2015","edition":"5th Ed.","scope":"تمام فصول کتاب"},
-    {"year":"1398","period":"33","subject":"بیماری‌های دهان و فک و صورت","title":"Burket's Oral Medicine","authors":"Glick M","pub_year":"2015","edition":"12th Ed.","scope":"فصول 4 و 5 و 7 و 10 کتاب"},
-    {"year":"1398","period":"33","subject":"بیماری‌های دهان و فک و صورت","title":"Dental Management in the Medically Compromised Patient","authors":"Falace DA; Little J","pub_year":"2018","edition":"12th Ed. [sic; actual 9th]","scope":"فصول 2 و 4 و 12 و 14 و 15 و 16 و 17 کتاب (فقط مباحث ملاحظات دندانپزشکی)"},
-    {"year":"1398","period":"33","subject":"پریودانتیکس","title":"Carranza's Clinical Periodontology","authors":"","pub_year":"2015","edition":"12th Ed.","scope":"فصول 1 و 3 و 7 و 14 و 15 و 16 و 17 و 18 و 20 و 21 و 23 و 25 و 29 و 31 و 33 و 34 و 35 و 41 و 42 و 44 و 45 و 46 و 52، به علاوه قسمت‌های Online Only کتاب"},
-    {"year":"1398","period":"33","subject":"جراحی دهان و فک و صورت","title":"Contemporary Oral and Maxillofacial Surgery","authors":"Peterson LJ","pub_year":"2014","edition":"6th Ed.","scope":"کلیه فصول کتاب"},
-    {"year":"1398","period":"33","subject":"جراحی دهان و فک و صورت","title":"Handbook of Local Anesthesia","authors":"Malamed S","pub_year":"2013","edition":"6th Ed.","scope":"کلیه فصول کتاب"},
-    {"year":"1398","period":"33","subject":"جراحی دهان و فک و صورت","title":"Medical Emergencies in the Dental Office","authors":"Malamed S","pub_year":"2015","edition":"7th Ed.","scope":"فصول 1 و 2 و 3، از فصل 5 تا آخر فصل 13، و فصول 30 و 31 کتاب"},
-    {"year":"1398","period":"33","subject":"دندانپزشکی ترمیمی","title":"Craig's Restorative Dental Materials","authors":"Sakaguchi RL; Ferracane J; Powers JM","pub_year":"2018","edition":"14th Ed.","scope":"فصول 9 و 10 (فقط صفحات 171 تا 178) و 13 کتاب"},
-    {"year":"1398","period":"33","subject":"دندانپزشکی ترمیمی","title":"Sturdevant's Art and Science of Operative Dentistry","authors":"Andre Ritter","pub_year":"2018","edition":"7th Ed.","scope":"فصل 1 (صفحات 1 تا 15، اول اکلوژن) و فصول 2 و 3 و 4 و 5 و 10 کتاب"},
-    {"year":"1398","period":"33","subject":"دندانپزشکی ترمیمی","title":"Summit's Fundamentals of Operative Dentistry: A Contemporary Approach","authors":"","pub_year":"2013","edition":"4th Ed.","scope":"فصول 6 و 7 و 9 (از مبحث باندینگ تا صفحه 217) و 10 و 11 کتاب"},
-    {"year":"1398","period":"33","subject":"دندانپزشکی کودکان","title":"Dentistry for the Child and Adolescent","authors":"McDonald J","pub_year":"2016","edition":"10th Ed.","scope":"فصول 1 و 2 و 3 و 4 و 7 و 8 و 9 و 10 و 11 و 13 و 15 و 16 و 19 و 22 و 25 و 26 و 27"},
-    {"year":"1398","period":"33","subject":"رادیولوژی دهان و فک و صورت","title":"Oral Radiology, Principles and Interpretation","authors":"White SC; Pharoah MJ","pub_year":"2014","edition":"7th Ed.","scope":"فصول 1 تا 25 کتاب"}
+    {
+      "year": "1398",
+      "period": "33",
+      "subject": "ارتودانتیکس",
+      "title": "Contemporary Orthodontics",
+      "authors": "Proffit WR",
+      "pub_year": "2013",
+      "edition": "5th Ed.",
+      "scope": "فصول 1 و 3 و 4 و 5 و 6 و 7 و 11 و 12 و 13؛ فصل 2 صفحات 20 تا 50؛ فصل 8 صفحات 278 تا 289 و صفحه 295 تا آخر فصل؛ فصل 10 صفحات 347 تا 353؛ فصل 17 صفحات 606 تا 613"
+    },
+    {
+      "year": "1398",
+      "period": "33",
+      "subject": "اندودانتیکس",
+      "title": "Endodontics: Principles and Practice",
+      "authors": "Torabinejad M; Walton RE",
+      "pub_year": "2015",
+      "edition": "5th Ed.",
+      "scope": "تمام فصول کتاب"
+    },
+    {
+      "year": "1398",
+      "period": "33",
+      "subject": "بیماری‌های دهان و فک و صورت",
+      "title": "Burket's Oral Medicine",
+      "authors": "Glick M",
+      "pub_year": "2015",
+      "edition": "12th Ed.",
+      "scope": "فصول 4 و 5 و 7 و 10 کتاب"
+    },
+    {
+      "year": "1398",
+      "period": "33",
+      "subject": "بیماری‌های دهان و فک و صورت",
+      "title": "Dental Management in the Medically Compromised Patient",
+      "authors": "Falace DA; Little J",
+      "pub_year": "2018",
+      "edition": "12th Ed. [sic; actual 9th]",
+      "scope": "فصول 2 و 4 و 12 و 14 و 15 و 16 و 17 کتاب (فقط مباحث ملاحظات دندانپزشکی)"
+    },
+    {
+      "year": "1398",
+      "period": "33",
+      "subject": "پریودانتیکس",
+      "title": "Carranza's Clinical Periodontology",
+      "authors": "",
+      "pub_year": "2015",
+      "edition": "12th Ed.",
+      "scope": "فصول 1 و 3 و 7 و 14 و 15 و 16 و 17 و 18 و 20 و 21 و 23 و 25 و 29 و 31 و 33 و 34 و 35 و 41 و 42 و 44 و 45 و 46 و 52، به علاوه قسمت‌های Online Only کتاب"
+    },
+    {
+      "year": "1398",
+      "period": "33",
+      "subject": "جراحی دهان و فک و صورت",
+      "title": "Contemporary Oral and Maxillofacial Surgery",
+      "authors": "Peterson LJ",
+      "pub_year": "2014",
+      "edition": "6th Ed.",
+      "scope": "کلیه فصول کتاب"
+    },
+    {
+      "year": "1398",
+      "period": "33",
+      "subject": "جراحی دهان و فک و صورت",
+      "title": "Handbook of Local Anesthesia",
+      "authors": "Malamed S",
+      "pub_year": "2013",
+      "edition": "6th Ed.",
+      "scope": "کلیه فصول کتاب"
+    },
+    {
+      "year": "1398",
+      "period": "33",
+      "subject": "جراحی دهان و فک و صورت",
+      "title": "Medical Emergencies in the Dental Office",
+      "authors": "Malamed S",
+      "pub_year": "2015",
+      "edition": "7th Ed.",
+      "scope": "فصول 1 و 2 و 3، از فصل 5 تا آخر فصل 13، و فصول 30 و 31 کتاب"
+    },
+    {
+      "year": "1398",
+      "period": "33",
+      "subject": "دندانپزشکی ترمیمی",
+      "title": "Craig's Restorative Dental Materials",
+      "authors": "Sakaguchi RL; Ferracane J; Powers JM",
+      "pub_year": "2018",
+      "edition": "14th Ed.",
+      "scope": "فصول 9 و 10 (فقط صفحات 171 تا 178) و 13 کتاب"
+    },
+    {
+      "year": "1398",
+      "period": "33",
+      "subject": "دندانپزشکی ترمیمی",
+      "title": "Sturdevant's Art and Science of Operative Dentistry",
+      "authors": "Andre Ritter",
+      "pub_year": "2018",
+      "edition": "7th Ed.",
+      "scope": "فصل 1 (صفحات 1 تا 15، اول اکلوژن) و فصول 2 و 3 و 4 و 5 و 10 کتاب"
+    },
+    {
+      "year": "1398",
+      "period": "33",
+      "subject": "دندانپزشکی ترمیمی",
+      "title": "Summit's Fundamentals of Operative Dentistry: A Contemporary Approach",
+      "authors": "",
+      "pub_year": "2013",
+      "edition": "4th Ed.",
+      "scope": "فصول 6 و 7 و 9 (از مبحث باندینگ تا صفحه 217) و 10 و 11 کتاب"
+    },
+    {
+      "year": "1398",
+      "period": "33",
+      "subject": "دندانپزشکی کودکان",
+      "title": "Dentistry for the Child and Adolescent",
+      "authors": "McDonald J",
+      "pub_year": "2016",
+      "edition": "10th Ed.",
+      "scope": "فصول 1 و 2 و 3 و 4 و 7 و 8 و 9 و 10 و 11 و 13 و 15 و 16 و 19 و 22 و 25 و 26 و 27"
+    },
+    {
+      "year": "1398",
+      "period": "33",
+      "subject": "رادیولوژی دهان و فک و صورت",
+      "title": "Oral Radiology, Principles and Interpretation",
+      "authors": "White SC; Pharoah MJ",
+      "pub_year": "2014",
+      "edition": "7th Ed.",
+      "scope": "فصول 1 تا 25 کتاب"
+    },
+    {
+      "year": "1398",
+      "period": "33",
+      "subject": "آسیب‌شناسی دهان و فک و صورت",
+      "title": "Oral and Maxillofacial Pathology",
+      "authors": "Neville B; Damm DD",
+      "pub_year": "2016",
+      "edition": "4th Ed.",
+      "scope": "تمام فصول کتاب به جز فصول 4 و 18 و 19",
+      "evidence": "Full 1398 residency sources, supplied four-page PDF (konkur.in mirror; Ministry-hosted original not independently authenticated)",
+      "source_document": "Reference-Assistant-Dentistry98-[konkur.in].pdf (4 pages; SHA-256 E6409765D78B6FB8ACE629F466235C33AC23026A6AF3B9E88D5C9C89743DD7D8)"
+    },
+    {
+      "year": "1398",
+      "period": "33",
+      "subject": "پروتزهای دندانی",
+      "title": "Fundamentals of Fixed Prosthodontics",
+      "authors": "Schillingburg HT",
+      "pub_year": "2012",
+      "edition": "4th Ed.",
+      "scope": "تمام فصول کتاب به جز فصول 5 و 11 و 12",
+      "evidence": "Full 1398 residency sources, supplied four-page PDF (konkur.in mirror; Ministry-hosted original not independently authenticated)",
+      "source_document": "Reference-Assistant-Dentistry98-[konkur.in].pdf (4 pages; SHA-256 E6409765D78B6FB8ACE629F466235C33AC23026A6AF3B9E88D5C9C89743DD7D8)"
+    },
+    {
+      "year": "1398",
+      "period": "33",
+      "subject": "پروتزهای دندانی",
+      "title": "McCracken's Removable Partial Prosthodontics",
+      "authors": "Carr AB",
+      "pub_year": "2011",
+      "edition": "12th Ed.",
+      "scope": "تمام فصول کتاب",
+      "evidence": "Full 1398 residency sources, supplied four-page PDF (konkur.in mirror; Ministry-hosted original not independently authenticated)",
+      "source_document": "Reference-Assistant-Dentistry98-[konkur.in].pdf (4 pages; SHA-256 E6409765D78B6FB8ACE629F466235C33AC23026A6AF3B9E88D5C9C89743DD7D8)"
+    },
+    {
+      "year": "1398",
+      "period": "33",
+      "subject": "پروتزهای دندانی",
+      "title": "Prosthodontic Treatment for Edentulous Patients",
+      "authors": "Zarb G; Hobkirk J",
+      "pub_year": "2013",
+      "edition": "13th Ed.",
+      "scope": "تمام فصول کتاب به جز فصول 18 و 19 و 20 و 21 و 22",
+      "evidence": "Full 1398 residency sources, supplied four-page PDF (konkur.in mirror; Ministry-hosted original not independently authenticated)",
+      "source_document": "Reference-Assistant-Dentistry98-[konkur.in].pdf (4 pages; SHA-256 E6409765D78B6FB8ACE629F466235C33AC23026A6AF3B9E88D5C9C89743DD7D8)"
+    },
+    {
+      "year": "1398",
+      "period": "33",
+      "subject": "سلامت دهان و دندانپزشکی اجتماعی",
+      "title": "کتاب ملی سلامت دهان",
+      "authors": "",
+      "pub_year": "1394",
+      "edition": "چاپ اول (۱۳۹۴)",
+      "scope": "فصول 1 تا 16 کتاب",
+      "evidence": "Full 1398 residency sources, supplied four-page PDF (konkur.in mirror; Ministry-hosted original not independently authenticated)",
+      "source_document": "Reference-Assistant-Dentistry98-[konkur.in].pdf (4 pages; SHA-256 E6409765D78B6FB8ACE629F466235C33AC23026A6AF3B9E88D5C9C89743DD7D8)"
+    },
+    {
+      "year": "1398",
+      "period": "33",
+      "subject": "مواد دندانی",
+      "title": "Introduction to Dental Materials",
+      "authors": "Noort RV",
+      "pub_year": "2014",
+      "edition": "4th Ed.",
+      "scope": "تمام فصول کتاب",
+      "evidence": "Full 1398 residency sources, supplied four-page PDF (konkur.in mirror; Ministry-hosted original not independently authenticated)",
+      "source_document": "Reference-Assistant-Dentistry98-[konkur.in].pdf (4 pages; SHA-256 E6409765D78B6FB8ACE629F466235C33AC23026A6AF3B9E88D5C9C89743DD7D8)"
+    }
   ]
 }
