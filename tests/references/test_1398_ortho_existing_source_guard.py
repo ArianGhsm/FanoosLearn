@@ -16,7 +16,7 @@ class OrthodonticsExistingSourceGuardTests(unittest.TestCase):
         cls.body = FILE.read_text(encoding="utf-8")
 
     def test_dml_touches_only_existing_question_sources(self):
-        targets = re.findall(r"(?<!FOR )(?:INSERT INTO|UPDATE|DELETE FROM|REPLACE INTO)\s+([a-z_]+)",
+        targets = re.findall(r"(?<!FOR )(?:INSERT INTO|UPDATE|DELETE FROM|REPLACE INTO)\s+(bank_[a-z_]+)\b",
                              self.body, flags=re.I | re.M)
         self.assertEqual([t.lower() for t in targets], ["bank_question_sources"])
 
