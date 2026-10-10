@@ -488,6 +488,8 @@ SQL);
                     if ($choice !== null) {
                         $this->fail("{$here}.answer.choice", 'must be null for a voided question');
                     }
+                } elseif (($answer['status'] ?? null) === 'disputed' && $choice === null) {
+                    // No valid key yet: kept in the bank, left out of every scored exam.
                 } elseif (!is_int($choice) || $choice < 1 || $choice > count($choices)) {
                     $this->fail("{$here}.answer.choice", 'must be the 1-based number of a choice');
                 }
@@ -506,6 +508,9 @@ SQL);
 
             if (isset($question['type'])) {
                 $this->requireEnum($question, 'type', self::QUESTION_TYPES, $here);
+            }
+            if (isset($question['booklet_source']) && (!is_string($question['booklet_source']) || mb_strlen($question['booklet_source']) > 300)) {
+                $this->fail("{$here}.booklet_source", 'must be the words the booklet prints, at most 300 characters');
             }
             if (isset($question['cognitive_level'])) {
                 $this->requireEnum($question, 'cognitive_level', self::COGNITIVE_LEVELS, $here);
@@ -730,7 +735,8 @@ SQL);
                 'cognitive_level' => $question['cognitive_level'] ?? null,
                 'expert_difficulty' => $question['difficulty'] ?? null,
                 'version' => $row === null ? 1 : ((int) $row['version'] + ($changed ? 1 : 0)),
-            ] + (isset($question['status']) ? ['status' => $question['status']] : []));
+            ] + (isset($question['status']) ? ['status' => $question['status']] : [])
+              + (isset($question['booklet_source']) ? ['booklet_source' => $question['booklet_source']] : []));
             ++$counts['questions'];
             if ($row !== null && $changed) {
                 ++$counts['questions_changed'];

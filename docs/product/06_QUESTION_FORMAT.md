@@ -114,6 +114,13 @@ when it is absent. An explanation records the page it was written from in
 `explanation.from` ({ref, pdf_page, pdf_sha256}), kept by value on the
 explanation (migration 0043).
 
+**Papers from Google Drive** go through `scripts/import/drive_batch.py`
+(`docs/ops/QUESTION_IMPORT.md`): `scripts/import/docx_to_sitting.py` reads
+residency, national, board and promotion papers (`--type`, `--round`,
+`--subject`); a key marked «نامشخص» becomes a `disputed` answer with no choice
+(kept, never scored) and the booklet's «منبع درج‌شده در دفترچه» line becomes
+`booklet_source` (a hint, never a source; migration 0044).
+
 **Re-importing a sitting.** A question's `sources` and `concepts` are
 replaced only when the file lists them; a file without those keys (a wording
 correction, an amended key) leaves the classification as it is. Reviewed
