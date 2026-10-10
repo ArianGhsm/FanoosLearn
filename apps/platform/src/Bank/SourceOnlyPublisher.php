@@ -21,7 +21,7 @@ final class SourceOnlyPublisher
         array $study, array $validated, array $decisions, bool $apply,
         ?string $referenceTextRoot = null,
     ): int {
-        if (($year < 1399 && !($year === 1398 && in_array($subject, ['endodontics', 'periodontics', 'community-dentistry'], true))) || $year > 1500
+        if (($year < 1399 && !($year === 1398 && in_array($subject, ['endodontics', 'periodontics', 'community-dentistry', 'prosthodontics'], true))) || $year > 1500
             || ($study['format'] ?? '') !== 'fanoos.classification.study-only/1'
             || ($validated['format'] ?? '') !== ($study['format'] ?? '')
             || ($study['exam_type'] ?? '') !== 'residency'
@@ -51,6 +51,10 @@ final class SourceOnlyPublisher
             // Official 1398 source announcement independently identifies exact Torabinejad 5e
             // for endodontics, original Carranza 12e for periodontics, and the national
             // oral-health 1394 text (chapters 1–16) for community dentistry.
+            // The complete 1398 notice additionally specifies Shillingburg Fixed 4e,
+            // McCracken RPD 12e and Zarb Edentulous 13e for prosthodontics.
+            // Their specific chapter exclusions are enforced below by the
+            // year-specific official reference-validity scope lookup.
             // Every other 1398 subject remains blocked by the year gate.
             if ($year === 1398 && $subject === 'endodontics'
                 && $decision['edition'] !== 'torabinejad-endodontics@5e') {
@@ -63,6 +67,14 @@ final class SourceOnlyPublisher
             if ($year === 1398 && $subject === 'community-dentistry'
                 && $decision['edition'] !== 'national-oral-health@1394') {
                 throw new RuntimeException('1398 community dentistry requires the exact national oral-health 1394 edition.');
+            }
+            if ($year === 1398 && $subject === 'prosthodontics'
+                && !in_array((string) $decision['edition'], [
+                    'shillingburg-fixed@4e',
+                    'mccracken-rpd@12e',
+                    'zarb-edentulous@13e',
+                ], true)) {
+                throw new RuntimeException('1398 prosthodontics requires an exact officially announced edition.');
             }
             $wanted[$n] = $decision;
         }
