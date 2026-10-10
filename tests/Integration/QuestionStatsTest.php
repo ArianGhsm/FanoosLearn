@@ -65,6 +65,7 @@ final class QuestionStatsTest
         $this->assert($stats['peer_answered'] === 3 && $stats['peer_correct_percent'] === 67, 'Peer share of q1 is wrong: ' . json_encode($stats));
         $this->assert($stats['answered'] === 0 && $stats['last_correct'] === null && $stats['last_answered_at'] === null, 'A student who never answered got a record.');
         $this->assert(!array_key_exists('answer', $read['question']), 'Stats must not carry the answer.');
+        $this->assert(!array_key_exists('bank', $read['question']), 'An authored question claimed bank facts.');
         $q2 = $this->readById($f['s4'], $attempt['attempt_id'], 'q2', 3)['question']['stats'];
         $this->assert($q2['peer_answered'] === null && $q2['peer_correct_percent'] === null, 'A blank was counted, or a share was shown below the minimum.');
 

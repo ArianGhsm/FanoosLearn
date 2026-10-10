@@ -675,6 +675,29 @@ components:
             difficulty: { type: string, enum: [easy, medium, hard] }
             tags: { type: array, items: { type: string } }
             provenance: { type: object }
+            images: { type: object, description: 'Which parts carry an image: {stem: bool, choices: [bool]}.' }
+            stats: { type: object, description: 'QuestionStatsRecorder: how this question has gone, for everyone and for the caller.' }
+            bank:
+              type: object
+              description: 'A bank question only (BankQuestionFacts): its exam, year, round and number in the sitting, its subject, and the reference chapter it is classified under -- null unless set or reviewed by a person or at the 0.85 confidence threshold.'
+              required: [exam, exam_key, year, round, number, subject, chapter]
+              properties:
+                exam: { type: string }
+                exam_key: { type: string }
+                year: { type: integer }
+                round: { type: integer }
+                number: { type: [integer, 'null'] }
+                subject: { type: string }
+                chapter:
+                  type: [object, 'null']
+                  required: [book, edition, number, title, title_fa, pdf_page]
+                  properties:
+                    book: { type: string }
+                    edition: { type: string }
+                    number: { type: [string, 'null'] }
+                    title: { type: string }
+                    title_fa: { type: [string, 'null'] }
+                    pdf_page: { type: [integer, 'null'] }
           additionalProperties: false
       additionalProperties: false
     AssessmentAttemptReviewSummary:

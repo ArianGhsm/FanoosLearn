@@ -12,6 +12,11 @@
  */
 
 body.x-runner-page {
+    /* The exam reads in Yekan Bakh, nearer MedoFast's face than Vazirmatn
+       (owner, 2026-10-11). Its files carry Persian letters and digits only
+       (fonts.css unicode-range), so Latin terms in a stem fall through to
+       Vazirmatn's matched Latin, as before. */
+    --font-body: "YekanBakh Fanoos", "Vazirmatn", "Segoe UI", Tahoma, system-ui, sans-serif;
     --reading-size: 1.02rem;
     --x-card-pad: var(--space-5);
 }
@@ -144,44 +149,115 @@ body.x-runner-page {
     padding-inline: var(--x-card-pad);
 }
 
+/* MedoFast's order: the facts first, set off from the question by a rule.
+   The boxes share the first row with the tools; the chapter takes the
+   whole width under them, since a chapter name is long. */
 .x-runner-page .x-question__head {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--space-3);
-    padding-block: var(--space-4) 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "chips tools" "source source";
+    align-items: start;
+    gap: 10px var(--space-3);
+    padding-block: var(--space-4);
     border: 0;
+    border-bottom: 1px solid var(--border);
     background: transparent;
 }
 
 .x-runner-page .x-question__meta {
+    display: contents;
+}
+
+.x-runner-page .x-question__chips { grid-area: chips; }
+.x-runner-page .x-question__tools { grid-area: tools; }
+.x-runner-page .x-source { grid-area: source; }
+
+.x-question__chips {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    flex: 1;
-    min-width: 0;
-    padding: 0;
-    border: 0;
 }
 
+/* Boxes with an icon each, as in MedoFast's question header: the exam and
+   year first, in the brand's colour, then subject, topic and difficulty. */
 .x-chip {
     display: inline-flex;
     align-items: center;
+    gap: 5px;
     max-width: 100%;
-    padding: 3px 10px;
-    border-radius: var(--radius-pill);
+    padding: 4px 10px;
+    border-radius: 10px;
     font-size: var(--text-xs);
-    font-weight: var(--weight-medium);
+    font-weight: var(--weight-strong);
     line-height: 1.6;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
+.x-chip svg {
+    flex: none;
+    width: 14px;
+    height: 14px;
+}
+
+.x-chip__text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.x-chip--exam { background: var(--accent-soft); color: var(--accent); }
 .x-chip--subject { background: var(--hue-subject-soft); color: var(--hue-subject); }
 .x-chip--tag { background: var(--hue-tag-soft); color: var(--hue-tag); }
 .x-chip--level.is-easy { background: var(--success-soft); color: var(--success); }
 .x-chip--level.is-medium { background: var(--warning-soft); color: var(--warning); }
 .x-chip--level.is-hard { background: var(--danger-soft); color: var(--danger); }
+
+/* The reference chapter: its own line, since a chapter name is long. */
+.x-source {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-muted);
+}
+
+.x-source__icon {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.x-source__body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.x-source__chapter {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-strong);
+    line-height: 1.7;
+    color: var(--text-primary);
+}
+
+.x-source__book {
+    align-self: flex-start;
+    max-width: 100%;
+    overflow: hidden;
+    font-size: var(--text-2xs);
+    color: var(--text-tertiary);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
 
 .x-runner-page .x-question__tools {
     display: flex;
@@ -781,8 +857,7 @@ body.x-runner-page {
     }
 
     .x-runner-page .x-question__head {
-        align-items: center;
-        padding-block: 16px 0;
+        padding-block: 16px 14px;
     }
 
     .x-runner-page .x-question__tools {
@@ -1010,6 +1085,12 @@ body.x-runner-page {
         padding: 0 var(--space-4) calc(var(--space-5) + env(safe-area-inset-bottom, 0px));
         border-radius: 22px 22px 0 0;
         overscroll-behavior: contain;
+    }
+
+    /* Two buttons side by side on a phone: each label on one line. */
+    .x-runner-page .x-dialog__actions .f-btn {
+        padding-inline: var(--space-3);
+        white-space: nowrap;
     }
 
     /* The head stays put while the sheet scrolls, with a grab handle above it. */
