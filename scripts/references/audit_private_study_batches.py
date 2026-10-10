@@ -35,7 +35,7 @@ def _page_segments(book: Path) -> dict[int, str]:
     if not book.is_file():
         raise ValueError("The exact reference text is missing for printed-page verification")
     raw = book.read_text(encoding="utf-8")
-    markers = list(re.finditer(r"^=== PAGE (\\d+) ===\\s*$", raw, flags=re.MULTILINE))
+    markers = list(re.finditer(r"^=== PAGE (\d+) ===\s*$", raw, flags=re.MULTILINE))
     if not markers:
         raise ValueError("The exact reference text has no PDF page markers")
     return {
@@ -51,7 +51,7 @@ def _printed_labels(text: str) -> set[int]:
     for line in lines[:3] + lines[-3:]:
         if len(line) >= 90:
             continue
-        match = re.match(r"^(\\d{1,4})(?:\\s|$)", line) or re.search(r"(?:^|\\s)(\\d{1,4})$", line)
+        match = re.match(r"^(\d{1,4})(?:\s|$)", line) or re.search(r"(?:^|\s)(\d{1,4})$", line)
         if match:
             numbers.add(int(match.group(1)))
     return numbers
