@@ -73,7 +73,9 @@ BOOKLET = re.compile(r'^منبع\s*(?:درج|ذکر)[‌\s]?شده(?:\s*در\s*�
 DEFAULT_EXPECTED = {'residency': 250, 'national': 240, 'board': 100, 'promotion': 100}
 CHOICE_FA = re.compile(r'^(الف|ب|ج|د)\s*[)\-–.]\s*(.*)$')
 CHOICE_EN = re.compile(r'^([a-dA-D])\s*[)\-–.]\s*(.*)$')
-ANSWER = re.compile(r'^(?:پاسخ|جواب|Correct answer|Answer)', re.I)
+# An answer line -- not the closing «پاسخ‌نامه» (answer sheet) heading.
+ANSWER = re.compile(r'^(?:پاسخ(?![\s‌]*نامه)|جواب|Correct answer|Answer)', re.I)
+LETTER_ANSWER = {'الف': 1, 'ب': 2, 'ج': 3, 'د': 4}
 # The closing key table's heading ("کلید عددی نهایی سؤالات", "پاسخ کلیدی عددی سؤالات").
 KEY_TABLE = re.compile(r'کلید.*(?:سؤالات|سوالات)|^کلید')
 # What opens an English reading or instruction block ("PART C. Reading ... — Passage 1", "Passage 2 (...)", "Directions: ...").
@@ -121,6 +123,12 @@ def answer_of(line: str) -> dict | None:
     for d in digits:
         if d not in seen:
             seen.append(d)
+    if not seen:
+        # «پاسخ نهایی: ب» -- the option's letter alone.
+        letters = re.findall(r'(?<![\w‌])(الف|ب|ج|د)(?![\w‌])', tail[-1] if len(tail) > 1 else line)
+        for letter in letters:
+            if LETTER_ANSWER[letter] not in seen:
+                seen.append(LETTER_ANSWER[letter])
     if not seen:
         return None
     answer = {'choice': seen[0], 'status': 'preliminary' if 'اولیه' in line else 'final'}
@@ -212,7 +220,9 @@ def parse(docx: Path, year: int, expected: int = 250):
             answer = answer_of(text)
             if answer is None:
                 warnings.append(f'{current["number"]}: answer line not understood: «{text[:60]}»')
-            current['answer'] = answer
+            if answer is not None or current.get('answer') is None:
+                # A later line that is not an answer never erases one already read.
+                current['answer'] = answer
             continue
         if text and text.startswith(('یادداشت', 'توضیح')):
             current.setdefault('_notes', []).append(text)
