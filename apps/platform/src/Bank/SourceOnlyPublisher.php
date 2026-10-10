@@ -21,7 +21,7 @@ final class SourceOnlyPublisher
         array $study, array $validated, array $decisions, bool $apply,
         ?string $referenceTextRoot = null,
     ): int {
-        if (($year < 1399 && !($year === 1398 && $subject === 'endodontics')) || $year > 1500
+        if (($year < 1399 && !($year === 1398 && in_array($subject, ['endodontics', 'periodontics'], true))) || $year > 1500
             || ($study['format'] ?? '') !== 'fanoos.classification.study-only/1'
             || ($validated['format'] ?? '') !== ($study['format'] ?? '')
             || ($study['exam_type'] ?? '') !== 'residency'
@@ -49,10 +49,15 @@ final class SourceOnlyPublisher
                 throw new RuntimeException('Unsupported source decision or human override.');
             }
             // Official 1398 source announcement independently identifies exact Torabinejad 5e
-            // for endodontics. Other 1398 subjects remain blocked by the year gate.
+            // for endodontics, and original Carranza 12e for periodontics.
+            // Every other 1398 subject remains blocked by the year gate.
             if ($year === 1398 && $subject === 'endodontics'
                 && $decision['edition'] !== 'torabinejad-endodontics@5e') {
                 throw new RuntimeException('1398 endodontics requires exact announced Torabinejad 5e.');
+            }
+            if ($year === 1398 && $subject === 'periodontics'
+                && $decision['edition'] !== 'carranza-periodontology@12e') {
+                throw new RuntimeException('1398 periodontics requires exact announced Carranza 12e.');
             }
             $wanted[$n] = $decision;
         }
