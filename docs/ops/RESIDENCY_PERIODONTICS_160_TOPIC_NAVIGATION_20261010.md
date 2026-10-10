@@ -28,6 +28,12 @@ sudo -n -u fanoosupd python3 /srv/fanoos/updater-checkout/scripts/references/bui
   --out=/srv/fanoos/shared/research/classification/reports/periodontics-14e-topic-overlay-20261010/topic-160-crosswalk.json
 ```
 
+**Executed and independently verified** on the production host without writing to production: exactly **160/160** topics assigned, spanning **45 distinct** named 14e chapters, with each current question ID, stem hash, historical source identity, original chapter and page, and official answer status read back against live DB. The original-to-topic derivation comprises 20 source12e/topic14e reviews, 90 standard source13e→topic14e crosswalks, 17 question-specific semantic overrides and 33 retained provisional 14e chapter tags. All **160 source/question/answer records matched the live readback unchanged**.
+
+Protected result `/srv/fanoos/shared/research/classification/reports/periodontics-14e-topic-overlay-20261010/topic-160-crosswalk.json`, SHA-256 `fc898502a159b6ac01e40a3659aae951cda09364ab493218c5a26e2beacc74ab`.
+
+Protected independent readback report `/srv/fanoos/shared/research/classification/reports/periodontics-14e-topic-overlay-20261010/topic-160-independent-db-readback.json`, SHA-256 `86b9d5834048755c301e823f56ebb4d23b0fc249caf880a93d0370866414a80b`. **Production DB writes: 0.**
+
 The output stays protected on the server and rejects clobbering an existing result. It is a **complete research/navigation record only**, not an import payload for `bank_question_sources` or site publication. Any future site UI for topic navigation must explicitly display `14e topic (provisional)` separately from `official question-year reference and page`, and must not overwrite old source, exact print page, human edits, assessment versions, student attempts or answer keys.
 
 **Closure decision:** 160/160 *provisional topic navigation* can be prepared and archived; **scientifically approved chapter+source+page citation for all 160 remains open**. Closing that latter requirement would require complete original 14e (or authorized user decision to renounce original-year citation accuracy), a genuine original 13e page audit of 89 historical sources and human review of 16 1398 official answer problems. Do not claim a guessed chapter/page is exact.
