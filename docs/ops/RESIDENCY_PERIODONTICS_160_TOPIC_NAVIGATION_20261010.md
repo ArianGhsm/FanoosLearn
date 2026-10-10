@@ -28,6 +28,8 @@ sudo -n -u fanoosupd python3 /srv/fanoos/updater-checkout/scripts/references/bui
   --out=/srv/fanoos/shared/research/classification/reports/periodontics-14e-topic-overlay-20261010/topic-160-crosswalk.json
 ```
 
+**Public 160-row chapter index (no question text or copyrighted book content):** [PERIODONTICS_160_14E_TOPIC_MAP_20261010.csv](data/PERIODONTICS_160_14E_TOPIC_MAP_20261010.csv). Each row identifies year, question number, the provisional latest Carranza14e topic chapter and title, the historical source chapter, official-year edition, original-book citation verification flag and 1398 answer-review status. The column `status=14e_TOC_TOPIC_ONLY_UNVERIFIED_FULL_BOOK` applies to the navigation label; the separate verified flag refers only to the 15 independently proven original-year citations. This CSV is **not** an importable official-source feed.
+
 **Executed and independently verified** on the production host without writing to production: exactly **160/160** topics assigned, spanning **45 distinct** named 14e chapters, with each current question ID, stem hash, historical source identity, original chapter and page, and official answer status read back against live DB. The original-to-topic derivation comprises 20 source12e/topic14e reviews, 90 standard source13e→topic14e crosswalks, 17 question-specific semantic overrides and 33 retained provisional 14e chapter tags. All **160 source/question/answer records matched the live readback unchanged**.
 
 Protected result `/srv/fanoos/shared/research/classification/reports/periodontics-14e-topic-overlay-20261010/topic-160-crosswalk.json`, SHA-256 `fc898502a159b6ac01e40a3659aae951cda09364ab493218c5a26e2beacc74ab`.
