@@ -225,11 +225,12 @@ laptop when the verified edition is already in the server library.
 ### Current ready-edition inventory and classification operations
 
 The following was **measured after the audited Telegram and Konkur.in
-reference imports on 2026-10-09**, not assumed from a local folder: official
-catalog **44 editions**, verified/published private PDF resources **38**,
-currently without a verified PDF **6**; all 38 registered objects reported
-`ready=true`. The library holds **4,567,132,880 bytes** of registered
-reference PDFs. The filesystem was **87% used** (~7.5 GiB available).
+imports on 2026-10-09 and the web-source import on 2026-10-10**, not assumed
+from a local folder: official catalog **44 editions**, verified/published
+private PDF resources **42**, currently without a verified PDF **2**; all 42
+registered objects reported `ready=true`. The library holds
+**4,712,822,240 bytes** of registered reference PDFs. The filesystem was
+**87% used** (~7.7 GiB available).
 
 A read-only inventory, run by the authorized server operator:
 
