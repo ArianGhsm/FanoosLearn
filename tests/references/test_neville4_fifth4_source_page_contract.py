@@ -5,7 +5,7 @@ class Fifth4Safety(unittest.TestCase):
  @classmethod
  def setUpClass(cls):cls.s=SCRIPT.read_text(encoding="utf-8")
  def test_page_only(self):
-  self.assertEqual(re.findall(r"\b(?:UPDATE|INSERT\s+INTO|DELETE\s+FROM)\s+(bank_[a-z_]+)\b",cls.s if False else self.s,re.I),["bank_question_sources"])
+  self.assertEqual(re.findall(r"\b(?:UPDATE|INSERT\s+INTO|DELETE\s+FROM)\s+(bank_[a-z_]+)\b",self.s,re.I),["bank_question_sources"])
   for w in ["SET page=:page","page IS NULL","origin='ai'","reviewed_at IS NULL","reviewed_by_user_id IS NULL","rowCount()!==1"]:self.assertIn(w,self.s)
  def test_pinned_research(self):
   for w in ["10a377e50f4b68404f88cad022dc5f8bb00ca21edcab4ba41079c77a74bf8620",
