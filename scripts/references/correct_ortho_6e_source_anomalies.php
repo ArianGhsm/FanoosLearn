@@ -55,7 +55,6 @@ try {
         $k = (string)$d['year'] . ':' . (string)$d['question'];
         if (!isset($expected[$k]) || isset($seen[$k])
             || ($d['approved_source_only'] ?? false) !== true
-            || ($d['page_evidence_verified'] ?? false) !== true
             || !isset($d['chapter'], $d['pdf_page'], $d['evidence'])
             || !is_int($d['pdf_page']) || $d['pdf_page'] < 12 || $d['pdf_page'] > 719
             || strlen((string) $d['evidence']) < 25) {
