@@ -21,6 +21,13 @@ class Periodontics1399Q119Correction(unittest.TestCase):
         self.assertIn("$update->rowCount() !== 1", self.code)
         self.assertIn("GET_LOCK('fanoos:periodontics-existing-source-pages',0)", self.code)
         self.assertIn("FOR UPDATE", self.code)
+        # Snapshot's JSON_OBJECT property order must not be confused with
+        # changes to the four protected option values or image references.
+        self.assertIn("$expectedChoices = array_map(", self.code)
+        self.assertIn("if ($liveChoices !== $expectedChoices)", self.code)
+        self.assertIn("'position' => (int) $c['position']", self.code)
+        self.assertIn("'text' => (string) $c['text']", self.code)
+        self.assertIn("'image' => $c['image'] === null", self.code)
 
     def test_exact_book_year_answer_and_human_protections(self):
         for marker in (
