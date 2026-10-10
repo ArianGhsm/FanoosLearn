@@ -1,47 +1,54 @@
-# Oral pathology | Current verified bank and original-book status
+# Oral pathology — current verified production and original-book status
 
-**Last independently verified 2026-10-10. Exclusive subject: oral pathology residency 1398–1405.** This document supersedes old *progress/status* statements in earlier dated pathology research notes, but not their immutable original research, official book evidence, provenance or application receipts. This is **not** a declaration of 159/159 scientifically correct chapter+page classification.
+**2026-10-10 · Dentistry residency 1398–1405 · Pathology only**
 
-**Additional 2026-10-10 fifth-edition checkpoint — supersedes only the older 37/2 line below:** Twelve more incorrect, nonempty 1404/1405 Neville5e chapter-number page placeholders have now been cross-checked against the approved original book's keyed-answer evidence, year scope, PDF chapter boundaries and three neighboring printed page labels. Strict read-only live preflight passed **12/12**. Versioned guarded page-only operator and regression tests were merged in [PR #239](https://github.com/ArianGhsm/FanoosLearn/pull/239), commit `6443a7896605edc79df2711dc820bba7aaa70fc5`, with successful PR and main CI. **Do not report these 12 as actually applied** until the official live release includes the script and new private applied receipt plus complete 159-bank-question and two whole-frozen-assessment postdiff exist. Last observed live release `986bae8610f963c8be60cd2cc92788e69a5a706b` lacked the 12-case operator. Current real source-page fixes remain **47**, NULL pages **78**. A third recorded answer/original-book conflict was found: **1404 Q48** (HPV established for recorded key verruca vulgaris, while offered verruciform xanthoma has no established causal role). No key was touched. Thus current 159-case research states: 42 actually applied in the new 4e batch; 72 further original4e page checks; 12 new Neville5e reviewed and pending controlled apply; 24 remaining Neville5e page checks; 5 out-of-official-scope chapter assignments; **3** possible recorded-key/book conflicts; 1 human-held NULL page. Protected updated per-question V2 manifest SHA256 `c95a4490d52f9b9db5bf896f22614fe793818c66201bd81a98d716efa42ff28d`, held-decision report SHA256 `847017351a2eb0e0446c147089d3e6bfcf6e32239a6e03388fd9825133c146cc`, canonical private README SHA256 `0f52beb538a591e8c529629a74353c1a629c9089fac30228a65fea6656d8bfa1`. All nine outdated status narrations are in the protected hash-listed archive, not destroyed. This 12-case update does not change the 78 NULL-page count.
+**Scientific course status: not yet eligible for 159/159 closure.** This document supersedes older and now-stale progress counts in the GitHub history while retaining the immutable evidence and all protected server source files. Do not interpret a chapter field that is nonempty as independently correct.
 
-## Current production state
+## Confirmed live bank state
 
-- **159 questions / 159 existing attached source records.** Every question has a reference and assigned chapter, but five assigned chapters lie outside the official exam-year syllabus.
-- **78 source rows still have no printed page**, rather than the previous 120.
-- **Five original Neville fifth-edition incorrect nonempty page placeholders** were actually corrected in the previously documented production transaction.
-- **Forty-two Neville fourth-edition NULL-page records** were actually corrected in a **single source-page-only atomic transaction**, on the officially deployed versioned CLI from [PR #230](https://github.com/ArianGhsm/FanoosLearn/pull/230). Prior to apply: read-only bank/answer/syllabus/physical book page checks passed 42/42, fresh independently verified FANOOS full backup `20261010T120645Z-2ac1eec3` held 54 files and was reverified. Private database apply receipt confirms `applied=true`, `count=42`; all other columns and human source rows are immutable.
-- Independent readback compared **every one of 159 sources (all columns except the 42 authorized page fields)** and **all 159 bank question stems, choices, media and latest official answers** before/after. **Exactly 42 source.page values changed.** The **six entire previously published exam definition SHA256** values for 1398–1403 were identical (published versions 8, 8, 8, 6, 5, 5). Earlier five fifth-edition updates likewise independently audited the full 1404/1405 frozen assessments.
-- As of this verification, the deployed server contained the official restricted source-page repair CLI, with site health HTTP 200.
+- **159 questions, 159 attached original-year reference/chapter source records.**
+- **83 existing-source printed-page metadata corrections actually committed**, each with an exclusive receipt, a fresh independently verified full FANOOS backup, a production-source read-only preflight and whole-subject readback:
+  - **66 missing original Neville 4e pages filled**, in three batches of 42, 12 and 12.
+  - **17 wrong nonempty original Neville 5e placeholder pages corrected**, in batches of five and twelve.
+- **54 source records still have NULL printed page**. Per year: 1398: 16; 1399: 10; 1400: 6; 1401: 6; 1402: 8; 1403: 7; 1404: 1; 1405: 0. These counts were rechecked against live MySQL, not projected from PR results.
+- Exactly **one protected human-origin record**, 1404 Q56, has no page. No human-authored classification, question, option, recorded official answer, earlier published entire exam definition or student attempt was altered by these operations.
+- At least **19 other nonempty Neville 5e page assignments** still require original-edition answer-specific scientific and printed-page verification.
 
-The two production batch results should not be confused with all-purpose clinical answer certification. No recorded answer key, human-review decision or historical exam was changed.
+### Four recorded-key vs primary-book conflicts requiring authority
 
-## Immutable protected research and clean-up
+The original books raise research-level concerns for 1398 Q60 (microglossia), Q64 (ancient schwannoma), Q66 (oral melanoacanthoma), and 1404 Q48 (the recorded answer describes verruca vulgaris as lacking confirmed HPV involvement). **No keys were changed.** Authenticate official answer-booklets, original errata and any subsequent official revision; only an authorized human/official-answer process can adjudicate them.
 
-Private root: `/srv/fanoos/shared/research/classification/parallel/oral-pathology-review-20261010`.
+Five existing source chapters are excluded by the official syllabus applicable to the exam year: 1399 Q75; 1402 Q61, Q62; and 1404 Q44, 1405 Q44. Do not invent an allowed alternate chapter merely to clear a blocker. For 1399 Q75, original Neville4e ch14 discusses periapical cemento-osseous dysplasia; a full answer/management proof is still needed before any source/chapter correction.
 
-| Record | SHA-256 |
-| --- | --- |
-| Canonical current `README.md` | `a7b9f8fdac8e8c9ac07a341f771d173c117b03b5c07c97d24ced2cec41608548` |
-| All-159 postbatch per-question disposition `CURRENT_159_CASE_STATES.json` | `1e07875e15eec1cc87eff091e6f829e8c155134f677ad2d3b65d091ed7e06f4b` |
-| Protected 42-source atomic apply receipt `neville4-42-source-page-apply-receipt-20261010.json` | `3cb19e635592f510c9935b721f5dfed4d6e9d2452866c06bace981c4e65c4426` |
-| Complete independent postapply 159-source and 6 frozen exam audit `neville4-after42-independent-diff.json` | `81068297c16f5a572433c5d08733e7d3480198e6a405f7acce536aeeddf0bed2` |
-| Original book/answer verified 42-case approval evidence `neville4-reviewed-answer-page-candidates-20261010.json` | `06489c524c61e8fe221208117ce9cdc46e57b3d0a18e5f76215815ea1fc60f82` |
-| Cleanup archive manifest `history/20261010/MANIFEST.json` | `87f25c23366976bbe8cb78e60b490e6cfd96c4cfcd0741942726b466e5368135` |
+## Independently verified integrity and full rollback information
 
-**Cleanup completed:** Eight outdated iterative checkpoint/readme documents were relocated (not destroyed) into a private dated, integrity-hashed archive. All original book extractions, clinically relevant research, source/answer snapshots, unique production transaction receipts, full backups, immutable exam hashes and replay scripts retain their previous accessible locations. Never delete the historical trails to manufacture course completion.
+All five guarded source-page-only transactions applied with `applied=true`, with postapply readback showing only the enumerated `bank_question_sources.page` fields changed, across **all 159 source rows and all 159 question stem/choice/image/official answer snapshots**. Relevant entire already-published exam-version SHA256 values were identical before and after each update.
 
-## Remaining original-edition clinical approval gates
+The fifth completed batch applied **12 Neville4e missing-page corrections** after the official deployment of `273899d2c22bea4a570506c9549c9056e8265e4e`, with a verified 54-file full project backup `20261010T130635Z-6d6b9aa3`. Its independent postdiff SHA256 is `64213e79236dd7b968611efe183d4c68b07bc1cf42fb9ab7b012fa78907813cb`.
 
-| Current group | Questions |
-| --- | ---: |
-| Current 42 applied original-Neville4e source-page corrections | 42 |
-| Older fourth-edition sources requiring independent answer-level page work | 72 |
-| Fifth-edition existing pages requiring clinical/physical page review (includes earlier five actual page fixes) | 37 |
-| Existing chapter outside official exam-year scope | 5 |
-| Original-book vs recorded official-key concern, 1398 Q60 and Q64 | 2 |
-| Protected human source with NULL page, 1404 Q56 | 1 |
-| **Total** | **159** |
+All protected private details and receipts live in:
 
-The 78 NULL fields are in the 72 fourth-edition fact-review group, two Q60/Q64 concerns, three older fourth-edition excluded-chapter cases, and one human source; all other issues include pages or placeholders.
+`/srv/fanoos/shared/research/classification/parallel/oral-pathology-review-20261010/`
 
-**Next action cannot be bulk guessing:** independently locate each remaining original-book answer fact in the exact-year book and allowable chapter, print-page corroborate, adjudicate key discrepancies through authorized review, avoid human overrides, then follow guarded source-only publication with fresh full backup, exclusive ownership, CI and complete live + frozen exam integrity readback. The subject is **partially corrected**, not closed.
+Read `README.md` (SHA256 `14e32aa9777fcb929c8dfe1de1b9e20a61e03d3de73dcdee56eaaeebdaa3e657`) and the full 159-question disposition `CURRENT_159_ORAL_PATHOLOGY_EXACT_STATUS_20261010.json` (SHA256 `3d24772ee3556bb7fa3a81eef503612f433603c9f47d44c1588a7957a2d6feda`).
+
+All older narrative checkpoints have been **archived, not destroyed**, under `history/20261010/` with hash-verified manifest. Original PDF and answer-source evidence, published snapshot digests, production receipts, backups and reproducibility scripts were never intentionally discarded.
+
+### Original book-text resilience after parallel cleanup
+
+Parallel cleanup removed prior original-book text copies from the research workspace. We recovered **both** from the *approved original production private PDF objects* using the official versioned `scripts/references/extract_server_reference.py` with hash-verified dry run and apply:
+
+- **Neville 4e**, original private PDF SHA256 `6fbc9bcba9003deda2f8fc006ccc4f23f9e15db0bcd0e237c56ddf6788578bb6`, 878 physical pages, extracted text SHA256 `b240862242cfd48c9b90cdfa5cf8ba43a8e4ffe6900ea5d4e02b09419c40c58a`.
+- **Neville 5e**, original private PDF SHA256 `4d35199b9cda526997717802e174144071d38f0179e725e7ed6a90b2f98565ac`, 983 physical pages, extracted text SHA256 `348dafa50b9f53648dc5f7cad97547459ba70a227680ab921c5a04b1b63b6c40`.
+
+Both verified books now reside in `references/` in the dedicated pathology workspace. Neville4e also has its restored W04 copy. **Future cross-subject cleanup must not delete either text or any unique applied receipt** without equivalent independently verified permanent storage; those files are required to validate ongoing source page operations.
+
+## Next completion gates
+
+Of the 54 NULL pages, 53 are older original Neville4e and one is human-reviewed original Neville5e. Among the 53, 47 are ordinary outstanding fact-level review and the other six are held by excluded chapters or likely official-key/book contradictions. Separately, at least 19 other populated original Neville5e pages require exact-source verification.
+
+Complete only with individual answer-specific original-book evidence, exact exam-year official allowed chapter, physically corroborated book-printed page, and authorized adjudication of contested official answers or human decisions. Each further mutation must pass reviewed CI, official deploy, fresh independently verified backup, exclusive publication lock, complete 159-row invariants, entire frozen-exam digests, production receipt and site health.
+
+**Do not mark oral pathology fully finished until the last 54 NULL fields and all remaining evidence/official-key, scope and human exceptions are legitimately resolved.**
+
+Prior implementation milestones: [PR #239](https://github.com/ArianGhsm/FanoosLearn/pull/239), [PR #243](https://github.com/ArianGhsm/FanoosLearn/pull/243), [PR #244](https://github.com/ArianGhsm/FanoosLearn/pull/244).
