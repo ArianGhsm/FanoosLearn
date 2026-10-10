@@ -33,7 +33,7 @@ try {
     $expected = filter_var($args['expected'] ?? null, FILTER_VALIDATE_INT);
     $apply = isset($args['apply']);
     if (preg_match('/^[0-9a-f-]{36}$/D', $ws) !== 1 || $year === false
-        || ($year < 1399 && !(($year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1'], true)) || ($year === 1398 && $subject === 'periodontics' && $stem === 'periodontics') || ($year === 1398 && $subject === 'community-dentistry' && $stem === 'community')))
+        || ($year < 1399 && !(($year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1'], true)) || ($year === 1398 && $subject === 'periodontics' && $stem === 'periodontics') || ($year === 1398 && $subject === 'community-dentistry' && $stem === 'community') || ($year === 1398 && $subject === 'oral-surgery' && $stem === 'surgery' && $expected === 2 && isset($args['package-root']))))
         || $year > 1500 || $expected === false || $expected < 1 || $expected > 250
         || preg_match('/^[a-z][a-z0-9-]{1,59}$/D', $subject) !== 1
         || preg_match('/^[a-z][a-z0-9-]{1,59}$/D', $stem) !== 1) {
@@ -60,6 +60,9 @@ try {
             || is_link($candidate) || realpath($candidate) !== $candidate) {
             throw new RuntimeException('Package root must be an exact coordinator WNN audit stage.');
         }
+        if ($year === 1398 && $subject === 'oral-surgery' && $label !== 'W08-audit-stage') {
+            throw new RuntimeException('1398 oral surgery requires the exact W08 coordinator audit-stage.');
+        }
         if ($label === 'W03-endo-q1-audit-stage'
             && !($year === 1398 && $subject === 'endodontics' && $stem === 'endodontics-q1')) {
             throw new RuntimeException('Endodontics Q1 coordinator stage may only map the exact 1398 Q1 batch.');
@@ -83,6 +86,12 @@ try {
         return json_decode((string) file_get_contents($path), true, 64, JSON_THROW_ON_ERROR);
     };
     $audit = $read($auditPath);
+    // 1398 surgery exception is only Q123/Q124, in the approved Malamed Emergencies 7e PDF.
+    // No Hupp7 substitution, original answer correction, or bulk 1398 surgery bypass.
+    if ($year === 1398 && $subject === 'oral-surgery'
+        && ($expected !== 2 || $stem !== 'surgery' || !isset($args['package-root']))) {
+        throw new RuntimeException('1398 surgery accepts only the two exact audited Malamed7 questions.');
+    }
     if (($audit['format'] ?? '') !== 'fanoos.classification.provenance-audit/1'
         || ($audit['research_only'] ?? false) !== true) {
         throw new RuntimeException('Required no-question-change provenance audit absent.');
