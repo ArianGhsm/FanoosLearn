@@ -351,10 +351,28 @@ paths:
       parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Csrf' }]
       requestBody: { required: true, content: { application/json: { schema: { type: object, required: [subject], properties: { subject: { type: string, description: 'required unless edition is given' }, type: { type: string, description: 'an exam type key: only that exam type''s questions' }, edition: { type: string, description: 'reference@edition: only questions sourced to this book (across subjects when no subject is given); 404 bank_chapter_not_found when unknown' }, chapter: { type: string, description: 'a chapter key of that edition: only questions sourced to this chapter' }, topic: { type: string }, year: { type: integer }, recent: { type: boolean } } } } } }
       responses: { '201': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' }, '422': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/bank/visuals:
+    get:
+      operationId: listBankVisuals
+      description: 'Published visual study material (10_VISUALS.md): [{key, kind, title, subject, subject_name, chapters: [reference@edition#node]}], filtered by subject, kind (mindmap, flowchart, diagram, table, capsule) or the chapter they explain (edition=reference@edition, chapter=node key).'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: subject, in: query, required: false, schema: { type: string } }, { name: kind, in: query, required: false, schema: { type: string } }, { name: edition, in: query, required: false, schema: { type: string } }, { name: chapter, in: query, required: false, schema: { type: string } }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/bank/visuals/{visualKey}:
+    get:
+      operationId: readBankVisual
+      description: 'One published visual: {key, kind, title, subject, subject_name, format (tree, markdown, image), tree, markdown, has_image, from: {title, edition, pdf_page_from, pdf_page_to}, origin, reviewed, chapters: [{ref, number, title, title_fa}], concepts: [{key, name}], questions: [question key]}. 404 bank_visual_not_found for a draft or unknown key.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: visualKey, in: path, required: true, schema: { type: string, pattern: '^[a-z0-9][a-z0-9_.-]{0,79}$' } }]
+      responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' } }
+  /workspaces/{workspaceId}/bank/visuals/{visualKey}/image:
+    get:
+      operationId: readBankVisualImage
+      description: 'The image of a published image visual (PNG, WebP or JPEG), inline, private cache. 404 bank_visual_not_found.'
+      parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: visualKey, in: path, required: true, schema: { type: string, pattern: '^[a-z0-9][a-z0-9_.-]{0,79}$' } }]
+      responses: { '200': { description: 'The image bytes.' }, '403': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/bank/books:
     get:
       operationId: readBankBooks
-      description: 'بانک به تفکیک کتاب و فصل: {type, listed_year, types, subjects: [{key, name, name_en, books: [{edition_ref, title, authors, edition, published_year, listed_year, questions, chapters: [{key, number, title, title_fa, title_fa_reviewed, questions}]}]}]}. For each subject, the editions its published questions are sourced to (sources set or reviewed by a person, or at confidence >= 0.85), each chapter with how many questions come from it (a section source counts for its chapter); listed_year is set when the book is on the latest official list of the exam type (residency when none is given). With ?type= only that exam type''s questions.'
+      description: 'بانک به تفکیک کتاب و فصل: {type, listed_year, types, subjects: [{key, name, name_en, books: [{edition_ref, title, authors, edition, published_year, listed_year, questions, chapters: [{key, number, title, title_fa, title_fa_reviewed, questions, visuals}]}]}]}; visuals counts the published mind maps and summaries of a chapter. For each subject, the editions its published questions are sourced to (sources set or reviewed by a person, or at confidence >= 0.85), each chapter with how many questions come from it (a section source counts for its chapter); listed_year is set when the book is on the latest official list of the exam type (residency when none is given). With ?type= only that exam type''s questions.'
       parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/BankType' }]
       responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/bank/references:

@@ -33,6 +33,12 @@ final class BankImporter
 {
     public const CATALOG_FORMAT = 'fanoos.bank.catalog/1';
     public const SITTING_FORMAT = 'fanoos.bank.sitting/1';
+    public const VISUALS_FORMAT = 'fanoos.bank.visuals/1';
+    public const VISUAL_KINDS = ['mindmap', 'flowchart', 'diagram', 'table', 'capsule'];
+    /** A mind map's outline: how deep, how many nodes, how long a node's text. */
+    private const TREE_DEPTH = 7;
+    private const TREE_NODES = 600;
+    private const TREE_TEXT = 400;
 
     public const QUESTION_TYPES = ['recall', 'conceptual', 'clinical_scenario', 'diagnosis', 'treatment_planning', 'image_based', 'calculation'];
     public const COGNITIVE_LEVELS = ['recall', 'understanding', 'application', 'analysis'];
@@ -75,7 +81,8 @@ final class BankImporter
         match ($file['format'] ?? null) {
             self::CATALOG_FORMAT => $this->checkCatalog($workspaceId, $file),
             self::SITTING_FORMAT => $this->checkSitting($workspaceId, $file, $assetsDir),
-            default => $this->fail('format', 'must be "' . self::CATALOG_FORMAT . '" or "' . self::SITTING_FORMAT . '"'),
+            self::VISUALS_FORMAT => $this->checkVisuals($workspaceId, $file, $assetsDir),
+            default => $this->fail('format', 'must be "' . self::CATALOG_FORMAT . '", "' . self::SITTING_FORMAT . '" or "' . self::VISUALS_FORMAT . '"'),
         };
 
         return $this->errors;
@@ -93,9 +100,11 @@ final class BankImporter
         }
         $counts = [];
         $write = function () use ($workspaceId, $file, $assetsDir, &$counts): void {
-            $counts = $file['format'] === self::CATALOG_FORMAT
-                ? $this->writeCatalog($workspaceId, $file)
-                : $this->writeSitting($workspaceId, $file, $assetsDir);
+            $counts = match ($file['format']) {
+                self::CATALOG_FORMAT => $this->writeCatalog($workspaceId, $file),
+                self::VISUALS_FORMAT => $this->writeVisuals($workspaceId, $file, $assetsDir),
+                default => $this->writeSitting($workspaceId, $file, $assetsDir),
+            };
         };
         if ($dryRun) {
             $this->database->beginTransaction();
@@ -207,8 +216,10 @@ SQL);
         $cited = $this->database->prepare(<<<'SQL'
 SELECT EXISTS (SELECT 1 FROM bank_question_sources WHERE edition_id = :a)
     OR EXISTS (SELECT 1 FROM bank_question_currency WHERE against_edition_id = :b)
+    OR EXISTS (SELECT 1 FROM bank_explanations WHERE source_edition_id = :c)
+    OR EXISTS (SELECT 1 FROM bank_visuals WHERE source_edition_id = :d)
 SQL);
-        $cited->execute(['a' => $editionId, 'b' => $editionId]);
+        $cited->execute(['a' => $editionId, 'b' => $editionId, 'c' => $editionId, 'd' => $editionId]);
         if ((bool) $cited->fetchColumn() || !$this->pruneEditionNodes($workspaceId, $editionId, [], $result)) {
             return false;
         }
@@ -234,7 +245,8 @@ SQL);
         $rows = $this->database->prepare(<<<'SQL'
 SELECT node.id, node.parent_id, node.node_key,
        EXISTS (SELECT 1 FROM bank_question_sources s WHERE s.node_id = node.id)
-       OR EXISTS (SELECT 1 FROM bank_edition_mappings m WHERE m.from_node_id = node.id OR m.to_node_id = node.id) AS in_use
+       OR EXISTS (SELECT 1 FROM bank_edition_mappings m WHERE m.from_node_id = node.id OR m.to_node_id = node.id)
+       OR EXISTS (SELECT 1 FROM bank_visual_links v WHERE v.node_id = node.id) AS in_use
 FROM bank_reference_nodes node
 WHERE node.workspace_id = :workspace AND node.edition_id = :edition
 SQL);
@@ -898,6 +910,165 @@ SQL)->execute($fields + [
         }
 
         return true;
+    }
+
+    // ================================================================ visuals
+
+    /**
+     * Visual study material (mind maps, flowcharts, diagrams, tables,
+     * capsules): each has one body -- a tree outline, markdown, or an image
+     * from the assets folder -- and names what it explains (chapters
+     * reference@edition#node, concept keys, question keys) and the book
+     * pages it was made from.
+     *
+     * @param array<string, mixed> $file
+     */
+    private function checkVisuals(string $workspaceId, array $file, ?string $assetsDir): void
+    {
+        $seen = [];
+        foreach ($this->list($file, 'visuals') as $i => $visual) {
+            $here = "visuals[{$i}]";
+            $this->requireKey($visual, 'key', '/^[a-z0-9][a-z0-9_.-]{0,79}$/', $here);
+            $key = (string) ($visual['key'] ?? '');
+            if (isset($seen[$key])) {
+                $this->fail("{$here}.key", "repeats {$key}");
+            }
+            $seen[$key] = true;
+            $this->requireEnum($visual, 'kind', self::VISUAL_KINDS, $here);
+            $this->requireText($visual, 'title', 200, $here);
+            if (isset($visual['subject']) && $this->lookup($workspaceId, 'bank_subjects', 'subject_key', (string) $visual['subject']) === null) {
+                $this->fail("{$here}.subject", 'unknown subject');
+            }
+            $bodies = array_values(array_filter(['tree', 'markdown', 'image'], static fn (string $f): bool => isset($visual[$f])));
+            if (count($bodies) !== 1) {
+                $this->fail($here, 'needs exactly one of "tree", "markdown" or "image"');
+            } elseif ($bodies[0] === 'tree') {
+                $nodes = 0;
+                $this->checkTree($visual['tree'], "{$here}.tree", 1, $nodes);
+            } elseif ($bodies[0] === 'markdown' && (!is_string($visual['markdown']) || trim($visual['markdown']) === '' || strlen($visual['markdown']) > 60000)) {
+                $this->fail("{$here}.markdown", 'must be text, at most 60,000 bytes');
+            } elseif ($bodies[0] === 'image') {
+                $this->checkImage($visual['image'], "{$here}.image", $assetsDir);
+            }
+            foreach ($this->arrayOf($visual, 'chapters', $here) as $c => $ref) {
+                if (!is_string($ref) || !str_contains($ref, '#') || $this->resolveNode($workspaceId, $ref) === null) {
+                    $this->fail("{$here}.chapters[{$c}]", 'must be a known reference@edition#node');
+                }
+            }
+            foreach ($this->arrayOf($visual, 'concepts', $here) as $c => $concept) {
+                if ($this->lookup($workspaceId, 'bank_concepts', 'concept_key', (string) $concept) === null) {
+                    $this->fail("{$here}.concepts[{$c}]", 'unknown concept');
+                }
+            }
+            foreach ($this->arrayOf($visual, 'questions', $here) as $c => $question) {
+                if ($this->lookup($workspaceId, 'bank_questions', 'question_key', (string) $question) === null) {
+                    $this->fail("{$here}.questions[{$c}]", 'unknown question key');
+                }
+            }
+            if (isset($visual['from'])) {
+                $from = $visual['from'];
+                if (!is_array($from) || $this->resolveEdition($workspaceId, (string) ($from['ref'] ?? '')) === null) {
+                    $this->fail("{$here}.from.ref", 'must name a known reference@edition');
+                } else {
+                    $this->checkBookPage(['pdf_page' => $from['pdf_page_from'] ?? null, 'pdf_sha256' => $from['pdf_sha256'] ?? null], "{$here}.from");
+                    if (isset($from['pdf_page_to']) && (!is_int($from['pdf_page_to']) || $from['pdf_page_to'] < (int) ($from['pdf_page_from'] ?? 1))) {
+                        $this->fail("{$here}.from.pdf_page_to", 'must be a PDF page at or after pdf_page_from');
+                    }
+                }
+            }
+            if (isset($visual['status'])) {
+                $this->requireEnum($visual, 'status', ['draft', 'published'], $here);
+            }
+            $this->checkMachineFields($visual, $here);
+        }
+    }
+
+    private function checkTree(mixed $node, string $where, int $depth, int &$count): void
+    {
+        if (!is_array($node) || !is_string($node['text'] ?? null) || trim($node['text']) === '' || mb_strlen($node['text']) > self::TREE_TEXT) {
+            $this->fail("{$where}.text", 'must be text, at most ' . self::TREE_TEXT . ' characters');
+            return;
+        }
+        if (isset($node['note']) && (!is_string($node['note']) || mb_strlen($node['note']) > 1000)) {
+            $this->fail("{$where}.note", 'must be text, at most 1,000 characters');
+        }
+        if (++$count > self::TREE_NODES) {
+            $this->fail($where, 'the outline has more than ' . self::TREE_NODES . ' nodes');
+            return;
+        }
+        $children = $node['children'] ?? [];
+        if (!is_array($children) || !array_is_list($children)) {
+            $this->fail("{$where}.children", 'must be a list');
+            return;
+        }
+        if ($children !== [] && $depth >= self::TREE_DEPTH) {
+            $this->fail($where, 'the outline is deeper than ' . self::TREE_DEPTH . ' levels');
+            return;
+        }
+        foreach ($children as $i => $child) {
+            $this->checkTree($child, "{$where}.children[{$i}]", $depth + 1, $count);
+        }
+    }
+
+    /**
+     * Upserts each visual by key (a new version when its body changes; a
+     * reviewed visual is left alone) and replaces its links.
+     *
+     * @param array<string, mixed> $file
+     * @return array<string, int>
+     */
+    private function writeVisuals(string $workspaceId, array $file, ?string $assetsDir): array
+    {
+        $counts = ['visuals' => 0, 'visuals_changed' => 0, 'visuals_kept_reviewed' => 0, 'links' => 0, 'images' => 0];
+        foreach ($this->list($file, 'visuals') as $visual) {
+            $existing = $this->database->prepare('SELECT id, version, body, image, reviewed_by_user_id FROM bank_visuals WHERE workspace_id = :workspace AND visual_key = :key');
+            $existing->execute(['workspace' => $workspaceId, 'key' => $visual['key']]);
+            $row = $existing->fetch() ?: null;
+            if ($row !== null && $row['reviewed_by_user_id'] !== null) {
+                ++$counts['visuals_kept_reviewed'];
+                continue;
+            }
+            $format = isset($visual['tree']) ? 'tree' : (isset($visual['markdown']) ? 'markdown' : 'image');
+            $body = match ($format) {
+                'tree' => json_encode($visual['tree'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+                'markdown' => (string) $visual['markdown'],
+                default => null,
+            };
+            $image = $format === 'image' ? $this->storeImage((string) $visual['image'], $assetsDir, $counts) : null;
+            $changed = $row !== null && ($row['body'] !== $body || $row['image'] !== $image);
+            $from = $visual['from'] ?? [];
+            $visualId = $this->upsert('bank_visuals', $workspaceId, ['visual_key' => $visual['key']], [
+                'kind' => $visual['kind'],
+                'title' => $visual['title'],
+                'subject_id' => isset($visual['subject']) ? $this->lookup($workspaceId, 'bank_subjects', 'subject_key', (string) $visual['subject']) : null,
+                'body_format' => $format,
+                'body' => $body,
+                'image' => $image,
+                'source_edition_id' => isset($from['ref']) ? $this->resolveEdition($workspaceId, (string) $from['ref']) : null,
+                'source_pdf_page_from' => $from['pdf_page_from'] ?? null,
+                'source_pdf_page_to' => $from['pdf_page_to'] ?? ($from['pdf_page_from'] ?? null),
+                'source_pdf_sha256' => isset($from['pdf_sha256']) ? strtolower((string) $from['pdf_sha256']) : null,
+                'status' => $visual['status'] ?? 'draft',
+                'origin' => $visual['origin'] ?? 'ai',
+                'confidence' => $visual['confidence'] ?? null,
+                'version' => $row === null ? 1 : ((int) $row['version'] + ($changed ? 1 : 0)),
+            ]);
+            ++$counts['visuals'];
+            $counts['visuals_changed'] += $changed ? 1 : 0;
+            $this->database->prepare('DELETE FROM bank_visual_links WHERE visual_id = :visual')->execute(['visual' => $visualId]);
+            $link = $this->database->prepare('INSERT INTO bank_visual_links (id, workspace_id, visual_id, node_id, concept_id, question_id) VALUES (:id, :workspace, :visual, :node, :concept, :question)');
+            $targets = array_merge(
+                array_map(fn ($ref): array => ['node' => $this->resolveNode($workspaceId, (string) $ref), 'concept' => null, 'question' => null], $visual['chapters'] ?? []),
+                array_map(fn ($key): array => ['node' => null, 'concept' => $this->lookup($workspaceId, 'bank_concepts', 'concept_key', (string) $key), 'question' => null], $visual['concepts'] ?? []),
+                array_map(fn ($key): array => ['node' => null, 'concept' => null, 'question' => $this->lookup($workspaceId, 'bank_questions', 'question_key', (string) $key)], $visual['questions'] ?? []),
+            );
+            foreach ($targets as $target) {
+                $link->execute(['id' => Uuid::v7(), 'workspace' => $workspaceId, 'visual' => $visualId] + $target);
+                ++$counts['links'];
+            }
+        }
+
+        return $counts;
     }
 
     // ================================================================ helpers

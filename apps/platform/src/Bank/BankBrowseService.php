@@ -215,6 +215,160 @@ final class BankBrowseService
     }
 
     /**
+     * Visual study material (mind maps, flowcharts, diagrams, tables,
+     * capsules), published ones only: [{key, kind, title, subject, subject_name,
+     * chapters: [edition_ref#node]}], filtered by subject, kind, or the chapter
+     * (edition_ref + chapter key) they explain.
+     *
+     * @param array<string, string> $filters subject, kind, edition, chapter
+     * @return list<array<string, mixed>>
+     */
+    public function visuals(string $userId, string $workspaceId, array $filters = []): array
+    {
+        $this->access->requireWorkspace($userId, $workspaceId, 'exam.take');
+        $query = $this->database->prepare(<<<'SQL'
+SELECT visual.id, visual.visual_key, visual.kind, visual.title, subject.subject_key, subject.name AS subject_name
+FROM bank_visuals visual
+LEFT JOIN bank_subjects subject ON subject.id = visual.subject_id
+WHERE visual.workspace_id = :workspace AND visual.status = 'published'
+ORDER BY subject.sort_order, visual.title
+SQL);
+        $query->execute(['workspace' => $workspaceId]);
+        $rows = $query->fetchAll();
+        $chapters = $this->visualChapters($workspaceId);
+        $out = [];
+        foreach ($rows as $row) {
+            $refs = $chapters[(string) $row['id']] ?? [];
+            if (($filters['subject'] ?? '') !== '' && $row['subject_key'] !== $filters['subject']) {
+                continue;
+            }
+            if (($filters['kind'] ?? '') !== '' && $row['kind'] !== $filters['kind']) {
+                continue;
+            }
+            if (($filters['edition'] ?? '') !== '') {
+                $wanted = $filters['edition'] . (($filters['chapter'] ?? '') !== '' ? '#' . $filters['chapter'] : '');
+                if (array_filter($refs, static fn (string $ref): bool => $ref === $wanted || str_starts_with($ref, $wanted . (str_contains($wanted, '#') ? '.' : '#'))) === []) {
+                    continue;
+                }
+            }
+            $out[] = ['key' => (string) $row['visual_key'], 'kind' => (string) $row['kind'], 'title' => (string) $row['title'],
+                'subject' => $row['subject_key'], 'subject_name' => $row['subject_name'], 'chapters' => $refs];
+        }
+
+        return $out;
+    }
+
+    /**
+     * One published visual with its body (a tree outline, markdown, or an
+     * image served by GET .../image), what it explains, and the book pages it
+     * was made from.
+     *
+     * @return array<string, mixed>
+     */
+    public function visual(string $userId, string $workspaceId, string $key): array
+    {
+        $this->access->requireWorkspace($userId, $workspaceId, 'exam.take');
+        $query = $this->database->prepare(<<<'SQL'
+SELECT visual.*, subject.subject_key, subject.name AS subject_name, reference.title AS source_title, edition.edition_label AS source_edition
+FROM bank_visuals visual
+LEFT JOIN bank_subjects subject ON subject.id = visual.subject_id
+LEFT JOIN bank_reference_editions edition ON edition.id = visual.source_edition_id
+LEFT JOIN bank_references reference ON reference.id = edition.reference_id
+WHERE visual.workspace_id = :workspace AND visual.visual_key = :key AND visual.status = 'published'
+SQL);
+        $query->execute(['workspace' => $workspaceId, 'key' => $key]);
+        $row = $query->fetch();
+        if ($row === false) {
+            throw new PlatformException('bank_visual_not_found', 'That visual is not published.', 404);
+        }
+        $links = $this->database->prepare(<<<'SQL'
+SELECT question.question_key, concept.concept_key, concept.name AS concept_name, node.number, node.title, node.title_fa,
+       CONCAT(reference.reference_key, '@', edition.edition_key, '#', node.node_key) AS chapter_ref
+FROM bank_visual_links link
+LEFT JOIN bank_questions question ON question.id = link.question_id
+LEFT JOIN bank_concepts concept ON concept.id = link.concept_id
+LEFT JOIN bank_reference_nodes node ON node.id = link.node_id
+LEFT JOIN bank_reference_editions edition ON edition.id = node.edition_id
+LEFT JOIN bank_references reference ON reference.id = edition.reference_id
+WHERE link.visual_id = :visual
+SQL);
+        $links->execute(['visual' => $row['id']]);
+        $chapters = [];
+        $concepts = [];
+        $questions = [];
+        foreach ($links->fetchAll() as $link) {
+            if ($link['question_key'] !== null) {
+                $questions[] = (string) $link['question_key'];
+            } elseif ($link['concept_key'] !== null) {
+                $concepts[] = ['key' => (string) $link['concept_key'], 'name' => (string) $link['concept_name']];
+            } elseif ($link['chapter_ref'] !== null) {
+                $chapters[] = ['ref' => (string) $link['chapter_ref'], 'number' => $link['number'], 'title' => (string) $link['title'], 'title_fa' => $link['title_fa']];
+            }
+        }
+
+        return [
+            'key' => (string) $row['visual_key'],
+            'kind' => (string) $row['kind'],
+            'title' => (string) $row['title'],
+            'subject' => $row['subject_key'],
+            'subject_name' => $row['subject_name'],
+            'format' => (string) $row['body_format'],
+            'tree' => $row['body_format'] === 'tree' ? json_decode((string) $row['body'], true) : null,
+            'markdown' => $row['body_format'] === 'markdown' ? (string) $row['body'] : null,
+            'has_image' => $row['image'] !== null,
+            'from' => $row['source_title'] === null ? null : [
+                'title' => (string) $row['source_title'], 'edition' => (string) $row['source_edition'],
+                'pdf_page_from' => $row['source_pdf_page_from'] === null ? null : (int) $row['source_pdf_page_from'],
+                'pdf_page_to' => $row['source_pdf_page_to'] === null ? null : (int) $row['source_pdf_page_to'],
+            ],
+            'origin' => (string) $row['origin'],
+            'reviewed' => $row['reviewed_at'] !== null,
+            'chapters' => $chapters,
+            'concepts' => $concepts,
+            'questions' => $questions,
+        ];
+    }
+
+    /** The image key of a published image visual, for GET .../image. */
+    public function visualImage(string $userId, string $workspaceId, string $key): string
+    {
+        $this->access->requireWorkspace($userId, $workspaceId, 'exam.take');
+        $query = $this->database->prepare("SELECT image FROM bank_visuals WHERE workspace_id = :workspace AND visual_key = :key AND status = 'published' AND image IS NOT NULL");
+        $query->execute(['workspace' => $workspaceId, 'key' => $key]);
+        $image = $query->fetchColumn();
+        if ($image === false) {
+            throw new PlatformException('bank_visual_not_found', 'That visual has no image.', 404);
+        }
+
+        return (string) $image;
+    }
+
+    /**
+     * Each published visual's chapter refs (reference@edition#node).
+     *
+     * @return array<string, list<string>>
+     */
+    private function visualChapters(string $workspaceId): array
+    {
+        $query = $this->database->prepare(<<<'SQL'
+SELECT link.visual_id, CONCAT(reference.reference_key, '@', edition.edition_key, '#', node.node_key) AS ref
+FROM bank_visual_links link
+JOIN bank_visuals visual ON visual.id = link.visual_id AND visual.status = 'published'
+JOIN bank_reference_nodes node ON node.id = link.node_id
+JOIN bank_reference_editions edition ON edition.id = node.edition_id
+JOIN bank_references reference ON reference.id = edition.reference_id
+WHERE link.workspace_id = :workspace
+SQL);
+        $query->execute(['workspace' => $workspaceId]);
+        $out = [];
+        foreach ($query->fetchAll() as $row) {
+            $out[(string) $row['visual_id']][] = (string) $row['ref'];
+        }
+
+        return $out;
+    }
+
+    /**
      * The bank by book and chapter (بانک به تفکیک کتاب و فصل): for each
      * subject, the editions its published questions are sourced to, each
      * with every chapter and how many questions come from it; with an exam
@@ -231,6 +385,13 @@ final class BankBrowseService
         $links = $this->sourcedQuestions($workspaceId, $typeKey);
         $chapters = $this->editionChapters($workspaceId);
         $listed = $this->latestListed($workspaceId, $typeKey ?? 'residency');
+        // How many published visuals explain each chapter (a section link counts for its chapter).
+        $drawn = [];
+        foreach ($this->visualChapters($workspaceId) as $refs) {
+            foreach (array_unique(array_map(static fn (string $ref): string => preg_replace('/^([^#]+#[^.]+).*$/', '$1', $ref), $refs)) as $ref) {
+                $drawn[$ref] = ($drawn[$ref] ?? 0) + 1;
+            }
+        }
 
         $subjects = [];
         foreach ($this->subjects($workspaceId) as $subject) {
@@ -272,6 +433,7 @@ final class BankBrowseService
                         'title_fa' => $chapter['title_fa'],
                         'title_fa_reviewed' => $chapter['title_fa_reviewed'],
                         'questions' => count($book['by_chapter'][$chapter['key']] ?? []),
+                        'visuals' => $drawn[$book['edition_ref'] . '#' . $chapter['key']] ?? 0,
                     ], $chapters[$editionId] ?? []),
                 ];
             }

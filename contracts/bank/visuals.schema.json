@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fanooslearn.ir/contracts/bank/visuals.schema.json",
+  "title": "FANOOS bank visuals file",
+  "description": "Mind maps, flowcharts, diagrams, tables and capsules, each tied to what it explains and to the book pages it was made from. Imported with scripts/import/import-bank.php import (images from --assets).",
+  "type": "object",
+  "required": [
+    "format",
+    "visuals"
+  ],
+  "properties": {
+    "format": {
+      "const": "fanoos.bank.visuals/1"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "visuals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "key",
+          "kind",
+          "title"
+        ],
+        "oneOf": [
+          {
+            "required": [
+              "tree"
+            ]
+          },
+          {
+            "required": [
+              "markdown"
+            ]
+          },
+          {
+            "required": [
+              "image"
+            ]
+          }
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_.-]{0,79}$"
+          },
+          "kind": {
+            "enum": [
+              "mindmap",
+              "flowchart",
+              "diagram",
+              "table",
+              "capsule"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "subject": {
+            "type": "string",
+            "description": "A subject key from the catalog."
+          },
+          "tree": {
+            "$ref": "#/$defs/node",
+            "description": "A mind map's outline, at most 7 levels and 600 nodes."
+          },
+          "markdown": {
+            "type": "string",
+            "maxLength": 60000,
+            "description": "Headings (#), lists (- / 1.), tables (| a | b |) and **bold** only."
+          },
+          "image": {
+            "type": "string",
+            "description": "A PNG, WebP or JPEG in the assets folder (no SVG)."
+          },
+          "chapters": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "reference@edition#node"
+            }
+          },
+          "concepts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "A question key, type-year-round-number."
+            }
+          },
+          "from": {
+            "type": "object",
+            "required": [
+              "ref"
+            ],
+            "description": "The book pages it was made from.",
+            "properties": {
+              "ref": {
+                "type": "string",
+                "description": "reference@edition"
+              },
+              "pdf_page_from": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "pdf_page_to": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "pdf_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-fA-F]{64}$"
+              }
+            }
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "published"
+            ],
+            "default": "draft"
+          },
+          "origin": {
+            "enum": [
+              "ai",
+              "human"
+            ],
+            "default": "ai"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "node": {
+      "type": "object",
+      "required": [
+        "text"
+      ],
+      "properties": {
+        "text": {
+          "type": "string",
+          "maxLength": 400
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        }
+      }
+    }
+  }
+}

@@ -288,9 +288,16 @@ function chapterLine(chapter, most, studyBody) {
         text.append(bar);
     }
     item.append(text);
-    if (studyBody) {
+    if (studyBody || chapter.visuals > 0) {
         const side = el('div', 'k-ch__side');
-        side.append(el('span', 'k-ch__count', `${faDigits(chapter.questions)} سؤال`), studyButton('تمرین', studyBody));
+        if (studyBody) side.append(el('span', 'k-ch__count', `${faDigits(chapter.questions)} سؤال`));
+        // A chapter's mind maps and summaries, when there are any.
+        if (chapter.visuals > 0 && studyBody) {
+            const maps = el('a', 'k-ch__maps', `نقشه · ${faDigits(chapter.visuals)}`);
+            maps.href = `/app/visuals?${new URLSearchParams({ edition: studyBody.edition, chapter: chapter.key })}`;
+            side.append(maps);
+        }
+        if (studyBody) side.append(studyButton('تمرین', studyBody));
         item.append(side);
     }
     return item;
