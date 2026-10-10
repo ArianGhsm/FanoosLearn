@@ -29,6 +29,59 @@ def load(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+
+def _page_segments(book: Path) -> dict[int, str]:
+    """Read page-marked *private* reference text; never export quotations."""
+    if not book.is_file():
+        raise ValueError("The exact reference text is missing for printed-page verification")
+    raw = book.read_text(encoding="utf-8")
+    markers = list(re.finditer(r"^=== PAGE (\\d+) ===\\s*$", raw, flags=re.MULTILINE))
+    if not markers:
+        raise ValueError("The exact reference text has no PDF page markers")
+    return {
+        int(marker.group(1)): raw[marker.end():markers[i + 1].start() if i + 1 < len(markers) else len(raw)]
+        for i, marker in enumerate(markers)
+    }
+
+
+def _printed_labels(text: str) -> set[int]:
+    """Strictly recognize short numeric running heads/feet, not body numbers."""
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    numbers: set[int] = set()
+    for line in lines[:3] + lines[-3:]:
+        if len(line) >= 90:
+            continue
+        match = re.match(r"^(\\d{1,4})(?:\\s|$)", line) or re.search(r"(?:^|\\s)(\\d{1,4})$", line)
+        if match:
+            numbers.add(int(match.group(1)))
+    return numbers
+
+
+def _verify_pdf_printed_page(root: Path, edition: str, pdf_page: int, value: str,
+                             cache: dict[str, dict[int, str]]) -> bool:
+    """Accept book-printed labels only with actual-page AND adjacent-page evidence.
+
+    Deliberately stricter than the primary text validator: a stray chapter
+    number on one page may be mistaken for its printed page number. Require
+    at least two independently adjacent page labels with matching offsets.
+    """
+    try:
+        printed = int(value)
+    except (TypeError, ValueError):
+        return False
+    if not 1 <= pdf_page or not 1 <= printed:
+        return False
+    if edition not in cache:
+        cache[edition] = _page_segments(root / "references" / f"{edition}.txt")
+    pages = cache[edition]
+    if printed not in _printed_labels(pages.get(pdf_page, "")):
+        return False
+    corroborated = sum(
+        printed + step in _printed_labels(pages.get(pdf_page + step, ""))
+        for step in (-2, -1, 1, 2) if pdf_page + step > 0 and printed + step > 0
+    )
+    return corroborated >= 2
+
 def audit_batch(root: Path, spec: str) -> dict:
     m = BATCH.fullmatch(spec)
     if not m:
@@ -67,6 +120,7 @@ def audit_batch(root: Path, spec: str) -> dict:
     if actual != wanted.keys():
         raise ValueError(f"{spec}: validated source set and decision set differ")
     pages = {}
+    reference_page_cache: dict[str, dict[int, str]] = {}
     for n, decision in wanted.items():
         assigned = mapped[n]["sources"]
         if len(assigned) != 1:
@@ -78,7 +132,12 @@ def audit_batch(root: Path, spec: str) -> dict:
         suffix = str(item["ref"]).removeprefix(expected_ref_prefix)
         if suffix != str(decision["chapter"]).zfill(2):
             raise ValueError(f"{spec}: wrong chapter map for Q{n}")
-        if str(item.get("page")) not in {str(decision["page"]), f'pdf {decision["page"]}'} or item.get("origin") != "ai":
+        if item.get("origin") != "ai":
+            raise ValueError(f"{spec}: wrong page or origin for Q{n}")
+        label = str(item.get("page"))
+        pdf_number = int(decision["page"])
+        if label not in {str(pdf_number), f"pdf {pdf_number}"} and not _verify_pdf_printed_page(
+                root, str(decision["edition"]), pdf_number, label, reference_page_cache):
             raise ValueError(f"{spec}: wrong page or origin for Q{n}")
         confidence = item.get("confidence", {})
         if (min(float(confidence.get(k, 0)) for k in ("source", "node", "page")) < 0.85
