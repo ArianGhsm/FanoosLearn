@@ -72,9 +72,11 @@ source of owned PDFs. `scripts/ops/reference-library-inventory.php`
 is the authoritative **live availability check** for approved, verified,
 private `reference_pdf` objects.
 
-Snapshot of the inventory **2026-10-09**: **44** catalog editions,
-**27** private PDFs registered and verified, **17** without a verified
-library PDF. These are time-stamped findings, not permanent invariants.
+Snapshot after the audited Telegram and Konkur.in imports on 2026-10-09
+and web-source import on 2026-10-10: **44** catalog editions, **42** private
+PDFs registered and verified, **2** without a verified library PDF. The 42
+PDFs total **4,712,822,240 bytes**. These are time-stamped findings, not
+permanent invariants.
 Registration of a PDF is **not** proof that it has a complete, searchable
 text and validated chapter-page boundaries.
 
@@ -227,7 +229,8 @@ See `docs/product/09_CHAPTER_CLASSIFICATION.md` for the mistakes and guards.
 - Reconcile historical 1398–1405 coverage notes with a current **database
   audit**. Historical counts in `06_QUESTION_FORMAT.md` are not live counts.
 - Regularly monitor disk capacity and backup retention without deleting
-  anything outside the approved retention policy. On 2026-10-09 the host
-  reported **92% disk usage** (~4.9 GB free).
+  anything outside the approved retention policy. After the audited web-source
+  import on 2026-10-10, the live inventory reported **87% disk usage** (~7.7
+  GiB free); see `docs/ops/SERVER.md` for the dated snapshot.
 - Any access gap or unready edition is a documented **pending dependency**,
   not a reason to revert to a mandatory laptop workflow.
