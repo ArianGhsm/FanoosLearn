@@ -65,13 +65,31 @@ SUBJECT_WORDS = [
     ('مواد', 'dental-materials'), ('جراحی', 'oral-surgery'), ('بیماری', 'oral-medicine'), ('آسیب', 'oral-pathology'),
     ('رادیولوژی', 'oral-radiology'), ('ارتو', 'orthodontics'), ('کودکان', 'pediatric-dentistry'),
     ('سلامت', 'community-dentistry'), ('اجتماعی', 'community-dentistry'), ('زبان', 'english'),
+    # Older papers' names: «پاتولوژی دهان و فک», «دندانپزشکی تشخیصی», «دندانپزشکی جامعه نگر».
+    ('پاتولوژی', 'oral-pathology'), ('تشخیص', 'oral-medicine'), ('جامعه', 'community-dentistry'),
+    # The national exam's basic-science block, after English (from 1404).
+    ('علوم پایه', 'basic-sciences'), ('بیوشیمی', 'basic-sciences'), ('باکتری', 'basic-sciences'), ('تشریح', 'basic-sciences'),
+    ('فیزیولوژی', 'basic-sciences'), ('ژنتیک', 'basic-sciences'), ('ایمنی', 'basic-sciences'),
 ]
 
-QUESTION = re.compile(r'^(?:سؤال|سوال)?\s*([0-9]{1,3})\s*[.\-–—:)ـ|]\s*(.*)$')
+# «12. stem», «سؤال 001 | stem», «سؤال 1 (شماره 1 در درس ارتودنسی): stem»,
+# or «سؤال 2» alone with its stem on the next line (number in group 1 or 3).
+QUESTION = re.compile(r'^(?:(?:سؤال|سوال)?\s*([0-9]{1,3})\s*(?:\((?:شماره|سؤال|سوال)[^)]*\)\s*)?[.\-–—:)ـ|]\s*(.*)|(?:سؤال|سوال)\s*([0-9]{1,3})\s*)$')
 # «منبع درج‌شده در دفترچه: کارانزا ۲۰۱۹» -- what the printed booklet names beside a question.
 BOOKLET = re.compile(r'^منبع\s*(?:درج|ذکر)[‌\s]?شده(?:\s*در\s*دفترچه)?\s*:\s*(.+)$')
 DEFAULT_EXPECTED = {'residency': 250, 'national': 240, 'board': 100, 'promotion': 100}
-CHOICE_FA = re.compile(r'^(الف|ب|ج|د)\s*[)\-–.]\s*(.*)$')
+# «الف)», «الف ـ», and «الف(» (a PDF's right-to-left copy reverses the bracket).
+CHOICE_FA = re.compile(r'^(الف|ب|ج|د)\s*[()\-–—.ـ]\s*(.*)$')
+INLINE_CHOICE = re.compile(r'(?:^|\s)(الف|ب|ج|د)\s*[()]\s*')
+# What follows «سؤال N:» in a correction list: «1 و 3», «حذف شده».
+KEY_LINE = re.compile(r'^\s*(?:[1-4](?:\s*(?:و|،|,)\s*[1-4])*|حذف\s*شده)\s*$')
+# «صفحه 5 PDF» -- where the question sat in the source file.
+PAGE_MARK = re.compile(r'^صفحه\s*[0-9]+\s*PDF\s*', re.I)
+# «1) ...» options: only in papers whose questions say «سؤال N», where a
+# bare number cannot be the next question.
+CHOICE_NUM = re.compile(r'^([1-4])\s*\)\s*(.*)$')
+# A rule drawn between questions (────, ----).
+RULE = re.compile(r'^[\s─━—–\-_=*]{3,}$')
 CHOICE_EN = re.compile(r'^([a-dA-D])\s*[)\-–.]\s*(.*)$')
 # An answer line -- not the closing «پاسخ‌نامه» (answer sheet) heading.
 ANSWER = re.compile(r'^(?:پاسخ(?![\s‌]*نامه)|جواب|Correct answer|Answer)', re.I)
@@ -79,7 +97,7 @@ LETTER_ANSWER = {'الف': 1, 'ب': 2, 'ج': 3, 'د': 4}
 # The closing key table's heading ("کلید عددی نهایی سؤالات", "پاسخ کلیدی عددی سؤالات").
 KEY_TABLE = re.compile(r'کلید.*(?:سؤالات|سوالات)|^کلید')
 # What opens an English reading or instruction block ("PART C. Reading ... — Passage 1", "Passage 2 (...)", "Directions: ...").
-PASSAGE = re.compile(r'^(?:PART|Part|Passage|Directions|Read the following|Reading Comprehension)')
+PASSAGE = re.compile(r'^(?:PART|Part|Passage|PASSAGE|Directions|Read the following|Reading Comprehension)|^.{0,40}(?:Read the following|درک مطلب)')
 ABSENT = re.compile(r'وجود ندارد|موجود نیست')
 UNNUMBERED = re.compile(r'^(?:سؤال|سوال)\s*بدون\s*شماره')
 
@@ -92,6 +110,8 @@ def subject_of(line: str) -> str | None:
     """A short line that names a subject and nothing else is a heading."""
     if len(line) > 60 or QUESTION.match(line) or CHOICE_FA.match(line) or ANSWER.match(line):
         return None
+    if line.rstrip().endswith(('؟', '?')):
+        return None  # a short stem that names a subject («... درمان جراحی ...؟») is still a question
     for word, key in SUBJECT_WORDS:
         if word in line:
             return key
@@ -113,7 +133,7 @@ def paragraphs(docx: Path):
 def answer_of(line: str) -> dict | None:
     if 'حذف' in line:
         return {'choice': None, 'status': 'voided'}
-    if 'نامشخص' in line:
+    if 'نامشخص' in line or 'در دسترس نیست' in line:
         # No valid key: kept in the bank, never scored, until a key is found.
         return {'choice': None, 'status': 'disputed'}
     tail = re.split(r'گزینه(?:‌ها|ها)?(?:ی)?|:', line, maxsplit=1)
@@ -148,6 +168,7 @@ def parse(docx: Path, year: int, expected: int = 250):
     key_table: list[str] = []
     in_key = False
     zipped = None
+    prefixed = False  # questions read «سؤال N»: a bare «N)» is an option
 
     def close():
         nonlocal current
@@ -163,12 +184,17 @@ def parse(docx: Path, year: int, expected: int = 250):
             continue
         if not text and not images:
             continue
+        if text and RULE.match(text):
+            continue
         if text and KEY_TABLE.search(text) and len(questions) >= expected * 0.8 and not QUESTION.match(text):
             close()
             in_key = True
             continue
         heading = subject_of(text) if text else None
-        if heading and (current is None or 'answer' in current or not current['_choices']) and not PASSAGE.match(text):
+        if heading == 'oral-pathology' and 'دهان' not in text and subject in ('english', 'basic-sciences'):
+            heading = 'basic-sciences'  # «آسیب‌شناسی» after English is general pathology
+        awaiting_stem = current is not None and current['stem'] == '' and not current['_choices']
+        if heading and not awaiting_stem and (current is None or 'answer' in current or not current['_choices']) and not PASSAGE.match(text):
             close()
             subject, passage, in_passage, skipping = heading, [], False, False
             continue
@@ -178,8 +204,16 @@ def parse(docx: Path, year: int, expected: int = 250):
             warnings.append(f'skipped an unnumbered question: «{text[:60]}»')
             continue
         q = QUESTION.match(text) if text else None
+        if q and prefixed and current is not None and CHOICE_NUM.match(text):
+            q = None
+        if q and q.group(2) is not None and KEY_LINE.match(q.group(2)):
+            # «سؤال 221: 1 و 3» -- a correction list after the paper, not a question.
+            warnings.append(f'a key line read as a key, not a question: «{text[:40]}»')
+            continue
         if q:
-            number = int(q.group(1))
+            if text.startswith(('سؤال', 'سوال')):
+                prefixed = True
+            number = int(q.group(1) or q.group(3))
             last = questions[-1]['number'] if questions else (current['number'] if current else 0)
             if current is not None:
                 last = current['number']
@@ -188,7 +222,8 @@ def parse(docx: Path, year: int, expected: int = 250):
                 skipping = False
                 if number - last > 1:
                     warnings.append(f'questions {last + 1}..{number - 1} are not in the document')
-                stem = re.sub(r'\s*\((?:[^()]*?)\)\s*$', lambda m: '' if subject_of(m.group(0).strip(' ()')) else m.group(0), q.group(2)).strip()
+                stem = re.sub(r'\s*\((?:[^()]*?)\)\s*$', lambda m: '' if subject_of(m.group(0).strip(' ()')) else m.group(0), q.group(2) or '').strip()
+                stem = PAGE_MARK.sub('', stem).strip()
                 current = {'number': number, 'subject': subject, 'stem': stem, '_choices': {}, '_images': list(images),
                            '_passage': '\n'.join(passage) if passage and subject == 'english' else None}
                 in_passage = False
@@ -204,10 +239,16 @@ def parse(docx: Path, year: int, expected: int = 250):
             continue
         if current is None:
             continue
-        c = CHOICE_FA.match(text) or CHOICE_EN.match(text)
+        inline = INLINE_CHOICE.split(text) if text.startswith('الف') else []
+        if len(inline) >= 5:
+            # «الف( یک ب( دو ج( سه د( چهار» -- all options on one line.
+            for label, choice in zip(inline[1::2], inline[2::2]):
+                current['_choices'][LETTERS.index(label)] = choice.strip()
+            continue
+        c = CHOICE_FA.match(text) or CHOICE_EN.match(text) or (CHOICE_NUM.match(text) if prefixed else None)
         if c:
             label = c.group(1)
-            index = LETTERS.index(label) if label in LETTERS else 'abcd'.index(label.lower())
+            index = LETTERS.index(label) if label in LETTERS else (int(label) - 1 if label.isdigit() else 'abcd'.index(label.lower()))
             current['_choices'][index] = c.group(2).strip()
             continue
         if images:
@@ -215,6 +256,10 @@ def parse(docx: Path, year: int, expected: int = 250):
         booklet = BOOKLET.match(text) if text else None
         if booklet:
             current['_booklet'] = booklet.group(1).strip()[:300]
+            continue
+        if text and text.startswith(('وضعیت سؤال', 'وضعیت سوال')) and 'حذف' in text:
+            # «وضعیت سؤال: حذف شده (طبق کلید نهایی)» in place of an answer line.
+            current['answer'] = {'choice': None, 'status': 'voided'}
             continue
         if text and ANSWER.match(text):
             answer = answer_of(text)
@@ -229,6 +274,9 @@ def parse(docx: Path, year: int, expected: int = 250):
             continue
         if text and not current['_choices']:
             current['stem'] = (current['stem'] + '\n' + text).strip()
+        elif text and current['_choices'].get(max(current['_choices'])) == '':
+            # An option whose words wrapped onto the next line («د(» then its text).
+            current['_choices'][max(current['_choices'])] = text
         elif text:
             warnings.append(f'{current["number"]}: text after the options ignored: «{text[:60]}»')
     close()
@@ -275,6 +323,11 @@ def build(docx: Path, year: int, out: Path, form: str, official: dict[int, dict]
         if not any(choices) and q['_images']:
             # Graph options printed inside the figure (e.g. 1405 Q191): the figure is the options.
             choices = [f'نمودار {LETTERS[i]}' for i in range(4)]
+        if not any(choices):
+            # No option at all could be read: a question that cannot be
+            # answered is not put on the site; the report lists it to fix.
+            warnings.append(f'{n}: no option could be read; left out')
+            continue
         for i, choice in enumerate(choices):
             if not choice:
                 warnings.append(f'{n}: option {LETTERS[i]} is not in the document')

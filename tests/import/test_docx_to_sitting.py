@@ -34,6 +34,12 @@ class DocxToSittingTest(unittest.TestCase):
     def test_question_numbers_and_booklet_sources_in_the_newer_layouts(self):
         for line in ['سؤال 1 ـ کدام صحیح است؟', 'سؤال 001 | کدام صحیح است؟', norm('۱. کدام صحیح است؟')]:
             self.assertEqual(int(QUESTION.match(line).group(1)), 1, line)
+        numbered = QUESTION.match('سؤال 7 (شماره 7 در درس ارتودنسی): کدام صحیح است؟')
+        self.assertEqual((numbered.group(1), numbered.group(2)), ('7', 'کدام صحیح است؟'))
+        alone = QUESTION.match('سؤال 2')
+        self.assertEqual((alone.group(1), alone.group(3)), (None, '2'))
+        self.assertIsNone(QUESTION.match('2'))  # a bare number is never a question on its own
+        self.assertEqual(answer_of('پاسخ کلیدی: — (کلید رسمی این آزمون در دسترس نیست)'), {'choice': None, 'status': 'disputed'})
         self.assertEqual(BOOKLET.match('منبع درج‌شده در دفترچه: کارانزا ۲۰۱۹').group(1), 'کارانزا ۲۰۱۹')
         self.assertEqual(BOOKLET.match('منبع ذکرشده در دفترچه: JCP').group(1), 'JCP')
 
@@ -57,6 +63,61 @@ class DocxToSittingTest(unittest.TestCase):
         self.assertEqual(sitting['questions'][1]['answer']['status'], 'preliminary')
         self.assertEqual((report['no_valid_key'], report['preliminary'], report['booklet_sources']), (1, 1, 1))
         self.assertFalse([w for w in report['warnings'] if 'absent' in w])
+
+    def test_numbered_and_tatweel_options_with_rules_between_questions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            docx = Path(tmp) / 'promotion.docx'
+            write_docx(docx, [
+                'سؤالات رادیولوژی دهان، فک و صورت',
+                'سؤال 001  |  اولین سؤال؟', '1)  یک', '2)  دو', '3)  سه', '4)  چهار', 'پاسخ کلیدی: گزینه 2 (ب)',
+                '─────────────────────────',
+                'سؤال 002  |  دومین سؤال؟', 'الف ـ یک', 'ب ـ دو', 'ج ـ سه', 'د ـ چهار', 'پاسخ کلیدی: 4 (د)',
+                'سؤال 003  |  سومین سؤال؟', '1) یک', '2) دو', '3) سه', '4) چهار', 'پاسخ نهایی: گزینهٔ 1',
+                'سؤال 4', 'چهارمین سؤال؟', 'الف)  یک', 'ب)  دو', 'ج)  سه', 'د)  چهار', 'وضعیت سؤال: حذف شده (طبق کلید نهایی)',
+            ])
+            build(docx, 1405, Path(tmp), 'A', None, exam_type='promotion', round_=8, subject='oral-radiology', expected=4)
+            sitting = json.loads((Path(tmp) / 'promotion-1405-8.json').read_text(encoding='utf-8'))
+        questions = sitting['questions']
+        self.assertEqual([q['number'] for q in questions], [1, 2, 3, 4])
+        for q in questions:
+            self.assertEqual(q['choices'], ['یک', 'دو', 'سه', 'چهار'], q['number'])
+            self.assertNotIn('\n', q['stem'])
+        self.assertEqual(questions[3]['stem'], 'چهارمین سؤال؟')
+        self.assertEqual([q['answer']['choice'] for q in questions], [2, 4, 1, None])
+        self.assertEqual(questions[3]['answer']['status'], 'voided')
+
+    def test_one_line_options_page_marks_key_lists_and_unreadable_questions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            docx = Path(tmp) / 'paper.docx'
+            write_docx(docx, [
+                'بیماری‌های دهان',
+                'سؤال 1  |  صفحه 5 PDF', 'اولین سؤال؟', 'الف( یک ب( دو ج( سه د(', 'چهار', 'پاسخ کلیدی: 2 (ب)',
+                'سؤال 2  |  دومین سؤال بی‌گزینه؟', 'پاسخ کلیدی: 1 (الف)',
+                'سؤال 3  |  سومین سؤال؟', 'الف) یک', 'ب) دو', 'ج) سه', 'د) چهار', 'پاسخ کلیدی: 3 (ج)',
+                'سؤال 4: 1 و 3', 'سؤال 5: حذف شده',
+            ])
+            report = build(docx, 1405, Path(tmp), 'A', None, exam_type='promotion', round_=6, subject='oral-medicine', expected=3)
+            sitting = json.loads((Path(tmp) / 'promotion-1405-6.json').read_text(encoding='utf-8'))
+        questions = sitting['questions']
+        self.assertEqual([q['number'] for q in questions], [1, 3])  # 2 has no options; 4 and 5 are a key list
+        self.assertEqual(questions[0]['stem'], 'اولین سؤال؟')
+        self.assertEqual(questions[0]['choices'], ['یک', 'دو', 'سه', 'چهار'])
+        self.assertTrue(any('2: no option could be read' in w for w in report['warnings']))
+
+    def test_the_national_basic_science_block_after_english(self):
+        self.assertEqual(subject_of('بیوشیمی بالینی'), 'basic-sciences')
+        self.assertEqual(subject_of('تشریح سر و گردن'), 'basic-sciences')
+        self.assertEqual(subject_of('پاتولوژی دهان و فک'), 'oral-pathology')
+        self.assertIsNone(subject_of('شایع ترین عارضه به دنبال درمان جراحی در افراد مسن چیست؟'))
+        with tempfile.TemporaryDirectory() as tmp:
+            docx = Path(tmp) / 'national.docx'
+            lines = []
+            for heading, number in [('آسیب‌شناسی دهان و فک و صورت', 1), ('زبان انگلیسی', 2), ('آسیب‌شناسی', 3), ('فیزیولوژی', 4)]:
+                lines += [heading, f'{number}. سؤال {number}؟', 'الف) یک', 'ب) دو', 'ج) سه', 'د) چهار', 'پاسخ کلیدی: 1']
+            write_docx(docx, lines)
+            build(docx, 1405, Path(tmp), 'A', None, exam_type='national', round_=1, expected=4)
+            sitting = json.loads((Path(tmp) / 'national-1405-1.json').read_text(encoding='utf-8'))
+        self.assertEqual([q['subject'] for q in sitting['questions']], ['oral-pathology', 'english', 'basic-sciences', 'basic-sciences'])
 
     def test_subject_headings_and_what_is_not_one(self):
         self.assertEqual(subject_of('بیماری های دهان، فک و صورت'), 'oral-medicine')

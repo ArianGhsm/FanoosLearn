@@ -58,6 +58,8 @@ SUBJECTS = [
     ('pediatric-dentistry', 'دندانپزشکی کودکان', 'Pediatric Dentistry'),
     ('community-dentistry', 'سلامت دهان و دندانپزشکی اجتماعی', 'Community Oral Health'),
     ('english', 'زبان انگلیسی', 'English'),
+    # The national exam's basic-science block (from 1404: تشریح، فیزیولوژی، بیوشیمی، ...).
+    ('basic-sciences', 'علوم پایه', 'Basic Sciences'),
 ]
 SUBJECT_BY_NAME = {name.replace('‌', ''): key for key, name, _ in SUBJECTS}
 
