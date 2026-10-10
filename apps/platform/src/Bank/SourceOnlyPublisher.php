@@ -21,7 +21,7 @@ final class SourceOnlyPublisher
         array $study, array $validated, array $decisions, bool $apply,
         ?string $referenceTextRoot = null,
     ): int {
-        if (($year < 1399 && !($year === 1398 && in_array($subject, ['endodontics', 'periodontics', 'community-dentistry'], true))) || $year > 1500
+        if (($year < 1399 && !($year === 1398 && in_array($subject, ['endodontics', 'periodontics', 'community-dentistry', 'oral-surgery'], true))) || $year > 1500
             || ($study['format'] ?? '') !== 'fanoos.classification.study-only/1'
             || ($validated['format'] ?? '') !== ($study['format'] ?? '')
             || ($study['exam_type'] ?? '') !== 'residency'
@@ -64,7 +64,22 @@ final class SourceOnlyPublisher
                 && $decision['edition'] !== 'national-oral-health@1394') {
                 throw new RuntimeException('1398 community dentistry requires the exact national oral-health 1394 edition.');
             }
+            if ($year === 1398 && $subject === 'oral-surgery') {
+                $approved = [
+                    123 => ['edition' => 'malamed-medical-emergencies@7e', 'chapter' => '3', 'page' => 110],
+                    124 => ['edition' => 'malamed-medical-emergencies@7e', 'chapter' => '11', 'page' => 211],
+                ];
+                $expectedSource = $approved[$n] ?? null;
+                if ($expectedSource === null || (string) $decision['edition'] !== $expectedSource['edition']
+                    || (string) $decision['chapter'] !== $expectedSource['chapter']
+                    || (int) $decision['page'] !== $expectedSource['page']) {
+                    throw new RuntimeException('1398 surgery requires exact Malamed Emergencies 7e Q123/124 verified pages.');
+                }
+            }
             $wanted[$n] = $decision;
+        }
+        if ($year === 1398 && $subject === 'oral-surgery' && array_keys($wanted) !== [123, 124]) {
+            throw new RuntimeException('1398 surgery accepts only the exact two-question audited batch.');
         }
         $mapped = [];
         $seen = [];
