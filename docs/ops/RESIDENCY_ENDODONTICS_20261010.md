@@ -68,3 +68,46 @@ Private coordinator stage: `/srv/fanoos/shared/research/classification/coordinat
 The 1398 official catalog identifies `torabinejad-endodontics@5e` and all chapters for **endodontics**. The proposed source-only 1398 exception in this PR is intentionally *subject-restricted*: other 1398 disciplines remain rejected. It still requires matching original study, exact officially valid edition/chapter scope, primary and independent evidence review, a fresh live source-free check, verified full backup, source-only transactional preview, unique receipt and independently audited assessment publication. The older 1398 W03 nine-decision package is **not** publication-ready.
 
 **State at this checkpoint:** these are research acceptance and a proposed code eligibility change only. Neither eight 1398 links nor 1400 Q29 were imported or published at the time this report was written. The fact that the newer code supports independently proven printed-book labels does not authorize bypassing the older deployed source writer, nor changing a label to make a preview pass.
+
+
+## Latest verified production checkpoint — 2026-10-10 after second-stage publication
+
+**This section supersedes the historical research-only status and preliminary question list above.** Historical W03 submissions and earlier eight-question search stages are preserved for reproducibility, but **Q12 is excluded by manual answer review and Q19 replaces it in the approved eight-question publication**.
+
+### Real database inserts and complete frozen exam publication
+
+| Year | Proven source-only inserts | Independently verified backup | Frozen assessment | Audit |
+|---|---|---|---|---|
+| 1400 | Q29, Torabinejad6e ch9 PDF p170 / printed p163 — **applied** 2026-10-10 09:55:46 UTC | `20261010T095118Z-d2cab314`, complete 54-file manifest | v6→v7, 249 questions identical except one source explanation | original-book audit SHA256 `8bbbb1a7610b9ab1295e1be84ca5d62aa15e88d64ee7e3cce55f192904174950` |
+| 1398 | Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q19, Torabinejad5e — **applied** 2026-10-10 10:01:51 UTC | `20261010T095909Z-0e187637`, complete 54-file manifest | v3→v4, 245 questions identical except eight source explanations | stricter original-book audit SHA256 `337d964cff414077364fa3adc82b8ea1bf7d2946e289b04eb5fa5f7a471cbe98` |
+
+Official source-only importer independently returned exactly one and eight new rows respectively, with `questions_changed=choices_changed=answers_changed=0`. Unique private production receipts (verified readbacks):
+
+- `/srv/fanoos/shared/research/classification/reports/1400-endodontics-W03-source-publish-20261010.json`, SHA256 `4e0cd8f384ffee3cab0550f6d3c60eb6001e35a4aebdae9d038bacc8e900cf7b`.
+- `/srv/fanoos/shared/research/classification/reports/1398-endodontics-W03-semantic-source-publish-20261010.json`, SHA256 `eccec5dd7273e6e08dd03543913f1855d27ed2318c07d65d85fdc2d8d76ef72f`.
+
+After the two batches, independent live SQL readback showed **148 of 159 endodontics questions** carrying source rows, with **11 unsourced**, all in 1398; year 1400 and each 1399–1405 are 20/20 sourced. Two of 1404's human-origin source rows, Q27 ch12 and Q34 ch13, still lack a book page and must not be marked page-complete.
+
+### Manual semantic exclusions and new evidence
+
+- Earlier research accepted 1398 Q12 (5e ch6 p113); **human semantic review held it**: the official recorded choice calls radix entomolaris a mesial extra canal while the book defines an additional molar *root*. Original key unchanged.
+- Q19 was independently accepted in the replacement eight-question package, 5e ch11 PDF p201 (supporting preceding original page p200), recorded splint-duration answer consistent with the book. Original W03 evidence, both coordinator-stage predecessors, and their checksums remain preserved, never overwritten.
+- Q1 printed book p41/PDF p53 mismatch did not pass the independent two-neighbor page auditor; hold pending proof. Q9–Q11, Q13–Q18 similarly remain uninserted unless newly audited separately. Q14, Q15, Q17, Q18 and Q12 require answer-key integrity review; **do not edit official keys while assigning sources**.
+
+### Additional independently approved but not imported: 1398 Q9
+
+The original exact Torabinejad5e text explicitly supports the recorded mesial tube shift together with decreased vertical angulation. Single-question private research package `1398:endodontics:endodontics-q9`, original-book ch12 **PDF p216**. Both unchanged primary validator and independent book audit accepted this one question, `0` source/content rejects. Private stage:
+- `bank-sittings/1398/endodontics-q9-study.json`, SHA256 `0731cf447d0ac46d9dcfaff015e49edae63f24ab466d0f38bc36f195125b72e7`
+- `classification/decisions/1398-endodontics.json`, SHA256 `e64eaec1bfd4a3d0296780f986381a3ea51efa386a9bd19bf7950a360f83c9f3`
+- `classification/sittings/1398-endodontics-q9-validated.json`, SHA256 `c382dc37cc0b20250821cae44daad31f9a6ae2bd810e2350cb815d7ada52c07a`
+- `classification/reports/1398-endodontics-Q9-independent-audit-20261010.json`, SHA256 `2e76698ee93bfdb84450a9fe1dc7adcd8b35eae846fc13316b2916ea9b942a9a`
+
+The official publisher initially rejected `stem=endodontics-q9` (no production side effect). Scoped support was added with regression tests and merged **PR #214**, merge SHA `0b32d7741f502b34043e0d360d6cb86c3a9de271`, all five PR/main CI jobs green. A separate official updater request `01a1254a-4562-77f9-94a9-13de8c05d345` FAILED preflight at 2026-10-10 10:10:49 UTC because the canonical main workflow was not yet green *at that instant*. The previously healthy deployed release remained `051c3b00d783dd7e26c68635e258c79078f19fc0`. GitHub subsequently confirmed the main workflow green, but **Q9 has not been transaction-previewed on the new deployed code, imported, or published**. Do not represent it as done or repeat a failed deployment request blindly.
+
+**Q9 next gates:** independently confirm exact currently live canonical main and green SHA, successful authorized updater deploy with backup and site sync, fresh 1398 unsourced study/source-original identity, frozen full-assessment preview, unique full verified backup, `--expected=1` source-only preview/apply with above immutable package and unique receipt, live source count, exam v4→v5 publish and full 245-question frozen diff.
+
+### Other unresolved data and constraints
+
+Remaining 1398 source-free numbers as of readback: **Q1, Q9, Q10, Q11, Q12, Q13, Q14, Q15, Q16, Q17, Q18**. Q10 and similar diagram-dependent questions require actual reference figures. Two 1404 **human-origin** sources (Q27, Q34) have correct existing chapter nodes but **NULL page** and no existing source quote to ground a page. Keep the human origin/review provenance unchanged; only after a page-specific book/answer proof and separately audited metadata-only operator may these be repaired. The existence of a candidate chapter or nearby original page does not prove the precise page.
+
+**Status:** verified source-only live publication of nine net new endodontics assignments across 1398/1400, plus one newly independently validated Q9 research proposal **not published**, and 10 other pending unsourced 1398 questions. These remaining scientific and production evidence gates prevent labeling the entire subject complete. All decisions/receipts/book content are protected on server, not in public GitHub.
