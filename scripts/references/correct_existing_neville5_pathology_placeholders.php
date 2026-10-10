@@ -12,7 +12,7 @@ $paths=[
  'manifest'=>[$root.'/neville5-precise-placeholder-reviewed-cases-20261010.json','0bd1e9d6df79057c5b95b0fa225ca3d99a7ee014a42f2f10f9d7c9a28012590e'],
  'sources'=>[$root.'/neville4-after42-live-sources.private.json','9ea8a2671673385c833ad1e0242dd6ee742f3760020f8e81cb4f5fd3cddd9db8'],
  'answers'=>[$root.'/neville4-after42-answers.json','810c3d9d7cef512f295b919cf676fa9b7cacbe618321e8a361084dda6b66ffa0'],
- 'original'=>['$root.'/references/neville-oral-pathology@5e.txt','348dafa50b9f53648dc5f7cad97547459ba70a227680ab921c5a04b1b63b6c40'],
+ 'original'=>[$root.'/references/neville-oral-pathology@5e.txt','348dafa50b9f53648dc5f7cad97547459ba70a227680ab921c5a04b1b63b6c40'],
 ];
 $db=null;$locked=false;$receipt=null;$handle=false;$committed=false;
 try {
