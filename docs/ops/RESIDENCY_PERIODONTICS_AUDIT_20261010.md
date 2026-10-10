@@ -1,3 +1,30 @@
+> **Updated verified production checkpoint, 2026-10-10 UTC10:28.** The original 2026-10-10 research-only snapshot below is historical for 1398 source availability: exact Carranza12e became ready, and two validated question source rows were subsequently published. The following new section is the current result; do not reuse the earlier unsourced count or "12e pending" state as live.
+
+## Verified periodontics production completion checkpoint (1398 partial; subject remains open)
+
+Latest production query and original-book audits establish **160 periodontics residency questions (1398–1405), 142 existing source rows, 18 raw unsourced questions**, and no human-reviewed source overrides. This must not be called 160 exact page-verified records.
+
+### 1398 official Carranza 12e — two sources published
+
+- Approved original 12e private PDF: 1,766 pages, 89 original printed chapter headings verified against corrected page ranges. PDF object SHA-256 `1332e1f92ec1dea1ee99c7382993ce3f191407099d7650ebb97c79b989553263`; original-book private page-marked text SHA-256 `9b67b16cfaa080067bc9f03e550daa3fd71501855658922151fb2f90518f3e25`, canonical protected path `/srv/fanoos/shared/research/references/carranza-periodontology@12e.txt`. The private boundary audit SHA-256 is `2953344c8bc3dfdf42703ce798543c404e6ae52006991127b9dde1030f69160a`. Correction/manifest/tests: [PR #215](https://github.com/ArianGhsm/FanoosLearn/pull/215), merged SHA `652d496a21182568e549a157c5378a9f1d21db21`, green CI.
+- Exact edition + year/subject-specific source-only publication gates and regression tests: [PR #217](https://github.com/ArianGhsm/FanoosLearn/pull/217), merged SHA `4253bf4c41a19896aa27b5cea7336ff0f8397b35`, CI workflow run `38044496861` green. Official updater request `01a12556-d879-757c-9582-1d2679445673` **SUCCEEDED**; both live `/health` and checkout matched `4253bf4c41a19896aa27b5cea7336ff0f8397b35`.
+- Pre-release study, re-exported from live source-free DB, was byte/JSON identical to prior W03 study for all 20 periodontics questions. Primary original-book `apply_classification.py`: **2 accepted, 0 rejected, 18 undecided**. Independent audit `classification/reports/1398-periodontics-two-audit-20261010.json` confirms unchanged stems/choices/official answer and exact source page/quote/node.
+- Official full backup `/var/backups/fanoos/20261010T102642Z-77b8d9ac` passed `scripts/ops/verify-backup.php` (54 files). Exact source-only PHP preview then atomic apply inserted **only 2** source rows: Q141 Carranza12e ch15, original PDF p595, printed page 230; Q144 Carranza12e ch45, PDF p981, printed page 487. Origin `ai`, official scope passed, both original printed page corroborations passed. Production receipt `/srv/fanoos/shared/research/classification/reports/1398-periodontics-two-source-publish-20261010.json`, SHA-256 `7823991b0e746b7db49ce911106fdd8d73826ce267ac09ede43f7ca0c0650867`, reports `applied=true`, `source_rows=2`, `questions_changed=choices_changed=answers_changed=0`. DB post-readback showed precisely Q141 and Q144 were added and **18** other perio 1398 questions remain source-free.
+- Full 1398 frozen assessment preflight compared all **245** questions with version 4, zero stem/answer/choice changes; after 2 insertions, official `scripts/import/import-bank.php publish` added published version **5**, preserving previous version. Independent `audit_published_assessment.php --previous=4 --current=5` succeeded: `question_content_identical=true`, `questions=245`, `updated_explanations=2`. Publisher carried forward 2 unrelated voided answers as voided/left out; no key changes performed. Live site health remained OK.
+- Recoverable research archive `/var/backups/fanoos/research/20261010-periodontics-exact-reference-checkpoint-v2.tar.gz`, SHA-256 `7b36bbb657c1003d3b194d85b08d547eac4cc69c202e65af15c9909d9478b3f3`; on-host `.sha256` verification succeeded. This is **not** offsite storage and predates two production source inserts. Durable private handoff `/srv/fanoos/shared/research/ops/residency-periodontics-20261010.md` has post-apply details and recovery paths.
+
+### Outstanding blockers — do not claim this subject fully closed
+
+| Year(s) | Count requiring further exact-page adjudication | Reason |
+|---|---:|---|
+| 1398 | 18 without source | Original 12e is now ready but questions require item-by-item exact-answer evidence; some recorded official answers are clinically inconsistent or malformed. Do not change human/official answers as part of classification. |
+| 1399–1403 | 100 source rows, **all without page** | Historical nearest 14e evidence used despite exact official Carranza13e. Full original 13e private text now available; requires exact-page original quote and review, and a new guarded metadata-only *correction* operator for already sourced rows (existing source-only publisher only inserts). Current 1399 Q119 ch48 conflicts with original ch47 PDF p1073, printed p507. Five currently assigned chapters fall outside official year scope: 1400 Q130 ch34, 1402 Q138 ch14/Q139 ch11/Q148 ch65, 1403 Q115 ch87. |
+| 1404–1405 | 40 source rows, all suspect page values | 22 pages equal chapter numbers, 18 pages are placeholders 1/2/3. Approved private Carranza14e PDF is **only 105 supplementary pages**, while full original 14e page map expects over 1,800 pages. The full exact 14e is not present in connected Drive or approved server library; neither chapter nor printed page can be final-verified. Never substitute 13e for 14e. |
+
+Keep source rows and question keys untouched unless exact-year evidence, validation, fresh verified backup, atomic audited metadata-only change, frozen assessment diff, and post-readback all succeed. **A sourced-row count is not an exact-reference completion count.**
+
+---
+
 # Dentistry residency periodontics — exact-reference audit checkpoint (2026-10-10)
 
 **Status: private research only. No live question, choice, answer, source, historical assessment, or attempt record was changed.** This checkpoint is limited to the `periodontics` subject; other parallel workstreams own all other subjects.
