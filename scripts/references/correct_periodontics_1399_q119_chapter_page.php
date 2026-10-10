@@ -177,7 +177,14 @@ SQL);
         'position' => (int) $c['position'],'text' => (string) $c['text'],
         'image' => $c['image'] === null ? null : (string) $c['image'],
     ], $choices->fetchAll(PDO::FETCH_ASSOC));
-    if ($liveChoices !== $saved['choices']) {
+    // JSON_OBJECT serialized the snapshot keys in provider-dependent order.
+    // Normalize field order AND scalar types while requiring exact values and
+    // original choice order; never normalize or change actual option content.
+    $expectedChoices = array_map(static fn(array $c): array => [
+        'position' => (int) $c['position'], 'text' => (string) $c['text'],
+        'image' => $c['image'] === null ? null : (string) $c['image'],
+    ], $saved['choices']);
+    if ($liveChoices !== $expectedChoices) {
         throw new RuntimeException('Protected options or images changed.');
     }
     $answer = $db->prepare('SELECT choice_position,status,also_correct_positions FROM bank_official_answers WHERE question_id=:qid ORDER BY recorded_at DESC,id DESC LIMIT 1');
