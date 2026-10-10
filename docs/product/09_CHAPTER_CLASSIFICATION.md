@@ -117,6 +117,16 @@ exact command and verifiable expected counts. Run the original
 `apply_classification.py` evidence validator before auditing. A study-only
 sitting is deliberately **not** an importable bank sitting.
 
+
+### English subject: official-key-only exception (2026-10-10 owner decision)
+
+For residency `english` there are **no official reference-validity rows**. A complete, valid official `final` or `amended` answer key is the final classification requirement: do **not** search an unrelated textbook, assign a chapter/page/evidence, generate an artificial `bank_question_sources` row, or classify those questions as "blocked for lack of a PDF." An English answer with missing, disputed, voided, or otherwise invalid key is a separate answer-review issue and must not be silently approved. Preserve stems, reading passages, all options, images, keys including corrections/multiple answers, human decisions, historical frozen assessments and attempts.
+
+Report the counts separately, leaving the raw source-row count honest:
+`raw_no_source`, `english_no_source_with_valid_key_exempt`, and
+`non_english_no_source_requiring_source_review`. At the read-only snapshot
+2026-10-10, these are **393**, **159**, **234**, respectively, of 1,995 residency questions. In the 159 English records, 158 current keys are `final` and one is `amended`; zero are missing/voided/null choice. No bank source insert or assessment republish is implied or permitted by this exemption. Authority: `docs/PROJECT_PRINCIPLES.md`, section 3A.
+
 ## 3. The procedure
 
 One batch is one sitting and one subject (10–30 questions).
