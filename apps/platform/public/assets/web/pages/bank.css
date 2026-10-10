@@ -431,6 +431,44 @@ a.b-card:focus-visible {
     font-size: var(--text-xs);
 }
 
+/* The exam types: a segmented switch above the years. */
+.r-types {
+    display: flex;
+    gap: var(--space-1);
+    margin-bottom: var(--space-2);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.r-types[hidden] {
+    display: none;
+}
+
+.r-type {
+    flex: none;
+    min-height: 38px;
+    padding: 0 var(--space-4);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.r-type:hover {
+    color: var(--text-primary);
+}
+
+.r-type[aria-pressed="true"] {
+    border-color: var(--text-primary);
+    background: var(--text-primary);
+    color: var(--surface);
+}
+
 /* The strip of years: scrolls sideways on a phone, stays under the header. */
 .r-years {
     position: sticky;
@@ -487,11 +525,6 @@ a.b-card:focus-visible {
     box-shadow: var(--shadow-accent);
 }
 
-.r-year__type {
-    font-size: var(--text-xs);
-    font-weight: var(--weight-body);
-    opacity: 0.85;
-}
 
 .r-tools {
     display: flex;
@@ -638,6 +671,11 @@ a.b-card:focus-visible {
 .r-book--tag { --spine: var(--hue-tag); --spine-soft: var(--hue-tag-soft); }
 .r-book--source { --spine: var(--hue-source); --spine-soft: var(--hue-source-soft); }
 .r-book--difficulty { --spine: var(--hue-difficulty); --spine-soft: var(--hue-difficulty-soft); }
+.r-book--articles { --spine: var(--border-strong); --spine-soft: var(--surface-strong); }
+
+.r-book--articles .r-book__spine {
+    background: repeating-linear-gradient(180deg, var(--spine) 0 6px, transparent 6px 10px);
+}
 
 .r-book__spine {
     border-radius: var(--radius-pill);

@@ -1,0 +1,641 @@
+{
+  "format": "fanoos.research.reference-rows/1",
+  "exam_types": [
+    "board",
+    "promotion"
+  ],
+  "notes": "The official 1405 reference lists of the dental specialty board (دانشنامه/گواهینامه تخصصی) and promotion (ارتقا) exams, one list per specialty, as published by the medical education assessment center (sanjeshp.ir, Content.aspx?click=26, section «دانشنامه تخصصی دندانپزشکی»). The base file is the zip «منابع آزمون های دانشنامه/گواهینامه و ارتقای رشته های تخصصی دندانپزشکی سال 1405» (ten PDFs, one per specialty); three later rows of the same section supersede parts of it: «اصلاحیه منابع آزمون دانشنامه/گواهینامه تخصصی دندانپزشکی ترمیمی سال 1405» (announced آذر 1404; replaces the operative list: Goldstein dropped, chapter lists changed), «منابع آزمون ارتقاء و دانشنامه/ گواهینامه تخصصی پروتزهای دندانی ۱۴۰۵ و ۱۴۰۶» (replaces the prosthodontics list for 1405 and also covers 1406; dental-specialty-references-1406.json), and «اطلاعیه اصلاح منابع آزمون ارتقای دستیاری رشته ارتودانتیکس سال 1405» (for the promotion exam only, Proffit's Contemporary Orthodontics moves from the 2019 edition to the 2026 one). Each list applies to both exam types unless a row names its own exam_types. Books are one row each; the journals and named articles a list adds are summarised in one row per specialty («مقاله‌ها و ژورنال‌های اعلام‌شده») whose scope says what they are; the full article lists stay in the PDFs. Scopes are copied as printed, digits in Latin form.",
+  "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
+  "source_document": "منابع آزمون های دانشنامه/گواهینامه و ارتقای رشته های تخصصی دندانپزشکی سال 1405 (zip)",
+  "rows": [
+    {
+      "year": "1405",
+      "subject": "اندودانتیکس",
+      "title": "Ingle's Endodontics",
+      "authors": "Rotstein I; Ingle JI",
+      "pub_year": "2019",
+      "edition": "7th ed.",
+      "scope": "تمام فصول کتاب"
+    },
+    {
+      "year": "1405",
+      "subject": "اندودانتیکس",
+      "title": "Cohen's Pathways of the Pulp",
+      "authors": "Berman LH; Hargreaves KM",
+      "pub_year": "2020",
+      "edition": "12th ed.",
+      "scope": "تمام فصول کتاب"
+    },
+    {
+      "year": "1405",
+      "subject": "اندودانتیکس",
+      "title": "Microsurgery in Endodontics",
+      "authors": "Kim S; Kratchman S; Karabucak B; Kohli M; Setzer F",
+      "pub_year": "2017",
+      "edition": "",
+      "scope": "تمام فصول کتاب"
+    },
+    {
+      "year": "1405",
+      "subject": "اندودانتیکس",
+      "title": "Endodontic Advances and Evidence-Based Clinical Guidelines",
+      "authors": "Ahmed HM; Dummer PM",
+      "pub_year": "2022",
+      "edition": "",
+      "scope": "فصل‌های 6 و 14 و 18"
+    },
+    {
+      "year": "1405",
+      "subject": "اندودانتیکس",
+      "title": "Textbook and Color Atlas of Traumatic Injuries to the Teeth",
+      "authors": "Andreasen JO; Andreasen FM; Andersson L",
+      "pub_year": "2019",
+      "edition": "5th ed.",
+      "scope": "فصل‌های 21 و 22 و 23 و 24 و 25 و 27 و 28 و 39"
+    },
+    {
+      "year": "1405",
+      "subject": "اندودانتیکس",
+      "title": "مقاله‌ها و ژورنال‌های اعلام‌شده",
+      "authors": "",
+      "pub_year": "1405",
+      "edition": "",
+      "scope": "خلاصه‌ی همه‌ی مقاله‌های سال 2025 دو مجله‌ی Journal of Endodontics و Iranian Endodontic Journal؛ متن کامل 12 مقاله‌ی منتخب؛ و سه بیانیه و راهنما: AAE Position Statement on Vital Pulp Therapy (2021)، ESE position statement on root resorption (2023)، AAE guidance on the use of systemic antibiotics in endodontics (2017). فهرست کامل در ابلاغیه."
+    },
+    {
+      "year": "1405",
+      "subject": "پریودانتیکس",
+      "title": "Newman and Carranza's Clinical Periodontology",
+      "authors": "Newman MG; Takei H; Klokkevold PR; Carranza FA",
+      "pub_year": "2023",
+      "edition": "",
+      "scope": "تمام فصول کتاب"
+    },
+    {
+      "year": "1405",
+      "subject": "پریودانتیکس",
+      "title": "Clinical Periodontology and Implant Dentistry (Lindhe)",
+      "authors": "Lang NP; Lindhe J",
+      "pub_year": "2021",
+      "edition": "",
+      "scope": "تمام فصول کتاب (دو جلد)"
+    },
+    {
+      "year": "1405",
+      "subject": "پریودانتیکس",
+      "title": "Misch's Contemporary Implant Dentistry",
+      "authors": "Misch CE; Resnik RR",
+      "pub_year": "2020",
+      "edition": "4th Edition",
+      "scope": "فصول 3، 5، 7–9، 15–19، 22–32، 34، 37، 41–42"
+    },
+    {
+      "year": "1405",
+      "subject": "پریودانتیکس",
+      "title": "غشاهای سدکننده در جراحی‌های رژنراتیو پریودنتال و ایمپلنت",
+      "authors": "دکتر مهرداد لطف‌آذر",
+      "pub_year": "",
+      "edition": "ویرایش جدید، چاپ دوم",
+      "scope": "تمام کتاب"
+    },
+    {
+      "year": "1405",
+      "subject": "پریودانتیکس",
+      "title": "مقاله‌ها و ژورنال‌های اعلام‌شده",
+      "authors": "",
+      "pub_year": "1405",
+      "edition": "",
+      "scope": "متن کامل 7 مقاله: راهنماهای EFP S3 (درمان پریودنتیت مرحله‌ی I–III و IV و بیماری‌های اطراف ایمپلنت)، کاربرد طبقه‌بندی جدید بیماری‌های پریودنتال (Tonetti و Sanz 2019) و سه مقاله‌ی Periodontology 2000 و Journal of Periodontology. فهرست کامل در ابلاغیه."
+    },
+    {
+      "year": "1405",
+      "subject": "پروتزهای دندانی",
+      "title": "Functional Occlusion from TMJ to Smile Design",
+      "authors": "Dawson PE",
+      "pub_year": "2007",
+      "edition": "",
+      "scope": "همه‌ی کتاب به جز فصول 23، 24، 25، 26، 27، 28، 32، 45، 46، 47",
+      "source_document": "منابع آزمون ارتقاء و دانشنامه/ گواهینامه تخصصی پروتزهای دندانی ۱۴۰۵ و ۱۴۰۶.pdf"
+    },
+    {
+      "year": "1405",
+      "subject": "پروتزهای دندانی",
+      "title": "Contemporary Fixed Prosthodontics",
+      "authors": "Rosenstiel SF; Land MF",
+      "pub_year": "2023",
+      "edition": "",
+      "scope": "همه‌ی فصول",
+      "source_document": "منابع آزمون ارتقاء و دانشنامه/ گواهینامه تخصصی پروتزهای دندانی ۱۴۰۵ و ۱۴۰۶.pdf"
+    },
+    {
+      "year": "1405",
+      "subject": "پروتزهای دندانی",
+      "title": "Management of Temporomandibular Disorders and Occlusion",
+      "authors": "Okeson JP",
+      "pub_year": "2020",
+      "edition": "8th Ed.",
+      "scope": "فصول 8، 9، 10، 11، 12، 13، 15",
+      "source_document": "منابع آزمون ارتقاء و دانشنامه/ گواهینامه تخصصی پروتزهای دندانی ۱۴۰۵ و ۱۴۰۶.pdf"
+    },
+    {
+      "year": "1405",
+      "subject": "پروتزهای دندانی",
+      "title": "Zarb's Prosthodontic Treatment for Edentulous Patients",
+      "authors": "Zarb G",
+      "pub_year": "2017",
+      "edition": "14th Ed.",
+      "scope": "همه‌ی فصول",
+      "source_document": "منابع آزمون ارتقاء و دانشنامه/ گواهینامه تخصصی پروتزهای دندانی ۱۴۰۵ و ۱۴۰۶.pdf"
+    },
+    {
+      "year": "1405",
+      "subject": "پروتزهای دندانی",
+      "title": "Stewart's Clinical Removable Partial Prosthodontics",
+      "authors": "Phoenix RD; Cagna DR; DeFreest CF",
+      "pub_year": "2008",
+      "edition": "4th Ed.",
+      "scope": "همه‌ی فصول",
+      "source_document": "منابع آزمون ارتقاء و دانشنامه/ گواهینامه تخصصی پروتزهای دندانی ۱۴۰۵ و ۱۴۰۶.pdf"
+    },
+    {
+      "year": "1405",
+      "subject": "پروتزهای دندانی",
+      "title": "Clinical Maxillofacial Prosthetics",
+      "authors": "Taylor TD",
+      "pub_year": "2000",
+      "edition": "",
+      "scope": "همه‌ی فصول",
+      "source_document": "منابع آزمون ارتقاء و دانشنامه/ گواهینامه تخصصی پروتزهای دندانی ۱۴۰۵ و ۱۴۰۶.pdf"
+    },
+    {
+      "year": "1405",
+      "subject": "پروتزهای دندانی",
+      "title": "Misch's Contemporary Implant Dentistry",
+      "authors": "Misch CE",
+      "pub_year": "2021",
+      "edition": "4th edition",
+      "scope": "فصول 1 تا 25 به جز 4، 5، 9، 10، 13 و 14؛ و فصول 33 و 41 و 42",
+      "source_document": "منابع آزمون ارتقاء و دانشنامه/ گواهینامه تخصصی پروتزهای دندانی ۱۴۰۵ و ۱۴۰۶.pdf"
+    },
+    {
+      "year": "1405",
+      "subject": "پروتزهای دندانی",
+      "title": "Dental Implant Prosthetics",
+      "authors": "Misch CE",
+      "pub_year": "2015",
+      "edition": "2nd edition",
+      "scope": "فصول 18، 26، 28 و 29",
+      "source_document": "منابع آزمون ارتقاء و دانشنامه/ گواهینامه تخصصی پروتزهای دندانی ۱۴۰۵ و ۱۴۰۶.pdf"
+    },
+    {
+      "year": "1405",
+      "subject": "پروتزهای دندانی",
+      "title": "مقاله‌ها و ژورنال‌های اعلام‌شده",
+      "authors": "",
+      "pub_year": "1405",
+      "edition": "",
+      "scope": "مجله‌های سال 2025: Journal of Prosthetic Dentistry، Dental Research Journal، Frontiers in Dentistry، Journal of Dentistry (Shiraz University of Medical Sciences) و JODDD.",
+      "source_document": "منابع آزمون ارتقاء و دانشنامه/ گواهینامه تخصصی پروتزهای دندانی ۱۴۰۵ و ۱۴۰۶.pdf"
+    },
+    {
+      "year": "1405",
+      "subject": "دندانپزشکی ترمیمی",
+      "title": "Sturdevant's Art and Science of Operative Dentistry",
+      "authors": "Ritter AV; Boushell LW; Walter R",
+      "pub_year": "2026",
+      "edition": "8th Ed.",
+      "scope": "کلیه فصول غیر از فصل 16"
+    },
+    {
+      "year": "1405",
+      "subject": "دندانپزشکی ترمیمی",
+      "title": "Craig's Restorative Dental Materials",
+      "authors": "Sakaguchi RL; Ferracane J; Powers JM",
+      "pub_year": "2019",
+      "edition": "14th Ed.",
+      "scope": "کلیه فصول غیر از فصل‌های 1 و 2 و 3 و 9 و 10 و 11 و 12 و 14 و 15"
+    },
+    {
+      "year": "1405",
+      "subject": "دندانپزشکی ترمیمی",
+      "title": "Summit's Fundamentals of Operative Dentistry: A Contemporary Approach",
+      "authors": "Hilton TJ; Ferracane JL; Broome JC",
+      "pub_year": "2013",
+      "edition": "4th Ed.",
+      "scope": "کلیه فصول غیر از فصل‌های 1 و 2 و 5 و 6 و 7 و 18 و 19 و 20"
+    },
+    {
+      "year": "1405",
+      "subject": "دندانپزشکی ترمیمی",
+      "title": "Dental Implant Prosthetics",
+      "authors": "Misch CE",
+      "pub_year": "2015",
+      "edition": "2nd Ed.",
+      "scope": "فصول 2 و 3 و 8 و 9 و 10 و 13 و 17 و 20 و 21"
+    },
+    {
+      "year": "1405",
+      "subject": "دندانپزشکی ترمیمی",
+      "title": "Functional Occlusion from TMJ to Smile Design",
+      "authors": "Dawson PE",
+      "pub_year": "2007",
+      "edition": "",
+      "scope": "فصول 3 و 15 و 16 و 17 و 18 و 19 و 20 و 21 و 28 و 35 و 36 و 37 و 38 و 39 و 40"
+    },
+    {
+      "year": "1405",
+      "subject": "دندانپزشکی ترمیمی",
+      "title": "Phillips' Science of Dental Materials",
+      "authors": "Shen C; Rawls HR; Esquivel-Upshaw JF",
+      "pub_year": "2022",
+      "edition": "13th Ed.",
+      "scope": "فصول 5 و 6 و 7 و 8 و 9 (تا صفحه 183) و 10 و 16 و 17"
+    },
+    {
+      "year": "1405",
+      "subject": "دندانپزشکی ترمیمی",
+      "title": "Contemporary Fixed Prosthodontics",
+      "authors": "Rosenstiel SF; Land MF; Walter R",
+      "pub_year": "2023",
+      "edition": "6th edition",
+      "scope": "فصول 1 و 2 و 3 و 4 و 7 و 8 و 9 و 10 و 12 و 14 و 15 و 16 و 25 و 26"
+    },
+    {
+      "year": "1405",
+      "subject": "دندانپزشکی ترمیمی",
+      "title": "مقاله‌ها و ژورنال‌های اعلام‌شده",
+      "authors": "",
+      "pub_year": "1405",
+      "edition": "",
+      "scope": "40 مقاله‌ی منتخب سال‌های 2024 و 2025 از مجله‌های Operative Dentistry، Dental Materials Journal و Dental Materials. فهرست کامل در اصلاحیه‌ی ابلاغیه.",
+      "source_document": "اصلاحیه منابع آزمون دانشنامه/گواهینامه تخصصی دندانپزشکی ترمیمی سال 1405 (اعلام‌شده در آذر 1404).pdf"
+    },
+    {
+      "year": "1405",
+      "subject": "جراحی دهان و فک و صورت",
+      "title": "Oral and Maxillofacial Surgery (Fonseca)",
+      "authors": "Fonseca RJ",
+      "pub_year": "2017",
+      "edition": "3rd ed.",
+      "scope": "سه جلد به استثنای فصول جراحی دنتوآلوئولار و ایمپلنت (جلد اول، فصول 20 تا 23 و 26 تا 43)، تروما (جلد دوم، فصول 1 تا 15) و جراحی ارتوگناتیک و زیبایی (جلد سوم، فصول 1 تا 26)"
+    },
+    {
+      "year": "1405",
+      "subject": "جراحی دهان و فک و صورت",
+      "title": "Peterson's Principles of Oral and Maxillofacial Surgery",
+      "authors": "Miloro M; Ghali GE",
+      "pub_year": "2022",
+      "edition": "4th ed.",
+      "scope": "مباحث دنتوآلوئولر، ایمپلنت، عفونت، بازسازی و جراحی ارتوگناتیک و زیبایی (از ابتدای فصل 5 تا انتهای فصل 15 و فصول 40، 41، 42، 43، 44، 45 و 58 تا 77)"
+    },
+    {
+      "year": "1405",
+      "subject": "جراحی دهان و فک و صورت",
+      "title": "Schwartz's Principles of Surgery",
+      "authors": "Brunicardi FC",
+      "pub_year": "2019",
+      "edition": "11th ed.",
+      "scope": "مباحث جراحی عمومی: فصول 2 و 3 و 4 و 5"
+    },
+    {
+      "year": "1405",
+      "subject": "جراحی دهان و فک و صورت",
+      "title": "Oral and Maxillofacial Trauma",
+      "authors": "Fonseca RJ; Walker RV",
+      "pub_year": "2013",
+      "edition": "4th ed.",
+      "scope": "کلیه فصول. اگر ویرایش تازه‌ی این کتاب تا شش ماه پیش از آزمون بورد چاپ شود، سؤال از آخرین چاپ طرح می‌شود."
+    },
+    {
+      "year": "1405",
+      "subject": "جراحی دهان و فک و صورت",
+      "title": "مقاله‌ها و ژورنال‌های اعلام‌شده",
+      "authors": "",
+      "pub_year": "1405",
+      "edition": "",
+      "scope": "مقاله‌های منتخب سال 2025 از International Journal of Oral and Maxillofacial Surgery و Journal of Oral and Maxillofacial Surgery؛ فهرست مقاله‌ها بعداً اعلام می‌شود."
+    },
+    {
+      "year": "1405",
+      "subject": "بیماری‌های دهان و فک و صورت",
+      "title": "Burket's Oral Medicine",
+      "authors": "Glick M",
+      "pub_year": "2021",
+      "edition": "13th Ed.",
+      "scope": "کلیه فصول کتاب"
+    },
+    {
+      "year": "1405",
+      "subject": "بیماری‌های دهان و فک و صورت",
+      "title": "Dental Management in the Medically Compromised Patient",
+      "authors": "Falace DA; Little J",
+      "pub_year": "2024",
+      "edition": "10th Ed.",
+      "scope": "کلیه فصول کتاب"
+    },
+    {
+      "year": "1405",
+      "subject": "بیماری‌های دهان و فک و صورت",
+      "title": "Oral Radiology, Principles and Interpretation",
+      "authors": "White SC; Pharoah MJ",
+      "pub_year": "2019",
+      "edition": "8th Ed.",
+      "scope": "فصول 18 و 22 و 23 و 24 و 25 و 26"
+    },
+    {
+      "year": "1405",
+      "subject": "بیماری‌های دهان و فک و صورت",
+      "title": "Oral and Maxillofacial Pathology",
+      "authors": "Neville B; Damm DD",
+      "pub_year": "2024",
+      "edition": "5th Ed.",
+      "scope": "فصول 2 و 12 و 14 و 16 کتاب (به استثنای یافته‌های بافتی و آسیب‌شناسی)"
+    },
+    {
+      "year": "1405",
+      "subject": "آسیب‌شناسی دهان و فک و صورت",
+      "title": "Oral and Maxillofacial Pathology",
+      "authors": "Neville BW; et al",
+      "pub_year": "2024",
+      "edition": "5th",
+      "scope": "تمام فصول به جز فصول 2، 4، 18 و 19"
+    },
+    {
+      "year": "1405",
+      "subject": "آسیب‌شناسی دهان و فک و صورت",
+      "title": "Oral Pathology: Clinical Pathologic Correlations",
+      "authors": "Regezi JA; et al",
+      "pub_year": "2017",
+      "edition": "7th",
+      "scope": "تمام فصول"
+    },
+    {
+      "year": "1405",
+      "subject": "آسیب‌شناسی دهان و فک و صورت",
+      "title": "Ten Cate's Oral Histology",
+      "authors": "Nanci A",
+      "pub_year": "2024",
+      "edition": "10th",
+      "scope": "تمام فصول به جز فصول 1، 2، 4، 10، 13، 14 و 15"
+    },
+    {
+      "year": "1405",
+      "subject": "آسیب‌شناسی دهان و فک و صورت",
+      "title": "Robbins, Cotran and Kumar Pathologic Basis of Disease",
+      "authors": "Kumar V; Abbas AK; Aster JC; et al",
+      "pub_year": "2024",
+      "edition": "11th",
+      "scope": "فصول 1، 2، 3 و 7"
+    },
+    {
+      "year": "1405",
+      "subject": "آسیب‌شناسی دهان و فک و صورت",
+      "title": "Oral Pathology (Woo)",
+      "authors": "Woo SB",
+      "pub_year": "2024",
+      "edition": "3rd",
+      "scope": "فصول 5، 6، 12، 13 و 18"
+    },
+    {
+      "year": "1405",
+      "subject": "آسیب‌شناسی دهان و فک و صورت",
+      "title": "مقاله‌ها و ژورنال‌های اعلام‌شده",
+      "authors": "",
+      "pub_year": "1405",
+      "edition": "",
+      "scope": "Oral Oncology Journal: فقط خلاصه‌ی مقاله‌ها، از 1 ژوئیه‌ی 2024 تا 30 ژوئن 2025."
+    },
+    {
+      "year": "1405",
+      "subject": "رادیولوژی دهان و فک و صورت",
+      "title": "Head and Neck Imaging",
+      "authors": "Som PM",
+      "pub_year": "2011",
+      "edition": "5th Ed.",
+      "scope": "فصول 2، 3، 4، 7، 26 و 40 (مبحث Tumors and Tumor-like Conditions تا صفحه 2524)"
+    },
+    {
+      "year": "1405",
+      "subject": "رادیولوژی دهان و فک و صورت",
+      "title": "Oral Radiology, Principles and Interpretation",
+      "authors": "White SC; Pharoah MJ",
+      "pub_year": "2026",
+      "edition": "9th Ed.",
+      "scope": "کلیه فصول کتاب"
+    },
+    {
+      "year": "1405",
+      "subject": "رادیولوژی دهان و فک و صورت",
+      "title": "Differential Diagnosis of Oral and Maxillofacial Lesions",
+      "authors": "Wood NK; Goaz PW",
+      "pub_year": "1997",
+      "edition": "5th Ed.",
+      "scope": "فصول 15 تا 30"
+    },
+    {
+      "year": "1405",
+      "subject": "رادیولوژی دهان و فک و صورت",
+      "title": "Radiologic Science for Technologists",
+      "authors": "Bushong SC",
+      "pub_year": "2021",
+      "edition": "12th Ed.",
+      "scope": "فصول 7، 8، 9، 10، 13، 14، 15، 16، 21، 27، 30، 31، 32، 33، 34، 35، 36، 39، 40"
+    },
+    {
+      "year": "1405",
+      "subject": "رادیولوژی دهان و فک و صورت",
+      "title": "Principles of Dental Imaging",
+      "authors": "Langland OE; Langlais RP",
+      "pub_year": "2002",
+      "edition": "2nd Ed.",
+      "scope": "فصول 9 و 10"
+    },
+    {
+      "year": "1405",
+      "subject": "رادیولوژی دهان و فک و صورت",
+      "title": "Diagnostic Imaging: Oral and Maxillofacial",
+      "authors": "Koenig LJ",
+      "pub_year": "2017",
+      "edition": "",
+      "scope": "سکشن‌های 1 تا 4"
+    },
+    {
+      "year": "1405",
+      "subject": "رادیولوژی دهان و فک و صورت",
+      "title": "Ultrasonography of the Head and Neck: An Imaging Atlas",
+      "authors": "Welkoborsky HJ; Jecker P",
+      "pub_year": "2019",
+      "edition": "",
+      "scope": "فصول 3 و 11"
+    },
+    {
+      "year": "1405",
+      "subject": "رادیولوژی دهان و فک و صورت",
+      "title": "مقاله‌ها و ژورنال‌های اعلام‌شده",
+      "authors": "",
+      "pub_year": "1405",
+      "edition": "",
+      "scope": "مقاله‌های مروری و مرور نظام‌مند سال‌های 2025 و 2026 دو مجله‌ی DMFR و Triple O (Oral Surgery, Oral Medicine, Oral Pathology and Oral Radiology)."
+    },
+    {
+      "year": "1405",
+      "subject": "ارتودانتیکس",
+      "exam_types": [
+        "board"
+      ],
+      "title": "Contemporary Orthodontics",
+      "authors": "Proffit WR",
+      "pub_year": "2019",
+      "edition": "6th Edition",
+      "scope": "All chapters, except for chapters 1-5"
+    },
+    {
+      "year": "1405",
+      "subject": "ارتودانتیکس",
+      "exam_types": [
+        "promotion"
+      ],
+      "title": "Contemporary Orthodontics",
+      "authors": "Proffit WR",
+      "pub_year": "2026",
+      "edition": "",
+      "scope": "All chapters, except for chapters 1-5",
+      "source_document": "اطلاعیه اصلاح منابع آزمون ارتقای دستیاری رشته ارتودانتیکس سال 1405.pdf"
+    },
+    {
+      "year": "1405",
+      "subject": "ارتودانتیکس",
+      "title": "Contemporary Treatment of Dentofacial Deformity",
+      "authors": "Proffit WR",
+      "pub_year": "2003",
+      "edition": "1st Edition",
+      "scope": "Chapters: 4, 6, 7, 11, 12, 13, 14, 16, 17, 18"
+    },
+    {
+      "year": "1405",
+      "subject": "ارتودانتیکس",
+      "title": "Orthodontics: Current Principles and Techniques",
+      "authors": "Graber LW",
+      "pub_year": "2023",
+      "edition": "7th edition",
+      "scope": "All chapters, except for chapters 1, 11, 17-part A, 18, 21, 22, 27, and 40"
+    },
+    {
+      "year": "1405",
+      "subject": "ارتودانتیکس",
+      "title": "The Biomechanical Foundation of Clinical Orthodontics",
+      "authors": "Burstone CJ",
+      "pub_year": "2022",
+      "edition": "1st Edition",
+      "scope": "Chapters: 4, 5, 6, 7, 9, 12, 13, 14, 15"
+    },
+    {
+      "year": "1405",
+      "subject": "ارتودانتیکس",
+      "title": "Orthognathic Surgery: Principles, Planning, and Practice",
+      "authors": "Naini FB",
+      "pub_year": "2017",
+      "edition": "1st Edition",
+      "scope": "Chapters: 5, 6, 16, 18, 24, 25, 26, 28, 31, 34, 36, 38"
+    },
+    {
+      "year": "1405",
+      "subject": "ارتودانتیکس",
+      "title": "Esthetics and Biomechanics in Orthodontics",
+      "authors": "Nanda R",
+      "pub_year": "2015",
+      "edition": "2nd Edition",
+      "scope": "Chapter: 25"
+    },
+    {
+      "year": "1405",
+      "subject": "ارتودانتیکس",
+      "title": "Temporary Anchorage Devices in Orthodontics",
+      "authors": "Nanda R",
+      "pub_year": "2019",
+      "edition": "2nd Edition",
+      "scope": "Chapters: 2, 3, 4, 5, 6, 12, 13, 14, 15, 17"
+    },
+    {
+      "year": "1405",
+      "subject": "ارتودانتیکس",
+      "title": "Principles and Biomechanics of Aligner Treatment",
+      "authors": "Nanda R",
+      "pub_year": "",
+      "edition": "1st Edition",
+      "scope": "All chapters except for chapters 1, 15, 16, 17, 18, 19"
+    },
+    {
+      "year": "1405",
+      "subject": "ارتودانتیکس",
+      "title": "Orthodontic Treatment of Impacted Teeth",
+      "authors": "Becker A",
+      "pub_year": "2022",
+      "edition": "4th Edition",
+      "scope": "Chapters 6, 12"
+    },
+    {
+      "year": "1405",
+      "subject": "ارتودانتیکس",
+      "title": "مقاله‌ها و ژورنال‌های اعلام‌شده",
+      "authors": "",
+      "pub_year": "1405",
+      "edition": "",
+      "scope": "24 مقاله‌ی منتخب (از جمله اصول اخلاق حرفه‌ای AAO 2023) و 16 مقاله‌ی ارزیابی پژوهش (Research Appraisal) از AJODO، JO و BMJ. فهرست کامل در ابلاغیه."
+    },
+    {
+      "year": "1405",
+      "subject": "دندانپزشکی کودکان",
+      "title": "McDonald and Avery's Dentistry for the Child and Adolescent",
+      "authors": "Dean JA",
+      "pub_year": "2021",
+      "edition": "11th Ed.",
+      "scope": "کلیه فصول کتاب"
+    },
+    {
+      "year": "1405",
+      "subject": "دندانپزشکی کودکان",
+      "title": "Pediatric Dentistry: Infancy through Adolescence",
+      "authors": "Nowak A",
+      "pub_year": "2019",
+      "edition": "6th Ed.",
+      "scope": "کلیه فصول کتاب"
+    },
+    {
+      "year": "1405",
+      "subject": "دندانپزشکی کودکان",
+      "title": "Textbook and Color Atlas of Traumatic Injuries to the Teeth",
+      "authors": "Andreasen J",
+      "pub_year": "2019",
+      "edition": "5th Ed.",
+      "scope": "فقط فصول 11، 12، 13، 14، 15، 16، 17، 18، 19، 20، 21، 22، 23، 26، 39"
+    },
+    {
+      "year": "1405",
+      "subject": "دندانپزشکی کودکان",
+      "title": "Innovations in Preventive Dentistry",
+      "authors": "Splieth C",
+      "pub_year": "2021",
+      "edition": "",
+      "scope": "فقط فصول 1، 3، 4، 5، 6، 7، 8، 9، 10، 11، 12، 13"
+    },
+    {
+      "year": "1405",
+      "subject": "دندانپزشکی کودکان",
+      "title": "Contemporary Orthodontics",
+      "authors": "Proffit WR",
+      "pub_year": "2019",
+      "edition": "6th Ed.",
+      "scope": "فقط فصول 11، 12، 13، 14 کتاب"
+    },
+    {
+      "year": "1405",
+      "subject": "دندانپزشکی کودکان",
+      "title": "مقاله‌ها و ژورنال‌های اعلام‌شده",
+      "authors": "",
+      "pub_year": "1405",
+      "edition": "",
+      "scope": "متن کامل 31 مقاله‌ی منتخب سال‌های 2024 و 2025 (Int J Paediatr Dent، Eur Arch Paediatr Dent، J Clin Pediatr Dent، Pediatr Dent و دیگران). فهرست کامل در ابلاغیه."
+    }
+  ]
+}
