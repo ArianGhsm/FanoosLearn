@@ -268,7 +268,6 @@
     flex: none;
     font-size: var(--text-xs);
     color: var(--text-tertiary);
-    font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 900px) {
@@ -288,4 +287,32 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2);
+}
+
+/* The bank's past papers above the catalogue (cards from bank.css). */
+.x-papers {
+    margin-bottom: var(--space-6);
+}
+
+.x-papers__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+.x-papers__head h2,
+.x-papers__more {
+    margin: 0;
+    font-size: var(--text-xl);
+}
+
+.x-papers__head .g-goal {
+    margin-top: 0;
+}
+
+.x-papers__more {
+    margin-bottom: var(--space-3);
 }

@@ -16,6 +16,24 @@ final class BackupRetention
     private const MAX_COMPLETED_BACKUPS = 5;
 
     /**
+     * Remove only the staging directory created by the backup operation that
+     * just failed. Completed backups and unrelated partials are never touched.
+     */
+    public static function discardIncompleteStaging(string $path, string $backupRoot): void
+    {
+        $resolvedRoot = realpath($backupRoot);
+        $resolvedPath = realpath($path);
+        if ($resolvedRoot === false || !is_dir($resolvedRoot) || is_link($backupRoot)
+            || $resolvedPath === false || !is_dir($resolvedPath) || is_link($path)
+            || dirname($resolvedPath) !== $resolvedRoot
+            || preg_match('/^\d{8}T\d{6}Z-[a-f0-9]{8}\.partial$/', basename($resolvedPath)) !== 1) {
+            throw new RuntimeException('Incomplete backup staging path is invalid.');
+        }
+        self::assertTreeWithoutSymlinks($resolvedPath, $resolvedRoot);
+        self::removeTreeWithoutSymlinks($resolvedPath, $resolvedRoot);
+    }
+
+    /**
      * Prune completed full backups and verified private research archives as
      * one FANOOS project retention set.
      *

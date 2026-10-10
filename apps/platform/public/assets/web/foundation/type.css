@@ -90,17 +90,13 @@
 }
 
 /*
- * Anything numeric that changes in place -- a timer, a counter, a score, a
- * question number -- must not resize the layout as it ticks. Persian digits
- * are proportional in Vazirmatn, so without this the bar twitches on every
- * second.
+ * Only a clock that ticks every second keeps its digits one width, so the
+ * bar does not twitch. Everywhere else Vazirmatn's own proportional Persian
+ * digits are used: one-width Persian digits leave gaps inside a number
+ * ("۵ ۰ ۰"), which the owner asked to remove (2026-10-10).
  */
 .f-tnum,
-.x-bar__timer,
-.x-question__index,
-.x-rail__pill,
-.x-stat__value,
-.x-report__percent {
+.x-bar__timer {
     font-variant-numeric: tabular-nums;
 }
 

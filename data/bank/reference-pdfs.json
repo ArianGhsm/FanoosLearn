@@ -1,0 +1,296 @@
+{
+  "format": "fanoos.reference-pdfs.v1",
+  "notes": [
+    "The exact approved private server PDF is the only reference-book source. The workflow reads requested PDF pages one at a time and never writes page text, full-book text, OCR output or a search index. A selected short evidence quote may be saved with its exact PDF page in a durable decision.",
+    "Availability is time-sensitive. `pdf: verified-server-pdf` is only a catalog disposition; scripts/references/verified_reference_pdf.py and scripts/ops/reference-library-inventory.php verify the current approved PDF at use time. `missing` records an edition to leave pending; `nearest` is historical information and never authorizes a new substitution by default.",
+    "2026-10-10 inventory dispositions cover every official edition currently listed in catalog validity across residency, national, board and promotion exams. The live inventory is rechecked at use time."
+  ],
+  "editions": {
+    "burket-oral-medicine@12e": {
+      "pdf": "verified-server-pdf"
+    },
+    "burket-oral-medicine@13e": {
+      "pdf": "verified-server-pdf"
+    },
+    "carranza-periodontology@12e": {
+      "nearest": "carranza-periodontology@13e",
+      "pdf": "verified-server-pdf"
+    },
+    "carranza-periodontology@13e": {
+      "pdf": "verified-server-pdf"
+    },
+    "carranza-periodontology@14e": {
+      "pdf": "verified-server-pdf"
+    },
+    "craig-restorative-materials@14e": {
+      "pdf": "verified-server-pdf"
+    },
+    "goldstein-esthetics@3e": {
+      "pdf": "verified-server-pdf"
+    },
+    "hupp-oral-surgery@6e": {
+      "nearest": "hupp-oral-surgery@7e",
+      "missing": "No approved, verified private PDF for the exact 2014 6th edition was present in the 2026-10-10 live inventory; the 2019 7th edition is not an exact substitute."
+    },
+    "hupp-oral-surgery@7e": {
+      "pdf": "verified-server-pdf"
+    },
+    "little-falace-dental-management@10e": {
+      "pdf": "verified-server-pdf"
+    },
+    "little-falace-dental-management@9e": {
+      "pdf": "verified-server-pdf"
+    },
+    "malamed-local-anesthesia@6e": {
+      "pdf": "verified-server-pdf"
+    },
+    "malamed-local-anesthesia@7e": {
+      "pdf": "verified-server-pdf"
+    },
+    "malamed-medical-emergencies@7e": {
+      "pdf": "verified-server-pdf"
+    },
+    "mccracken-rpd@12e": {
+      "pdf": "verified-server-pdf"
+    },
+    "mccracken-rpd@13e": {
+      "pdf": "verified-server-pdf"
+    },
+    "mcdonald-avery-pediatric@10e": {
+      "nearest": "mcdonald-avery-pediatric@11e",
+      "pdf": "verified-server-pdf"
+    },
+    "mcdonald-avery-pediatric@11e": {
+      "pdf": "verified-server-pdf"
+    },
+    "national-oral-health@1394": {
+      "pdf": "verified-server-pdf"
+    },
+    "neville-oral-pathology@4e": {
+      "pdf": "verified-server-pdf"
+    },
+    "neville-oral-pathology@5e": {
+      "pdf": "verified-server-pdf"
+    },
+    "nowak-pediatric@6e": {
+      "pdf": "verified-server-pdf"
+    },
+    "phillips-materials@13e": {
+      "pdf": "verified-server-pdf"
+    },
+    "powers-wataha-materials@11e": {
+      "pdf": "verified-server-pdf"
+    },
+    "proffit-orthodontics@5e": {
+      "pdf": "verified-server-pdf"
+    },
+    "proffit-orthodontics@6e": {
+      "pdf": "verified-server-pdf"
+    },
+    "rosenstiel-fixed@6e": {
+      "pdf": "verified-server-pdf"
+    },
+    "shillingburg-fixed@4e": {
+      "pdf": "verified-server-pdf"
+    },
+    "sturdevant-operative@7e": {
+      "pdf": "verified-server-pdf"
+    },
+    "summit-operative@4e": {
+      "pdf": "verified-server-pdf"
+    },
+    "torabinejad-endodontics@5e": {
+      "pdf": "verified-server-pdf"
+    },
+    "torabinejad-endodontics@6e": {
+      "pdf": "verified-server-pdf"
+    },
+    "van-noort-materials@4e": {
+      "pdf": "verified-server-pdf"
+    },
+    "van-noort-materials@5e": {
+      "pdf": "verified-server-pdf"
+    },
+    "white-pharoah-radiology@7e": {
+      "nearest": "white-pharoah-radiology@8e",
+      "pdf": "verified-server-pdf"
+    },
+    "white-pharoah-radiology@8e": {
+      "pdf": "verified-server-pdf"
+    },
+    "zarb-edentulous@13e": {
+      "pdf": "verified-server-pdf"
+    },
+    "ahmed-dummer-endodontic-advances@1e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "andreasen-traumatic-injuries@5e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "announced-articles-endodontics@1405": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "announced-articles-operative-dentistry@1405": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "announced-articles-oral-pathology@1405": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "announced-articles-oral-radiology@1405": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "announced-articles-oral-surgery@1405": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "announced-articles-orthodontics@1405": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "announced-articles-pediatric-dentistry@1405": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "announced-articles-periodontics@1405": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "announced-articles-prosthodontics@1405": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "announced-articles-prosthodontics@1406": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "becker-impacted-teeth@4e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "burket-oral-medicine@11e": {
+      "pdf": "verified-server-pdf"
+    },
+    "burstone-biomechanics@1e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "bushong-radiologic-science@12e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "cohen-pathways@12e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "craig-restorative-materials@13e": {
+      "pdf": "verified-server-pdf"
+    },
+    "daly-public-health@2e": {
+      "pdf": "verified-server-pdf"
+    },
+    "dawson-functional-occlusion@1e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "fonseca-oral-surgery@3e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "fonseca-trauma@4e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "graber-orthodontics@7e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "ingle-endodontics@7e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "kim-microsurgery@1e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "koenig-diagnostic-imaging@2e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "langland-dental-imaging@2e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "lindhe-clinical-periodontology@7e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "little-falace-dental-management@8e": {
+      "pdf": "verified-server-pdf"
+    },
+    "lotfazar-barrier-membranes-fa@2": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "mccabe-walls-materials@9e": {
+      "pdf": "verified-server-pdf"
+    },
+    "misch-contemporary-implant@4e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "misch-implant-prosthetics@2e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "naini-orthognathic@1e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "nanda-aligners@1e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "nanda-esthetics-biomechanics@2e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "nanda-tads@2e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "okeson-tmd@8e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "peterson-oral-surgery-fa@5e-fa": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "peterson-principles@4e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "proffit-dentofacial-deformity@1e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "proffit-orthodontics@7e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "regezi-oral-pathology@7e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "robbins-pathology@11e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "schwartz-surgery@11e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "som-head-neck-imaging@5e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "splieth-preventive@1e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "stewart-rpd@4e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "sturdevant-operative@6e": {
+      "pdf": "verified-server-pdf"
+    },
+    "sturdevant-operative@8e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "taylor-maxillofacial-prosthetics@1e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "ten-cate-histology@10e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "welkoborsky-ultrasonography@1e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "white-pharoah-radiology@9e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "woo-oral-pathology@3e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "wood-goaz-differential@5e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "zarb-edentulous@14e": {
+      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    }
+  }
+}

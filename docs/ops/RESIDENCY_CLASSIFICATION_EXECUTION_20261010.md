@@ -4,6 +4,14 @@
 questions against approved exact official reference editions already available
 on the server; do not wait for the remaining unready editions or use a laptop.
 **Status:** verified private **research decisions**, not production imports.
+The `.txt` paths and index hashes in the historical results below describe
+temporary files that were created by the previous workflow and removed on
+2026-10-10. They are retained here only as history; do not recreate them. The
+current branch reads exact PDF pages directly and stores no page-text copy.
+The accepted-decision counts below came from the old text-index validator. They
+are historical research results, not a claim that those decisions were checked
+under the current page-at-a-time PDF procedure. Revalidate any pending reuse
+directly against the exact approved PDF page.
 
 Read first:
 - `docs/PROJECT_PRINCIPLES.md` — GitHub/server authority, exact-edition rule
@@ -25,8 +33,9 @@ Checked through authorized SentinelX server access on 2026-10-10:
 - 1,995 residency questions, of which **1,504 chaptered and 491 missing a
   chapter** (unchanged by this private research pass).
 - Live reference inventory previously confirmed **27 verified private PDFs
-  out of 44 catalog editions**. A PDF is not automatically text-searchable;
-  only verified page-marked texts may be used for a decision.
+  out of 44 catalog editions**. The current reader verifies the exact approved
+  PDF and requests only cited pages; an unreadable page is reviewed visually or
+  left pending. No text derivative is part of the current workflow.
 - Source PDF evidence used here:
   `national-oral-health@1394` (330 PDF pages; 24 page-mapped chapters);
   `white-pharoah-radiology@8e` (1,958 pages; 33 mapped chapters).
@@ -56,8 +65,9 @@ References are resolved into the validated source-node form
 The earlier 2026-10-09 report held 22 accepted decisions (1403 community 5,
 1405 community 9, 1405 radiology 8). This pass produced **52 additional
 accepted** decisions: new 1398–1402 community-dentistry batches (41), plus
-4 more 1403 community and 7 more 1405 radiology. All passed the original
-book-text/page-to-chapter validator.
+4 more 1403 community and 7 more 1405 radiology. These results passed the
+then-current text-index/page-to-chapter validator and are retained as history;
+direct PDF page revalidation is required before further use.
 
 **No answer key, question, source row, publication status or other production
 data was written.** The number of missing production chapters is still 491.
@@ -93,8 +103,9 @@ workspace identifier or original private question text in public logs.
 - **1398 community-dentistry:** the catalog names the exact 1394 national
   reference, whose PDF is present, but its historical announced syllabus
   scope is incomplete (the source announcement's detailed PDF is missing).
-  Ten study mappings are *book-evidence validated*, but the exact syllabus
-  boundary needs independent confirmation **before production publication**.
+  Ten study mappings passed the historical text-index evidence check, but
+  require direct PDF page revalidation. The exact syllabus boundary needs
+  independent confirmation **before production publication**.
   Do not infer that the year had a documented chapters 1–16 scope.
 - The national book's extracted two-column Persian text sometimes interleaves
   columns. Search hits alone are insufficient: each selection required the
@@ -120,8 +131,9 @@ workspace identifier or original private question text in public logs.
 Protected server root: `/srv/fanoos/shared/research`.
 
 - Inputs: `bank-sittings/<year>/<stem>-study.json`
-- Edition texts and provenance: `references/<edition>.txt` and
-  `references/<edition>.provenance.json`
+- Previous PDF-derived cache files: removed by the 2026-10-10 cleanup; see
+  `classification/reports/artifact-cleanup-20261010.json` for the private
+  path/hash receipt.
 - Search terms: `classification/reports/<year>-<stem>-queries.json`
 - Decisions: `classification/decisions/<year>-<subject>.json`
 - Validator outputs: `classification/sittings/<year>-<stem>-validated.json`
@@ -129,13 +141,19 @@ Protected server root: `/srv/fanoos/shared/research`.
   `classification/reports/residency-audit-20261010.json`
   SHA-256:
   `43ec6f2d23ed1b2c2a4717be47bbf20d1609b603887607f42157df564f64c4b8`.
+- PDF text-cache cleanup receipts:
+  `classification/reports/artifact-cleanup-20261010.json`,
+  `classification/reports/pdf-text-archive-cleanup-20261010.json`, and
+  `classification/reports/artifact-cleanup-followup-20261010.json`, and
+  `classification/reports/artifact-cleanup-recurrence-20261010.json`.
 
-For any future evaluation, run all decision files through the **original**
-`apply_classification.py` first, with `--local` pointed to this protected
-root. Then audit the full bank-study integrity and source maps (read-only):
+For any future evaluation, verify the two exact PDFs and run the audit directly
+against their current pages; no temporary PDF-text index or sidecar is needed:
 
 ```sh
-python3 scripts/references/audit_private_study_batches.py \
+sudo -u fanoosupd python3 -B scripts/references/verify_reference_pdfs.py \
+  --only national-oral-health@1394 --only white-pharoah-radiology@8e
+sudo -u fanoosupd python3 -B scripts/references/audit_private_study_batches.py \
   --local=/srv/fanoos/shared/research \
   --batch=1398:community-dentistry:community \
   --batch=1399:community-dentistry:community \
@@ -145,7 +163,7 @@ python3 scripts/references/audit_private_study_batches.py \
   --batch=1403:community-dentistry:community \
   --batch=1405:community-dentistry:community \
   --batch=1405:oral-radiology:radiology \
-  --out=/srv/fanoos/shared/research/classification/reports/residency-audit-20261010.json
+  --out=/srv/fanoos/shared/research/classification/reports/residency-audit-20261010-pdf-provenance.json
 ```
 
 Expected audit: `batch_count=8`, `questions=90`, `accepted=74`,
@@ -185,14 +203,12 @@ The official syllabus lists three exact references:
 - `malamed-medical-emergencies@7e` — **not available as approved server PDF**
 - `malamed-local-anesthesia@6e` — **verified private server PDF**, all chapters
 
-The verified Malamed local-anesthesia 6e PDF was read in place and processed
-without copying the original. The full page-marked private text has **428 PDF
-pages and 21 chapter runs**, text SHA-256
-`e6b0043989be850cb64826446d0cb8991626d013eb6d95d44696e0365b4dce96`;
-verified source PDF SHA-256
+The verified Malamed local-anesthesia 6e PDF was read in place. The previous
+workflow temporarily created a page-text index for its **428 PDF pages and 21
+chapter runs**; the index and provenance sidecar were removed on 2026-10-10.
+Verified source PDF SHA-256:
 `2026eff83ef2d2543725becb3685e8cb492f1dcf9f5d7a7ae72a28024ef67bf6`.
-Paths:
-`references/malamed-local-anesthesia@6e.{txt,provenance.json}`,
+Durable files:
 `bank-sittings/1398/surgery-study.json` and
 `classification/reports/1398-surgery-{queries,q112-search}.json`
 (the last name is `1398-surgery-q112-search.json`).

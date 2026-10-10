@@ -1,5 +1,13 @@
 # Live residency chapter-source publication checkpoint — 2026-10-10
 
+> **1398 reference-list update (2026-10-10):** The later four-page, owner-supplied complete notice adds official reference-validity scopes for oral pathology, prosthodontics, community dentistry and dental materials (six additional references; 19 total across 12 clinical subjects). The earlier “1398 syllabus missing” remarks below are historical checkpoints and are superseded **only for source-list validity**, not for unverified question citations. See [1398 complete notice](RESIDENCY_1398_COMPLETE_NOTICE_20261010.md).
+
+Historical cache note: earlier runs generated temporary page-marked text from
+verified reference PDFs. Cleanup removed the live derivatives and the
+discovered W08 archive copy. The current working branch reads one exact PDF
+page at a time and creates no PDF text file or index; it is not yet merged or
+deployed. Search-output filenames below are history, not files to reuse.
+
 ## Authorization and release
 
 Owner requested merge/deploy first, then continue exact-official-edition
@@ -378,7 +386,7 @@ For **each** study year, a fresh live export confirmed the accepted question ID 
 | 1405 | 1 | `20261010T085148Z-11dea211` | `45ea3743113223825397d2107f122d3adc627765a41d42af3ecc80e5aff00c51` | v4→v5, 246 questions, 1 new source explanation |
 | 1399 | 1 | `20261010T085523Z-6bdf3c44` | `5adbc1052d2aaa941d5c725450cb394bc41a17e048bd45bc26484378cfce59fe` | v5→v6, 248 questions, 1 new source explanation |
 
-All preserved official voided answer exclusions from the historical frozen exams. The exact receipt filenames in protected `classification/reports/` are `YEAR-community-W02-source-publish-20261010.json`; the full book/PDF text and original questions were kept private. A relay job for the 1400 pre-apply full backup timed out, but the finalized physical backup was subsequently independently verified as a valid 54-file set; a relay timeout is not itself evidence of backup corruption.
+All preserved official voided answer exclusions from the historical frozen exams. The exact receipt filenames in protected `classification/reports/` are `YEAR-community-W02-source-publish-20261010.json`; original PDFs and questions remain private, temporary page text has been removed, and only short decision evidence is retained. A relay job for the 1400 pre-apply full backup timed out, but the finalized physical backup was subsequently independently verified as a valid 54-file set; a relay timeout is not itself evidence of backup corruption.
 
 **Post-W02 checkpoint:** 1995 residency questions, 1622 with actual source rows, 373 raw without source rows. Of those 373, **159 published residency English questions are officially key-final/reference-exempt** under `docs/PROJECT_PRINCIPLES.md` §3A (158 `final`, 1 `amended`); the true remaining non-English source-review queue is **214**. These are time-stamped counts and should be refreshed after future imports. **Never rerun any of the four completed W02 source applies**. The private reproducibility ledger is `/srv/fanoos/shared/research/ops/residency-parallel-57-dispositions-20261010.md`.
 

@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Work out which chapter every page of every reference edition belongs to.
+"""Map every page directly from the exact approved reference PDF.
 
-Reads .local/references/<edition>.txt (build_reference_texts.py) and the
-edition's chapter list (data/bank/reference-tocs.json), and writes
-data/bank/reference-chapter-pages.json: for each edition, the runs of PDF
-pages that belong to each chapter. Classification turns "the answer is on
-page 412" into "chapter 14" with it.
+Reads one PDF page at a time from the verified server object and discards its
+text after scoring that page. It retains only page numbers, chapter votes and
+the final chapter runs; it never creates a text version or search index.
+Together with the edition's chapter list (data/bank/reference-tocs.json), it
+writes data/bank/reference-chapter-pages.json. Classification turns "the
+answer is on page 412" into "chapter 14" with it.
 
 Each page votes for its chapter from what the book prints on it:
 - the running head ("CHAPTER 13", "17 • Nonpharmacologic…", "4. Fundamentals…");
@@ -14,23 +15,25 @@ Each page votes for its chapter from what the book prints on it:
 A page with no vote takes its neighbours' chapter only when both agree. A
 page nobody can place stays unplaced -- it is reported, never guessed.
 
-    python scripts/references/build_chapter_pages.py
     python scripts/references/build_chapter_pages.py --only proffit-orthodontics@5e
 """
 from __future__ import annotations
 
 import argparse
 import collections
+import os
 import json
 import re
 import sys
+import stat
+import tempfile
 from pathlib import Path
+from verified_reference_pdf import open_verified_reference
 
 REPO = Path(__file__).resolve().parents[2]
 TOCS = REPO / 'data' / 'bank' / 'reference-tocs.json'
-TEXTS = REPO / 'data' / 'bank' / 'reference-texts.json'
+PDFS = REPO / 'data' / 'bank' / 'reference-pdfs.json'
 OUT = REPO / 'data' / 'bank' / 'reference-chapter-pages.json'
-PAGE = re.compile(r'^=== PAGE (\d+) ===$', re.M)
 STOP = {'and', 'the', 'of', 'in', 'for', 'to', 'a', 'an', 'with', 'on', 'its', 'their', 'or'}
 
 HEAD_PATTERNS = [
@@ -52,13 +55,9 @@ def roman_front_matter(lines: list[str]) -> bool:
     return bool(lines and re.fullmatch(r'[ivxlcdm]{1,8}', lines[0].strip(), re.I))
 
 
-def pages_of(path: Path) -> list[tuple[int, str]]:
-    raw = path.read_text(encoding='utf-8')
-    marks = list(PAGE.finditer(raw))
-    return [
-        (int(m.group(1)), raw[m.end():nxt.start() if nxt else len(raw)])
-        for m, nxt in zip(marks, marks[1:] + [None])
-    ]
+def pages_of(pdf):
+    """Yield a single PDF page's text at a time; callers must not retain it."""
+    yield from pdf.iter_page_texts()
 
 
 def votes(text: str, chapters: dict[str, list[str]]) -> collections.Counter:
@@ -175,7 +174,7 @@ def documented_openings(starts: dict[str, int], chapter_list: list[list[str]], p
     return starts
 
 
-def locate(pages: list[tuple[int, str]], chapter_list: list[list[str]],
+def locate(pages, chapter_list: list[list[str]],
            bookmark_starts: dict[str, int] | None = None) -> dict:
     """Assign every page a chapter so that chapters run in book order.
 
@@ -189,8 +188,20 @@ def locate(pages: list[tuple[int, str]], chapter_list: list[list[str]],
     chapters = {str(n): words(t) for n, t in chapter_list}
     keys = [str(n) for n, _ in chapter_list]
     k = len(keys)
-    numbers = [p for p, _ in pages]
-    tallies = [votes(text, chapters) for _, text in pages]
+    numbers: list[int] = []
+    tallies: list[collections.Counter] = []
+    page_openings: dict[str, int] = {}
+    readable_pages = 0
+    for page_number, page_text in pages:
+        numbers.append(page_number)
+        tallies.append(votes(page_text, chapters))
+        if len(re.sub(r'\s', '', page_text)) >= 40:
+            readable_pages += 1
+        for chapter, opening in openings([(page_number, page_text)], chapters).items():
+            page_openings.setdefault(chapter, opening)
+        del page_text
+    if numbers != list(range(1, len(numbers) + 1)):
+        raise ValueError('PDF page reader did not return every page in order')
 
     # States: 0 = front matter, 1..k = chapters, k+1 = back matter.
     neg = float('-inf')
@@ -223,7 +234,7 @@ def locate(pages: list[tuple[int, str]], chapter_list: list[list[str]],
 
     # A chapter cannot begin before its own opening or after it. This also
     # stops figure references on earlier pages from shifting a boundary.
-    starts = bookmark_starts if bookmark_starts else openings(pages, chapters)
+    starts = bookmark_starts if bookmark_starts else page_openings
     ordered = [(index + 1, starts[key]) for index, key in enumerate(keys) if key in starts]
     if all(before_page < after_page for (_, before_page), (_, after_page) in zip(ordered, ordered[1:])):
         for chapter_state, opening_page in ordered:
@@ -246,6 +257,9 @@ def locate(pages: list[tuple[int, str]], chapter_list: list[list[str]],
     seen = [r[0] for r in runs if r[0] is not None]
     return {
         'runs': runs,
+        'pdf_pages': len(numbers),
+        'readable_pages': readable_pages,
+        'readable_page_ratio': round(readable_pages / len(numbers), 6) if numbers else 0,
         'chapters_seen': len(set(seen)),
         'chapters_listed': k,
         'not_seen': [key for key in keys if key not in set(seen)],
@@ -253,52 +267,95 @@ def locate(pages: list[tuple[int, str]], chapter_list: list[list[str]],
     }
 
 
+def atomic_json(path: Path, value: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    edition_rows = ',\n'.join(
+        '    ' + json.dumps(edition, ensure_ascii=False) + ': '
+        + json.dumps(entry, ensure_ascii=False, separators=(',', ': '))
+        for edition, entry in sorted(value['editions'].items())
+    )
+    payload = (
+        '{\n'
+        + '  "format": ' + json.dumps(value['format'], ensure_ascii=False) + ',\n'
+        + '  "notes": ' + json.dumps(value['notes'], ensure_ascii=False) + ',\n'
+        + '  "editions": {\n' + edition_rows + '\n  }\n}\n'
+    )
+    if path.is_symlink():
+        raise ValueError('chapter map output must not be a symlink')
+    previous = path.stat() if path.exists() else None
+    fd, temporary = tempfile.mkstemp(prefix='.chapter-map-', suffix='.tmp', dir=path.parent)
+    try:
+        with os.fdopen(fd, 'w', encoding='utf-8', newline='\n') as stream:
+            os.fchmod(stream.fileno(), stat.S_IMODE(previous.st_mode) if previous else 0o644)
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+        if previous and os.geteuid() == 0:
+            os.chown(temporary, previous.st_uid, previous.st_gid)
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
-    parser.add_argument('--local', default=str(REPO / '.local'))
-    parser.add_argument('--library', help='book library; use complete PDF chapter outlines when available')
-    parser.add_argument('--only', action='append', help='rebuild only this edition and preserve all other page maps')
+    parser.add_argument('--only', action='append', required=True,
+                        help='rebuild only this edition (repeatable; required) and preserve all other page maps')
+    parser.add_argument('--storage-root', type=Path, default=Path('/srv/fanoos/shared/storage'))
+    parser.add_argument('--mysql-defaults', type=Path, default=Path('/etc/fanoos/mysql-migrator.cnf'))
+    parser.add_argument('--database', default='fanoos_prod')
+    parser.add_argument('--min-readable-ratio', type=float, default=0.80)
     args = parser.parse_args()
+    if not 0.5 <= args.min_readable_ratio <= 1:
+        raise ValueError('invalid minimum readable-page ratio')
     sys.stdout.reconfigure(encoding='utf-8')
 
     tocs = json.loads(TOCS.read_text(encoding='utf-8'))['editions']
-    texts = json.loads(TEXTS.read_text(encoding='utf-8'))['editions'] if args.library else {}
-    requested = set(args.only or [])
-    result = json.loads(OUT.read_text(encoding='utf-8'))['editions'] if requested and OUT.exists() else {}
+    pdf_manifest = json.loads(PDFS.read_text(encoding='utf-8'))['editions']
+    requested = set(args.only)
+    result = json.loads(OUT.read_text(encoding='utf-8'))['editions'] if OUT.exists() else {}
     built = set()
-    for path in sorted((Path(args.local) / 'references').glob('*.txt')):
-        edition = path.stem
-        if requested and edition not in requested:
+    for edition in sorted(requested):
+        entry = pdf_manifest.get(edition)
+        if not isinstance(entry, dict) or entry.get('pdf') != 'verified-server-pdf':
+            print(f'not eligible  {edition}: exact verified server PDF is not listed')
             continue
         chapter_list = tocs.get(edition, {}).get('chapters') or []
         if not chapter_list:
             print(f'no chapter list  {edition}')
             continue
-        pages = pages_of(path)
-        chapter_pairs = [[str(c[0]), c[1]] for c in chapter_list]
+        pdf = open_verified_reference(edition, args.storage_root, args.mysql_defaults, args.database)
+        chapter_pairs = [[str(chapter[0]), chapter[1]] for chapter in chapter_list]
         starts = {}
-        if args.library and 'chapter_pdf_starts' in texts.get(edition, {}):
-            starts = documented_openings(texts[edition]['chapter_pdf_starts'], chapter_pairs, len(pages))
-        elif args.library and 'pdf' in texts.get(edition, {}):
-            import pymupdf
-            with pymupdf.open(Path(args.library) / texts[edition]['pdf']) as pdf:
-                starts = bookmark_openings(pdf.get_toc(), chapter_pairs)
-        located = locate(pages, chapter_pairs, starts)
+        if 'chapter_pdf_starts' in entry:
+            starts = documented_openings(entry['chapter_pdf_starts'], chapter_pairs, pdf.page_count)
+        else:
+            starts = bookmark_openings(pdf.bookmarks(), chapter_pairs)
+        located = locate(pages_of(pdf), chapter_pairs, starts)
+        if located['pdf_pages'] != pdf.page_count:
+            raise ValueError(f'{edition}: direct PDF read did not cover the full document')
+        if located['readable_page_ratio'] < args.min_readable_ratio:
+            raise ValueError(
+                f"{edition}: only {located['readable_pages']}/{pdf.page_count} PDF pages have a usable text layer; "
+                'keep pending and review the original PDF manually; no OCR/export was created')
+        located['source_pdf_sha256'] = pdf.source_sha256
+        located['source'] = 'verified-server-pdf'
         result[edition] = located
         built.add(edition)
         weak = [c for c, s in located['supported_pages'].items() if int(s.split('/')[0]) * 3 < int(s.split('/')[1])]
-        print(f"{edition:40} pages {len(pages):5}  chapters {located['chapters_seen']:3}/{located['chapters_listed']:3}  outline {'yes' if starts else 'no '}  not seen {located['not_seen'][:10]}  weakly supported {weak[:10]}")
+        print(f"{edition:40} pages {pdf.page_count:5}  readable {located['readable_pages']:5}  chapters {located['chapters_seen']:3}/{located['chapters_listed']:3}  outline {'yes' if starts else 'no '}  not seen {located['not_seen'][:10]}  weakly supported {weak[:10]}")
 
     missing = requested - built
     if missing:
         print(f'not built: {sorted(missing)}')
         return 1
 
-    OUT.write_text(json.dumps({
+    atomic_json(OUT, {
         'format': 'fanoos.reference-chapter-pages.v1',
-        'notes': ['runs: [chapter, first PDF page, last PDF page] in .local/references/<edition>.txt, in book order; chapter null = front or back matter. supported_pages: pages in the run whose own text voted for the chapter. Built by scripts/references/build_chapter_pages.py.'],
+        'notes': ['runs: [chapter, first PDF page, last PDF page] from the exact verified server PDF, in book order; chapter null = front or back matter. Each page is read transiently and independently; no text version, OCR output or search index is created.'],
         'editions': result,
-    }, ensure_ascii=False) + '\n', encoding='utf-8', newline='\n')
+    })
     return 0
 
 

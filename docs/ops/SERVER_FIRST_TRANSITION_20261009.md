@@ -11,6 +11,13 @@ verified editions on the server. Absent/incomplete editions are pending.
 This document records the transition and its remaining technical prerequisites.
 It does not authorize a shortcut around the existing classification validator.
 
+**Current clarification (2026-10-10):** the earlier bridge did create
+protected temporary page-marked `.txt` indexes. They were removed during the
+2026-10-10 cleanup. Its replacement, `scripts/references/verified_reference_pdf.py`,
+verifies the approved PDF and reads only selected pages in memory; no text
+copy, index or OCR export is created. This dated log remains historical for
+its inventory and workspace findings; do not re-run its old extraction steps.
+
 ## Owner clarification — production host and access route
 
 The owner confirms that the current FANOOS production server is hosted by
@@ -50,7 +57,8 @@ The new **server-only, access-controlled working area** is
 
 ```
 /srv/fanoos/shared/research/
-  references/<edition>.txt            full page-marked text after verification
+  tmp/<operation-id>/queries.json                       temporary query input
+  tmp/<operation-id>/search-output.json                 temporary search output, if redirected
   bank-sittings/<year>/<sitting>.json  exact site-matching private source file
   classification/decisions/           one decision batch per year and subject
   classification/sittings/            validated classified sittings
@@ -67,24 +75,27 @@ working area before placing irreplaceable files there, or mirror its durable
 artifacts through an existing audited private backup mechanism. Empty folders
 do not prove content was migrated.
 
-Scripts currently accept the `--local` argument pointing to that root.
-The future secure source bridge must read the approved object file associated
-with `content_resource_metadata.topic=<edition>` through an authorized,
-audited accessor and never expose those objects to public URLs.
-Use a space-aware, single-edition workflow and verify PDF page markers.
+The current bridge resolves `content_resource_metadata.topic=<edition>`
+to the latest approved PDF, verifies its SHA-256 and reads requested pages
+without exporting PDF text. Search and chapter mapping read one page at a time;
+only short selected evidence quotes and PDF/page provenance enter decisions
+and receipts. No page markers, `.txt` indexes or OCR files are created. Use a
+space-aware, single-edition workflow and delete the operation's temporary
+queries and search outputs after its validated audit receipt is recorded.
 
 ## Reproducible continuation
 
 1. Run `scripts/ops/reference-library-inventory.php` with the authorized
    server runtime config; record current approved edition keys.
-2. Verify a secure reader and backed-up protected workspace; only then
-   materialize or convert one eligible edition.
-3. Independently verify full text, chapter starts/ends, official year scope,
+2. Verify the exact official PDF SHA-256 and page count through the read-only
+   bridge; no extracted text file or index is created.
+3. Independently verify complete page-index coverage, chapter starts/ends,
+   official year scope,
    and the exact site-matching sitting and current source assignments.
 4. Select one subject/year with an eligible *exact* official reference.
    Use `classification_batch.py` (nearest fallback disabled by default),
-   `find_in_books.py`, and `apply_classification.py` with `--local`.
-5. Accept only decisions with exact page text evidence, chapter and
+   `find_in_books.py`, `apply_classification.py` and the direct-PDF auditor.
+5. Accept only decisions with evidence verified on the exact PDF page, chapter and
    confidence; keep absent/unfound questions pending; preserve human reviews.
 6. Generate an inventory report, validate `questions_changed=0`,
    verified backup, audited import, publish and post-state counts.
@@ -101,6 +112,5 @@ Use a space-aware, single-edition workflow and verify PDF page markers.
   with backup, smoke checks, SHA read-back and shared-host isolation.
 - Distinguish **GitHub commit**, **server deployment**, and **bank import**
   separately in final status reports.
-- Do not run large batch text extraction while disk remains close to full.
-  Retention changes must use the existing supervised script's dry-run and
-  never delete backups or other workloads by ad-hoc commands.
+- No bulk text extraction is part of classification. Page reads are transient;
+  preserve backup retention and never remove backups or other workloads ad hoc.

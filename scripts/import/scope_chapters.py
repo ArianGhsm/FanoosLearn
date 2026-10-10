@@ -60,8 +60,14 @@ def resolve(scope: str | None, chapters: list[str]) -> list[dict] | None:
     text = text.replace('تا آخر فصل', 'تا')
     text = re.sub(rf'{NUMBER}(?:\s*-\s*{NUMBER}){{2,}}', lambda m: '، '.join(re.findall(NUMBER, m.group(0))), text)
     text = re.sub(rf'({NUMBER})\s*تا\s*({NUMBER})', lambda m: f'{m.group(1)}–{m.group(2)}', text)
-    if text.startswith('کلیه فصول'):
-        text = 'تمام فصول' + text[len('کلیه فصول'):]
+    # The specialty lists' wordings of the same: «همه‌ی فصول»، «همه کتاب بجز فصول»،
+    # «کلیه فصول غیر از»، «All chapters, except for chapters 1-5», «Chapters: 4, 6».
+    text = re.sub(r'^(?:کلیه|همه‌ی|همه)\s*(?:فصول|کتاب)(?:\s*کتاب)?', 'تمام فصول', text)
+    text = re.sub(r'^all chapters,?', 'تمام فصول', text, flags=re.I)
+    text = re.sub(r'^تمام فصول\s*(?:کتاب\s*)?(?:بجز|به‌جز|به غیر از|غیر از|except for|except)(?:\s*(?:فصل‌های|فصلهای|فصول|فصل|chapters?))?\s*',
+                  'تمام فصول به جز ', text, flags=re.I)
+    text = re.sub(r'^chapters?\s*:?\s*', 'فصول ', text, flags=re.I)
+    text = re.sub(r'\s+', ' ', text).strip()
     # «فقط فصول …» means "only these chapters", not part of them; a parenthesis
     # after «کتاب» («(فقط مباحث ملاحظات دندانپزشکی)») qualifies the whole list.
     text = re.sub(r'^فقط\s+(?=فص)', '', text)

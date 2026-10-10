@@ -46,6 +46,8 @@ class PublisherSafetyContracts(unittest.TestCase):
             'realpath($candidate) !== $candidate',
         ]:
             self.assertIn(marker, self.cli)
+        self.assertIn("W03-endo-q1-audit-stage", self.cli)
+        self.assertIn("Endodontics Q1 coordinator stage may only map", self.cli)
         # Receipt and verified full backup must remain under original root.
         self.assertIn("realpath(dirname($receipt)) !== $reportDir", self.cli)
         self.assertIn("BackupManifest::verify", self.cli)
@@ -56,6 +58,26 @@ class PublisherSafetyContracts(unittest.TestCase):
                        "hash_file('sha256', $decisionsPath)"]:
             self.assertIn(marker, self.cli)
         self.assertIn("SourceOnlyPublisher::run", self.cli)
+
+    def test_1398_exception_is_limited_to_three_proven_subjects(self):
+        """Only three evidence-reviewed 1398 subjects pass exact-edition guards."""
+        self.assertIn("$year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1', 'endodontics-location-final'], true)", self.cli)
+        self.assertIn("$year === 1398 && $subject === 'endodontics'", self.service)
+        self.assertIn("$decision['edition'] !== 'torabinejad-endodontics@5e'", self.service)
+        self.assertIn("1398 endodontics requires exact announced Torabinejad 5e", self.service)
+        self.assertIn("$subject === 'periodontics' && in_array($stem, ['periodontics', 'periodontics-followup'], true)", self.cli)
+        self.assertIn("classification/decisions/1398-periodontics-followup.json", self.cli)
+        self.assertIn("$year === 1398 && $subject === 'periodontics'", self.service)
+        self.assertIn("$decision['edition'] !== 'carranza-periodontology@12e'", self.service)
+        self.assertIn("1398 periodontics requires exact announced Carranza 12e", self.service)
+        self.assertIn("$subject === 'community-dentistry' && $stem === 'community'", self.cli)
+        self.assertIn("$year === 1398 && $subject === 'community-dentistry'", self.service)
+        self.assertIn("$decision['edition'] !== 'national-oral-health@1394'", self.service)
+        self.assertIn("1398 community dentistry requires the exact national oral-health 1394 edition", self.service)
+        self.assertIn("W02-community-final-audit-stage", self.cli)
+        # Global guard remains in effect for every other 1398 subject.
+        self.assertIn("$year < 1399", self.service)
+        self.assertIn("$year < 1399", self.cli)
 
     def test_apply_requires_fresh_verified_backup_and_receipt(self):
         for marker in ["BackupManifest::verify", "database.sql",

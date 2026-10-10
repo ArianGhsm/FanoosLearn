@@ -120,7 +120,6 @@
 
 .f-demo__step b {
     color: var(--text-primary);
-    font-variant-numeric: tabular-nums;
 }
 
 .f-demo__timer {

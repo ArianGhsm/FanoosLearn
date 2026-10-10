@@ -19,6 +19,9 @@
  */
 import { api, describeError } from '../foundation/api.js';
 import { el, faDigits, faText, kindLabel, notice } from './runner-view.js';
+import { groupSittings, specialtiesByType } from './bank-rules.js';
+import { paperGroup } from './bank-papers.js';
+import { goalPicker, readGoal } from './exam-goal.js';
 
 const list = document.getElementById('catalog');
 const filters = document.getElementById('catalog-filters');
@@ -239,4 +242,42 @@ filters?.addEventListener('click', (event) => {
     renderBody();
 });
 
-if (list && workspaceId) load();
+/*
+ * The bank's past papers, grouped by exam and year and narrowed by «آزمون من»,
+ * above the catalogue. A workspace without a bank shows the catalogue alone.
+ */
+async function loadPapers() {
+    let bank;
+    try {
+        bank = await api.get(`${base}/bank`);
+    } catch {
+        return;
+    }
+    if (!Array.isArray(bank?.sittings) || bank.sittings.length === 0) return;
+    const section = document.getElementById('papers');
+    const papers = document.getElementById('papers-list');
+    let goal = readGoal(bank.types.map((type) => type.key));
+    const draw = () => {
+        const groups = groupSittings(bank.sittings, goal);
+        papers.replaceChildren(...(groups.length > 0
+            ? groups.map(paperGroup)
+            : [el('p', { className: 'f-muted', text: 'برای این آزمون هنوز سؤالی منتشر نشده.' })]));
+    };
+    document.getElementById('goal-slot').replaceChildren(goalPicker({
+        types: bank.types,
+        specialties: specialtiesByType(bank.sittings),
+        goal,
+        onChange: (next) => {
+            goal = next;
+            draw();
+        },
+    }));
+    draw();
+    section.hidden = false;
+    document.getElementById('catalog-title').hidden = false;
+}
+
+if (list && workspaceId) {
+    loadPapers();
+    load();
+}

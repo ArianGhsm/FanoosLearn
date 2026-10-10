@@ -20,14 +20,16 @@ of the counted rows at ✅.
 
 | # | Option | Who | FANOOS |
 |---|---|---|---|
-| 1 | Past exams by year and sitting (به تفکیک دوره و سال) | M P | ✅ each bank sitting is published as an exam |
+| 0 | «آزمون من»: the exam a student prepares for (an exam type, and for a specialty exam optionally one specialty) | P | ✅ a chip on the bank and the exams page, kept in the browser like the theme; default every exam; it narrows the bank's subjects and papers (`?type=` on the bank API), puts the specialty first and opens منابع آزمون on that exam; one tap back to every exam |
+| 0b | Bank by book and chapter (به تفکیک کتاب و فصل) | P | ✅ the bank's default view: per subject, the books its questions are sourced to (the latest official list's first, marked «در فهرست»), the five most-asked chapters with counts and a study button, the whole book one tap away; «سؤال‌های این فصل» on منابع آزمون opens a chapter's questions from every exam |
+| 1 | Past exams by year and sitting (به تفکیک دوره و سال) | M P | ✅ each bank sitting is published as an exam; the bank's «به تفکیک آزمون و سال» and the exams page group them by exam and year, a specialty exam's papers side by side |
 | 2 | Bank by subject (به تفکیک درس), one page per subject | M P | ✅ /app/bank, به تفکیک درس |
 | 3 | Topics inside a subject with question counts, most-asked first (مطالعه مبحثی) | M P | ✅ topics with counts, most-asked first, one-tap study of a topic |
 | 4 | High-yield topics with "since year X" counts (شایع‌ترین میکرومبحث‌ها) | M | ✅ most-asked concepts, with counts since the last five years |
 | 5 | Subject header: questions per exam, questions in the bank, years covered | M | ✅ questions in the bank, per exam, years, old-reference count |
 | 6 | Comprehensive mode: every question of a subject in year order (مطالعه جامع) | M | ✅ the whole subject newest year first, or only recent years, or one year |
 | 7 | Reference awareness: questions marked when their reference is old (رفرنس قدیم) | M P | ✅ «رفرنس قدیم» counted per subject and topic (from reviewed currency) |
-| 8 | Exam references by year (منابع آزمون دستیاری ۱۳۹۷–۱۴۰۵) | P | ✅ /app/references, year by year, subject by subject, with chapter scope |
+| 8 | Exam references by exam and year (دستیاری ۱۳۹۷–۱۴۰۶; بورد و ارتقا ۱۴۰۵–۱۴۰۶; آزمون ملی ۱۴۰۴–۱۴۰۵) | P | ✅ /app/references: a switch between exam types (`?type=`), a strip of years (`?year=`), the year's numbers, one card per subject with each book's edition, announced scope, chapter coverage and chapters; badges for what changed against the year before (new book, new edition, new scope, dropped book), search and "only what changed" |
 | 9 | Authored questions and authored exams (تالیفی) | M P | ✅ any exam kind can be authored and published |
 | 10 | Search across subjects, topics and exams (جستجو) | M | ✅ search on the bank page across subjects and years |
 

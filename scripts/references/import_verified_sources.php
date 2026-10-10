@@ -33,10 +33,11 @@ try {
     $expected = filter_var($args['expected'] ?? null, FILTER_VALIDATE_INT);
     $apply = isset($args['apply']);
     if (preg_match('/^[0-9a-f-]{36}$/D', $ws) !== 1 || $year === false
-        || $year < 1399 || $year > 1500 || $expected === false || $expected < 1 || $expected > 250
+        || ($year < 1399 && !(($year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1', 'endodontics-location-final'], true)) || ($year === 1398 && $subject === 'periodontics' && in_array($stem, ['periodontics', 'periodontics-followup'], true)) || ($year === 1398 && $subject === 'community-dentistry' && $stem === 'community') || ($year === 1398 && $subject === 'prosthodontics' && $stem === 'prosthodontics')))
+        || $year > 1500 || $expected === false || $expected < 1 || $expected > 250
         || preg_match('/^[a-z][a-z0-9-]{1,59}$/D', $subject) !== 1
         || preg_match('/^[a-z][a-z0-9-]{1,59}$/D', $stem) !== 1) {
-        throw new RuntimeException('Workspace, exact year/subject/stem and expected count required; 1398 is held.');
+        throw new RuntimeException('Workspace, exact year/subject/stem and expected count required; 1398 is held outside independently verified endodontics, periodontics, community dentistry and prosthodontics.');
     }
     if ($apply !== isset($args['backup']) || $apply !== isset($args['receipt'])) {
         throw new RuntimeException('Apply requires both verified full backup and unique private receipt.');
@@ -54,10 +55,19 @@ try {
         // mutable source folder. All original inputs remain SHA-pinned by audit.
         $candidate = (string) $args['package-root'];
         $label = basename($candidate);
-        if ($root === false || preg_match('/^W0[1-8]-audit-stage$/D', $label) !== 1
+        if ($root === false || preg_match('/^(?:W0[1-8]-audit-stage|W02-community-final-audit-stage|W03-endo-q1-audit-stage|W03-location-final-20261010)$/D', $label) !== 1
             || $candidate !== "{$root}/classification/coordinator/{$label}"
             || is_link($candidate) || realpath($candidate) !== $candidate) {
             throw new RuntimeException('Package root must be an exact coordinator WNN audit stage.');
+        }
+        if ($label === 'W03-endo-q1-audit-stage'
+            && !($year === 1398 && $subject === 'endodontics' && $stem === 'endodontics-q1')) {
+            throw new RuntimeException('Endodontics Q1 coordinator stage may only map the exact 1398 Q1 batch.');
+        }
+        if ($label === 'W03-location-final-20261010'
+            && !($year === 1398 && $subject === 'endodontics'
+                && $stem === 'endodontics-location-final')) {
+            throw new RuntimeException('Endodontics final location audit stage is exclusive to exact 1398 endodontics.');
         }
         $inputRoot = $candidate;
         $auditDir = realpath($candidate . '/classification/reports');
@@ -71,6 +81,9 @@ try {
     $studyPath = "{$inputRoot}/bank-sittings/{$year}/{$stem}-study.json";
     $validatedPath = "{$inputRoot}/classification/sittings/{$year}-{$stem}-validated.json";
     $decisionsPath = "{$inputRoot}/classification/decisions/{$year}-{$subject}.json";
+    if ($year === 1398 && $subject === 'periodontics' && $stem === 'periodontics-followup') {
+        $decisionsPath = "{$inputRoot}/classification/decisions/1398-periodontics-followup.json";
+    }
     $read = static function (string $path): array {
         if (!is_file($path) || is_link($path)) {
             throw new RuntimeException('Expected verified private file is unavailable.');

@@ -42,15 +42,19 @@ final class BankBrowseService
     }
 
     /**
-     * Subjects with their numbers, and the exam papers by year.
+     * Subjects with their numbers, and the exam papers by year; with an exam
+     * type (the student's «آزمون من»), only that type's questions and papers.
+     * `types` lists every active exam type with its published questions, so
+     * the page can offer them whatever the filter.
      *
      * @return array<string, mixed>
      */
-    public function overview(string $userId, string $workspaceId): array
+    public function overview(string $userId, string $workspaceId, ?string $typeKey = null): array
     {
         $this->access->requireWorkspace($userId, $workspaceId, 'exam.take');
-        $questions = $this->questions($workspaceId, null);
-        $sittings = $this->sittings($workspaceId);
+        $typeKey = $this->typeFilter($workspaceId, $typeKey);
+        $questions = $this->questions($workspaceId, null, $typeKey);
+        $sittings = array_values(array_filter($this->sittings($workspaceId), static fn (array $s): bool => $typeKey === null || $s['type_key'] === $typeKey));
         $published = array_filter($sittings, static fn (array $sitting): bool => $sitting['assessment_id'] !== null);
 
         $subjects = [];
@@ -83,12 +87,17 @@ final class BankBrowseService
             }, $subjects)),
             'sittings' => array_values(array_map(static fn (array $sitting): array => [
                 'type' => $sitting['type_name'],
+                'type_key' => $sitting['type_key'],
                 'year' => $sitting['year'],
                 'round' => $sitting['round'],
+                'subject_key' => $sitting['subject_key'],
+                'subject_name' => $sitting['subject_name'],
                 'assessment_id' => $sitting['assessment_id'],
                 'questions' => $sitting['questions'],
             ], $published)),
             'total' => count($questions),
+            'type' => $typeKey,
+            'types' => $this->types($workspaceId),
         ];
     }
 
@@ -98,11 +107,12 @@ final class BankBrowseService
      *
      * @return array<string, mixed>
      */
-    public function subject(string $userId, string $workspaceId, string $subjectKey): array
+    public function subject(string $userId, string $workspaceId, string $subjectKey, ?string $typeKey = null): array
     {
         $this->access->requireWorkspace($userId, $workspaceId, 'exam.take');
         $subject = $this->subjectRow($workspaceId, $subjectKey);
-        $questions = $this->questions($workspaceId, (string) $subject['id']);
+        $typeKey = $this->typeFilter($workspaceId, $typeKey);
+        $questions = $this->questions($workspaceId, (string) $subject['id'], $typeKey);
         $latest = $questions === [] ? null : max(array_column($questions, 'year'));
         $recentFrom = $latest === null ? null : $latest - self::RECENT_YEARS + 1;
 
@@ -140,6 +150,8 @@ final class BankBrowseService
 
         return [
             'subject' => ['key' => $subject['subject_key'], 'name' => $subject['name'], 'name_en' => $subject['name_en']],
+            'type' => $typeKey,
+            'type_name' => $typeKey === null ? null : array_column($this->types($workspaceId), 'name', 'key')[$typeKey],
             'total' => count($questions),
             'per_exam' => $sittings === [] ? null : (int) round(count($questions) / count($sittings)),
             'first_year' => $questions === [] ? null : min(array_column($questions, 'year')),
@@ -163,9 +175,19 @@ final class BankBrowseService
     public function study(string $userId, string $workspaceId, array $input): array
     {
         $this->access->requireWorkspace($userId, $workspaceId, 'exam.take');
-        $subject = $this->subjectRow($workspaceId, (string) ($input['subject'] ?? ''));
-        $questions = $this->questions($workspaceId, (string) $subject['id']);
-        $title = (string) $subject['name'];
+        $typeKey = $this->typeFilter($workspaceId, isset($input['type']) ? (string) $input['type'] : null);
+        $edition = isset($input['edition']) && $input['edition'] !== '' ? (string) $input['edition'] : null;
+        $chapter = isset($input['chapter']) && $input['chapter'] !== '' ? (string) $input['chapter'] : null;
+        // A chapter is studied across subjects (a radiology chapter is asked in oral medicine too),
+        // unless a subject is named.
+        $subject = ($edition !== null && ($input['subject'] ?? '') === '') ? null : $this->subjectRow($workspaceId, (string) ($input['subject'] ?? ''));
+        $questions = $this->questions($workspaceId, $subject === null ? null : (string) $subject['id'], $typeKey);
+        $title = $subject === null ? '' : (string) $subject['name'];
+        if ($edition !== null) {
+            [$ids, $label] = $this->chapterQuestions($workspaceId, $edition, $chapter);
+            $questions = array_values(array_filter($questions, static fn (array $q): bool => isset($ids[$q['id']])));
+            $title = ltrim($title . ' · ' . $label, ' ·');
+        }
 
         $topic = isset($input['topic']) && $input['topic'] !== '' ? (string) $input['topic'] : null;
         if ($topic !== null) {
@@ -193,8 +215,229 @@ final class BankBrowseService
     }
 
     /**
-     * منابع آزمون: the references named for each exam year, newest year
-     * first, subject by subject.
+     * The bank by book and chapter (بانک به تفکیک کتاب و فصل): for each
+     * subject, the editions its published questions are sourced to, each
+     * with every chapter and how many questions come from it; with an exam
+     * type, only that type's questions. A book on the type's latest official
+     * list says so (listed_year). Only sources that may be shown as fact are
+     * counted: set or reviewed by a person, or at the confidence threshold.
+     *
+     * @return array<string, mixed>
+     */
+    public function books(string $userId, string $workspaceId, ?string $typeKey = null): array
+    {
+        $this->access->requireWorkspace($userId, $workspaceId, 'exam.take');
+        $typeKey = $this->typeFilter($workspaceId, $typeKey);
+        $links = $this->sourcedQuestions($workspaceId, $typeKey);
+        $chapters = $this->editionChapters($workspaceId);
+        $listed = $this->latestListed($workspaceId, $typeKey ?? 'residency');
+
+        $subjects = [];
+        foreach ($this->subjects($workspaceId) as $subject) {
+            $subjects[$subject['id']] = ['key' => $subject['key'], 'name' => $subject['name'], 'name_en' => $subject['name_en'], 'books' => []];
+        }
+        $editions = $this->editions($workspaceId);
+        foreach ($links as $link) {
+            if (!isset($subjects[$link['subject_id']], $editions[$link['edition_id']])) {
+                continue;
+            }
+            $books = &$subjects[$link['subject_id']]['books'];
+            $books[$link['edition_id']] ??= $editions[$link['edition_id']] + ['questions' => [], 'by_chapter' => []];
+            $books[$link['edition_id']]['questions'][$link['question_id']] = true;
+            if ($link['chapter_key'] !== null) {
+                $books[$link['edition_id']]['by_chapter'][$link['chapter_key']][$link['question_id']] = true;
+            }
+            unset($books);
+        }
+
+        $out = [];
+        foreach ($subjects as $subject) {
+            if ($subject['books'] === []) {
+                continue;
+            }
+            $books = [];
+            foreach ($subject['books'] as $editionId => $book) {
+                $books[] = [
+                    'edition_ref' => $book['edition_ref'],
+                    'title' => $book['title'],
+                    'authors' => $book['authors'],
+                    'edition' => $book['edition'],
+                    'published_year' => $book['published_year'],
+                    'listed_year' => isset($listed['editions'][$editionId]) ? $listed['year'] : null,
+                    'questions' => count($book['questions']),
+                    'chapters' => array_map(static fn (array $chapter): array => [
+                        'key' => $chapter['key'],
+                        'number' => $chapter['number'],
+                        'title' => $chapter['title'],
+                        'title_fa' => $chapter['title_fa'],
+                        'title_fa_reviewed' => $chapter['title_fa_reviewed'],
+                        'questions' => count($book['by_chapter'][$chapter['key']] ?? []),
+                    ], $chapters[$editionId] ?? []),
+                ];
+            }
+            // The latest list's books first, then the most-asked.
+            usort($books, static fn (array $a, array $b): int => [$b['listed_year'] !== null, $b['questions']] <=> [$a['listed_year'] !== null, $a['questions']]);
+            $out[] = ['key' => $subject['key'], 'name' => $subject['name'], 'name_en' => $subject['name_en'], 'books' => $books];
+        }
+
+        return ['type' => $typeKey, 'listed_year' => $listed['year'], 'subjects' => $out, 'types' => $this->types($workspaceId)];
+    }
+
+    /**
+     * Published questions with a source that may be shown as fact, each with
+     * its edition and the top-level chapter its node sits in.
+     *
+     * @return list<array{question_id:string,subject_id:string,edition_id:string,chapter_key:?string}>
+     */
+    private function sourcedQuestions(string $workspaceId, ?string $typeKey): array
+    {
+        $filter = $typeKey === null ? '' : 'AND sitting.exam_type_id = (SELECT id FROM bank_exam_types WHERE workspace_id = :type_workspace AND type_key = :type)';
+        $query = $this->database->prepare(<<<SQL
+SELECT DISTINCT link.question_id, question.subject_id, link.edition_id, link.node_id
+FROM bank_question_sources link
+JOIN bank_questions question ON question.id = link.question_id
+JOIN bank_exam_sittings sitting ON sitting.id = question.sitting_id
+WHERE link.workspace_id = :workspace AND question.status = 'published' AND sitting.assessment_id IS NOT NULL
+  AND (link.origin = 'human' OR link.reviewed_at IS NOT NULL OR COALESCE(link.confidence_node, link.confidence_source, 1) >= :threshold) {$filter}
+SQL);
+        $parameters = ['workspace' => $workspaceId, 'threshold' => self::CONFIDENCE_THRESHOLD];
+        if ($typeKey !== null) {
+            $parameters['type_workspace'] = $workspaceId;
+            $parameters['type'] = $typeKey;
+        }
+        $query->execute($parameters);
+        $rows = $query->fetchAll();
+        $top = $this->chapterOfNode($workspaceId);
+
+        return array_map(static fn (array $row): array => [
+            'question_id' => (string) $row['question_id'],
+            'subject_id' => (string) $row['subject_id'],
+            'edition_id' => (string) $row['edition_id'],
+            'chapter_key' => $row['node_id'] === null ? null : ($top[(string) $row['node_id']] ?? null),
+        ], $rows);
+    }
+
+    /**
+     * Every node's top-level chapter key (a source may cite a section).
+     *
+     * @return array<string, string>
+     */
+    private function chapterOfNode(string $workspaceId): array
+    {
+        $query = $this->database->prepare('SELECT id, parent_id, node_key FROM bank_reference_nodes WHERE workspace_id = :workspace');
+        $query->execute(['workspace' => $workspaceId]);
+        $nodes = [];
+        foreach ($query->fetchAll() as $row) {
+            $nodes[(string) $row['id']] = [$row['parent_id'] === null ? null : (string) $row['parent_id'], (string) $row['node_key']];
+        }
+        $top = [];
+        foreach ($nodes as $id => [$parent, $key]) {
+            $at = $id;
+            for ($guard = 0; $nodes[$at][0] !== null && isset($nodes[$nodes[$at][0]]) && $guard < 6; ++$guard) {
+                $at = $nodes[$at][0];
+            }
+            $top[$id] = $nodes[$at][1];
+        }
+
+        return $top;
+    }
+
+    /** @return array<string, array{edition_ref:string,title:string,authors:?string,edition:string,published_year:?int}> */
+    private function editions(string $workspaceId): array
+    {
+        $query = $this->database->prepare(<<<'SQL'
+SELECT edition.id, reference.reference_key, edition.edition_key, reference.title, reference.authors, edition.edition_label, edition.published_year
+FROM bank_reference_editions edition
+JOIN bank_references reference ON reference.id = edition.reference_id
+WHERE edition.workspace_id = :workspace
+SQL);
+        $query->execute(['workspace' => $workspaceId]);
+        $out = [];
+        foreach ($query->fetchAll() as $row) {
+            $out[(string) $row['id']] = [
+                'edition_ref' => $row['reference_key'] . '@' . $row['edition_key'],
+                'title' => (string) $row['title'],
+                'authors' => $row['authors'],
+                'edition' => (string) $row['edition_label'],
+                'published_year' => $row['published_year'] === null ? null : (int) $row['published_year'],
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * The editions on an exam type's latest official list, and that year.
+     *
+     * @return array{year:?int,editions:array<string,true>}
+     */
+    private function latestListed(string $workspaceId, string $typeKey): array
+    {
+        $query = $this->database->prepare(<<<'SQL'
+SELECT validity.exam_year, validity.edition_id
+FROM bank_reference_validity validity
+JOIN bank_exam_types type ON type.id = validity.exam_type_id
+WHERE validity.workspace_id = :workspace AND type.type_key = :type AND validity.is_official = TRUE
+  AND validity.exam_year = (SELECT MAX(v2.exam_year) FROM bank_reference_validity v2 WHERE v2.workspace_id = validity.workspace_id AND v2.exam_type_id = validity.exam_type_id)
+SQL);
+        $query->execute(['workspace' => $workspaceId, 'type' => $typeKey]);
+        $year = null;
+        $editions = [];
+        foreach ($query->fetchAll() as $row) {
+            $year = (int) $row['exam_year'];
+            $editions[(string) $row['edition_id']] = true;
+        }
+
+        return ['year' => $year, 'editions' => $editions];
+    }
+
+    /**
+     * The questions sourced to one edition, or one chapter of it, and how
+     * the study set is titled.
+     *
+     * @return array{0: array<string, true>, 1: string}
+     */
+    private function chapterQuestions(string $workspaceId, string $editionRef, ?string $chapterKey): array
+    {
+        $editions = $this->editions($workspaceId);
+        $editionId = null;
+        foreach ($editions as $id => $edition) {
+            if ($edition['edition_ref'] === $editionRef) {
+                $editionId = $id;
+            }
+        }
+        if ($editionId === null) {
+            throw new PlatformException('bank_chapter_not_found', 'That book is not in the catalog.', 404);
+        }
+        $label = $editions[$editionId]['title'];
+        if ($chapterKey !== null) {
+            $chapter = null;
+            foreach ($this->editionChapters($workspaceId)[$editionId] ?? [] as $candidate) {
+                if ($candidate['key'] === $chapterKey) {
+                    $chapter = $candidate;
+                }
+            }
+            if ($chapter === null) {
+                throw new PlatformException('bank_chapter_not_found', 'That chapter is not in the catalog.', 404);
+            }
+            $label .= ' · فصل ' . self::faDigits((string) $chapter['number']);
+        }
+        $ids = [];
+        foreach ($this->sourcedQuestions($workspaceId, null) as $link) {
+            if ($link['edition_id'] === $editionId && ($chapterKey === null || $link['chapter_key'] === $chapterKey)) {
+                $ids[$link['question_id']] = true;
+            }
+        }
+        if ($ids === []) {
+            throw new PlatformException('bank_study_empty', 'No question comes from there.', 422);
+        }
+
+        return [$ids, $label];
+    }
+
+    /**
+     * منابع آزمون: the references named for each exam type and year, newest
+     * year first (residency before the other types within a year), subject by subject.
      *
      * @return list<array<string, mixed>>
      */
@@ -215,11 +458,18 @@ SQL);
         $query->execute(['workspace' => $workspaceId]);
         $rows = $query->fetchAll();
         $chapters = $this->editionChapters($workspaceId);
+        // How many published questions come from each chapter, across every exam.
+        $asked = [];
+        foreach ($this->sourcedQuestions($workspaceId, null) as $link) {
+            if ($link['chapter_key'] !== null) {
+                $asked[$link['edition_id']][$link['chapter_key']][$link['question_id']] = true;
+            }
+        }
 
         $years = [];
         foreach ($rows as $row) {
             $key = $row['type_key'] . ':' . $row['exam_year'];
-            $years[$key] ??= ['type' => (string) $row['type_name'], 'year' => (int) $row['exam_year'], 'subjects' => []];
+            $years[$key] ??= ['type' => (string) $row['type_name'], 'type_key' => (string) $row['type_key'], 'year' => (int) $row['exam_year'], 'subjects' => []];
             $subjects = &$years[$key]['subjects'];
             $subjects[$row['subject_key']] ??= ['key' => (string) $row['subject_key'], 'name' => (string) $row['subject_name'], 'references' => []];
             $subjects[$row['subject_key']]['references'][] = [
@@ -230,7 +480,9 @@ SQL);
                 'published_year' => $row['published_year'] === null ? null : (int) $row['published_year'],
                 'scope' => $row['scope'],
                 'official' => (bool) $row['is_official'],
-                'chapters' => self::markScope($chapters[(string) $row['edition_id']] ?? [], $row['scope_chapters']),
+                'chapters' => array_map(static fn (array $chapter): array => $chapter + [
+                    'questions' => count($asked[(string) $row['edition_id']][$chapter['key']] ?? []),
+                ], self::markScope($chapters[(string) $row['edition_id']] ?? [], $row['scope_chapters'])),
             ];
             unset($subjects);
         }
@@ -355,10 +607,11 @@ SQL);
      *
      * @return list<array{key:string,subject_key:string,sitting_id:string,year:int,round:int,number:int,topic_key:?string,topic_name:?string,topic_name_en:?string,concept_key:?string,concept_name:?string,concept_name_en:?string,old_reference:bool}>
      */
-    private function questions(string $workspaceId, ?string $subjectId): array
+    private function questions(string $workspaceId, ?string $subjectId, ?string $typeKey = null): array
     {
         $concepts = $this->concepts($workspaceId);
-        $filter = $subjectId === null ? '' : 'AND question.subject_id = :subject';
+        $filter = ($subjectId === null ? '' : 'AND question.subject_id = :subject')
+            . ($typeKey === null ? '' : ' AND sitting.exam_type_id = (SELECT id FROM bank_exam_types WHERE workspace_id = :type_workspace AND type_key = :type)');
         $query = $this->database->prepare(<<<SQL
 SELECT question.id, question.question_key, question.number_in_sitting, subject.subject_key,
        sitting.id AS sitting_id, sitting.exam_year, sitting.exam_round,
@@ -378,6 +631,10 @@ SQL);
         if ($subjectId !== null) {
             $parameters['subject'] = $subjectId;
         }
+        if ($typeKey !== null) {
+            $parameters['type_workspace'] = $workspaceId;
+            $parameters['type'] = $typeKey;
+        }
         $query->execute($parameters);
 
         $rows = [];
@@ -389,6 +646,7 @@ SQL);
                 $topic = $concepts[$topic['parent_id']] ?? null;
             }
             $rows[] = [
+                'id' => (string) $row['id'],
                 'key' => (string) $row['question_key'],
                 'subject_key' => (string) $row['subject_key'],
                 'sitting_id' => (string) $row['sitting_id'],
@@ -473,8 +731,13 @@ SQL);
     private function sittings(string $workspaceId): array
     {
         $query = $this->database->prepare(<<<'SQL'
-SELECT sitting.id, sitting.exam_year, sitting.exam_round, sitting.assessment_id, type.name AS type_name,
-       (SELECT COUNT(*) FROM bank_questions question WHERE question.sitting_id = sitting.id AND question.status = 'published') AS questions
+SELECT sitting.id, sitting.exam_year, sitting.exam_round, sitting.assessment_id, type.name AS type_name, type.type_key,
+       (SELECT COUNT(*) FROM bank_questions question WHERE question.sitting_id = sitting.id AND question.status = 'published') AS questions,
+       (SELECT COUNT(DISTINCT question.subject_id) FROM bank_questions question WHERE question.sitting_id = sitting.id) AS subject_count,
+       (SELECT subject.subject_key FROM bank_questions question JOIN bank_subjects subject ON subject.id = question.subject_id
+        WHERE question.sitting_id = sitting.id LIMIT 1) AS subject_key,
+       (SELECT subject.name FROM bank_questions question JOIN bank_subjects subject ON subject.id = question.subject_id
+        WHERE question.sitting_id = sitting.id LIMIT 1) AS subject_name
 FROM bank_exam_sittings sitting
 JOIN bank_exam_types type ON type.id = sitting.exam_type_id
 WHERE sitting.workspace_id = :workspace
@@ -488,13 +751,56 @@ SQL);
             'round' => (int) $row['exam_round'],
             'assessment_id' => $row['assessment_id'] === null ? null : (string) $row['assessment_id'],
             'type_name' => (string) $row['type_name'],
+            'type_key' => (string) $row['type_key'],
+            // A board or promotion paper is one specialty's; a residency paper has every subject.
+            'subject_key' => (int) $row['subject_count'] === 1 ? (string) $row['subject_key'] : null,
+            'subject_name' => (int) $row['subject_count'] === 1 ? (string) $row['subject_name'] : null,
             'questions' => (int) $row['questions'],
         ], $query->fetchAll());
     }
 
     /**
-     * The references named for this subject in the two latest years that
-     * name any, so the student sees what changed.
+     * The active exam types, in their order, with how many published
+     * questions each has (none yet for a type that only has reference lists).
+     *
+     * @return list<array{key:string,name:string,questions:int}>
+     */
+    private function types(string $workspaceId): array
+    {
+        $query = $this->database->prepare(<<<'SQL'
+SELECT type.type_key, type.name,
+       (SELECT COUNT(*) FROM bank_questions question JOIN bank_exam_sittings sitting ON sitting.id = question.sitting_id
+        WHERE sitting.exam_type_id = type.id AND question.status = 'published' AND sitting.assessment_id IS NOT NULL) AS questions
+FROM bank_exam_types type
+WHERE type.workspace_id = :workspace AND type.is_active = TRUE
+ORDER BY type.sort_order, type.name
+SQL);
+        $query->execute(['workspace' => $workspaceId]);
+
+        return array_map(static fn (array $row): array => [
+            'key' => (string) $row['type_key'], 'name' => (string) $row['name'], 'questions' => (int) $row['questions'],
+        ], $query->fetchAll());
+    }
+
+    /** An exam type to filter by: null for all, or an active type of this workspace. */
+    private function typeFilter(string $workspaceId, ?string $typeKey): ?string
+    {
+        if ($typeKey === null || $typeKey === '') {
+            return null;
+        }
+        foreach ($this->types($workspaceId) as $type) {
+            if ($type['key'] === $typeKey) {
+                return $typeKey;
+            }
+        }
+        throw new PlatformException('bank_type_not_found', 'That exam type is not in the bank.', 404);
+    }
+
+    /**
+     * The residency references named for this subject in the two latest
+     * years that name any, so the student sees what changed. The subject
+     * page is the residency bank's; board, promotion and national lists are
+     * on منابع آزمون.
      *
      * @return list<array<string, mixed>>
      */
@@ -503,7 +809,7 @@ SQL);
         $query = $this->database->prepare(<<<'SQL'
 SELECT validity.exam_year, reference.title, edition.edition_label, validity.scope
 FROM bank_reference_validity validity
-JOIN bank_exam_types type ON type.id = validity.exam_type_id AND type.is_active = TRUE
+JOIN bank_exam_types type ON type.id = validity.exam_type_id AND type.is_active = TRUE AND type.type_key = 'residency'
 JOIN bank_reference_editions edition ON edition.id = validity.edition_id
 JOIN bank_references reference ON reference.id = edition.reference_id
 WHERE validity.workspace_id = :workspace AND validity.subject_id = :subject
