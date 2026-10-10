@@ -135,3 +135,52 @@ This section **supersedes all earlier in-progress counts and Q9 hold statements 
 - Source rows for 1404 Q27 and Q34 remain **human-origin** with existing chapter 12 and 13 respectively but **NULL pages**; there is no verified exact-page, answer-consistent citation to justify metadata-only repair yet. Existence of a chapter must not be mislabeled as page complete.
 - PR #223 (guarded Q1 stage) and all five associated CI jobs passed, merged commit `9aba5eef0fc4a2ff786e0e21c1f7ba9f5d80b52c`. Successful authorized updater deployed release `1178d9b80fb1cc1a95746f219c9c5a32fdd1bbe8` including this code, health `https://fanooslearn.ir/health` returned HTTP **200**. Previous failed updater requests were preserved and resolved by a separate official successful deployment, not by bypassing CI.
 - **Open scientific gates**: independent expert adjudication of nine 1398 recorded-answer conflicts and page-specific original book evidence for both 1404 human-origin sources. Their human/official decisions, stem and choices remain untouched. **Do not mark the entire endodontics subject fully closed/published** while these remain.
+
+
+## FINAL LOCATION-ONLY CLOSURE — 2026-10-10 14:07 UTC
+
+**AUTHORITATIVE FINAL STATE. This section supersedes ALL earlier counts, reservations, publication holds and incomplete-status statements above.** User-approved classification criterion is **location of the topic in the exact-year official reference**, even when the stored answer key is contested. It does **not** certify the answer key or permit its mutation.
+
+### Production-verified complete subject map
+
+- **159/159** endodontics questions across residency exam years 1398–1405 have official source, chapter and nonempty page. SQL audited **zero source-free questions and zero null/blank pages**. Yearly counts: **1398 19/19; 1399–1405 each 20/20**.
+- Every source row maps to the exact officially designated **Torabinejad Endodontics 5e** for 1398–1399 or **Torabinejad Endodontics 6e** for 1400–1405; 159 unique year/question source records, all with a chapter and page.
+- A complete, **private** 159-row reproducible mapping (year, number, reference edition, chapter, page, source origin; no question stems/choices/keys) was exported from live MySQL to `/srv/fanoos/shared/research/ops/endodontics-complete-159-source-location-map-20261010.json`. SHA256 `c23b54733dfc2fceeff195f138d04eb15f1549ffdfcbd35c755cf176b7f93364`.
+- Previously published 1398 Q1/Q2–Q9/Q19, 1399 Q29, and 1400 Q29 were **not reinserted or overwritten**.
+
+### Final nine 1398 locations (Torabinejad 5e, original PDF-page indexes)
+
+| 1398 Question | Exact official chapter | PDF page |
+|---|---:|---:|
+| 10 | 13 | 233 |
+| 11 | 13 | 236 |
+| 12 | 6 | 113 |
+| 13 | 16 | 296 |
+| 14 | 19 | 363 |
+| 15 | 20 | 381 |
+| 16 | 8 | 135 |
+| 17 | 15 | 257 |
+| 18 | 2 | 42 |
+
+Q12 is explicitly corroborated in the actual original 5e PDF page 113 by the Radix entomolaris / extra mandibular molar root passage. All nine locations passed the primary source-text matcher and independent original-book provenance audit (9 accepted, 0 rejected); source text and the 494-page exact PDF had been directly extracted from the server-held source object. The prior automatically cleaned extracted-text scratch directory is not a necessary production dependency.
+
+The source-only importer applied exactly **nine new source links** with `questions_changed=0`, `choices_changed=0`, `answers_changed=0`. Unique private receipt: `/srv/fanoos/shared/research/classification/reports/1398-endodontics-last9-location-publish-20261010.json`, SHA256 `192bb49518ef316bb4f5d48ee0aa2abba2ebf993821073a2b297e0379c5da65e`. Independently verified complete **54-file pre-write backup** `20261010T135514Z-31e44a89`. The official published 1398 frozen exam moved **v9→v10**; full **245-question** before/after audit returned `question_content_identical=true`, with 13 source-explanation refreshes total (some other 1398 subjects were updated concurrently).
+
+### Final two existing HUMAN-source pages, 1404 (Torabinejad 6e)
+
+| 1404 Question | Existing human chapter | Newly corroborated PDF page | Existing origin |
+|---|---:|---:|---|
+| 27 | 12 | 246 | human |
+| 34 | 13 | 281 | human |
+
+These two original HUMAN-source rows received **only** `bank_question_sources.page` metadata changes. Their official edition, chapter, provenance/reviewer metadata, original anchor, stems, choices, answers, historic attempts and versions remain preserved. PDF-page proof was re-extracted directly from the original 501-page authorized 6e asset and durably saved as protected private JSON at `/srv/fanoos/shared/research/classification/coordinator/W03-location-final-20261010/classification/reports/1404-endo-human-exact-pdf-page-proof-20261010.json`, SHA256 `3c1bff9ec82b3e661b7bae87df86b280c982ddd977dba7037285086cb24eb76a`. This avoids relying on transient scratch book text cleaned by the retention job.
+
+Verified complete pre-write **54-file backup** `20261010T140503Z-ec07cc28`. Private page-only apply receipt `/srv/fanoos/shared/research/classification/coordinator/W03-location-final-20261010/classification/reports/1404-endodontics-human-page-publish-20261010.json` SHA256 `c3c5dae13578d8f0abf7d997f9bf19b72d0a79bb35ec39085ad9873ac9c28853`. The 1404 frozen assessment was published **v4→v5**; complete **247-question** post-audit returned `question_content_identical=true` with 16 source-explanation refreshes, including other subjects.
+
+### Validated release and integrity gates
+
+- Source-only nine-question writer and metadata-only human page operator: [PR #252](https://github.com/ArianGhsm/FanoosLearn/pull/252) merged, five required CI jobs green.
+- Durable exact original-book PDF proof for human page-only update: [PR #254](https://github.com/ArianGhsm/FanoosLearn/pull/254) merged, five required CI jobs green.
+- Canonical main with those changes officially deployed as release `994d6f79094b4b94b25eb5ee03762a95c94e7c1c` by the authorized updater. Fanoos public health endpoint returned **HTTP 200**. No unverified deployment claims.
+- The official answer keys are **UNCHANGED**, even where the recorded answers conflict with source-book wording; historical attempts and human decisions were preserved. A separate optional scientific/key-review queue remains in the private preserved ledger `/srv/fanoos/shared/research/ops/1398-endodontics-answer-consistency-holds-20261010.json` (SHA256 `3d258373118f8146fd03f7fd8db98acf6280cecb7d59202557f669e484283012`), **NOT a blocker** for source location under the user's explicit rule.
+- **Endodontics classification / topic location is COMPLETE AND PUBLISHED**. Do not redo this subject's classification or automatically change any question/answer data. Future key revisions, if any, require a separate explicit human process.
