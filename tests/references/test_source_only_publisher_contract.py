@@ -78,6 +78,19 @@ class PublisherSafetyContracts(unittest.TestCase):
         self.assertIn("$year < 1399", self.service)
         self.assertIn("$year < 1399", self.cli)
 
+    def test_1398_surgery_exception_accepts_only_malamed7_two_questions(self):
+        """The 1398 oral-surgery scope must NOT allow Hupp 7e or other question numbers."""
+        self.assertIn("$subject === 'oral-surgery' && $stem === 'surgery' && $expected === 2", self.cli)
+        self.assertIn("isset($args['package-root'])", self.cli)
+        self.assertIn("$label !== 'W08-audit-stage'", self.cli)
+        self.assertIn("1398 surgery accepts only the two exact audited Malamed7 questions", self.cli)
+        self.assertIn("'oral-surgery'", self.service)
+        self.assertIn("123 => ['edition' => 'malamed-medical-emergencies@7e', 'chapter' => '3', 'page' => 110]", self.service)
+        self.assertIn("124 => ['edition' => 'malamed-medical-emergencies@7e', 'chapter' => '11', 'page' => 211]", self.service)
+        self.assertIn("array_keys($wanted) !== [123, 124]", self.service)
+        self.assertIn("1398 surgery requires exact Malamed Emergencies 7e Q123/124 verified pages", self.service)
+        self.assertIn("v.is_official=1", self.service)
+
     def test_apply_requires_fresh_verified_backup_and_receipt(self):
         for marker in ["BackupManifest::verify", "database.sql",
                        "posix_geteuid", "research", "receipt",
