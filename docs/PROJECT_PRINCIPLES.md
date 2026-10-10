@@ -181,25 +181,32 @@ read-back or other verifiable result.
   `/srv/fanoos/shared/research/tmp/<operation-id>/`. Use `trap`/`finally` for
   cleanup where possible; never scatter scratch files through the repository,
   home directory or shared reference root.
-- A PDF-derived page index is a temporary cache for an active classification
-  batch. After the batch's validator and independent audit receipts are safely
-  recorded, remove its `.txt` index and matching cache receipt when no other
-  active batch uses that edition. Delete search-output text once its decisions
-  and audit receipt are complete. Keep source-PDF SHA-256, page count, chapter
+- A PDF-derived page index is a temporary cache for one operation, never a
+  standing copy of a book. After validation/audit output and its recovery
+  receipt are recorded, remove the `.txt` index, matching provenance sidecar,
+  search dumps and logs when no running batch uses them. A pending follow-up
+  does not make a regenerable index durable: rebuild it from the current
+  approved PDF when work resumes. Keep source-PDF SHA-256, page count, chapter
   map identity, decisions and concise non-copyrighted audit receipts.
+- Do not leave free-form `.txt` outputs in the research workspace. Its only
+  persistent `.txt` exceptions are checksum manifests, licenses and dependency
+  manifests; keep durable narrative in Markdown and machine-readable receipts
+  in JSON/CSV as appropriate.
 - One-off scripts are deleted after their validated output is recorded.
   Reusable scripts are intentional versioned source code: review and keep them
   in `scripts/`, then remove only their temporary outputs after each run.
 - Clean Python bytecode and temporary checkouts after use. Before deleting any
-  private artifact, check for active work, preview exact paths, and verify the
+  private artifact, check for running work, preview exact paths, and verify the
   required recovery point. Never use a blanket recursive delete. Preserve
   official source documents, original PDFs, validated decisions, human reviews,
   publication receipts and verified backups.
 - Run research commands with `python3 -B`; temporary bytecode has no value and
   must not accumulate in the private workspace or nested checkouts.
-- Current legacy artifacts stay until their active handoffs are complete and
-  their replacement/restore path is verified; this rule does not authorize
-  deleting an in-progress workstream's inputs.
+- Remove legacy full-book text caches and scratch outputs after confirming the
+  current approved PDF and reproducible extraction path. Keep pending decisions
+  and handoffs; do not keep large generated inputs just because a later review
+  is pending. Preserve unique research evidence that cannot be recreated from
+  the source PDF or durable audit record.
 
 ## 5. Change and release discipline
 

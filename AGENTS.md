@@ -62,8 +62,13 @@ leave one-off scripts, full-book text dumps, Python bytecode or duplicate
 checkouts after their operation ends. Preserve durable decisions, concise
 provenance/audit receipts, official PDFs, human reviews and verified backups.
 Run research Python commands with `python3 -B` to avoid bytecode caches.
-Before cleanup, confirm the workstream is closed, list the exact paths, and
-check its recovery point. Do not clean an active batch or use a blanket delete.
+After an operation ends, remove its generated files once its validated result
+and concise recovery receipt are recorded. Before cleanup, confirm no running
+batch uses the files, list exact paths, and verify the replacement or recovery
+path. A pending follow-up does not require keeping a regenerable PDF index:
+rebuild it from the current approved PDF when work resumes. Preserve pending
+decisions, durable handoffs and any unique source data. Do not clean a running
+batch or use a blanket delete.
 
 ## 3. Reference and question processing
 

@@ -416,7 +416,9 @@ plus the protected server research workspace
 (`/srv/fanoos/shared/research`), not to the owner's laptop. The generated
 page-text index is only a cache tied to that PDF's provenance receipt; store
 it under the batch's unique `tmp/<operation-id>/` path and remove it after the
-validator/audit handoff is complete and no active batch shares it.
+validator/audit handoff is complete and no running batch shares it. If a
+follow-up resumes later, rebuild the index from the current approved PDF
+instead of retaining a full-book text cache.
 Its deliverables:
 
 1. the decisions files for the year, and a clean `apply_classification.py`

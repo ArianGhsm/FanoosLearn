@@ -44,9 +44,16 @@ verifies its chapter, page and evidence.
   their `.provenance.json` cache sidecars live only under a per-operation
   `research/tmp/` directory and are deleted after the validated audit receipt
   is written and no concurrent batch uses them.
-- This follow-up removed generated Python bytecode caches. It did not change
-  live question/source rows, answers, assessments or PDF objects, and it did
-  not deploy a release.
+- On 2026-10-10, cleanup removed 43 PDF-index paths (35 files and 8 links),
+  36 matching provenance sidecars, 16 transient search/validation text files
+  and 25 Python bytecode files. All index hashes matched the current approved
+  PDF inventory first. It reclaimed an estimated 149,016,576 allocated bytes;
+  the remaining seven research `.txt` files are checksum, license or
+  dependency manifests. Six affected checksum manifests were updated and
+  verified. The private path/hash receipt is
+  `classification/reports/artifact-cleanup-20261010.json`. No live
+  question/source rows, answers, assessments or PDF objects changed, and no
+  release was deployed.
 
 ## Resume steps
 

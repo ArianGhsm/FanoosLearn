@@ -65,9 +65,12 @@ reads the current approved PDF object in place and verifies its SHA-256. A
 page-text index is only a cache for active work; after the validator and audit
 receipts are recorded and no concurrent batch uses it, delete the index and
 its cache receipt. Preserve the PDF SHA-256 and other concise provenance in the
-durable audit. Verify a backup before removing any workstream inputs. Never
-leave one-off scripts, reference indexes, search-output text, Python bytecode
-or nested Git checkouts under `shared/research` after their workstream closes.
+durable audit. After an operation ends, remove its generated indexes, search
+text, one-off scripts and bytecode when no running batch uses them and the
+recovery path is verified. Recreate an index from the approved PDF when a
+pending review resumes; preserve the review decisions and handoff. Keep unique
+source material until a verified recovery exists. Never leave temporary
+checkouts under `shared/research` after their task ends.
 
 nginx serves everything under `/assets/` as immutable for a year
 (`ops/nginx/fanoos-performance.conf`). A release reaches browsers only
