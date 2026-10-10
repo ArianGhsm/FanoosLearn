@@ -37,6 +37,17 @@ class PrivateBookExtractionTests(unittest.TestCase):
         self.assertEqual(module.chapter_coverage(mapping, "proffit-orthodontics@6e", 746),
                          {"mapped_chapters": 20, "mapped_pages": 746})
 
+    def test_shillingburg_pdf_chapter_boundaries(self):
+        import json
+        mapping = json.loads((HERE / "data/bank/reference-chapter-pages.json").read_text())
+        runs = mapping["editions"]["shillingburg-fixed@4e"]["runs"]
+        self.assertEqual(module.chapter_coverage(mapping, "shillingburg-fixed@4e", 585),
+                         {"mapped_chapters": 29, "mapped_pages": 585})
+        self.assertIn([None, 1, 1], runs)
+        self.assertIn([None, 55, 55], runs)
+        self.assertIn(["8", 110, 141], runs)
+        self.assertIn(["9", 142, 159], runs)
+
     def test_page_markers(self):
         result = module.create_text("book@1e", ["hello", "world"], "a" * 64)
         self.assertIn("=== PAGE 1 ===\nhello", result)
