@@ -78,13 +78,17 @@ try {
 
     BackupManifest::verify($final);
     $sanitizedBackups = ReferencePdfBackupPruner::pruneCompletedBackups($resolvedBackup, $referenceObjects);
-    $pruned = BackupRetention::pruneCompletedFullBackups($resolvedBackup, 5);
+    $pruned = BackupRetention::pruneCompletedProjectBackups(
+        $resolvedBackup,
+        $resolvedBackup . DIRECTORY_SEPARATOR . 'research',
+        5,
+    );
     JsonLogger::write('info', 'backup.completed', [
         'backup_id' => $name,
         'reference_pdf_objects_excluded' => count($referenceObjects),
         'reference_pdf_bytes_excluded' => $excludedBytes,
         'reference_pdf_backups_sanitized' => count($sanitizedBackups),
-        'pruned_full_backup_count' => count($pruned),
+        'pruned_backup_set_count' => count($pruned),
     ]);
     echo $final . PHP_EOL;
 } catch (Throwable $error) {

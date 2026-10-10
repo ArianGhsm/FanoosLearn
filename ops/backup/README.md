@@ -16,6 +16,27 @@ images are in the full backup (`scripts/ops/backup.php`), which stays on the
 server. Reference-only PDF objects are deliberately excluded from full
 backups and remain in live private storage.
 
+## Local backup retention
+
+FANOOS keeps at most five completed, verified server-local backup sets across
+`/var/backups/fanoos/` and `/var/backups/fanoos/research/`. A verified full
+backup triggers retention immediately; the hourly
+`fanoos-backup-retention.timer` enforces the same cap for research recovery
+archives. A research `.tar.gz` counts only with a valid adjacent `.sha256`
+receipt. Incomplete archives and publication receipts are left in place and do
+not count as recovery sets. The temporary database transfer remains outside
+this inventory because it is removed when the send job exits.
+
+Install the timer after deploying the reviewed units through the updater:
+
+```sh
+sudo install -o root -g root -m 0644 /srv/fanoos/updater-checkout/ops/backup/fanoos-backup-retention.service.example /etc/systemd/system/fanoos-backup-retention.service
+sudo install -o root -g root -m 0644 /srv/fanoos/updater-checkout/ops/backup/fanoos-backup-retention.timer.example /etc/systemd/system/fanoos-backup-retention.timer
+sudo systemd-analyze verify /etc/systemd/system/fanoos-backup-retention.service /etc/systemd/system/fanoos-backup-retention.timer
+sudo systemctl daemon-reload
+sudo systemctl enable --now fanoos-backup-retention.timer
+```
+
 ## Restoring
 
 ```

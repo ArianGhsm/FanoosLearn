@@ -1,0 +1,12 @@
+[Unit]
+Description=Hourly enforcement of FANOOS project backup retention
+
+[Timer]
+OnBootSec=15min
+OnUnitInactiveSec=1h
+RandomizedDelaySec=5min
+AccuracySec=1min
+Unit=fanoos-backup-retention.service
+
+[Install]
+WantedBy=timers.target

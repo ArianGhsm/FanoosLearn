@@ -1,0 +1,16 @@
+[Unit]
+Description=Retain the five newest verified FANOOS backup sets
+After=local-fs.target
+
+[Service]
+Type=oneshot
+User=fanoosupd
+Group=fanoosupd
+Environment=FANOOS_CONFIG_FILE=/etc/fanoos/updater-config.php
+ExecStart=/usr/bin/env ONLY_BACKUPS=1 KEEP_BACKUPS=5 /bin/sh /srv/fanoos/current/scripts/ops/prune-retention.sh
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/backups/fanoos

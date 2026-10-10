@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fanoos\Tests\Operations;
 
 use Fanoos\Platform\Operations\BackupManifest;
+use Fanoos\Platform\Operations\BackupRetention;
 use Fanoos\Platform\Operations\FileTreeSnapshot;
 use RuntimeException;
 
@@ -34,6 +35,83 @@ final class BackupContractTest
 
             file_put_contents($backup . DIRECTORY_SEPARATOR . 'objects' . DIRECTORY_SEPARATOR . 'nested' . DIRECTORY_SEPARATOR . 'object.bin', 'tampered');
             self::assertThrows(fn () => BackupManifest::verify($backup), 'Manifest verification must detect tampering.');
+
+            $fullRoot = $temporaryRoot . DIRECTORY_SEPARATOR . 'full-backups';
+            $researchRoot = $fullRoot . DIRECTORY_SEPARATOR . 'research';
+            mkdir($researchRoot, 0700, true);
+            $fullNames = [
+                '20261010T000000Z-aaaa1111',
+                '20261008T000000Z-bbbb2222',
+                '20261006T000000Z-cccc3333',
+                '20261004T000000Z-dddd4444',
+                '20261002T000000Z-eeee5555',
+            ];
+            foreach ($fullNames as $name) {
+                self::writeFullBackup($fullRoot, $name);
+            }
+            $corruptFull = '20261012T000000Z-ffff6666';
+            mkdir($fullRoot . DIRECTORY_SEPARATOR . $corruptFull, 0700);
+            file_put_contents($fullRoot . DIRECTORY_SEPARATOR . $corruptFull . DIRECTORY_SEPARATOR . 'manifest.json', '{}');
+            file_put_contents($fullRoot . DIRECTORY_SEPARATOR . $corruptFull . DIRECTORY_SEPARATOR . 'READY', 'corrupted manifest');
+
+            $recentResearch = '20261010-recent-checkpoint.tar.gz';
+            $oldResearch = '20261010-old-checkpoint.tar.gz';
+            self::writeResearchArchive($researchRoot, $recentResearch, 'research-new', '2026-10-07T12:00:00Z');
+            self::writeResearchArchive($researchRoot, $oldResearch, 'research-old', '2026-10-03T12:00:00Z');
+            $receipt = '20261010-publication-receipt.tar.gz';
+            self::writeResearchArchive($researchRoot, $receipt, 'audit receipt', '2026-10-12T12:00:00Z');
+            $incomplete = $researchRoot . DIRECTORY_SEPARATOR . '20261010-incomplete.tar.gz';
+            file_put_contents($incomplete, 'unfinished');
+            $corrupt = $researchRoot . DIRECTORY_SEPARATOR . '20261010-corrupt.tar.gz';
+            file_put_contents($corrupt, 'corrupt');
+            file_put_contents($corrupt . '.sha256', str_repeat('0', 64) . '  ' . basename($corrupt) . PHP_EOL);
+
+            $planned = BackupRetention::pruneCompletedProjectBackups($fullRoot, $researchRoot, 5, true);
+            self::assert(
+                $planned === [$oldResearch, $fullNames[4]],
+                'Dry-run retention must plan the oldest complete sets across full and research destinations.',
+            );
+            self::assert(
+                is_file($researchRoot . DIRECTORY_SEPARATOR . $oldResearch)
+                    && is_dir($fullRoot . DIRECTORY_SEPARATOR . $fullNames[4]),
+                'Dry-run retention must not remove any backup.',
+            );
+            $removed = BackupRetention::pruneCompletedProjectBackups($fullRoot, $researchRoot, 5);
+            self::assert($removed === $planned, 'Applied retention must remove the exact dry-run plan.');
+            self::assert(
+                !file_exists($researchRoot . DIRECTORY_SEPARATOR . $oldResearch)
+                    && !file_exists($researchRoot . DIRECTORY_SEPARATOR . $oldResearch . '.sha256')
+                    && !file_exists($fullRoot . DIRECTORY_SEPARATOR . $fullNames[4]),
+                'Applied retention must remove complete backup sets and their receipts together.',
+            );
+            self::assert(
+                is_file($researchRoot . DIRECTORY_SEPARATOR . $receipt)
+                    && is_file($incomplete)
+                    && is_file($corrupt)
+                    && is_dir($fullRoot . DIRECTORY_SEPARATOR . $corruptFull),
+                'Publication receipts and incomplete or unverifiable backups must remain untouched.',
+            );
+
+            $projectRoot = dirname(__DIR__, 2);
+            $retentionRunner = file_get_contents($projectRoot . '/scripts/ops/prune-retention.sh');
+            $retentionService = file_get_contents($projectRoot . '/ops/backup/fanoos-backup-retention.service.example');
+            $retentionTimer = file_get_contents($projectRoot . '/ops/backup/fanoos-backup-retention.timer.example');
+            $this->assert(
+                is_string($retentionRunner) && str_contains($retentionRunner, 'prune-completed-backups.php'),
+                'The documented retention runner must use the project-wide backup pruner.',
+            );
+            $this->assert(
+                is_string($retentionService)
+                    && str_contains($retentionService, 'ONLY_BACKUPS=1 KEEP_BACKUPS=5')
+                    && str_contains($retentionService, 'User=fanoosupd'),
+                'The scheduled service must enforce five sets as the FANOOS updater identity.',
+            );
+            $this->assert(
+                is_string($retentionTimer)
+                    && str_contains($retentionTimer, 'OnUnitInactiveSec=1h')
+                    && str_contains($retentionTimer, 'fanoos-backup-retention.service'),
+                'The retention timer must periodically invoke the project service.',
+            );
         } finally {
             self::removeTree($temporaryRoot);
         }
@@ -73,5 +151,24 @@ final class BackupContractTest
             is_dir($target) && !is_link($target) ? self::removeTree($target) : unlink($target);
         }
         rmdir($path);
+    }
+
+    private static function writeResearchArchive(string $root, string $name, string $contents, string $modifiedAt): void
+    {
+        $archive = $root . DIRECTORY_SEPARATOR . $name;
+        file_put_contents($archive, $contents);
+        $digest = hash_file('sha256', $archive);
+        file_put_contents($archive . '.sha256', $digest . '  ' . $name . PHP_EOL);
+        $timestamp = (new \DateTimeImmutable($modifiedAt))->getTimestamp();
+        touch($archive, $timestamp);
+        touch($archive . '.sha256', $timestamp);
+    }
+
+    private static function writeFullBackup(string $root, string $name): void
+    {
+        $backup = $root . DIRECTORY_SEPARATOR . $name;
+        mkdir($backup, 0700);
+        $digest = BackupManifest::write($backup, ['test_fixture' => true]);
+        file_put_contents($backup . DIRECTORY_SEPARATOR . 'READY', $digest . PHP_EOL);
     }
 }
