@@ -19,6 +19,7 @@ final class SourceOnlyPublisher
     public static function run(
         PDO $db, string $workspace, int $year, string $subject,
         array $study, array $validated, array $decisions, bool $apply,
+        ?string $referenceTextRoot = null,
     ): int {
         if ($year < 1399 || $year > 1500
             || ($study['format'] ?? '') !== 'fanoos.classification.study-only/1'
@@ -75,9 +76,17 @@ final class SourceOnlyPublisher
             $s = $sources[0];
             $edition = (string) $d['edition'];
             $chapter = 'ch' . str_pad((string) $d['chapter'], 2, '0', STR_PAD_LEFT);
+            $pageLabel = (string) ($s['page'] ?? '');
+            $pdfPage = (int) $d['page'];
+            $validPage = in_array($pageLabel, [(string) $pdfPage, 'pdf ' . $pdfPage], true);
+            if (!$validPage && $referenceTextRoot !== null) {
+                $validPage = PrintedBookPageEvidence::corroborates(
+                    $referenceTextRoot, $edition, $pdfPage, $pageLabel
+                );
+            }
             if (!preg_match('/^([a-z0-9-]+)@([a-z0-9-]+)$/D', $edition, $m)
                 || ($s['ref'] ?? '') !== $edition . '#' . $chapter
-                || !in_array((string) ($s['page'] ?? ''), [(string) $d['page'], 'pdf ' . $d['page']], true)
+                || !$validPage
                 || ($s['anchor'] ?? '') !== $d['evidence']
                 || mb_strlen((string) ($s['anchor'] ?? '')) < 15
                 || mb_strlen((string) ($s['anchor'] ?? '')) > 600
