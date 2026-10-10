@@ -108,7 +108,6 @@
 .c-chip__count {
     padding: 0 var(--space-2);
     font-size: var(--text-2xs);
-    font-variant-numeric: tabular-nums;
     color: var(--text-tertiary);
 }
 
@@ -139,7 +138,6 @@
 .c-source span {
     font-size: var(--text-sm);
     color: var(--text-secondary);
-    font-variant-numeric: tabular-nums;
 }
 
 .c-source:has(input:checked) {
@@ -161,7 +159,6 @@
     color: var(--accent-strong);
     background: var(--accent-soft);
     border-radius: var(--radius-md);
-    font-variant-numeric: tabular-nums;
 }
 
 .c-range {
@@ -202,7 +199,6 @@
 .c-bar__summary {
     margin: 0;
     font-weight: var(--weight-medium);
-    font-variant-numeric: tabular-nums;
 }
 
 .c-mine {
@@ -254,7 +250,6 @@
     color: var(--text-secondary);
     background: var(--surface-muted);
     border-radius: var(--radius-sm);
-    font-variant-numeric: tabular-nums;
 }
 
 .c-mine__badge.is-open { color: var(--warning); background: var(--warning-soft); }

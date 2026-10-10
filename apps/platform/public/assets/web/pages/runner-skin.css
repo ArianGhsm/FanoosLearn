@@ -91,7 +91,6 @@ body.x-runner-page {
     font-size: var(--text-sm);
     font-weight: var(--weight-strong);
     color: var(--text-primary);
-    font-variant-numeric: tabular-nums;
 }
 
 .x-runner-page .x-bar__progress-track {
