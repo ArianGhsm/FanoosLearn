@@ -218,6 +218,22 @@ SQL);
         $endodontics = array_values(array_filter($overview['subjects'], static fn (array $s): bool => $s['key'] === 'endodontics'))[0] ?? null;
         $this->assert($overview['total'] === 2 && $endodontics !== null && $endodontics['total'] === 2 && $endodontics['per_exam'] === 2 && $endodontics['first_year'] === 1404, 'Overview: ' . json_encode($overview, JSON_UNESCAPED_UNICODE));
         $this->assert(count($overview['sittings']) === 1 && $overview['sittings'][0]['assessment_id'] === $published['assessment_id'], 'The published sitting is not listed by year.');
+        // «آزمون من»: one exam type narrows the bank; another type's view is empty, and an unknown type is refused.
+        $sittingType = $overview['sittings'][0]['type_key'];
+        $narrowed = $browse->overview($f['student'], $ws, $sittingType);
+        $this->assert($narrowed['type'] === $sittingType && $narrowed['total'] === 2 && in_array($sittingType, array_column($overview['types'], 'key'), true), 'The bank does not narrow to an exam type.');
+        $other = array_values(array_diff(array_column($overview['types'], 'key'), [$sittingType]))[0] ?? null;
+        if ($other !== null) {
+            $empty = $browse->overview($f['student'], $ws, $other);
+            $this->assert($empty['total'] === 0 && $empty['sittings'] === [] && count($empty['types']) === count($overview['types']), 'Another exam type still shows this paper.');
+            $this->assert($browse->subject($f['student'], $ws, 'endodontics', $other)['total'] === 0, 'A subject narrowed to another exam type still counts this paper.');
+        }
+        try {
+            $browse->overview($f['student'], $ws, 'no-such-exam');
+            $this->assert(false, 'An unknown exam type was accepted.');
+        } catch (PlatformException $e) {
+            $this->assert($e->errorCode === 'bank_type_not_found', 'An unknown exam type gave ' . $e->errorCode);
+        }
         $subject = $browse->subject($f['student'], $ws, 'endodontics');
         $this->assert($subject['topics'][0]['key'] === 'endodontics/cleaning-and-shaping' && $subject['topics'][0]['total'] === 2 && count($subject['high_yield']) === 2, 'Subject topics: ' . json_encode($subject['topics'], JSON_UNESCAPED_UNICODE));
         $this->assert($subject['references'] !== [], 'The subject page lists no references.');

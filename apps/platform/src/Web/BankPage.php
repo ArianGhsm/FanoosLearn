@@ -22,6 +22,7 @@ final class BankPage
 <header class="b-head">
     <h1>بانک سؤال</h1>
     <p class="f-muted">سؤال‌های آزمون‌های گذشته، درس به درس و سال به سال، هر کدام با پاسخ تشریحی و جای پاسخ در رفرنس.</p>
+    <div id="goal-slot"></div>
     <div class="b-head__tools">
         <input class="f-input b-search" id="bank-search" type="search" placeholder="جست‌وجوی درس، مبحث یا سال…" autocomplete="off" aria-label="جست‌وجو در بانک">
         <a class="f-btn f-btn--ghost" href="/app/references">منابع آزمون</a>
@@ -34,7 +35,7 @@ final class BankPage
 
 <div class="b-tabs" role="tablist" aria-label="نمای بانک">
     <button class="x-chip is-active" type="button" role="tab" aria-selected="true" data-view="subjects">به تفکیک درس</button>
-    <button class="x-chip" type="button" role="tab" aria-selected="false" data-view="years">به تفکیک سال</button>
+    <button class="x-chip" type="button" role="tab" aria-selected="false" data-view="years">به تفکیک آزمون و سال</button>
 </div>
 
 <div id="bank" data-page="overview" aria-busy="true" aria-live="polite">

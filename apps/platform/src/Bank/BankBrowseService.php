@@ -42,15 +42,19 @@ final class BankBrowseService
     }
 
     /**
-     * Subjects with their numbers, and the exam papers by year.
+     * Subjects with their numbers, and the exam papers by year; with an exam
+     * type (the student's «آزمون من»), only that type's questions and papers.
+     * `types` lists every active exam type with its published questions, so
+     * the page can offer them whatever the filter.
      *
      * @return array<string, mixed>
      */
-    public function overview(string $userId, string $workspaceId): array
+    public function overview(string $userId, string $workspaceId, ?string $typeKey = null): array
     {
         $this->access->requireWorkspace($userId, $workspaceId, 'exam.take');
-        $questions = $this->questions($workspaceId, null);
-        $sittings = $this->sittings($workspaceId);
+        $typeKey = $this->typeFilter($workspaceId, $typeKey);
+        $questions = $this->questions($workspaceId, null, $typeKey);
+        $sittings = array_values(array_filter($this->sittings($workspaceId), static fn (array $s): bool => $typeKey === null || $s['type_key'] === $typeKey));
         $published = array_filter($sittings, static fn (array $sitting): bool => $sitting['assessment_id'] !== null);
 
         $subjects = [];
@@ -83,12 +87,17 @@ final class BankBrowseService
             }, $subjects)),
             'sittings' => array_values(array_map(static fn (array $sitting): array => [
                 'type' => $sitting['type_name'],
+                'type_key' => $sitting['type_key'],
                 'year' => $sitting['year'],
                 'round' => $sitting['round'],
+                'subject_key' => $sitting['subject_key'],
+                'subject_name' => $sitting['subject_name'],
                 'assessment_id' => $sitting['assessment_id'],
                 'questions' => $sitting['questions'],
             ], $published)),
             'total' => count($questions),
+            'type' => $typeKey,
+            'types' => $this->types($workspaceId),
         ];
     }
 
@@ -98,11 +107,12 @@ final class BankBrowseService
      *
      * @return array<string, mixed>
      */
-    public function subject(string $userId, string $workspaceId, string $subjectKey): array
+    public function subject(string $userId, string $workspaceId, string $subjectKey, ?string $typeKey = null): array
     {
         $this->access->requireWorkspace($userId, $workspaceId, 'exam.take');
         $subject = $this->subjectRow($workspaceId, $subjectKey);
-        $questions = $this->questions($workspaceId, (string) $subject['id']);
+        $typeKey = $this->typeFilter($workspaceId, $typeKey);
+        $questions = $this->questions($workspaceId, (string) $subject['id'], $typeKey);
         $latest = $questions === [] ? null : max(array_column($questions, 'year'));
         $recentFrom = $latest === null ? null : $latest - self::RECENT_YEARS + 1;
 
@@ -140,6 +150,8 @@ final class BankBrowseService
 
         return [
             'subject' => ['key' => $subject['subject_key'], 'name' => $subject['name'], 'name_en' => $subject['name_en']],
+            'type' => $typeKey,
+            'type_name' => $typeKey === null ? null : array_column($this->types($workspaceId), 'name', 'key')[$typeKey],
             'total' => count($questions),
             'per_exam' => $sittings === [] ? null : (int) round(count($questions) / count($sittings)),
             'first_year' => $questions === [] ? null : min(array_column($questions, 'year')),
@@ -164,7 +176,8 @@ final class BankBrowseService
     {
         $this->access->requireWorkspace($userId, $workspaceId, 'exam.take');
         $subject = $this->subjectRow($workspaceId, (string) ($input['subject'] ?? ''));
-        $questions = $this->questions($workspaceId, (string) $subject['id']);
+        $typeKey = $this->typeFilter($workspaceId, isset($input['type']) ? (string) $input['type'] : null);
+        $questions = $this->questions($workspaceId, (string) $subject['id'], $typeKey);
         $title = (string) $subject['name'];
 
         $topic = isset($input['topic']) && $input['topic'] !== '' ? (string) $input['topic'] : null;
@@ -355,10 +368,11 @@ SQL);
      *
      * @return list<array{key:string,subject_key:string,sitting_id:string,year:int,round:int,number:int,topic_key:?string,topic_name:?string,topic_name_en:?string,concept_key:?string,concept_name:?string,concept_name_en:?string,old_reference:bool}>
      */
-    private function questions(string $workspaceId, ?string $subjectId): array
+    private function questions(string $workspaceId, ?string $subjectId, ?string $typeKey = null): array
     {
         $concepts = $this->concepts($workspaceId);
-        $filter = $subjectId === null ? '' : 'AND question.subject_id = :subject';
+        $filter = ($subjectId === null ? '' : 'AND question.subject_id = :subject')
+            . ($typeKey === null ? '' : ' AND sitting.exam_type_id = (SELECT id FROM bank_exam_types WHERE workspace_id = :type_workspace AND type_key = :type)');
         $query = $this->database->prepare(<<<SQL
 SELECT question.id, question.question_key, question.number_in_sitting, subject.subject_key,
        sitting.id AS sitting_id, sitting.exam_year, sitting.exam_round,
@@ -377,6 +391,10 @@ SQL);
         $parameters = ['workspace' => $workspaceId, 'threshold_concept' => self::CONFIDENCE_THRESHOLD, 'threshold_currency' => self::CONFIDENCE_THRESHOLD];
         if ($subjectId !== null) {
             $parameters['subject'] = $subjectId;
+        }
+        if ($typeKey !== null) {
+            $parameters['type_workspace'] = $workspaceId;
+            $parameters['type'] = $typeKey;
         }
         $query->execute($parameters);
 
@@ -473,8 +491,13 @@ SQL);
     private function sittings(string $workspaceId): array
     {
         $query = $this->database->prepare(<<<'SQL'
-SELECT sitting.id, sitting.exam_year, sitting.exam_round, sitting.assessment_id, type.name AS type_name,
-       (SELECT COUNT(*) FROM bank_questions question WHERE question.sitting_id = sitting.id AND question.status = 'published') AS questions
+SELECT sitting.id, sitting.exam_year, sitting.exam_round, sitting.assessment_id, type.name AS type_name, type.type_key,
+       (SELECT COUNT(*) FROM bank_questions question WHERE question.sitting_id = sitting.id AND question.status = 'published') AS questions,
+       (SELECT COUNT(DISTINCT question.subject_id) FROM bank_questions question WHERE question.sitting_id = sitting.id) AS subject_count,
+       (SELECT subject.subject_key FROM bank_questions question JOIN bank_subjects subject ON subject.id = question.subject_id
+        WHERE question.sitting_id = sitting.id LIMIT 1) AS subject_key,
+       (SELECT subject.name FROM bank_questions question JOIN bank_subjects subject ON subject.id = question.subject_id
+        WHERE question.sitting_id = sitting.id LIMIT 1) AS subject_name
 FROM bank_exam_sittings sitting
 JOIN bank_exam_types type ON type.id = sitting.exam_type_id
 WHERE sitting.workspace_id = :workspace
@@ -488,8 +511,49 @@ SQL);
             'round' => (int) $row['exam_round'],
             'assessment_id' => $row['assessment_id'] === null ? null : (string) $row['assessment_id'],
             'type_name' => (string) $row['type_name'],
+            'type_key' => (string) $row['type_key'],
+            // A board or promotion paper is one specialty's; a residency paper has every subject.
+            'subject_key' => (int) $row['subject_count'] === 1 ? (string) $row['subject_key'] : null,
+            'subject_name' => (int) $row['subject_count'] === 1 ? (string) $row['subject_name'] : null,
             'questions' => (int) $row['questions'],
         ], $query->fetchAll());
+    }
+
+    /**
+     * The active exam types, in their order, with how many published
+     * questions each has (none yet for a type that only has reference lists).
+     *
+     * @return list<array{key:string,name:string,questions:int}>
+     */
+    private function types(string $workspaceId): array
+    {
+        $query = $this->database->prepare(<<<'SQL'
+SELECT type.type_key, type.name,
+       (SELECT COUNT(*) FROM bank_questions question JOIN bank_exam_sittings sitting ON sitting.id = question.sitting_id
+        WHERE sitting.exam_type_id = type.id AND question.status = 'published' AND sitting.assessment_id IS NOT NULL) AS questions
+FROM bank_exam_types type
+WHERE type.workspace_id = :workspace AND type.is_active = TRUE
+ORDER BY type.sort_order, type.name
+SQL);
+        $query->execute(['workspace' => $workspaceId]);
+
+        return array_map(static fn (array $row): array => [
+            'key' => (string) $row['type_key'], 'name' => (string) $row['name'], 'questions' => (int) $row['questions'],
+        ], $query->fetchAll());
+    }
+
+    /** An exam type to filter by: null for all, or an active type of this workspace. */
+    private function typeFilter(string $workspaceId, ?string $typeKey): ?string
+    {
+        if ($typeKey === null || $typeKey === '') {
+            return null;
+        }
+        foreach ($this->types($workspaceId) as $type) {
+            if ($type['key'] === $typeKey) {
+                return $typeKey;
+            }
+        }
+        throw new PlatformException('bank_type_not_found', 'That exam type is not in the bank.', 404);
     }
 
     /**

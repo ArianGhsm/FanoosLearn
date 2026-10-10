@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chapterCoverage, droppedReferences, fold, matches, previousYear, referenceChange, scopeText, share, sittingLabel, yearSpan } from '../../apps/platform/public/assets/web/pages/bank-rules.js';
+import { ALL_EXAMS, chapterCoverage, goalLabel, groupSittings, normalizeGoal, specialtiesByType, specialtyFirst, droppedReferences, fold, matches, previousYear, referenceChange, scopeText, share, sittingLabel, yearSpan } from '../../apps/platform/public/assets/web/pages/bank-rules.js';
 import { faDigits } from '../../apps/platform/public/assets/web/pages/question-stats.js';
 
 test('search folds Arabic letter forms, Persian digits and ZWNJ', () => {
@@ -79,4 +79,43 @@ test('chapter coverage counts announced chapters only when the year names them',
 test('a scope reads in Persian digits with room after each comma between numbers', () => {
     assert.equal(scopeText('فصول 4,5،8 و 13–30', faDigits), 'فصول ۴، ۵، ۸ و ۱۳–۳۰');
     assert.equal(scopeText(null, faDigits), '');
+});
+
+test('a stored goal is kept only while its exam type exists', () => {
+    assert.deepEqual(normalizeGoal({ type: 'board', specialty: 'endodontics' }, ['residency', 'board']), { type: 'board', specialty: 'endodontics' });
+    assert.deepEqual(normalizeGoal({ type: 'national' }, ['residency']), ALL_EXAMS);
+    assert.deepEqual(normalizeGoal(null, ['residency']), ALL_EXAMS);
+    assert.deepEqual(normalizeGoal({ type: 'residency', specialty: 7 }, ['residency']), { type: 'residency', specialty: '' });
+});
+
+test('a goal reads as the exam and, for a specialty exam, the specialty', () => {
+    const types = [{ key: 'residency', name: 'دستیاری' }, { key: 'board', name: 'بورد' }];
+    assert.equal(goalLabel(ALL_EXAMS, types), 'همه‌ی آزمون‌ها');
+    assert.equal(goalLabel({ type: 'residency', specialty: '' }, types), 'دستیاری');
+    assert.equal(goalLabel({ type: 'board', specialty: 'endodontics' }, types, 'اندودانتیکس'), 'بورد · اندودانتیکس');
+});
+
+test('papers group by exam and year, and a specialty goal keeps its own papers', () => {
+    const sittings = [
+        { type: 'دستیاری', type_key: 'residency', year: 1404, subject_key: null },
+        { type: 'بورد', type_key: 'board', year: 1404, subject_key: 'endodontics' },
+        { type: 'بورد', type_key: 'board', year: 1404, subject_key: 'periodontics' },
+        { type: 'ارتقا', type_key: 'promotion', year: 1405, subject_key: 'endodontics' },
+    ];
+    const all = groupSittings(sittings);
+    assert.deepEqual(all.map((g) => `${g.type_key}:${g.year}:${g.sittings.length}`), ['promotion:1405:1', 'residency:1404:1', 'board:1404:2']);
+    const endo = groupSittings(sittings, { type: 'board', specialty: 'endodontics' });
+    assert.deepEqual(endo.map((g) => `${g.type_key}:${g.sittings.map((s) => s.subject_key)}`), ['board:endodontics']);
+});
+
+test('specialty exams list their specialties; a goal specialty comes first', () => {
+    const sittings = [
+        { type_key: 'residency', subject_key: null },
+        { type_key: 'board', subject_key: 'periodontics', subject_name: 'پریودانتیکس' },
+        { type_key: 'board', subject_key: 'endodontics', subject_name: 'اندودانتیکس' },
+        { type_key: 'board', subject_key: 'endodontics', subject_name: 'اندودانتیکس' },
+    ];
+    assert.deepEqual(specialtiesByType(sittings), { board: [{ key: 'endodontics', name: 'اندودانتیکس' }, { key: 'periodontics', name: 'پریودانتیکس' }] });
+    assert.deepEqual(specialtyFirst([{ key: 'a' }, { key: 'b' }], 'b').map((r) => r.key), ['b', 'a']);
+    assert.deepEqual(specialtyFirst([{ key: 'a' }], '').map((r) => r.key), ['a']);
 });
