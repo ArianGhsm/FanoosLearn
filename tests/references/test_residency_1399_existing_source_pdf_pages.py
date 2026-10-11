@@ -71,9 +71,9 @@ class Residency1399ExactExistingSourceRepairContract(unittest.TestCase):
         self.assertIn("PDF_HUPP_1399", self.text)
         self.assertIn("35e3c37fec67a831a4464205c1817cc1e51c0a9f8a0bd8660a1881ecd2f10a83", self.text)
         for n in (131, 132, 133, 134, 135, 136, 137, 139, 140, 141, 142, 143, 144, 148, 149, 150):
-            self.assertRegex(self.text, rf"(?m)^\\s*{n}\\s*=>")
+            self.assertRegex(self.text, rf"(?m)^\s*{n}\s*=>")
         for n in (138, 145, 146, 147):
-            self.assertNotRegex(self.text, rf"(?m)^\\s*{n}\\s*=>")
+            self.assertNotRegex(self.text, rf"(?m)^\s*{n}\s*=>")
 
     def test_official_partial_and_subchapter_guards(self):
         self.assertIn("Craig partial original-year page-scope rejected", self.text)
