@@ -58,3 +58,19 @@
 - آرشیو محافظت‌شدهٔ snapshot ۲۵۰ سؤال + ۴ تصویر + ۱۹ تصمیم + خروجی اعتبارسنجی + فهرست پژوهشی در `/var/backups/fanoos/research/20261011-residency1403-endo-19-primary-reviewed.tar.gz` قرار دارد؛ SHA-256 `272eeb547883b25d9ca85699a0cbc63bf0bad2cd266e06c0f5730494b0670037`. این آرشیو **پشتیبان کامل تولید نیست** و برای مجوز تغییر تولیدی کافی نیست.
 
 **مرزبندی پذیرش:** این ۱۹ مورد فقط از **اعتبارسنج اولیهٔ مستقیم PDF** عبور کرده‌اند. `audit_private_study_batches.py` تنها بستهٔ `study-only` بدون منبع موجود را می‌پذیرد؛ خروجی canonical این مرحله `fanoos.bank.sitting/1` و پرسش‌ها از قبل ردیف منبع دارند. برای پذیرش نهایی و ثبت PDF-page روی ردیف‌های موجود، ممیزی مستقل سازگار با source-repair، اصلاح کنترل‌شدهٔ فقط `pdf_page` و `pdf_sha256`، نسخهٔ پشتیبان کامل تازه، محافظ عدم تغییر صورت سؤال/گزینه/کلید، قفل انتشار و آزمون‌های CI الزامی‌اند. **این مرحله هنوز هیچ ردیف تولیدی را ویرایش نکرده، آزمونی بازنشر نکرده و عدد ۷۱/۲۵۰ِ ثبت‌شده را تغییر نداده است.**
+
+## ممیزی ثانویهٔ مستقل (۲۰۲۶-۱۰-۱۱)
+
+برای رفع محدودیتِ نوع دادهٔ ممیز، از خروجی واقعی ۲۵۰ سؤال با یک اسکریپت بازتولیدپذیر و محافظت‌شدهٔ صرفاً پژوهشی، **همان ۲۰ سؤال اندودانتیکس** با صورت سؤال، چهار گزینه و آخرین کلید رسمی بدون تغییر به قالب غیرقابل‌ورود `fanoos.classification.study-only/1` تبدیل شدند. این فایل اصلاً برای واردکردن به بانک قابل‌استفاده نیست؛ هیچ دادهٔ زنده‌ای بازنویسی نشد. اسکریپت: `/srv/fanoos/shared/research/tmp/1403-endo-page-audit-20261011/make_endo_study_subset.py`، هش `afe8b620beac2b74aad4b0bbd1904a109e1d447df94b8cffb1ee64409d5cfddc`.
+
+مسیر ریشهٔ ممیزی: `/srv/fanoos/shared/research/tmp/1403-endo-page-audit-20261011/audit-root/`. فایل مطالعهٔ اصلی (`bank-sittings/1403/endo-study-20261011-study.json`) SHA-256 `17e3b2c8c0dd669df36399f564dd11a2446f66bba4fed731012b45f37b430cc9`؛ تصمیم‌ها (`classification/decisions/1403-endodontics.json`) SHA-256 `383c525da64ea1242e5122715f1afb1116038a2fd442846fca1e5ca735b82ad0`؛ خروجی اعتبارسنج اول (`classification/sittings/1403-endo-study-20261011-validated.json`) SHA-256 `68172bc14af93113a2a07480e6ff3d70877dcf9b20618f5eb2067ba1411ab96c`.
+
+اجرای مجددِ اعتبارسنج اولیه روی همین بستهٔ ۲۰ سؤالی **۱۹ accepted، صفر rejected، یک undecided** داشت. سپس ابزار **مستقل** `scripts/references/audit_private_study_batches.py` با `--local=<audit-root> --batch=1403:endodontics:endo-study-20261011` خروجی رسمیِ زیر را ثبت کرد:
+
+`{"format":"fanoos.classification.provenance-audit/1","research_only":true,"batch_count":1,"questions":20,"accepted":19,"pending":1}`
+
+گزارش ممیزی ثانویه: `<audit-root>/classification/reports/1403-endo-19-independent-page-audit.json`، SHA-256 `42b821f21d50a6edd932060b448d247628f011995fb63fabbab3b7a09802ad62`. گزارش صراحتاً `question_content_identical=true`، `reference_years=[1403]`، PDFِ متصل به هش تورابینژاد۶ و تمام ۱۹ جفت شماره فصل/PDF-page را تأیید می‌کند. سؤال ۳۴ همچنان hold باقی می‌ماند.
+
+آرشیو محافظت‌شدهٔ مربوط به ممیزی مستقل: `/var/backups/fanoos/research/20261011-residency1403-endo-19-independent-verified.tar.gz`، SHA-256 `89f96297691bd5dba3bda31fd5cd392a4646f99d9476815ff4fe8c59dff04ade`؛ هش فایل رسید استخراج‌شده از آرشیو دوباره کنترل و برابر اصل بود.
+
+**محدودهٔ صحت:** این ممیزی رسمی پژوهشی/مستقل بوده، اما **اصلاح ردیف موجود در DB، بازانتشار آزمون، CI ابزارِ جدید metadata-repair یا استقرار جدید انجام نشده است.** ۱۹ تصمیم از نظر رفرنس/فصل/شمارهٔ PDF قابل استناد پژوهشی هستند؛ تغییر تولیدی فقط با مجوز و مسیر ایمنِ بازبینی منبع قبلی و قفل انتشار امکان‌پذیر است.
