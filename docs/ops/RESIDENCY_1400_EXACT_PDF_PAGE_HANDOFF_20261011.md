@@ -88,3 +88,58 @@ The existing private W01 research package contains **14 primary-validated / inde
 The official 1400 radiology validity entry is `white-pharoah-radiology@8e` with explicit `scope_chapters` **1–25**, source-document `1400_منابع دستیاری 1400.pdf`. The three out-of-scope cases **must not** be imported, even though the original text is found; investigate the official exam reference list or question attribution separately without changing keys or old source rows. The first attempted new scratch validator correctly reported **1 accepted (Q199), 3 rejected (Q208–210)**; because it required all four to succeed, the batch had a nonzero exit code and its temporary output was automatically cleaned. The subsequent independent one-question validation and write attempt was **blocked by tool safety checks**; no private followup decision file, validation receipt, production DB import, frozen assessment version, or release change was claimed. Do not bypass that safety gate. A separately authorized resumption must perform the independent review and approved protected write before counting Q199 as completed.
 
 **Production numbers remain 56/250 same-row chapter+PDF page+SHA, with 174 non-English book-based incomplete cases and 20 official-key-only English exceptions.** Scientific revalidation of earlier research is not publication. This doc update alone makes no production data, answer, or attempt changes.
+
+
+## Exact-PDF research expansion, 2026-10-11 — not yet applied to production
+
+**Live baseline rechecked in this continuation:** residency/1400/round1: **250 total, 56 with same-row chapter + PDF page + SHA**; **174 non-English clinical cases remain incomplete**, plus 20 English official-answer-only exceptions. Running release symlink was `cd3b7913640dcb6ccdcb471e637e9e3236b89c4e`, while the updater checkout showed `a4b447d14d7e490ca9a4309aeec7b84e8a659a86`; a full release/CI/synchronization assertion was *not* established. No live source rows, keys, answers, human decisions, frozen assessments, attempts or site release were changed.
+
+### Authoritative W01 radiology source-only research package now rebuilt
+
+The canonical current `apply_classification.py --pdf-pages` independently accepted **15/20**, **0 rejected**, retaining the original 14 untouched and adding **Q199 White & Pharoah 8e, chapter 9, PDF page 457**. The secondary `audit_private_study_batches.py` confirmed **15 accepted / 5 pending**, PDF source hash `228ceb46982c3057d8a7d78b1d10759e72ed1a3a385a76a9affc38e45874c25a`, and **all original stems/options/answers identical**. A new protected immutable coordinator research stage was created and read back:
+
+- `/srv/fanoos/shared/research/classification/coordinator/W01-audit-stage/` (private, no PDF/page-text export)
+- `classification/reports/W01-1400-15-original-pdf-audit-20261011.json`: SHA-256 `6c62e4baeae703632c1aa77159993dac7abc79fefdb061be25bd4bef169c39ef`
+- Exact 15 decision-file SHA-256: `284d83c9fb352d73241ef0051efd5ca121adfdb614a4dbde8e7ad0f791d7dcc1`
+- Rebuilt validated-study SHA-256: `985c79d1617022bba5b8cf1e5aa818d636c234ee1ed73fc05fee58866462e9c0`
+
+An *older* source-only dry-run using the 14-question old-format validated file failed because that validated file omitted `pdf_page` and `pdf_sha256`. The new 15-question stage correctly includes these fields and passed both offline validators. **An attempt to run the source-only dry-run on this new stage was blocked by the tool's safety checks. Do not circumvent or mark the 15 as inserted.** Before authorized resumption, run the canonical source-only preflight against the protected 15-question stage with exact live question matching, then fresh full verified backup + publisher lock + approved apply + unique receipt + exam/answer/frozen-state audit. The remaining W01 Q195/Q197 and out-of-official-scope Q208/Q209/Q210 stay on hold.
+
+### Legacy source rows: PDF-page evidence recovered, subject to safe metadata-only repair
+
+The following **13 existing source rows** were independently checked against their exact original approved PDF (PDF SHA matches contiguous chapter map), actual same-page original evidence, official 1400 scope, *and printed-page matching on adjacent original PDF pages*. Legacy `printed_page` is **not** the `pdf_page`:
+
+| Subject | Question | Edition | Existing chapter | Existing printed page | Verified original PDF page |
+|---|---:|---|---|---:|---:|
+| Dental materials | 213 | Powers & Wataha 11e | 8 | 110 | 128 |
+| Dental materials | 215 | Powers & Wataha 11e | 7 | 92 | 110 |
+| Dental materials | 219 | Van Noort 4e | 3.7 | 212 | 227 |
+| Dental materials | 220 | Van Noort 4e | 3.6 | 206 | 221 |
+| Endodontics | 24 | Torabinejad 6e | 4 | 66 | 73 |
+| Endodontics | 26 | Torabinejad 6e | 6 | 102 | 109 |
+| Endodontics | 29 | Torabinejad 6e | 9 | 163 | 170 |
+| Endodontics | 30 | Torabinejad 6e | 10 | 190 | 197 |
+| Endodontics | 33 | Torabinejad 6e | 12 | 236 | 243 |
+| Endodontics | 34 | Torabinejad 6e | 13 | 294 | 301 |
+| Endodontics | 35 | Torabinejad 6e | 14 | 313 | 320 |
+| Endodontics | 39 | Torabinejad 6e | 20 | 439 | 446 |
+| Endodontics | 40 | Torabinejad 6e | 15 | 331 | 338 |
+
+And **six** additional existing oral-surgery source rows passed the same exact-PDF, chapter, scope, quotation and independent neighboring printed-page checks:
+
+| Q | Edition | Chapter | Printed | PDF page |
+|---:|---|---:|---:|---:|
+| 134 | Malamed Local Anesthesia 7e | 18 | 345 | 362 |
+| 136 | Hupp Oral Surgery 7e | 3 | 43 | 57 |
+| 137 | Hupp 7e | 5 | 61 | 75 |
+| 143 | Hupp 7e | 26 | 563 | 577 |
+| 146 | Hupp 7e | 31 | 658 | 672 |
+| 147 | Hupp 7e | 10 | 174 | 188 |
+
+**Three** existing Zarb Edentulous 13e prosthodontics source rows independently passed the same checks: **Q83 ch12 printed272 PDF286; Q86 ch1 printed17 PDF31; Q90 ch7 printed152 PDF166**. Q88 ch8 PDF179 has original-PDF quote evidence but printed-page corroboration is incomplete; hold for independent source review. The McCracken RPD 13e chapter map is **not bound to the current approved original PDF SHA**; no McCracken PDF page can count as verified until that map is rebuilt and audited.
+
+**Neville oral pathology:** all **20** historical citations were imported originally with `[neville-oral-pathology@5e ... nearest edition]` in their anchors, although **Neville 4e is the official year-1400 edition**. Re-reading the **actual Neville 4e** rather than mechanically carrying old 5e printed numbers found an exact phrase from the old anchored evidence on the corresponding official 4e chapter page for **Q62 ch2 PDF98, Q64 ch5 PDF192, Q71 ch12 PDF501, Q73 ch13 PDF561, Q74 ch14 PDF601, Q77 ch15 PDF657**. These **six are research candidates only**, pending full question/answer semantic review and source repair; the other 14 cannot be claimed from an unmatched 5e quote. The original verified Neville 4e PDF SHA was `6fbc9bcba9003deda2f8fc006ccc4f23f9e15db0bcd0e237c56ddf6788578bb6`.
+
+**Scope conflicts:** six materials legacy Van Noort records **Q211/212/214/216/217/218** are presently mapped to chapters outside year-1400 official scope (only sections **3.4–3.7** eligible), even when old book text was found; they must not be completed without a new official in-scope exact-page citation. For oral medicine, pediatric dentistry and periodontics, historic blank-page anchors point to **Burket 13e / Little Falace 10e / McDonald-Avery 11e / Carranza 14e**, respectively, rather than the official **Burket 12e / Little Falace 9e / Nowak 6e / Carranza 13e**. These historical chapters must be independently revalidated, not merely relabeled with the official edition. The unsourced non-radiology question numbers are **Q170 operative** and **Q174 pediatric**; Q174 already has a private Nowak 6e ch15 PDF264 research decision pending approved source-only publication. A subsequent full Burket12e transient one-page scan timed out, so no results from that incomplete job are counted.
+
+**Production completion is still 56/250.** The numbers above are overlapping categories of **research-validated candidate metadata**, not new live completion totals. The source-only publisher only inserts into genuinely source-free questions; it does **not** repair pre-existing chapter-only sources. No raw SQL shortcut, wholesale source replacement or fake printed-to-PDF-page conversion is authorized. Require a separately reviewed metadata-only repair implementation with snapshot/backups and immutable-published-exam checks. Any safety-gate block must remain a blocker for that operation, not an excuse for using a weaker write route.
