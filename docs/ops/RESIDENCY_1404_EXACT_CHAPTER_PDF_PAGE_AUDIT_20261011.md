@@ -1,5 +1,68 @@
 # Residency 1404 exact chapter + PDF-page audit — 2026-10-11
 
+## LATEST PRODUCTION CHECKPOINT — 36 more original-PDF pages applied, total **102/250**
+
+**Execution 2026-10-11 (latest in this file).** The original, officially approved book/PDF SHA of each of these **36** existing AI-origin source rows was verified, each 1-indexed PDF page was visually/textually corroborated with the precise printed page and adjacent printed labels, and each cited question/official keyed choice was screened against its original passage. The official operator `scripts/references/repair_verified_source_pages.php` passed a full rollback-only preview before executing the isolated production writes with a fresh full backup. Only **`bank_question_sources.pdf_page` and `bank_question_sources.pdf_sha256`** were updated; book, chapter node, printed labels, original question text, options, official keys (including amended/voided history), human reviews, attempts and immutable student assessment versions were never rewritten.
+
+**Live authenticated MySQL after applies:** 1404 residency, round 1, total 250 questions = 230 clinical plus 20 English reference-exempt; same-row chapter + `pdf_page` + exact-PDF `pdf_sha256` rose **66 → 102** during this continuation (the original day's first baseline was 48). **128 non-English clinical still need completion.** New rows: Neville5e oral pathology **16**, Hupp7e oral surgery **12**, Malamed7e oral surgery/local anesthesia **3**, Zarb13e prosthodontics **5**. The original approved PDF SHA-256 values are included in the protected private checkpoint and enforced by the publisher.
+
+| Question | Original reference (edition) | Existing official chapter | Book printed page | Verified PDF page |
+| ---: | --- | ---: | ---: | ---: |
+| 41 | `neville-oral-pathology@5e` | 3 | 143 | **153** |
+| 43 | `neville-oral-pathology@5e` | 6 | 222 | **232** |
+| 45 | `neville-oral-pathology@5e` | 9 | 329 | **339** |
+| 46 | `neville-oral-pathology@5e` | 10 | 367 | **377** |
+| 47 | `neville-oral-pathology@5e` | 10 | 379 | **389** |
+| 49 | `neville-oral-pathology@5e` | 11 | 489 | **499** |
+| 50 | `neville-oral-pathology@5e` | 11 | 488 | **498** |
+| 51 | `neville-oral-pathology@5e` | 12 | 569 | **579** |
+| 53 | `neville-oral-pathology@5e` | 13 | 607 | **617** |
+| 54 | `neville-oral-pathology@5e` | 14 | 635 | **645** |
+| 52 | `neville-oral-pathology@5e` | 12 | 534 | **544** |
+| 55 | `neville-oral-pathology@5e` | 14 | 664 | **674** |
+| 57 | `neville-oral-pathology@5e` | 15 | 702 | **712** |
+| 58 | `neville-oral-pathology@5e` | 15 | 733 | **743** |
+| 59 | `neville-oral-pathology@5e` | 15 | 694 | **704** |
+| 60 | `neville-oral-pathology@5e` | 16 | 790 | **800** |
+| 131 | `hupp-oral-surgery@7e` | 1 | 10 | **24** |
+| 133 | `hupp-oral-surgery@7e` | 4 | 48 | **62** |
+| 135 | `hupp-oral-surgery@7e` | 14 | 261 | **275** |
+| 136 | `hupp-oral-surgery@7e` | 15 | 281 | **295** |
+| 137 | `hupp-oral-surgery@7e` | 16 | 320 | **334** |
+| 138 | `hupp-oral-surgery@7e` | 21 | 446 | **460** |
+| 139 | `hupp-oral-surgery@7e` | 23 | 484 | **498** |
+| 140 | `hupp-oral-surgery@7e` | 24 | 512 | **526** |
+| 141 | `hupp-oral-surgery@7e` | 25 | 531 | **545** |
+| 142 | `hupp-oral-surgery@7e` | 28 | 617 | **631** |
+| 143 | `hupp-oral-surgery@7e` | 29 | 632 | **646** |
+| 144 | `hupp-oral-surgery@7e` | 26 | 584 | **598** |
+| 146 | `malamed-local-anesthesia@7e` | 4 | 62 | **79** |
+| 148 | `malamed-local-anesthesia@7e` | 18 | 349 | **366** |
+| 149 | `malamed-local-anesthesia@7e` | 4 | 61 | **78** |
+| 81 | `zarb-edentulous@13e` | 1 | 18 | **32** |
+| 83 | `zarb-edentulous@13e` | 12 | 272 | **286** |
+| 84 | `zarb-edentulous@13e` | 17 | 336 | **350** |
+| 85 | `zarb-edentulous@13e` | 7 | 151 | **165** |
+| 89 | `zarb-edentulous@13e` | 15 | 317 | **331** |
+
+**Pre-apply independently verified full backup:** `/var/backups/fanoos/20261011T190447Z-cbce7c1e`, official `verify-backup.php` returned **114 verified files**. The completed atomic apply receipt per batch was read back and SHA-256 verified:
+
+- `/srv/fanoos/shared/research/classification/reports/residency-1404-neville-10-applied-20261011.json` — SHA-256 `d8a765d418056e7f3d3cc09a5feb226f00b1b9cc570c5353e4dafb4c5c89e64e`.
+- `/srv/fanoos/shared/research/classification/reports/residency-1404-neville-6-applied-20261011.json` — SHA-256 `244f302a28a9ed5fefcf9feb3dbb7195051cdc2a7926542ec6676557b5940b26`.
+- `/srv/fanoos/shared/research/classification/reports/residency-1404-hupp-12-applied-20261011.json` — SHA-256 `6b1192eb4fa83ef41b8ac2dfb164ceaeec30cc7c57a102989f87936c4a483f46`.
+- `/srv/fanoos/shared/research/classification/reports/residency-1404-malamed-3-applied-20261011.json` — SHA-256 `edd4c2371ff7081ead0a3166f1f097ca8149df89bf4c35ce82886c7e6ea0cbbc`.
+- `/srv/fanoos/shared/research/classification/reports/residency-1404-zarb-5-applied-20261011.json` — SHA-256 `4b13841288c23fa827523653990459dd3a0098c00e9a3ba08b5b24adfb81203e`.
+
+Protected server research checkpoint: `/srv/fanoos/shared/research/classification/reports/residency-1404-36-exact-pdf-page-applied-checkpoint-20261011.json` (owner `fanoosupd`, `0600`), SHA-256 `1c1c360a310022edb3378eb4a18694a42da7c642caa312110f3e3b14572f80d3`; readback confirms exactly 36 source rows, 5 committed receipts, new total 102. The previous 18-applied checkpoint was `residency-1404-eighteen-bound-pages-applied-checkpoint-20261011.json`; these 36 are **additional**, not duplicates.
+
+**Strict non-source invariants after updates:** 250 question rows digest `5550ae476311940bce104182eebdde3e95b72594ef324628dc1fe6f77e767098`; 1,000 options digest `8103a7487af85336871bd90eeb00db5dc1240d3cb811e3eb5f07b74d53a8c215`; 260 official answer-history records digest `7ccaafbe4e04c9dcf5a80b83c594013abd4e06c6a690b10bcb10ea08c86b8621` — all identical to the preceding checkpoint. Student-facing immutable published exam **v5 / 247 questions** remains unchanged, frozen digest `91d37dc63430d140597c515f4838059c8dba7ffe415522556d19291c707fdc11`. **No frozen-exam re-publication** in this execution; bank citation metadata is already committed, but the site assessment's legacy explanation snapshot remains until the full official reviewer-authorized publisher/revalidation.
+
+**Explicit holds:** oral pathology Q42 (amended negative question), Q44 wrong year-scope chapter, Q48 historic chapter/page conflict, Q56 protected human source; oral surgery Hupp Q132/Q134 and Q145 (amended) require further semantic review, human Q147 excluded, Malamed Q150 official-key premise clashes with discussion of safety of amide agents; Zarb Q82 impossible original printed label for ch11, Q86/Q88 fail independent operator original-page/evidence gate even though preliminary locations were read, Q87 source does not directly establish keyed lip sign, Q90 human protected. The McCracken13e and McDonald11e chapter maps are not SHA-bound to their currently approved original PDF objects, and Carranza14e approved object is only a 105-page fragment. Existing 1404 oral radiology/community sources are human-origin. **Do not infer pages, change human decisions or force rejected rows.** Earlier Little & Falace Q76/Q78 passed rollback preview but their apply remained blocked, so they are not counted.
+
+The site `/health` was OK at live release `cd3b7913640dcb6ccdcb471e637e9e3236b89c4e`; repository documentation merge is tracked independently from live database source commits and site deployment.
+
+
+
 **Scope:** FANOOS dental **residency**, 1404, round 1. This is a read-only production and original-reference audit, not a publication or authorization to rewrite older source metadata. Use [the indivisible chapter/page policy](../product/09_CHAPTER_CLASSIFICATION.md) and [project principles](../PROJECT_PRINCIPLES.md) for all subsequent steps.
 
 ## Live baseline and exemption
