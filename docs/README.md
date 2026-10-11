@@ -38,6 +38,8 @@
   [`../ops/backup/README.md`](../ops/backup/README.md).
 - [`ops/QUESTION_IMPORT.md`](ops/QUESTION_IMPORT.md) — bringing exam papers
   from Google Drive into the bank (discover, prepare, import).
+- [`ops/BANK_CLASSIFICATION_SNAPSHOT_20261011.md`](ops/BANK_CLASSIFICATION_SNAPSHOT_20261011.md)
+  — live, reproducible site-wide chapter counts with English exemption and citation-depth caveats.
 - [`ops/RESIDENCY_CLASSIFICATION_1398_1405.md`](ops/RESIDENCY_CLASSIFICATION_1398_1405.md)
   — where residency classification stands, and how to read its removed per-batch records.
 - [`ops/REFERENCE_LISTS_NATIONAL_SPECIALTY_20261010.md`](ops/REFERENCE_LISTS_NATIONAL_SPECIALTY_20261010.md)
