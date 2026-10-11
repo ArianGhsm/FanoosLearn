@@ -92,3 +92,70 @@ The 17 stringent match candidates have original-PDF page, year-valid edition, in
 The earlier ten Torabinejad literal locations are correct *location discoveries*; only five passed the audit's **additional** pre-existing source confidence/eligibility and unique-match guards. The five others are not authorized for an automatic repair. The 134 pending comprise **63** without an exact existing anchor match, **61** failing strict anchor/scope/AI-confidence preconditions, and **10 McCracken 13e** blocked by an approved PDF versus chapter-map SHA mismatch. Rebuild and independently validate that exact edition map before touching those ten; do not bypass the hash guard or substitute another edition.
 
 **Publication status remains ZERO newly completed rows and ZERO source/question/answer/assessment changes.** The accepted candidate page list is a research file, not a source repair receipt. Before a live update, inspect and test the safe existing-source page repair operator, get a fresh independently verified backup, verify unchanged source identity/edition/chapter/original quote and the frozen exam, and follow the source-only reviewed publication/deployment gates. Neither the 17 research matches nor the other 134 are counted as completed live classifications.
+
+
+## Production publication of twelve verified PDF page locations — 2026-10-11
+
+**Actual result independently re-read:** the residency 1401 book-chapter+bound-PDF-page count increased **67 → 79 / 249**. Exactly **12 existing AI source rows** had only their previously NULL `pdf_page` and `pdf_sha256` fields added. No question, choice, official answer, edition, chapter, historic printed/legacy page, anchor, review state, exam assessment, or attempt record was modified. **151 non-English questions remain incomplete** (139 historical sourced but still without bound PDF page, 12 genuinely unsourced); 19 final-key English questions remain citation-exempt.
+
+### Verified individual mappings actually stored
+
+| Subject / exact official edition | Question → existing chapter / PDF page |
+|---|---|
+| Oral surgery, Hupp 7e | 132 → 2 / 42; 134 → 11 / 215; 135 → 14 / 274; 138 → 23 / 499; 140 → 24 / 522 |
+| Oral surgery, Malamed 7e | 145 → 7 / 134; 148 → 16 / 311 |
+| Endodontics, Torabinejad 6e | 22 → 1 / 18; 31 → 15 / 337; 36 → 19 / 422 |
+| Prosthodontics, Zarb 13e | 83 → 15 / 332; 87 → 12 / 286 |
+
+**Evidence provenance and controls:** previous independent source+chapter+PDF-page report SHA `d143e48cd9cbfe87dfc048cb9d31db0f68f6248e38b1fbca589ed0b199c87f68`; direct printed-label-neighbor and actual legacy-anchor original-PDF checks `1401-existing-page-neighbor-corroboration-20261011.json`, SHA `66d7b3223d2baf5c57dab7c7b7cdc11107d547fe436b8d39040942a76a88f3b9` (17 examined, 12 qualified, five held); 12 per-question protected study+decision+validated+independent audit packages (12/12 passing), stage index `1401-private-single-question-audit-stages-20261011.json` SHA `1e160ae8a5361911dc9df0b06bb2f877132f902d5bf0450ba800166dfbaeee47`; 12/12 individual source-page rollback previews SHA `cbf8f0219c3cd899da90ad3d0a4f59b726cb9d5dd50929b0d77924ce7d3dcf43`.
+
+The three reviewed **atomic, source-metadata-only group plans** are private and byte-pinned:
+- surgery plan `1401-surgery-page-repair-plan-20261011.json` SHA `4a5ade4c107df8cfe72d4095d9561ad12aa83eb915b22ab3bcd2dfdeb0347f22`, seven candidates;
+- endodontics plan `1401-endo-page-repair-plan-20261011.json` SHA `ee743dabe5161c7b01fceea951b869eafaf29574ee2d4c8e919b686b87c505fa`, three candidates;
+- prosthodontics plan `1401-prostho-page-repair-plan-20261011.json` SHA `f1c687f67a8790f8d69a783772a8cb23a3cbf945902eebd17ca0ba1b3f01a6e7`, two candidates.
+
+The deployed operator is `scripts/references/repair_verified_source_pages.php`. Its real database rollback previews all passed (seven, three, two; no non-source mutations); report `1401-batch-verified-page-repair-previews-20261011.json` SHA `77370f5c4a8f0442df09b0dbe00a034070d726eb43a83f6024b2b570ee043467`. An independent frozen 249-question assessment preflight passed for all three affected subjects, prior version **6**, receipt `1401-frozen-assessment-preflight-20261011.json` SHA `ac4d30803570ef6d2926f41dc179f5e87fb75ab1cb8003d9acd155fb84edba35`.
+
+### Deployment, backup, live applies and receipts
+
+The approved GitHub `main` CI completed successfully for code SHA `cd3b7913640dcb6ccdcb471e637e9e3236b89c4e` and the official deployment request `01a12b64-6e4e-72bf-bdb5-f5aee1a21018` finished **SUCCEEDED** (UTC 2026-10-11 14:39:13); the live `/health` endpoint returned `ok` with exactly that release SHA. Deployment's fresh full backup `/var/backups/fanoos/20261011T143835Z-3e7ca9e5` was **independently verified, 114 files including database.sql**, and authorized all three source-only updates under the enforced four-hour freshness window.
+
+Three actual atomic applies via that *deployed* operator, all protected with unique receipts:
+- surgery seven applied UTC 14:41:15, `1401-surgery-verified-page-repair-20261011.json` SHA `eda426c37da7ce15b8a91d725cf3f97045f4e8e79d111f36a99ffe9a799ac8f8`;
+- endodontics three applied UTC 14:41:57, `1401-endo-verified-page-repair-20261011.json` SHA `2da5cd0f977df93d0640be71283f9b9f4b7a53894e1bb7c78796bb84354d18ec`;
+- prosthodontics two applied UTC 14:42:33, `1401-prostho-verified-page-repair-20261011.json` SHA `42d00fa5512681c37b2c17726973460c00c2d81ea372e5c67c60a2517e5c2d58`.
+
+Independent **database read-back checked all 12 exact existing source IDs**, their current PDF pages and exact PDF hashes, previous chapter and edition, original printed/legacy label, original evidence-anchor SHA, zero human review, and a live comparison of every affected stem, all choices and the latest official answer against the immutable per-case input. No mismatch. Protected proof `1401-12-page-source-final-readback-20261011.json` SHA `a008f9fd4e29f52ef6c8685471a64148317bf0724ae046cb4e812e444afa293c`. Live strict count **79 of 249**, after both source update and independently verified read-back.
+
+**Frozen student assessment was intentionally not republished.** The live assessment remains **version 6**. A read-only comparison of its full 249-question frozen definition with the current BankPublisher preview found **no changed explanations for any of the 12 repaired questions** and **zero non-source field-value changes**. The preview did find **141 unrelated historical source-explanation differences**, which would be swept into a new assessment version if a blind whole-year publish were executed. These were not authorized by this narrow PDF-page repair; they are held for a separate audit. Receipt `1401-assessment-publication-gate-20261011.json` SHA `2cb5c8cd89775e3d8e43aeedd4580f6033c112fa118a074735a4521cc543c847`. No assessment version or student attempts were changed.
+
+### Protected evidence recovery and continuation
+
+All 12 private per-question study/decision/audit packages and fourteen protected batch reports/receipts were archived at `/var/backups/fanoos/research/20261011-residency1401-12-source-page-repairs-evidence.tar.gz`, SHA-256 `585e76b0ec778b5b19b6ec5ab21069b2682183f69b762f111639d064867113bc`. The archive was re-opened and all **62 files compared byte-by-byte** to the original inputs; a checksum sidecar was created and read back. This is an **on-server** archive, not offsite backup. The official verified retention operator dry-run then applied the configured **five completed sets** limit, deleting only the oldest completed verified full set `20261011T072401Z-4c8d0351`; the newer pre-repair backup and research archive remain.
+
+The remaining 151 non-English questions must be handled per same-year official edition, in-scope original chapter, exact server PDF page and hash. The five previously found but not strictly eligible PDF locations remain on hold (legacy anchor normalization or printed-page-neighbor issues); do **not** lower guards or copy a constant printed-page offset. The ten McCracken 13e cases remain blocked by the exact official PDF/chapter-map SHA mismatch, not by chapter naming alone. Separate fresh guarded source-only insertion is needed for 11 unsourced radiology and one unsourced pediatric question. All other old printed-only sources remain intact. Re-query production and current GitHub/deployment before attempting any additional repair.
+
+
+## Further original-book recovery: 3 additional pages actually verified and applied
+
+**Subsequent production result:** three more historical AI sources received exact page and PDF hash using the same approved source-page-only operator, bringing strict 1401 completeness from **79 → 82 / 249**. The full 1401 improvement during this operation is **67 → 82**, i.e. **15 actual verified source-page repairs**. **148 non-English book-based cases remain incomplete** (136 already source-linked but not complete, 12 without any source); 19 English final-key questions remain explicitly exempt.
+
+| Question | Exact official edition | Existing chapter | Verified PDF page | Preserved printed page |
+|---:|---|---:|---:|---:|
+| 30 | Torabinejad Endodontics 6e | 15 | 353 | 346 |
+| 213 | Powers-Wataha Materials 11e | 4 | 63 | 45 |
+| 214 | Powers-Wataha Materials 11e | 9 | 140 | 122 |
+
+The three had passed the original independent 13-book chapter+page search but were withheld earlier because the historic full-length evidence strings were split across PDF columns or line layout. They were recovered using **new short, verbatim quotes from the same original authenticated PDF pages** and independently checked printed-page neighbor labels, while **leaving all historical anchor text completely unchanged**. Original additional read-only science proof: `/srv/fanoos/shared/research/classification/reports/1401-three-rescued-original-page-proof-20261011.json`, SHA `80430c379de422d20be650bf14a55a10fc2d4c0ed4db5ca2d095697da7ca115d`.
+
+For each question, independently exported current question/choices/official key and created protected one-question original study, decision and validator package under `/srv/fanoos/shared/research/classification/recovery-1401-{endo30,materials213,materials214}-20261011/`; `apply_classification.py` and the independent original-PDF `audit_private_study_batches.py` succeeded **3/3** with no original-question change. Per-case independent audit SHA: endo30 `4c6242fa9fb3e3708c2433998871e2fab9cf9960384ea6265b591c6e0f4a5bd6`; materials213 `b02f586115240c79dbc99368aea975968f9b71d5bcb3339dd078ff925a958a4c`; materials214 `870679402bdbf139322af753be0774f924e0ce9f9fbdeb901d4a032217f92955`. Aggregated audit `1401-three-original-anchor-audits-20261011.json` in the protected reports directory.
+
+Two uniquely identified private batch repair plans, **both with successful rollback-only transaction previews and zero question/choice/answer changes**, were then applied from the **already deployed** green release `cd3b7913640dcb6ccdcb471e637e9e3236b89c4e` after a fresh independent verified full backup `/var/backups/fanoos/20261011T145712Z-e0f10040` (114 files including `database.sql`):
+- `1401-endo30-rescue-page-plan-20261011.json`, SHA `0980d3924d026182086d2e2715a2e5acbf7030513a2ab051c11a0405dcec81e9`. Applied one official Torabinejad PDF page with unique receipt `1401-endo30-rescue-page-applied-20261011.json`, SHA `22d04e233a8d49e2293059af83af63df044af1546b5ff67bcb25cc9bbb1ea211`, UTC 15:00:48.
+- `1401-materials-213-214-rescue-page-plan-20261011.json`, SHA `71226355c735c96ff1ec88bb9698102f151bfa5b41ba6a9a90c9854fab5f3443`. Applied two Powers-Wataha PDF pages with unique receipt `1401-materials-213-214-rescue-page-applied-20261011.json`, SHA `bb9e811e1df567decfa508b0c49babd5a9c026af8825b235dd483af9a94ca5e5`, UTC 15:01:07.
+
+Independent production re-query verified all **three exact original source IDs**, their unchanged edition/chapter, historic printed/legacy labels, original anchor SHA and AI/non-human review state, **all original question stems and option arrays and latest official answers** against each protected original study, and exact current `pdf_page` and `pdf_sha256`. Strict total independently read back **82/249**, 148 pending non-English. Private receipt `1401-three-additional-original-page-final-readback-20261011.json`, SHA `6c6478141a23d898a66b917e5fdaf448ec8205a5ae6b579a6bc6bd6c2c8f9b2b`. Only `pdf_page` and `pdf_sha256` were changed in the three sources. No student exam republish has been authorized as part of this narrower source metadata repair: the assessment remains version 6, and prior evidence of 141 unrelated historical explanation differences calls for separate examination rather than a whole-exam automatic publish.
+
+The three extra studies, decisions, original-page scientific checks, plans and receipts are protected in a **second independently extracted-and-byte-verified 19-file on-server recovery archive**, `/var/backups/fanoos/research/20261011-residency1401-three-additional-pdf-pages-evidence.tar.gz`, SHA `40001597c76669f08cd1162a380b7a444a3a2d550dc00623fdf440d899db7be4` with verified checksum sidecar. The original 62-file first-batch archive and full backups remain separately recoverable; no offsite claim.
+
+**Remaining scientific blockers:** Q23 Endodontics and Q85 Prosthodontics have located phrases but have not passed independent three-point printed-page neighbor corroboration; the exact McCracken RPD 13e chapter map conflicts with the approved current original PDF SHA, so ten older cases stay untouched; additional missing sources are radiology Q192,193,194,198,202,203,204,206,208,209,210 and pediatric Q177, and the other old source rows require separate page-specific original-book evidence. Never infer PDF pages from a fixed printed-page offset, never rewrite human reviews, and never regenerate or apply these fifteen already-completed source changes. The next worker starts by checking GitHub, health, full backup receipts, the exact saved 1401 package hashes, and live database strict count.
