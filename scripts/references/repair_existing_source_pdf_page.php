@@ -160,7 +160,7 @@ try {
     try {
         $get = $db->prepare(<<<'SQL'
 SELECT q.id question_id, q.stem, q.status,
-       s.id source_id, s.page, s.printed_page, s.pdf_page, s.pdf_sha256, s.origin, s.reviewed_at,
+       s.id source_id, s.page, s.printed_page, s.pdf_page, s.pdf_sha256, s.origin, s.reviewed_at, s.reviewed_by_user_id,
        r.reference_key, e.edition_key, n.node_key, n.kind
 FROM bank_questions q
 JOIN bank_exam_sittings si ON si.id=q.sitting_id AND si.workspace_id=q.workspace_id
@@ -181,7 +181,7 @@ SQL);
             || $live['status'] !== 'published' || $live['stem'] !== $original['stem']
             || $live['reference_key'] !== $parts[1] || $live['edition_key'] !== $parts[2]
             || $live['node_key'] !== $node || $live['kind'] !== 'chapter'
-            || $live['origin'] !== 'ai' || $live['reviewed_at'] !== null
+            || $live['origin'] !== 'ai' || $live['reviewed_at'] !== null || $live['reviewed_by_user_id'] !== null
             || $live['pdf_page'] !== null || $live['pdf_sha256'] !== null
             || (string) $live['page'] !== (string) $pdfPage
             || (string) $live['printed_page'] !== (string) $pdfPage) {
