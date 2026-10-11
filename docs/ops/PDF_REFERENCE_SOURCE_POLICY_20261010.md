@@ -128,6 +128,15 @@ fields, bytecode, `.tmp` or `.partial` files. The three remaining `.txt`
 files are checksum manifests; `research/tmp/` is empty. Other protected
 parallel research scripts and unique decisions were not swept without a
 separate recovery review.
+Private W04/W05/W06/W08 handoffs that still described the old extractor were
+corrected with explicit PDF-only resume instructions; obsolete extractor
+steps in the active W06/W08 procedures were superseded. The private W04
+checksum manifest no longer lists ten removed caches, and the affected
+W05/W06/W08 manifests were refreshed with old/new hashes preserved in audit
+receipts. A final read-back verified **15 checksum manifests and 198 member
+hashes, with zero missing or mismatched members**. Private correction receipts:
+`classification/reports/private-pdf-handoff-correction-20261011.json` and
+`w08-handoff-pdf-only-correction-20261011.json`.
 
 The direct-PDF implementation in PR #255 was subsequently merged as
 `1a31ac96b8cfcd2d5a2e5aa4147b77a81567b073` and is in the live release

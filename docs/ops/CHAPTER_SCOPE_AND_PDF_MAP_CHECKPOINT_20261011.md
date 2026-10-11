@@ -44,6 +44,22 @@ The existing source-only publisher already has its own official-scope gate.
 by this audit or map research.** Do not bulk delete the 126 rows: verify the
 official notice and original PDF page for each, preserve human decisions,
 then plan a separate audited correction with a verified backup and read-back.
+The complete protected 126-row queue, with source row IDs, exact edition,
+chapter, recorded PDF page/hash and official chapter list but no question
+stems or book text, is `classification/reports/out-of-scope-source-ledger-20261011.json`
+(SHA-256 `4439620d87b6d20585f3e1fb14a462572c9042f483c81f61537b56a518186d42`).
+
+The wider live bank read-back found **10,295** questions: board 2,600 with
+zero source rows; national 2,493 with 224 sourced; promotion 2,000 with 185
+sourced; residency 3,202 with 1,760 sourced. All 2,169 existing source rows
+had an exact official year/subject/edition validity row. The national 224
+and promotion 185 source rows have PDF page and PDF SHA-256 fields. In
+residency, **1,122 of 1,760** source rows have neither field: they are legacy
+citations and must not be presented as page-verified direct-PDF work merely
+because a chapter is present. Residency English remains exempt only under
+the separately recorded official-key rule; raw unsourced totals are not a
+scientific completion measure by themselves. These are time-stamped counts,
+not permanent invariants.
 
 ## Exact PDF boundary work on this branch
 
@@ -128,6 +144,13 @@ them to reproduce unresolved audits. They need a separate exact-path review:
 move reusable, non-private logic to versioned `scripts/`, preserve unique
 pending evidence, then remove completed one-off scripts after confirming their
 durable result and recovery path. Do not sweep them by extension.
+The W04/W05/W06/W08 private handoffs were also marked historical where they
+instructed whole-PDF text extraction. Current resume steps use the verified
+one-page reader and private operation temp cleanup. A subsequent checksum
+read-back verified 15 research manifests covering 198 files with no missing
+or mismatched member. The original and replacement manifest hashes are kept
+in `classification/reports/private-pdf-handoff-correction-20261011.json` and
+`w08-handoff-pdf-only-correction-20261011.json`.
 
 ## Resume order and import gate
 
