@@ -66,3 +66,25 @@ The existing private W01 research package contains **14 primary-validated / inde
 6. GitHub code/doc changes: PR → green relevant CI → review → merge → updater deployment → exact SHA/health/sync read-back. DB application, exam publication and deploy are **distinct** stages; none is completed merely because another succeeds.
 
 **Checkpoint outcome:** 0 new sources applied; 0 historical sources repaired; 0 exams republished; no answer/question/choice modification. The durable value of this pass is a fresh, independently read-back year-1400 source/page backlog and non-overwriting next-step queue.
+
+
+## Additional original-PDF W01 audit, 2026-10-11
+
+**Completed and read back, research only:** the previously prepared **14 radiology decisions** were rechecked against the *current approved original* White & Pharoah 8e PDF, SHA-256 `228ceb46982c3057d8a7d78b1d10759e72ed1a3a385a76a9affc38e45874c25a`, **1,958 PDF pages**. Its SHA-bound chapter map covers 33 chapters and the entire PDF without a gap. For every one of Q191, Q192, Q193, Q194, Q196, Q198, Q200–Q207, the original-page quotation is present, the requested PDF page is inside its mapped chapter and the selected chapter is within **1400's official radiology scope of chapters 1–25**. The earlier independent research audit provenance and the immutable decisions SHA were also checked against the prior 14-accepted batch. No new publication or DB write occurred.
+
+**Protected durable on-server receipt (independently read back):** `/srv/fanoos/shared/research/classification/reports/residency-1400-W01-direct-pdf-revalidation-20261011.json`, SHA-256 `09461fb324d0531decddf90aeb3c6488c39bb7e98527af61a67e82241d48e001`, 14 entries, no copyrighted page text in the receipt. The accepted question/page list remains exactly the 14 entries in the table already documented by the earlier W01 handoff, with their original decisions file SHA `95721de828f628221ba7411d7b79ec0f01e915104a7928bbff02b24f8f8d8bd6`. These are **research-validated**, not recorded-complete under the live DB predicate.
+
+**Focused original-PDF screening of the other six radiology questions:**
+
+| Question | Direct original-book finding | Disposition |
+|---|---|---|
+| 195 | Digital imaging, chapter 4, pages 173/181 contain printing/DPI context but no supported resolution of the specific original-choice discrepancy | Pending |
+| 197 | Intraoral imaging, chapter 7, candidate pages 321/377 contain bisecting-angle discussion, not sufficient original evidence for the mental-foramen projection answer | Pending |
+| **199** | Panoramic imaging, **chapter 9, PDF page 457**, explicit original description of the condyle moving anteroinferior relative to the closed position, consistent with recorded key | **Primary validator accepted** in a 4-decision scratch batch; not yet secondary-audited or durably saved as a new decision |
+| **208** | Sinus mucosal polyps, candidate **chapter 28, PDF 1556–1557**; direct original text supports the question, but chapter **28 is OUTSIDE** official 1400 scope (chapters 1–25) | **Hold, no classification** |
+| **209** | Fracture nonunion, candidate **chapter 27, PDF 1529**; direct original text supports the question, but chapter **27 is OUTSIDE** 1400's official scope | **Hold, no classification** |
+| **210** | Gingival SCC vs periodontal inflammation, candidate **chapter 26, PDF 1408**; direct original text supports the question, but chapter **26 is OUTSIDE** 1400's official scope | **Hold, no classification** |
+
+The official 1400 radiology validity entry is `white-pharoah-radiology@8e` with explicit `scope_chapters` **1–25**, source-document `1400_منابع دستیاری 1400.pdf`. The three out-of-scope cases **must not** be imported, even though the original text is found; investigate the official exam reference list or question attribution separately without changing keys or old source rows. The first attempted new scratch validator correctly reported **1 accepted (Q199), 3 rejected (Q208–210)**; because it required all four to succeed, the batch had a nonzero exit code and its temporary output was automatically cleaned. The subsequent independent one-question validation and write attempt was **blocked by tool safety checks**; no private followup decision file, validation receipt, production DB import, frozen assessment version, or release change was claimed. Do not bypass that safety gate. A separately authorized resumption must perform the independent review and approved protected write before counting Q199 as completed.
+
+**Production numbers remain 56/250 same-row chapter+PDF page+SHA, with 174 non-English book-based incomplete cases and 20 official-key-only English exceptions.** Scientific revalidation of earlier research is not publication. This doc update alone makes no production data, answer, or attempt changes.
