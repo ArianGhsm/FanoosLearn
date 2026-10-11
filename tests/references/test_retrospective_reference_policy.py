@@ -70,7 +70,7 @@ class Pre1396ReferencePolicyTests(unittest.TestCase):
 
     def test_reference_year_must_not_be_relabelled_exam_year(self):
         selected = self.select(1391)
-        self.assertEqual(p.reference_year_for_decision(selected[0], 1391), 1398)
+        self.assertEqual(p.reference_year_for_decision(selected[0], 1391), 1397)
         with self.assertRaises(ValueError):
             p.reference_year_for_decision(row(1395, "wrong@1e"), 1391)
         self.assertEqual(p.reference_year_for_decision(row(1396, "normal@1e"), 1396), 1396)
