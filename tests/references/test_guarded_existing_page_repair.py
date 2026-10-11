@@ -22,6 +22,18 @@ class ExistingSourcePdfPageRepairContract(unittest.TestCase):
         self.assertNotRegex(self.source, r"\b(?:INSERT\s+INTO|DELETE\s+FROM|UPDATE)\s+(?:bank_questions|bank_official_answers|bank_question_choices|bank_exam_assessments)\b")
         self.assertNotRegex(self.source, r"\b(?:DELETE\s+FROM|TRUNCATE\s+TABLE)\s+bank_question_sources\b")
 
+    def test_printed_pdf_offset_needs_explicit_and_independent_proof(self):
+        self.assertIn("isset($args['printed-offset'])", self.source)
+        self.assertIn("if ($printedOffset)", self.source)
+        self.assertIn("PrintedBookPageEvidence::corroborates(", self.source)
+        self.assertIn("PrintedBookPageEvidence::pageContainsEvidence(", self.source)
+        self.assertIn("[(string) ($live['anchor_text'] ?? '')]", self.source)
+        self.assertIn("abs($pdfPage - (int) $printedLabel) > 80", self.source)
+        self.assertIn("(string) $live['page'] !== $printedLabel", self.source)
+        self.assertIn("(string) $live['printed_page'] !== (string) $pdfPage", self.source)
+        self.assertIn("source_pdf_provenance", self.source)
+        self.assertIn("reviewed_by_user_id", self.source)
+
     def test_repair_fails_closed_and_dry_runs_by_default(self):
         for guard in (
             "BackupManifest::verify",

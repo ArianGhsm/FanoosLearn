@@ -15,6 +15,7 @@ declare(strict_types=1);
  * fresh full backup, authorized fanoosupd identity, and unique private receipt.
  */
 use Fanoos\Platform\Operations\BackupManifest;
+use Fanoos\Platform\Bank\PrintedBookPageEvidence;
 use Fanoos\Platform\Support\DatabaseConnection;
 
 require dirname(__DIR__, 2) . '/apps/platform/bootstrap.php';
@@ -22,7 +23,7 @@ require dirname(__DIR__, 2) . '/apps/platform/bootstrap.php';
 try {
     $args = [];
     foreach (array_slice($argv, 1) as $arg) {
-        if (preg_match('/^--(workspace|case-root|year|subject|number|stem|audit-sha|apply|backup|receipt)(?:=(.*))?$/D', $arg, $m) !== 1
+        if (preg_match('/^--(workspace|case-root|year|subject|number|stem|audit-sha|printed-offset|apply|backup|receipt)(?:=(.*))?$/D', $arg, $m) !== 1
             || isset($args[$m[1]])) {
             throw new RuntimeException('Unknown or duplicate option.');
         }
@@ -35,6 +36,10 @@ try {
     $stem = (string) ($args['stem'] ?? '');
     $expectedAuditSha = strtolower((string) ($args['audit-sha'] ?? ''));
     $apply = isset($args['apply']);
+    $printedOffset = isset($args['printed-offset']);
+    if ($printedOffset && $args['printed-offset'] !== '1') {
+        throw new RuntimeException('The printed-offset evidence flag takes no value.');
+    }
     if (!preg_match('/^[0-9a-f-]{36}$/D', $workspace)
         || $year === false || $year < 1397 || $year > 1500
         || $number === false || $number < 1 || $number > 300
@@ -160,7 +165,7 @@ try {
     try {
         $get = $db->prepare(<<<'SQL'
 SELECT q.id question_id, q.stem, q.status,
-       s.id source_id, s.page, s.printed_page, s.pdf_page, s.pdf_sha256, s.origin, s.reviewed_at, s.reviewed_by_user_id,
+       s.id source_id, s.page, s.printed_page, s.pdf_page, s.pdf_sha256, s.origin, s.reviewed_at, s.reviewed_by_user_id, s.anchor_text,
        r.reference_key, e.edition_key, n.node_key, n.kind
 FROM bank_questions q
 JOIN bank_exam_sittings si ON si.id=q.sitting_id AND si.workspace_id=q.workspace_id
@@ -182,10 +187,28 @@ SQL);
             || $live['reference_key'] !== $parts[1] || $live['edition_key'] !== $parts[2]
             || $live['node_key'] !== $node || $live['kind'] !== 'chapter'
             || $live['origin'] !== 'ai' || $live['reviewed_at'] !== null || $live['reviewed_by_user_id'] !== null
-            || $live['pdf_page'] !== null || $live['pdf_sha256'] !== null
-            || (string) $live['page'] !== (string) $pdfPage
+            || $live['pdf_page'] !== null || $live['pdf_sha256'] !== null) {
+            throw new RuntimeException('Existing source is changed, reviewed or already has a verified PDF location.');
+        }
+        // A legacy numeric page means the book-printed label, NOT the PDF index.
+        // Exact-page labels stay fail-closed by default. A different PDF index
+        // requires an explicit flag, three-point page-label corroboration and
+        // proof that the old source's own evidence is present on that PDF page.
+        if ($printedOffset) {
+            $printedLabel = (string) $live['printed_page'];
+            if (!preg_match('/^[1-9][0-9]{0,3}$/D', $printedLabel)
+                || (string) $live['page'] !== $printedLabel
+                || (int) $printedLabel === $pdfPage
+                || abs($pdfPage - (int) $printedLabel) > 80
+                || !PrintedBookPageEvidence::corroborates($edition, $pdfPage, $printedLabel, $pdfSha)
+                || !PrintedBookPageEvidence::pageContainsEvidence(
+                    $edition, $pdfPage, [(string) ($live['anchor_text'] ?? '')], $pdfSha
+                )) {
+                throw new RuntimeException('Printed/PDF offset lacks independent neighbor-page and original source evidence.');
+            }
+        } elseif ((string) $live['page'] !== (string) $pdfPage
             || (string) $live['printed_page'] !== (string) $pdfPage) {
-            throw new RuntimeException('Existing source is changed, reviewed, mismatched or not an exact page-label candidate.');
+            throw new RuntimeException('Exact-page repair cannot change an existing printed page or infer an offset.');
         }
         $q = ['ws' => $workspace, 'qid' => $live['question_id']];
         $choices = $db->prepare('SELECT text,image FROM bank_question_choices WHERE workspace_id=:ws AND question_id=:qid ORDER BY position');
@@ -272,6 +295,7 @@ SQL);
         'format'=>'fanoos.source-page-repair/1', 'applied'=>$apply,
         'year'=>$year, 'subject'=>$subject, 'number'=>$number,
         'reference'=>$edition, 'chapter'=>$chapter, 'pdf_page'=>$pdfPage,
+        'printed_offset_evidence'=>$printedOffset,
         'pdf_sha256'=>$pdfSha, 'source_rows_updated'=>1,
         'question_rows_updated'=>0, 'choices_updated'=>0, 'answers_updated'=>0,
         'source_chapter_updated'=>0, 'human_reviews_updated'=>0,
