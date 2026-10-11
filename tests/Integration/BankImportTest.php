@@ -67,7 +67,7 @@ final class BankImportTest
         $broken['questions'][1]['concepts'][0]['key'] = 'endodontics/no-such-concept';
         $broken['questions'][1]['sources'][0]['confidence']['node'] = 1.4;
         $broken['questions'][0]['sources'][0]['pdf_page'] = 0;
-        $broken['questions'][1]['sources'][0]['pdf_sha256'] = str_repeat('a', 64); // a file named without its page
+        unset($broken['questions'][1]['sources'][0]['pdf_page']); // a file named without its page
         $broken['questions'][0]['explanation']['from']['ref'] = 'no-such@1e';
         $problems = $importer->validate($ws, $broken);
         foreach (['questions[0].answer.choice', 'questions[1].number', 'questions[1].concepts[0].key', 'questions[1].sources[0].confidence.node',
@@ -81,6 +81,23 @@ final class BankImportTest
             ++$this->assertions;
         }
         $this->assert($this->count('bank_questions', $ws) === 0, 'A refused import wrote questions.');
+
+        // A chapter without both PDF page and file hash must never be inserted.
+        foreach (['pdf_page', 'pdf_sha256'] as $missingField) {
+            $incomplete = $sitting;
+            unset($incomplete['questions'][0]['sources'][0][$missingField]);
+            $this->assert(
+                $this->mentions($importer->validate($ws, $incomplete), 'questions[0].sources[0].pdf_page'),
+                'A chapter-only mapping was accepted without ' . $missingField
+            );
+            try {
+                $importer->import($ws, $incomplete);
+                throw new RuntimeException('An incomplete chapter source was imported.');
+            } catch (BankImportException) {
+                ++$this->assertions;
+            }
+            $this->assert($this->count('bank_questions', $ws) === 0, 'Incomplete source import wrote questions.');
+        }
 
         // The real thing.
         $counts = $importer->import($ws, $sitting);
