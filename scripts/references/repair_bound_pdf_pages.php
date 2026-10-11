@@ -16,7 +16,6 @@ declare(strict_types=1);
 use Fanoos\Platform\Operations\BackupManifest;
 use Fanoos\Platform\Support\DatabaseConnection;
 use Fanoos\Platform\Support\RuntimeConfig;
-use PDO;
 
 require dirname(__DIR__, 2) . '/apps/platform/bootstrap.php';
 
