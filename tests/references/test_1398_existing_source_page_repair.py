@@ -20,7 +20,7 @@ class ExistingSourcePageRepairContract(unittest.TestCase):
         self.assertIn("pdf_page=:page,pdf_sha256=:sha", sql)
         self.assertNotIn("node_id=", sql)
         self.assertNotIn("edition_id=", sql)
-        self.assertNotIn("page=:", sql)
+        self.assertNotRegex(sql, r"(?<![A-Za-z_])page\\s*=")
         self.assertNotIn("answer", sql.lower())
         self.assertNotIn("question", sql.lower())
         self.assertIn("reviewed_at IS NULL", sql)
