@@ -546,6 +546,9 @@ SQL);
                 }
                 $this->checkOrigin($source, $at);
                 $this->checkBookPage($source, $at);
+                if (str_contains($ref, '#') && (!isset($source['pdf_page']) || !isset($source['pdf_sha256']))) {
+                    $this->fail("{$at}.pdf_page", 'a chapter requires pdf_page and pdf_sha256 from the same verified official PDF');
+                }
             }
             foreach ($this->arrayOf($question, 'concepts', $here) as $c => $concept) {
                 $at = "{$here}.concepts[{$c}]";
@@ -789,6 +792,17 @@ SQL);
                 $editionId = $this->resolveEdition($workspaceId, explode('#', $ref)[0]);
                 if ($this->reviewedExists('bank_question_sources', ['question_id' => $questionId, 'edition_id' => $editionId, 'node_id' => $nodeId])) {
                     continue;
+                }
+                // Defense in depth: no new chapter link may be persisted without
+                // its own exact PDF page and file identity. Legacy rows remain
+                // untouched when a sitting does not supply source replacements.
+                if ($nodeId !== null && (
+                    !isset($source['pdf_page'], $source['pdf_sha256'])
+                    || !is_int($source['pdf_page']) || $source['pdf_page'] < 1
+                    || !is_string($source['pdf_sha256'])
+                    || preg_match('/^[a-fA-F0-9]{64}$/D', $source['pdf_sha256']) !== 1
+                )) {
+                    throw new BankImportException(['a new chapter source requires pdf_page and verified pdf_sha256']);
                 }
                 if ($nodeId !== null) {
                     $scope = $this->database->prepare(<<<'SQL'
