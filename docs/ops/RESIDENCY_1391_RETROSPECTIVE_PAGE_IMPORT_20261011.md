@@ -47,3 +47,33 @@ The first three pathology input files were immutably archived before follow-up w
 Current backlog: **8** pending oral-pathology questions, **17** pending endodontics, all other subject questions not yet classified, and **3 voided questions** retained in the raw count. Therefore **208 raw incompletes**, of which **205** have non-voided keys in the imported question file. For the pending questions, determine actual answer-bearing *original PDF pages* one by one; never impute pages, equate a generic topical mention with proof, or insert chapter-only rows. Some apparent exam-key anomalies remain candidates for independent answer-integrity review; do not change keys in a source-only task.
 
 For the next batch, snapshot live current sources and operator state; maintain per-question `reference_year`, `classification_basis=retrospective_proxy_1397_plus` in the protected decision/audit/receipt. Use the exact existing study-only workflow with preflight dry-run, hash-bound validator, independent private evidence audit, newly verified full recovery backup and source-only insert. Never replace existing source records or overwrite user/human decisions. Verify production DB, health and any publication change before reporting completion.
+
+
+## Follow-up — 24 source/page citations in live database, 2026-10-11
+
+After the 12-row baseline above, 12 additional **retrospective** citations were independently page-verified, audited, source-only inserted and reread from the live DB. The 12-row table above is an earlier checkpoint, **not** the latest count. Exact-year official original sources still remain unverified.
+
+| Subject | Question | 1397+ reference edition | Chapter | Original PDF page |
+|---|---:|---|---:|---:|
+| Oral pathology | 38 | Neville 4e, reference-year 1397 | 10 | 365 |
+| Orthodontics | 183 | Proffit 5e, reference-year 1397 | 5 | 138 |
+| Orthodontics | 187 | Proffit 5e, reference-year 1397 | 4 | 118 |
+| Orthodontics | 190 | Proffit 5e, reference-year 1397 | 5 | 161 |
+| Orthodontics | 192 | Proffit 5e, reference-year 1397 | 6 | 179 |
+| Orthodontics | 193 | Proffit 5e, reference-year 1397 | 6 | 178 |
+| Orthodontics | 196 | Proffit 5e, reference-year 1397 | 6 | 214 |
+| Orthodontics | 198 | Proffit 5e, reference-year 1397 | 11 | 426 |
+| Orthodontics | 199 | Proffit 5e, reference-year 1397 | 13 | 538 |
+| Dental materials | 155 | Powers-Wataha 11e, reference-year 1399 | 5 | 81 |
+| Dental materials | 156 | Powers-Wataha 11e, reference-year 1399 | 13 | 191 |
+| Dental materials | 157 | Powers-Wataha 11e, reference-year 1399 | 8 | 134 |
+
+- Q38 source-only receipt `/srv/fanoos/shared/research/classification/reports/1391-pathology-q38-retro-source-applied-20261011.json`; audit `b3f6840f9dbe59c74c03c0f209723c560d4096f8099f6a2da8285af5ce4ec5e0`.
+- Eight orthodontics receipts/audit: `/srv/fanoos/shared/research/classification/reports/1391-orthodontics-retro-source-applied-20261011.json`; audit `47d252ff0d4605b15578ba0866a01076b7498cf6c235693cee37d7e4fc39f1f8`. A first dry-run failed only because the temporary study-only JSON answer fields had a different **key order** to the importer's strict PHP array comparison; the original fields and values were retained, reordered, independently revalidated and re-audited, and then passed.
+- Three dental materials: `/srv/fanoos/shared/research/classification/reports/1391-dental-materials-retro-source-applied-20261011.json`; audit `d7db30f47cdd920b6341794123767b2ffdcbcbfbb0c8f99d891f0a182a3925e8`.
+- Both batches of Q38+orthodontics and the materials batch used verified full recovery backup `/var/backups/fanoos/20261011T185456Z-2a972a2b`, 114 files successfully verified. All apply receipts report `questions_changed=0`, `choices_changed=0`, `answers_changed=0`.
+- The prior 6-decision oral pathology canonical file was separately hash-backed up to `/srv/fanoos/shared/research/ops/1391-oral-pathology-v2-before-q38-20261011.json` (SHA-256 `aaf0bfb6159c835ac1a6118da7900c9c1c41a26301d12c0525de1372b7e54096`), temporarily staged with one Q38 decision for the guarded source-only importer and **restored** exactly after successful Q38 publication. The earlier 6-decision validated sitting was likewise preserved separately.
+- Same-row `node_id`, positive `pdf_page`, and `pdf_sha256` readback: **24 / 220**. Pending **196 raw questions** = 193 with non-voided keys and 3 voided questions. Count no source unless chapter **and exact PDF page** are present in that same row.
+- **Syllabus guard example:** Proffit 5e chapter 2 is **outside the 1397 scope**; Q181 and Q182 therefore remain pending rather than being falsely called 1397-exam scope citations, despite finding topical PDF pages. A later 1398+ proxy year requires genuine own-year scope verification.
+
+The complete work remains in progress. No 1391 original official-key booklet was independently obtained; source-only records and evidence do not change official answers.
