@@ -69,7 +69,7 @@ class Residency1399ExactExistingSourceRepairContract(unittest.TestCase):
     def test_legacy_bad_page_is_fixed_only_for_q25(self):
         self.assertRegex(
             self.text,
-            r"25\s*=>.*?'old_printed'\s*=>\s*'7'.*?'printed'\s*=>\s*'51'",
+            r"(?s)25\s*=>.*?'old_printed'\s*=>\s*'7'.*?'printed'\s*=>\s*'51'",
         )
         self.assertIn("'new_printed' => $row['new_printed_page']", self.text)
 
