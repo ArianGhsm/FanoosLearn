@@ -169,6 +169,7 @@ def parse(docx: Path, year: int, expected: int = 250):
     in_key = False
     zipped = None
     prefixed = False  # questions read «سؤال N»: a bare «N)» is an option
+    seen: set[str] = set()  # subjects whose heading has appeared
 
     def close():
         nonlocal current
@@ -191,12 +192,16 @@ def parse(docx: Path, year: int, expected: int = 250):
             in_key = True
             continue
         heading = subject_of(text) if text else None
-        if heading == 'oral-pathology' and 'دهان' not in text and subject in ('english', 'basic-sciences'):
-            heading = 'basic-sciences'  # «آسیب‌شناسی» after English is general pathology
+        if heading == 'oral-pathology' and 'دهان' not in text and (subject in ('english', 'basic-sciences') or 'oral-pathology' in seen):
+            # A second, bare «آسیب‌شناسی» -- after English, or once the paper's
+            # oral pathology has had its section -- is the general pathology
+            # of the basic-science block (national 1404 puts it before English).
+            heading = 'basic-sciences'
         awaiting_stem = current is not None and current['stem'] == '' and not current['_choices']
         if heading and not awaiting_stem and (current is None or 'answer' in current or not current['_choices']) and not PASSAGE.match(text):
             close()
             subject, passage, in_passage, skipping = heading, [], False, False
+            seen.add(heading)
             continue
         if text and UNNUMBERED.match(text):
             close()
