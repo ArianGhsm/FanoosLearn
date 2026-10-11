@@ -1,5 +1,16 @@
 # Residency 1391 — exact source, chapter and PDF page preflight (2026-10-11)
 
+> **Policy supersession, 2026-10-11:** The owner subsequently
+> authorized using reference books from **1397 and later** for exams
+> before **1396**. The missing original 1391 official list below remains
+> an accurate historical finding, but **no longer blocks retrospective
+> classification**. Such links are *retrospective*, never falsely marked as
+> official for 1391; verified edition+chapter+PDF page+SHA and immutable
+> question/answer protections still apply. See
+> [pre-1396 retrospective classification](PRE_1396_RETROSPECTIVE_CLASSIFICATION_20261011.md).
+> The 0/220 status is a snapshot before retrospective work, not a target
+> conclusion.
+
 ## Scope and verified live state
 
 - Production FANOOS site: `https://fanooslearn.ir/health` responded `status: ok` at release `524ec2b25a8ce6325ab95b26b66e25bcb50f7140` during this preflight.
