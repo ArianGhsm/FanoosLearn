@@ -4,7 +4,7 @@
 
 ## Four source-page repairs applied and independently read back
 
-The live bank initially had 250 total questions, 75 on-record complete under the owner's atomic SAME-SOURCE requirement: official chapter node, pdf_page, and pdf_sha256. Twenty English questions have final official answer choices and are book-reference exempt. This work added four previously NULL bound PDF page/hash pairs without changing any question, answer, choice, source edition/node, legacy page/printed page, evidence anchor, human decision or attempts. Production read-back after the second batch: **79/250 field-complete**, 171 raw field-incomplete, **151 active book-citation candidates** after 20 exempt English.
+The live bank initially had 250 total questions, 75 on-record complete under the owner's atomic SAME-SOURCE requirement: official chapter node, pdf_page, and pdf_sha256. Twenty English questions have final official answer choices and are book-reference exempt. This work added four previously NULL bound PDF page/hash pairs without changing any question, answer, choice, source edition/node, legacy page/printed page, evidence anchor, human decision or attempts. Production read-back after the second batch: **79/250 field-complete**, 171 raw field-incomplete, **151 non-English entries lacking complete page citations** after 20 exempt English (some additionally require official-scope review).
 
 | Question | Exact edition | Chapter | PDF page | Printed page | Evidence on that same original page |
 |---|---|---:|---:|---:|---|
@@ -103,6 +103,6 @@ All four source repairs and their original PDF page/hashes were already
 applied before this independent full-backup-and-reviewed-publication step.
 These steps did **not** edit the user-entered question text, options or
 official keys, and the old frozen student-assessment version remains intact.
-The backlog is **151 clinical source/page candidates** plus the separate
+The backlog is **151 non-English page/scope cases** plus the separate
 29-row official-structured-scope review queue (overlapping with the backlog,
 not additive). No further 1402 source page edits are claimed in this record.
