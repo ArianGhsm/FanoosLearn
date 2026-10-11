@@ -33,6 +33,25 @@
 - Periodontics: all 20 existing source records are incomplete. The stored exact year edition is `carranza-periodontology@13e`; legacy source anchors describe provisional 14e nearest-edition research. Do not treat those as validated current 13e evidence. Protected, preexisting candidate query terms are stored at `/srv/fanoos/shared/research/classification/reports/1399-periodontics-carranza13-queries-20261010.json`. A 13e page scan is research only; inspect original pages and announced scope before accepting anything.
 - The current existing-row gaps have no case with `pdf_page` present but `pdf_sha256` missing. Most legacy rows use `printed_page` or no page. Generic `scripts/references/backfill_source_pages.php` only promotes an explicit `pdf N` legacy value to a bound page with its verified source; it is **not** proof that a printed number equals the physical PDF page, and does not independently repair this sitting.
 
+## Independently reread original-PDF page leads (research, not DB commits)
+
+The following original-book pages were read directly through `verified_reference_pdf.py --require-map --page N`. The bridge verified the current approved private PDF and SHA-bound chapter map. Official 1399 validity was independently confirmed in the live `bank_reference_validity` table; `torabinejad-endodontics@5e` has all chapters in scope and `carranza-periodontology@13e` explicitly includes chapters 3, 12, 33, 52 and 72. These findings are **not recorded-complete until a guarded source-row transaction commits `pdf_page + pdf_sha256` and passes post-audit.**
+
+| Subject | Question | Original edition | Existing chapter | Physical PDF page | Printed label on page | Page evidence, summarized |
+|---|---:|---|---:|---:|---:|---|
+| Endodontics | 25 | Torabinejad 5e | 4 | **63** | **51** (legacy source claims **7**, conflicting) | LPS / lipid A and TLR4 receptor shown together in the innate-immunity table |
+| Endodontics | 30 | Torabinejad 5e | 18 | **347** | 335 | GuttaFlow identified as cold, flowable injection filling system |
+| Endodontics | 32 | Torabinejad 5e | 1 | **21** | 9 | Growth factors embedded in dentin matrix |
+| Periodontics | 115 | Carranza 13e | 12 | **506** | 182 | Smoking changes probing bleeding, attachment and bone loss, table 12.1 |
+| Periodontics | 118 | Carranza 13e | 33 | **882** | 408 | CBCT/periapical defect comparison; original historical audited fenestration quote needs exact retained validator check |
+| Periodontics | 122 | Carranza 13e | 72 | **1611** | 721 | Merin class C, 1–3-month recall; unperformed indicated surgery for medical reasons |
+| Periodontics | 123 | Carranza 13e | 52 | **1196** | 559 | Original 13e metronidazole and warfarin drug interaction; exact short quote needs revalidation by guarded publisher |
+| Periodontics | 125 | Carranza 13e | 3 | **96** | 46 | Transseptal/alveolar-crest fibers develop at tooth emergence |
+
+Pinned map/document SHA-256: Torabinejad 5e `71f21c26a4f1e5d038ff6aa408669a5cc040e90c94eea0bf2e00478997710146` (494 PDF pages); Carranza 13e `f0e411898ae010688ca5c0d21afe312cef6f5dae86d0e2e45648bc51ca8e2adf` (1,991 PDF pages). Perio Q115/Q118/Q122/Q123/Q125 already appear in retired historical Git PR #268 as previously page-evidence researched; **do not rerun obsolete page-label-only operator** because it does not fill the new strict `pdf_page` and `pdf_sha256` columns. This audit rechecked the indicated live original PDF pages.
+
+Endodontics Q31 (QMix irrigation) remains pending: looking through original Torabinejad 5e chapter-16 pages did not identify direct QMix-specific supporting evidence. Q25 must not retain the contradictory legacy printed page 7 when a reviewed metadata correction is made (the actual original PDF p63 is printed p51). No live bank mutation has occurred here.
+
 ## Reproducibility: the read-only strict count
 
 ```sql
