@@ -18,6 +18,8 @@ Nothing is taken on trust. A decision is accepted only when
   a missing official one, in which case the chapter is carried over to the
   official edition by its title and the source cites the official edition;
 - the chapter is a chapter of that edition in the catalog;
+- the chapter is inside the official year-specific syllabus when its chapter
+  list is recorded; an unstructured selected/excluded scope stays pending;
 - the page lies inside that chapter (data/bank/reference-chapter-pages.json);
 - every fragment of the evidence (split on "...", each of at least four
   words) is printed on that page of the current exact verified server PDF;
@@ -137,6 +139,19 @@ def chapter_nodes(catalog: dict, edition: str) -> dict[str, dict]:
     return {}
 
 
+def scope_issue(validity: dict, chapter: str) -> str | None:
+    """Fail closed on a chapter outside an explicit official syllabus."""
+    listed = validity.get('scope_chapters') or []
+    if listed:
+        if chapter not in {str(item['number']) for item in listed}:
+            return f'chapter {chapter} is outside the official year-specific scope'
+        return None
+    scope = str(validity.get('scope') or '')
+    if any(marker in scope for marker in ('منتخب', 'به جز', 'بجز', 'غیر از', 'except', 'excluding')):
+        return 'official selected/excluded chapter scope is not structured; keep pending'
+    return None
+
+
 def words(title: str) -> set[str]:
     return {w for w in re.findall(r'[a-z0-9]+', title.lower()) if len(w) > 2}
 
@@ -196,10 +211,10 @@ def main() -> int:
     runs = json.loads((BANK / 'reference-chapter-pages.json').read_text(encoding='utf-8'))['editions']
     books = Books(args.storage_root, args.mysql_defaults, args.database)
 
-    official: dict[str, set[str]] = {}
+    official: dict[str, dict[str, dict]] = {}
     for v in catalog['validity']:
         if v.get('exam_type') == exam_type and int(v['year']) == year:
-            official.setdefault(v['subject'], set()).add(v['edition'])
+            official.setdefault(v['subject'], {})[v['edition']] = v
 
     source = Path(args.decisions)
     # A directory holds every year's decisions; only this sitting's are read
@@ -226,7 +241,7 @@ def main() -> int:
                 accepted[n] = None
         elif why is None:
             edition, chapter = d.get('edition', ''), str(d.get('chapter', ''))
-            names = official.get(q['subject'], set())
+            names = official.get(q['subject'], {})
             cite, cite_chapter = edition, chapter
             if edition not in names and not args.allow_nearest:
                 why = 'nearest-edition substitutions are paused; use exact official edition or keep pending'
@@ -259,6 +274,8 @@ def main() -> int:
             page = d.get('page')
             if why is None and chapter not in nodes:
                 why = f'{edition} has no chapter {chapter}'
+            if why is None and cite in names:
+                why = scope_issue(names[cite], cite_chapter)
             if why is None:
                 in_chapter = any(r[0] == chapter and r[1] <= int(page) <= r[2] for r in runs.get(edition, {}).get('runs', []))
                 if not in_chapter:

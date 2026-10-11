@@ -790,6 +790,36 @@ SQL);
                 if ($this->reviewedExists('bank_question_sources', ['question_id' => $questionId, 'edition_id' => $editionId, 'node_id' => $nodeId])) {
                     continue;
                 }
+                if ($nodeId !== null) {
+                    $scope = $this->database->prepare(<<<'SQL'
+SELECT n.kind, n.number, v.scope, v.scope_chapters
+FROM bank_reference_nodes n
+JOIN bank_reference_validity v ON v.workspace_id = n.workspace_id AND v.edition_id = n.edition_id
+WHERE n.workspace_id = :workspace AND n.id = :node
+  AND v.exam_type_id = :type AND v.exam_year = :year
+  AND v.subject_id = :subject AND v.is_official = 1
+LIMIT 1
+SQL);
+                    $scope->execute([
+                        'workspace' => $workspaceId, 'node' => $nodeId,
+                        'type' => $typeId, 'year' => $year,
+                        'subject' => $this->lookup($workspaceId, 'bank_subjects', 'subject_key', (string) $question['subject']),
+                    ]);
+                    $validity = $scope->fetch() ?: null;
+                    if ($validity === null || $validity['kind'] !== 'chapter') {
+                        throw new BankImportException(['source chapter has no official year/subject validity']);
+                    }
+                    $chapters = $validity['scope_chapters'] === null ? [] : json_decode((string) $validity['scope_chapters'], true, 512, JSON_THROW_ON_ERROR);
+                    if ($chapters !== [] && !in_array((string) $validity['number'], array_map(static fn (array $row): string => (string) $row['number'], $chapters), true)) {
+                        throw new BankImportException(['source chapter is outside the official year-specific scope']);
+                    }
+                    $scopeText = (string) ($validity['scope'] ?? '');
+                    if ($chapters === [] && (str_contains($scopeText, 'منتخب') || str_contains($scopeText, 'به جز')
+                        || str_contains($scopeText, 'بجز') || str_contains($scopeText, 'غیر از')
+                        || stripos($scopeText, 'except') !== false || stripos($scopeText, 'excluding') !== false)) {
+                        throw new BankImportException(['official selected/excluded source scope is not structured']);
+                    }
+                }
                 $this->database->prepare(<<<'SQL'
 INSERT INTO bank_question_sources (id, workspace_id, question_id, edition_id, node_id, page, pdf_page, printed_page, pdf_sha256, table_ref, figure_ref, box_ref, anchor_text, is_primary,
     confidence_source, confidence_node, confidence_page, origin, created_at)

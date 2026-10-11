@@ -111,11 +111,12 @@ not scratch outputs from a finished local run; remove each only after its PR
 is closed or merged and the protected W08 handoff is preserved. Their
 remaining `.txt` files are license/dependency manifests, not book copies.
 
-The direct-PDF implementation and this rule are on open PR #255 and have not
-yet been merged or deployed. The live release at this check was
-`69ff7223a46298489a15cd35745dd4d77305089c` and still contains the legacy
-`extract_server_reference.py`; do not invoke it. The merged catalog currently
-has 33 chapter maps: 24 carry a PDF hash,
+The direct-PDF implementation in PR #255 was subsequently merged as
+`1a31ac96b8cfcd2d5a2e5aa4147b77a81567b073` and is in the live release
+`524ec2b25a8ce6325ab95b26b66e25bcb50f7140` as checked on 2026-10-11.
+The previous `69ff7223a46298489a15cd35745dd4d77305089c` release and its
+legacy extractor are historical; do not invoke that extractor. At the earlier
+check, the catalog had 33 chapter maps: 24 carried a PDF hash,
 and 28 have contiguous page coverage. Nine lack a source hash; five have page
 gaps or overlaps, with four maps in both groups. Search, validation and audit
 fail closed for the 10 maps that fail either check. The other 23 have both a

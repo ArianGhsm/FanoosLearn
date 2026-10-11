@@ -119,7 +119,11 @@ The binding procedure is
 `scripts/references/apply_classification.py` against the exact verified PDF
 page and the page-to-chapter map. The authority order is: official year
 validity and scope → exact verified edition PDF/page → short verbatim evidence
-from that page → validator → reviewed import.
+from that page → validator → reviewed import. An answer found only outside the
+announced chapter or partial-page scope remains pending official-syllabus
+review; lowering confidence does not authorize an excluded citation. Review
+older outside-scope rows individually, including human decisions, before any
+correction.
 An unlocated fact stays **undecided**, not `none`; existing human-reviewed
 sources remain protected.
 

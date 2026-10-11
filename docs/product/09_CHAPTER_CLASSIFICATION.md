@@ -178,8 +178,11 @@ do not locate support, leave the question undecided (§5).
 - The fact is in two chapters: take the one that teaches it, not the one that
   refers to it in passing.
 - The page is outside the year's announced `scope`: look for the same fact
-  inside the scope first; if it is only outside, keep it and lower the
-  confidence.
+  inside the scope. If the only support is outside, leave the question
+  undecided for official-syllabus review. Lower confidence does not make an
+  excluded chapter eligible. For a partially included chapter, verify the
+  official printed-page or section limit on the original PDF page before
+  publication; a chapter-list check alone cannot validate that limit.
 - Review questions at the end of a chapter, the index, tables of contents
   and reference lists are never the evidence page.
 
@@ -227,6 +230,13 @@ files are read for a sitting, by the `<year>-` prefix):
   silently use these exceptions for new decisions.
 
 **Step 6 — check and write.**
+
+The validator rejects a chapter outside an explicit `scope_chapters` list.
+If the official scope describes selected or excluded chapters but has no
+structured chapter list, the decision stays pending until the catalog is
+corrected from the official notice. The full sitting importer applies the
+same chapter-level gate; partial page and section limits still need explicit
+human review against the original PDF before a source is published.
 
 ```sh
 sudo -u fanoosupd python3 -B scripts/references/apply_classification.py --sitting=<sitting.json> \
