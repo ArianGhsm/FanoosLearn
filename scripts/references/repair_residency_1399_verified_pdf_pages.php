@@ -6,7 +6,7 @@ declare(strict_types=1);
  *
  * This intentionally cannot change a question, option, official answer,
  * human-reviewed source, attempt or frozen assessment. It will only update
- * page, printed_page, pdf_page, pdf_sha256 on eight existing AI source rows.
+ * page, printed_page, pdf_page, pdf_sha256 on a fixed allowlist of existing AI source rows.
  * Original official chapter and edition must ALREADY match the target.
  *
  * 1. php scripts/references/repair_residency_1399_verified_pdf_pages.php
@@ -48,6 +48,54 @@ function exactTargets1399(): array
                 'pdf' => 21, 'old_printed' => '9', 'printed' => '9', 'answer' => 3,
                 'sha' => PDF_TORABINEJAD_1399,
                 'proof' => ['factors are embedded in dentin matrix']],
+        ],
+        'operative-dentistry' => [
+            170 => ['edition' => 'craig-restorative-materials@14e', 'chapter' => '10',
+                'pdf' => 183, 'old_printed' => '172', 'printed' => '172', 'answer' => 3,
+                'sha' => '333e81ae8a1818cdff57f00e3f870698776e3b8e02fcc49169f397f2fbaf90b9',
+                'proof' => ['composition close to the eutectic']],
+        ],
+        'dental-materials' => [
+            212 => ['edition' => 'van-noort-materials@4e', 'chapter' => '3.5',
+                'pdf' => 217, 'old_printed' => '202', 'printed' => '202', 'answer' => 1,
+                'sha' => '7e993e5c50979c3287b755e4ade2a1f42c27e444acd1ca4ac9cc9e791d9f203a',
+                'proof' => ['Their sag resistance can be poor due to excessive creep']],
+            214 => ['edition' => 'powers-wataha-materials@11e', 'chapter' => '8',
+                'pdf' => 120, 'old_printed' => '102', 'printed' => '102', 'answer' => 3,
+                'sha' => 'df1b471c7c2949422cbe9f883a792800cb811e39c7217dbae781084df8478399',
+                'proof' => ['potassium zinc fluoride', 'To counteract the inhibiting effect']],
+            216 => ['edition' => 'powers-wataha-materials@11e', 'chapter' => '2',
+                'pdf' => 39, 'old_printed' => '21', 'printed' => '21', 'answer' => 1,
+                'sha' => 'df1b471c7c2949422cbe9f883a792800cb811e39c7217dbae781084df8478399',
+                'proof' => ['unfilled acrylic (material B)', 'tougher']],
+            218 => ['edition' => 'powers-wataha-materials@11e', 'chapter' => '7',
+                'pdf' => 105, 'old_printed' => '87', 'printed' => '87', 'answer' => 2,
+                'sha' => 'df1b471c7c2949422cbe9f883a792800cb811e39c7217dbae781084df8478399',
+                'proof' => ['Bioceramic cement requires no etching', 'calcium aluminate']],
+        ],
+        'prosthodontics' => [
+            89 => ['edition' => 'zarb-edentulous@13e', 'chapter' => '12',
+                'pdf' => 290, 'old_printed' => '276', 'printed' => '276', 'answer' => 4,
+                'sha' => 'bcf92916cd0a01915695d1cb5aad8c51e7f2dac5909477c4df4454d229156a3d',
+                'proof' => ['if the soreness is in the notch itself', 'the posterior palatal']],
+            92 => ['edition' => 'zarb-edentulous@13e', 'chapter' => '9',
+                'pdf' => 208, 'old_printed' => '194', 'printed' => '194', 'answer' => 1,
+                'sha' => 'bcf92916cd0a01915695d1cb5aad8c51e7f2dac5909477c4df4454d229156a3d',
+                'proof' => ['Use corners of the mouth as the anterior']],
+            93 => ['edition' => 'zarb-edentulous@13e', 'chapter' => '12',
+                'pdf' => 291, 'old_printed' => '277', 'printed' => '277', 'answer' => 2,
+                'sha' => 'bcf92916cd0a01915695d1cb5aad8c51e7f2dac5909477c4df4454d229156a3d',
+                'proof' => ['Most often, the gagging relates to',
+                    'the posterior border of the maxillary denture']],
+            95 => ['edition' => 'zarb-edentulous@13e', 'chapter' => '9',
+                'pdf' => 210, 'old_printed' => '196', 'printed' => '196', 'answer' => 3,
+                'sha' => 'bcf92916cd0a01915695d1cb5aad8c51e7f2dac5909477c4df4454d229156a3d',
+                'proof' => ['The first step in relating the maxilla to the articulator is to']],
+            98 => ['edition' => 'zarb-edentulous@13e', 'chapter' => '5',
+                'pdf' => 78, 'old_printed' => '64', 'printed' => '64', 'answer' => 4,
+                'sha' => 'bcf92916cd0a01915695d1cb5aad8c51e7f2dac5909477c4df4454d229156a3d',
+                'proof' => ['A retruded tongue',
+                    'position deprives the patient of a border seal for the lingual']],
         ],
         'periodontics' => [
             115 => ['edition' => 'carranza-periodontology@13e', 'chapter' => '12',
@@ -117,7 +165,7 @@ SELECT q.id qid, q.workspace_id ws, q.status qstatus,
 s.id sid,s.page,s.printed_page,s.pdf_page,s.pdf_sha256,s.origin,
 s.reviewed_at,s.reviewed_by_user_id,s.is_primary,
 r.reference_key,e.edition_key,n.node_key,n.number chapter,n.kind,
-v.is_official,v.scope_chapters
+v.is_official,v.scope,v.scope_chapters
 FROM bank_questions q
 JOIN bank_exam_sittings si ON si.id=q.sitting_id AND si.workspace_id=q.workspace_id
 JOIN bank_exam_types et ON et.id=si.exam_type_id AND et.workspace_id=q.workspace_id
@@ -139,6 +187,9 @@ ORDER BY recorded_at DESC,id DESC LIMIT 1 FOR UPDATE
 SQL);
     $rows = [];
     foreach ($targets as $number => $target) {
+        $numberBits = explode('.', $target['chapter'], 2);
+        $expectedNode = 'ch' . str_pad($numberBits[0], 2, '0', STR_PAD_LEFT)
+            . (isset($numberBits[1]) ? '.' . $numberBits[1] : '');
         $find->execute(['subject' => $subject, 'number' => $number]);
         $found = $find->fetchAll(PDO::FETCH_ASSOC);
         if (count($found) !== 1) {
@@ -148,7 +199,7 @@ SQL);
         [$ref, $edition] = explode('@', $target['edition'], 2);
         if ($v['qstatus'] !== 'published'
             || $v['reference_key'] !== $ref || $v['edition_key'] !== $edition
-            || $v['node_key'] !== 'ch' . str_pad($target['chapter'], 2, '0', STR_PAD_LEFT)
+            || $v['node_key'] !== $expectedNode
             || (string) $v['chapter'] !== $target['chapter'] || $v['kind'] !== 'chapter'
             || (int) $v['is_official'] !== 1
             || $v['origin'] !== 'ai' || (int) $v['is_primary'] !== 1
@@ -157,6 +208,16 @@ SQL);
             || $v['page'] !== $target['old_printed']
             || $v['printed_page'] !== $target['old_printed']) {
             throw new RuntimeException("Source/edition/chapter/human/old-page guard failed on Q{$number}.");
+        }
+        // Craig 14e has a *printed-page partial-syllabus* gate in 1399.
+        // A chapter-level allowlist alone would wrongly admit Q166/Q167.
+        if ($subject === 'operative-dentistry'
+            && ($target['edition'] !== 'craig-restorative-materials@14e'
+                || $target['chapter'] !== '10'
+                || !str_contains((string) $v['scope'], '171–178')
+                || (int) $target['printed'] < 171
+                || (int) $target['printed'] > 178)) {
+            throw new RuntimeException("Craig partial original-year page-scope rejected Q{$number}.");
         }
         $scope = json_decode((string) $v['scope_chapters'], true, 64, JSON_THROW_ON_ERROR);
         $allowed = array_map(static fn(array $x): string => (string) ($x['number'] ?? ''), $scope ?? []);

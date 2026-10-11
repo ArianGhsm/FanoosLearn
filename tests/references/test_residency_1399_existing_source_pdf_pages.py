@@ -20,7 +20,7 @@ class Residency1399ExactExistingSourceRepairContract(unittest.TestCase):
     def test_fixed_year_editions_questions_and_hashes(self):
         self.assertIn("si.exam_year=1399", self.text)
         self.assertIn("si.exam_round=1", self.text)
-        for n in (25, 30, 32, 115, 118, 122, 123, 125):
+        for n in (25, 30, 32, 89, 92, 93, 95, 98, 115, 118, 122, 123, 125, 170, 212, 214, 216, 218):
             self.assertRegex(self.text, rf"(?m)^\s*{n}\s*=>")
         self.assertIn("torabinejad-endodontics@5e", self.text)
         self.assertIn("carranza-periodontology@13e", self.text)
@@ -65,6 +65,17 @@ class Residency1399ExactExistingSourceRepairContract(unittest.TestCase):
             "fingerprint", "plan_sha256", "receipt", "readback",
         ):
             self.assertIn(token, self.text)
+
+    def test_official_partial_and_subchapter_guards(self):
+        self.assertIn("Craig partial original-year page-scope rejected", self.text)
+        self.assertIn("str_contains((string) $v['scope'], '171–178')", self.text)
+        self.assertIn("$expectedNode", self.text)
+        self.assertIn("explode('.', $target['chapter'], 2)", self.text)
+        self.assertIn("van-noort-materials@4e", self.text)
+        self.assertIn("powers-wataha-materials@11e", self.text)
+        self.assertIn("zarb-edentulous@13e", self.text)
+        for excluded in (166, 167, 213, 217, 219, 220):
+            self.assertNotRegex(self.text, rf"(?m)^\\s*{excluded}\\s*=>")
 
     def test_legacy_bad_page_is_fixed_only_for_q25(self):
         self.assertRegex(
