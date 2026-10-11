@@ -1,0 +1,60 @@
+# National exam classification — 1405 (and 1404, in progress)
+
+Procedure: `docs/product/09_CHAPTER_CLASSIFICATION.md` (exact official
+edition, verified PDF, hash-bound chapter map, verbatim page evidence,
+`apply_classification.py`, dry run `questions_changed=0`, verified backup,
+import, publish). Owner request 2026-10-11.
+
+## Conventions added for national sittings
+
+- **Sitting that matches the site:** the Drive-import staging sitting that
+  was imported on 2026-10-11 (`docs/ops/DRIVE_IMPORT_20261011.md`), copied to
+  protected `/srv/fanoos/shared/research/bank-sittings/<year>/national-<year>-<round>.json`
+  (images in `…-assets/`).
+- **Decisions live per sitting:** `/srv/fanoos/shared/research/classification/decisions/national-<year>-<round>/<year>-<subject>.json`.
+  The residency directory `decisions/` holds `<year>-*.json` too, and
+  national 1404 has two sittings with overlapping numbers, so a national
+  sitting is always validated with `--decisions=` pointing at its own folder.
+- **Editions ready** (verified PDF + map bound to its SHA-256), national
+  1404/1405 list: torabinejad 6e, carranza 13e, zarb 13e, summit 4e, craig
+  14e, hupp 7e, malamed 7e, burket 12e, little-falace 9e, neville 5e,
+  white-pharoah 8e, proffit 6e, national-oral-health 1394.
+  **Pending (no hash-bound map):** mccracken-rpd 13e, rosenstiel 6e,
+  shillingburg 4e, sturdevant 7e, mcdonald-avery 11e — their questions stay
+  undecided.
+- English (scope statement, no book) and the basic-science block (no
+  official reference) get no source.
+- The private post-validator audit script is residency-only; for national
+  sittings the evidence check is `apply_classification.py` (every quote
+  re-read from the cited PDF page).
+
+## National 1405 (مرداد) — done 2026-10-11
+
+| Subject | With chapter | Notes |
+|---|---|---|
+| endodontics | 11 / 12 | Q15 undecided (AAE form is a figure) |
+| periodontics | 11 / 12 | Q73 not found |
+| oral surgery | 10 / 12 | Q85 key doubtful (trismus and immunocompromised both listed); Q88 frequency is a figure |
+| oral medicine | 7 / 12 | Q25, Q27 only in out-of-scope chapters / summary pages |
+| oral pathology | 11 / 12 | Q39 not found |
+| oral radiology | 9 / 12 | Q123 only in ch. 27 (out of scope) |
+| orthodontics | 6 / 12 | **Q1: key (medial to Meckel) contradicts Proffit p43 ("just lateral")** — owner to review the key |
+| community dentistry | 6 / 8 | Q133, Q138 not decided |
+| dental materials | 3 / 8 | |
+| prosthodontics | 3 / 22 | only Zarb ready |
+| operative dentistry | 3 / 12 | only Summit ready; several facts outside Summit's scope chapters |
+| pediatric dentistry | 0 / 12 | McDonald 11e not ready |
+| English, basic sciences | — | no official reference |
+| **Total** | **80 / 210** | 0 rejected |
+
+Run: validated sitting `classification/sittings/national-1405-1.json`;
+dry run 210 questions, `questions_changed 0`, sources 80; backup
+`/var/backups/fanoos/20261011T024417Z-19b39d6d` (verified); import; publish
+(assessment `01a12826-8a7f-78f2-9414-4974fa8281bb`, version
+`01a128d9-4464-7b05-aa6f-87a052461a1a`). Read-back: 80 sources, all with
+`pdf_page` and `pdf_sha256`; the runner shows e.g. Q13 «فصل ۱ · پاتوژنز
+بیماری‌های پالپ و پری‌اپیکال» (Torabinejad 6e, PDF p25).
+
+## National 1404 (مرداد and دی) — next
+
+Same editions; sittings copied to `bank-sittings/1404/`.
