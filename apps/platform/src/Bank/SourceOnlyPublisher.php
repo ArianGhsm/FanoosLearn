@@ -54,7 +54,7 @@ final class SourceOnlyPublisher
                     || ($decision['classification_basis'] ?? '') !== 'retrospective_proxy_1397_plus') {
                     throw new RuntimeException('Pre-1396 source must declare an actual 1397+ official proxy reference year and retrospective basis.');
                 }
-            } elseif (isset($decision['reference_year'], $decision['classification_basis'])) {
+            } elseif (isset($decision['reference_year']) || isset($decision['classification_basis'])) {
                 throw new RuntimeException('A normal exact-year source cannot claim retrospective basis.');
             }
             // Official 1398 source announcement independently identifies exact Torabinejad 5e
@@ -222,6 +222,10 @@ SQL);
                 ];
                 if ($actual !== $original[$n]['answer']) {
                     throw new RuntimeException('Published answer differs from reviewed study.');
+                }
+                if ($retrospective && ($actual['choice'] === null
+                    || !in_array($actual['status'], ['final', 'amended'], true))) {
+                    throw new RuntimeException('Voided, disputed or keyless old exam question cannot receive retrospective source.');
                 }
                 $existing->execute($params);
                 if ($existing->fetch(PDO::FETCH_ASSOC) !== false) {
