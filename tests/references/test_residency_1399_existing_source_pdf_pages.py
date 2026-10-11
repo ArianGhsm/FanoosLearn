@@ -46,7 +46,7 @@ class Residency1399ExactExistingSourceRepairContract(unittest.TestCase):
         self.assertEqual(len(sql_updates), 1)
         table, assignments = sql_updates[0]
         self.assertEqual(table.lower(), "bank_question_sources")
-        keys = re.findall(r"(?:^|,)\s*([a-z_]+)\s*=", assignments, flags=re.I)
+        keys = re.findall(r"(?:^|,)\s*([a-z_][a-z0-9_]*)\s*=", assignments, flags=re.I)
         self.assertEqual(
             set(map(str.lower, keys)),
             {"page", "printed_page", "pdf_page", "pdf_sha256"},
