@@ -204,6 +204,7 @@ JOIN bank_reference_editions edition ON edition.id = link.edition_id
 JOIN bank_references reference ON reference.id = edition.reference_id
 LEFT JOIN bank_reference_nodes node ON node.id = link.node_id
 WHERE link.question_id = :question
+  AND (link.node_id IS NULL OR (link.pdf_page IS NOT NULL AND link.pdf_sha256 IS NOT NULL))
 ORDER BY link.is_primary DESC, link.created_at
 LIMIT 1
 SQL);
