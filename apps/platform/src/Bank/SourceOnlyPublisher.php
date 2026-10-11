@@ -20,7 +20,8 @@ final class SourceOnlyPublisher
         PDO $db, string $workspace, int $year, string $subject,
         array $study, array $validated, array $decisions, bool $apply,
     ): int {
-        if (($year < 1399 && !($year === 1398 && in_array($subject, ['endodontics', 'periodontics', 'community-dentistry', 'prosthodontics'], true))) || $year > 1500
+        $retrospective = $year >= 1300 && $year < 1396;
+        if (($year < 1399 && !$retrospective && !($year === 1398 && in_array($subject, ['endodontics', 'periodontics', 'community-dentistry', 'prosthodontics'], true))) || $year > 1500
             || ($study['format'] ?? '') !== 'fanoos.classification.study-only/1'
             || ($validated['format'] ?? '') !== ($study['format'] ?? '')
             || ($study['exam_type'] ?? '') !== 'residency'
@@ -46,6 +47,15 @@ final class SourceOnlyPublisher
                            $decision['evidence'], $decision['confidence'])
                 || isset($decision['override_human'], $decision['none'])) {
                 throw new RuntimeException('Unsupported source decision or human override.');
+            }
+            if ($retrospective) {
+                $proxyYear = $decision['reference_year'] ?? null;
+                if (!is_int($proxyYear) || $proxyYear < 1397 || $proxyYear > 1500
+                    || ($decision['classification_basis'] ?? '') !== 'retrospective_proxy_1397_plus') {
+                    throw new RuntimeException('Pre-1396 source must declare an actual 1397+ official proxy reference year and retrospective basis.');
+                }
+            } elseif (isset($decision['reference_year'], $decision['classification_basis'])) {
+                throw new RuntimeException('A normal exact-year source cannot claim retrospective basis.');
             }
             // Official 1398 source announcement independently identifies exact Torabinejad 5e
             // for endodontics, original Carranza 12e for periodontics, and the national
@@ -143,7 +153,8 @@ final class SourceOnlyPublisher
                 'pdf_page' => $sourcePdfPage,
                 'pdf_sha256' => strtolower($sourcePdfHash),
                 'printed_page' => isset($s['printed_page']) ? (string) $s['printed_page'] : null,
-                'anchor' => $s['anchor'], 'conf' => $conf];
+                'anchor' => $s['anchor'], 'conf' => $conf,
+                'reference_year' => $retrospective ? (int) $d['reference_year'] : $year];
         }
         if (count($seen) !== count($original) || count($mapped) !== count($wanted)
             || $mapped === []) {
@@ -218,12 +229,12 @@ SQL);
                 }
                 $nodes->execute([
                     'ws' => $workspace, 'ref' => $src['ref'], 'edition' => $src['edition'],
-                    'node' => $src['node'], 'yr' => $year, 'sub' => $subject,
+                    'node' => $src['node'], 'yr' => $src['reference_year'], 'sub' => $subject,
                 ]);
                 $mappedNode = $nodes->fetch(PDO::FETCH_ASSOC);
                 if (!is_array($mappedNode) || $nodes->fetch(PDO::FETCH_ASSOC) !== false
                     || $mappedNode['kind'] !== 'chapter') {
-                    throw new RuntimeException('Official exact-edition chapter not unique or absent.');
+                    throw new RuntimeException('Exact-edition chapter lacks an official validity row for its selected reference year.');
                 }
                 $scope = json_decode((string) $mappedNode['scope_chapters'], true);
                 $numbers = is_array($scope)
