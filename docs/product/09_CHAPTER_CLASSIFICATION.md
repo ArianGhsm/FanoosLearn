@@ -40,6 +40,26 @@ there is no page and no quote to back it. Title-based classification was
 measured: on 1403 endodontics a third of such chapters were wrong, and on
 1404 a quarter (49 of 188) differed from the page-verified chapter.
 
+### Mandatory chapter + page pair (owner, 2026-10-11)
+
+New classification is **atomic**: no chapter assignment is accepted unless
+the same record contains the exact edition's verified `pdf_page` and
+`pdf_sha256`, and the short evidence actually supports the decision on
+that PDF page, inside the official syllabus scope. The printed page is useful
+for display but cannot replace `pdf_page` or its file SHA-256. For an
+unlocated or unreadable page, keep **both** the proposed chapter and page
+pending; do not emit a chapter-only source or treat it as complete.
+Historical rows missing page/hash are backlog, not newly completed work;
+preserve human-reviewed assignments pending separately approved repair.
+The policy-final residency English exemption remains source-free (§3A).
+
+For all new progress reports, use one same-row predicate:
+`node_id IS NOT NULL AND pdf_page IS NOT NULL AND
+pdf_sha256 IS NOT NULL`. Raw source counts and legacy printed/any-page
+counts can be shown for diagnostics, clearly marked incomplete. An audit
+must also independently confirm PDF hash, chapter boundaries, syllabus
+scope and page evidence before calling the row scientifically verified.
+
 ## 2. What the work needs
 
 | What | Where |
