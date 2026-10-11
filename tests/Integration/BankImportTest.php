@@ -11,6 +11,7 @@ use Fanoos\Platform\Bank\BankBrowseService;
 use Fanoos\Platform\Bank\BankImporter;
 use Fanoos\Platform\Bank\BankImportException;
 use Fanoos\Platform\Bank\BankPublisher;
+use Fanoos\Platform\Bank\BankSittingExporter;
 use Fanoos\Platform\Content\CustomPracticeService;
 use Fanoos\Platform\Content\ExamQuestionRateGuard;
 use Fanoos\Platform\Content\ExamScheduleService;
@@ -224,6 +225,17 @@ SQL);
         $publisher = new BankPublisher($this->database, $this->exams());
         $published = $publisher->publish($ws, 'residency', 1404, 1, $f['manager'], $f['reviewer'], ['time_limit_minutes' => 30]);
         $this->assert($published['new_exam'] === true && $published['questions'] === 2 && $published['left_out'] === [], 'Publish: ' . json_encode($published));
+
+        // Exported back out, the sitting re-imports with no question or answer changed (09 §7).
+        $exportDir = sys_get_temp_dir() . '/fanoos-export-' . bin2hex(random_bytes(4));
+        mkdir($exportDir);
+        $exported = (new BankSittingExporter($this->database))->export($ws, 'residency', 1404, 1, $exportDir);
+        $roundTrip = json_decode((string) file_get_contents($exported['file']), true, 64, JSON_THROW_ON_ERROR);
+        $again = $importer->import($ws, $roundTrip, null, true);
+        $this->assert($exported['questions'] === 2 && $again['questions_changed'] === 0 && $again['answers_recorded'] === 0 && $again['sources'] === 0,
+            'An exported sitting does not re-import unchanged: ' . json_encode($again));
+        unlink($exported['file']);
+        rmdir($exportDir);
         $exams = $this->exams();
         $entry = $exams->catalogEntry($f['student'], $ws, $published['assessment_id']);
         $this->assert($entry !== null && str_contains((string) $entry['title'], '۱۴۰۴') && $entry['assessment_kind'] === 'past_exam', 'The published exam is not in the catalogue as a past exam.');

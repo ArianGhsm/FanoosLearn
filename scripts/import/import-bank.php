@@ -8,6 +8,7 @@ use Fanoos\Platform\Authorization\ScopeAuthorizer;
 use Fanoos\Platform\Bank\BankImporter;
 use Fanoos\Platform\Bank\BankImportException;
 use Fanoos\Platform\Bank\BankPublisher;
+use Fanoos\Platform\Bank\BankSittingExporter;
 use Fanoos\Platform\Content\ExamImageStore;
 use Fanoos\Platform\Content\ExamQuestionRateGuard;
 use Fanoos\Platform\Content\ExamService;
@@ -34,6 +35,11 @@ use Fanoos\Platform\Support\RuntimeConfig;
  * may review their own):
  *   php scripts/import/import-bank.php publish --workspace=<uuid> --type=residency --year=1404 [--round=1]
  *       --actor=<uuid> --reviewer=<uuid> [--time-limit=<minutes>] [--max-attempts=<n>]
+ *
+ * Export a sitting that is already in the bank as a sitting file (and its
+ * images in <out>/assets), to add checked sources to it through the ordinary
+ * importer; re-importing it unchanged changes no question or answer (09 §7):
+ *   php scripts/import/import-bank.php export --workspace=<uuid> --type=national --year=1404 [--round=1] --out=<existing folder>
  *
  * Images named in a sitting file are read from --assets and stored in
  * FANOOS_STORAGE_ROOT; run imports with images as the web user.
@@ -94,6 +100,22 @@ try {
         exit(0);
     }
 
+    if ($command === 'export') {
+        $out = realpath((string) ($options['out'] ?? ''));
+        if ($out === false || !is_dir($out)) {
+            throw new RuntimeException('--out=<existing folder> is required');
+        }
+        $result = (new BankSittingExporter($database, $images))->export(
+            $workspace,
+            (string) ($options['type'] ?? ''),
+            (int) ($options['year'] ?? 0),
+            (int) ($options['round'] ?? 1),
+            $out,
+        );
+        echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . PHP_EOL;
+        exit(0);
+    }
+
     if ($command === 'publish') {
         $audit = new AuditLogger($database);
         $authorizer = new ScopeAuthorizer($database);
@@ -115,7 +137,7 @@ try {
         exit(0);
     }
 
-    throw new RuntimeException('Usage: import-bank.php check|import|publish --workspace=<uuid> ... (see the header of this file)');
+    throw new RuntimeException('Usage: import-bank.php check|import|export|publish --workspace=<uuid> ... (see the header of this file)');
 } catch (BankImportException $error) {
     fwrite(STDERR, implode("\n", $error->problems) . "\n" . count($error->problems) . " problem(s); nothing was written.\n");
     exit(1);
