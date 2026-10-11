@@ -90,6 +90,12 @@ python3 scripts/import/drive_batch.py import --batch=<name> --backup=/var/backup
 - A reviewed answer, source, concept or explanation is never overwritten.
 - Questions keep their key `type-year-round-number`; changing a paper's round
   later creates new questions, so settle the manifest before importing.
+- From 2026-10-11, never create a chapter-based source row unless
+  `pdf_page` and `pdf_sha256` are present **together on the same row**,
+  checked against the exact approved PDF and the official chapter scope.
+  Without its independently checked PDF page, a proposed chapter is
+  pending; do not import the proposed chapter. Earlier incomplete
+  source records stay intact until separately audited.
 - Chapter classification of the new papers is a separate step (09): each
   source names the reference, edition, chapter, PDF page, printed page and
   the PDF's SHA-256.

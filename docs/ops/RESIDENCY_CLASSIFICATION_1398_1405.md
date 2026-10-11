@@ -6,6 +6,15 @@ promotion and national questions. This page replaces the 40-odd per-batch
 reports written between 2026-10-09 and 2026-10-10; they and the one-off page
 operators are kept in Git history (see the end of this page).
 
+> **New rule, 2026-10-11:** the historical `Sourced` and `Paged`
+> columns below are diagnostic, **not** completed chapter classification.
+> Completion now requires chapter node, verified PDF page number and
+> bound PDF SHA-256 **on the same source row**, plus original-page
+> evidence and official year-specific scope review. The live site-wide
+> counts and each remaining sitting are in
+> [BANK_CLASSIFICATION_PAGE_BACKLOG_20261011.md](BANK_CLASSIFICATION_PAGE_BACKLOG_20261011.md).
+> Keep all legacy records and human decisions intact pending audited repair.
+
 ## Live state (database read-back, 2026-10-11)
 
 Residency, all published sittings 1398–1405. *Sourced*: the question has at

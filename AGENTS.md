@@ -96,6 +96,16 @@ a blanket delete.
 - If a verified PDF page is not readable by the page-at-a-time reader, inspect
   the original page in a PDF viewer or leave that question pending. Do not
   create OCR output or a text version to fill the gap.
+- **Atomic chapter+page policy (owner 2026-10-11):** No new
+  chapter-based citation or classification completion without a positive
+  `pdf_page` and `pdf_sha256` tied to the *same* source row for the
+  exact official edition and supported by direct original-PDF evidence.
+  A printed or legacy `page` field alone is insufficient. Leave
+  unverified chapter+page proposals pending; preserve older incomplete
+  records and human reviews pending audited repairs. Report completion
+  only using same-row `node_id + pdf_page + pdf_sha256`, with
+  residency-English official-key exemptions separately counted. See
+  `docs/ops/BANK_CLASSIFICATION_PAGE_BACKLOG_20261011.md`.
 - Use `scripts/references/` search and evidence validator end-to-end.
   Every decision needs the book's own verbatim evidence, chapter, PDF page,
   edition and confidence; unanswered matches remain undecided, not `none`.

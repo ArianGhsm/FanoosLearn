@@ -66,6 +66,7 @@ FROM bank_question_sources link
 JOIN bank_reference_editions edition ON edition.id = link.edition_id
 JOIN bank_references reference ON reference.id = edition.reference_id
 WHERE link.workspace_id = :workspace AND link.question_id = :question AND link.node_id IS NOT NULL
+  AND link.pdf_page IS NOT NULL AND link.pdf_sha256 IS NOT NULL
   AND (link.origin = 'human' OR link.reviewed_at IS NOT NULL OR COALESCE(link.confidence_node, link.confidence_source, 1) >= :threshold)
 ORDER BY link.is_primary DESC, link.origin = 'human' DESC, link.reviewed_at IS NOT NULL DESC
 LIMIT 1

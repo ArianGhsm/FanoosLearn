@@ -546,6 +546,9 @@ SQL);
                 }
                 $this->checkOrigin($source, $at);
                 $this->checkBookPage($source, $at);
+                if (str_contains($ref, '#') && (!isset($source['pdf_page']) || !isset($source['pdf_sha256']))) {
+                    $this->fail("{$at}.pdf_page", 'a chapter requires pdf_page and pdf_sha256 from the same verified official PDF');
+                }
             }
             foreach ($this->arrayOf($question, 'concepts', $here) as $c => $concept) {
                 $at = "{$here}.concepts[{$c}]";
@@ -789,6 +792,55 @@ SQL);
                 $editionId = $this->resolveEdition($workspaceId, explode('#', $ref)[0]);
                 if ($this->reviewedExists('bank_question_sources', ['question_id' => $questionId, 'edition_id' => $editionId, 'node_id' => $nodeId])) {
                     continue;
+                }
+                // Defense in depth: no new chapter link may be persisted without
+                // its own exact PDF page and file identity. Legacy rows remain
+                // untouched when a sitting does not supply source replacements.
+                if ($nodeId !== null && (
+                    !isset($source['pdf_page'], $source['pdf_sha256'])
+                    || !is_int($source['pdf_page']) || $source['pdf_page'] < 1
+                    || !is_string($source['pdf_sha256'])
+                    || preg_match('/^[a-fA-F0-9]{64}$/D', $source['pdf_sha256']) !== 1
+                )) {
+                    throw new BankImportException(['a new chapter source requires pdf_page and verified pdf_sha256']);
+                }
+                if ($nodeId !== null) {
+                    $scope = $this->database->prepare(<<<'SQL'
+WITH RECURSIVE ancestors AS (
+    SELECT id, workspace_id, edition_id, parent_id, kind, number
+    FROM bank_reference_nodes WHERE workspace_id = :workspace AND id = :node
+    UNION ALL
+    SELECT parent.id, parent.workspace_id, parent.edition_id, parent.parent_id, parent.kind, parent.number
+    FROM bank_reference_nodes parent
+    JOIN ancestors child ON child.parent_id = parent.id AND child.workspace_id = parent.workspace_id
+)
+SELECT n.number, v.scope, v.scope_chapters
+FROM ancestors n
+JOIN bank_reference_validity v ON v.workspace_id = n.workspace_id AND v.edition_id = n.edition_id
+WHERE n.kind = 'chapter'
+  AND v.exam_type_id = :type AND v.exam_year = :year
+  AND v.subject_id = :subject AND v.is_official = 1
+LIMIT 1
+SQL);
+                    $scope->execute([
+                        'workspace' => $workspaceId, 'node' => $nodeId,
+                        'type' => $typeId, 'year' => $year,
+                        'subject' => $this->lookup($workspaceId, 'bank_subjects', 'subject_key', (string) $question['subject']),
+                    ]);
+                    $validity = $scope->fetch() ?: null;
+                    if ($validity === null) {
+                        throw new BankImportException(['source chapter has no official year/subject validity']);
+                    }
+                    $chapters = $validity['scope_chapters'] === null ? [] : json_decode((string) $validity['scope_chapters'], true, 512, JSON_THROW_ON_ERROR);
+                    if ($chapters !== [] && !in_array((string) $validity['number'], array_map(static fn (array $row): string => (string) $row['number'], $chapters), true)) {
+                        throw new BankImportException(['source chapter is outside the official year-specific scope']);
+                    }
+                    $scopeText = (string) ($validity['scope'] ?? '');
+                    if ($chapters === [] && (str_contains($scopeText, 'منتخب') || str_contains($scopeText, 'به جز')
+                        || str_contains($scopeText, 'بجز') || str_contains($scopeText, 'غیر از')
+                        || stripos($scopeText, 'except') !== false || stripos($scopeText, 'excluding') !== false)) {
+                        throw new BankImportException(['official selected/excluded source scope is not structured']);
+                    }
                 }
                 $this->database->prepare(<<<'SQL'
 INSERT INTO bank_question_sources (id, workspace_id, question_id, edition_id, node_id, page, pdf_page, printed_page, pdf_sha256, table_ref, figure_ref, box_ref, anchor_text, is_primary,

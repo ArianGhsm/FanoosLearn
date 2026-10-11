@@ -455,7 +455,10 @@ SQL);
     {
         $filter = $typeKey === null ? '' : 'AND sitting.exam_type_id = (SELECT id FROM bank_exam_types WHERE workspace_id = :type_workspace AND type_key = :type)';
         $query = $this->database->prepare(<<<SQL
-SELECT DISTINCT link.question_id, question.subject_id, link.edition_id, link.node_id
+SELECT DISTINCT link.question_id, question.subject_id, link.edition_id,
+       CASE WHEN link.node_id IS NOT NULL
+                 AND link.pdf_page IS NOT NULL AND link.pdf_sha256 IS NOT NULL
+            THEN link.node_id ELSE NULL END AS node_id
 FROM bank_question_sources link
 JOIN bank_questions question ON question.id = link.question_id
 JOIN bank_exam_sittings sitting ON sitting.id = question.sitting_id

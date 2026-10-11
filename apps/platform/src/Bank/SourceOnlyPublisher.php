@@ -104,7 +104,15 @@ final class SourceOnlyPublisher
             $edition = (string) $d['edition'];
             $chapter = 'ch' . str_pad((string) $d['chapter'], 2, '0', STR_PAD_LEFT);
             $pageLabel = (string) ($s['page'] ?? '');
-            $pdfPage = (int) $d['page'];
+            $pdfPage = $d['page'];
+            $sourcePdfPage = $s['pdf_page'] ?? null;
+            $sourcePdfHash = $s['pdf_sha256'] ?? null;
+            if (!is_int($pdfPage) || $pdfPage < 1
+                || !is_int($sourcePdfPage) || $sourcePdfPage !== $pdfPage
+                || !is_string($sourcePdfHash)
+                || preg_match('/^[a-fA-F0-9]{64}$/D', $sourcePdfHash) !== 1) {
+                throw new RuntimeException('A chapter source requires its exact pdf_page and verified PDF SHA-256.');
+            }
             $validPage = in_array($pageLabel, [(string) $pdfPage, 'pdf ' . $pdfPage], true);
             if (!$validPage) {
                 $validPage = PrintedBookPageEvidence::corroborates(
@@ -131,7 +139,11 @@ final class SourceOnlyPublisher
             }
             $mapped[$n] = ['ref' => $m[1], 'edition' => $m[2],
                 'node' => $chapter, 'chapter' => (string) $d['chapter'],
-                'page' => (string) $s['page'], 'anchor' => $s['anchor'], 'conf' => $conf];
+                'page' => (string) $s['page'],
+                'pdf_page' => $sourcePdfPage,
+                'pdf_sha256' => strtolower($sourcePdfHash),
+                'printed_page' => isset($s['printed_page']) ? (string) $s['printed_page'] : null,
+                'anchor' => $s['anchor'], 'conf' => $conf];
         }
         if (count($seen) !== count($original) || count($mapped) !== count($wanted)
             || $mapped === []) {
@@ -162,9 +174,9 @@ AND et.type_key='residency' AND v.is_official=1
 SQL);
         $insert = $db->prepare(<<<'SQL'
 INSERT INTO bank_question_sources
-(id,workspace_id,question_id,edition_id,node_id,page,anchor_text,
+(id,workspace_id,question_id,edition_id,node_id,page,pdf_page,printed_page,pdf_sha256,anchor_text,
 is_primary,confidence_source,confidence_node,confidence_page,origin,created_at)
-VALUES (:id,:ws,:qid,:edition,:node,:page,:anchor,1,:cs,:cn,:cp,'ai',UTC_TIMESTAMP(6))
+VALUES (:id,:ws,:qid,:edition,:node,:page,:pdf_page,:printed_page,:pdf_sha256,:anchor,1,:cs,:cn,:cp,'ai',UTC_TIMESTAMP(6))
 SQL);
         $db->beginTransaction();
         $count = 0;
@@ -222,7 +234,9 @@ SQL);
                 $insert->execute([
                     'id' => Uuid::v7(), 'ws' => $workspace, 'qid' => $q['id'],
                     'edition' => $mappedNode['edition_id'], 'node' => $mappedNode['node_id'],
-                    'page' => $src['page'], 'anchor' => $src['anchor'],
+                    'page' => $src['page'], 'pdf_page' => $src['pdf_page'],
+                    'printed_page' => $src['printed_page'], 'pdf_sha256' => $src['pdf_sha256'],
+                    'anchor' => $src['anchor'],
                     'cs' => $src['conf'], 'cn' => $src['conf'], 'cp' => $src['conf'],
                 ]);
                 ++$count;

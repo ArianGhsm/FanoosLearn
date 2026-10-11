@@ -1,5 +1,13 @@
 # Residency 1397 and promotion 1405 classification — 2026-10-11
 
+> Follow-up (research only): the direct-PDF chapter-map and official-scope
+> audit in [CHAPTER_SCOPE_AND_PDF_MAP_CHECKPOINT_20261011.md](CHAPTER_SCOPE_AND_PDF_MAP_CHECKPOINT_20261011.md)
+> found 25 outside-scope source rows in the newest published sittings and
+> validated 9 additional, **unpublished** residency 1397 endodontics and 7
+> 13 promotion 1405 round-3 prosthodontics decisions. The published counts below
+> are unchanged; do not add these research decisions to them before an audited
+> import and live read-back.
+
 Procedure: `docs/product/09_CHAPTER_CLASSIFICATION.md`, with the national
 conventions in `docs/ops/NATIONAL_CLASSIFICATION_1404_1405.md` (each sitting
 has its own decisions folder; evidence is re-read by `apply_classification.py`

@@ -10,6 +10,18 @@ Authority: `docs/PROJECT_PRINCIPLES.md`,
 `docs/product/09_CHAPTER_CLASSIFICATION.md` and
 `docs/ops/RESIDENCY_CLASSIFICATION_1398_1405.md` (per-batch execution logs are in Git history).
 
+**Additional owner acceptance rule (2026-10-11):** a source-only batch
+must contain its exact verified `pdf_page` and current `pdf_sha256`
+in the same source row as its chapter `node_id`. If any page or
+file identity is absent, **exclude that question from publication** and
+leave its chapter decision pending. A legacy `page` or
+`printed_page` does not satisfy this requirement. Historical
+unpaged chapter rows are not counted as completed; do not delete or
+overwrite them except through separately approved, fully audited repair.
+The new current backlog and SQL are recorded in
+`BANK_CLASSIFICATION_PAGE_BACKLOG_20261011.md`. Historical numeric
+checkpoints below preserve their original (broader) definitions.
+
 ## Implementation
 
 - `apps/platform/src/Bank/SourceOnlyPublisher.php` is a single-transaction

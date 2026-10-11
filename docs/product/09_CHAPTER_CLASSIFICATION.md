@@ -40,6 +40,26 @@ there is no page and no quote to back it. Title-based classification was
 measured: on 1403 endodontics a third of such chapters were wrong, and on
 1404 a quarter (49 of 188) differed from the page-verified chapter.
 
+### Mandatory chapter + page pair (owner, 2026-10-11)
+
+New classification is **atomic**: no chapter assignment is accepted unless
+the same record contains the exact edition's verified `pdf_page` and
+`pdf_sha256`, and the short evidence actually supports the decision on
+that PDF page, inside the official syllabus scope. The printed page is useful
+for display but cannot replace `pdf_page` or its file SHA-256. For an
+unlocated or unreadable page, keep **both** the proposed chapter and page
+pending; do not emit a chapter-only source or treat it as complete.
+Historical rows missing page/hash are backlog, not newly completed work;
+preserve human-reviewed assignments pending separately approved repair.
+The policy-final residency English exemption remains source-free (§3A).
+
+For all new progress reports, use one same-row predicate:
+`node_id IS NOT NULL AND pdf_page IS NOT NULL AND
+pdf_sha256 IS NOT NULL`. Raw source counts and legacy printed/any-page
+counts can be shown for diagnostics, clearly marked incomplete. An audit
+must also independently confirm PDF hash, chapter boundaries, syllabus
+scope and page evidence before calling the row scientifically verified.
+
 ## 2. What the work needs
 
 | What | Where |
@@ -178,8 +198,11 @@ do not locate support, leave the question undecided (§5).
 - The fact is in two chapters: take the one that teaches it, not the one that
   refers to it in passing.
 - The page is outside the year's announced `scope`: look for the same fact
-  inside the scope first; if it is only outside, keep it and lower the
-  confidence.
+  inside the scope. If the only support is outside, leave the question
+  undecided for official-syllabus review. Lower confidence does not make an
+  excluded chapter eligible. For a partially included chapter, verify the
+  official printed-page or section limit on the original PDF page before
+  publication; a chapter-list check alone cannot validate that limit.
 - Review questions at the end of a chapter, the index, tables of contents
   and reference lists are never the evidence page.
 
@@ -227,6 +250,13 @@ files are read for a sitting, by the `<year>-` prefix):
   silently use these exceptions for new decisions.
 
 **Step 6 — check and write.**
+
+The validator rejects a chapter outside an explicit `scope_chapters` list.
+If the official scope describes selected or excluded chapters but has no
+structured chapter list, the decision stays pending until the catalog is
+corrected from the official notice. The full sitting importer applies the
+same chapter-level gate; partial page and section limits still need explicit
+human review against the original PDF before a source is published.
 
 ```sh
 sudo -u fanoosupd python3 -B scripts/references/apply_classification.py --sitting=<sitting.json> \
