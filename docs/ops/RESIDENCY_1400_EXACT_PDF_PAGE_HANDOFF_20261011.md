@@ -39,11 +39,11 @@ The 56 is a **field-presence count**, not a new 56-page independent scientific r
 
 All 152 existing but incomplete source records have `node_id` but no complete bound `pdf_page` + `pdf_sha256`. The read-only live metadata audit found:
 
-- **85** printed/numeric legacy page labels: dental materials 10, endodontics 20, operative 5, oral pathology 20, oral surgery 20, prosthodontics 18 — **actually 93**; recalculate from the subject table rather than using a guessed aggregate.
+- **93** printed/numeric legacy page labels: dental materials 10, endodontics 20, operative 5, oral pathology 20, oral surgery 20, prosthodontics 18.
 - More source rows have blank legacy pages: oral medicine 20, pediatric 19, periodontics 20. The live SQL confirmed legacy pages are **not** `pdf N` labels. Printed page numbers cannot be mechanically assigned as PDF-page numbers.
 - The previous `backfill_source_pages.php` can parse printed fields, but this does not establish actual PDF pages. Do **not** treat `--bind-pdf` as scientific page validation or run a bulk data operation under the new rule.
 
-Correction to the numeric summary above: printed/numeric incomplete records total **93** (10+20+5+20+20+18); blank legacy-page records total **59** (20+19+20), together **152**. This explicit reconciliation supersedes the provisional number on the previous bullet.
+Together the **93** printed/numeric and **59** blank legacy-page records account for all **152** chaptered-but-incomplete rows.
 
 All year-1400 official `catalog.json` validity entries were inspected by subject (White & Pharoah 8e for radiology; multiple exact texts for restorative/materials/prosthodontics); subject-specific scope and partial-page exclusions are mandatory. No other year's edition or approximate map may be substituted.
 
