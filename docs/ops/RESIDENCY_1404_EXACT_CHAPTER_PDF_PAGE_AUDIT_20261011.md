@@ -50,6 +50,24 @@ A follow-up read-only pass requested the **original PDF page of every one of the
 
 The 18-row private no-apply source-location report is at `/srv/fanoos/shared/research/classification/reports/residency-1404-endo-original-page-screen-20261011.json`, SHA-256 `4c7177790d93f2e5637f4ba182a2f8b8c5884ced4e2f1815adc385dc138122dc`. It contains only question numbers, chapter, printed and verified original PDF page, short screening dispositions and the pinned original PDF SHA (no extracted original-book pages or question stems). The report is not an import file, and its eight candidates have `approved:false`; direct evidence, visual checks where needed, source-only publishing guards and full verified backup remain necessary before DB publication. The 18 read-only page inspections changed **zero** source rows.
 
+## Follow-up original-PDF screening: six endodontics + three dental materials (same day)
+
+A second evidence-level examination of the stored endodontics screen narrowed the **eight preliminary endodontics candidates** to **six comparatively direct, keyed-option-supporting locations**: Q21 ch11/PDF222 (printed215), Q25 ch10/PDF197 (printed190), Q28 ch16/PDF359 (printed352), Q31 ch9/PDF175 (printed168), Q36 ch15/PDF340 (printed333), and Q37 ch13/PDF278 (printed271). All use Torabinejad 6e SHA `09333f079cb3300550cc0702985aae216d952eacabdaac005e1c66fafebe13e0`. **Q23** remains on hold because the negative-apical-patency answer needs further independent semantic justification. **Q40** remains on hold because the existing historical anchor discusses a *bone curette* although the official answer specifies a *periodontal curette*; the separate figure-caption location is not enough to silently override that conflict. Q24 (voided), Q29 (amended), and the figure-dependent items retain their existing protected states.
+
+Direct original-page reads also found three promising existing **Craig Restorative Dental Materials 14e** citations (approved server object SHA `333e81ae8a1818cdff57f00e3f870698776e3b8e02fcc49169f397f2fbaf90b9`):
+
+| 1404 residency question | Existing official Craig 14e chapter | Original printed page | Direct PDF page | Fact corroborated |
+| --- | ---: | ---: | ---: | --- |
+| Q211 | 4 | 42 | **53** | An immediate reduction in creep-recovery strain represents elastic recovery |
+| Q212 | 10 | 200 | **211** | Heating can recrystallize wrought alloys into a grained structure |
+| Q217 | 12 | 233 | **244** | Phosphate binds calcium and regulates alginate working/setting characteristics |
+
+Materials Q213 (negative fracture-toughness rationale not established on found page), Q216 (legacy printed299 points to an uninformative/blank page around PDF310), Q219 (human source outside listed official scope), and Q220 (historical Van Noort section 2.3 outside listed scope) are held. No nearest-book substitution, page-offset extrapolation or source record mutation was performed.
+
+The 9 candidate metadata/proof snippets are preserved in the **protected, research-only** report `/srv/fanoos/shared/research/classification/reports/residency-1404-nine-original-pdf-page-candidates-20261011.json`, SHA-256 `85b658ac84c508bc2ddb34764fe1e3b204b450041dccc5b1d977e44167f7ea9f`. Read-back confirmed exactly six endodontics and three dental-materials entries, six stated holds and `live_source_records_updated:0`. The receipt records original-PDF page locations and short candidate proof snippets, not entire original pages or bank stem/choice text. It **does not** substitute for two-neighbor printed-label verification, complete independent scientific review or the approved source-metadata publication.
+
+**Implementation gate:** A provisional one-time script was created on an isolated GitHub branch, but a safety validation interrupted its correction. The incomplete script was explicitly **deleted from that branch before any pull request/merge/deploy**. No page operator from this 1404 work is present in GitHub main or active production. Any future production operator must be separately reviewed, pass CI, protect full bank-row fingerprints, update *only* `pdf_page` and `pdf_sha256`, take a fresh complete verified backup, record a unique receipt, and perform full source/assessment before–after checks. **New live bound-page count remains 48/250, with 182 non-English requiring completion and 20 exempt English questions.**
+
 ## Existing citations that conflict with enumerated 1404 official scope
 
 A read-only equality audit joined each existing `bank_question_sources` chapter number and edition to the **same** 1404 residency subject/edition `bank_reference_validity.scope_chapters` list. **Nine** existing rows have a chapter outside their explicitly enumerated chapter list (seven AI-origin, **two protected human-origin**). This first pass does **not** validate nuanced partial-page/section restrictions, and must not trigger deletion, key changes or automatic replacement.
