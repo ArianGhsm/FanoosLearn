@@ -44,7 +44,7 @@ Live, deployed, ancestry-checked guarded operator `scripts/references/repair_exi
 
 exists for **Q43, Q50, Q54, Q59 and Q60**; do not assume it exists for the other two.
 
-Prior same-date successfully applied 1405 Q214, Q27, Q29, Q35, Q38 are in `RESIDENCY_1405_FIVE_LIVE_PDF_PAGE_REPAIRS_20261011.md`. Cumulative this-day operations are **nine independent successful single-row source-only commits** after the preexisting 83 recorded-complete baseline. An aggregate DB read-back for exact `residency:1405:1` (expected **92/250** exact-field-complete and 138 book-based incomplete) remains a separate required check; do not assert the expected number as measured without confirming it. In addition, row Q217 remains outside official scope despite populated three fields.
+Prior same-date successfully applied 1405 Q214, Q27, Q29, Q35, Q38 are in `RESIDENCY_1405_FIVE_LIVE_PDF_PAGE_REPAIRS_20261011.md`. Cumulative same-day actions are **ten successfully applied individual source-only repairs**, confirmed by the transaction receipts. Independent live SQL readback after Q60 confirms **93/250** `residency:1405:1` records have a chapter and verified PDF page and hash; 20 English exempt, 137 textbook-based records remain incomplete. This is a field-level count, with older official-scope exceptions still pending.
 
 A previously checked read-only official published-assessment preflight for the sitting confirmed current **v5 / 246 frozen questions** and `question_content_identical=true`; another subject-specific postreadback after this four-source batch remains an action item, as does verifying release health after the final operation.
 
