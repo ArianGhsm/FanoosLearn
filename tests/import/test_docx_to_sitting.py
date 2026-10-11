@@ -119,6 +119,19 @@ class DocxToSittingTest(unittest.TestCase):
             sitting = json.loads((Path(tmp) / 'national-1405-1.json').read_text(encoding='utf-8'))
         self.assertEqual([q['subject'] for q in sitting['questions']], ['oral-pathology', 'english', 'basic-sciences', 'basic-sciences'])
 
+    def test_general_pathology_before_english_is_basic_science(self):
+        # National 1404 (مرداد): materials, then a bare «آسیب‌شناسی», then the other basic sciences, then English.
+        with tempfile.TemporaryDirectory() as tmp:
+            docx = Path(tmp) / 'national.docx'
+            lines = []
+            for heading, number in [('آسیب‌شناسی دهان و فک و صورت', 1), ('مواد دندانی', 2), ('آسیب‌شناسی', 3), ('ژنتیک', 4), ('زبان انگلیسی', 5)]:
+                lines += [heading, f'{number}. سؤال {number}؟', 'الف) یک', 'ب) دو', 'ج) سه', 'د) چهار', 'پاسخ کلیدی: 1']
+            write_docx(docx, lines)
+            build(docx, 1404, Path(tmp), 'A', None, exam_type='national', round_=1, expected=5)
+            sitting = json.loads((Path(tmp) / 'national-1404-1.json').read_text(encoding='utf-8'))
+        self.assertEqual([q['subject'] for q in sitting['questions']],
+                         ['oral-pathology', 'dental-materials', 'basic-sciences', 'basic-sciences', 'english'])
+
     def test_subject_headings_and_what_is_not_one(self):
         self.assertEqual(subject_of('بیماری های دهان، فک و صورت'), 'oral-medicine')
         self.assertEqual(subject_of('زیست مواد دندانی'), 'dental-materials')
