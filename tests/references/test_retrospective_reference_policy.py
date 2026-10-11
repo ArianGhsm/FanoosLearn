@@ -50,7 +50,7 @@ class Pre1396ReferencePolicyTests(unittest.TestCase):
     def test_pre1396_select_earliest_ready_1397_plus_per_book_family(self):
         selected = self.select(1391)
         self.assertEqual([(x["year"], x["edition"]) for x in selected],
-                         [(1398, "book@2e"), (1397, "other@1e")])
+                         [(1397, "other@1e"), (1398, "book@2e")])
         self.assertTrue(all(x["year"] > 1396 for x in selected))
         self.assertTrue(all(x["official"] for x in selected))
 
