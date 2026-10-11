@@ -77,3 +77,28 @@ After the 12-row baseline above, 12 additional **retrospective** citations were 
 - **Syllabus guard example:** Proffit 5e chapter 2 is **outside the 1397 scope**; Q181 and Q182 therefore remain pending rather than being falsely called 1397-exam scope citations, despite finding topical PDF pages. A later 1398+ proxy year requires genuine own-year scope verification.
 
 The complete work remains in progress. No 1391 original official-key booklet was independently obtained; source-only records and evidence do not change official answers.
+
+
+## Latest follow-up: 28 live same-source chapter + PDF page references
+
+A subsequent oral-radiology batch used **White/Pharoah Radiology 8e**, the genuine 1399
+reference-year list, as a specifically labeled `retrospective_proxy_1397_plus` for
+1391. Direct original-PDF page evidence, SHA-bound chapter maps, independent
+provenance audit, rollback preview, verified full backup and guarded source-only
+production insert all passed.
+
+| Question | Chapter | Exact PDF page |
+|---:|---:|---:|
+| 142 | 24 | 1257 |
+| 147 | 3 | 120 |
+| 149 | 1 | 60 |
+| 150 | 2 | 90 |
+
+Private receipt: `/srv/fanoos/shared/research/classification/reports/1391-oral-radiology-retro-source-applied-20261011.json`.
+Audit SHA-256 `4a95ab95bb4d27d73c05de7b707f92a967b00a95c7d6f9a3134b0ece2585850d`.
+Verified 114-file full backup `/var/backups/fanoos/20261011T190700Z-9101ae81`.
+Receipt reports `source_rows=4` and zero question/choice/answer modifications.
+**Live database strict read-back: 28 / 220 recorded-complete, 192 raw pending
+(189 non-voided plus 3 voided).** Earlier 12/24 counts are historical
+checkpoints. Neither later-year books nor the unverified original key are
+mislabelled official for 1391.
