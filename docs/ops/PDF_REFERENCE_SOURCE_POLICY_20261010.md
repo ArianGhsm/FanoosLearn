@@ -104,12 +104,30 @@ sidecars, `.pyc`, `.tmp` or `.partial` files, and zero full-book text members in
 the three research archives scanned. The seven remaining `.txt` files are
 checksum, license and dependency manifests only.
 
-The two W08 worktrees under `classification/parallel/W08/` remain because they
-are clean checkouts of separate open remote branches: [PR #203](https://github.com/ArianGhsm/FanoosLearn/pull/203)
-and [PR #233](https://github.com/ArianGhsm/FanoosLearn/pull/233). They are
-not scratch outputs from a finished local run; remove each only after its PR
-is closed or merged and the protected W08 handoff is preserved. Their
-remaining `.txt` files are license/dependency manifests, not book copies.
+The two W08 checkouts mentioned at the earlier checkpoint were later removed
+on 2026-10-11. [PR #203](https://github.com/ArianGhsm/FanoosLearn/pull/203)
+had merged and [PR #233](https://github.com/ArianGhsm/FanoosLearn/pull/233)
+had closed; both checkouts were clean and their commits recoverable from Git.
+The protected W08 handoff and checksums remain. Private receipt:
+`classification/reports/artifact-cleanup-w08-checkouts-20261011.json`.
+
+A fresh scan on 2026-10-11 found two complete Neville 4e/5e text copies in
+an older oral-pathology research folder, created after the prior cleanup.
+Both approved original PDFs and their current hashes/page counts were
+verified through the direct reader; no classifier was active. The two exact
+files were removed (10,444,094 logical bytes) with private receipt
+`classification/reports/artifact-cleanup-neville-text-20261011.json`.
+The completed `tmp/nat1405-probe/` operation also left 48 query, one-off
+script and duplicate sitting files. Its `check.json` was byte-identical to
+the protected validated national 1405 sitting; 80 sources were live. Those
+48 exact files were removed with receipt
+`classification/reports/artifact-cleanup-national1405-probe-20261011.json`.
+Post-cleanup read-back of the protected research tree and seven inspected
+archives found zero PDF text files, `page_text`/`full_text`/`book_text` JSON
+fields, bytecode, `.tmp` or `.partial` files. The three remaining `.txt`
+files are checksum manifests; `research/tmp/` is empty. Other protected
+parallel research scripts and unique decisions were not swept without a
+separate recovery review.
 
 The direct-PDF implementation in PR #255 was subsequently merged as
 `1a31ac96b8cfcd2d5a2e5aa4147b77a81567b073` and is in the live release

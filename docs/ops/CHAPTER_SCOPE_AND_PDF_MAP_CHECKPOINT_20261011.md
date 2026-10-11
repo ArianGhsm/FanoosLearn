@@ -64,6 +64,68 @@ section dividers and blank pages unassigned. Carranza 14e stays **pending**:
 its registered PDF has only 105 supplementary pages, while the old map runs
 to page 1875. It cannot be made eligible by padding a map.
 
+## Follow-up private research, no production import
+
+Using the PR #291 worktree and only the exact approved PDFs, two more
+site-matching batches were validated. The private decision files contain
+short page quotes; no question text or page text was added to Git. All cited
+pages were also inspected as original PDF page images streamed in memory, with
+no raster or text file left behind. Both sittings were compared against live
+subject assignments in addition to the import dry run, because
+`questions_changed` does not count a subject change.
+
+| Sitting | Original PDF | New research decisions | Validator | Import dry run | Live source rows changed |
+| --- | --- | --- | --- | --- | --- |
+| residency 1397-1, endodontics | Torabinejad 5e, 494 pages | Q83, 84, 86, 89, 90, 92, 100 (7/20) | 7 accepted, 0 rejected | 247 questions; `questions_changed=0`, `answers_recorded=0`, 7 sources; 247/247 subjects match | 0 |
+| promotion 1405-3, prosthodontics | Rosenstiel 6e, 945 pages | Q9, 10, 12, 13, 16, 21, 22 (7/100) | 7 accepted, 0 rejected | 100 questions; `questions_changed=0`, `answers_recorded=0`, 7 sources; 100/100 subjects match | 0 |
+
+Protected decisions and read-back receipts:
+
+- `classification/decisions/residency-1397-1/1397-endodontics.json`,
+  SHA-256 `bfc231a3abc45a07d5983db3f8a95b8bef8c2d5eb365bbf3f42556beb7ae77d0`;
+  `classification/reports/residency-1397-endo-direct-pdf-20261011.json`,
+  SHA-256 `b85af89c21d763bb4418a59c0dc7d012a8a1182b180b8caf7329c0c1e3abe310`.
+- `classification/decisions/promotion-1405-3/1405-prosthodontics.json`,
+  SHA-256 `43b66f24545d6e2b996f048134be3c7ed0dbc23144838888c9454ab535860a8e`;
+  `classification/reports/promotion-1405-r3-direct-pdf-20261011.json`,
+  SHA-256 `3954912f9b6527874c2840e167aee64bc71dbdf08663f88da03d8599aa66682d`.
+
+Both had **zero** live sources in their subject/round before this research.
+The receipt names exact input/map/PDF hashes and visual pages. No verified
+research recovery archive was made: the server already held its five most
+recent full backup sets, so backup retention must be reconciled before any
+production import. Do not claim these 14 decisions are on the site. Regenerate
+validated sittings from the protected decisions after PR review, green merge,
+updater deployment, and a fresh PDF/sitting read-back. Then repeat the import
+dry run, make and verify a backup, import and publish with an audited receipt.
+After receipt read-back and a process check, the two exact operation
+directories (queries, draft decisions and generated validated sittings) and
+the temporary PR worktree were removed. Only the protected decisions and
+concise receipts remain from this research pass.
+
+PR #291 (`fix/pdf-chapter-map-coverage-20261011`) had five green CI checks at
+SHA `0560a40dcec43d027e623f7fe66f0fccd39ba28c`; it remained open and
+unreviewed at this checkpoint. The server still ran `524ec2b` and was in
+sync with its current GitHub `main`. Neither a branch push nor green CI is
+a deployment or a bank data import.
+
+## Research-workspace cleanup read-back
+
+The follow-up exact-path cleanup removed two regenerated full-book Neville
+text files (10,444,094 logical bytes), two clean W08 checkouts after their
+PRs were resolved (43,999,232 allocated bytes), and the completed 48-file
+national 1405 scratch operation. The protected decisions, handoffs, original
+PDFs and live bank remained. Private receipts are
+`classification/reports/artifact-cleanup-neville-text-20261011.json`,
+`artifact-cleanup-w08-checkouts-20261011.json` and
+`artifact-cleanup-national1405-probe-20261011.json`. A post-cleanup scan
+found zero PDF text files, page/full/book-text JSON fields, bytecode or
+temporary/partial files in the research tree and seven checked archives.
+`research/tmp/` was empty; three remaining `.txt` files were checksum
+manifests. The protected parallel folders still contain historical one-off
+research scripts; do not delete those in bulk without checking their durable
+results and recovery paths individually.
+
 ## Resume order and import gate
 
 1. Review this branch's map boundaries and chapter-scope guard; merge only
