@@ -67,7 +67,7 @@ class Residency1399ExactExistingSourceRepairContract(unittest.TestCase):
             self.assertIn(token, self.text)
 
     def test_q97_answer_page_not_old_question_start_page(self):
-        self.assertRegex(self.text, r"(?s)97\\s*=>.*?'pdf'\\s*=>\\s*271,.*?'old_printed'\\s*=>\\s*'255',.*?'printed'\\s*=>\\s*'257'")
+        self.assertRegex(self.text, r"(?s)97\s*=>.*?'pdf'\s*=>\s*271,.*?'old_printed'\s*=>\s*'255',.*?'printed'\s*=>\s*'257'")
         self.assertIn("of the premolars and canines on the offending side", self.text)
         self.assertIn("Good thermal conductivity", self.text)
         self.assertIn("opposite buccal sulcus", self.text)
