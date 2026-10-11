@@ -46,3 +46,15 @@
 ۳. قبل از هر تغییر تولیدی: ممیزی مستقل شواهد و نشانی فایل، سندِ بستهٔ غیرقابل‌تغییر و هش‌ها، preview تراکنشی، نسخهٔ پشتیبان **کامل و تازه و تأییدشده**، اجرای source-only/metadata-only دارای محافظ و رسید یکتا، بازخوانی DB و assessment، بررسی CI، ادغام و updater رسمی، health و ثبت نسخهٔ نهایی. هیچ تغییر به‌صورت تکمیل‌شده ادعا نشود مگر واقعاً تأیید شده باشد.
 
 **وضعیت این سند:** پیش‌ممیزی و آغاز جست‌وجوی شواهد؛ **صفر تغییر جدید به رکوردهای تولیدیِ منبع/فصل/صفحه در این مرحله تأیید شده است**.
+
+## نتیجهٔ مرحلهٔ اندودانتیکس، ۲۰۲۶-۱۰-۱۱
+
+- خروجی فقط‌خواندنیِ تازه و منطبق با بانک تولیدی: `/srv/fanoos/shared/research/bank-sittings/1403/canonical-export-20261011/residency-1403-1.json`؛ شامل **۲۵۰ سؤال و ۴ تصویر**. SHA-256 فایل `5a903b491496ed3b7f912dde0fdc37607ff102f33b36a9c5e723baab19a1fcc7`.
+- کنترل استاندارد `import-bank.php import --dry-run` بر همین خروجی و چهار تصویر: **`questions:250`، `questions_changed:0`، `answers_recorded:0`، `sources:0`، `images:0`**. هیچ import واقعی انجام نشده است.
+- **۲۰** سؤال اندودانتیکس (۲۱ تا ۴۰) با جست‌وجوی مستقیم PDF ویرایش رسمی `torabinejad-endodontics@6e` مرور شدند. موارد قابل استناد پژوهشی برای **۱۹ سؤال** با صفحهٔ PDF واقعی، شمارهٔ فصل و شاهد کوتاه مستقیم در یک فایل تصمیم مستقل ثبت شدند؛ سؤال **۳۴** به‌علت عدم اثبات مقدار دقیق حجم تزریق Gow-Gates/PDL با شاهد قدیمی **hold** ماند.
+- تصمیم‌ها: `/srv/fanoos/shared/research/tmp/1403-endo-page-audit-20261011/1403-endodontics-decisions-review.json`، SHA-256 `383c525da64ea1242e5122715f1afb1116038a2fd442846fca1e5ca735b82ad0`.
+- اجرای ابزار اولیهٔ پروژه `scripts/references/apply_classification.py` با sitting اصلی و **همان ۱۹ تصمیم** نتیجهٔ **۱۹ accepted / ۰ rejected** داشت؛ خروجی خصوصی `/srv/fanoos/shared/research/tmp/1403-endo-page-audit-20261011/1403-endodontics-validated-study.json`، SHA-256 `ada00e21c2f2f179e42cd824af24f51961db1ef6c01d584c3c5bb1929521ae1c`.
+- فهرست ۲۰ ردیف پژوهشی شامل صفحه‌های پیشنهادی، SHA-256 PDF ثابت و پرچم hold: `/srv/fanoos/shared/research/classification/reports/1403-endodontics-pdf-page-candidates-20261011.json`، SHA-256 `42268fc3e394122f4fb698fa0bdd1256f49ae37a84b1af50c70e403971cd670b`.
+- آرشیو محافظت‌شدهٔ snapshot ۲۵۰ سؤال + ۴ تصویر + ۱۹ تصمیم + خروجی اعتبارسنجی + فهرست پژوهشی در `/var/backups/fanoos/research/20261011-residency1403-endo-19-primary-reviewed.tar.gz` قرار دارد؛ SHA-256 `272eeb547883b25d9ca85699a0cbc63bf0bad2cd266e06c0f5730494b0670037`. این آرشیو **پشتیبان کامل تولید نیست** و برای مجوز تغییر تولیدی کافی نیست.
+
+**مرزبندی پذیرش:** این ۱۹ مورد فقط از **اعتبارسنج اولیهٔ مستقیم PDF** عبور کرده‌اند. `audit_private_study_batches.py` تنها بستهٔ `study-only` بدون منبع موجود را می‌پذیرد؛ خروجی canonical این مرحله `fanoos.bank.sitting/1` و پرسش‌ها از قبل ردیف منبع دارند. برای پذیرش نهایی و ثبت PDF-page روی ردیف‌های موجود، ممیزی مستقل سازگار با source-repair، اصلاح کنترل‌شدهٔ فقط `pdf_page` و `pdf_sha256`، نسخهٔ پشتیبان کامل تازه، محافظ عدم تغییر صورت سؤال/گزینه/کلید، قفل انتشار و آزمون‌های CI الزامی‌اند. **این مرحله هنوز هیچ ردیف تولیدی را ویرایش نکرده، آزمونی بازنشر نکرده و عدد ۷۱/۲۵۰ِ ثبت‌شده را تغییر نداده است.**
