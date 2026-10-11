@@ -84,6 +84,36 @@ invariants.
 Registration of a PDF is **not** proof that it has readable page content or
 validated chapter-page boundaries.
 
+### Atomic chapter-and-PDF-page completion — owner decision 2026-10-11
+
+**A book-based question is chapter-classified only if its *same source
+record* has an exact official edition and in-scope chapter node
+(`bank_question_sources.node_id`), a positive 1-based `pdf_page`,
+and `pdf_sha256` identifying the current verified server PDF.** Evidence
+must be checked against that exact PDF page and its hash-bound chapter map,
+with any official partial-page limits independently verified. A bare chapter,
+a printed or legacy `page` label, or a PDF page without its file identity is
+**not a completed classification**. No chapter without its verified PDF page
+may be newly recorded or presented as completed. Do not infer pages from a
+chapter title or unverified pagination.
+
+When an exact page cannot be found and verified, leave the new decision
+**pending with neither a new chapter assignment nor a fabricated page**;
+continue other eligible questions. Historical incomplete source records
+remain intact, including human-reviewed records, until individually audited
+and safely repaired via the approved, backed-up source-only workflow. Do not
+erase existing chapters, keys, assessments or human decisions merely to
+satisfy the new metric.
+
+Every future backlog, import receipt, progress dashboard and handoff must
+use `EXISTS` on a **single source row** containing `node_id`,
+`pdf_page` and `pdf_sha256` for the strict **chapter+page recorded**
+counter; the separately audited **verified/in-scope** counter may be lower.
+Report incomplete rows with a chapter separately from questions without
+any chapter, and retain historical raw source counts as labeled diagnostics.
+Explicit no-book-source exemptions (residency English, §3A) are reported
+separately and never given synthetic chapter/page rows.
+
 ### Classification eligibility
 
 Work continuously through **eligible questions whose exact official edition
@@ -290,6 +320,12 @@ a required page cannot be read, leave the item pending for direct visual review
 of the original PDF. The exam sitting source and reference-book source remain
 distinct: the sitting source verifies question wording, while the reference
 PDF verifies chapter, page and evidence.
+
+**2026-10-11 — Atomic completion rule:** assigning a chapter and assigning
+its verified PDF page are one indivisible classification decision. Unverified
+or page-less chapters are incomplete in every new progress report and cannot
+be created by new imports. The 2026-10-11 production audit and sitting-level
+backlog are documented in `docs/ops/BANK_CLASSIFICATION_PAGE_BACKLOG_20261011.md`.
 
 ## 7. Open implementation items (do not assume completed)
 
