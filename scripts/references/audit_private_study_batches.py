@@ -18,6 +18,7 @@ import tempfile
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from apply_classification import flat, fragments
 from verified_reference_pdf import chapter_coverage, open_verified_reference
+from retrospective_reference_policy import BASIS, is_retrospective
 
 BATCH = re.compile(r"^(13[0-9]{2}|14[0-9]{2}):([a-z][a-z0-9-]*):([a-z][a-z0-9-]*)$")
 CHAPTERS = Path(__file__).resolve().parents[2] / "data/bank/reference-chapter-pages.json"
@@ -108,6 +109,14 @@ def audit_batch(root: Path, spec: str,
     wanted = {int(d["number"]): d for d in decisions if "edition" in d}
     if len(wanted) != len(decisions):
         raise ValueError(f"{spec}: duplicate or unsupported decisions")
+    reference_years = sorted({d.get("reference_year") for d in wanted.values()}) if is_retrospective(year_n) else [year_n]
+    if is_retrospective(year_n):
+        for d in wanted.values():
+            if (d.get("classification_basis") != BASIS
+                    or not isinstance(d.get("reference_year"), int)
+                    or isinstance(d.get("reference_year"), bool)
+                    or d["reference_year"] < 1397):
+                raise ValueError(f"{spec}: missing explicit 1397+ retrospective reference-year provenance")
     if not wanted.keys() <= original.keys():
         raise ValueError(f"{spec}: decision question not in exact sitting")
     chapter_maps = json.loads(CHAPTERS.read_text(encoding="utf-8"))["editions"]
@@ -165,6 +174,8 @@ def audit_batch(root: Path, spec: str,
         pages[str(n)] = {"ref": item["ref"], "pdf_page": int(decision["page"])}
     return {
         "batch": spec,
+        "classification_basis": BASIS if is_retrospective(year_n) else "official_exam_year",
+        "reference_years": reference_years,
         "exam_year": year_n,
         "subject": subject,
         "questions": len(original),

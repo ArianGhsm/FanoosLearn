@@ -22,6 +22,7 @@ import os
 import sys
 import tempfile
 from pathlib import Path
+from retrospective_reference_policy import is_retrospective, selected_reference_rows
 
 REPO = Path(__file__).resolve().parents[2]
 BANK = REPO / 'data' / 'bank'
@@ -75,18 +76,25 @@ def main() -> int:
     year = int(sitting['year'])
     catalog = json.loads((BANK / 'catalog.json').read_text(encoding='utf-8'))
     pdfs = json.loads((BANK / 'reference-pdfs.json').read_text(encoding='utf-8'))['editions']
+    maps = json.loads((BANK / 'reference-chapter-pages.json').read_text(encoding='utf-8'))['editions']
     exam_type = args.exam_type or sitting['exam_type']
 
-    rows = official_editions(catalog, exam_type, year, args.subject)
+    rows = selected_reference_rows(catalog, exam_type, year, args.subject, pdfs, maps)
+    if is_retrospective(year):
+        print(f'RETROSPECTIVE {exam_type} {year}: using verified 1397+ proxy reference years; NOT official for exam year')
     search = []
     for row in rows:
         found = pdf_available(row['edition'], pdfs, args.include_nearest)
         note = 'PDF source listed' if found == row['edition'] else (f'MISSING, legacy nearest {found}' if found else 'MISSING, pending exact edition')
-        print(f"OFFICIAL {row['edition']} [{note}] scope: {row.get('scope', '')}")
+        label = f"PROXY_REFERENCE_YEAR_{row['year']}" if is_retrospective(year) else 'OFFICIAL'
+        print(f"{label} {row['edition']} [{note}] scope: {row.get('scope', '')}")
         if found and found not in search:
             search.append(found)
     if not rows:
-        print(f'no official reference for {exam_type} {year} {args.subject}: these questions get no source')
+        if is_retrospective(year):
+            print(f'PENDING: no verified 1397+ proxy reference for {exam_type} {year} {args.subject}; do not assign chapter or page')
+        else:
+            print(f'no official reference for {exam_type} {year} {args.subject}: these questions get no source')
 
     queries = []
     for q in sitting['questions']:

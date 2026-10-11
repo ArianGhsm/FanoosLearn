@@ -21,6 +21,25 @@ no text version, OCR export or index is created. **No laptop is required.**
 Everything here was learned on 1398–1405 (2026-10-08). §8 lists the mistakes
 that were made and what now stops each of them.
 
+### Retrospective exception for exam years before 1396 (owner decision 2026-10-11)
+
+For exam years **1395 and earlier**, use the references published for
+**1397 onward**, in ascending year order, when their original verified server
+PDFs and complete chapter maps are available. This is a designated
+`retrospective_proxy_1397_plus` classification; its reference year must be
+recorded separately from the exam year and never described as the official
+reference list of the original sitting. It does not affect years **1396+**.
+
+A retrospective decision requires exactly the same **book edition + chapter
++ verified original PDF page + PDF SHA-256 + short exact-page quotation**
+as a normal decision. Do **not** fill `catalog.validity` for 1391–1395
+with invented historical `official=true` records, disable exact-source
+scope checks, or publish chapter-only sources. If a guarded importer does not
+support the retrospective provenance, keep the proposal in research pending
+an audited versioned publisher implementation; do not bypass it through
+raw SQL or full-sitting imports. See
+`docs/ops/PRE_1396_RETROSPECTIVE_CLASSIFICATION_20261011.md`.
+
 ## 1. What a result must be
 
 A question's source is **found, not guessed**. It is accepted only with:
