@@ -91,7 +91,7 @@ function rowsFingerprint1399(PDO $db, string $ws, string $qid): string
     $result = [];
     foreach ([
         'question' => ['bank_questions', 'id', 'id'],
-        'choices' => ['bank_question_choices', 'question_id', 'position,id'],
+        'choices' => ['bank_question_choices', 'question_id', 'position'],
         'answers' => ['bank_official_answers', 'question_id', 'recorded_at,id'],
         'sources' => ['bank_question_sources', 'question_id', 'id'],
     ] as $kind => [$table, $idColumn, $order]) {
