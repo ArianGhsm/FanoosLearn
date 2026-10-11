@@ -11,6 +11,7 @@ use Fanoos\Platform\Bank\BankBrowseService;
 use Fanoos\Platform\Bank\BankImporter;
 use Fanoos\Platform\Bank\BankImportException;
 use Fanoos\Platform\Bank\BankPublisher;
+use Fanoos\Platform\Bank\BankSittingExporter;
 use Fanoos\Platform\Content\CustomPracticeService;
 use Fanoos\Platform\Content\ExamQuestionRateGuard;
 use Fanoos\Platform\Content\ExamScheduleService;
