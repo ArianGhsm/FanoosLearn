@@ -133,10 +133,18 @@ corrected with explicit PDF-only resume instructions; obsolete extractor
 steps in the active W06/W08 procedures were superseded. The private W04
 checksum manifest no longer lists ten removed caches, and the affected
 W05/W06/W08 manifests were refreshed with old/new hashes preserved in audit
-receipts. A final read-back verified **15 checksum manifests and 198 member
+receipts. That intermediate read-back verified **15 checksum manifests and 198 member
 hashes, with zero missing or mismatched members**. Private correction receipts:
 `classification/reports/private-pdf-handoff-correction-20261011.json` and
 `w08-handoff-pdf-only-correction-20261011.json`.
+Four obsolete private one-off scripts that wrote PDF text or depended on the
+removed extractor were then removed from W06/W07/W08, after correcting seven
+protected handoffs and their checksum manifests. Current versioned inventory,
+PDF verifier and page validator are their recovery route. Private receipt:
+`classification/reports/obsolete-pdf-text-script-cleanup-20261011.json`.
+A static post-cleanup scan found no remaining private script calling the old
+text writer or a `pdftotext`-to-`.txt` path. The final checksum read-back now
+verifies 15 manifests/195 members with zero errors.
 
 The direct-PDF implementation in PR #255 was subsequently merged as
 `1a31ac96b8cfcd2d5a2e5aa4147b77a81567b073` and is in the live release

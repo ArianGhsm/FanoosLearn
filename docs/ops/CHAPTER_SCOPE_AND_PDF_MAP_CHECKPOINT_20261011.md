@@ -92,31 +92,54 @@ subject assignments in addition to the import dry run, because
 
 | Sitting | Original PDF | New research decisions | Validator | Import dry run | Live source rows changed |
 | --- | --- | --- | --- | --- | --- |
-| residency 1397-1, endodontics | Torabinejad 5e, 494 pages | Q83, 84, 86, 89, 90, 92, 100 (7/20) | 7 accepted, 0 rejected | 247 questions; `questions_changed=0`, `answers_recorded=0`, 7 sources; 247/247 subjects match | 0 |
-| promotion 1405-3, prosthodontics | Rosenstiel 6e, 945 pages | Q9, 10, 12, 13, 16, 21, 22 (7/100) | 7 accepted, 0 rejected | 100 questions; `questions_changed=0`, `answers_recorded=0`, 7 sources; 100/100 subjects match | 0 |
+| residency 1397-1, endodontics | Torabinejad 5e, 494 pages | Q83, 84, 86, 89, 90, 92, 98, 99, 100 (9/20) | 9 accepted, 0 rejected | 247 questions; `questions_changed=0`, `answers_recorded=0`, 9 sources; 247/247 subjects match | 0 |
+| promotion 1405-3, prosthodontics | Rosenstiel 6e, 945 pages | Q7, 8, 9, 10, 12, 13, 15, 16, 17, 19, 21, 22, 24 (13/100) | 13 accepted, 0 rejected | 100 questions; `questions_changed=0`, `answers_recorded=0`, 13 sources; 100/100 subjects match | 0 |
 
 Protected decisions and read-back receipts:
 
 - `classification/decisions/residency-1397-1/1397-endodontics.json`,
-  SHA-256 `bfc231a3abc45a07d5983db3f8a95b8bef8c2d5eb365bbf3f42556beb7ae77d0`;
-  `classification/reports/residency-1397-endo-direct-pdf-20261011.json`,
-  SHA-256 `b85af89c21d763bb4418a59c0dc7d012a8a1182b180b8caf7329c0c1e3abe310`.
+  current SHA-256 `e7d4ec62bf6ee00cbc2376a11546d9a3d2c9796efa35c8ace31e49dd2507863e`;
+  current `classification/reports/residency-1397-endo-direct-pdf-20261011-v2.json`,
+  SHA-256 `280663c23a42ee75d829bbcfd2e93d4ca19b9da49f0068042b110c26f1d8d8c1`.
+  The earlier seven-decision receipt remains as historical audit lineage; Q98
+  and Q99 were added only after direct visual checks of PDF pages 182 and 246,
+  a nine-decision validator pass and a fresh zero-change import dry run.
+  The other 11 endodontics questions remain **undecided**, with exact
+  question numbers, candidate pages and reason codes in protected
+  `classification/reports/residency-1397-endo-pending-20261011.json`
+  (SHA-256 `21e7a626b78e82a9db507cb026c667f4921f7719f6f55d1a8143acc95d020736`).
+  Two of the 11 have possible official-key conflicts against the original
+  edition and require human review; an unlocated or inferred answer was not
+  converted to `none` or an artificial source.
 - `classification/decisions/promotion-1405-3/1405-prosthodontics.json`,
-  SHA-256 `43b66f24545d6e2b996f048134be3c7ed0dbc23144838888c9454ab535860a8e`;
-  `classification/reports/promotion-1405-r3-direct-pdf-20261011.json`,
-  SHA-256 `3954912f9b6527874c2840e167aee64bc71dbdf08663f88da03d8599aa66682d`.
+  current SHA-256 `1d2e9eed82a5ef4edd3c68c8dacf2a53050231ff1025092a9b0ceed0fef29686`;
+  current `classification/reports/promotion-1405-r3-direct-pdf-20261011-v2.json`,
+  SHA-256 `14ed8c5ecde353d368b563f8a58fdb8f1447767f05c84a672dddb54fd36d7974`.
+  The earlier seven-decision receipt remains historical. Across two targeted
+  passes, 18 questions were screened: 13 accepted, five held, 82 not yet
+  examined. Protected `classification/reports/promotion-1405-r3-screening-20261011.json`
+  (SHA-256 `5507d1421d5590b7d88543016969944f8309253b3598fc62c751c18c67212aa4`)
+  records the five holds without question or book text. Do not call the
+  unexamined questions unanswerable.
 
 Both had **zero** live sources in their subject/round before this research.
 The receipt names exact input/map/PDF hashes and visual pages. No verified
 research recovery archive was made: the server already held its five most
 recent full backup sets, so backup retention must be reconciled before any
-production import. Do not claim these 14 decisions are on the site. Regenerate
+production import. Do not claim these 22 decisions are on the site. Regenerate
 validated sittings from the protected decisions after PR review, green merge,
 updater deployment, and a fresh PDF/sitting read-back. Then repeat the import
 dry run, make and verify a backup, import and publish with an audited receipt.
-After receipt read-back and a process check, the two exact operation
+The PR #291 code itself (SHA `ce7d70f`) was also run in an isolated temporary
+server worktree against the two current protected decision files: validator
+9/0 and 13/0 accepted/rejected, followed by transactional import dry runs
+with `questions_changed=0` and `answers_recorded=0` in both sittings. Live
+source rows remained zero. Private branch-preflight receipt:
+`classification/reports/pr291-branch-import-preflight-20261011.json`,
+SHA-256 `ccf5a897aca9aeefb9183f643e2857f2d4d5825489f841442d381af49c3f40fa`.
+After receipt read-back and a process check, the five exact operation
 directories (queries, draft decisions and generated validated sittings) and
-the temporary PR worktree were removed. Only the protected decisions and
+four temporary PR worktrees were removed. Only the protected decisions and
 concise receipts remain from this research pass.
 
 PR #291 (`fix/pdf-chapter-map-coverage-20261011`) had five green CI checks at
@@ -138,17 +161,22 @@ PDFs and live bank remained. Private receipts are
 found zero PDF text files, page/full/book-text JSON fields, bytecode or
 temporary/partial files in the research tree and seven checked archives.
 `research/tmp/` was empty; three remaining `.txt` files were checksum
-manifests. The protected parallel folders still contain **127** historical
+manifests. The protected parallel folders initially contained **127** historical
 Python/PHP/shell/SQL research scripts. Some private handoffs explicitly use
 them to reproduce unresolved audits. They need a separate exact-path review:
 move reusable, non-private logic to versioned `scripts/`, preserve unique
 pending evidence, then remove completed one-off scripts after confirming their
 durable result and recovery path. Do not sweep them by extension.
+Four obsolete scripts that wrote PDF text or depended on the deleted
+extractor were then removed with exact hashes and protected receipt
+`classification/reports/obsolete-pdf-text-script-cleanup-20261011.json`;
+**123** historical scripts remain for that owner-by-owner review. A static
+scan found no remaining PDF-text generator in them.
 The W04/W05/W06/W08 private handoffs were also marked historical where they
 instructed whole-PDF text extraction. Current resume steps use the verified
 one-page reader and private operation temp cleanup. A subsequent checksum
-read-back verified 15 research manifests covering 198 files with no missing
-or mismatched member. The original and replacement manifest hashes are kept
+read-back verified 15 research manifests covering 195 current files with no
+missing or mismatched member. The original and replacement manifest hashes are kept
 in `classification/reports/private-pdf-handoff-correction-20261011.json` and
 `w08-handoff-pdf-only-correction-20261011.json`.
 

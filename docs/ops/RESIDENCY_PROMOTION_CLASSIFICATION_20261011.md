@@ -3,8 +3,8 @@
 > Follow-up (research only): the direct-PDF chapter-map and official-scope
 > audit in [CHAPTER_SCOPE_AND_PDF_MAP_CHECKPOINT_20261011.md](CHAPTER_SCOPE_AND_PDF_MAP_CHECKPOINT_20261011.md)
 > found 25 outside-scope source rows in the newest published sittings and
-> validated 7 additional, **unpublished** residency 1397 endodontics and 7
-> promotion 1405 round-3 prosthodontics decisions. The published counts below
+> validated 9 additional, **unpublished** residency 1397 endodontics and 7
+> 13 promotion 1405 round-3 prosthodontics decisions. The published counts below
 > are unchanged; do not add these research decisions to them before an audited
 > import and live read-back.
 
