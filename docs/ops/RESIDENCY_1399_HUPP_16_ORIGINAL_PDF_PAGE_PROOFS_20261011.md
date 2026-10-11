@@ -29,11 +29,21 @@
 
 At research time all sixteen had exactly the cited `hupp-oral-surgery@7e` chapter source, `origin='ai'`, `is_primary=1`, NULL `reviewed_at`, a stored printed page (not a physical PDF page), and a matching latest `bank_official_answers.status='final'` option. All 16 are covered by the exact-value whitelist added to the guarded `repair_residency_1399_verified_pdf_pages.php` source-metadata operator, with original PDF/book quote and printed-page checks, single-writer lock, latest bank/option/key fingerprint, four-hour sealed plan, verified full backup and source-only compare-and-swap. The code cannot modify chapter, reference, question, options, final answers, human reviews, attempts or frozen assessments.
 
-## Four Malamed 6e questions explicitly held
+## Four exact Malamed 6e original PDF-page candidates — provenance hold
 
-Q138, Q145, Q146, Q147 originally have historical `malamed-local-anesthesia@6e` source chapters 13/6/1/14 respectively, but the old attached prose was generated from a *different, 7e* edition and was marked approximate: **do not use that prose to invent exact 6e pages**. Exact 6e PDF is present in the approved map (SHA-256 `2026eff83ef2d2543725becb3685e8cb492f1dcf9f5d7a7ae72a28024ef67bf6`). A four-query exact 6e page-locator research input was staged privately:
+Separate `find_in_books.py` 6e original physical-PDF search completed successfully under authorized `fanoosupd` (read-only result job `job_9133f5094ba1`). Candidate discovery was followed by independent single-page text inspection, original 6e hash-bound chapter map lookup, exact-year syllabus all-chapters validity and positive original short quote + neighbor printed-page validators for each of four cases:
+
+| Q | Original 6e chapter | PDF page | Original printed page | Latest official option | Book passage / original evidence |
+|---:|---:|---:|---:|---:|---|
+| 138 | 13 | **237** | 219 | 4 | Maxillary block target superior and medial to PSA block target |
+| 145 | 6 | **111** | 93 | 2 | Larger needle lumen improves aspiration of blood |
+| 146 | 1 | **39** | 21 | 1 | Original Table 1-6 procaine protein binding **5%** vs prilocaine **55%**, lidocaine **65%**; articaine **95%** continuation on PDF p40, printed p22 |
+| 147 | 14 | **260** | 242 | 2 | Vazirani–Akinosi block avoids mandatory bone contact; original page on visualization of needle insertion |
+
+Approved original `malamed-local-anesthesia@6e` PDF SHA-256: `2026eff83ef2d2543725becb3685e8cb492f1dcf9f5d7a7ae72a28024ef67bf6`. All four pages and both physical and printed labels were confirmed individually. Private safe query input:
 `/srv/fanoos/shared/research/classification/reports/residency-1399-exact-pages/malamed6e-four-queries-20261011.json`.
-The `find_in_books.py` page-at-a-time search was launched under the privileged but authorized `fanoosupd` user; review its *actual* result before granting original book chapter+page publication. Do not use a search score as citation proof: read the discovered original page and independently validate page label, evidence, answer and year scope first.
+
+**Do not add these four directly to the existing metadata-only operator yet.** While the existing live edition/node is labeled `malamed-local-anesthesia@6e`, the legacy attached AI `anchor_text` explicitly cites **7e** and states its 6e original had not been available. Assigning a 6e SHA/page to that uncorrected citation would create conflicting source provenance. A separately authorized versioned source-evidence repair and full immutable-content audit is required, or formal reviewed replacement of the 7e-attributed anchor, before safely marking the four as complete. Never silently rewrite historical source provenance or claim that table evidence is published when not.
 
 ## Publication checklist and phase separation
 
