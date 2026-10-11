@@ -792,10 +792,18 @@ SQL);
                 }
                 if ($nodeId !== null) {
                     $scope = $this->database->prepare(<<<'SQL'
-SELECT n.kind, n.number, v.scope, v.scope_chapters
-FROM bank_reference_nodes n
+WITH RECURSIVE ancestors AS (
+    SELECT id, workspace_id, edition_id, parent_id, kind, number
+    FROM bank_reference_nodes WHERE workspace_id = :workspace AND id = :node
+    UNION ALL
+    SELECT parent.id, parent.workspace_id, parent.edition_id, parent.parent_id, parent.kind, parent.number
+    FROM bank_reference_nodes parent
+    JOIN ancestors child ON child.parent_id = parent.id AND child.workspace_id = parent.workspace_id
+)
+SELECT n.number, v.scope, v.scope_chapters
+FROM ancestors n
 JOIN bank_reference_validity v ON v.workspace_id = n.workspace_id AND v.edition_id = n.edition_id
-WHERE n.workspace_id = :workspace AND n.id = :node
+WHERE n.kind = 'chapter'
   AND v.exam_type_id = :type AND v.exam_year = :year
   AND v.subject_id = :subject AND v.is_official = 1
 LIMIT 1
@@ -806,7 +814,7 @@ SQL);
                         'subject' => $this->lookup($workspaceId, 'bank_subjects', 'subject_key', (string) $question['subject']),
                     ]);
                     $validity = $scope->fetch() ?: null;
-                    if ($validity === null || $validity['kind'] !== 'chapter') {
+                    if ($validity === null) {
                         throw new BankImportException(['source chapter has no official year/subject validity']);
                     }
                     $chapters = $validity['scope_chapters'] === null ? [] : json_decode((string) $validity['scope_chapters'], true, 512, JSON_THROW_ON_ERROR);
