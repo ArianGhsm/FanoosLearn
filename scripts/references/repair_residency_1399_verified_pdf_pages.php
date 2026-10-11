@@ -51,6 +51,13 @@ function exactTargets1399(): array
                 'sha' => PDF_TORABINEJAD_1399,
                 'proof' => ['factors are embedded in dentin matrix']],
         ],
+        // Dedicated canonical endodontics Q31 batch: Q25/Q30/Q32 were previously applied.
+        'endodontics-qmix' => [
+            31 => ['edition' => 'torabinejad-endodontics@5e', 'chapter' => '16',
+                'pdf' => 293, 'old_printed' => '281', 'printed' => '281', 'answer' => 3,
+                'sha' => PDF_TORABINEJAD_1399,
+                'proof' => ['QMix has the potential not only to remove the smear']],
+        ],
         'operative-dentistry' => [
             170 => ['edition' => 'craig-restorative-materials@14e', 'chapter' => '10',
                 'pdf' => 183, 'old_printed' => '172', 'printed' => '172', 'answer' => 3,
@@ -390,7 +397,8 @@ try {
     }
     $locked = true;
     $db->beginTransaction();
-    $rows = inspectTargets1399($db, $subject, $all[$subject]);
+    $canonicalSubject = $subject === 'endodontics-qmix' ? 'endodontics' : $subject;
+    $rows = inspectTargets1399($db, $canonicalSubject, $all[$subject]);
     if (!$apply) {
         $db->rollBack();
         $plan = [

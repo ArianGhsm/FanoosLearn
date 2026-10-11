@@ -20,7 +20,7 @@ class Residency1399ExactExistingSourceRepairContract(unittest.TestCase):
     def test_fixed_year_editions_questions_and_hashes(self):
         self.assertIn("si.exam_year=1399", self.text)
         self.assertIn("si.exam_round=1", self.text)
-        for n in (25, 30, 32, 89, 92, 93, 95, 98, 115, 118, 122, 123, 125, 131, 132, 133, 134, 135, 136, 137, 139, 140, 141, 142, 143, 144, 148, 149, 150, 170, 212, 214, 216, 218):
+        for n in (25, 30, 31, 32, 89, 92, 93, 95, 98, 115, 118, 122, 123, 125, 131, 132, 133, 134, 135, 136, 137, 139, 140, 141, 142, 143, 144, 148, 149, 150, 170, 212, 214, 216, 218):
             self.assertRegex(self.text, rf"(?m)^\s*{n}\s*=>")
         self.assertIn("torabinejad-endodontics@5e", self.text)
         self.assertIn("carranza-periodontology@13e", self.text)
@@ -65,6 +65,14 @@ class Residency1399ExactExistingSourceRepairContract(unittest.TestCase):
             "fingerprint", "plan_sha256", "receipt", "readback",
         ):
             self.assertIn(token, self.text)
+
+    def test_q31_is_exact_and_isolated_from_prior_endodontic_batch(self):
+        self.assertRegex(self.text, r"(?m)^\s*31\s*=>")
+        self.assertIn("'endodontics-qmix' => [", self.text)
+        self.assertIn("$canonicalSubject = $subject === 'endodontics-qmix' ? 'endodontics' : $subject", self.text)
+        self.assertIn("'pdf' => 293", self.text)
+        self.assertIn("'old_printed' => '281'", self.text)
+        self.assertIn("QMix has the potential not only to remove the smear", self.text)
 
     def test_hupp_1399_original_pdf_only(self):
         self.assertIn("hupp-oral-surgery@7e", self.text)
