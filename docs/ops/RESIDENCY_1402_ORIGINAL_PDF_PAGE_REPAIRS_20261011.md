@@ -106,3 +106,29 @@ official keys, and the old frozen student-assessment version remains intact.
 The backlog is **151 non-English page/scope cases** plus the separate
 29-row official-structured-scope review queue (overlapping with the backlog,
 not additive). No further 1402 source page edits are claimed in this record.
+
+## Exact explanation-diff attribution (additional live read-only review)
+
+A direct side-by-side comparison of each frozen question's explanation in
+versions 5 and 6 against today's incomplete source-row IDs explains the
+apparently equal totals of 145 changed explanations and 145 unbound sources.
+**They are different sets.** The 145 changed explanations break down as:
+
+- **139** questions with an existing but currently unbound source: their
+  old chapter location was suppressed by the strict same-row page/hash policy.
+- **6** questions whose sources are now page-bound: Q21, Q23, Q64, Q65,
+  Q66, Q73. Q64/65/66/73 are the four page repairs in this report;
+  Q21 and Q23 already have bound pages and their explanations changed
+  for a separate source-related reason that should not be presumed without
+  inspecting both explanation values.
+- Conversely, **6** unbound source rows correspond to *voided* questions
+  Q60, Q96, Q99, Q102, Q103, Q144 and thus do not appear in either
+  scorable frozen question definition. The seventh voided question,
+  Q181, is a different row and should not be conflated with these six.
+
+This direct set comparison reconciles 139 + 6 = 145 explanation changes
+and 139 + 6 = 145 currently unbound chapter rows. It strengthens the
+frozen-version audit but **does not** prove that every change was solely
+caused by missing-page suppression; six bound-question explanation changes
+need attribution. No frozen question's prompt, choices or keys changed.
+This read-only check made **zero** DB mutations.
