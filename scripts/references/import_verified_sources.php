@@ -32,12 +32,13 @@ try {
     $stem = (string) ($args['stem'] ?? '');
     $expected = filter_var($args['expected'] ?? null, FILTER_VALIDATE_INT);
     $apply = isset($args['apply']);
+    $retrospective = $year !== false && $year >= 1300 && $year < 1396;
     if (preg_match('/^[0-9a-f-]{36}$/D', $ws) !== 1 || $year === false
-        || ($year < 1399 && !(($year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1', 'endodontics-location-final'], true)) || ($year === 1398 && $subject === 'periodontics' && in_array($stem, ['periodontics', 'periodontics-followup'], true)) || ($year === 1398 && $subject === 'community-dentistry' && $stem === 'community') || ($year === 1398 && $subject === 'prosthodontics' && $stem === 'prosthodontics')))
+        || ($year < 1399 && !$retrospective && !(($year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1', 'endodontics-location-final'], true)) || ($year === 1398 && $subject === 'periodontics' && in_array($stem, ['periodontics', 'periodontics-followup'], true)) || ($year === 1398 && $subject === 'community-dentistry' && $stem === 'community') || ($year === 1398 && $subject === 'prosthodontics' && $stem === 'prosthodontics')))
         || $year > 1500 || $expected === false || $expected < 1 || $expected > 250
         || preg_match('/^[a-z][a-z0-9-]{1,59}$/D', $subject) !== 1
         || preg_match('/^[a-z][a-z0-9-]{1,59}$/D', $stem) !== 1) {
-        throw new RuntimeException('Workspace, exact year/subject/stem and expected count required; 1398 is held outside independently verified endodontics, periodontics, community dentistry and prosthodontics.');
+        throw new RuntimeException('Workspace, exact year/subject/stem and expected count required; pre-1396 allows only explicit audited retrospective 1397+ references; 1398 still has a narrow subject gate.');
     }
     if ($apply !== isset($args['backup']) || $apply !== isset($args['receipt'])) {
         throw new RuntimeException('Apply requires both verified full backup and unique private receipt.');
@@ -101,6 +102,9 @@ try {
         throw new RuntimeException('Exactly one batch audit required.');
     }
     $b = $matches[0];
+    if ($retrospective && ($b['classification_basis'] ?? '') !== 'retrospective_proxy_1397_plus') {
+        throw new RuntimeException('Pre-1396 source audit must attest a distinct retrospective proxy basis.');
+    }
     if (($b['accepted'] ?? 0) !== $expected || ($b['question_content_identical'] ?? false) !== true
         || ($b['study_sha256'] ?? '') !== hash_file('sha256', $studyPath)
         || ($b['validated_sha256'] ?? '') !== hash_file('sha256', $validatedPath)
@@ -136,6 +140,8 @@ try {
         'batch' => $key, 'applied' => $apply, 'source_rows' => $written,
         'questions_changed' => 0, 'choices_changed' => 0, 'answers_changed' => 0,
         'audit_sha256' => hash_file('sha256', $auditPath),
+        'classification_basis' => $retrospective ? 'retrospective_proxy_1397_plus' : 'official_exam_year',
+        'reference_years' => $retrospective ? ($b['reference_years'] ?? []) : [$year],
         'validated_sha256' => hash_file('sha256', $validatedPath),
     ];
     if ($apply) {
