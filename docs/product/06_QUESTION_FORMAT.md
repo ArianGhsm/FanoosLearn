@@ -114,6 +114,17 @@ when it is absent. An explanation records the page it was written from in
 `explanation.from` ({ref, pdf_page, pdf_sha256}), kept by value on the
 explanation (migration 0043).
 
+**New chapter-completion invariant (2026-10-11):** a source that names
+a chapter (`reference@edition#node`) must carry a verified positive
+`pdf_page` and its exact `pdf_sha256` **on that same source row**.
+A `page` string or `printed_page` alone does not count as completion
+and may not be used to create a new chapter citation. Both chapter and
+PDF page must be supported by the original page and exact official
+edition/scope. Legacy records remain in the database for audited repair;
+reports must not call them completed, and no unrelated re-import may
+silently delete or alter reviewed sources. For live per-exam counts and
+reproducible SQL see `docs/ops/BANK_CLASSIFICATION_PAGE_BACKLOG_20261011.md`.
+
 **Papers from Google Drive** go through `scripts/import/drive_batch.py`
 (`docs/ops/QUESTION_IMPORT.md`): `scripts/import/docx_to_sitting.py` reads
 residency, national, board and promotion papers (`--type`, `--round`,
