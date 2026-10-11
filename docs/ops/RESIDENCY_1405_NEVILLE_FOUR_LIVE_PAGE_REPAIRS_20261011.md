@@ -14,7 +14,7 @@ Read-only inspection of Q41–Q60 (twenty pathology questions) checked each exis
 | 54 | 14 | 639 | 649 | accepted | accepted | preview passed; **applied** 19:14:18 UTC |
 | 57 | 15 | 722 | 732 | accepted | accepted | **hold:** original live exact-text evidence check failed; no live write |
 | 59 | 16 | 750 | 760 | accepted | accepted | preview passed; **applied** 19:14:47 UTC |
-| 60 | 16 | 770 | 780 | accepted | accepted | preview passed; as of this note **apply not confirmed** (remote command was blocked; do not count) |
+| 60 | 16 | 770 | 780 | accepted | accepted | preview passed; **applied** at 19:17:33 UTC, receipt verified |
 
 Scientific evidence covers original immutable live stem, four choices and latest final official key, original AI source identity, source PDF and hash, chapter map, printed book page labels with neighboring corroboration, exact source fragment and official syllabus. None of these initial cases is a question/option/answer import.
 
@@ -36,13 +36,13 @@ Audit SHA-256, independently checked before guarded preview:
 | 59 | `0f5f3fd5a18b88dcd31e03d75c9693bdbcdb098c23eca72d708b41722bf0e39d` |
 | 60 | `fd3a3ec4239c4504a3fa09d69f7c4f9c38218fb610fd4fca13a3530edbe048ef` |
 
-## Four successful guarded live writes
+## Five successful guarded live writes
 
-Live, deployed, ancestry-checked guarded operator `scripts/references/repair_existing_source_pdf_page.php --printed-offset` was used with original approved private PDF SHA and four separate independent audit digests. The official backup `/var/backups/fanoos/20261011T185643Z-5d8b2831` had previously passed independent `verify-backup.php` (**114 files**); it was still recent for the four apply operations. Each produced `applied:true`, exactly one existing `bank_question_sources` row changed, and **ZERO** edits to `bank_questions`, choices, answers, existing source chapter, human reviews or attempt history. They filled only `pdf_page` and `pdf_sha256`, preserving old printed/legacy page fields. Unique production receipt:
+Live, deployed, ancestry-checked guarded operator `scripts/references/repair_existing_source_pdf_page.php --printed-offset` was used with original approved private PDF SHA and five separate independent audit digests. The official backup `/var/backups/fanoos/20261011T185643Z-5d8b2831` had previously passed independent `verify-backup.php` (**114 files**); it was still recent for the five apply operations. Each produced `applied:true`, exactly one existing `bank_question_sources` row changed, and **ZERO** edits to `bank_questions`, choices, answers, existing source chapter, human reviews or attempt history. They filled only `pdf_page` and `pdf_sha256`, preserving old printed/legacy page fields. Unique production receipt:
 
 `/srv/fanoos/shared/research/classification/recovery-1405-pathology<Q>-20261011/classification/reports/1405-pathology<Q>-live-repair-20261011.json`
 
-exists for **Q43, Q50, Q54 and Q59**; do not assume it exists for the other three.
+exists for **Q43, Q50, Q54, Q59 and Q60**; do not assume it exists for the other two.
 
 Prior same-date successfully applied 1405 Q214, Q27, Q29, Q35, Q38 are in `RESIDENCY_1405_FIVE_LIVE_PDF_PAGE_REPAIRS_20261011.md`. Cumulative this-day operations are **nine independent successful single-row source-only commits** after the preexisting 83 recorded-complete baseline. An aggregate DB read-back for exact `residency:1405:1` (expected **92/250** exact-field-complete and 138 book-based incomplete) remains a separate required check; do not assert the expected number as measured without confirming it. In addition, row Q217 remains outside official scope despite populated three fields.
 
@@ -56,3 +56,8 @@ A previously checked read-only official published-assessment preflight for the s
 - Continue the remaining 1405 textbook-based questions with exact approved PDF edition, official subject-specific chapter scope and genuinely confirmed PDF page. Never modify text, choices, answers, frozen exam assessment or human review.
 
 No full-sitting completion is claimed.
+
+
+## Confirmed post-Q60 production count (supersedes earlier tentative 92 statement)
+
+The guarded Q60 actual operator response at **19:17:33 UTC** was `applied:true`, source rows updated 1, all protected changes 0 and the same verified backup identity. Independent live MySQL exact-sitting query after this write returned **93** `residency:1405:1` source rows bearing chapter, `pdf_page`, and `pdf_sha256`. With 250 bank questions and 20 English reference-exempt, **137 textbook-based incomplete** remain. This is a field-count, not independent proof every older citation matches official scope. Prior text saying Q60 unconfirmed or 92 expected is superseded by this section. Keep site-health/frozen-version postbatch recheck outstanding.
