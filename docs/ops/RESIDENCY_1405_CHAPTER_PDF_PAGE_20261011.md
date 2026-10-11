@@ -58,3 +58,29 @@ FANOOS_CONFIG_FILE=/etc/fanoos/updater-config.php php \
 ## Remaining work
 
 Proceed by official year validity and exact approved, hash-bound reference PDF, prioritizing old page-less AI rows and reporting blocked partial-page, unavailable edition and human-review cases separately. For subjects with many printed labels, never convert printed page into PDF page without direct book-page evidence and chapter-boundary/scope verification. Use official snapshot SQL in `BANK_CLASSIFICATION_PAGE_BACKLOG_20261011.md` after each applied repair; English remains exempt without synthetic source rows.
+
+
+## Production completion checkpoint — 2026-10-11, 13:52–13:53 UTC
+
+**This section supersedes the 82-row baseline for live counts.** PR [#302](https://github.com/ArianGhsm/FanoosLearn/pull/302) merged as \`f42d2dbecd24e0a2016be3b7776e3b5c40825c7d\`, included in canonical release \`04a1054a1399bfa0191ef92215876e0a933f3783\`. The latter commit's five CI jobs all passed. Official updater deployment request \`01a12b37-8188-749e-b56f-194c73d6fd60\` finished \`SUCCEEDED\`; public \`/health\` returned the same release and \`status=ok\`.
+
+Official independent full backup \`/var/backups/fanoos/20261011T134944Z-c263daf4\` passed \`verify-backup.php\` (**114 files**). After the preexisting source edition/node, question, options, official key and human-review checks and rollback-only preview, the guarded operator repaired **exactly Q222**: preserved source \`national-oral-health@1394#ch04\`, printed page \`57\`, and wrote only \`pdf_page=57\` and the verified source PDF hash \`d1cc93cdc6d567cad554cdb08329914ca39e043bc183c587d637f322da20ae66\`. Private receipt:
+\`/srv/fanoos/shared/research/classification/recovery-1405-community222-20261011/classification/reports/1405-community222-live-repair-20261011.json\`.
+The receipt reports **one existing source row updated, zero question/choice/answer/chapter/human-review changes**. Independently archived full private case and receipt:
+\`/var/backups/fanoos/research/20261011-residency1405-community222-applied-source-receipt.tar.gz\`,
+SHA-256 \`6346d8ca39132b6aa0426fc26614ad9a92438d1ca03dba3f88c4dab48e6a4825\`.
+
+A new live DB query and readback confirmed **250 total**, **225 source-bearing**, **83 with chapter+numeric PDF page+PDF SHA**, **167 raw incomplete**, including 20 English-exempt; **147 book-based records remain incomplete**. Q222 retains \`ch04\`, \`page=57\`, \`printed_page=57\`, AI origin, and null human review. The existing published assessment remains version **5**, with **246 frozen questions**, and the read-only published-assessment preflight returned \`question_content_identical=true\`. **No new assessment version was published** because the source-only repair preserved legacy page, source reference and frozen question content; future publication steps must be evaluated separately where changed citation display requires them.
+
+### Additional scientific holds
+
+Read-only official year-scope verification flagged exactly these existing 1405 citations as **outside the explicit 1405 chapter scope**:
+
+- **Q44** oral pathology, Neville 5e chapter 7.
+- **Q129, Q130** periodontics, Carranza 14e chapters 79 and 87.
+- **Q217** dental materials, Van Noort 5e section 2.3 (**already contains PDF page fields; never count it as scientifically validated solely because fields are present**).
+- **Q218** dental materials, Craig 14e chapter 13.
+
+These are **holds**, not automatic source corrections: they require re-checking original question against a reference/chapter/page actually named by the 1405 notice. Further, Craig 14e verified server PDF has a chapter-mapped **printed-to-PDF offset of +11 pages** for preliminary Q211/212/214/219 locations. Candidate labels are not independently validated source decisions: do not copy printed page values into \`pdf_page\` for these cases, or apply the exact-page-aligned repair operator to them.
+
+Next action: scientifically validate the remaining 147 book-based rows (and any invalid existing complete rows), use only official exact edition/page evidence, and persist independent source-only audit receipts. Do not report the whole exam as fully classified until the bank, published assessment and scientific chapter scope all pass.
