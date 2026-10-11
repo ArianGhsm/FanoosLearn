@@ -49,7 +49,7 @@ Run:
 - import and publish: assessment `01a12826-05e0-7730-ae1d-88e4eba50d13`,
   version `01a12958-de11-70de-bc3c-cc7285f0c678`, 247 questions.
 
-## Promotion 1405
+## Promotion 1405 — done
 
 Specialty rounds: 1 endo, 2 perio, 3 prosthodontics, 4 operative,
 5 surgery, 6 oral medicine, 7 oral pathology, 8 radiology, 9 orthodontics,
@@ -63,3 +63,21 @@ Rounds with a ready edition:
 - r10: nowak 6e, proffit 6e (McDonald 11e not ready).
 
 Rounds 1, 2, 3, 5, 8 and 9 have no ready edition and stay pending.
+
+### Promotion 1405 — done (rounds 4, 6, 7, 10)
+
+Search terms covered only the ready editions. In r4, only the questions
+cited to Craig or Summit were searched; the questions cited to Sturdevant
+("آرت"), Phillips, Dawson, Rosenstiel and Misch stay pending.
+
+| Round | With chapter | Books | Backup | Assessment |
+|---|---|---|---|---|
+| 4 operative | 16 / 100 | Craig 14e, Summit 4e | `20261011T070717Z-cc48b930` | `01a11d32-1a56-79c3-ab87-23c4e53ccc96` |
+| 6 oral medicine | 78 / 100 | Burket 13e, Little-Falace 10e, Neville 5e, White 8e | `20261011T071032Z-dcf801a9` | `01a11d32-1cd8-71c5-a746-5070ecc1da1f` (Q38 withdrawn, left out) |
+| 7 oral pathology | 56 / 100 | Neville 5e | `20261011T071401Z-3bf638d7` | `01a11d32-1e2f-726b-8b4c-afa4b364d9b7` |
+| 10 pediatric | 35 / 100 | Nowak 6e, Proffit 6e | `20261011T071626Z-53086d26` | `01a11d32-21da-7e10-9816-1e4eb936dea1` |
+
+Every dry run showed `questions_changed 0` and `answers_recorded 0`, and
+every backup was verified. Undecided questions are mainly those that cite
+journal articles (r10 Q91–Q100), Regezi or Robbins (r7), or a book that is
+not ready.
