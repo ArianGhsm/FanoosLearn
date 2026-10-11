@@ -114,6 +114,38 @@ any chapter, and retain historical raw source counts as labeled diagnostics.
 Explicit no-book-source exemptions (residency English, §3A) are reported
 separately and never given synthetic chapter/page rows.
 
+### Pre-1396 retrospective reference policy — owner decision 2026-10-11
+
+**For exam sittings dated 1395 or earlier (year < 1396), classify using the
+published dentistry-residency references from 1397 onward.** Start at the
+1397 reference-validity catalog for that subject; where its exact edition
+PDF cannot be verified, its chapter map is invalid, or the evidence is
+unavailable, continue through reference years 1398, 1399, … in ascending
+order to find a demonstrably suitable approved edition. The selected book
+must actually belong to an official source list for the **chosen reference
+year**. Do not assume the book was officially assigned to the earlier
+**exam year**.
+
+This is an **owner-authorized retrospective reference alignment**, not a
+historical claim about the exam-year official syllabus. Keep the
+`exam_year`, `reference_year`, `edition`, and classification basis
+(`retrospective_proxy_1397_plus`) separately documented and visible in
+audits, handoffs and site labels when presented. The source's book and
+edition are real; the historical official status remains unverified.
+Do not manufacture `official=true` validity rows for pre-1396 years
+merely to bypass guards. For exams dated 1396 or later, the existing
+year-specific exact-edition official validity requirements remain intact.
+
+**The chapter+PDF-page atomic criterion is unchanged.** Each accepted
+question must name a verified source edition and chapter plus a positive
+PDF page and SHA-256 of that *same* original book's server PDF, with
+original-page evidence and correct chapter boundaries; no title guesses,
+generic chapter-only assignments, or 1397 page labels grafted onto another
+edition. Keep unresolved/voided questions and absent evidence pending;
+preserve texts, options, answer keys, human decisions, frozen exams and
+attempts. The research and safe publication procedure is documented in
+`docs/ops/PRE_1396_RETROSPECTIVE_CLASSIFICATION_20261011.md`.
+
 ### Classification eligibility
 
 Work continuously through **eligible questions whose exact official edition
