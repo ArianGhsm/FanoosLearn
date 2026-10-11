@@ -64,4 +64,45 @@ The full 1402 frozen assessment version **5** had **243 questions**. Read-only p
 
 Remaining book-citation backlog after the four source-row repairs: **145** existing chapter-only rows with no bound original PDF page and **6** source-free oral-radiology rows; 20 English final-key reference exemptions remain complete without an invented citation. Q175 operative remains pending exact original printed-page and partial official chapter-9 scope verification. Continue with other eligible original editions and skip false/out-of-scope mappings. Follow docs/ops/VERIFIED_SOURCE_PAGE_REPAIR_20261011.md and docs/product/09_CHAPTER_CLASSIFICATION.md.
 
-**Status at writing:** Four guarded live source repairs independently verified. Exam version republication tracked separately until final receipt and v5→v6 regression audit. Never treat research-only findings as published bank rows.
+**Final status:** Four guarded 1402 source-page repairs applied and audited in live bank; assessment version 6 subsequently published and the complete 243-question frozen-version diff passed. Other book-citation and official-scope holds remain pending.
+
+
+## Final controlled student-assessment publication (verified)
+
+On 2026-10-11 after all four source repairs, a third official full production backup
+`/var/backups/fanoos/20261011T145712Z-e0f10040` was independently verified
+(114 manifest files), and a new complete read-only publication preflight against
+frozen **assessment version 5** returned **243/243** identical non-source
+question definitions; all 20 protected radiology-study questions also matched.
+
+The authorized existing owner publication path
+`scripts/import/import-bank.php publish --type=residency --year=1402 --round=1`
+then **successfully published version 6**, not a separate exam. Exactly **243**
+scorable questions remain and the seven official-voided Q60, Q96, Q99, Q102,
+Q103, Q144, Q181 remain excluded from scoring. The authoritative
+postpublication audit `audit_published_assessment.php --previous=5 --current=6`
+returned:
+
+- `question_content_identical: true`, **243/243** questions, same order,
+  prompt, choices, answer, and every other frozen non-explanation field.
+- **145 source-derived explanation fields changed.** This number is not
+  a claim of 145 new page assignments: the new version hides previously
+  displayed legacy chapter citations that lack a same-row bound PDF page.
+  Exactly **145** currently chaptered 1402 source records remain without
+  `pdf_page/pdf_sha256`, matching the aggregate size of that affected
+  cohort; the per-question explanation differences should still be reviewed
+  before attributing every edit individually.
+- Assessment version **5 still exists** with its historical SHA-256 and
+  version **6** is the current `published` version. The database read-back
+  confirmed version 6, alongside the unchanged total **79/250** strict
+  recorded-complete chapter+PDF-page source rows.
+- Public `/health` returned `status: ok` at deployed release
+  `cd3b7913640dcb6ccdcb471e637e9e3236b89c4e` after publication.
+
+All four source repairs and their original PDF page/hashes were already
+applied before this independent full-backup-and-reviewed-publication step.
+These steps did **not** edit the user-entered question text, options or
+official keys, and the old frozen student-assessment version remains intact.
+The backlog is **151 clinical source/page candidates** plus the separate
+29-row official-structured-scope review queue (overlapping with the backlog,
+not additive). No further 1402 source page edits are claimed in this record.
