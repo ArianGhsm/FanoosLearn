@@ -7,6 +7,25 @@
 > Read-only operations only; **no questions, answers, sources, assessments,
 > reviews or attempts were changed**.
 
+## Owner's newer atomic rule — 2026-10-11
+
+This snapshot originally measured **any chapter node**, yielding
+2,169/10,295. Under the later owner decision, a new book-based chapter
+classification **must** include its exact, hash-bound PDF page on the same
+source row; otherwise it is incomplete. A new read-only audit of this
+same production state found **1,047/10,295** questions with `node_id`,
+`pdf_page` and `pdf_sha256` together, leaving **9,248** incomplete by
+the new recorded-fields criterion (including 1,122 legacy chaptered rows
+without a bound PDF page). 239 independently verified residency-English
+questions are explicitly exempt, leaving **9,009** after subtracting only
+that exemption. This is a *field-presence* count, not a replacement for
+original-page and official-scope validation. The complete 70-sitting
+read-back and reproducible SQL are in
+`docs/ops/BANK_CLASSIFICATION_PAGE_BACKLOG_20261011.md`
+(which is introduced by PR #291). Old raw node/source counts below are
+retained and labeled as historical/diagnostic only. No production
+records were modified to recalculate these counts.
+
 ## Site-wide live totals
 
 A question is **chaptered** if it has at least one
