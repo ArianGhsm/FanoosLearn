@@ -58,3 +58,37 @@ A 13-edition metadata-only read-only audit was initiated under protected server 
 6. Update this document, private receipts and recovery archive with **actual** executed data changes; never treat discovery as publication. Multiple other year-specific workers may update the server concurrently, so re-check it before writing.
 
 Current read-only inspection saw matching live and GitHub main at **2de5b8da121dfdd225923adeb386de839a086711**; this is not a guarantee of future consistency.
+
+
+## Completed 13-edition research audit — private report independently read back
+
+The private report was successfully generated, read back and its SHA-256 verified on the server. Its path is /srv/fanoos/shared/research/classification/reports/1401-legacy-page-evidence-audit-20261011-v1.json; **SHA256 d143e48cd9cbfe87dfc048cb9d31db0f68f6248e38b1fbca589ed0b199c87f68**. It covers exactly **151** previously sourced but PDF-page-incomplete records, and uses the exact approved original private server PDFs, bound chapter map and official 1401 validity.
+
+| Exact reference edition | Rows inspected | Unique qualifying original-page matches | Remaining pending |
+|---|---:|---:|---:|
+| Burket 12e | 12 | 0 | 12 |
+| Carranza 13e | 20 | 0 | 20 |
+| Craig restorative materials 14e | 2 | 0 | 2 |
+| Hupp 7e | 14 | 5 | 9 |
+| Little-Falace 9e | 8 | 0 | 8 |
+| Malamed 7e | 6 | 2 | 4 |
+| McCracken RPD 13e | 10 | 0 | 10 |
+| Neville 4e | 20 | 0 | 20 |
+| Nowak 6e | 19 | 0 | 19 |
+| Powers-Wataha 11e | 2 | 2 | 0 |
+| Torabinejad 6e | 20 | 5 | 15 |
+| Van Noort 4e | 8 | 0 | 8 |
+| Zarb 13e | 10 | 3 | 7 |
+| **Total** | **151** | **17** | **134** |
+
+The 17 stringent match candidates have original-PDF page, year-valid edition, in-scope original chapter, literal complete quoted anchor fragments on a unique mapped page, origin AI and original page confidence >=0.85. By exam question number / chapter / PDF page:
+
+- Oral surgery, Hupp 7e: **132/2/42, 134/11/215, 135/14/274, 138/23/499, 140/24/522**
+- Oral surgery, Malamed 7e: **145/7/134, 148/16/311**
+- Dental materials, Powers-Wataha 11e: **213/4/63, 214/9/140**
+- Endodontics, Torabinejad 6e: **22/1/18, 23/2/36, 30/15/353, 31/15/337, 36/19/422**
+- Prosthodontics, Zarb 13e: **83/15/332, 85/8/181, 87/12/286**
+
+The earlier ten Torabinejad literal locations are correct *location discoveries*; only five passed the audit's **additional** pre-existing source confidence/eligibility and unique-match guards. The five others are not authorized for an automatic repair. The 134 pending comprise **63** without an exact existing anchor match, **61** failing strict anchor/scope/AI-confidence preconditions, and **10 McCracken 13e** blocked by an approved PDF versus chapter-map SHA mismatch. Rebuild and independently validate that exact edition map before touching those ten; do not bypass the hash guard or substitute another edition.
+
+**Publication status remains ZERO newly completed rows and ZERO source/question/answer/assessment changes.** The accepted candidate page list is a research file, not a source repair receipt. Before a live update, inspect and test the safe existing-source page repair operator, get a fresh independently verified backup, verify unchanged source identity/edition/chapter/original quote and the frozen exam, and follow the source-only reviewed publication/deployment gates. Neither the 17 research matches nor the other 134 are counted as completed live classifications.
