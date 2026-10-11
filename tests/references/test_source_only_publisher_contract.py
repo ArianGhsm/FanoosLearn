@@ -26,6 +26,18 @@ class PublisherSafetyContracts(unittest.TestCase):
         self.assertIn("already exists", self.service)
         self.assertIn("FOR UPDATE", self.service)
 
+    def test_atomic_chapter_and_pdf_page_contract(self):
+        # The legacy page/printed label alone must never yield a source row.
+        for marker in [
+            "A chapter source requires its exact pdf_page and verified PDF SHA-256.",
+            "sourcePdfPage !== $pdfPage",
+            "sourcePdfHash",
+            "pdf_page,printed_page,pdf_sha256",
+            "'pdf_page' => $src['pdf_page']",
+            "'pdf_sha256' => $src['pdf_sha256']",
+        ]:
+            self.assertIn(marker, self.service)
+
     def test_question_and_answer_preflight(self):
         for marker in ["question !== $original", "realChoices !== $original",
                        "actual !== $original", "status'] !== 'published'"]:
