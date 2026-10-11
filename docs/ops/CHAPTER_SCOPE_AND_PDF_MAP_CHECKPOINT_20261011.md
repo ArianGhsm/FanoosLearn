@@ -122,9 +122,12 @@ PDFs and live bank remained. Private receipts are
 found zero PDF text files, page/full/book-text JSON fields, bytecode or
 temporary/partial files in the research tree and seven checked archives.
 `research/tmp/` was empty; three remaining `.txt` files were checksum
-manifests. The protected parallel folders still contain historical one-off
-research scripts; do not delete those in bulk without checking their durable
-results and recovery paths individually.
+manifests. The protected parallel folders still contain **127** historical
+Python/PHP/shell/SQL research scripts. Some private handoffs explicitly use
+them to reproduce unresolved audits. They need a separate exact-path review:
+move reusable, non-private logic to versioned `scripts/`, preserve unique
+pending evidence, then remove completed one-off scripts after confirming their
+durable result and recovery path. Do not sweep them by extension.
 
 ## Resume order and import gate
 
