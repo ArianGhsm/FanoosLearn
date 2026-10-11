@@ -272,6 +272,10 @@ def main() -> int:
                             cite_chapter = node['number']
             nodes = chapter_nodes(catalog, edition)
             page = d.get('page')
+            if why is None and (not isinstance(page, int) or isinstance(page, bool) or page < 1):
+                why = 'a chapter decision requires the exact positive PDF page number'
+            if why is None and cite != edition:
+                why = 'nearest-edition page cannot verify the cited official edition; keep chapter and page pending'
             if why is None and chapter not in nodes:
                 why = f'{edition} has no chapter {chapter}'
             if why is None and cite in names:
