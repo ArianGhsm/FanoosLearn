@@ -49,6 +49,7 @@ import sys
 import tempfile
 from pathlib import Path
 from verified_reference_pdf import chapter_coverage, open_verified_reference
+from retrospective_reference_policy import BASIS, is_retrospective, selected_reference_rows
 
 REPO = Path(__file__).resolve().parents[2]
 BANK = REPO / 'data' / 'bank'
@@ -212,9 +213,14 @@ def main() -> int:
     books = Books(args.storage_root, args.mysql_defaults, args.database)
 
     official: dict[str, dict[str, dict]] = {}
-    for v in catalog['validity']:
-        if v.get('exam_type') == exam_type and int(v['year']) == year:
-            official.setdefault(v['subject'], {})[v['edition']] = v
+    if is_retrospective(year):
+        for subject in sorted({q['subject'] for q in sitting['questions']}):
+            for row in selected_reference_rows(catalog, exam_type, year, subject, pdfs, runs):
+                official.setdefault(subject, {})[row['edition']] = row
+    else:
+        for v in catalog['validity']:
+            if v.get('exam_type') == exam_type and int(v['year']) == year:
+                official.setdefault(v['subject'], {})[v['edition']] = v
 
     source = Path(args.decisions)
     # A directory holds every year's decisions; only this sitting's are read
@@ -234,14 +240,24 @@ def main() -> int:
         elif n in seen:
             why = 'decided twice'
         seen.add(n)
+        if why is None and is_retrospective(year) and (q['answer'].get('status') not in ('final', 'amended')
+                                                     or q['answer'].get('choice') is None):
+            why = 'voided/disputed or missing official answer cannot support retrospective chapter/page'
         if why is None and 'none' in d:
-            if official.get(q['subject']) and not str(d['none']).strip():
+            if is_retrospective(year):
+                why = 'retrospective missing reference remains pending; none is not a chapter+page decision'
+            elif official.get(q['subject']) and not str(d['none']).strip():
                 why = 'a question with official references needs a reason to have none'
             else:
                 accepted[n] = None
         elif why is None:
             edition, chapter = d.get('edition', ''), str(d.get('chapter', ''))
             names = official.get(q['subject'], {})
+            if is_retrospective(year) and edition in names:
+                expected_year = int(names[edition]['year'])
+                if d.get('reference_year') != expected_year or d.get('classification_basis') != BASIS:
+                    why = (f'retrospective decision must explicitly name reference_year '
+                           f'{expected_year} and classification_basis {BASIS}')
             cite, cite_chapter = edition, chapter
             if edition not in names and not args.allow_nearest:
                 why = 'nearest-edition substitutions are paused; use exact official edition or keep pending'
@@ -351,6 +367,9 @@ def main() -> int:
                 src['page'] = None
             q['sources'] = [{k: v for k, v in src.items() if v is not None}]
     sitting['notes'] = (sitting.get('notes') or '') + f' Sources from {len(accepted)} checked classification decisions (scripts/references/apply_classification.py).'
+    if is_retrospective(year):
+        sitting['notes'] += (f' {BASIS}: 1397+ exact PDF citations refer to later official '
+                             'reference-year lists, not original exam-year official books.')
     save_sitting(Path(args.out), sitting)
     print(f'wrote {args.out}')
     return 0
