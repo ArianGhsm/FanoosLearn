@@ -92,6 +92,29 @@ All receipt files reside under `/srv/fanoos/shared/research/classification/repor
 
 The previously held endodontics items (e.g. Q23, Q40, Q24 voided) and nine year-scope conflicts remain unmodified. **Next:** continue direct, independent original-page evidence per subject and approved same-row source metadata repair, while obtaining a safe published-assessment preflight and reviewer-authorized append if student-visible updating is requested.
 
+## Second production source-only publication: eight Burket oral-medicine citations (same day)
+
+After the earlier 10 audited original-page repairs, eight additional 1404 **oral-medicine** questions were verified directly in the **official Burket's Oral Medicine 13e** original PDF, exact SHA-256 `0ca841beb1820e8e0a33c96b5ce37cc36c94d6adce53fbf172b27312e0fd5252`. The deployed, reviewed `repair_verified_source_pages.php` existing-source operator passed **the entire eight-row rollback preview** and then the real atomic apply. The original PDF page contents, the corresponding printed-book label and at least two neighboring label pages, the 1404 official chapter scope, source anchor SHA, original final-key/choice state, absence of a human reviewer and exact pinned edition/hash passed for each source.
+
+| 1404 question | Existing Burket 13e chapter | Original printed page | One-indexed verified PDF page |
+| --- | ---: | ---: | ---: |
+| 61 | 3 | 41 | **61** |
+| 62 | 3 | 59 | **79** |
+| 63 | 3 | 65 | **85** |
+| 64 | 4 | 90 | **110** |
+| 65 | 5 | 148 | **168** |
+| 66 | 6 | 177 | **197** |
+| 67 | 6 | 192 | **212** |
+| 80 | 9 | 318 | **338** |
+
+The original page passages matched the existing keyed medical concepts: herpes-labialis topical antivirals (61), pemphigus biopsy at the advancing lesion margin (62), desquamative gingivitis differential (63), pseudomembranous Candida (64), mucosal melanoma sites/paresthesia (65), gingival pyogenic granuloma (66), ALP evaluation for a central giant-cell lesion/hyperparathyroidism (67), and asymptomatic bilateral sialadenosis with chronic alcoholism (80). These are original-book locations, not printed-page offsets inferred from a conversion constant.
+
+**Production verified 48 → 66 bound clinical source rows cumulatively** (10 earlier + 8 Burket): 1404 residency **250 total**, 230 clinical, 20 reference-exempt English, **164 clinical still incomplete**. Endodontics now 9/20, dental materials 7/10, and oral medicine **3 → 11 of 20**; unchanged subjects retain the earlier inventory. Independent direct MySQL row readback returned all eight book chapters/printed pages/PDF locations, `origin=ai` and no human review. The precise sole SQL mutations were `bank_question_sources.pdf_page` and `bank_question_sources.pdf_sha256` (not chapters, legacy labels or any question, option, answer, human review or attempt). The original 250-question digest and 1000-choice digest remain identical to the earlier checkpoint. Frozen student assessment remained v5 / 247 published questions and identical SHA `91d37dc63430d140597c515f4838059c8dba7ffe415522556d19291c707fdc11`, **not re-published**.
+
+**Independent verified full backup** for both batches remained `/var/backups/fanoos/20261011T150038Z-b3aff002` (114 manifest files verified). The new protected apply receipt is `/srv/fanoos/shared/research/classification/reports/residency-1404-oralmedicine-burket-8-applied-20261011-1.json`, SHA-256 `00daa92d1b7eee3eb4bd98b6e5f6899d9e92a2167a0d018af1bd79915abaa822`; the cumulative 18-applied private immutable checkpoint is `residency-1404-eighteen-bound-pages-applied-checkpoint-20261011.json`, SHA `31cfc7994e6eaba4b5200ef18887ae5ad9de94ebfbafde26ab42bfcbec32be78`. Site `/health` remained OK (active release `cd3b7913640dcb6ccdcb471e637e9e3236b89c4e` at readback). The 1404 student-facing frozen assessment still needs separately reviewed, non-explanation-identity preflight before any new version is published.
+
+**Additional independent research, NOT applied:** Two Little & Falace 10e oral-medicine cases passed the same official rollback preview, Q76 ch16 printed251/PDF287 and Q78 ch17 printed275/PDF313, tied to original SHA `6568ce7b80ae216f80285d08c231502931535bd322e835f62bd76f255341834e`. Their prepared protected plan is `residency-1404-oralmedicine-little-2-verified-20261011.json`, SHA `e81f85b8c195f6feba101531f9b16ff0bb3fcb21761a036c5f64a681c0f304a0`. The actual apply command was **blocked by an external tool safety check** before execution; live DB readback confirms Q76/Q78 still `pdf_page=NULL`. Do not count these two as completed or bypass the execution safeguard. Human source records Q68/71/72/74, including Q71 voided, were deliberately excluded. Q69 may have key/differential issues; Q70 and Q77 require further original-page semantic review. Continue other independently valid sources rather than assuming all subjects are ready.
+
 ## Existing citations that conflict with enumerated 1404 official scope
 
 A read-only equality audit joined each existing `bank_question_sources` chapter number and edition to the **same** 1404 residency subject/edition `bank_reference_validity.scope_chapters` list. **Nine** existing rows have a chapter outside their explicitly enumerated chapter list (seven AI-origin, **two protected human-origin**). This first pass does **not** validate nuanced partial-page/section restrictions, and must not trigger deletion, key changes or automatic replacement.
