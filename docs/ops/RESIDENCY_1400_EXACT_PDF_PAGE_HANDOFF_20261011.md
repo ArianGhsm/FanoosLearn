@@ -270,3 +270,26 @@ Approved exact year-1400 complete-denture reference **Zarb Edentulous 13e**, ori
 The generic printed-header recognizer missed Q82/Q85/Q88 because the original book uses variant header layouts; all three were independently confirmed from explicit printed numerals on the original page and **both neighboring pages** rather than a guessed PDF offset. The old chapter/page values and answer keys remain untouched.
 
 **Operational caveat unchanged:** The book's entire researched Zarb cohort is **not** a published completion: all ten legacy rows still need backed-up, guarded, metadata-only source repair; Q85/Q87/Q88 require further semantic review. The merged/main document may lag this documentation branch if pull-request creation remains tool-safety blocked. GitHub branch documentation itself does not imply CI, merge, deployment or production DB publication.
+
+
+## 2026-10-12 follow-on: Powers & Wataha 11e six MATERIALS alternate-reference candidate pages — **NOT VALIDATED**
+
+The live year-1400 materials stems and official answer positions were read directly for Q211/212/214/216/217/218; their old Van Noort chapter placements are out of the official year-1400 Van Noort 4e scope (only sections 3.4–3.7). These must **NOT** be promoted from their old reference. Read-only targeted textual keyword scans of the actual approved **Powers & Wataha 11e** PDF completed successfully on `job_6ee5ea3d8999`, finding candidate matching pages within permitted Powers chapters (the book excludes ch1,6,10,12,14 in year-1400 syllabus). This was a **keyword screen, not final page-level answer/anchor proof**:
+
+| Question | Alternative Powers11 chapter | Candidate actual original PDF page | Evidence keywords present |
+|---:|---:|---:|---|
+| 211 | 2 | 38 | proportional limit, yield strength (other candidates 33,39) |
+| 212 | 8 | 132 | alginate, permanent deformation, elastic recovery, undercut (also chapter2 pages41–43 and other chapter8 pages) |
+| 214 | 11 | 158 | ruthenium, grain size, base metal |
+| 216 | 5 | 81 | dimensional change, recurrent caries |
+| 217 | 7 | 107 | microhybrid, microfilled, self-adhesive resin, resin cement |
+| 218 | 3 | 48 | benzoyl peroxide, organic amine |
+
+The screen located printed/PDF page leads but a subsequent targeted original-PDF excerpt and printed-neighbor verification action was **blocked by the tool safety gate**. Do not claim the candidate pages are clinically verified, or bypass the gate. Q217 is especially sensitive: published key choice2 makes a comparative wear-resistance assertion that should not be assumed true without exact approved book support. Similar caution for Q214 alloy grain-size statements. Preserve original official answers unchanged, even if contradictory. Future safe scientific review should gather on-page original-PDF quotations, official year validity, chapter boundary, printed-page+neighbor corroboration, real live source-row ID and SHA, before counting any of these six. **Production rows changed: 0.**
+
+Prior durable complete scholarly audits remain:
+- Endodontics Q21–Q40 **20 original chapter/PDF-page matches**, 9 exact old legacy anchors + 11 fresh short quotes; all live source rows still have NULL `pdf_page/pdf_sha256`.
+- Zarb complete dentures Q81–Q90 **10 PDF page leads**, 7 answer-direct and 3 held (Q85/87/88).
+- Private receipts and SHA hashes are recorded in preceding sections of this document.
+
+**Live/current-status caveat:** Last successful production SQL audit yielded **250 total and 56 completed**, before this materials keyword screen. A subsequent combined preflight and some other read-only scripts were tool-safety blocked, so no newer live DB completion number is claimed. No question/option/key/attempt changes, source-row repair, publisher import, CI, merge, deploy or assessment publication occurred in this task.
