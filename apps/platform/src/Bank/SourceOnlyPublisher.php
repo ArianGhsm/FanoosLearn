@@ -103,8 +103,10 @@ final class SourceOnlyPublisher
                     : [
                         211 => ['white-pharoah-radiology@7e', '1', 27],
                         212 => ['white-pharoah-radiology@7e', '3', 50],
+                        213 => ['white-pharoah-radiology@7e', '2', 38],
                         214 => ['white-pharoah-radiology@7e', '6', 103],
                         215 => ['white-pharoah-radiology@7e', '4', 61],
+                        216 => ['white-pharoah-radiology@7e', '7', 109],
                         217 => ['white-pharoah-radiology@7e', '10', 189],
                         218 => ['white-pharoah-radiology@7e', '10', 199],
                         219 => ['white-pharoah-radiology@7e', '14', 260],
