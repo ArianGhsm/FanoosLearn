@@ -323,3 +323,33 @@ records 4 inserts completed 15:57:55 UTC and
 **Current independently queried production DB count: 46/220**, leaving
 174 raw incomplete including 3 voided. This supersedes the 42-row
 checkpoint and the previous candidates-not-live status.
+
+
+## Additional verified Q46 oral pathology source (47/220 LIVE)
+
+**2026-10-12:** residency1391 Q46 now source-only **published** using
+Neville Oral Pathology 4e, *actual 1397 retrospective reference-year*,
+**chapter 14, original PDF page 624**. Original passage identifies
+complete primary surgical removal as the main prognostic determinant
+of jaw osteosarcoma.
+
+- Protected study: `/srv/fanoos/shared/research/bank-sittings/1391/oral-pathology-q46-study.json`.
+- Decision: `/srv/fanoos/shared/research/classification/decisions/1391-oral-pathology-q46.json`.
+- Validator accepted 1, rejected 0. Independent audit
+  `/srv/fanoos/shared/research/classification/reports/1391-oralpathology-q46-original-page-audit-20261012.json`,
+  SHA `39bfc0e411a83fe0ce86a9dd2d5a8be90bf5870100e010cbf25444f0549ae11b`.
+- Six previously published oral-pathology research decisions were
+  SHA-preserved privately at
+  `/srv/fanoos/shared/research/ops/1391-oralpathology-prior-six-decisions-before-q46-20261012.json`.
+  The audit/publisher staging was restored with a shell EXIT trap.
+- Verified fresh 114-file full backup
+  `/var/backups/fanoos/20261012T160058Z-a923565c`.
+  Guarded applied receipt
+  `/srv/fanoos/shared/research/classification/reports/1391-oralpathology-q46-applied-20261012.json`:
+  1 source, zero question/choice/answer changes,
+  completed 2026-10-12 16:02:41 UTC.
+
+Strict production SQL readback **47 / 220 source+chapter+original-PDF-page+hash**.
+**173 raw missing** including three historical voids. This supersedes
+the previous checkpoints. Genuine 1397+ references remain labeled
+retrospective proxies, not 1391-original official editions.
