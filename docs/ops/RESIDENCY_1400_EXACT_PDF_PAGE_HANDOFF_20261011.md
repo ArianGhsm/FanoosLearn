@@ -293,3 +293,42 @@ Prior durable complete scholarly audits remain:
 - Private receipts and SHA hashes are recorded in preceding sections of this document.
 
 **Live/current-status caveat:** Last successful production SQL audit yielded **250 total and 56 completed**, before this materials keyword screen. A subsequent combined preflight and some other read-only scripts were tool-safety blocked, so no newer live DB completion number is claimed. No question/option/key/attempt changes, source-row repair, publisher import, CI, merge, deploy or assessment publication occurred in this task.
+
+
+## 2026-10-13: McCracken 13e original-PDF page audit and Shillingburg live-row correction alert
+
+### McCracken RPD 13e Q91–Q98 — eight original pages, seven answer-relevant, one held
+
+The production server's **current** approved McCracken 13e chapter-run map is now bound to original PDF SHA-256 `4e05bee57d1066601b8a2b30c2ae72d4a5bf65298747b600ae3fdd8248a192d9`; the earlier handoff's *map-not-bound* blocker is no longer current for McCracken. All eight old AI source rows Q91–Q98 were read directly, their chapters checked in the official residency-1400 syllabus (all McCracken chapters), corresponding original PDF pages independently checked for source five-word phrase overlap and neighboring actual printed book numerals, and answer keys compared against same-page facts:
+
+| Q | Original chapter | Book printed | Actual original PDF page | Clinical status |
+|---:|---:|---:|---:|---|
+| 91 | 19 | 268 | 281 | **HOLD:** undercuts of sprinkled acrylic base described, but exact keyed exception for mandibular labial blockout not explicitly shown |
+| 92 | 11 | 142 | 155 | Answer-supported: relief factors and connector geometry |
+| 93 | 16 | 221 | 234 | Answer-supported: wrinkles when tray moves during setting |
+| 94 | 17 | 233 | 246 | Answer-supported: palatal raphe versus ridge tissue displaceability |
+| 95 | 7 | 82 | 95 | Answer-support context ALSO on PDF page **94 / printed 81**: tissue undercuts precluding gingival bar-clasp approach; existing source Q95 legacy quote is on PDF95 |
+| 96 | 14 | 203 | 216 | Answer-supported: proximal-gingival abutment region caries risk |
+| 97 | 22 | 301 | 314 | Answer-supported: loss of tissue support and rotation/settling distal-extension base |
+| 98 | 10 | 119 | 132 | Answer-supported: U-shaped palatal connector with inoperable palatal torus |
+
+Private source-ID-bound receipt (read back): `/srv/fanoos/shared/research/classification/reports/residency-1400-mccracken-Q91-Q98-original-PDF-page-semantic-audit-20261013.json` SHA-256 `b8022fc5568a612f0381224964cb29f9cfd95ae72557c0bbefd315b909e820ba`. **8 locations / 7 answer-supported / Q91 held.** This is a *research receipt*, not evidence of production repair. A PHP official strict header corroborator accepts Q92 and Q94; Q93/Q96/Q97/Q98 failed due long printed header layouts, though the PDF header and its neighbors were manually read. Do not force those failures or bypass the official publisher.
+
+### Shillingburg Fixed Prosthodontics 4e Q99–Q110: existing live source rows already have PDF pages
+
+A live SQL follow-up revealed **all twelve Q99–Q110 already have `pdf_page` and `pdf_sha256` set** to original approved book SHA `f9c42a8d37993682c0b8ccd8283e75606bbd9c530663dd38e6aa79627ec97b2c`. Therefore these twelve **must not** be counted as fresh published completions from this research. Their actual footer printed page numerals and both neighbors were independently confirmed. The official 1400 Shillingburg validity excludes chapters 5,11,12; the current `reference-chapter-pages.json` entry lacks source-PDF-SHA binding (requires separately reviewed provenance map fix, **not** an excuse to patch source rows using an unbound map).
+
+**Critical Q103 integrity conflict:** production currently records Shillingburg chapter **9**, PDF page **137**, but real direct-book answer evidence for the official choice 2 is **chapter 8, PDF 132, printed 121**: in the mandibular central-incisor/opposite-lateral case, a **completely rigid fixed partial denture** is explicitly recommended because of the short span. The current source row has original `pdf_page=137`, which the mapped PDF itself places in chapter 8, not chapter 9. This needs an independently reviewed **atomic source chapter + page repair** (NOT the existing `pdf_page`-only repair tool), with no changes to stems, choices, official keys, or review/attempt state. Do not mark corrected until DB post-write verification.
+
+Other Shillingburg direct same-page answer evidence identified for Q99 ch2 PDF25, Q101 ch7 PDF105, Q102 ch7 PDF106, Q104 ch16 PDF294, Q105 ch17 PDF324, Q108 ch27 PDF530, Q109 ch24 PDF469, Q110 ch20 PDF379. Q100 ch17 PDF316, Q106 ch19 PDF356, Q107 ch25 PDF485 are page-located but need further answer-specific review. All 12 printed book numerals were confirmed as PDF-page minus 11 only **after** checking the actual page-footer labels and both neighbors, not by assigning an unchecked constant offset. **No Shillingburg DB changes were made.**
+
+### Production-source metadata repair pathway
+
+The new/current official script `scripts/references/repair_verified_source_pages.php` strictly changes **only** `bank_question_sources.pdf_page` and `pdf_sha256` on currently published, unreviewed AI-origin rows with exact source identity, official chapter scope, approved SHA-bound original PDF map, short same-page quote, independent printed-page corroboration, rollback-only preview, fresh verified full backup, service-account-only apply and unique private receipt. This tool CANNOT correct the wrong Shillingburg Q103 chapter.
+
+Private protected current-year plans **prepared and official rollback previews succeeded** for 12 existing source rows:
+- Endodontics Q24,29,30,34,35,39,40, 7 rows, plan `residency1400-strong-source-page-metadata-plan-endodontics-20261013.json`, SHA `745cb7d34ede0cb318b0591a9f4ff9fc7af84bae385a8b2ce49b632a49fe9955`
+- Dental materials Q215,220, 2 rows, plan `residency1400-strong-source-page-metadata-plan-dental-materials-20261013.json`, SHA `e308ff1b00dd6d1417170c38a6c4da9c70565c9b5f9626b32ab0202276866527`
+- Zarb prostho Q83,86,90, 3 rows, plan `residency1400-strong-source-page-metadata-plan-prosthodontics-20261013.json`, SHA `f2535c231d04244e6b2f85b42885f3fe0e502dd1451e831efec95fe74febcc48`.
+
+All other old-anchor metadata candidates require stronger quotation corroboration or the appropriately reviewed source-metadata repair path; do not blindly insert or replace source rows. Full production backup `/var/backups/fanoos/20261012T205820Z-b31cde28` was verified with `BackupManifest::verify`: 114 files, database dump 60,503,922 bytes, creation 2026-10-12 20:58:40 UTC, within 4 hours at the verified preflight time. **The production apply was started separately under an exclusive local classification publication lock and must be judged solely from its eventual native receipts and live DB readback; this document note alone does not certify a successful apply.** Never assert success from a queued job.
