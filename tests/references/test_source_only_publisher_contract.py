@@ -71,6 +71,14 @@ class PublisherSafetyContracts(unittest.TestCase):
             self.assertIn(marker, self.cli)
         self.assertIn("SourceOnlyPublisher::run", self.cli)
 
+    def test_1399_radiology_stage_cannot_be_repurposed(self):
+        self.assertIn("W01-radiology-next-20261012-v2", self.cli)
+        self.assertIn("$year === 1399 && $subject === 'oral-radiology'", self.cli)
+        self.assertIn("$stem === 'radiology-remain' && $expected === 4", self.cli)
+        self.assertIn("1399 W01 radiology evidence stage is exclusive", self.cli)
+        self.assertIn("BackupManifest::verify", self.cli)
+        self.assertIn("hash_file('sha256', $decisionsPath)", self.cli)
+
     def test_1398_exception_is_limited_to_three_proven_subjects(self):
         """Only three evidence-reviewed 1398 subjects pass exact-edition guards."""
         self.assertIn("$year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1', 'endodontics-location-final'], true)", self.cli)
