@@ -192,3 +192,51 @@ These **three are part of the 12 weak-anchor surgery candidates previously repor
 **Q131** Malamed 7e chapter 1 original PDF page **41 / printed 24** also has direct-page original evidence contrasting etidocaine/procaine lipid solubility and discussing protein binding, consistent with the previous live key position 2; hash-bound official scope and printed neighbors confirmed. Keep it a *research-only semantic candidate*: live source/official-key re-query and reviewed metadata publication did not run in this continuation.
 
 A new Malamed research receipt creation and a later separate targeted SQL read were blocked by tool safety checks; do not claim those steps succeeded or circumvent the block. Q132 and Q140 corrections exist in these durable, reviewable operations notes but are **not recorded in production**. The original question, options, keys, human decisions, source provenance and historical exam attempts were not modified. A reviewed and fresh-backed-up source-metadata-only repair tool, protected publisher lock and post-write readbacks remain mandatory before any new completion count.
+
+
+## 2026-10-12: All 20 residency-1400 endodontics chapter + actual PDF pages independently audited (RESEARCH ONLY)
+
+**Scientific original-PDF scope is now fully located: 20 of 20 endodontics questions (Q21–Q40).** This does **not** change the production same-row completion predicate: at the latest read the site remained **56/250** completed overall, with **0/20 endodontics source rows** containing both `pdf_page` and `pdf_sha256`. All 20 pre-existing sources, answer keys and question/attempt content remain unchanged.
+
+Canonical official reference **Torabinejad Endodontics 6e**, approved original PDF SHA-256 `09333f079cb3300550cc0702985aae216d952eacabdaac005e1c66fafebe13e0`; the actual reference chapter page-map checksum, official residency-1400 validity, chapter containment, same-page exact evidence and actual printed running headers with neighboring pages were rechecked against every live `bank_question_sources` row. The **read-only original-PDF evidence audit** is immutable and private:
+
+- `/srv/fanoos/shared/research/classification/reports/residency-1400-endodontics-all20-original-PDF-chapter-page-provenance-20261012.json`
+- SHA-256 `0887becc59150ba3cf5192b5e0d30a7cda29e1655cc6f131d66845ada3b635af`.
+- Split provenance: **9** exact original legacy full-anchor matches to the approved original edition; **11** fresh short exact-page quotes independently re-reviewed with the question-answer facts. The audit includes immutable row IDs, current official answer positions, old printed-page values, verified actual book printed/PDF page numbers and hashes.
+- **Critical correction Q23**: chapter 3 actual **PDF 53 / printed 46** supports the direction of tube shift with a real mental-foramen example (the previous printed 42 / PDF49 only described the general localization technique). Current bank page remains 42 and is **NOT** updated.
+- Q22 chapter2 PDF33 / printed26 and Q25 chapter5 PDF94 / printed87 were falsely rejected by the generic printed-page parser because running headers have variant typography. Explicit page-head printed numerals on the target and both neighboring pages independently proved these page labels; no assumed constant offset was used.
+
+| Q | Ch | Printed page | Actual original PDF page |
+|---:|---:|---:|---:|
+| 21 | 11 | 212 | 219 |
+| 22 | 2 | 26 | 33 |
+| 23 | 3 | **46** | **53** |
+| 24 | 4 | 66 | 73 |
+| 25 | 5 | 87 | 94 |
+| 26 | 6 | 102 | 109 |
+| 27 | 7 | 124 | 131 |
+| 28 | 8 | 154 | 161 |
+| 29 | 9 | 163 | 170 |
+| 30 | 10 | 190 | 197 |
+| 31 | 11 | 210 | 217 |
+| 32 | 12 | 230 | 237 |
+| 33 | 12 | 236 | 243 |
+| 34 | 13 | 294 | 301 |
+| 35 | 14 | 313 | 320 |
+| 36 | 15 | 332 | 339 |
+| 37 | 18 | 396 | 403 |
+| 38 | 19 | 409 | 416 |
+| 39 | 20 | 439 | 446 |
+| 40 | 15 | 331 | 338 |
+
+**Answer-content highlights rechecked against direct same-page original text:** Q21 intrusive luxation has very high pulp-necrosis frequency for closed-apex teeth; Q22 bisphosphonate patient needs soft-tissue protection from clamp; Q25 cold/chewing/percussion may exacerbate maxillary sinus-origin toothache; Q27 size10 to size25 at D3 means 0.05 taper; Q28 long-acting agents with less epinephrine in the maxilla can increase intraoperative bleeding; Q31 dental trauma sensibility absence may leave prognosis questionable/pulp status uncertain; Q32 symmetry-rule exception is maxillary molars; Q36 **Sealapex BASE vs CATALYST** (titanium dioxide in catalyst, so original exception key position 1 is valid); Q37 torsional fracture in narrow canal; Q38 tooth restorability is key to nonsurgical retreatment; Q23 reversing the book's distal-shift/upward-angle illustration yields mesial-shift/decreased vertical angle for the image moving distal/coronal.
+
+Private scientific validation receipts with new quotes were created and read back:
+`residency-1400-q22-q25-q31-q133-q138-exact-page-evidence-20261012.json` SHA `a15bc54a2e46e7facce32f0e3399c3690b3b341ebe12c72c3f9a7cc592cc72db`;
+`residency-1400-endo-q27-q32-q37-q38-original-page-semantic-20261012.json` SHA `461d1b240b86faf48673a064777e08078b9cb1c4b30908ccd734c963f337f4c6`;
+`residency-1400-endo-q21-q28-q36-exact-original-PDF-answer-review-20261012.json` SHA `a39271cde6f5908928b93eac7de15cc5bb23ef6271d95f10e1b0028561e59363`;
+`residency-1400-endodontics-q23-physical-radiographic-shift-exact-PDF-page-20261012.json` SHA `d9f61fe95d768975d340e97516f5e01b42d8de323aff435f2603f21701e1cc0a`.
+
+**Oral surgery remaining evidence**: Q133 Malamed 7e chapter12 PDF215 printed198 and Q138 Hupp 7e chapter11 PDF217 printed203 have direct original page proof; Q133's exception (levator veli palatini) is *indirectly supported by the listed V3 motor muscles*, needs an explicit independent source statement before concluding complete semantic proof; Q138's keyed exception to curettage is directly substantiated. Their original-book original-page audit resides within private mixed receipt `residency-1400-q22-q25-q31-q133-q138-exact-page-evidence-20261012.json`.
+
+**Mandatory remaining action:** separate reviewed metadata-only source repair with live immutable row/key precheck, fresh verified full backup, exclusive publisher lock, restricted updates to source/chapter/page fields, post-write row readback, protected assessment/version audit, site-health confirmation as relevant. No bypass through raw SQL or full-sitting importer; the source-only publisher is INSERT-only and cannot update existing rows. New exact-page evidence cannot count as site publication until verified in the production DB.
