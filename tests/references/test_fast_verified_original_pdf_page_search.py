@@ -39,6 +39,18 @@ class VerifiedFastScanTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "page count"):
                 list(iter_original_pdf_pages(FakePDF(), "pymupdf"))
 
+    def test_chunked_poppler_original_pages(self):
+        with patch("find_in_books.subprocess.run",
+                   return_value=types.SimpleNamespace(stdout=b"first\\fsecond\\f\\n")):
+            actual = list(iter_original_pdf_pages(FakePDF(), "chunked"))
+        self.assertEqual(actual, [(1, "first"), (2, "second")])
+
+    def test_chunked_poppler_boundary_mismatch(self):
+        with patch("find_in_books.subprocess.run",
+                   return_value=types.SimpleNamespace(stdout=b"broken")):
+            with self.assertRaisesRegex(ValueError, "boundaries mismatch"):
+                list(iter_original_pdf_pages(FakePDF(), "chunked"))
+
     def test_other_engine_rejected(self):
         with self.assertRaises(ValueError):
             list(iter_original_pdf_pages(FakePDF(), "fake"))
