@@ -18,6 +18,7 @@ import json
 import math
 import re
 import sys
+import subprocess
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
@@ -124,6 +125,26 @@ def iter_original_pdf_pages(pdf, engine="pdftotext"):
     if engine == "pdftotext":
         yield from pdf.iter_page_texts()
         return
+    if engine == "chunked":
+        # A bounded 12-page Poppler block, never a saved book text index.
+        # Yield individual original pages; independent one-page book evidence
+        # and neighboring printed-page labels are still required for citations.
+        for start in range(1, pdf.page_count + 1, 12):
+            end = min(start + 11, pdf.page_count)
+            result = subprocess.run(
+                ["pdftotext", "-enc", "UTF-8", "-layout", "-f", str(start),
+                 "-l", str(end), str(pdf.source), "-"],
+                check=True, capture_output=True, timeout=60,
+            )
+            text = result.stdout.decode("utf-8", "replace")
+            if text.endswith("\f"):
+                text = text[:-1]
+            pages = text.split("\f")
+            if len(pages) != end - start + 1:
+                raise ValueError("Poppler original PDF page boundaries mismatch")
+            for n, page_text in enumerate(pages, start):
+                yield n, page_text.strip("\r\n")
+        return
     if engine != "pymupdf":
         raise ValueError("Unknown page search engine")
     import pymupdf
@@ -181,7 +202,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("queries", help="temporary or durable JSON list of question keys, editions and search terms")
     parser.add_argument("--top", type=int, default=3)
-    parser.add_argument("--engine", choices=("pdftotext", "pymupdf"), default="pdftotext")
+    parser.add_argument("--engine", choices=("pdftotext", "pymupdf", "chunked"), default="pdftotext")
     parser.add_argument("--storage-root", type=Path, default=Path("/srv/fanoos/shared/storage"))
     parser.add_argument("--mysql-defaults", type=Path, default=Path("/etc/fanoos/mysql-migrator.cnf"))
     parser.add_argument("--database", default="fanoos_prod")
