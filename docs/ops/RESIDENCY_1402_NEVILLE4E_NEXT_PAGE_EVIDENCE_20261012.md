@@ -24,7 +24,7 @@ Private SHA-pinned guarded source-only update *candidate* plans (mode 0600; neve
 `/srv/fanoos/shared/research/classification/reports/residency-1402-neville4e-next-2-page-plan-20261012.json`
 (Q75/76/78/79/80). Plans contain current pre-change source IDs, hashes of the unchanged historical anchor, original edition and chapter, PDF SHA, printed labels and short original-page evidence. They must be revalidated if the DB changes. The versioned `repair_verified_source_pages.php` is limited to exact source-only pdf_page/pdf_sha256 updates, with rollback preview, official scope and direct original-page corroboration, and a **fresh verified full production backup** for apply.
 
-**Not accepted in this batch:** Q61 and Q62 are in chapters excluded from structured official 1402 Neville scope. Q68 (alveolar mucosa versus gingival SCC resemblance to pyogenic granuloma) and Q77 (absence of a radiopaque component for ameloblastic fibroma) need more discriminating original text/alternatives before repair. Q70 has no old printed-page label; a direct, definitive Neville4e passage supporting its myoepithelial-cell exception and its exact PDF page remains to be established. Those cases are pending, not imputed.
+**Not accepted in this batch:** Q61 and Q62 are in chapters excluded from structured official 1402 Neville scope. Q68 (alveolar mucosa versus gingival SCC resemblance to pyogenic granuloma) still needs more discriminating original text. Q77 was originally withheld here, but subsequently received differential-original-book review and a separate successful guarded page publication (see final outcome below). Q70 has no old printed-page label; a direct, definitive Neville4e passage supporting its myoepithelial-cell exception and its exact PDF page remains to be established. Those cases are pending, not imputed.
 
 **Concurrency warning:** multiple other exam years were running independent source-page work. A 1399 repair reported a 1205 lock wait timeout while source-page previews were holding row locks and repeatedly hashing large PDFs. Do **not** start concurrent source repair transactions or force through a timed-out preview. Wait for the specific prior run's verified result, then prefer short source-only batches, keep full backups/receipts, independently check unchanged question/choice/key fields and published assessment. Only count an actual applied/read-back result.
 
@@ -67,17 +67,69 @@ created and applied inside the current four-hour guard. Protected plan files
 are all mode 0600 under `/srv/fanoos/shared/research/classification/reports`
 and source metadata did not change between preflight and apply.
 
-**Independent live after-apply count: 90/250** with same-row chapter +
+**Intermediate live after-apply count: 90/250** with same-row chapter +
 positive PDF page + PDF SHA-256, up from **79/250** at this pass's start.
-The remaining raw strict field-incomplete set is **160/250**, consisting
-of 140 non-English book-citation candidates and 20 officially exempt English.
+At that intermediate step, the remaining raw strict field-incomplete set was **160/250**, consisting of 140 non-English book-citation candidates and 20 officially exempt English. The subsequent Q77 publication and student version 7 update appear below.
 This field count does not independently certify validity of pre-existing
 pages: the separate 29 out-of-structured-official-scope records documented
 in the previous 1402 audit remain an unresolved review queue (overlapping
 the backlog, not added to it).
 
-The student-facing frozen assessment was still version 6 when the source
-changes were read back; a separate reviewed `audit_published_assessment.php`
-preflight confirmed its **243/243** non-explanation question definitions
-were stable. Do not claim version 7 has published until a separate full
-backup, official publisher and post-version immutable-field audit succeed.
+Before the final stage, the student-facing frozen assessment was still version 6. A separate reviewed `audit_published_assessment.php` preflight confirmed all **243/243** non-explanation question definitions were stable. The subsequent validated student publication outcome is recorded below.
+
+## Final Q77 original-PDF differential, guarded apply and v7 publication
+
+**Q77** (which odontogenic tumor, unlike the other three options, lacks
+radiopaque components) received additional comparison against Neville 4e,
+chapter 15. The approved original **PDF page 677 / printed 670** displays
+ameloblastic fibroma as a radiolucent lesion; the same edition describes
+the desmoplastic ameloblastoma's mixed radiolucent/radiopaque appearance
+(PDF pages 662–663), and other alternatives have calcified/radiopaque
+components. The existing question's official answer is ameloblastic fibroma.
+Original-page and printed-page-neighbor checks passed in the official guarded
+rollback preview with **one** accepted source and zero content changes.
+
+Protected Q77 plan:
+`/srv/fanoos/shared/research/classification/reports/residency-1402-neville4e-q77-page-plan-20261012.json`,
+plan SHA-256 `77cef8675abf4ad7286c58c60a4cb9cc5c4d489aebd6bcef027eac178638f221`.
+A second fresh full backup taken *after the first 11 source repairs*,
+`/var/backups/fanoos/20261012T041814Z-861b0f30`, was independently
+verified by the canonical tool (**114 files**, including database.sql).
+With all Q77 source guards still unchanged, the source-only apply committed
+**only** pdf_page=677 and the pinned original Neville4e PDF SHA on that existing
+chapter-15 row. Protected receipt:
+`/srv/fanoos/shared/research/classification/reports/residency-1402-neville4e-q77-page-applied-20261012.json`,
+SHA-256 `5ecc95908f4296d6ef788b0963564671c6e1fc3c96fe28a28f6b11bea40d4266`.
+Independent MySQL read-back confirmed old `printed_page=670`, unchanged
+original anchor digest, original edition/node, and new exact `pdf_page=677`
+plus correct 64-character PDF hash.
+
+**Final verified same-row source coverage: 91/250**. Source/printed-only
+legacy queue is 133 existing unbound rows plus six unsourced oral-radiology
+questions; together **139 non-English requiring exact book location**.
+The separate **20 English** questions remain officially exempt and must
+not receive invented book citations. The 29 structured-official-scope
+exceptions in the prior audit are an overlapping review queue and are not
+added to the 139.
+
+**Published assessment v7 — independently verified.** A fresh full
+sitting prepublication audit against version 6 found
+`full_sitting_questions=243, question_content_identical=true`.
+The owner-authorized canonical `import-bank.php publish` operation
+created assessment version 7 (version ID
+`01a12e58-d7ef-7efe-92fa-536083b87ff2`), retaining the same
+243 scorable questions and the same seven voided/non-scored question
+numbers (60, 96, 99, 102, 103, 144, 181). The mandatory
+`audit_published_assessment.php --previous=6 --current=7` returned
+`question_content_identical=true`, **243/243** questions and exactly
+**12 source-derived explanation changes**, matching the twelve original
+PDF-page repairs in this pass. Frozen version 6 remains preserved and
+production DB read-back confirmed version 7 is `published`. The live
+site `/health` returned `status: ok` at
+`cd3b7913640dcb6ccdcb471e637e9e3236b89c4e`.
+
+All claims in this section were checked against live private production
+records, not inferred from successful local research or a deploy request.
+No question stems, options, keys, assessment non-source data, human
+decisions or historic student attempts were modified as part of the
+source-only updates; historical frozen versions were preserved.
