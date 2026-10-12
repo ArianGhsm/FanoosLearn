@@ -349,7 +349,7 @@ def main() -> int:
                     raise ValueError(f'{edition}: original PDF page {opening} is not confirmed chapter {chapter}')
             def is_index(page: int) -> bool:
                 lines = [line.strip() for line in pdf.page_text(page).splitlines() if line.strip()]
-                return bool(re.search(r'\\bindex\\b', ' '.join(lines[:4]), re.I))
+                return bool(re.search(r'\bindex\b', ' '.join(lines[:4]), re.I))
             if not is_index(end) or is_index(end - 1):
                 raise ValueError(f'{edition}: index beginning not confirmed by adjacent original pages')
             documented_runs = [[None, 1, ordered[0] - 1]]
