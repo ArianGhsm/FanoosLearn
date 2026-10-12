@@ -49,6 +49,22 @@ class ExistingSourcePageRepairContracts(unittest.TestCase):
         ):
             self.assertIn(guard, self.source)
 
+    def test_nullable_historic_page_is_explicitly_guarded_and_never_written(self):
+        # An original source can lack an old printed label. Its newly
+        # independently verified PDF printed number is evidence only.
+        for guard in (
+            "array_key_exists('expected_legacy_page', $item)",
+            "array_key_exists('expected_stored_printed_page', $item)",
+            "$s['page'] !== $expectedLegacy",
+            "$s['printed_page'] !== $storedPrinted",
+            "PrintedBookPageEvidence::corroborates(",
+            "PrintedBookPageEvidence::pageContainsEvidence(",
+            "UPDATE bank_question_sources SET pdf_page=:page,pdf_sha256=:sha",
+        ):
+            self.assertIn(guard, self.source)
+        self.assertNotIn("SET printed_page=", self.source)
+        self.assertNotIn("SET page=", self.source)
+
     @unittest.skipUnless(shutil.which("php"), "PHP required")
     def test_php_syntax(self):
         result = subprocess.run(["php", "-l", str(OPERATOR)], text=True,
