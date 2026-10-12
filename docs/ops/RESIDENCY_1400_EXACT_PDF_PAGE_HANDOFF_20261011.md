@@ -349,3 +349,28 @@ An authorized, reviewed service-account execution of `scripts/references/repair_
 Receipt paths all share `/srv/fanoos/shared/research/classification/reports/` and use exact basenames `residency1400-approved-metadata-apply-<subject>-20261013.json`. They are protected on-server and were independently opened and checked. **Do not count additional completions from plans/preview alone.**
 
 **Next batch:** 15 more official-plan candidates in four groups passed original PDF, approved map, official-year scope, human unreviewed AI-origin check, and native PHP printed-header corroboration: endodontics 26/33; materials 213/219; oral surgery 134/136/137/143/146/147; prosthodontics 81/84/89/92/94. One attempted publisher orchestration lost its agent connection mid-flight. The host was then queried: its publisher lock remained **held** and official PHP repair process was **still running**. **Never restart that batch blindly.** Reconcile future outcome by final DB row readback plus individual `residency1400-next-approved-metadata-apply-<subject>-20261013.json` native receipts, and compare target 68/250 baseline to any increase. At documentation time this next batch was **not yet confirmed applied**. The strict PHP printed-header validator rejects Zarb Q82 (but original page text/neighbor labels are manually supported) and four other McCracken candidates due format variations; do not circumvent validators or claim those as published.
+
+
+## 2026-10-13: second official protected PDF-page metadata publication verified, 68 → 83
+
+The four authorized existing-source-only repair batches in the second wave **all completed on the server despite a temporary SentinelX agent disconnection**. Connection loss was NOT retried blindly: the original publisher lock was seen held, its PHP process active, then all four native receipts appeared as **`mode=applied`**, and the exclusive publisher lock was released. Authenticated production MySQL verified **250 total, 83** same-source `node_id + pdf_page + pdf_sha256` (previous checkpoint 250/68). A subsequent dedicated readback compared **all 27 rows** from both waves against their current source-row IDs, edition, original chapter, unchanged legacy printed page, exact approved SHA and page, `origin=ai`, unreviewed status: **27/27 exact matches**. Every publish used the reviewed `repair_verified_source_pages.php`, backed by previously verified full snapshot `20261012T205820Z-b31cde28`; this changes only `pdf_page` and `pdf_sha256`.
+
+| Wave 2 subject | Actual published question numbers | Official private receipt SHA-256 |
+|---|---|---|
+| Endodontics (2) | 26, 33 | `19d1e8e61a3536aac9fc9aec22df5eecc5c2ed008e8d27cf98ae9e720de669a5` |
+| Dental materials (2) | 213, 219 | `1b8209091763566b69508820bd3f5649a5d08a01c4f2190ee33ecd72a8e2a8aa` |
+| Oral surgery (6) | 134, 136, 137, 143, 146, 147 | `50a656f7a7ba72aefceb61d6dfae9d915a6b1974aeb24408ad63043ac96f0ff0` |
+| Prosthodontics (5) | 81, 84, 89, 92, 94 | `f27fe0a1f8c443b74c15c997da18ca54da8754844a615f9035406e6bff3b545d` |
+
+The files are `/srv/fanoos/shared/research/classification/reports/residency1400-next-approved-metadata-apply-<subject>-20261013.json`, private readback verified. Thus two waves yielded **27 new actual published source-page completions (56→83)**; those are NOT extra research-only candidates.
+
+### Next wave (16) — two strict rollback previews passed; apply not yet certified
+
+Scientifically verified original-PDF original-year chapter+page and PHP printed page evidence: Torabinejad6e endodontics Q21,27,28,31,32,36,37,38; Malamed7e/Hupp7e oral-surgery Q131,135,138,139,141,148,149,150. Native strict rollback previews **both passed, 8+8**, each with preserved source identity and short exact-page answer evidence. Private prepared SHA-pinned plans:
+
+- `residency1400-third-source-page-plan-endodontics-20261013.json` SHA-256 `ff090d404b753b9691acc39d2d086be0a9854659249e7e3385d069fd7631ecb9`.
+- `residency1400-third-source-page-plan-oral-surgery-20261013.json` SHA-256 `07ac315b5ca9723f3133bb71b58ae3da2e3eee429fcb9abbb316aa649e6abced`.
+
+A **fresh full backup after the 83-completion point** was started with the official `scripts/ops/backup.php`; this was still an in-flight SentinelX job (`job_18c55d30ccf2`) at documentation time. **Do not claim its backup succeeded until the job's returned backup path is read and verified. Do not apply the 16 using an unverified backup or re-run an in-flight operation.** If fresh backup verified, execute authorized writer under publisher lock, reconcile native receipts and independent live count/unchanged protected fields. A successful third wave would raise the live count to **99/250**; this is an expectation only, NOT a result.
+
+Remaining blockers persist: Torabinejad Q22/Q25 do not pass strict PHP printed-header parser even though source original headers show 26/87, Q23 corrected page53/printed46 requires existing printed label42 correction so cannot use page/hash-only writer; Hupp/Malamed Q132 and Q140 need corrected printed labels, Q133 semantic exception held; Shillingburg Q103 chapter9/PDF137 in production is wrong compared with answer-explicit ch8/PDF132, requires separate atomic chapter/page source correction and map provenance; English 20 source-exempt by official key, and nearest-edition sources for pathology, oral medicine, pediatric, perio require official-year attribution. Do not bypass any official writer rejection.
