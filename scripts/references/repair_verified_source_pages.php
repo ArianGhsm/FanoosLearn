@@ -13,6 +13,8 @@ declare(strict_types=1);
  * Apply requires --apply --backup=/var/backups/fanoos/<fresh verified full backup>
  * and --receipt=/srv/fanoos/shared/research/classification/reports/<unused>.json.
  *
+ * For an originally unnumbered historic source, a separately verified book
+ * printed-page label may be supplied without changing the stored NULL value.
  * Never change chapter, edition, historical printed label, original anchor,
  * question, choices, key, review state, assessment or attempts.
  */
@@ -127,6 +129,8 @@ SQL);
             $page = $item['pdf_page'] ?? null;
             $sha = $item['pdf_sha256'] ?? null;
             $printed = $item['printed_page'] ?? null;
+            $storedPrinted = array_key_exists('expected_stored_printed_page', $item)
+                ? $item['expected_stored_printed_page'] : $printed;
             $expectedLegacy = $item['expected_legacy_page'] ?? null;
             $anchorHash = $item['expected_anchor_sha256'] ?? null;
             $quote = $item['evidence'] ?? null;
@@ -137,7 +141,11 @@ SQL);
                 || !is_int($page) || $page < 1 || $page > 6000
                 || !is_string($sha) || !preg_match('/^[a-f0-9]{64}$/D', $sha)
                 || !is_string($printed) || !preg_match('/^[1-9][0-9]{0,3}$/D', $printed)
-                || !is_string($expectedLegacy) || !is_string($anchorHash)
+                || !array_key_exists('expected_legacy_page', $item)
+                || ($expectedLegacy !== null && !is_string($expectedLegacy))
+                || ($storedPrinted !== null && (!is_string($storedPrinted)
+                    || $storedPrinted !== $printed))
+                || !is_string($anchorHash)
                 || !preg_match('/^[a-f0-9]{64}$/D', $anchorHash)
                 || !is_string($quote) || strlen($quote) < 16 || strlen($quote) > 190) {
                 throw new RuntimeException('Invalid source/page/evidence identity in protected plan.');
@@ -155,7 +163,7 @@ SQL);
             if ($s['question_status'] !== 'published' || $s['origin'] !== 'ai'
                 || $s['reviewed_at'] !== null || $s['reviewed_by_user_id'] !== null
                 || $s['pdf_page'] !== null || $s['pdf_sha256'] !== null
-                || $s['page'] !== $expectedLegacy || $s['printed_page'] !== $printed
+                || $s['page'] !== $expectedLegacy || $s['printed_page'] !== $storedPrinted
                 || hash('sha256', (string) $s['anchor_text']) !== $anchorHash
                 || $s['reference_key'] . '@' . $s['edition_key'] !== $edition
                 || (string) $s['chapter_no'] !== $chapter || $s['kind'] !== 'chapter'
