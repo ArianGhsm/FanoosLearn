@@ -1,5 +1,27 @@
 # Residency 1404 exact chapter + PDF-page audit — 2026-10-11
 
+## 2026-10-12 production checkpoint: eight more bound original PDF pages, now 110/250
+
+**Verified live production readback (1404 residency, first sitting, 2026-10-12):** 250 total, 230 clinical, 20 English reference-exempt. A source row with official chapter AND physical 1-indexed original PDF page AND exact SHA grew from **102 to 110**; **120 clinical** still missing verified page. Eight new bound source rows below are backed by five separate successful protected official `repair_verified_source_pages.php` application receipts and two independently verified full production backups (each 114 manifest files). Only `bank_question_sources.pdf_page` and `bank_question_sources.pdf_sha256` changed, no question/answer, chapter node, printed label, human source or student history mutation.
+
+| Q | Subject | Original approved edition | Official chapter | Printed page | Original PDF page |
+| ---: | --- | --- | ---: | ---: | ---: |
+| 22 | Endodontics | Torabinejad 6e | 17 | 370 | **377** |
+| 23 | Endodontics | Torabinejad 6e | 14 | 302 | **309** |
+| 39 | Endodontics | Torabinejad 6e | 18 | 392 | **399** |
+| 76 | Oral medicine | Little & Falace 10e | 16 | 251 | **287** |
+| 78 | Oral medicine | Little & Falace 10e | 17 | 275 | **313** |
+| 134 | Oral surgery | Hupp 7e | 11 | 192 | **206** |
+| 145 | Oral surgery | Hupp 7e | 30 | 645 | **659** |
+| 213 | Dental materials | Craig 14e | 11 | 211 | **222** |
+
+**Provenance (private owner `fanoosupd`, mode 0600):** `/srv/fanoos/shared/research/classification/reports/residency-1404-eight-pages-applied-checkpoint-20261012.json`, SHA-256 `2f9a6ce0f4077d5c9faa6c51f4372fa2aab5fa1f4e1e3c17d59c101412c56596`, verified as 8 rows, 5 successful applied receipts, from 102 to 110. All five independently verified receipt SHA-256 values, original PDF object SHA-256 values, and printed physical-page associations are recorded in that private checkpoint. Their public nontext identifiers: `residency-1404-hupp-2-applied-20261012.json` (2 rows); `residency-1404-oralmedicine-little-2-applied-20261012.json` (2); `residency-1404-endo-q23-applied-20261012.json` (1); `residency-1404-endo-q22-q39-applied-20261012.json` (2); `residency-1404-craig-q213-applied-20261012.json` (1). Verified full backups: `/var/backups/fanoos/20261012T153557Z-38668c66` and `/var/backups/fanoos/20261012T153424Z-011f6665`, both `verify-backup.php` passed **114 files**.
+
+**Exact independent unchanged digests:** 250 question rows `5550ae476311940bce104182eebdde3e95b72594ef324628dc1fe6f77e767098`, 1000 choices `8103a7487af85336871bd90eeb00db5dc1240d3cb811e3eb5f07b74d53a8c215`, 260 official-answer history `7ccaafbe4e04c9dcf5a80b83c594013abd4e06c6a690b10bcb10ea08c86b8621`. Frozen student assessment remains version 5, 247 questions, SHA `91d37dc63430d140597c515f4838059c8dba7ffe415522556d19291c707fdc11`. **No assessment republish or code deployment** in this source-repair checkpoint.
+
+**Concurrency:** Other valid first-party guarded work on the same exam overlapped, producing MySQL lock-wait rejection on the first attempted Hupp apply and CAS rejection when the already-valid Hupp rows were committed concurrently. An attempted duplicate Q23 receipt was also correctly rejected after another official operator applied the same plan, and an independent DB readback confirmed it. This checkpoint counts distinct successful source rows only, not attempted duplicate writes. The separately planned **Q213** was successfully committed by this continuation with verified `153424` backup. **Holds:** Q216 Craig last printed page 299 is followed by a physical blank leaf and fails the mandatory independent neighboring printed-page validator; Q35 Torabinejad fails physical source-page/evidence corroboration. Neither may be forced into a completed count. Other previously documented human-origin and incomplete-reference-map holds remain in force.
+
+
 ## LATEST PRODUCTION CHECKPOINT — 36 more original-PDF pages applied, total **102/250**
 
 **Execution 2026-10-11 (latest in this file).** The original, officially approved book/PDF SHA of each of these **36** existing AI-origin source rows was verified, each 1-indexed PDF page was visually/textually corroborated with the precise printed page and adjacent printed labels, and each cited question/official keyed choice was screened against its original passage. The official operator `scripts/references/repair_verified_source_pages.php` passed a full rollback-only preview before executing the isolated production writes with a fresh full backup. Only **`bank_question_sources.pdf_page` and `bank_question_sources.pdf_sha256`** were updated; book, chapter node, printed labels, original question text, options, official keys (including amended/voided history), human reviews, attempts and immutable student assessment versions were never rewritten.
