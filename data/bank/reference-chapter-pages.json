@@ -3691,7 +3691,8 @@
         "24": "5/5",
         "25": "21/62"
       },
-      "source_pdf_sha256": "4e05bee57d1066601b8a2b30c2ae72d4a5bf65298747b600ae3fdd8248a192d9"
+      "source_pdf_sha256": "4e05bee57d1066601b8a2b30c2ae72d4a5bf65298747b600ae3fdd8248a192d9",
+      "source": "verified-server-pdf"
     },
     "mcdonald-avery-pediatric@11e": {
       "runs": [
@@ -3887,7 +3888,8 @@
         "30": "8/11",
         "31": "24/32"
       },
-      "source_pdf_sha256": "a344465f89ff6711099a8bee1878e83236c9778340447ac7491bbc27a89fb629"
+      "source_pdf_sha256": "a344465f89ff6711099a8bee1878e83236c9778340447ac7491bbc27a89fb629",
+      "source": "verified-server-pdf"
     },
     "national-oral-health@1394": {
       "runs": [
