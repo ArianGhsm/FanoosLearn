@@ -309,7 +309,7 @@ SQL);
                 throw new RuntimeException("Q{$n}: original source row is no longer unique.");
             }
             $old = $matches[0];
-            if ($old['number_in_sitting'] !== $n
+            if ((int) $old['number_in_sitting'] !== $n
                 || $old['type_key'] !== 'residency'
                 || (int) $old['exam_year'] !== 1403 || (int) $old['exam_round'] !== 1
                 || $old['subject_key'] !== $i['subject']
