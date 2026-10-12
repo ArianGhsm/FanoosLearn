@@ -240,3 +240,33 @@ Private scientific validation receipts with new quotes were created and read bac
 **Oral surgery remaining evidence**: Q133 Malamed 7e chapter12 PDF215 printed198 and Q138 Hupp 7e chapter11 PDF217 printed203 have direct original page proof; Q133's exception (levator veli palatini) is *indirectly supported by the listed V3 motor muscles*, needs an explicit independent source statement before concluding complete semantic proof; Q138's keyed exception to curettage is directly substantiated. Their original-book original-page audit resides within private mixed receipt `residency-1400-q22-q25-q31-q133-q138-exact-page-evidence-20261012.json`.
 
 **Mandatory remaining action:** separate reviewed metadata-only source repair with live immutable row/key precheck, fresh verified full backup, exclusive publisher lock, restricted updates to source/chapter/page fields, post-write row readback, protected assessment/version audit, site-health confirmation as relevant. No bypass through raw SQL or full-sitting importer; the source-only publisher is INSERT-only and cannot update existing rows. New exact-page evidence cannot count as site publication until verified in the production DB.
+
+
+## 2026-10-12: original-PDF page recovery of all 10 Zarb edentulous sources; 7 answer-verified, 3 held
+
+Approved exact year-1400 complete-denture reference **Zarb Edentulous 13e**, original server-approved PDF SHA-256 `bcf92916cd0a01915695d1cb5aad8c51e7f2dac5909477c4df4454d229156a3d`. In a new read-only, server-side aggregate audit, all **ten existing Zarb sources Q81–Q90** were checked against their actual live question/source row IDs, official 1400 chapter scope (excludes chapters 18–22), SHA-bound map, chapter-contained *real PDF page*, exact short in-page original evidence and printed page running headers on the current and both adjacent pages.
+
+**Science status: seven have original-PDF page evidence directly relevant to the official choice; three still require independent semantic review before publication.** Do **not** count the latter three as scientifically complete merely because the book page is known. None were patched in production.
+
+| Q | Existing chapter | Actual printed book page | Actual original PDF page | Evidence status |
+|---:|---:|---:|---:|---|
+| 81 | 15 | 317 | 331 | New, direct: bilabial sounds and anteroposterior anterior-tooth position |
+| 82 | 13 | 289 | 303 | New, direct: immediate denture first 24-hour follow-up |
+| 83 | 12 | 272 | 286 | Previously full old-anchor / PDF verified |
+| 84 | 11 | 235 | 249 | New, direct: muffled speech / short upper anteriors |
+| 85 | 10 | 209 | 223 | **HOLD**: papilla/retromolar landmarks explicit; keyed exclusion of buccal shelf only inferred |
+| 86 | 1 | 17 | 31 | Previously full old-anchor / PDF verified |
+| 87 | 7 | **144** | **158** | **HOLD**: porcelain brittleness and chipping on impact explicit, but precise cause of keyed occlusal disharmony not directly stated; previously had printed143/PDF157 legacy attribution, **do not mechanically retain it** |
+| 88 | 8 | 165 | 179 | **HOLD**: mandibular/buccinator factors in maxillary buccal vestibule width explicit; pterygomandibular-raphe exclusion still inferred |
+| 89 | 7 | 136 | 150 | New, direct: injection-molded nylon for confirmed methacrylate monomer allergy |
+| 90 | 7 | 152 | 166 | Previously full old-anchor / PDF verified |
+
+**Protected immutable private receipts saved and re-read (never commit book/question text to public Git):**
+
+- Four independently reviewed direct answer sources: `/srv/fanoos/shared/research/classification/reports/residency-1400-zarb-q81-q82-q84-q89-original-page-evidence-20261012.json`, SHA-256 `19cf16aa2b1b84290fd7d03c7a531c90a4780fd6c528fdb2ea61b7aa3cc820ff`.
+- Three partial source candidates, explicitly held: `/srv/fanoos/shared/research/classification/reports/residency-1400-zarb-q85-q87-q88-original-PDF-page-holds-20261012.json`, SHA-256 `f1dd247ef47072f6697f4929ce2bc44711e71a3d238191a60e115704147c2c81`.
+- **Consolidated all-ten live-row audit:** `/srv/fanoos/shared/research/classification/reports/residency-1400-zarb-all10-original-PDF-page-research-audit-20261012.json`, SHA-256 `44ea84da34e47d2ba0d1cac6f335c22ef76f44e6f385e6ab757e01ce7fe9aff3`.
+
+The generic printed-header recognizer missed Q82/Q85/Q88 because the original book uses variant header layouts; all three were independently confirmed from explicit printed numerals on the original page and **both neighboring pages** rather than a guessed PDF offset. The old chapter/page values and answer keys remain untouched.
+
+**Operational caveat unchanged:** The book's entire researched Zarb cohort is **not** a published completion: all ten legacy rows still need backed-up, guarded, metadata-only source repair; Q85/Q87/Q88 require further semantic review. The merged/main document may lag this documentation branch if pull-request creation remains tool-safety blocked. GitHub branch documentation itself does not imply CI, merge, deployment or production DB publication.
