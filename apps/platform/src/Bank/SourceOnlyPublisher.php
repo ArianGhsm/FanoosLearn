@@ -95,6 +95,7 @@ final class SourceOnlyPublisher
             if ($year === 1398 && in_array($subject, ['pediatric-dentistry', 'oral-radiology'], true)) {
                 $specific = $subject === 'pediatric-dentistry'
                     ? [
+                        159 => ['mcdonald-avery-pediatric@10e', '19', 360],
                         164 => ['mcdonald-avery-pediatric@10e', '11', 215],
                         168 => ['mcdonald-avery-pediatric@10e', '8', 159],
                     ]
@@ -103,6 +104,8 @@ final class SourceOnlyPublisher
                         212 => ['white-pharoah-radiology@7e', '3', 50],
                         214 => ['white-pharoah-radiology@7e', '6', 103],
                         217 => ['white-pharoah-radiology@7e', '10', 189],
+                        219 => ['white-pharoah-radiology@7e', '14', 260],
+                        226 => ['white-pharoah-radiology@7e', '21', 355],
                     ];
                 $expectedSource = $specific[$n] ?? null;
                 if (!is_array($expectedSource)
