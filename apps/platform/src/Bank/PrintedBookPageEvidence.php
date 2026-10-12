@@ -185,6 +185,13 @@ final class PrintedBookPageEvidence
 
     private static function normalize(string $text): string
     {
-        return trim((string) preg_replace('/\s+/u', ' ', mb_strtolower($text)));
+        // Poppler may hard-wrap a word with a discretionary hyphen at the
+        // physical end of a line. Rejoin only that pattern; keep in-line
+        // hyphens and all other punctuation to preserve strict quote matching.
+        $joined = preg_replace('/-\h*\R\h*/u', '', $text);
+        if ($joined === null) {
+            return '';
+        }
+        return trim((string) preg_replace('/\s+/u', ' ', mb_strtolower($joined)));
     }
 }
