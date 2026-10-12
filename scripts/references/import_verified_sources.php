@@ -166,7 +166,7 @@ try {
             throw new RuntimeException('Apply needs a recently verified full backup containing database.sql.');
         }
         $receipt = (string) $args['receipt'];
-        if (realpath(dirname($receipt)) !== $receiptDir || is_link($receipt)
+        if ((isset($args['case-root']) ? realpath(dirname($receipt)) !== $receiptDir : realpath(dirname($receipt)) !== $reportDir) || is_link($receipt)
             || file_exists($receipt) || !str_ends_with($receipt, '.json')) {
             throw new RuntimeException('Receipt path must be new and private.');
         }
