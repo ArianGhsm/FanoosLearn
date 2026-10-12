@@ -40,3 +40,22 @@ Carranza14e current approved server PDF has 105 pages with scattered excerpts, S
 Only owner-authorized deployment.manage may request the canonical green-main updater deploy. Do not impersonate an owner, bypass CI or run unstaged code for source edits on live DB. On successful release and health, take and independently verify a fresh full backup; rerun guarded previews from the DEPLOYED code; use existing-source repair with exact audit SHA for 7 cases and source-only importer for 4 radiology cases, each with unique receipts. Read back exact original question/option/key and frozen published version unchanged, verify hashes and actual source pages, then update scoped count. Q207 remains scientifically cross-chapter and source-free; preexisting chapter-scope anomalies Q44/Q129/Q130/Q217/Q218 remain open.
 
 This document records 11 independently reviewed, safe rollback-preview eligible cases, **not 11 applied production completions**.
+
+## Five additional chapter-scoped exact-PDF matches where legacy printed citation is unreliable (research-only)
+
+Full chapter-range search, restricted to the exact approved SHA-pinned current server reference PDFs and each question's original AI anchor, found the five additional UNIQUE PDF pages below. Original published question/4 options/latest final answer and original source were read from live DB, without any write. Each was independently run through apply_classification.py --pdf-pages (1 accepted/0 rejected) and audit_private_study_batches.py (1 accepted/0 pending), with SHA-locked private case.
+
+| Q | Approved official edition | Chapter | Actual PDF page | Existing legacy page | Actual independently verified printed book label | Audit SHA-256 |
+|---:|---|---:|---:|---:|---|---|
+| 26 | Torabinejad Endodontics 6e | 6 | 114 | 107 | PDF page header labels not independently corroborated | f7be0b92e4f5e2294efd971c2cdfed3104bfdb6eb3ec3dc241d83cfeaa3ea483 |
+| 105 | Rosenstiel Fixed 6e | 7 | 243 | 1 (placeholder) | 232, independently corroborated with two neighboring labels | 9c575c18fc0ce0b28eed23b3348f3d4c760d5802f1588711cb0747b0bccc0b34 |
+| 173 | McDonald/Avery Pediatric 11e | 3 | 58 | 3 (chapter placeholder) | unavailable, do not infer printed page | 57808041ebcdcb2eb61847a7aa2fadbb4af280895a660bef40ae30ac4bfa4233 |
+| 181 | McDonald/Avery Pediatric 11e | 15 | 302 | 15 (chapter placeholder) | unavailable, do not infer printed page | 94f67f10a85f3df4ee1466833b41b7d92c0438ec017d3a212cf19594514cf3e8 |
+| 190 | McDonald/Avery Pediatric 11e | 29 | 666 | 29 (chapter placeholder) | unavailable, do not infer printed page | 526d95f728dfd1b2bb2f0a7257d565f076cc6543b96d61d36dd04e3056835f7a |
+
+Protected research case roots under /srv/fanoos/shared/research/classification/:
+recovery-1405-endo26-20261012; recovery-1405-prostho105-20261012; recovery-1405-pediatric173-20261012; recovery-1405-pediatric181-20261012; recovery-1405-pediatric190-20261012.
+
+These 5 do NOT qualify for the existing unchanged-source printed-offset repair as it currently stands, since the existing legacy printed-page evidence is absent/invalid or uncorroborated. Do not force a page label or preserve a demonstrably false label as a validated printed citation. A separately reviewed, conservatively guarded source-only legacy-citation correction is needed if actual PDF-page metadata are to be applied. Original question/options/answers/history and human edits MUST remain unchanged.
+
+Thus **16** research-validated (11 existing audited preview-eligible + 5 audited legacy-placeholder/reliability holds), but only the same **99 already-live recorded complete** as of this document; no new production page edits in this sub-batch. Do not combine these numbers or claim exam closure.
