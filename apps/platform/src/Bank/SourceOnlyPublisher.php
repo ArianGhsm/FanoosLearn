@@ -95,6 +95,7 @@ final class SourceOnlyPublisher
             if ($year === 1398 && in_array($subject, ['pediatric-dentistry', 'oral-radiology'], true)) {
                 $specific = $subject === 'pediatric-dentistry'
                     ? [
+                        152 => ['mcdonald-avery-pediatric@10e', '13', 246],
                         159 => ['mcdonald-avery-pediatric@10e', '19', 360],
                         164 => ['mcdonald-avery-pediatric@10e', '11', 215],
                         168 => ['mcdonald-avery-pediatric@10e', '8', 159],
@@ -103,9 +104,16 @@ final class SourceOnlyPublisher
                         211 => ['white-pharoah-radiology@7e', '1', 27],
                         212 => ['white-pharoah-radiology@7e', '3', 50],
                         214 => ['white-pharoah-radiology@7e', '6', 103],
+                        215 => ['white-pharoah-radiology@7e', '4', 61],
                         217 => ['white-pharoah-radiology@7e', '10', 189],
                         219 => ['white-pharoah-radiology@7e', '14', 260],
+                        223 => ['white-pharoah-radiology@7e', '25', 486],
+                        224 => ['white-pharoah-radiology@7e', '22', 386],
                         226 => ['white-pharoah-radiology@7e', '21', 355],
+                        227 => ['white-pharoah-radiology@7e', '20', 333],
+                        228 => ['white-pharoah-radiology@7e', '25', 473],
+                        229 => ['white-pharoah-radiology@7e', '23', 437],
+                        230 => ['white-pharoah-radiology@7e', '24', 463],
                     ];
                 $expectedSource = $specific[$n] ?? null;
                 if (!is_array($expectedSource)
