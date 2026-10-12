@@ -1,5 +1,39 @@
 # Residency 1404 exact chapter + PDF-page audit — 2026-10-11
 
+
+## 2026-10-12 production continuation: **seven further original chapter/PDF-page bindings applied**
+
+**Status:** actual production writes completed via the already deployed `scripts/references/repair_verified_source_pages.php` after four **successful official rollback-only previews**, SHA-bound original same-year editions, original-text and 1-indexed physical PDF page corroboration including neighboring printed pages, publication status and final/amended official-answer guard. Source-only atomic updates changed precisely `bank_question_sources.pdf_page` and `pdf_sha256` on **seven existing AI-origin source rows**, never stems, 1,000 options, 260 official answer-history rows, legacy printed labels, chapter nodes, human-reviewed rows or frozen published assessment versions.
+
+| Question | Exam section | Official original edition | Current official chapter | Book printed page | Verified PDF page |
+| ---: | --- | --- | ---: | ---: | ---: |
+| 22 | Endodontics | Torabinejad 6e | 17 | 370 | **377** |
+| 23 | Endodontics | Torabinejad 6e | 14 | 302 | **309** |
+| 39 | Endodontics | Torabinejad 6e | 18 | 392 | **399** |
+| 76 | Oral medicine | Little & Falace 10e | 16 | 251 | **287** |
+| 78 | Oral medicine | Little & Falace 10e | 17 | 275 | **313** |
+| 134 | Oral surgery | Hupp 7e | 11 | 192 | **206** |
+| 145 | Oral surgery | Hupp 7e | 30 | 645 | **659** |
+
+Original reference SHA-256 pins:
+- Torabinejad 6e: `09333f079cb3300550cc0702985aae216d952eacabdaac005e1c66fafebe13e0`.
+- Little & Falace 10e: `6568ce7b80ae216f80285d08c231502931535bd322e835f62bd76f255341834e`.
+- Hupp 7e: `35e3c37fec67a831a4464205c1817cc1e51c0a9f8a0bd8660a1881ecd2f10a83`.
+
+**Independent full-backup safety gate:** `/var/backups/fanoos/20261012T153557Z-38668c66`, official full backup and independent `scripts/ops/verify-backup.php` returned **114 verified files** prior to all seven applies. Private per-batch successful `mode=applied` receipts, owner `fanoosupd`, stored in `/srv/fanoos/shared/research/classification/reports/`:
+
+- `residency-1404-hupp-2-applied-20261012.json` SHA `50a595ae9b3f42f9bac48ca015fe384ec525cc73eb3a30db8445adf722c5d851`.
+- `residency-1404-oralmedicine-little-2-applied-20261012.json` SHA `231a0a2981f9d1f70e8f50bf0a086e61deadf2096bc5d88a0e6d7ec4a324ddef`.
+- `residency-1404-endo-q23-applied-20261012.json` SHA `d2afcedf5f9298e7bfd8e48d8e670c9b057bfa12060c5b607a735d0658402d0a`.
+- `residency-1404-endo-q22-q39-applied-20261012.json` SHA `fd4e69ac468548fe2f655ce2216caf8a1b2b2effb2eb1ff40b3789278474e12f`.
+
+**Protected, independently SHA-verified consolidated checkpoint:** `/srv/fanoos/shared/research/classification/reports/residency-1404-seven-applied-source-page-checkpoint-20261012.json`, SHA `54c8454fd7ad12601ef0dccdb8fd62ac8aef005beac108049f39906827996652`, mode `0600`, includes all exact rows/official edition PDF SHA values, plan pins, source-only receipts, backup, immutable digests, and independent concurrency note.
+
+**Live database:** prior 102 completed of 250, this operation added **7**; another independent concurrent task bound dental-materials Q213 (Craig 14e ch11 printed211, PDF222), not included in this seven-row publication or receipts. Independent MySQL readback therefore counted **110 / 250** total same-row chapter + original PDF page + PDF SHA, **120 / 230 non-English clinical still incomplete**, 20 English key-only reference-exempt. Concurrent activity must not be attributed to these seven writes or silently overwritten. At live readback: orthodontics 20/20, endodontics 12/20, oral pathology 16/20, oral medicine 13/20, prosthodontics 12/30, periodontics 0/20, oral surgery 17/20, operative dentistry 12/20, pediatric dentistry 0/20, oral radiology 0/20, dental materials 8/10, community dentistry 0/10.
+
+**Proved immutable invariants after applies:** SHA of all 250 questions `5550ae476311940bce104182eebdde3e95b72594ef324628dc1fe6f77e767098`; all 1,000 choices `8103a7487af85336871bd90eeb00db5dc1240d3cb811e3eb5f07b74d53a8c215`; all 260 official answer-history records `7ccaafbe4e04c9dcf5a80b83c594013abd4e06c6a690b10bcb10ea08c86b8621`. The student-facing **frozen published assessment v5 (247 questions)** SHA `91d37dc63430d140597c515f4838059c8dba7ffe415522556d19291c707fdc11` is unchanged; **no exam re-publication nor code deployment is claimed**. This operation updates live source records only. Site `/health` OK at beginning. Endodontics Q35 remains a formal HOLD after official original-page evidence validation failed in the earlier session: do not infer page or force source mutation. Other human/editorial/reference gaps remain as recorded below.
+
+
 ## LATEST PRODUCTION CHECKPOINT — 36 more original-PDF pages applied, total **102/250**
 
 **Execution 2026-10-11 (latest in this file).** The original, officially approved book/PDF SHA of each of these **36** existing AI-origin source rows was verified, each 1-indexed PDF page was visually/textually corroborated with the precise printed page and adjacent printed labels, and each cited question/official keyed choice was screened against its original passage. The official operator `scripts/references/repair_verified_source_pages.php` passed a full rollback-only preview before executing the isolated production writes with a fresh full backup. Only **`bank_question_sources.pdf_page` and `bank_question_sources.pdf_sha256`** were updated; book, chapter node, printed labels, original question text, options, official keys (including amended/voided history), human reviews, attempts and immutable student assessment versions were never rewritten.
