@@ -56,7 +56,7 @@ def selected_reference_rows(
             continue
         edition = str(v["edition"])
         family = edition.partition("@")[0]
-        if family not in by_family and _usable_pdf_and_map(edition, pdfs, chapter_maps):
+        if (family not in by_family and v.get('scope_chapters') and _usable_pdf_and_map(edition, pdfs, chapter_maps)):
             by_family[family] = v.copy()
     return list(by_family.values())
 

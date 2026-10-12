@@ -68,6 +68,18 @@ class Pre1396ReferencePolicyTests(unittest.TestCase):
         selected = self.select(1392)
         self.assertNotIn("other@2e", [x["edition"] for x in selected])
 
+    def test_unstructured_1397_scope_moves_to_first_scoped_later_year(self):
+        self.catalog["validity"].append(row(1397, "carranza@12e"))
+        self.catalog["validity"].append(row(1398, "carranza@12e"))
+        self.catalog["validity"][-2]["scope_chapters"] = []
+        self.pdfs["carranza@12e"] = {"pdf": "verified-server-pdf"}
+        self.maps["carranza@12e"] = MAP
+        rows = self.select(1391)
+        carranza = [v for v in rows if v["edition"] == "carranza@12e"]
+        self.assertEqual(len(carranza), 1)
+        self.assertEqual(carranza[0]["year"], 1398)
+        self.assertEqual(p.reference_year_for_decision(carranza[0], 1391), 1398)
+
     def test_reference_year_must_not_be_relabelled_exam_year(self):
         selected = self.select(1391)
         self.assertEqual(p.reference_year_for_decision(selected[0], 1391), 1397)
