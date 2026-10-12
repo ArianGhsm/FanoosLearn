@@ -56,7 +56,7 @@ try {
         // mutable source folder. All original inputs remain SHA-pinned by audit.
         $candidate = (string) $args['package-root'];
         $label = basename($candidate);
-        if ($root === false || preg_match('/^(?:W0[1-8]-audit-stage|W02-community-final-audit-stage|W03-endo-q1-audit-stage|W03-location-final-20261010)$/D', $label) !== 1
+        if ($root === false || preg_match('/^(?:W0[1-8]-audit-stage|W02-community-final-audit-stage|W03-endo-q1-audit-stage|W03-location-final-20261010|W01-radiology-next-20261012-v2)$/D', $label) !== 1
             || $candidate !== "{$root}/classification/coordinator/{$label}"
             || is_link($candidate) || realpath($candidate) !== $candidate) {
             throw new RuntimeException('Package root must be an exact coordinator WNN audit stage.');
@@ -69,6 +69,11 @@ try {
             && !($year === 1398 && $subject === 'endodontics'
                 && $stem === 'endodontics-location-final')) {
             throw new RuntimeException('Endodontics final location audit stage is exclusive to exact 1398 endodontics.');
+        }
+        if ($label === 'W01-radiology-next-20261012-v2'
+            && !($year === 1399 && $subject === 'oral-radiology'
+                && $stem === 'radiology-remain' && $expected === 4)) {
+            throw new RuntimeException('1399 W01 radiology evidence stage is exclusive to four separately verified sources.');
         }
         $inputRoot = $candidate;
         $auditDir = realpath($candidate . '/classification/reports');
