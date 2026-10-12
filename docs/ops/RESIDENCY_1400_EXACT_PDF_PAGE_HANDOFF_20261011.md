@@ -332,3 +332,20 @@ Private protected current-year plans **prepared and official rollback previews s
 - Zarb prostho Q83,86,90, 3 rows, plan `residency1400-strong-source-page-metadata-plan-prosthodontics-20261013.json`, SHA `f2535c231d04244e6b2f85b42885f3fe0e502dd1451e831efec95fe74febcc48`.
 
 All other old-anchor metadata candidates require stronger quotation corroboration or the appropriately reviewed source-metadata repair path; do not blindly insert or replace source rows. Full production backup `/var/backups/fanoos/20261012T205820Z-b31cde28` was verified with `BackupManifest::verify`: 114 files, database dump 60,503,922 bytes, creation 2026-10-12 20:58:40 UTC, within 4 hours at the verified preflight time. **The production apply was started separately under an exclusive local classification publication lock and must be judged solely from its eventual native receipts and live DB readback; this document note alone does not certify a successful apply.** Never assert success from a queued job.
+
+
+## 2026-10-13 official source-metadata-only publication: 12 successfully applied and independently read back
+
+An authorized, reviewed service-account execution of `scripts/references/repair_verified_source_pages.php`, the **strict existing-source PDF page/hash repair tool**, was performed after three zero-commit rollback previews, an independently verified full backup (`/var/backups/fanoos/20261012T205820Z-b31cde28`, created at 2026-10-12 20:58:40 UTC; 114 files and 60,503,922-byte database dump), a publisher file lock and SHA-pinned research plans.
+
+**Live production count changed from 56/250 to 68/250** (same-row reference node + original PDF page + original PDF SHA). The protected original stem, all choices, official keys, existing chapter/edition/printed label, AI-source origin and review/source fields were hashed before and after: the protected hash was identical. The official writer changed **only** `bank_question_sources.pdf_page` and `pdf_sha256` and emitted these read-back-confirmed private receipts:
+
+| Subject | Applied question numbers | Native receipt SHA-256 |
+|---|---|---|
+| Endodontics | 24, 29, 30, 34, 35, 39, 40 | `ba72411e05acfb6550045146c1166cd07c99749510aae863e2cc3c4a78560669` |
+| Dental materials | 215, 220 | `8a361f9dae3797289f9d6b070d26b66c93a44bb0eafde24c26627984daa279fe` |
+| Prosthodontics | 83, 86, 90 | `25873b985624820ceb8af817010e63f8ba7a8991a2e32cf004b6fada181d1496` |
+
+Receipt paths all share `/srv/fanoos/shared/research/classification/reports/` and use exact basenames `residency1400-approved-metadata-apply-<subject>-20261013.json`. They are protected on-server and were independently opened and checked. **Do not count additional completions from plans/preview alone.**
+
+**Next batch:** 15 more official-plan candidates in four groups passed original PDF, approved map, official-year scope, human unreviewed AI-origin check, and native PHP printed-header corroboration: endodontics 26/33; materials 213/219; oral surgery 134/136/137/143/146/147; prosthodontics 81/84/89/92/94. One attempted publisher orchestration lost its agent connection mid-flight. The host was then queried: its publisher lock remained **held** and official PHP repair process was **still running**. **Never restart that batch blindly.** Reconcile future outcome by final DB row readback plus individual `residency1400-next-approved-metadata-apply-<subject>-20261013.json` native receipts, and compare target 68/250 baseline to any increase. At documentation time this next batch was **not yet confirmed applied**. The strict PHP printed-header validator rejects Zarb Q82 (but original page text/neighbor labels are manually supported) and four other McCracken candidates due format variations; do not circumvent validators or claim those as published.
