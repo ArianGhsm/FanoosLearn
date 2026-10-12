@@ -123,7 +123,10 @@ numbers (60, 96, 99, 102, 103, 144, 181). The mandatory
 `audit_published_assessment.php --previous=6 --current=7` returned
 `question_content_identical=true`, **243/243** questions and exactly
 **12 source-derived explanation changes**, matching the twelve original
-PDF-page repairs in this pass. Frozen version 6 remains preserved and
+PDF-page repairs in this pass. An additional independent read-only
+per-question set comparison verified that **all 12 changed explanation IDs
+are exactly Q63, Q67, Q69, Q71, Q72, Q74, Q75, Q76, Q77, Q78, Q79,
+Q80**, with no unexpected or missing IDs. Frozen version 6 remains preserved and
 production DB read-back confirmed version 7 is `published`. The live
 site `/health` returned `status: ok` at
 `cd3b7913640dcb6ccdcb471e637e9e3236b89c4e`.
