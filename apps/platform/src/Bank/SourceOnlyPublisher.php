@@ -106,6 +106,7 @@ final class SourceOnlyPublisher
                         214 => ['white-pharoah-radiology@7e', '6', 103],
                         215 => ['white-pharoah-radiology@7e', '4', 61],
                         217 => ['white-pharoah-radiology@7e', '10', 189],
+                        218 => ['white-pharoah-radiology@7e', '10', 199],
                         219 => ['white-pharoah-radiology@7e', '14', 260],
                         223 => ['white-pharoah-radiology@7e', '25', 486],
                         224 => ['white-pharoah-radiology@7e', '22', 386],
@@ -122,6 +123,12 @@ final class SourceOnlyPublisher
                     || $decision['page'] !== $expectedSource[2]) {
                     throw new RuntimeException('1398 pediatric/radiology exact approved original PDF-page source gate refused.');
                 }
+            }
+            if ($year === 1398 && $subject === 'periodontics' && $n === 134
+                && ($decision['edition'] !== 'carranza-periodontology@12e'
+                    || (string) $decision['chapter'] !== '20'
+                    || $decision['page'] !== 664)) {
+                throw new RuntimeException('1398 Carranza Q134 requires exact chapter20 original PDF664.');
             }
             $wanted[$n] = $decision;
         }
