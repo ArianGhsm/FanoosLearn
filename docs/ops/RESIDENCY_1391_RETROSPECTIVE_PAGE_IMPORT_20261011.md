@@ -102,3 +102,48 @@ Receipt reports `source_rows=4` and zero question/choice/answer modifications.
 (189 non-voided plus 3 voided).** Earlier 12/24 counts are historical
 checkpoints. Neither later-year books nor the unverified original key are
 mislabelled official for 1391.
+
+
+## 2026-10-12: four pediatric chapter+verified PDF-page imports — live count 32
+
+Direct original-book evidence in the hash-verified, server-private Nowak
+Pediatric Dentistry 6e PDF from the **official 1399 reference list**; the
+1391 exam itself is not claimed to have used that edition officially.
+
+| Question | Exact edition | Official proxy year | Chapter | Original PDF page |
+|---:|---|---:|---:|---:|
+| 201 | nowak-pediatric@6e | 1399 | 3 | 82 |
+| 204 | nowak-pediatric@6e | 1399 | 14 | 248 |
+| 207 | nowak-pediatric@6e | 1399 | 16 | 278 |
+| 218 | nowak-pediatric@6e | 1399 | 34 | 561 |
+
+- Exact private 20-question study-only file:
+  `/srv/fanoos/shared/research/bank-sittings/1391/pediatric-dentistry-study.json`.
+- Four independently checked original-PDF evidence decisions:
+  `/srv/fanoos/shared/research/classification/decisions/1391-pediatric-dentistry.json`.
+- Validator: `4 accepted, 0 rejected, 16 not yet decided`.
+  Independent provenance audit:
+  `/srv/fanoos/shared/research/classification/reports/1391-pediatric-dentistry-retro-audit-20261012.json`
+  SHA-256 `251e70f4ed55df49746203169ec12e94695a7f1124b785b05c4db62e23b7207a`.
+- Guarded source-only preview: 4 inserts, zero item, choice or answer changes.
+  Verified full production backup `/var/backups/fanoos/20261012T035946Z-27488df0`
+  (114 files); source-only **applied** receipt:
+  `/srv/fanoos/shared/research/classification/reports/1391-pediatric-dentistry-retro-applied-20261012.json`,
+  completed 2026-10-12 04:03:20 UTC with
+  `questions_changed=0, choices_changed=0, answers_changed=0`.
+- Direct current production DB strict same-source chapter+positive PDF page+SHA
+  readback: **32 of 220**. **188 raw missing**, comprising 185 non-voided
+  imported keys and 3 historically voided questions (86, 111, 160).
+- Additional scientific research: Carranza Periodontology 12e Q65 chapter 1
+  PDF 37, Q67 chapter 1 PDF 42. Their 1397 reference-year list has
+  **no independently machine-readable chapter scope**, so validation correctly
+  rejected them and **neither has been published or counted**. The authentic
+  1398 list does identify chapter 1, enabling a later 1398 proxy-year check.
+  PR #334 added a tested rule to choose the earliest 1397+ official year
+  with a verifiable structured scope; merge succeeded, but deployment to the
+  live server and source publication must be independently confirmed before
+  either Carranza candidate counts.
+
+This supersedes the earlier 28-row checkpoint above; neither unverified
+question key authenticity nor original 1391 official reference years are
+misrepresented.
