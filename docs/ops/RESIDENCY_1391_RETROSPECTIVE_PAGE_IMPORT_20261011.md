@@ -294,3 +294,32 @@ and strict DB readback are complete.**
 
 Original 1391 official books and independently authenticated final official
 answer booklet remain unverified. No historical reference status was invented.
+
+
+## 2026-10-12 final follow-up: 46 verified LIVE same-source chapter+PDF page citations
+
+The four McCracken RPD 12e candidate citations in the previous section
+have now been **actually published**, not merely previewed.
+
+| Question | Official retrospective reference year | Edition | Chapter | Exact original PDF page |
+|---:|---:|---|---:|---:|
+| 105 | 1397 | mccracken-rpd@12e | 7 | 91 |
+| 106 | 1397 | mccracken-rpd@12e | 4 | 32 |
+| 110 | 1397 | mccracken-rpd@12e | 7 | 74 |
+| 112 | 1397 | mccracken-rpd@12e | 21 | 306 |
+
+The protected 30-question study input is `/srv/fanoos/shared/research/bank-sittings/1391/prosthodontics-study.json`;
+the research decisions are at `/srv/fanoos/shared/research/classification/decisions/1391-prosthodontics.json`;
+the strict validator accepted 4 of 4 decided, rejected 0. Independent
+audit `/srv/fanoos/shared/research/classification/reports/1391-prosthodontics-v2-original-pdf-audit-20261012.json`
+SHA-256 `52cc584a5c0cc2d5fabade4eb611639cc13e1552f7bd4d6a09378f6611cbdc33`.
+The complete original 114-file recovery backup
+`/var/backups/fanoos/20261012T155537Z-0350e9a7` was verified. Guarded
+source-only applied receipt
+`/srv/fanoos/shared/research/classification/reports/1391-prosthodontics-retro-applied-20261012.json`
+records 4 inserts completed 15:57:55 UTC and
+`questions_changed=0, choices_changed=0, answers_changed=0`.
+
+**Current independently queried production DB count: 46/220**, leaving
+174 raw incomplete including 3 voided. This supersedes the 42-row
+checkpoint and the previous candidates-not-live status.
