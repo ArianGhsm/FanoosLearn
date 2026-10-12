@@ -119,7 +119,22 @@ def chapter_at(runs: list, page: int) -> str | None:
     return None
 
 
-def search_edition(pdf, query_rows: list[dict], runs: list, top: int) -> dict[str, list[tuple]]:
+def iter_original_pdf_pages(pdf, engine="pdftotext"):
+    """Yield original PDF pages without writing any PDF-text derivative."""
+    if engine == "pdftotext":
+        yield from pdf.iter_page_texts()
+        return
+    if engine != "pymupdf":
+        raise ValueError("Unknown page search engine")
+    import pymupdf
+    with pymupdf.open(pdf.source) as doc:
+        if doc.page_count != pdf.page_count:
+            raise ValueError("Original PDF page count changed")
+        for i in range(doc.page_count):
+            yield i + 1, doc[i].get_text("text", sort=True)
+
+
+def search_edition(pdf, query_rows: list[dict], runs: list, top: int, engine='pdftotext') -> dict[str, list[tuple]]:
     heaps: dict[str, list[tuple]] = {str(row["key"]): [] for row in query_rows}
     prepared = {
         str(row["key"]): [TOKEN.findall(norm(str(term))) for term in row.get("terms", []) if str(term).strip()]
@@ -131,7 +146,7 @@ def search_edition(pdf, query_rows: list[dict], runs: list, top: int) -> dict[st
     total_length = 0
     # First pass retains only query-token document frequencies and page lengths.
     # It never stores page text or per-page token lists.
-    for page_number, page_text in pdf.iter_page_texts():
+    for page_number, page_text in iter_original_pdf_pages(pdf, engine):
         if not skipped_page(page_text):
             tokens = TOKEN.findall(norm(page_text))
             document_count += 1
@@ -143,7 +158,7 @@ def search_edition(pdf, query_rows: list[dict], runs: list, top: int) -> dict[st
 
     # Second pass keeps at most --top page numbers and short candidate quotes
     # per query; the current page text is discarded before the next page.
-    for page_number, page_text in pdf.iter_page_texts():
+    for page_number, page_text in iter_original_pdf_pages(pdf, engine):
         if not skipped_page(page_text):
             for query in query_rows:
                 key = str(query["key"])
@@ -166,6 +181,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("queries", help="temporary or durable JSON list of question keys, editions and search terms")
     parser.add_argument("--top", type=int, default=3)
+    parser.add_argument("--engine", choices=("pdftotext", "pymupdf"), default="pdftotext")
     parser.add_argument("--storage-root", type=Path, default=Path("/srv/fanoos/shared/storage"))
     parser.add_argument("--mysql-defaults", type=Path, default=Path("/etc/fanoos/mysql-migrator.cnf"))
     parser.add_argument("--database", default="fanoos_prod")
@@ -199,7 +215,7 @@ def main() -> int:
                 raise ValueError("chapter map has no verified PDF source hash; rebuild it from the current PDF")
             if mapped_source != pdf.source_sha256:
                 raise ValueError("chapter map belongs to a different PDF")
-            output[edition] = search_edition(pdf, rows, page_map["runs"], args.top)
+            output[edition] = search_edition(pdf, rows, page_map["runs"], args.top, args.engine)
         except (ValueError, RuntimeError, OSError, subprocess.SubprocessError) as error:
             print(f"   {edition}: pending ({error})", file=sys.stderr)
             output[edition] = {str(row["key"]): [] for row in rows}
