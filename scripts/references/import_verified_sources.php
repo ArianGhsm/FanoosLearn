@@ -56,7 +56,7 @@ try {
         // mutable source folder. All original inputs remain SHA-pinned by audit.
         $candidate = (string) $args['package-root'];
         $label = basename($candidate);
-        if ($root === false || preg_match('/^(?:W0[1-8]-audit-stage|W02-community-final-audit-stage|W03-endo-q1-audit-stage|W03-location-final-20261010|W01-radiology-next-20261012-v2)$/D', $label) !== 1
+        if ($root === false || preg_match('/^(?:W0[1-8]-audit-stage|W02-community-final-audit-stage|W03-endo-q1-audit-stage|W03-location-final-20261010|W01-radiology-next-20261012-v2|W01-1399-oralmedicine-q43-20261012)$/D', $label) !== 1
             || $candidate !== "{$root}/classification/coordinator/{$label}"
             || is_link($candidate) || realpath($candidate) !== $candidate) {
             throw new RuntimeException('Package root must be an exact coordinator WNN audit stage.');
@@ -74,6 +74,11 @@ try {
             && !($year === 1399 && $subject === 'oral-radiology'
                 && $stem === 'radiology-remain' && $expected === 4)) {
             throw new RuntimeException('1399 W01 radiology evidence stage is exclusive to four separately verified sources.');
+        }
+        if ($label === 'W01-1399-oralmedicine-q43-20261012'
+            && !($year === 1399 && $subject === 'oral-medicine'
+                && $stem === 'oral-medicine-q43' && $expected === 1)) {
+            throw new RuntimeException('1399 original Burket Q43 evidence stage is only for its exact batch.');
         }
         $inputRoot = $candidate;
         $auditDir = realpath($candidate . '/classification/reports');
