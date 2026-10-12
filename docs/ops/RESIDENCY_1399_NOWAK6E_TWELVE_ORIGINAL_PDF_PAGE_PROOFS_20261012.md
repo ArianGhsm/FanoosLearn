@@ -1,8 +1,8 @@
-# Residency 1399 Pediatric — Twelve original Nowak 6e chapter/PDF/printed-page proofs (2026-10-12)
+# Residency 1399 Pediatric — Seventeen original Nowak 6e chapter/PDF/printed-page proofs (2026-10-12)
 
 **Research evidence only; no production source edits or student exam republish.** Original officially authorized `nowak-pediatric@6e`, hash `80278bc5831dc36c040be27a39958ae1b0e8acd29a9b74a8d45e9b62abbf165f`. 1399 official chapter eligibility: **3,12,14–16,19–20,22–24,26–27,29,31–35,39–40**.
 
-An authenticated one-pass direct original-PDF scan checked all **20** pediatric exam question topics, then each candidate below was separately matched against the stored Persian stem and immutable official answer, directly read from the original PDF, and tested through `PrintedBookPageEvidence::pageContainsEvidence` and `corroborates(..., true)` with two original adjacent printed-page labels. **All twelve returned `QUOTE_OK LABEL_OK`**:
+An authenticated one-pass direct original-PDF scan checked all **20** pediatric exam question topics, then each candidate below was separately matched against the stored Persian stem and immutable official answer, directly read from the original PDF, and tested through `PrintedBookPageEvidence::pageContainsEvidence` and `corroborates(..., true)` with two original adjacent printed-page labels. **All original seventeen accepted cases returned `QUOTE_OK LABEL_OK`**:
 
 | Exam Q | Official ch | Physical PDF page | Printed book page | Latest final option | Original evidence |
 |---:|---:|---:|---:|---:|---|
@@ -23,6 +23,21 @@ An authenticated one-pass direct original-PDF scan checked all **20** pediatric 
 
 **Provenance hold:** The 20 existing pediatric AI `anchor_text` rows cite the *nearest nonofficial McDonald/Avery 11e*, although existing edition nodes are labeled official Nowak6e. Do not silently attach original Nowak6e SHA/page to that unreconciled other-edition anchor or change protected human review/question/answers/attempts. A separately audited authorized source-provenance replacement is required before increasing strict production completion. Original book quote and page validation do not automatically resolve the old contradictory AI source text.
 
-Other eight Q171,175,178,179,182,183,187,190 remain further original-text/answer review candidates; chapter/PDF search hits alone are **not accepted**.
+## Five additional exact official Nowak6e original pages
+
+Separate one-page answer-bearing checks and `PrintedBookPageEvidence::corroborates` with two original neighbors all returned **QUOTE_OK LABEL_OK**.
+
+| Q | Official ch | Physical PDF page | Printed book page | Latest final option | Original book evidence |
+|---:|---:|---:|---:|---:|---|
+| **179** | **26** | **438** | **381** | 1 | Original figure 26.3 prescribes **bilateral band and loop** for early loss of both mandibular first primary molars before permanent incisors erupt |
+| **182** | **22** | **376** | **326** | 3 | Original figure 22.24 shows **stainless steel crowns as abutments** for fixed pediatric prosthetic appliance |
+| **183** | **20** | **333** | **285** | 2 | No extra clinical benefit from professional prophylaxis before topical fluoride |
+| **187** | **27** | **445** | **386** | 3 | **Pacifier habit** associated with posterior crossbite and anterior open bite |
+| **190** | **23** | **387** | **334** | 3 | If pulp polyp present but post-coronal-amputation bleeding stops normally, **pulpotomy** may be used |
+
+This raises original-book positive quote+printed-neighbor research proofs from **12 to 17** pediatric questions without any live source mutation.
+
+**Three holdbacks:** Q**178** is strongly answer-matched to original ch27 physical PDF453, the case-study `W arch + Bluegrass appliance`, printed-page special label `393.e1`; original quote passed but automatic **neighbor printed label corroboration failed** for the special `.e1` pagination. Do not mark evidence fully approved until correct special-page proof/neighbor mapping. Q**171** developmental disability chlorhexidine gel versus mouthrinse at original ch39 PDF675 and Q**175** exact age-of-best-effect for fluoride mouthrinse at original ch32 PDF528 need independent direct **comparative** answer proof. Do not guess or claim 20/20.
+
 
 The original approved book was read transiently through `open_verified_reference` + single memory-only Poppler extraction; no book text derivative or persistent search index. Original quote/printed-label validations were from the approved PHP library, not offset inference. No DB row was updated. Latest 1399 strict same-row source complete count at this follow-up started at **95/249**, with 134 clinical pending plus 20 English exempt, 37 earlier protected source-only preflights not yet applied. Require green CI deployed release, verified recent full backup, sealed source-only CAS/receipt and independent database readback; full 248-frozen-vs-249-raw assessment audit and append-only publish are separate.
