@@ -81,3 +81,53 @@ Reproduce as correlated `EXISTS` on `bank_question_sources s` with `s.question_i
 At source-write read-back, the frozen **v7** assessment still contained **243** scorable questions. The live `audit_published_assessment.php` preflight returned `question_content_identical=true`, `full_sitting_questions=243`, and 20/20 matching protected radiology-study questions. The application health check remained `status: ok` at release `cd3b7913640dcb6ccdcb471e637e9e3236b89c4e`. No source-only patch changes stems, options, official answers, human decisions, attempt history or older frozen assessment versions.
 
 **Verified production v8 publication:** Following Q3, a new full production backup `/var/backups/fanoos/20261012T160058Z-a923565c` finished successfully and the independent `verify-backup.php` validated **114 files**. A fresh full-sitting preflight against frozen v7 returned `question_content_identical=true`, **243** scorable questions, and 20/20 matched protected radiology study questions. The owner-authorized canonical `scripts/import/import-bank.php publish` created **assessment version 8** (version ID `01a130d9-7de0-7fe3-b747-b65181591a10`), preserving all seven officially voided/non-scored question numbers and prior frozen v7. Post-publication `audit_published_assessment.php --previous=7 --current=8` returned `question_content_identical=true`, `questions=243`, `updated_explanations=17`. An independent exhaustive explanation-ID comparison found **exactly the 17 original Burket/Torabinejad corrected questions** and **zero unexpected/missing IDs**. Live MySQL read-back confirmed assessment status `published`, `current_version_no=8`, strict source completeness **108/250** and unchanged old frozen v7. Site `/health` remained `status: ok` at release `cd3b7913640dcb6ccdcb471e637e9e3236b89c4e`. This was a source-derived explanatory revision, not a modification of stems/options/keys/scoring order or prior attempts. Backup work can overlap with other exam years; never rerun an ambiguous backup job or overwrite a receipt without first inspecting the active process and production state.
+
+---
+
+## Second original-Torabinejad4-row batch (UTC 12 October, 16:08)
+
+After the independently confirmed assessment v8 publication described above,
+four additional `endodontics` records were matched to the official **1402
+Torabinejad 6e** scope and directly supported by the ORIGINAL approved PDF
+(SHA-256 `09333f079cb3300550cc0702985aae216d952eacabdaac005e1c66fafebe13e0`).
+Original-page evidence, page-label neighbors and chapter-map/hash were
+all confirmed in the guarded `PrintedBookPageEvidence` checks, then in a
+single rollback-only **four-row production preview**, with zero question,
+choice and official-answer modifications.
+
+| Question | Current official chapter | PDF page | Printed page | Direct original-book support |
+|---:|---:|---:|---:|---|
+| Q10 | 9 | 177 | 170 | Flare-up occurrence is not causally reduced merely by single-visit treatment |
+| Q14 | 11 | 221 | 214 | Topical tetracycline on root prior to timely open-apex avulsion replantation |
+| Q16 | 17 | 378 | 371 | Obturating materials are a leading cause of single-tooth discoloration |
+| Q19 | 12 | 241 | 234 | Furcation foramina: maxillary second molars 12%, versus 36% first maxillary and 32%/24% mandibular first/second molars |
+
+The official source-only operator `repair_verified_source_pages.php`
+guarded all four original AI source IDs, existing official editions and
+node IDs, old unchanged printed-page and anchor hashes, final key,
+source-PDF identity and absence of human review. Using independently
+verified full 114-file backup
+`/var/backups/fanoos/20261012T160058Z-a923565c`,
+a single atomic apply successfully recorded ONLY `pdf_page` and
+`pdf_sha256` on four source rows (UTC `2026-10-12T16:08:00Z`).
+Private protected plan:
+`/srv/fanoos/shared/research/classification/reports/residency-1402-torabinejad6e-second-4-20261012.json`
+(plan SHA `d6a2bd0ee4194ed096e2d983976f132b2474fdcb96029b1f3b9d77dd6b5086cd`);
+protected receipt:
+`/srv/fanoos/shared/research/classification/reports/residency-1402-torabinejad6e-second-4-applied-20261012.json`.
+
+Independent live MySQL after-apply reads returned exact chapter/PDF/printed
+triples Q10 (9/177/170), Q14 (11/221/214), Q16 (17/378/371),
+Q19 (12/241/234) and updated strict same-row coverage from **108/250**
+to **112/250**. The raw incomplete set becomes 138, of which 20 English
+are reference-exempt and **118 non-English** remain; the prior six
+historical voided non-English records are included in these 118.
+The existing 29 structured-syllabus-scope flags still require separate
+individual evaluation and overlap this backlog.
+
+The frozen student assessment was still **version 8** at source-row
+read-back. **Version 9 is not considered published until a fresh full
+post-update backup, owner-authorized official publisher, complete
+v8→v9 243-question immutable-field audit and production/health read-back
+independently verify it.** Production books, question texts, options and
+keys are never committed into GitHub.
