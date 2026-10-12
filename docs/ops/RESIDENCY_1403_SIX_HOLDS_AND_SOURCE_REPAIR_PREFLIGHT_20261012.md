@@ -43,7 +43,15 @@ Private protected 1403 proposal files for those 15 are under `/srv/fanoos/shared
 
 The pre-existing strict, source-metadata-only `scripts/references/repair_verified_source_pages.php` was used with a scoped 1403 workspace and the original approved reader. First Q30 evidence needed an *unhyphenated fragment on one actual PDF line* rather than an extract joined across printed line wraps. The original book page was independently checked and only the plan's **short new proof string** was adjusted; the legacy bank anchor remained unchanged. The strict official CLI then returned **`mode=rollback-preview`, `count=2`, 0 question/answer/choice changes** for **Q30 Torabinejad6e ch12 PDF p248** and **Q31 Torabinejad6e ch16 PDF p367**. Protected plan SHA-256 `7ea72a5ec8e5003be28f812809a8af2d54774c0de05d3a01115a0ce3c8493155`. It internally attempted only `pdf_page,pdf_sha256` UPDATE and rolled the DB transaction back. An attempted further grouped preview was blocked by platform tool safety controls and **must not be represented as run or successful**. A live read-back still gave **71** completed paired sources out of 250 total. Site health remained OK.
 
-### Mandatory remaining execution
+### Verifiable protected recovery artifact (research only)
+
+The original-search scripts, source-eligibility audit and 18-page printed-neighbour audit, alongside all seven draft source-only strict-preview JSON plans, are preserved in:
+
+`/var/backups/fanoos/research/20261012-residency1403-source-repair-evidence-15-eligibility.tar.gz`
+
+Archive SHA-256: `588185570d2a5eb8378579bc8bfe224f58b79caf271550c0247efc0f3e60acc4`. Archive listing validation passed (`tar -tzf`) and re-extracting the 18-item neighbour-evidence receipt reproduced SHA-256 `d9256da9ab86b4816de7db04d93504266de2181cb0f6e10b46c685b2ed0de7f8`. It contains no original protected PDF files and **is not a production database backup**.
+
+## Mandatory remaining execution
 
 The server runtime release lags Github merged official-original SHA-bound McDonald11e, McCracken13e and Phillips13e map changes (PR #339 and #346). Thus no strict live map check for these editions should be treated as complete until matching audited code is actually deployed.
 
