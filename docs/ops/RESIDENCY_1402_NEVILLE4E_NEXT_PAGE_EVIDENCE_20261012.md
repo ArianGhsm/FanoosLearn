@@ -107,7 +107,7 @@ plus correct 64-character PDF hash.
 **Final verified same-row source coverage: 91/250**. Source/printed-only
 legacy queue is 133 existing unbound rows plus six unsourced oral-radiology
 questions; together **139 non-English requiring exact book location**.
-The separate **20 English** questions remain officially exempt and must
+The latest official-answer status read-back partitions those 139 non-English missing records into **133 scorable questions** (128 final and 5 amended) plus **6 voided questions**; one additional voided question already has a complete source row. These six voided questions remain historically preserved but do not belong in the active scored-citation publication queue. The separate **20 English** questions remain officially exempt and must
 not receive invented book citations. The 29 structured-official-scope
 exceptions in the prior audit are an overlapping review queue and are not
 added to the 139.
