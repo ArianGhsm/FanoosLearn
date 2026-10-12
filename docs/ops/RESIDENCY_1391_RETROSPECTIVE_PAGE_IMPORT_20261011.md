@@ -147,3 +147,45 @@ Pediatric Dentistry 6e PDF from the **official 1399 reference list**; the
 This supersedes the earlier 28-row checkpoint above; neither unverified
 question key authenticity nor original 1391 official reference years are
 misrepresented.
+
+
+## 2026-10-12: five verified oral medicine exact chapter/PDF-page imports (37 live)
+
+These original PDF-page sources were selected from the **authentic official
+1398** Burket Oral Medicine **12e** reference list, *only* as owner-approved
+`retrospective_proxy_1397_plus` for the 1391 exam. The source's original
+1391 official status remains unverified.
+
+| 1391 question | Exact book | Official proxy year | Chapter | Original PDF page |
+|---:|---|---:|---:|---:|
+| 48 | burket-oral-medicine@12e | 1398 | 4 | 95 |
+| 49 | burket-oral-medicine@12e | 1398 | 4 | 80 |
+| 51 | burket-oral-medicine@12e | 1398 | 5 | 123 |
+| 56 | burket-oral-medicine@12e | 1398 | 7 | 184 |
+| 58 | burket-oral-medicine@12e | 1398 | 10 | 268 |
+
+- Original 17-item study-only input:
+  `/srv/fanoos/shared/research/bank-sittings/1391/oral-medicine-study.json`
+  (SHA-256 `9a00753b9534297eff5926af657849314a0e6cdcc03ba325c460df013f116f87`).
+- Research decisions:
+  `/srv/fanoos/shared/research/classification/decisions/1391-oral-medicine.json`;
+  accepted 5, rejected 0, pending 12; exact original PDF/edition, mapped
+  chapter, positive page and quote checked. Independent private audit:
+  `/srv/fanoos/shared/research/classification/reports/1391-oral-medicine-retro-v3-audit-20261012.json`,
+  audit SHA-256 `b02c9a728570a134a27893225a947e995d09f1cb6940ee2db5530e4beaf1ef73`.
+- Verified full 114-file production backup:
+  `/var/backups/fanoos/20261012T041814Z-19bd9989`.
+- Guarded source-only **applied** receipt:
+  `/srv/fanoos/shared/research/classification/reports/1391-oral-medicine-retro-applied-20261012.json`,
+  5 source inserts, `questions_changed=0`, `choices_changed=0`,
+  `answers_changed=0`, completed 2026-10-12 04:22:34 UTC.
+- Independent strict same-row source+chapter+positive PDF page+PDF SHA
+  production DB readback: **37 / 220**. **183 raw pending**,
+  180 with nonvoided imported answer status plus 3 historically voided.
+
+Six Carranza12e research candidates Q65/66/67/72/75/83 against the
+**structured 1398** validity list are documented in
+`docs/ops/RESIDENCY_1391_CARRANZA_SIX_SCOPED_RESEARCH_20261012.md`;
+they are **not published or counted**. The PR #334 reference selector fix
+is merged but must be present in a separately verified production release
+before any normal validator/audit/source-only publication of those candidates.
