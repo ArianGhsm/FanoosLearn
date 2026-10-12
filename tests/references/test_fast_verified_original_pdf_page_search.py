@@ -41,7 +41,7 @@ class VerifiedFastScanTest(unittest.TestCase):
 
     def test_chunked_poppler_original_pages(self):
         with patch("find_in_books.subprocess.run",
-                   return_value=types.SimpleNamespace(stdout=b"first\\fsecond\\f\\n")):
+                   return_value=types.SimpleNamespace(stdout=b"first\fsecond\f\n")):
             actual = list(iter_original_pdf_pages(FakePDF(), "chunked"))
         self.assertEqual(actual, [(1, "first"), (2, "second")])
 
