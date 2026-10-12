@@ -14,7 +14,7 @@ class Periodontics1398FollowupSafety(unittest.TestCase):
         self.assertIn("periodontics-followup", importer)
         self.assertIn("periodontics-certified-20261012", importer)
         self.assertIn("decisions/1398-{$stem}.json", importer)
-        self.assertIn('stem in {"periodontics-followup", "periodontics-certified-20261012"}', audit)
+        self.assertIn('stem in {"periodontics-followup", "periodontics-certified-20261012", "periodontics-q134-20261012"}', audit)
         self.assertIn('f"1398-{stem}.json"', audit)
         self.assertIn("hash_file('sha256', $decisionsPath)", importer)
         self.assertIn("question_content_identical", audit)
@@ -22,7 +22,7 @@ class Periodontics1398FollowupSafety(unittest.TestCase):
 
     def test_first_batch_and_other_subject_guards_stay_in_effect(self):
         importer = IMPORT.read_text()
-        self.assertIn("['periodontics', 'periodontics-followup', 'periodontics-certified-20261012']", importer)
+        self.assertIn("['periodontics', 'periodontics-followup', 'periodontics-certified-20261012', 'periodontics-q134-20261012']", importer)
         self.assertIn("endodontics-q9", importer)
         self.assertIn("endodontics-q1", importer)
         self.assertIn("$year < 1399", importer)
