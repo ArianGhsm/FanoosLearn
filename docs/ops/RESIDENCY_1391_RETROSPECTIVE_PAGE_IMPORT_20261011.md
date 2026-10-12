@@ -189,3 +189,33 @@ Six Carranza12e research candidates Q65/66/67/72/75/83 against the
 they are **not published or counted**. The PR #334 reference selector fix
 is merged but must be present in a separately verified production release
 before any normal validator/audit/source-only publication of those candidates.
+
+
+### Same-day follow-up: sixth oral medicine source (38 total)
+
+- Q52: **Burket Oral Medicine 12e**, genuine official reference year **1398**,
+  chapter **5**, **original PDF page 111**. Direct-page evidence distinguishes
+  erythroplakia from erythematous candidiasis by sharper lesion demarcation.
+- Independent single-question study:
+  `/srv/fanoos/shared/research/bank-sittings/1391/oral-medicine-q52-study.json`;
+  source decision:
+  `/srv/fanoos/shared/research/classification/decisions/1391-oral-medicine-q52.json`;
+  validated study:
+  `/srv/fanoos/shared/research/classification/sittings/1391-oral-medicine-q52-validated.json`.
+- Accepted 1, rejected 0. Independent private audit:
+  `/srv/fanoos/shared/research/classification/reports/1391-oral-medicine-q52-retro-audit-20261012.json`,
+  audit SHA-256 `ba8fe57a26b91194784eec185c3d4208335e89729efe4b69dfb957f6f614ad84`.
+- Independently verified recent complete 114-file backup:
+  `/var/backups/fanoos/20261012T042639Z-a393f330`.
+  Guarded source-only applied receipt:
+  `/srv/fanoos/shared/research/classification/reports/1391-oral-medicine-q52-retro-applied-20261012.json`,
+  reports source 1, **zero question/choice/answer changes**, UTC
+  `2026-10-12T04:28:37Z`.
+- The prior five-decision audit input was preserved at
+  `/srv/fanoos/shared/research/ops/1391-oral-medicine-pre-q52-decisions-20261012.json`
+  SHA-256 `dfd439ee7b8d472e3d502c86f67e8feb7e57f72d46d59a36d5ec5d893e026323`.
+  After Q52's standalone study-only audit and insertion, the five-decision
+  canonical file was restored *byte for byte* to that hash.
+- **Independent strict live same-row edition+chapter+PDF page+SHA readback:
+  38 of 220 questions**. Remaining 182 raw, including 3 voided.
+  Earlier 32/37 counts above are historical checkpoints.
