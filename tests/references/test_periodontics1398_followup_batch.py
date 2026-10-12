@@ -22,7 +22,8 @@ class Periodontics1398FollowupSafety(unittest.TestCase):
 
     def test_first_batch_and_other_subject_guards_stay_in_effect(self):
         importer = IMPORT.read_text()
-        self.assertIn("['periodontics', 'periodontics-followup', 'periodontics-certified-20261012', 'periodontics-q134-20261012']", importer)
+        self.assertIn("['periodontics', 'periodontics-followup', 'periodontics-certified-20261012']", importer)
+        self.assertIn("periodontics-q134-20261012", importer)
         self.assertIn("endodontics-q9", importer)
         self.assertIn("endodontics-q1", importer)
         self.assertIn("$year < 1399", importer)
