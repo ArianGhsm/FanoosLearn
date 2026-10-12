@@ -21,7 +21,7 @@ final class SourceOnlyPublisher
         array $study, array $validated, array $decisions, bool $apply,
     ): int {
         $retrospective = $year >= 1300 && $year < 1396;
-        if (($year < 1399 && !$retrospective && !($year === 1398 && in_array($subject, ['endodontics', 'periodontics', 'community-dentistry', 'prosthodontics'], true))) || $year > 1500
+        if (($year < 1399 && !$retrospective && !($year === 1398 && in_array($subject, ['endodontics', 'periodontics', 'community-dentistry', 'prosthodontics', 'operative-dentistry'], true))) || $year > 1500
             || ($study['format'] ?? '') !== 'fanoos.classification.study-only/1'
             || ($validated['format'] ?? '') !== ($study['format'] ?? '')
             || ($study['exam_type'] ?? '') !== 'residency'
@@ -84,6 +84,13 @@ final class SourceOnlyPublisher
                     'zarb-edentulous@13e',
                 ], true)) {
                 throw new RuntimeException('1398 prosthodontics requires an exact officially announced edition.');
+            }
+            if ($year === 1398 && $subject === 'operative-dentistry'
+                && ($n !== 175
+                    || $decision['edition'] !== 'summit-operative@4e'
+                    || (string) $decision['chapter'] !== '6'
+                    || $decision['page'] !== 294)) {
+                throw new RuntimeException('1398 operative source gate permits only audited Summit 4e Q175 chapter 6 exact PDF page 294.');
             }
             $wanted[$n] = $decision;
         }
