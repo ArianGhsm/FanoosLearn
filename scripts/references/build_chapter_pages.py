@@ -333,6 +333,39 @@ def main() -> int:
         else:
             starts = bookmark_openings(pdf.bookmarks(), chapter_pairs)
         located = locate(pages_of(pdf), chapter_pairs, starts)
+        if 'backmatter_pdf_start' in entry:
+            if not entry.get('chapter_pdf_starts') or set(starts) != {n for n, _ in chapter_pairs}:
+                raise ValueError(f'{edition}: a complete documented original chapter opening list is required')
+            ordered = [starts[n] for n, _ in chapter_pairs]
+            end = entry['backmatter_pdf_start']
+            if not isinstance(end, int) or not (ordered[-1] < end <= pdf.page_count):
+                raise ValueError(f'{edition}: original index page must follow the last chapter')
+            for (chapter, title), opening in zip(chapter_pairs, ordered):
+                lines = [line.strip() for line in pdf.page_text(opening).splitlines() if line.strip()]
+                head = ' '.join(lines[:23]).lower()
+                title_terms = words(title)
+                title_match = sum(word in head for word in title_terms) / max(1, len(title_terms))
+                if not (('chapter' in head or 'c h a p t e r' in head) and title_match >= 0.5):
+                    raise ValueError(f'{edition}: original PDF page {opening} is not confirmed chapter {chapter}')
+            def is_index(page: int) -> bool:
+                lines = [line.strip() for line in pdf.page_text(page).splitlines() if line.strip()]
+                return bool(re.search(r'\\bindex\\b', ' '.join(lines[:4]), re.I))
+            if not is_index(end) or is_index(end - 1):
+                raise ValueError(f'{edition}: index beginning not confirmed by adjacent original pages')
+            documented_runs = [[None, 1, ordered[0] - 1]]
+            documented_runs += [
+                [number, start, (ordered[i + 1] - 1 if i + 1 < len(ordered) else end - 1)]
+                for i, (number, start) in enumerate(zip((n for n, _ in chapter_pairs), ordered))
+            ]
+            documented_runs.append([None, end, pdf.page_count])
+            if any(first > last or (i > 0 and first != documented_runs[i - 1][2] + 1)
+                   for i, (_, first, last) in enumerate(documented_runs)):
+                raise ValueError(f'{edition}: chapter boundaries do not cover the original PDF exactly')
+            located['runs'] = documented_runs
+            located['chapters_seen'] = len(chapter_pairs)
+            located['not_seen'] = []
+            located['supported_pages'] = {}
+            located['source'] = 'verified-server-pdf'
         if located['pdf_pages'] != pdf.page_count:
             raise ValueError(f'{edition}: direct PDF read did not cover the full document')
         if located['readable_page_ratio'] < args.min_readable_ratio:
