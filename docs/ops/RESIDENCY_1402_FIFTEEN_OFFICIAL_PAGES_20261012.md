@@ -63,3 +63,52 @@ Several other 1402 legacy sources have their chapters outside the existing struc
 ## Frozen-assessment publication gate
 
 The previous complete frozen student assessment was **version 9**, scoring 243 questions. The seven officially voided question numbers 60,96,99,102,103,144,181 remain protected. After completing the 15 source-only repairs, a **new full production backup after all source updates** is required and must pass independent `verify-backup.php`. Then repeat `audit_published_assessment.php` preflight against v9; use the canonical owner-authorized `import-bank.php publish` and compare all 243 questions for immutable non-explanation content in v9→v10. Verify that the **15 explanation differences match exactly the 15 updated source question IDs**, with no other changes and all prior frozen versions and attempts untouched; read back version 10 published and check live `/health`. Do not represent v10 as published until those checks have succeeded.
+
+## Additional three Hupp 7e original pages applied after the first 15 (UTC 16:47)
+
+A follow-up original-book review found **three more** previously chaptered
+but page-unbound Hupp oral-surgery questions in the official 1402 chapter
+scope, each with a direct topic-specific answer and printed-header
+evidence corroborated by both neighboring PDF pages:
+
+| Q | Chapter | Exact PDF page | Printed page | Original-book fact corroborated |
+|---:|---:|---:|---:|---|
+| 81 | 1 | 27 | 13 | Severe hepatic dysfunction and inability to metabolize nitrogen in swallowed blood; encephalopathy risk and possible inpatient surgery |
+| 84 | 25 | 543 | 529 | Vertical facial buttresses are nasomaxillary, zygomatic and pterygomaxillary; the orbit is not one of them |
+| 91 | 23 | 499 | 485 | Marsupialization leaves pathological tissue in place without complete histologic examination |
+
+Their source row identities, prior printed pages, anchors, actual Hupp 7e
+PDF hash `35e3c37fec67a831a4464205c1817cc1e51c0a9f8a0bd8660a1881ecd2f10a83`
+and year-specific official scope were validated by the same
+`repair_verified_source_pages.php`. A **3-row rollback-only preview**
+accepted all three and reported zero question/choice/answer changes.
+The identical private plan was applied in one guarded source-only
+transaction at `2026-10-12T16:47:28Z`, backed by independently
+verified 114-file full backup
+`/var/backups/fanoos/20261012T161053Z-a03b8f8d`.
+
+Private plan:
+`/srv/fanoos/shared/research/classification/reports/residency-1402-hupp-last3-ready-20261012.json`
+(SHA-256 plan `ae868b13be2a8981394a7104700ba00568165db6a40a53c886a4789f9996a3e8`).
+Atomic applied receipt:
+`/srv/fanoos/shared/research/classification/reports/residency-1402-hupp-last3-ready-applied-20261012.json`,
+receipt SHA-256 `1ae8302229c41c288cc641a919fce965953e786bf46667c7fbb7c8c62253b024`.
+
+**Cumulative live strict source-row completeness after all 18 corrections:
+130/250 (52%).** Exactly **120** raw field-incomplete rows remain; 20
+final-answer English questions are book-exempt, leaving **100 non-English**
+incomplete, of which 6 voided legacy questions are excluded from
+the 243 scored frozen-question set. Thus **94 scored non-English
+source/page citations** remain to be independently established.
+These are counts of strict same-row binding, NOT a retrospective
+independent semantic re-audit of all older source rows. The
+29 year-specific structured official-scope review flags still overlap
+the sets; they are not additive.
+
+The previously started backup `/var/backups/fanoos/20261012T164444Z-8022b068`
+completed **before** these final three writes and therefore is **not**
+a sufficient post-update backup for student frozen-v10 publication.
+A new backup following Q81/Q84/Q91, a second independently verified
+manifest, full preflight, publisher, full 243-question v9-to-v10
+frozen-content comparison, exact 18 explanation-ID diff check, and
+site health are mandatory. Do not claim version 10 until verified.
