@@ -84,11 +84,11 @@ def audit_batch(root: Path, spec: str,
     path_input = root / "bank-sittings" / year / f"{stem}-study.json"
     path_output = root / "classification" / "sittings" / f"{year}-{stem}-validated.json"
     path_decisions = root / "classification" / "decisions" / f"{year}-{subject}.json"
-    if year_n == 1398 and subject == "periodontics" and stem in {"periodontics-followup", "periodontics-certified-20261012"}:
+    if year_n == 1398 and subject == "periodontics" and stem in {"periodontics-followup", "periodontics-certified-20261012", "periodontics-q134-20261012"}:
         path_decisions = root / "classification" / "decisions" / f"1398-{stem}.json"
     if (year_n, subject, stem) == (1398, "operative-dentistry", "operative-q175-20261012"):
         path_decisions = root / "classification" / "decisions" / "1398-operative-q175-20261012.json"
-    if year_n == 1398 and (subject, stem) in {('pediatric-dentistry', 'pediatric-q164-q168-20261012'), ('oral-radiology', 'radiology-four-20261012'), ('pediatric-dentistry', 'pediatric-q159-20261012'), ('oral-radiology', 'radiology-q219-q226-20261012'), ('pediatric-dentistry', 'pediatric-q152-20261012'), ('oral-radiology', 'radiology-seven-20261012')}:
+    if year_n == 1398 and (subject, stem) in {('pediatric-dentistry', 'pediatric-q164-q168-20261012'), ('oral-radiology', 'radiology-four-20261012'), ('pediatric-dentistry', 'pediatric-q159-20261012'), ('oral-radiology', 'radiology-q219-q226-20261012'), ('pediatric-dentistry', 'pediatric-q152-20261012'), ('oral-radiology', 'radiology-seven-20261012'), ('oral-radiology', 'radiology-q218-20261012')}:
         path_decisions = root / 'classification' / 'decisions' / f'1398-{stem}.json'
     source = load(path_input)
     result = load(path_output)
