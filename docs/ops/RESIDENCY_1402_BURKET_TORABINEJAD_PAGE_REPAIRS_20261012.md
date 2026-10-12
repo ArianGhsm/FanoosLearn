@@ -125,9 +125,4 @@ historical voided non-English records are included in these 118.
 The existing 29 structured-syllabus-scope flags still require separate
 individual evaluation and overlap this backlog.
 
-The frozen student assessment was still **version 8** at source-row
-read-back. **Version 9 is not considered published until a fresh full
-post-update backup, owner-authorized official publisher, complete
-v8→v9 243-question immutable-field audit and production/health read-back
-independently verify it.** Production books, question texts, options and
-keys are never committed into GitHub.
+**Final confirmed version 9 publication.** The protected applied receipt SHA-256 is `ebc834346a03116ed1ddcdcbb395cc399ab2e0e68d6a4f81889819e8dbdc9330`. A **new full backup after all four source changes**, `/var/backups/fanoos/20261012T161053Z-a03b8f8d`, completed, and the independent canonical `verify-backup.php` returned **114 files verified**. An immediate full-sitting preflight against version 8 returned `question_content_identical=true`, `full_sitting_questions=243`, and protected radiology-study match 20/20. Canonical owner-authorized `import-bank.php publish` created **frozen assessment version 9** (version ID `01a130e2-e5b7-7942-8dd6-5df09ba91757`). All seven official-voided questions remained excluded. The compulsory postpublication audit `audit_published_assessment.php --previous=8 --current=9` returned `question_content_identical=true`, `questions=243`, `updated_explanations=4`. A separate question-by-question frozen explanation comparison identified **exactly Q10, Q14, Q16 and Q19**, with **zero missing or unexpected** changes. MySQL confirmed `current_version_no=9`, `published`, old version 8 still retained with its historic checksum, strict source-row completeness **112/250**. Live `/health` confirmed `status: ok` and running release `cd3b7913640dcb6ccdcb471e637e9e3236b89c4e`. The frozen question texts, choices, official keys, ordering and historic attempts were not changed; production books and private question material remain server-only.
