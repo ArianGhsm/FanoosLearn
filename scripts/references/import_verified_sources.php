@@ -20,7 +20,7 @@ require dirname(__DIR__, 2) . '/apps/platform/bootstrap.php';
 try {
     $args = [];
     foreach (array_slice($argv, 1) as $arg) {
-        if (!preg_match('/^--(workspace|year|subject|stem|expected|audit|apply|backup|receipt|package-root)(?:=(.*))?$/D', $arg, $m)
+        if (!preg_match('/^--(workspace|year|subject|stem|expected|audit|audit-sha|apply|backup|receipt|package-root|case-root)(?:=(.*))?$/D', $arg, $m)
             || isset($args[$m[1]])) {
             throw new RuntimeException('Unexpected/repeated option.');
         }
@@ -51,6 +51,10 @@ try {
     $reportDir = $root === false ? false : realpath($root . '/classification/reports');
     $inputRoot = $root;
     $auditDir = $reportDir;
+    $receiptDir = $reportDir;
+    if (isset($args['package-root']) && isset($args['case-root'])) {
+        throw new RuntimeException('Specify only one protected package source.');
+    }
     if (isset($args['package-root'])) {
         // A coordinator-created, immutable snapshot, never a research worker's
         // mutable source folder. All original inputs remain SHA-pinned by audit.
@@ -83,11 +87,34 @@ try {
         $inputRoot = $candidate;
         $auditDir = realpath($candidate . '/classification/reports');
     }
+    if (isset($args['case-root'])) {
+        // A protected immutable original study/review package is a direct
+        // child of classification, never an arbitrary path or coordinator dir.
+        $privateRoot = $root === false ? false : realpath($root . '/classification');
+        $requested = (string) $args['case-root'];
+        $case = realpath($requested);
+        if ($year === false || $year < 1399 || $privateRoot === false || $case === false
+            || $requested !== $case || dirname($case) !== $privateRoot
+            || !preg_match('/^recovery-' . $year . '-[a-z0-9-]+-20[0-9]{6}$/D', basename($case))
+            || is_link($requested)) {
+            throw new RuntimeException('Case must be a direct protected same-year recovery folder.');
+        }
+        $inputRoot = $case;
+        $auditDir = realpath($case . '/classification/reports');
+        $receiptDir = $auditDir;
+    }
     $auditPath = (string) ($args['audit'] ?? '');
     if ($root === false || $reportDir === false || $auditDir === false
         || realpath(dirname($auditPath)) !== $auditDir
         || is_link($auditPath) || !is_file($auditPath)) {
         throw new RuntimeException('Audit must be a protected private report under the approved input root.');
+    }
+    $expectedAuditSha = strtolower((string) ($args['audit-sha'] ?? ''));
+    if ((isset($args['case-root']) && $expectedAuditSha === '')
+        || ($expectedAuditSha !== ''
+            && (!preg_match('/^[a-f0-9]{64}$/D', $expectedAuditSha)
+                || !hash_equals($expectedAuditSha, hash_file('sha256', $auditPath))))) {
+        throw new RuntimeException('Missing or mismatched independent private audit SHA-256.');
     }
     $studyPath = "{$inputRoot}/bank-sittings/{$year}/{$stem}-study.json";
     $validatedPath = "{$inputRoot}/classification/sittings/{$year}-{$stem}-validated.json";
@@ -139,7 +166,7 @@ try {
             throw new RuntimeException('Apply needs a recently verified full backup containing database.sql.');
         }
         $receipt = (string) $args['receipt'];
-        if (realpath(dirname($receipt)) !== $reportDir || is_link($receipt)
+        if (realpath(dirname($receipt)) !== $receiptDir || is_link($receipt)
             || file_exists($receipt) || !str_ends_with($receipt, '.json')) {
             throw new RuntimeException('Receipt path must be new and private.');
         }
