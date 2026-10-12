@@ -136,7 +136,7 @@ def iter_original_pdf_pages(pdf, engine="pdftotext"):
                  "-l", str(end), str(pdf.source), "-"],
                 check=True, capture_output=True, timeout=60,
             )
-            text = result.stdout.decode("utf-8", "replace")
+            text = result.stdout.decode("utf-8", "replace").rstrip("\r\n")
             if text.endswith("\f"):
                 text = text[:-1]
             pages = text.split("\f")
