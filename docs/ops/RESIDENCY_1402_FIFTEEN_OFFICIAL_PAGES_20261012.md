@@ -112,3 +112,57 @@ A new backup following Q81/Q84/Q91, a second independently verified
 manifest, full preflight, publisher, full 243-question v9-to-v10
 frozen-content comparison, exact 18 explanation-ID diff check, and
 site health are mandatory. Do not claim version 10 until verified.
+
+## Final frozen student publication: version 10 completed and audited
+
+**2026-10-12, production verified.** After the final three source-only
+operations and the independently verified source count of **130/250**,
+a **new full backup after all 18 source corrections**
+`/var/backups/fanoos/20261012T165117Z-fdcd2bd9`
+completed, with an independent canonical
+`scripts/ops/verify-backup.php` check of **114 valid files**.
+This backup is chronologically later than the source-only
+Hupp Q81/Q84/Q91 apply (`2026-10-12T16:47:28Z`).
+
+The reviewed full-sitting `audit_published_assessment.php` preflight
+compared the current bank to the frozen version **9**, with
+`question_content_identical=true`, **243** scorable questions and
+20/20 protected radiology-study questions matched.
+
+Canonical owner-authorized
+`scripts/import/import-bank.php publish --type=residency --year=1402 --round=1`
+successfully created **published assessment version 10**, version ID
+`01a13107-5ed7-747c-9560-2a429dddd3bf`, without creating a new exam.
+The seven protected officially voided Q60, Q96, Q99, Q102, Q103, Q144,
+Q181 remain excluded from scoring. Historical version 9 is preserved.
+
+**Postpublication immutable regression audit**
+`audit_published_assessment.php --previous=9 --current=10`
+returned `question_content_identical=true`, `questions=243`,
+`updated_explanations=18`. A second independent comparison of all
+243 explanation fields at question ID level found exactly the **18**
+source-corrected questions
+**Q81/Q83/Q84/Q85/Q86/Q87/Q89/Q90/Q91/Q93/Q94/Q95/Q97/Q100/Q101/Q106/Q108/Q118**
+and `unexpected=[]`, `missing=[]`.
+
+Separate production SQL read-back confirmed
+`exam_assessments.current_version_no=10` and `status=published`;
+strict same-row `node_id/pdf_page/pdf_sha256` bank coverage remains
+**130/250**. Public `/health` returned `status: ok` at deployed
+site release `cd3b7913640dcb6ccdcb471e637e9e3236b89c4e`.
+The source-only changes did **not** change question stems, options,
+official answers, human review decisions, prior student attempts
+or any earlier frozen assessment versions.
+
+**Remaining backlog (not complete):**
+120 raw strict field-incomplete question records, minus 20
+reference-exempt final-key English = **100 non-English historical citation
+cases**. Six of these are voided, thus **94 scored clinical questions**
+still need book chapter/page. The 29 old official-structured-scope
+mismatch alerts overlap this count and the older currently bound
+rows; each remains subject to exact official notice review.
+McDonald–Avery pediatric 11e and McCracken RPD 13e maps currently lack
+an exact approved-PDF SHA binding and must be independently reconstructed
+and CI/deploy-verified before writing any page; do not silently infer
+page offsets. This exam is **not yet scientifically citation-complete**
+despite the safe published version 10.
