@@ -71,6 +71,13 @@ class PublisherSafetyContracts(unittest.TestCase):
             self.assertIn(marker, self.cli)
         self.assertIn("SourceOnlyPublisher::run", self.cli)
 
+    def test_1399_oral_medicine_q43_only_stage(self):
+        self.assertIn("W01-1399-oralmedicine-q43-20261012", self.cli)
+        self.assertIn("$year === 1399 && $subject === 'oral-medicine'", self.cli)
+        self.assertIn("$stem === 'oral-medicine-q43' && $expected === 1", self.cli)
+        self.assertIn("BackupManifest::verify", self.cli)
+        self.assertIn("hash_file('sha256', $decisionsPath)", self.cli)
+
     def test_1399_radiology_stage_cannot_be_repurposed(self):
         self.assertIn("W01-radiology-next-20261012-v2", self.cli)
         self.assertIn("$year === 1399 && $subject === 'oral-radiology'", self.cli)
