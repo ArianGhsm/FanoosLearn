@@ -219,3 +219,78 @@ before any normal validator/audit/source-only publication of those candidates.
 - **Independent strict live same-row edition+chapter+PDF page+SHA readback:
   38 of 220 questions**. Remaining 182 raw, including 3 voided.
   Earlier 32/37 counts above are historical checkpoints.
+
+
+## 2026-10-12 follow-up: four additional Neville original-PDF chapter/page sources — live 42
+
+Four residency-1391 oral-pathology question sources were inserted in two
+independently audited, full-backup-protected **source-only** batches.
+The book is **Neville Oral and Maxillofacial Pathology 4e**, in an *actual*
+official **1397** reference list, cited only as an explicitly labelled
+**retrospective proxy** for exam year 1391.
+
+| Question | Neville4e chapter | Exact original PDF page | Direct passage context |
+|---:|---:|---:|---|
+| 33 | 2 | 100 | Amelogenesis imperfecta, generalized pitted type |
+| 35 | 3 | 125 | Periapical granuloma, lymphocytic inflammatory infiltrate |
+| 43 | 12 | 532 | Most common site of oral soft-tissue metastasis is gingiva |
+| 47 | 16 | 729 | Bullous pemphigoid most common autoimmune blistering condition |
+
+- Current server PDF of Neville4e SHA-256
+  `6fbc9bcba9003deda2f8fc006ccc4f23f9e15db0bcd0e237c56ddf6788578bb6`,
+  matched against the original hash-bound chapter/page map.
+- **First publication Q33+Q35:** protected 2-question study
+  `/srv/fanoos/shared/research/bank-sittings/1391/oral-pathology-q33q35-study.json`;
+  candidate decisions
+  `/srv/fanoos/shared/research/classification/decisions/1391-oral-pathology-q33q35.json`;
+  strict validator accepted 2, rejected 0.
+  Independent audit
+  `/srv/fanoos/shared/research/classification/reports/1391-oralpathology-q33q35-independent-audit-20261012.json`
+  SHA `33a658007d595035c781e1e218d6aefcc9dbf0ecb295d443e86cf386edc402a7`.
+  Verified complete 114-file production backup
+  `/var/backups/fanoos/20261012T153557Z-38668c66`.
+  Guarded applied receipt
+  `/srv/fanoos/shared/research/classification/reports/1391-oralpathology-q33q35-applied-20261012.json`,
+  2 inserts, zero questions/choices/answers changed, completed 15:41:18 UTC.
+- **Second publication Q43+Q47:** protected study
+  `/srv/fanoos/shared/research/bank-sittings/1391/oral-pathology-q43q47-study.json`;
+  decisions
+  `/srv/fanoos/shared/research/classification/decisions/1391-oral-pathology-q43q47.json`;
+  strict validator accepted 2, rejected 0.
+  Independent audit
+  `/srv/fanoos/shared/research/classification/reports/1391-oralpathology-q43q47-independent-audit-20261012.json`
+  SHA `6e477b8fd1473a8a000ebc1e70fbce9249d24462b4ed216b57ea50951165a90f`.
+  Verified full 114-file backup
+  `/var/backups/fanoos/20261012T154715Z-06739959`.
+  Guarded applied receipt
+  `/srv/fanoos/shared/research/classification/reports/1391-oralpathology-q43q47-applied-20261012.json`,
+  2 inserts, zero content/answer mutations, completed 15:48:34 UTC.
+- Before both independent audits/publishers the previous six-decision
+  canonical oral pathology file was saved **byte-for-byte** with SHA
+  `aaf0bfb6159c835ac1a6118da7900c9c1c41a26301d12c0525de1372b7e54096`
+  to distinct private protected `ops/1391-oralpathology-prior-six-decisions-before-*`
+  files. Temporary staging was needed for the auditing/publishing contract,
+  and a shell EXIT trap restored the previous canonical file on success
+  or failure.
+- **Direct live DB strict same-row source+chapter+PDF page+SHA readback: 42/220**.
+  **178 raw remain** (175 with nonvoided imported answer metadata plus 3
+  voided). Previous counts 12/24/28/32/37/38/40 are historical checkpoints.
+
+### Separately researched prosthodontics — NOT YET LIVE at the 42-row checkpoint
+
+Against **McCracken RPD 12e, official reference year 1397**, exact PDF
+quotes and chapter-map membership were validated for Q105 (ch7 PDF91),
+Q106 (ch4 PDF32), Q110 (ch7 PDF74), Q112 (ch21 PDF306).
+Protected `bank-sittings/1391/prosthodontics-study.json`,
+`classification/decisions/1391-prosthodontics.json`,
+`classification/sittings/1391-prosthodontics-validated.json`.
+Full strict validator and independent audit:
+`/srv/fanoos/shared/research/classification/reports/1391-prosthodontics-v2-original-pdf-audit-20261012.json`;
+4 accepted, 0 rejected, 26 pending in the 30-question study.
+Guarded rollback preview accepted 4 and reported **zero question/choice/answer
+mutations**, audit SHA `52cc584a5c0cc2d5fabade4eb611639cc13e1552f7bd4d6a09378f6611cbdc33`.
+**Do not count these four until the verified full backup, applied receipt,
+and strict DB readback are complete.**
+
+Original 1391 official books and independently authenticated final official
+answer booklet remain unverified. No historical reference status was invented.
