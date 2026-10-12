@@ -160,3 +160,35 @@ And **six** additional existing oral-surgery source rows passed the same exact-P
 **Pediatric Q174:** compared old one-question W05 research with actual production year-1400 stem, all four options and final correct choice 4 — **identical**, and live question was confirmed source-free. W05's older output only carries a display page and no `pdf_page` or `pdf_sha256`, so it is not yet canonical. A guarded attempt to rebuild its one-question private exact-PDF study/decision/audit stage was blocked by safety checks; **no new W05 stage was created**. Keep its researched Nowak 6e chapter15 PDF264 separate until an unobstructed canonical validator run and authorized publisher preflight. The earlier W01 15-question private validated stage remains research-only; its production source-only dry run was also blocked and must not be bypassed.
 
 **Operations:** No DB source-row repair, new clinical source insertion, human-review override, answer/key modification, historical attempt modification, assessment republish or release deployment was performed as part of this checkpoint. No 1400 year-completion claim is justified.
+
+
+## 2026-10-12 follow-up: direct-PDF semantic evidence and corrected page candidates
+
+**Latest successful live read:** residency 1400/round1 stays at **250 total, 56 same-row chapter + PDF page + PDF SHA**, with release symlink `cd3b7913640dcb6ccdcb471e637e9e3236b89c4e`. Source publication and assessment updates were **not** performed. The following findings are **research only**; the references and exact numbered pages were read afresh from the approved private original PDFs on the live server.
+
+### Hupp Oral Surgery 7e: three more old-source questions semantically reviewed
+
+For all three, the original PDF SHA `35e3c37fec67a831a4464205c1817cc1e51c0a9f8a0bd8660a1881ecd2f10a83`, chapter-run map, official 1400 scope, and adjacent actual printed page labels were independently confirmed. The original question's recorded answer was reconciled to the direct-page clinical fact.
+
+| Question | Chapter | Actual PDF page | Actual printed page | Short factual basis |
+|---:|---:|---:|---:|---|
+| 135 | 2 | 43 | 29 | Pulmonary aspiration: tachycardia, hypotension and stridor; the asked exception is bradycardia (answer 2) |
+| 148 | 7 | 104 | 90 | Silk/filament sutures and capillary wicking (answer 3) |
+| 149 | 28 | 633 | 619 | Wardill/W-Y push-back procedure and increased palatal length (answer 3) |
+
+An independent private, read-back evidence receipt was written with source-row IDs, original-book SHA, exact excerpts, answer-key position and validations:
+
+`/srv/fanoos/shared/research/classification/reports/residency-1400-hupp-q135-q148-q149-exact-page-semantic-review-20261012.json`
+
+SHA-256 `9d0f9f3d93a94691579af88241e37523f1af9b85030e7bb09e227528f5b5f404`.
+
+These **three are part of the 12 weak-anchor surgery candidates previously reported**, not 3 entirely new questions. The other separately semantically reviewed Hupp surgery Q139 ch16 PDF332, Q141 ch21 PDF446 and Q150 ch14 PDF272 were recorded in private receipt `residency-1400-oral-surgery-3-exact-page-semantic-review-20261012.json`, SHA `9436983806a318c1c3cd807fd61229439b44beaa3701152fc7ae04dc58d247dd`. Thus **six** of the 12 partial-anchor surgery questions now have specific same-page answer-relevant original PDF evidence, subject to protected metadata repair.
+
+### Corrected exact answer-evidence pages for two earlier candidates
+
+- **Q132, Malamed Local Anesthesia 7e, chapter 13, original PDF page 227, actual printed page 210.** Needle orientation is upward/inward/**backward**, making the question's forward-direction statement the keyed exception (original live key position 1 in previous read). Direct exact-page phrase fragments, chapter map, SHA and both neighboring printed labels were verified. This corrects the *previous research candidate* PDF page **226 / printed 209**. Do not apply both or use the older page as final evidence.
+- **Q140, Hupp Oral Surgery 7e, chapter 20, original PDF page 433, actual printed page 419.** In the text's delayed oroantral fistula closure discussion, acute/chronic sinus infection must first be eliminated, supporting the previously verified official answer position 1. The specific page label and both neighbors, official scope and SHA-bound mapped chapter were revalidated. This corrects the *previous research candidate* PDF page **432 / printed 418**.
+
+**Q131** Malamed 7e chapter 1 original PDF page **41 / printed 24** also has direct-page original evidence contrasting etidocaine/procaine lipid solubility and discussing protein binding, consistent with the previous live key position 2; hash-bound official scope and printed neighbors confirmed. Keep it a *research-only semantic candidate*: live source/official-key re-query and reviewed metadata publication did not run in this continuation.
+
+A new Malamed research receipt creation and a later separate targeted SQL read were blocked by tool safety checks; do not claim those steps succeeded or circumvent the block. Q132 and Q140 corrections exist in these durable, reviewable operations notes but are **not recorded in production**. The original question, options, keys, human decisions, source provenance and historical exam attempts were not modified. A reviewed and fresh-backed-up source-metadata-only repair tool, protected publisher lock and post-write readbacks remain mandatory before any new completion count.
