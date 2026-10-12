@@ -21,7 +21,7 @@ final class SourceOnlyPublisher
         array $study, array $validated, array $decisions, bool $apply,
     ): int {
         $retrospective = $year >= 1300 && $year < 1396;
-        if (($year < 1399 && !$retrospective && !($year === 1398 && in_array($subject, ['endodontics', 'periodontics', 'community-dentistry', 'prosthodontics', 'operative-dentistry'], true))) || $year > 1500
+        if (($year < 1399 && !$retrospective && !($year === 1398 && in_array($subject, ['endodontics', 'periodontics', 'community-dentistry', 'prosthodontics', 'operative-dentistry', 'pediatric-dentistry', 'oral-radiology'], true))) || $year > 1500
             || ($study['format'] ?? '') !== 'fanoos.classification.study-only/1'
             || ($validated['format'] ?? '') !== ($study['format'] ?? '')
             || ($study['exam_type'] ?? '') !== 'residency'
@@ -91,6 +91,26 @@ final class SourceOnlyPublisher
                     || (string) $decision['chapter'] !== '6'
                     || $decision['page'] !== 294)) {
                 throw new RuntimeException('1398 operative source gate permits only audited Summit 4e Q175 chapter 6 exact PDF page 294.');
+            }
+            if ($year === 1398 && in_array($subject, ['pediatric-dentistry', 'oral-radiology'], true)) {
+                $specific = $subject === 'pediatric-dentistry'
+                    ? [
+                        164 => ['mcdonald-avery-pediatric@10e', '11', 215],
+                        168 => ['mcdonald-avery-pediatric@10e', '8', 159],
+                    ]
+                    : [
+                        211 => ['white-pharoah-radiology@7e', '1', 27],
+                        212 => ['white-pharoah-radiology@7e', '3', 50],
+                        214 => ['white-pharoah-radiology@7e', '6', 103],
+                        217 => ['white-pharoah-radiology@7e', '10', 189],
+                    ];
+                $expectedSource = $specific[$n] ?? null;
+                if (!is_array($expectedSource)
+                    || $decision['edition'] !== $expectedSource[0]
+                    || (string) $decision['chapter'] !== $expectedSource[1]
+                    || $decision['page'] !== $expectedSource[2]) {
+                    throw new RuntimeException('1398 pediatric/radiology exact approved original PDF-page source gate refused.');
+                }
             }
             $wanted[$n] = $decision;
         }

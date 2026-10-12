@@ -88,6 +88,8 @@ def audit_batch(root: Path, spec: str,
         path_decisions = root / "classification" / "decisions" / f"1398-{stem}.json"
     if (year_n, subject, stem) == (1398, "operative-dentistry", "operative-q175-20261012"):
         path_decisions = root / "classification" / "decisions" / "1398-operative-q175-20261012.json"
+    if year_n == 1398 and (subject, stem) in {('pediatric-dentistry', 'pediatric-q164-q168-20261012'), ('oral-radiology', 'radiology-four-20261012')}:
+        path_decisions = root / 'classification' / 'decisions' / f'1398-{stem}.json'
     source = load(path_input)
     result = load(path_output)
     decisions = load(path_decisions)

@@ -34,7 +34,7 @@ try {
     $apply = isset($args['apply']);
     $retrospective = $year !== false && $year >= 1300 && $year < 1396;
     if (preg_match('/^[0-9a-f-]{36}$/D', $ws) !== 1 || $year === false
-        || ($year < 1399 && !$retrospective && !(($year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1', 'endodontics-location-final'], true)) || ($year === 1398 && $subject === 'periodontics' && in_array($stem, ['periodontics', 'periodontics-followup', 'periodontics-certified-20261012'], true)) || ($year === 1398 && $subject === 'community-dentistry' && $stem === 'community') || ($year === 1398 && $subject === 'prosthodontics' && $stem === 'prosthodontics') || ($year === 1398 && $subject === 'operative-dentistry' && $stem === 'operative-q175-20261012')))
+        || ($year < 1399 && !$retrospective && !(($year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1', 'endodontics-location-final'], true)) || ($year === 1398 && $subject === 'periodontics' && in_array($stem, ['periodontics', 'periodontics-followup', 'periodontics-certified-20261012'], true)) || ($year === 1398 && $subject === 'community-dentistry' && $stem === 'community') || ($year === 1398 && $subject === 'prosthodontics' && $stem === 'prosthodontics') || ($year === 1398 && $subject === 'operative-dentistry' && $stem === 'operative-q175-20261012') || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-q164-q168-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-four-20261012')))
         || $year > 1500 || $expected === false || $expected < 1 || $expected > 250
         || preg_match('/^[a-z][a-z0-9-]{1,59}$/D', $subject) !== 1
         || preg_match('/^[a-z][a-z0-9-]{1,59}$/D', $stem) !== 1) {
@@ -92,6 +92,9 @@ try {
     }
     if ($year === 1398 && $subject === 'operative-dentistry' && $stem === 'operative-q175-20261012') {
         $decisionsPath = "{$inputRoot}/classification/decisions/1398-operative-q175-20261012.json";
+    }
+    if ($year === 1398 && in_array($stem, ['pediatric-q164-q168-20261012', 'radiology-four-20261012'], true)) {
+        $decisionsPath = "{$inputRoot}/classification/decisions/1398-{$stem}.json";
     }
     $read = static function (string $path): array {
         if (!is_file($path) || is_link($path)) {
