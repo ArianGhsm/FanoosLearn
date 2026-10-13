@@ -634,7 +634,7 @@ function renderReveal(reveal, question, chosen, { explanationVisible = true, onS
         })
         : (reveal.explanation
             ? el('div', {}, renderMarkdown(reveal.explanation),
-                el('p', { className: 'x-explanation__origin', text: 'این توضیح با کمک هوش مصنوعی نوشته شده و بازبینی انسانی نشده است.' }))
+                el('p', { className: 'x-explanation__origin', text: 'این توضیح با کمک هوش مصنوعی تهیه شده است.' }))
             : el('p', { className: 'f-tiny', text: 'برای این سؤال توضیحی ثبت نشده است.' }));
 
     return el('section', { className: `x-revealed${right ? ' is-right' : ''}` },
@@ -1141,7 +1141,7 @@ export function renderReviewQuestion(entry, position, questionCount, actions, as
                 ? el('section', { className: 'x-explanation' },
                     el('h3', { text: 'چرا؟' }),
                     renderMarkdown(entry.explanation),
-                    el('p', { className: 'x-explanation__origin', text: 'این توضیح با کمک هوش مصنوعی نوشته شده و بازبینی انسانی نشده است.' }))
+                    el('p', { className: 'x-explanation__origin', text: 'این توضیح با کمک هوش مصنوعی تهیه شده است.' }))
                 : el('p', { className: 'f-tiny', text: 'برای این سؤال توضیحی ثبت نشده است.' }),
             renderQuestionStats(entry.stats ?? null)),
         el('p', { className: 'x-review__done' },

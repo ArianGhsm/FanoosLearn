@@ -92,7 +92,7 @@ a blanket delete.
 - Work with **eligible verified server editions** first. Set missing or
   incomplete editions aside as pending; no fabricated chapters and **no
   new nearest-edition fallback by default**. Preserve previously audited
-  legacy assignments and human-reviewed sources.
+  legacy assignments and source provenance until an audited correction.
 - If a verified PDF page is not readable by the page-at-a-time reader, inspect
   the original page in a PDF viewer or leave that question pending. Do not
   create OCR output or a text version to fill the gap.
@@ -102,10 +102,17 @@ a blanket delete.
   exact official edition and supported by direct original-PDF evidence.
   A printed or legacy `page` field alone is insufficient. Leave
   unverified chapter+page proposals pending; preserve older incomplete
-  records and human reviews pending audited repairs. Report completion
+  records and provenance pending audited repairs. Report completion
   only using same-row `node_id + pdf_page + pdf_sha256`, with
   residency-English official-key exemptions separately counted. See
   `docs/ops/BANK_CLASSIFICATION_PAGE_BACKLOG_20261011.md`.
+- **AI classification authority (owner 2026-10-13):** No human-review gate
+  or owner confidence queue. The AI may publish a decision only after exact
+  original-PDF evidence, official scope, independent validation, verified
+  backup and source-only readback. Confidence below 0.85 stays pending.
+  Human-origin legacy citations retain attribution but may be corrected by
+  an evidence-backed, audited source-only transaction without human sign-off;
+  question text, keys and frozen attempts stay untouched.
 - Use `scripts/references/` search and evidence validator end-to-end.
   Every decision needs the book's own verbatim evidence, chapter, PDF page,
   edition and confidence; unanswered matches remain undecided, not `none`.
