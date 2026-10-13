@@ -114,8 +114,13 @@ not certification that every older populated citation is scientifically sound.
   pages**, so 1404/1405 periodontics cannot be closed against a complete
   exact edition. Do not use Carranza 13e as a substitute or copy its page map.
 - 1405 Q191 remains without source pending recovery of the original exam
-  diagram and answer-label comparison; Q207 still lacks a scientifically
-  resolved in-scope passage. The sixteen other audited 1405 research cases
+  diagram and answer-label comparison. Q207 has exact in-scope evidence in
+  **two** official chapters (White/Pharoah 8e ch23/PDF1161 and
+  ch24/PDF1294); the current source-only publisher and independent audit
+  accept only one source per question, so a safe two-citation workflow is
+  required before publication. See
+  `RESIDENCY_1405_RADIOLOGY_Q207_TWO_VERIFIED_PAGES_20261013.md`.
+  The sixteen other audited 1405 research cases
   in `RESIDENCY_1405_ACCELERATED_56_PAGE_RESEARCH_20261013.md` remain
   research-only because legacy anchors are paraphrased and the current
   existing-source operator correctly refuses their mutation. Do not count
