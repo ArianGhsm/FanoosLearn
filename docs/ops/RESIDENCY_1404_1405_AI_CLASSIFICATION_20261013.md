@@ -102,6 +102,10 @@ receipt SHA-256 `2715568ae229dd8f73a5697726450a8ce6b55d3b5cc75972d6b0d65c07178b4
 Q191 still had no source row. **Final read-back: 109/250**, 20 English
 exempt, **121/230 clinical incomplete**. This is a same-row field count,
 not certification that every older populated citation is scientifically sound.
+The published frozen assessment remained version **5**, **246** questions,
+definition SHA-256
+`710f48cbbfb143e9ea106a5f8e24f7ed537e3779438ade97e248d085a6d895bb`;
+no assessment version was appended by these source-only operations.
 
 ## Remaining evidence work
 
