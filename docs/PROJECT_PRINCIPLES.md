@@ -24,8 +24,12 @@ chapter, page, evidence, and edition-independent concepts.
    and privacy constraints; old answers contradicted by newer editions must
    be labeled rather than silently treated as current.
 5. AI-produced source, chapter, page, similarity, and explanations carry
-   origin and confidence. The owner reviews values below **0.85**. Human
-   decisions cannot be replaced silently.
+   origin, confidence, and verifiable evidence. AI completes chapter
+   classification through the exact-edition PDF and independent validators;
+   no human review is required. A decision below **0.85** or without
+   decisive page evidence remains pending. Earlier human-origin records
+   retain their provenance; an AI correction needs an evidence-backed
+   reason, guarded source-only transaction, and auditable before/after receipt.
 
 ## 2. Two authorities: GitHub and the server
 
@@ -100,9 +104,9 @@ chapter title or unverified pagination.
 When an exact page cannot be found and verified, leave the new decision
 **pending with neither a new chapter assignment nor a fabricated page**;
 continue other eligible questions. Historical incomplete source records
-remain intact, including human-reviewed records, until individually audited
+remain intact, including human-origin records, until individually audited
 and safely repaired via the approved, backed-up source-only workflow. Do not
-erase existing chapters, keys, assessments or human decisions merely to
+erase existing chapters, keys, assessments or source provenance merely to
 satisfy the new metric.
 
 Every future backlog, import receipt, progress dashboard and handoff must
@@ -181,13 +185,11 @@ The binding procedure is
 `scripts/references/apply_classification.py` against the exact verified PDF
 page and the page-to-chapter map. The authority order is: official year
 validity and scope → exact verified edition PDF/page → short verbatim evidence
-from that page → validator → reviewed import. An answer found only outside the
+from that page → validator → audited import. An answer found only outside the
 announced chapter or partial-page scope remains pending official-syllabus
-review; lowering confidence does not authorize an excluded citation. Review
-older outside-scope rows individually, including human decisions, before any
-correction.
-An unlocated fact stays **undecided**, not `none`; existing human-reviewed
-sources remain protected.
+evidence; lowering confidence does not authorize an excluded citation. Audit
+older outside-scope rows individually, including human-origin records, before
+any correction. An unlocated fact stays **undecided**, not `none`.
 
 
 ## 3A. Dentistry-residency English: final answer key is sufficient (owner decision 2026-10-10)
@@ -358,6 +360,17 @@ its verified PDF page are one indivisible classification decision. Unverified
 or page-less chapters are incomplete in every new progress report and cannot
 be created by new imports. The 2026-10-11 production audit and sitting-level
 backlog are documented in `docs/ops/BANK_CLASSIFICATION_PAGE_BACKLOG_20261011.md`.
+
+**2026-10-13 — AI classification authority (supersedes the 2026-10-03 owner
+review threshold and human-approval wording above):** AI agents make and
+publish exact-edition chapter/page decisions autonomously after the original
+PDF, official scope, independent validator, immutable question/key checks,
+verified backup and source-only receipt all pass. Confidence below 0.85 is
+pending further evidence, not a human-review queue. An earlier human-origin
+source remains an attributed historical record; it can be superseded only by
+a separately audited, evidence-backed source-only correction that records
+the old and new citation and leaves question, answer and frozen attempts
+unchanged. No human sign-off is a classification prerequisite.
 
 ## 7. Open implementation items (do not assume completed)
 

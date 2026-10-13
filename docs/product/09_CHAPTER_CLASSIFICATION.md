@@ -1,5 +1,12 @@
 # Chapter classification
 
+**Owner decision 2026-10-13:** AI agents perform evidence-backed chapter
+classification through the validators and audited publication workflow;
+human review is not a prerequisite. Confidence below 0.85 remains pending.
+Earlier human-origin citations are historical provenance, not automatic
+authority over a better proven exact-edition PDF citation. Correction of an
+existing citation still requires an explicit comparison and guarded receipt.
+
 > **1398 reference-list update (2026-10-10):** The later four-page, owner-supplied complete notice adds official reference-validity scopes for oral pathology, prosthodontics, community dentistry and dental materials (six additional references; 19 total across 12 clinical subjects). The earlier “1398 syllabus missing” remarks below are historical checkpoints and are superseded **only for source-list validity**, not for unverified question citations. See [1398 complete notice](../ops/RESIDENCY_1398_COMPLETE_NOTICE_20261010.md).\n\n
 How a question gets its source: which official reference, which chapter,
 which page. The procedure is the same for every exam type the catalog
@@ -69,7 +76,7 @@ for display but cannot replace `pdf_page` or its file SHA-256. For an
 unlocated or unreadable page, keep **both** the proposed chapter and page
 pending; do not emit a chapter-only source or treat it as complete.
 Historical rows missing page/hash are backlog, not newly completed work;
-preserve human-reviewed assignments pending separately approved repair.
+preserve their original attribution pending an audited source-only repair.
 The policy-final residency English exemption remains source-free (§3A).
 
 For all new progress reports, use one same-row predicate:
@@ -218,7 +225,7 @@ do not locate support, leave the question undecided (§5).
   refers to it in passing.
 - The page is outside the year's announced `scope`: look for the same fact
   inside the scope. If the only support is outside, leave the question
-  undecided for official-syllabus review. Lower confidence does not make an
+  undecided pending authoritative syllabus evidence. Lower confidence does not make an
   excluded chapter eligible. For a partially included chapter, verify the
   official printed-page or section limit on the original PDF page before
   publication; a chapter-list check alone cannot validate that limit.
@@ -258,10 +265,9 @@ files are read for a sitting, by the `<year>-` prefix):
   copied as printed; avoid fragments with symbols (`≤`, `•`, `‐`, `#`,
   superscript reference numbers) when a plain run of words is available.
 - `confidence`: 0.95+ when the quote states the answer outright; 0.85–0.94
-  when it states it but the wording differs or two chapters teach it;
-  0.6–0.84 when it is the right section but the exact fact is inferred;
-  below 0.6 only after re-searching, and it goes to the owner's review
-  queue (PROJECT_PRINCIPLES decision 5).
+  when it states it but the wording differs or two chapters teach it.
+  Below 0.85, keep the decision pending and search again; there is no
+  human-review queue or confidence-based exception to the PDF evidence gate.
 - **New batches use the exact official edition only.** For auditing earlier
   nearest-edition assignments, the `--include-nearest` batch flag and
   `--allow-nearest` apply flag must be explicitly supplied; the chapter
@@ -274,8 +280,8 @@ The validator rejects a chapter outside an explicit `scope_chapters` list.
 If the official scope describes selected or excluded chapters but has no
 structured chapter list, the decision stays pending until the catalog is
 corrected from the official notice. The full sitting importer applies the
-same chapter-level gate; partial page and section limits still need explicit
-human review against the original PDF before a source is published.
+same chapter-level gate; partial page and section limits require an
+independent check against the official notice and original PDF page.
 
 ```sh
 sudo -u fanoosupd python3 -B scripts/references/apply_classification.py --sitting=<sitting.json> \
@@ -336,13 +342,15 @@ A future year is added to this table when its sitting is first imported.
   re-searching is left **out of the decisions file** (undecided). Undecided
   questions keep whatever source they already have and are retried when
   books are added.
-- **A human-checked source is never replaced silently.** If the sitting
-  already carries a source with `origin: human`, a decision for a different
-  chapter — or `none` — is rejected unless it carries `"override_human":
-  "<why this one is better>"`. The same chapter keeps the human source as
-  it is. When the AI and the human disagree, compare both pages and keep the
-  human chapter unless the quote clearly states the fact and the other does
-  not.
+- **Earlier source attribution is preserved in the audit.** The validator's
+  legacy `override_human` field is an evidence rationale, not a request for
+  human approval. If the AI proposes a different chapter from a prior
+  human-origin source, it must compare both original PDF pages and record
+  why the new exact-edition passage better supports the official answer.
+  An unchanged chapter keeps the existing citation. A correction may reach
+  production only through a separately guarded source-only operator with a
+  before/after receipt; never use a full-sitting import to overwrite the
+  prior source or invent `none` for a fact that remains unlocated.
 - Questions whose **exact official edition** is unavailable, whose approved
 PDF cannot be securely read, or whose direct-PDF chapter map is not verified
   stay undecided and are listed in the pending report. Continue eligible
@@ -427,7 +435,7 @@ the corrected questions as changed, the answers and option order stay, and
 | A reference that is not official that year (Craig for 1399–1401 materials) | the edition must be in that year's `validity` |
 | A carried-over chapter landed on the wrong chapter after a reorganisation | carry-over only by identical title; otherwise `official_chapter` |
 | The docx sitting of 1404 would have rewritten 171 stems | §4 table; dry run must show `questions_changed: 0` |
-| An AI pass overwrote human-checked chapters (49 on 1404) | `override_human` required to replace a human source |
+| An AI pass overwrote 49 earlier attributed chapters on 1404 without evidence | `override_human` retains the explicit evidence rationale; source-only correction needs an auditable before/after receipt |
 | `none` used for "not found", removing an existing source | §5: not found stays undecided |
 | Deploy requested before CI on `main` finished | WORKFLOW: request deployment only after CI on the merge commit is green |
 | Persian chapter numbers were present as `n فصل`, but the map skipped 19 of 24 chapters and put front matter in chapter 1 | recognise the standalone Persian heading and pin each chapter to its first occurrence; test the boundary and front matter |
