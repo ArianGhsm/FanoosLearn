@@ -532,7 +532,7 @@ function chapterPanel(chapters, editionRef) {
         panel.append(more, outside);
     }
     if (chapters.some((chapter) => chapter.title_fa && !chapter.title_fa_reviewed)) {
-        panel.append(el('p', 'r-chapters__note', 'عنوان‌های فارسی را هوش مصنوعی ترجمه و یکدست کرده و هنوز متخصص بازبینی‌شان نکرده است؛ عنوان انگلیسی همان متن کتاب است.'));
+        panel.append(el('p', 'r-chapters__note', 'عنوان‌های فارسی با کمک هوش مصنوعی ترجمه و یکدست شده‌اند؛ عنوان انگلیسی همان متن کتاب است.'));
     }
     toggle.addEventListener('click', () => {
         panel.hidden = !panel.hidden;

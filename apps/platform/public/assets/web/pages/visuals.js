@@ -220,7 +220,7 @@ async function visual() {
         for (const concept of data.concepts) list.append(el('li', '', concept.name));
         about.append(list);
     }
-    if (data.origin === 'ai' && !data.reviewed) about.append(el('p', 'v-about__note', 'این نقشه را هوش مصنوعی از روی کتاب ساخته و هنوز متخصص بازبینی‌اش نکرده است.'));
+    if (data.origin === 'ai') about.append(el('p', 'v-about__note', 'این نقشه با کمک هوش مصنوعی از روی کتاب ساخته شده است.'));
     if (about.childNodes.length > 0) parts.push(about);
     done(...parts);
 }
