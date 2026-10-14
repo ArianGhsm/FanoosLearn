@@ -1,5 +1,10 @@
 # Residency 1404/1405 AI classification checkpoint — 2026-10-13
 
+**Later 1405 update:** Q191's original-figure source was independently
+validated and applied on 2026-10-14, raising the live strict count to
+**110/250**. See `RESIDENCY_1405_Q191_ORIGINAL_FIGURE_SOURCE_20261014.md`;
+the 109/250 count below is the earlier checkpoint, not current state.
+
 Owner direction: complete exact-edition chapter/PDF-page classification by AI
 without a human-review gate. `docs/PROJECT_PRINCIPLES.md` and
 `docs/product/09_CHAPTER_CLASSIFICATION.md` govern the evidence and source-only
