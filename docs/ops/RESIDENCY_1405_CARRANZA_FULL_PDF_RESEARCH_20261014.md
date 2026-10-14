@@ -66,3 +66,49 @@ All private original questions, book passages, PDFs, study artifacts and any fut
 A new dedicated branch `fix/carranza14e-approved-pdf-chapter-map-20261015` proposes to replace the old unbound Carranza 14e run mapping. It pins the already verified 1,876-page PDF SHA, leaves front-matter pages **1–26** unassigned, maps chapters **1–88** starting at the visually corroborated native headings (including chapter 1 at p27 and all 47 corrected boundary offsets above), and leaves glossary/index/blank pages **1821–1876** unassigned. Automated regression tests cover the file identity, contiguous physical-page coverage, all 88 chapters and selected critical boundaries. The old `supported_pages` votes are reset rather than misrepresenting confidence against the new PDF.
 
 These changes are a **code/catalog proposal**, not a source-row publication. Require green PR CI, merge into canonical main, updater deployment with healthy live release and rerun of `verified_reference_pdf.py --edition=carranza-periodontology@14e --require-map`. Only then prepare individualized exact-year/official-scope evidence and source-only transactions; Q129/Q130 historical out-of-scope chapter labels remain held.
+
+## 2026-10-15 continuation — CI verification, original-PDF evidence and production gate
+
+**Deployment state:** The full-PDF Carranza map was merged via [PR #401](https://github.com/ArianGhsm/FanoosLearn/pull/401), canonical `main` SHA `02275e8039d4020beef62d820e8077e2765e3083`. Five PR CI jobs passed. Merge CI initially failed because the MySQL service image pull from public ECR returned `toomanyrequests: Data limit exceeded` before tests started; a failed-jobs rerun passed the MySQL integration job, leaving all five post-merge jobs green. The updater working checkout fast-forwarded to this `main` SHA. **The subsequent official deployment request was rejected by the connected operation's safety gate. It was not retried by an alternative/bypass route. Production release, approved reference object and source fields are unchanged.** A GitHub merge does not equal a deployed mapping.
+
+### 1405 periodontics — book-page research only
+
+The current approved full Carranza 14e PDF (1,876 pages; SHA `32f50c3c01d6de459b0fdf84a79e969ed99844605d742d5571392555ce074327`) was scanned directly without a saved text derivative, then shortlisted pages were directly re-read alongside original live question stems and recorded latest final answer indices. These numbers are **candidate evidence locations** pending individually accepted scientific audits and a safe production publisher, **not 20 source writes**. The first 18 preserve currently in-scope chapter candidates:
+
+| 1405 question | Existing chapter | Direct original PDF page candidate |
+|---:|---:|---:|
+| 111 | 4 | 71 |
+| 112 | 5 | 115 |
+| 113 | 8 | 228 |
+| 114 | 10 | 279 |
+| 115 | 59 | 1232 |
+| 116 | 5 | 124 |
+| 117 | 8 | 231 |
+| 118 | 25 | 606 |
+| 119 | 25 | 607 |
+| 120 | 32 | 777 |
+| 121 | 41 | 904 |
+| 122 | 16 | 431 |
+| 123 | 62 | 1291 |
+| 124 | 41 | 904 |
+| 125 | 43 | 926 |
+| 126 | 45 | 958 |
+| 127 | 25 | 621 |
+| 128 | 65 | 1370 |
+
+Prior normalized contiguous exact-phrase matches: Q112 p115, Q118 p606, Q119 p607. For other questions, the page contents and original anchor terminology align but the stored anchor is fragmented, OCR/ligature-affected, or paraphrased. Token overlap is never itself a final scientific decision. The historical `printed_page` cells for these 20 periodontics questions commonly contain placeholder chapter digits and are **not** independently verified printed labels; the exact-page and printed-offset publishers must reject misrepresented labels.
+
+**Q129 corrected scientific candidate:** Existing Carranza chapter 79 is **outside the official year scope**. Independently searching *only* chapters named in the official 1405 notice found original Carranza **chapter 78, physical PDF page 1618**: the original describes tension-free primary closure achieved by an inner periosteal incision, agreeing with the unchanged final-keyed question. This is a proposed **chapter-and-page correction** and cannot be applied with a page-only existing-source operator. Require a versioned, narrow, source-only correction transaction preserving all other data, before/after digests, backup, preview, CI, owner authorization and readback.
+
+**Q130 hold:** Its prior chapter 87 is outside official scope. Searching all in-scope Carranza chapters found peri-implant disease/progressive loss discussions, but no independently adequate, decisive original passage supporting the final-keyed surgical-access answer. Do **not** falsely transplant the ch87 citation to a merely topical in-scope chapter. Keep pending.
+
+### 56 previously label-verified candidates — independent original-PDF re-screen
+
+Read-only rescreen of all 56 previously corroborated printed-page candidates, by opening their **10 approved original exact-edition PDFs** and rechecking the existing legacy source anchor against the proposed physical PDF page, found:
+- All 56: current SHA-bound chapter map agrees with candidate PDF page and old chapter.
+- All 56: source-anchor unique-term recall on that page is at least **0.80**.
+- **Zero of 56:** complete normalized legacy source anchor appears as one contiguous verbatim phrase. Thus previous 56 are **strong research leads but cannot be bulk-certified by token overlap**. The 16 individually audited original unchanged-question packages identified earlier remain research-only, subject to the guarded publisher's own preconditions. Do not relax quote/answer/scope validation.
+
+Independent live SQL scoped to the 1405 residency first sitting found **120** clinical questions lacking the same-row node_id+pdf_page+pdf_sha256 trio: **115** existing source citations currently within official chapter scope, **4** old chapters outside it (Q44, Q129, Q130, Q218), and **1** without any source (Q207). Existing already field-complete out-of-scope citations require separate scientific correction. No 1405 DB source row, question, choice, official answer, attempt, published exam, or deployment was modified in this continuation.
+
+**Next approved operational step:** unblock the official CI-green main updater request; verify actual live release SHA and full-PDF map with `verified_reference_pdf.py --edition=carranza-periodontology@14e --require-map`. Then pursue original answer-bearing passage validation and guarded source-only plans for high-confidence cases. Avoid direct production SQL writes and any alternate execution after tool safety refusal.
