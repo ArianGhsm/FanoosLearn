@@ -60,3 +60,9 @@ Sixteen independently accepted, unchanged-original-study source-page cases alrea
 4. Recheck total, strict same-source-row completeness and scientific in-scope completeness separately; inspect frozen published-assessment content, live health, CI/release before closing the year.
 
 All private original questions, book passages, PDFs, study artifacts and any future source-update receipts stay exclusively on the protected server. This documentation contains **no new claims of live chapter/page completion**.
+
+## 2026-10-15 continuation — proposed full-PDF map commit and review gate
+
+A new dedicated branch `fix/carranza14e-approved-pdf-chapter-map-20261015` proposes to replace the old unbound Carranza 14e run mapping. It pins the already verified 1,876-page PDF SHA, leaves front-matter pages **1–26** unassigned, maps chapters **1–88** starting at the visually corroborated native headings (including chapter 1 at p27 and all 47 corrected boundary offsets above), and leaves glossary/index/blank pages **1821–1876** unassigned. Automated regression tests cover the file identity, contiguous physical-page coverage, all 88 chapters and selected critical boundaries. The old `supported_pages` votes are reset rather than misrepresenting confidence against the new PDF.
+
+These changes are a **code/catalog proposal**, not a source-row publication. Require green PR CI, merge into canonical main, updater deployment with healthy live release and rerun of `verified_reference_pdf.py --edition=carranza-periodontology@14e --require-map`. Only then prepare individualized exact-year/official-scope evidence and source-only transactions; Q129/Q130 historical out-of-scope chapter labels remain held.
