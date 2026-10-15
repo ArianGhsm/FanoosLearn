@@ -124,6 +124,27 @@ a blanket delete.
   Missing secure reader or workspace is a dependency to document and
   implement under the normal PR process, not a reason to demand a laptop.
 
+## 3AA. Voided questions REQUIRE original-book chapter + PDF page
+
+For **every** residency year, including 1405, a question that is
+officially **voided** must still receive an independently verified
+original-year book **chapter AND exact physical PDF page/SHA** like
+every other book-based question. **Never** equate `voided` with
+`unclassifiable` or `citation-exempt`; do not omit these items
+from the full-year science/citation census. They remain **ungraded**,
+with official answer `voided`, null correct choice, and original
+question status and attempts unchanged.
+
+For existing AI-origin voided sources, use only the versioned,
+reviewed, protected `repair_verified_voided_source_pages.php` operator
+with original-PDF quote, independently accepted SHA-pinned audit,
+original stem/choices/voided-key hashes, corroborated book printed
+page, protected rollback preview, fresh verified backup and receipt
+under the authorized updater. Do not convert voided into final,
+publish a draft question, or bypass any separate deployment safety
+gate. The entire year remains unclosed if any voided item's chapter
+or page is missing. See `docs/PROJECT_PRINCIPLES.md`.
+
 ## 3A. Binding residency whole-year release gate — owner 2026-10-16
 
 This rule binds **every AI model, device, human operator, hosted agent,

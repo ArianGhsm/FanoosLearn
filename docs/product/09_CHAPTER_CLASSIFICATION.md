@@ -393,6 +393,25 @@ its own page and quote replace the nearest-edition source.
 
 ## 7. Putting it on the site
 
+### Binding clarification: voided questions still require chapter AND PDF page
+
+**Do not exclude voided/draft questions from *scientific citation coverage*.**
+All non-English dentistry-residency questions, including officially
+`voided` and excluded-from-scoring items, must have the approved
+year-specific book chapter and exact original physical PDF page/SHA.
+Voided questions keep their official voided answers (null correct
+choice), original draft/scoring state, four original options and
+unchanged prior attempts and frozen exams. Citation completion is not
+the same as turning a question into a scored item.
+
+For existing AI-origin voided/draft sources use the separate guarded
+`repair_verified_voided_source_pages.php` after accepted private
+original-book scientific audit, exact page and printed neighbor
+checks, rollback preview, new verified full backup and unique receipt.
+Never attempt to pass voided items into a writer that explicitly
+requires `final/amended`; **do not alter the key** to work around it.
+See `docs/ops/VOIDED_QUESTION_CHAPTER_PDF_SOURCE_20261016.md`.
+
 ### Mandatory whole-YEAR residency publication gate (owner superseding decision 2026-10-16)
 
 **Research batches: 30–40 questions; public exam publication: ONE ENTIRE
