@@ -97,12 +97,25 @@ original-book text and original question meaning.
   The original page discusses odontoma development, peg teeth and
   bell-stage differentiation. Q174 remains **voided/draft**.
 
-The original printed pages were independently corroborated on the
-approved server book pages and nearby labels; this does NOT constitute
-a production apply or a full independent accepted audit for either
-candidate. Produce signed/SHA-pinned independent review artifacts
-and a protected plan only when the scientific answer-bearing link is
-accepted. A current status without the PDF fields is **not closed**.
+Both original-year source cases have now been independently
+**scientifically audited on the actual verified server PDF**, including
+all original-book page citations, current source identity, four
+original choices, original stem and unchanged latest `voided` key:
+
+- Q133 immutable scientific audit:
+  `/srv/fanoos/shared/research/classification/recovery-1405-voided133-20261016/classification/reports/1405-voided133-approved-original-PDF-audit-20261016.json`;
+  SHA-256 `826bf884aad9edae3b95068f51af241e432a26be5d1331d655c7bf48bff38ce0`.
+- Q174 immutable scientific audit:
+  `/srv/fanoos/shared/research/classification/recovery-1405-voided174-20261016/classification/reports/1405-voided174-approved-original-PDF-audit-20261016.json`;
+  SHA-256 `0f3074c4c716fafcba2f529c6ca6d9126dcc2c32d2772ef12139e4bb356b773b`.
+
+The independent research audit approves their source chapter **and**
+physical page only; it **does not approve a graded answer**. Their
+live `bank_question_sources.pdf_page` and `pdf_sha256` remain
+**NULL** until the separate approved operator is actually deployed,
+previewed and executed with a fresh verified full backup and unique
+receipts. No claim of live apply or full-year completion is made.
+
 
 ## Deployment is separate
 
