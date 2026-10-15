@@ -79,7 +79,7 @@ try {
         || (realpath(dirname($auditPath)) !== $privateReports
             && preg_match(
                 '~^' . preg_quote($privateClassification, '~')
-                . '/recovery-1405-[a-zA-Z0-9-]+/classification/reports/[^/]+\\.json$~D',
+                . '/recovery-1405-[a-zA-Z0-9-]+/classification/reports/[^/]+\.json$~D',
                 $auditReal,
             ) !== 1)) {
         throw new RuntimeException('Independently accepted private citation audit absent or changed.');
@@ -171,7 +171,7 @@ SQL);
                 || isset($seen[$number])
                 || !is_string($id) || preg_match('/^[a-f0-9-]{36}$/D', $id) !== 1
                 || !is_string($edition) || preg_match('/^[a-z0-9-]+@[a-z0-9]+$/D', $edition) !== 1
-                || !is_string($chapter) || preg_match('/^[0-9]+(?:\\.[0-9]+)?$/D', $chapter) !== 1
+                || !is_string($chapter) || preg_match('/^[0-9]+(?:\.[0-9]+)?$/D', $chapter) !== 1
                 || !is_int($page) || $page < 1 || $page > 6000
                 || !is_string($sha) || preg_match('/^[a-f0-9]{64}$/D', $sha) !== 1
                 || !is_string($printed) || preg_match('/^[1-9][0-9]{0,3}$/D', $printed) !== 1
