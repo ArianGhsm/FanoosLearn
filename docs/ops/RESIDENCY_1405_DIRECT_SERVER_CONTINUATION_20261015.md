@@ -91,3 +91,140 @@ GitHub listing confirmed the branch count fell from **121 to 11**. `main`, the
 open PR #388 branch, and nine refs whose tips differed from their merged PR
 heads were retained for review; no other contributor's working tree was
 changed. Branch deletion did not change the live release or database.
+
+## Later direct-server continuation: four more live source corrections
+
+This section supersedes the **195/250**, prosthodontics **25/30**, and
+periodontics **12/20** snapshots above. PR #412 narrowly taught
+`PrintedBookPageEvidence` to read a numeric book label at the end of the
+bounded *first-line* `Chapter N` running header, even when that line is long.
+PR #413 added the uppercase `CHAPTER N` form. Ordinary long body lines and
+the requirement for at least two matching neighboring page labels remain
+excluded/required. Both PRs passed five checks on the PR and exact merged
+`main`. The official updater deployed the second change as release
+`15dcd02079c8c62cbc2b921d47c132c06f025f3d`, request
+`01a13fc2-2913-7e6b-bf92-f927735c4342`, state `SUCCEEDED` at
+2026-10-15 13:33:34 UTC. Live `/health` and `check-sync.sh` independently
+reported that exact release and GitHub-main agreement. No SentinelX route was
+used.
+
+| Subject | Q | Official chapter | Book printed page | Original physical PDF page | Source fields actually changed |
+|---|---:|---:|---:|---:|---|
+| Prosthodontics, McCracken RPD 13e | 85 | 21 | 295 | 308 | PDF page + SHA only |
+| Prosthodontics, McCracken RPD 13e | 87 | 22 | 299 | 312 | PDF page + SHA only |
+| Prosthodontics, Zarb Edentulous 13e | 100 | 14 | 309 | 323 | PDF page + SHA only |
+| Periodontics, Carranza 14e | 112 | 5 | **63 (was 5)** | 115 | printed page + PDF page + SHA; chapter node unchanged |
+
+The three prosthodontics original-question, four-choice/latest-key research
+audits were accepted before publication. Q87's book passage gives general
+relief of 0.5–1.0 mm plus *additional* 1.0 mm over the ridge crest; the
+official answer's 1.5 mm minimum follows from those two quantities. Each
+target PDF page's own book label, at least two neighboring labels, short
+answer-bearing original-page quote, exact approved PDF SHA and official
+chapter run passed the deployed guarded page-only operator. Protected plans
+and one-row applied receipts are
+`/srv/fanoos/shared/research/classification/reports/1405-prosth-q{85,87,100}-page-{plan,applied}-20261015.json`.
+Each successful rollback preview preceded its applied receipt. The
+independently verified 114-file full backup was
+`/var/backups/fanoos/20261015T131958Z-e2153095`.
+
+Q112's independent accepted one-question Carranza original-page audit is
+`recovery-1405-perio112-20261015/classification/reports/1405-perio112-audit.json`,
+SHA-256 `59c8898af928f676a42af102e2e8a7f188ceda0448ba756b2470995aae513289`.
+Its exact PDF page 115 has uppercase chapter header and printed label 63;
+two neighboring labels corroborated it. The protected plan
+`1405-perio-q112-correction-plan-20261015.json` had SHA-256
+`888dcda0927e5154df1e97ab7d2f4402ca88bb39a4e2fb890d235cb3cd91926f`.
+The guarded chapter/printed/page operator accepted a rollback-only preview
+and issued the one-row applied receipt
+`1405-perio-q112-correction-applied-20261015.json` using independently
+verified 114-file backup `/var/backups/fanoos/20261015T133304Z-44ff3ab0`.
+Its unchanged original anchor, stem, four choices, final answer and chapter
+node were SHA/identity-pinned. Both operators reported zero question,
+choice and answer changes. Separate live SQL readback confirmed the four
+source IDs, exact original-PDF hashes and page numbers after commit.
+
+The current live **field-complete count is 199/250**: **20 English
+reference-exempt** and **31/230 clinical questions field-incomplete**.
+Prosthodontics is **28/30**, periodontics **13/20**. This is field coverage,
+not scientific certification of every old row; field-complete Q217 still has
+an out-of-1405-scope historical chapter. Prosthodontics Q81 remains on a
+figure/official-key reconciliation hold; Q99 lacks a decisive original-book
+passage for its keyed exclusion. Neither was changed.
+
+The seven remaining periodontics questions are Q113, Q114, Q118, Q119,
+Q127, Q128, and Q130. Original academic PDF/question audits are accepted,
+but their publication checks are unresolved. In Carranza's original PDF,
+several candidate pages carry insert-style book labels such as `108.e2`,
+`136.e1`, `364.e1`, `364.e2`, and `373.e1`; the present printed-page field
+and guarded operator accept numeric labels only. Q128 begins with a case
+scenario, without a corroborated target-page numeric book label. Q130's
+candidate PDF page 1505 says printed 845, but the neighboring pages include
+845.e1 and do not provide the required two sequential numeric labels.
+These labels must not be truncated to a fabricated integer or bypass the
+pagination guard. This also means the 1405 classification file **cannot yet
+be closed as complete**. A fresh remote inventory after PR #413 confirmed
+**11 branches** remain: `main`, open PR #388, and nine differing-tip refs
+retained for individual review.
+
+## Final periodontics continuation: all 20 sources field-complete
+
+This section supersedes the **199/250**, periodontics **13/20**, and seven
+periodontics publication holds above. The approved original Carranza 14e PDF
+uses actual inserted book labels, including `108.e2` and `779.e1`. Its
+`bank_question_sources.printed_page` database field is `VARCHAR(20)` and
+already supports exact textual labels. PR #415 added narrowly bounded
+first/last-line extraction of these labels and requires the immediately
+previous **and** next physical PDF pages to show the exact predecessor and
+successor labels. The ordinary numeric two-neighbor check remains in place.
+Both guarded source correction operators now accept the exact insert-label
+syntax. PR #415 and its merged `main` commit passed all five CI jobs. The
+official updater deployed release
+`2c685cca2b28c71cd1149f259c28d1414656531e` through request
+`01a13fcf-78bf-706a-8235-bd90fb08652f`, state `SUCCEEDED` at
+2026-10-15 13:48:18 UTC. Live `/health` and `check-sync.sh` matched that
+commit. The fresh full backup
+`/var/backups/fanoos/20261015T134742Z-f1118c79` was independently verified
+with 114 files.
+
+| Q | Official chapter | Exact printed label | Original physical PDF page | Historical source correction |
+|---:|---:|---|---:|---|
+| 113 | 8 | `108.e2` | 235 | printed 1 replaced |
+| 114 | 10 | `136.e1` | 279 | printed 10 replaced |
+| 118 | 25 | `364.e1` | 606 | printed 25 replaced |
+| 119 | 25 | `364.e2` | 607 | printed 1 replaced |
+| 127 | 25 | `373.e1` | 621 | printed 25 replaced |
+| 128 | 65 | `779.e1` | 1398 | printed 2 replaced |
+| 130 | **72 (was out-of-scope 87)** | `845` | 1505 | chapter and printed 87 replaced |
+
+The seven previously accepted independent original-question, four-choice,
+official-answer and original-PDF audits were rechecked in seven protected
+one-row plans. Each target label and its two adjacent original-PDF labels
+passed the new verifier against the exact approved Carranza PDF SHA-256
+`32f50c3c01d6de459b0fdf84a79e969ed99844605d742d5571392555ce074327`.
+The guarded chapter/printed/page operator accepted a rollback-only preview
+for **each** plan, checking its independent audit digest, immutable source
+anchor, stem, choices and latest final/amended answer, official-year chapter
+scope, bound chapter-page map and short original-page evidence. Seven
+separate applies then used the verified backup and unique mode-0600
+receipts. Plans and receipts are
+`/srv/fanoos/shared/research/classification/reports/1405-perio-q<N>-insert-{plan,applied}-20261015.json`,
+where `N=113,114,118,119,127,128,130`. The receipts report zero question,
+choice and answer changes. Independent live SQL readback compared all seven
+source IDs and every pinned source/question/choice/answer digest to their
+plans, and confirmed the exact printed labels, chapters, physical PDF pages
+and PDF hash after commit. Q130 alone changed its chapter node; the other
+six retained their existing in-scope chapter nodes. The legacy `page` field
+and all human review, attempts and published assessment history were left
+unchanged.
+
+The live **field-complete count is 206/250**: 20 English questions are
+reference-exempt, and **24/230 clinical questions remain field-incomplete**.
+Periodontics is **20/20**; prosthodontics is **28/30**. The remaining clinical
+field gaps are pediatric dentistry 10, endodontics 3, oral surgery 3, oral
+pathology 2, dental materials 2, prosthodontics 2, oral medicine 1 and oral
+radiology 1. Historical field-complete Q217 still cites an out-of-1405-scope
+chapter and is a separate scientific hold. Q81's figure/key ambiguity and
+Q99's insufficient decisive original-book evidence remain unresolved. Thus
+the **periodontics source-field backlog is closed**, while the full 1405
+exam classification cannot yet be declared complete.
