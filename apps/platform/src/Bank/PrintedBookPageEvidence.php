@@ -22,23 +22,41 @@ final class PrintedBookPageEvidence
             return false;
         }
         $target = self::readPageLabels($edition, $pdfPage, $expectedPdfSha256, $allowLongHeader);
-        if ($target === null || !in_array((int) $printedPage, $target, true)) {
+        $targetLabel = str_contains($printedPage, '.e') ? $printedPage : (int) $printedPage;
+        if ($target === null || !in_array($targetLabel, $target, true)) {
             return false;
         }
 
-        $neighbors = 0;
-        foreach ([-2, -1, 1, 2] as $step) {
-            $neighborPage = $pdfPage + $step;
-            $neighborPrinted = (int) $printedPage + $step;
-            if ($neighborPage < 1 || $neighborPrinted < 1) {
-                continue;
+        if (is_int($targetLabel)) {
+            $neighbors = 0;
+            foreach ([-2, -1, 1, 2] as $step) {
+                $neighborPage = $pdfPage + $step;
+                $neighborPrinted = $targetLabel + $step;
+                if ($neighborPage < 1 || $neighborPrinted < 1) {
+                    continue;
+                }
+                $labels = self::readPageLabels($edition, $neighborPage, $expectedPdfSha256, $allowLongHeader);
+                if ($labels !== null && in_array($neighborPrinted, $labels, true)) {
+                    ++$neighbors;
+                }
             }
-            $labels = self::readPageLabels($edition, $neighborPage, $expectedPdfSha256, $allowLongHeader);
-            if ($labels !== null && in_array($neighborPrinted, $labels, true)) {
-                ++$neighbors;
+            if ($neighbors >= 2) {
+                return true;
             }
         }
-        return $neighbors >= 2;
+
+        // Inserted book pages use labels such as 136.e1, 136.e2, then 137.
+        // Require both immediately adjacent original PDF pages to show the
+        // exact predecessor and successor; never truncate an insert label.
+        [$previous, $next] = self::adjacentPrintedLabels($printedPage);
+        if ($pdfPage < 2 || $previous === [] || $next === []) {
+            return false;
+        }
+        $before = self::readPageLabels($edition, $pdfPage - 1, $expectedPdfSha256, $allowLongHeader);
+        $after = self::readPageLabels($edition, $pdfPage + 1, $expectedPdfSha256, $allowLongHeader);
+        return $before !== null && $after !== null
+            && array_intersect($previous, array_map('strval', $before)) !== []
+            && array_intersect($next, array_map('strval', $after)) !== [];
     }
 
     /** Check short, reviewer-selected evidence on one exact PDF page. */
@@ -70,7 +88,7 @@ final class PrintedBookPageEvidence
         return true;
     }
 
-    /** @return list<int>|null */
+    /** @return list<int|string> */
     public static function pageLabelsFromText(string $text, bool $allowLongHeader = false): array
     {
         $lines = array_values(array_filter(array_map(
@@ -82,16 +100,16 @@ final class PrintedBookPageEvidence
         // first-line chapter running header. Accept only that exact shape;
         // ordinary long body lines remain excluded below.
         if (!$allowLongHeader && isset($lines[0]) && mb_strlen($lines[0]) < 180
-            && preg_match('/^Chapter\s+[0-9]{1,3}\b.{0,170}\h{2,}([1-9][0-9]{0,3})$/iu', $lines[0], $header)) {
-            $numbers[] = (int) $header[1];
+            && preg_match('/^Chapter\s+[0-9]{1,3}\b.{0,170}\h{2,}([1-9][0-9]{0,3}(?:\.e[1-9][0-9]?)?)$/iu', $lines[0], $header)) {
+            $numbers[] = str_contains($header[1], '.e') ? strtolower($header[1]) : (int) $header[1];
         }
         foreach ($edge as $line) {
             if (!$allowLongHeader && mb_strlen($line) >= 90) {
                 continue;
             }
-            if (preg_match('/^([0-9]{1,4})(?:\s|$)/u', $line, $match)
-                || preg_match('/(?:^|\s)([0-9]{1,4})$/u', $line, $match)) {
-                $numbers[] = (int) $match[1];
+            if (preg_match('/^([0-9]{1,4}(?:\.e[1-9][0-9]?)?)(?:\s|$)/iu', $line, $match)
+                || preg_match('/(?:^|\s)([0-9]{1,4}(?:\.e[1-9][0-9]?)?)$/iu', $line, $match)) {
+                $numbers[] = str_contains($match[1], '.e') ? strtolower($match[1]) : (int) $match[1];
             }
         }
         return array_values(array_unique($numbers));
@@ -120,10 +138,27 @@ final class PrintedBookPageEvidence
     {
         return preg_match('/^[a-z0-9][a-z0-9-]*@[a-z0-9]+$/D', $edition) === 1
             && $pdfPage >= 1
-            && preg_match('/^[1-9][0-9]{0,3}$/D', $printedPage) === 1;
+            && preg_match('/^[1-9][0-9]{0,3}(?:\.e[1-9][0-9]?)?$/D', $printedPage) === 1;
     }
 
-    /** @return list<int>|null */
+    /** @return array{list<string>,list<string>} */
+    private static function adjacentPrintedLabels(string $printedPage): array
+    {
+        if (preg_match('/^([1-9][0-9]{0,3})(?:\.e([1-9][0-9]?))?$/D', $printedPage, $parts) !== 1) {
+            return [[], []];
+        }
+        $base = (int) $parts[1];
+        $insert = isset($parts[2]) ? (int) $parts[2] : null;
+        if ($insert === null) {
+            return [$base > 1 ? [(string) ($base - 1)] : [],
+                array_values(array_filter([$base < 9999 ? (string) ($base + 1) : null, $base . '.e1']))];
+        }
+        return [$insert === 1 ? [(string) $base] : [$base . '.e' . ($insert - 1)],
+            array_values(array_filter([$insert < 99 ? $base . '.e' . ($insert + 1) : null,
+                $base < 9999 ? (string) ($base + 1) : null]))];
+    }
+
+    /** @return list<int|string>|null */
     private static function readPageLabels(
         string $edition, int $pdfPage, ?string $expectedPdfSha256, bool $allowLongHeader
     ): ?array
