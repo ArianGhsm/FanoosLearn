@@ -156,3 +156,216 @@ This iteration **safely unblocked the existing non-Carranza source-only repair p
 | Prosthodontics | 97 | Zarb 13e ch10 / 240 | `1405-verified-page-preview-20261015-prosthodontics.json` |
 
 **Production publication check:** a verified fresh full backup is mandatory, then each plan is applied only through the same guarded operator with `--apply --backup=<verified-path> --receipt=<new protected path>`. Require independent per-question/source/choice/answer/attempt readback and the scoped total, plus renewed health. **A rollback-only preview is not an applied change.** At this documentation checkpoint the full backup operation had been started and no live 1405 source update was yet claimed.
+
+## 2026-10-15 verified production apply and immutable-content closure for the first 16
+
+**This section supersedes the prior rollback-only state for exactly the sixteen questions below.** The previously approved fail-closed `repair_verified_source_pages.php` was used under service account `fanoosupd` for **eight independently successful applied transactions**, all guarded by the same independently verified official **full backup** `/var/backups/fanoos/20261015T000409Z-2f26750c` (114 files independently verified). The backup manifest excluded verified reference-only PDF objects by documented policy, not the original source assets from live storage. The operator's receipts are private 0600 files `/srv/fanoos/shared/research/classification/reports/1405-source-page-applied-20261015-q68.json` and `1405-source-page-applied-20261015-<subject>.json` for each subject in the seven-subject preview table above.
+
+All eight receipts explicitly returned `mode=applied`, correct plan SHA-256, the backup ID and **only** `pdf_page` and `pdf_sha256` as updated columns. An independent subsequent production query reloaded each of all **16 unique source UUIDs** and compared published question number, exact subject, unchanged original chapter, old book-printed page, historical page, unchanged original anchor digest, AI provenance and no human review, the expected exact PDF physical page and source object SHA, and the receipt-plan binding. **All 16 passed.**
+
+The exact-sitting live production count changed from **110/250** field-complete to **126/250**, with **20 English reference-exempt** and **104/230 clinical/book-based incomplete**. The newly applied source records are:
+
+| Subject | Q → exact approved physical PDF page |
+|---|---|
+| Oral medicine | 68→167, 70→326 |
+| Dental materials | 211→48, 212→51, 219→222 |
+| Oral surgery | 147→356, 148→336, 149→273 |
+| Pediatric dentistry | 176→197, 180→279, 182→344, 183→356 |
+| Oral pathology | 56→719 |
+| Endodontics | 31→276, 39→453 |
+| Prosthodontics | 97→240 |
+
+Protected exact-round1 **before/after immutable-content digests** are under `/srv/fanoos/shared/research/classification/reports/1405-immutable-content-{before,after}-source-pages-round1-20261015.json`. SHA-256 byte-for-byte comparison across **250 complete bank-question rows**, **1000 published choice rows**, and **250 official answer rows** is **unchanged for all three sets**. Note: an earlier extra file without the `round1` suffix used a raw CLI text serialization that counted embedded newlines as separate rows; it was superseded by this exact-year/round, escaped batch output and **must not** be used as a before/after baseline. The live `/health` remained `status=ok`. The new Carranza map remains GitHub-merged, **not deployed**; current production release is still `86d7c4fe37515381111994707e2914e308b7595f`. No deployment was implied by the source-only database changes.
+
+### Protected original-question-preserving official Q129 alternative: accepted research, not production applied
+
+A new single-question private research package `/srv/fanoos/shared/research/classification/recovery-1405-official129-20261015/` was recreated directly from the original published Q129 and four unchanged choices and latest final answer. An exact, locally decisive original-book passage on the current complete Carranza 14e physical PDF **page 1618**, **officially in-scope chapter 78**, confirms the correct answer about tension-free closure by an inner periosteal incision. `apply_classification.py --pdf-pages` accepted **1/1** and `audit_private_study_batches.py` independently accepted **1/1, 0 pending** with unchanged original question/answer provenance. Pinned audit SHA-256: `7a4d34caa6712ad5fa6aad877479227e34b1387088b0d7d5180e77ad0e73b808`. The historical Q129 source chapter **79** is outside the official year-1405 scope. **No source chapter replacement was applied** because the existing page-only publisher is forbidden to change `node_id`; a separately approved chapter-and-PDF-page correction, deployed map and fresh verified backup are required.
+
+### Remaining exact-year scope
+
+After the 16 verified non-periodontics applies, unfinished book-based counts are: periodontics 20, prosthodontics 17, oral surgery 14, pediatric dentistry 13, endodontics 13, oral medicine 12, oral pathology 12, dental materials 2, radiology 1; all other textbook-based subject backlogs are 0. Total 104. Existing out-of-official-scope source chapters Q44, Q129, Q130, Q218 and pre-existing field-complete Q217 remain on scientific hold, as does source-free Q207 with two distinct in-scope original references. **Do not call the entire exam certified or complete until source/page verification and year scope are both satisfied.**
+
+## Same-day independently applied second batch: Q30, Q46, Q62, Q131
+
+**Supersedes the 126/104 count above:** Following the first sixteen valid applies, four additional questions were independently examined against the exact official edition and their final published answers. Original private one-question studies were constructed from unchanged live stems, four choices and latest official final keys, with answer-bearing short quotations on the approved original PDF pages:
+
+| Question | Year-1405 official reference | Chapter | Physical PDF page | Verified book printed label | Accepted provenance audit SHA-256 |
+|---:|---|---:|---:|---:|---|
+| 30 | Torabinejad Endodontics 6e | 12 | 241 | 234 | `4b31bfa95b3bd01ef27b64edad3a4a05920618ae0695b787de1b40ad2a728855` |
+| 46 | Neville Oral Pathology 5e | 10 | 384 | 374 | `060937be32842995a297d08f57a00ffa8d0a4baecedd88e083a13a0560b83bda` |
+| 62 | Burket Oral Medicine 13e | 3 | 75 | 55 | `50d013ba406e3f92eb4b988f0cfd738c23743cc32176aa241f880e5c10cdfdd6` |
+| 131 | Hupp Oral Surgery 7e | 1 | 20 | 6 | `c73f2bb7cead1b8352be16cc96b763826b141557134b82fd32a74d34123c315b` |
+
+All four independent original-book classification validators and SHA-pinned provenance auditors returned **one accepted, zero rejected, zero pending** per case. The corresponding protected research roots are `/srv/fanoos/shared/research/classification/recovery-1405-evidence<Q>-20261015/` for the listed Q values. The protected 0600 plans `/srv/fanoos/shared/research/classification/reports/1405-evidence-new-page-preview-20261015-<subject>.json` all passed rollback-only preview and were then applied via the deployed guarded **source-only** operator, with the same fresh verified full backup `20261015T000409Z-2f26750c`, to unique private `1405-evidence-new-page-applied-20261015-<subject>.json` receipts.
+
+A **separate read-only live DB re-query** verified all four published source identifiers, existing unchanged in-scope chapters, original and printed pages, unchanged original anchor digests and AI provenance, correct physical PDF page and SHA; new field-complete count was **130/250**, with **20 English exempt** and **100 textbook-based questions incomplete**. Before/after immutable-content check across the original exact sitting: all **250 original question rows**, **1000 choices**, **250 official answer rows** have identical SHA-256 to the pre-write baseline. Protected report: `/srv/fanoos/shared/research/classification/reports/1405-immutable-content-after-20-sources-round1-20261015.json`. Public health stayed `status=ok`, old live release unchanged. No attempt/assessment or question/choice/answer write occurred. The old source-only page repairs **do not** solve Q217’s out-of-official-scope chapter or the remaining Q44/Q129/Q130/Q218/Q207 holds.
+
+The year 1405 is **not finished** by this milestone; 100 book-based incomplete sources remain pending verified original-page scientific review and/or safe publisher availability.
+
+## Same-day third independently audited and applied batch: six additional questions
+
+**Supersedes 130/100 above: verified live field completeness is now 136/250, with 20 English exempt and 94/230 clinical citations lacking complete chapter+PDF page+SHA.** Six fresh 0600 protected original-question study-only packages `/srv/fanoos/shared/research/classification/recovery-1405-evidence<Q>-20261015/` underwent case-specific scientific examination against current approved original reference PDFs and the unchanged live official final-answer choices. The actual reference passage was checked at the physical page; `apply_classification.py --pdf-pages` and `audit_private_study_batches.py` independently returned **1 accepted / 0 rejected / 0 pending** for every case.
+
+| Q | 1405 reference | Original official chapter | Physical PDF page | Original book printed label | Independent provenance audit SHA-256 |
+|---:|---|---:|---:|---:|---|
+| 28 | Torabinejad Endodontics 6e | 9 | 173 | 166 | `5c59212233fba0f43bc8b8b03463432261ab6b865eede8d9c3f991b1c58e3743` |
+| 64 | Burket Oral Medicine 13e | 4 | 125 | 105 | `e188d58f78ff0144a88733678da4e2891927fbc4b79afe4bb6221161bfdba197` |
+| 82 | McCracken RPD 13e | 6 | 72 | 59 | `3d3a6e428d11da0fca4741cea51b49d44c169eb4a7f6a643d022b9c64ec066c3` |
+| 132 | Hupp Oral Surgery 7e | 2 | 42 | 28 | `058fac4c56882a6c7198f79d642c7f0819a35ff8cab81ae958d2dea4372e2506` |
+| 145 | Hupp Oral Surgery 7e | 24 | 525 | 511 | `39aa46f1b9e74c5c9cc2f9e03bce5b154f31e62cf69e5f5e6d948e060d666142` |
+| 178 | McDonald/Avery Pediatric 11e | 11 | 230 | 219 | `7760617c0ae18e997c049ccf8bbff5ba0542ce87d2a0937a06c44c509f9aff05` |
+
+Each of five independently pinned `1405-evidence-six-preview-20261015-<subject>.json` source-only protected plans passed the official rollback preview. The approved `repair_verified_source_pages.php` then reported **applied** for every plan, backed by the same fresh independently verified full backup `20261015T000409Z-2f26750c`. Five **unique** private receipts `1405-evidence-six-applied-20261015-<subject>.json` record exactly six repaired sources. Independent live DB re-read compared all six source UUIDs against unchanged chapter, original page/printed label, original anchor SHA, AI provenance, source object PDF SHA, and the expected physical PDF page. **All passed**, giving **136** field-complete sources. Before/after hashes of all **250 exact-year/round questions**, **1000 choices** and **250 final answer rows** remain identical to the original protected baseline. Report: `/srv/fanoos/shared/research/classification/reports/1405-immutable-content-after-26-sources-round1-20261015.json`. Public health `status=ok`; current live release SHA remains unchanged, pending an authorized Carranza map deployment.
+
+**Scientific caveat:** 136 is strict non-null field coverage, not 136 certified year-in-scope sources, because the historical published Q217 source still cites an outside-scope chapter; Q44/Q129/Q130/Q218/Q207 remain unresolved/pending applied correction. Twenty-six new verified source page/sha pairs have been applied in this session. All subsequent repair attempts must keep a fresh verified full backup within the operator's four-hour window; never reuse the backup after it expires.
+
+## 2026-10-15 fourth applied batch — 13 new exact-page source repairs
+
+**Supersedes prior live counts: currently 149/250 strict same-row chapter+PDF physical page+approved-object SHA, 20 English exempt, 81 textbook-based questions remaining.** Separate complete original-published-stem, four-options and latest final-key private evidence packages were created for the below thirteen questions, at `/srv/fanoos/shared/research/classification/recovery-1405-evidence<Q>-20261015/`. An issue with the *research-only Q49 draft quotation* splitting a Poppler column-end word was corrected after reading the original PDF page, with old and new draft digests independently recorded at `recovery-1405-evidence49-20261015/classification/reports/1405-q49-research-draft-quote-correction.json`. No published source anchor or exam content was altered. Each of the thirteen original-PDF source/page validators and independent exact PDF SHA/unchanged original question provenance auditors accepted **1/1**, no rejection or pending.
+
+| Q | Subject | Official same-year edition | Existing in-scope chapter | Verified PDF page | Original book printed label |
+|---:|---|---|---:|---:|---:|
+| 32 | Endodontics | Torabinejad 6e | 14 | 320 | 313 |
+| 40 | Endodontics | Torabinejad 6e | 10 | 197 | 190 |
+| 45 | Oral pathology | Neville 5e | 9 | 338 | 328 |
+| 47 | Oral pathology | Neville 5e | 10 | 444 | 434 |
+| 49 | Oral pathology | Neville 5e | 11 | 501 | 491 |
+| 55 | Oral pathology | Neville 5e | 14 | 676 | 666 |
+| 67 | Oral medicine | Burket 13e | 5 | 175 | 155 |
+| 75 | Oral medicine | Little/Falace 10e | 14 | 267 | 235 |
+| 91 | Prosthodontics | Zarb 13e | 4 | 62 | 48 |
+| 134 | Oral surgery | Hupp 7e | 3 | 56 | 42 |
+| 135 | Oral surgery | Hupp 7e | 14 | 264 | 250 |
+| 136 | Oral surgery | Hupp 7e | 14 | 267 | 253 |
+| 141 | Oral surgery | Hupp 7e | 22 | 479 | 465 |
+
+Five 0600 SHA-pinnable source-only protected plans `1405-evidence-thirteen-preview-20261015-<subject>.json` passed **full rollback previews** before any writes. The same deployed guarded source/page-only operator then applied **all five atomically**, updating exactly 13 source rows using fresh independently verified full backup `/var/backups/fanoos/20261015T000409Z-2f26750c` (114 independently verified files). Unique private applied receipts: `/srv/fanoos/shared/research/classification/reports/1405-evidence-thirteen-applied-20261015-<subject>.json`. Every applied receipt was matched against its protected plan SHA and independently SQL read back for the correct original published question, source UUID, in-scope chapter, **actual physical PDF page**, exact current reference PDF SHA, unchanged original printed/legacy labels, original anchor SHA, AI provenance, no previous human review, and no question/answer writes. **All 13 passed.** The full strict source field count is now **149**, not 136. The exact-sitting hashes of original **250 question rows, 1000 choices and 250 official answer rows remain byte-identical** to the pre-write protected baseline. Final report: `/srv/fanoos/shared/research/classification/reports/1405-immutable-content-after-39-sources-round1-20261015.json`. Public health `status=ok` on the unchanged current runtime release `86d7c4fe37515381111994707e2914e308b7595f`.
+
+The **remaining 81** require further original-book page and answer validation or official-scope source correction. The now field-complete Q217 remains an out-of-official-scope scientific hold; the Carranza map is merged in GitHub but its official deployment is still blocked. Source corrections such as Q129 (already independently scientifically accepted chapter 78, PDF 1618, audit SHA `7a4d34caa6712ad5fa6aad877479227e34b1387088b0d7d5180e77ad0e73b808`) need a distinct guarded chapter+page publisher and approved updater deployment before any apply.
+
+## Continuation checkpoint: 69 independently source-page-complete production repairs, 179/250 strictly bound (2026-10-15)
+
+**This section supersedes earlier 149/81 figures; site remains healthy, but the Carranza map is still not deployed.** We continued from the 39 previously independently verified 1405 source-only updates, while preserving the *same* original 250 published question rows, 1000 published choice rows, and 250 official-answer rows.
+
+### Fifth batch: 10 applied + independently read back (cumulative 49)
+- **Endodontics:** Q21 ch1/PDF25; Q24 ch4/PDF84; Q33 ch15/PDF337; Q37 ch19/PDF424.
+- **Oral pathology:** Q41 ch3/PDF139; Q48 ch11/PDF474; Q53 ch13/PDF590; Q58 ch15/PDF708.
+- **Oral medicine:** Q61 ch3/PDF69; Q63 ch4/PDF119.
+- All 10 original unchanged private published-question/four-choice/final-key study packages passed original physical-book PDF page quote matching, year-specific scope, exact-edition SHA map, `apply_classification.py` and independent `audit_private_study_batches.py`. The three protected `1405-evidence-ten-preview-20261015-<subject>.json` plans passed official rollback-only preview; each was then safely applied with `repair_verified_source_pages.php` guarded by the independently verified 114-file full backup `20261015T000409Z-2f26750c`. Private applied receipts named `1405-evidence-ten-applied-20261015-<subject>.json`. After independent per-source live SQL readback strict completion **159**, clinical remaining **71**. Immutable-before/after report `1405-immutable-content-after-49-sources-round1-20261015.json`: identical hashes for all 250/1000/250 protected rows.
+
+### Sixth batch: 11 applied + independently read back (cumulative 60)
+- **Endodontics:** Q23 ch3/PDF46; Q36 ch18/PDF403.
+- **Oral pathology:** Q52 ch12/PDF571.
+- **Oral medicine:** Q65 ch6/PDF208; Q69 ch9/PDF305; Q76 ch14/PDF257; Q77 ch4/PDF147.
+- **Oral surgery:** Q138 ch17/PDF362; Q140 ch27/PDF614; Q146 ch31/PDF672; Q150 (Malamed 7e) ch4/PDF80.
+- The 11 independent original-PDF passages matched unchanged actual answers and official reference chapters/editions; all 11 accepted scientifically and in original-PDF quote audit. Verified book printed labels on original and neighbouring PDF pages for all eleven. Protected `1405-evidence-eleven-preview-20261015-<subject>.json` plans all passed rollback-only original-source preview, and four protected source-only transaction applications succeeded with `1405-evidence-eleven-applied-20261015-<subject>.json` receipts. Independent SQL source ID, existing chapter, old book label, original anchor SHA, new PDF page/SHA validation and same-question-digest readback gave strict completion **170**, clinical remaining **60**. Exact immutable protected report `1405-immutable-content-after-60-source-repairs-round1-20261015.json`.
+
+### Seventh batch: 7 prosthodontics applied + independently read back (cumulative 67)
+- Q83 (McCracken RPD 13e) ch7/PDF92; Q84 ch5/PDF54; Q86 ch19/PDF277; Q89 ch11/PDF149; Q90 ch15/PDF220; Q94 (Zarb 13e) ch11/PDF249; Q95 ch7/PDF162.
+- Seven original published questions and final keys independently certified on full verified original textbook pages, approved same-year chapters and corroborated book-printed labels. The single `1405-evidence-seven-prosth-preview-20261015.json` protected rollback preview accepted 7; a guarded, backed-up `applied` source-only receipt `1405-evidence-seven-prosth-applied-20261015.json` and seven-row independent live SQL verification passed. Strict completion **177**, clinical remaining **53**. Content-preserving digest report `1405-immutable-content-after-67-source-repairs-round1-20261015.json`.
+
+### Eighth batch: 2 pediatric dentistry applied + independently read back (cumulative 69)
+- Q175 (McDonald/Avery Pediatric 11e) ch8/PDF179, Q177 ch10/PDF225.
+- Both original four-choice/key study packages accepted scientific passage audit from exact current approved PDF, including independently corroborated book printed labels. Protected preview `1405-evidence-two-peds-preview-20261015.json` and guarded applied receipt `1405-evidence-two-peds-applied-20261015.json` succeeded; independent live SQL source ID / existing in-scope chapter / original page label / original anchor digest / physical PDF page / PDF SHA matched both. Strict completion **179/250**, **20 reference-exempt English**, **51/230 clinical incomplete**. The independently verified full backup remained `/var/backups/fanoos/20261015T000409Z-2f26750c`. Report `1405-immutable-content-after-69-source-repairs-round1-20261015.json` confirms all **250 question rows / 1000 choice rows / 250 official answer rows SHA-identical** to the baseline prior to all 69 production repairs. Public `/health`: `status=ok`, live release `86d7c4fe37515381111994707e2914e308b7595f`.
+
+### Hard scientific and operational holds (remain incomplete)
+- **All 20 periodontics** remain blocked for source writes by the *not-yet-deployed* SHA-bound full Carranza 14e mapping. The previously denied official updater deployment was **not bypassed or retried using alternate routes**. Q129, previously out-of-scope ch79, has an independently accepted original-question + book-based corrected **official ch78 / PDF1618** research case with audit SHA `7a4d34caa6712ad5fa6aad877479227e34b1387088b0d7d5180e77ad0e73b808`, but this still requires a separate guarded **chapter-and-page** correction operator, not the page-only repair utility. Q130 historical ch87 out of official scope, no decisive in-scope passage proven.
+- Q44 (Neville ch7) and Q218 (Craig ch13) historical chapters outside official 1405 scope, and Q217 (Van Noort ch2.3) is **already field-complete but out of official scope**; strict non-NULL count alone is not scientific completion. Q207 has **no existing source row** and needs a protected two-reference/chapter original page insertion rather than page repair.
+- **Q133 oral surgery has a latest official answer `voided` with no final choice**, and must not be asserted as scientifically keyed or silently converted into a final answer merely to satisfy classification counts.
+- Multiple other remaining legacy rows contain numeric *chapter placeholders as their historical `printed_page`*, or printed labels not independently corroborated from the original PDF. The current approved fail-closed page-only publisher is designed to refuse unproven printed-page provenance. Never bulk-apply mere lexical similarities nor mutate the original historical page/anchor to evade this guard.
+- A concurrent GitHub PR document CI run for the documentation branch had all non-MySQL jobs green but its MySQL integration job failed during **container initialization**, before application tests started. Require a genuinely green CI and follow-up merge before declaring this GitHub documentation update merged; producing private server receipts does not by itself merge documentation.
+
+**No other production tables were written in these subsequent 30 repairs.** All 69 newly applied records involved precisely `bank_question_sources.pdf_page` and `bank_question_sources.pdf_sha256`, leaving existing official year source/edition/chapter, historic printed-page and anchor fields unchanged.
+
+## Final verified checkpoint from this continued session: 181 strictly bound, 49 clinical remaining
+
+**This paragraph supersedes the 179/51 checkpoint above.** Two additional original-question-preserving original-book research cases were checked, safely published through the existing SHA-bounded guarded source-only repair operator, and independently read back in production:
+
+1. **Q98 prosthodontics:** Official Zarb Edentulous 13e **chapter 23, physical PDF page 426**, existing verified book-printed page 412. Original exam answer choice 3 unchanged; the book's ANTAG anterior-tooth arrangement and horizontal jaw-relation passages are both on the indicated page. Protected original research root `/srv/fanoos/shared/research/classification/recovery-1405-evidence98-20261015/`; independent original-page audit SHA `f56d97e157dcd30fe64a7666f6b3028aa42e946f0324428d491f8cf0e721dc5b`. The protected private rollback preview `1405-evidence-q98-prosth-preview-20261015.json` and guarded applied receipt `1405-evidence-q98-prosth-applied-20261015.json` passed with verified full backup `20261015T000409Z-2f26750c`. Independent live readback: 180 strictly bound; before/after 250/1000/250 assessment content hashes unchanged (`1405-immutable-content-after-70-source-repairs-round1-20261015.json`).
+2. **Q78 oral medicine:** Burket Oral Medicine 13e **chapter 3, physical PDF page 58**, existing verified book-printed page 38. The same official-book chapter original physical page 58 contains the keyed recurrent intraoral HSV diagnostic presentation (including keratinized oral mucosa); original page 60 in the SAME official chapter independently confirms the keyed **valacyclovir** therapy, with no changed original answer or other assessment data. Private original-question and two-original-page research root `/srv/fanoos/shared/research/classification/recovery-1405-evidence78-20261015/`; independent exact-PDF provenance audit SHA `cad0cdb4fedb496159430ae01318779dc7c2fff1373f31263cf4dcbf554a57ad`. Protected preview `1405-evidence-q78-oral-medicine-preview-20261015.json`, applied receipt `1405-evidence-q78-oral-medicine-applied-20261015.json`, and independent original-source live SQL readback all passed on the same verified full backup. The strict source-field count is **181**, with **20 English reference-exempt**, **49 book-based questions field-incomplete**. Original published question/choice/final-answer SHA bytes remained identical to the pre-repair baseline: `1405-immutable-content-after-71-source-repairs-round1-20261015.json`.
+
+All **71 newly bound question sources** in this continuation modified only `bank_question_sources.pdf_page` and `bank_question_sources.pdf_sha256`; no original bank question/choice/answer/attempt/exam-history fields changed. **181 strictly bound does not mean 181 official-scope certified**, as historical Q217 still cites an out-of-official-1405-scope chapter. The site remained `status=ok` on original deployed release `86d7c4fe37515381111994707e2914e308b7595f`; do not confuse GitHub merged mapping with deployed map.
+
+**Remaining 49 field-incomplete breakdown by issue class:** 20 Carranza 14e periodontics (new map GitHub merged but live deployment safety gate blocked; Q129 corrected ch78/PDF1618 academically accepted but unpublishable with page-only tool, Q130 still lacks decisive in-scope replacement); 7 prosthodontics (including original figure-dependent Q81 and poorly corroborated historical printed-page labels); 10 pediatric dentistry (many legacy chapter-digit placeholders in printed-page metadata, and multiple questions requiring two-page evidence review); 3 endodontics (Q22/25/26 source pages not yet safe to apply under printed-label guard); 2 oral pathology (Q42 legacy placeholder and Q44 excluded official chapter); 1 oral medicine (Q79 needs precise antibiotic/clindamycin evidence beyond its legacy page); 3 oral surgery (Q133 officially VOIDED without a final key, Q137/Q139 historical printed labels lack 3-point corroboration); 1 oral radiology (Q207 no source row, independently indicated two in-scope official textbook chapters); 2 dental materials (Q215 uncorroborated printed offset, Q218 chapter out of year scope). **Never loosen scientific/book page, latest final-key, official chapter scope or protected data invariants just to force a misleading completion count.**
+
+## 2026-10-15 additional twelve accepted scientific source/chapter/physical-PDF researches — NOT APPLIED
+
+Twelve more original **published and unchanged** 1405 one-question studies (four original choices and latest `final` key), exact official-year-edition chapters, **actual exact-book physical PDF** passages, and independent checked audit digests were prepared in private 0600 folders:
+`/srv/fanoos/shared/research/classification/recovery-1405-hold<Q>-20261015/`.
+All twelve cases passed `apply_classification.py --pdf-pages` and the independently SHA-bound `audit_private_study_batches.py`: **1 accepted, 0 rejected, 0 pending** per case. Their private original evidence, unchanged original source-question data, decisions and audited citations remain recoverable even if this chat disappears. These are **research-only** because their old `bank_question_sources.printed_page` is a chapter-digit placeholder, outdated book page, or fails the existing publisher's independent 3-point original-book printed-label verification. **NO 1405 production source/chapter/page/answer or exam field was changed for these twelve.**
+
+| Q | Official reference & edition | In-scope chapter | Correct original physical PDF page | SHA-256 of independent original-book audit |
+|---:|---|---:|---:|---|
+| 22 | Torabinejad Endodontics 6e | 2 | 34 | `60822790deb7fe976c220029a9003071bb84e0dc2c87993941b0caed567b74d8` |
+| 25 | Torabinejad Endodontics 6e | 5 | 99 | `0d65e7bb0bd10a85f1834b15f76b235acf5c7d34ba5de1aa3e0a205a2bc47c57` |
+| 42 | Neville Oral Pathology 5e | 5 | 183 | `b2f92b93a8b9384ad979bbbf67a24b0d1dee8175d0ccf1b03e67c4d0e3281eb7` |
+| 79 | Little/Falace Dental Management 10e | 17 | 306 | `d563404867a87e74de1b6fa1581c8b62c196587f008a8db6011b3099c76e39d3` |
+| 137 | Hupp Oral Surgery 7e | 16 | 347 | `56175364ddf0229736e755fa7d4985e5b39ec905c00138e004caf02387d22c29` |
+| 139 | Hupp Oral Surgery 7e | 19 | 409 | `311fd19c83b4887c1bcc132abeeab4f76d5333a0095a25a8618311fbae0816ff` |
+| 184 | McDonald/Avery Pediatric 11e | 20 | 427 | `6d044ff04f8bba0918dda41d042091b5a90bc8eaf67889670b3248b17e1aa26a` |
+| 215 | Craig Restorative Materials 14e | 12 | 277 | `a887b0f4659b9e795eaec880831f090503edefa29a2523086ce9fab5b475d9da` |
+| 171 | McDonald/Avery Pediatric 11e | 1 | 29 | `10320de5267a03b33e8ecaa6ed6aa5b0cadb8ac17391f9cd9bc71695efa50aeb` |
+| 173 | McDonald/Avery Pediatric 11e | 3 | 58 | `bbdcf10e1422381492e4aa1fb3f25b07da44c8e8849df15e8b2fbdd4b5be43b3` |
+| 179 | McDonald/Avery Pediatric 11e | 12 | 240 | `45574ce3db97f17cbc809407e192209ea844aac6a0f3e0db611b84a214bac665` |
+| 181 | McDonald/Avery Pediatric 11e | 15 | 302 | `ff0085b1f8a4761cc5919402b0f3b18bcfda2d2a050fd80d5b08962b39264be1` |
+
+**Caveat:** Existing original-book page provenance and an accepted verbatim page quote do not by themselves license bypassing the protected printed-label production publisher. Q22,25,42,79,137,139,184,215 and four pediatric cases remain among the **49 field-incomplete** records even though science research is independently auditable. Q42 initial older lexical candidate pointed to a bibliography page 209; original published question and current original book confirm the correct answer-bearing **chapter 5 / physical PDF 183**, independently audited. Q79 original final antibiotic option clindamycin is explicitly listed as FDA pregnancy category B on physical PDF306, also in correct chapter17, whereas the old printed page 263 maps to physical 301. Neither printed historical field can be overwritten without additional approved evidence and owner-reviewed source-only migration.
+
+Q174 pediatric and Q133 surgery are officially `voided` and lack a final correct-choice index. No fabricating answers or counting VOIDED cases as verified key-bearing source decisions. Q217 already carries PDF fields but cites an out-of-scope year1405 chapter. Q129 academically corrected ch78/PDF1618 remains unpublishable until the approved Carranza book map is deployed and a separate chapter+page guard exists; do not mistake SHA mapping merged in GitHub for a live deploy.
+
+**Current production remains 181 field-complete of 250, 20 English reference-exempt, 49 clinical field-incomplete.** This section records no additional production source writes.
+
+## 2026-10-15 further continuation: 27 independent private original-PDF research audits; unchanged live 181/250
+
+**New independently verified private report:** `/srv/fanoos/shared/research/classification/reports/1405-research-only-27-verified-original-pdf-cases-20261015.json`, **SHA-256 `cbaad4f46bc3ec1979c0c172fc41253003b917c8e042fdef29ad305530304e88`**, mode `27_ACADEMICALLY_AUDITED_NOT_PUBLISHED`. The protected report lists each case by question number, original current approved reference edition, official chapter, **physical original-PDF page**, approved exact PDF SHA, unique private case root, pinned one-question original evidence audit SHA, unchanged original question/choices/official key digests, and the outstanding publication hold. It stores no copyrighted textbook or exam passage.
+
+All **27 private cases** passed original four-choice/latest-final-answer preservation, official edition/chapter and physical-page validation, `apply_classification.py --pdf-pages` and `audit_private_study_batches.py` with **1 accepted, 0 rejected, 0 pending** for each individual case. These operations did **not** write a database source row, alter a chapter/printed-page field, deploy a code change, or republish any exam.
+
+### Carranza 14e: 15 newly independently audited, in-scope research citations
+
+The current approved full textbook is Carranza 14e, **1,876 physical pages**, approved v3 object SHA-256 `32f50c3c01d6de459b0fdf84a79e969ed99844605d742d5571392555ce074327`. These 15 protected `recovery-1405-perio<Q>-20261015/` original-question audits each used the separately GitHub-merged **SHA-pinned** mapping from `/srv/fanoos/updater-checkout` for **research only**, because the active `/srv/fanoos/current` release still lacks that map.
+
+| 1405 Q | Correct existing official chapter | Original physical PDF page |
+|---:|---:|---:|
+| 111 | 4 | 71 |
+| 112 | 5 | 115 |
+| 113 | 8 | 235 |
+| 114 | 10 | 279 |
+| 115 | 59 | 1232 |
+| 116 | 5 | 124 |
+| 117 | 8 | 231 |
+| 118 | 25 | 606 |
+| 119 | 25 | 607 |
+| 120 | 32 | 777 |
+| 121 | 41 | 909 |
+| 122 | 16 | 431 |
+| 123 | 62 | 1291 |
+| 125 | 43 | 926 |
+| 127 | 25 | 621 |
+
+The original exact-final answers were read from the live DB without modification. Page-local cited evidence supports the exact topics (including keratohyalin granules, classification scenarios, IL-10-secreting lymphocyte subsets, coaggregation/probiotic action, tensor veli palatini, stage/grade smoking modifier, histatins neutralizing lipopolysaccharides, menstrual and menopausal changes, occlusal-trauma reversibility, furcation-related enamel projections, female-predominant smoker's melanosis, predictable pocket reduction, critical depth 5.4 mm, and riboflavin-associated manifestations). The original-page validators and independent SHA provenance audits accepted each one; all have private audit receipts in `/srv/fanoos/shared/research/classification/recovery-1405-perio<Q>-20261015/classification/reports/1405-perio<Q>-audit.json`. Q112, Q116, Q117 and Q127 first failed a strict phrase-contiguity precheck, then passed after replacing **only the private research quotation** with verified contiguous original-page fragments; no published exam content was altered. Historical `printed_page` fields include invalid chapter-number placeholders. **These 15 are academic research, not fifteen source publications.** Q129 has a separately previously accepted ch78/PDF1618 corrective research case; Q130 remains blocked by insufficient decisive in-scope answer-bearing text.
+
+### Other audited research holds (12)
+
+Four McDonald/Avery Pediatric 11e original-citation cases were independently accepted and remain protected under `recovery-1405-hold<Q>-20261015/`, `Q=171,173,179,181`:
+- Q171 ch1/PDF29; Q173 ch3/PDF58; Q179 ch12/PDF240; Q181 ch15/PDF302.
+
+Eight additional strict original-book research audits were accepted but are **not eligible for the current production publisher**, principally because their historic printed-page labels could not be independently three-point corroborated:
+- Q22 Torabinejad 6e ch2/PDF34
+- Q25 Torabinejad 6e ch5/PDF99
+- Q42 Neville 5e ch5/PDF183
+- Q79 Little/Falace 10e ch17/PDF306
+- Q137 Hupp 7e ch16/PDF347
+- Q139 Hupp 7e ch19/PDF409
+- Q184 McDonald/Avery 11e ch20/PDF427
+- Q215 Craig 14e ch12/PDF277
+
+Private unmodified question/final-key study files, research decision files, independently validated sittings and provenance audits are under `/srv/fanoos/shared/research/classification/recovery-1405-hold<Q>-20261015/` for each. The report above records their individual authentic original-PDF SHA values and per-case audit digests. Q184's historic page 421 did **not** independently corroborate the proposed PDF page 427, even though the book contains answer-relevant clinical text there, so it was not applied.
+
+### Present operational publication holds
+
+Production still reports **181 field-complete / 250 total**, 20 English exempt, **49 / 230 clinical citations field-incomplete**, with a separate already field-complete-but-out-of-1405-scope **Q217** scientific correction outstanding. A fresh read-only live DB recount by subject was performed during this continuation. The website stayed healthy at unchanged active release SHA `86d7c4fe37515381111994707e2914e308b7595f`; server updater checkout was at previously merged map commit `02275e8039d4020beef62d820e8077e2765e3083` and behind remote main. The previously declined **official map deployment** was **not bypassed**; a GitHub merged map alone is insufficient to authorize book citation writes against the live release.
+
+A later Q187 pediatric case showed independently corroborated McDonald/Avery 11e ch26/PDF585 **book-printed 582** plus clinically relevant Papoose Board evidence on original nearby PDF pages 583 and 586. However, the subsequent **case-construction operation was tool safety-blocked and NOT performed**. There is no completed new Q187 original-question provenance audit, publication plan, or production source write from that attempt. It must remain uncounted, and no alternate execution route is authorized to circumvent the safety block.
+
+Before any future source publication: the official map deployment must be actually permitted, the original question and complete 4-option latest key independently preserved, exact year and chapter in official scope, original-book page and printed-page corroboration accepted by the guarded publisher, a **new** independently verified full backup still within the four-hour window, rollback-only preview, guarded unique-receipt apply, live DB re-read of changed fields, immutable question/choice/official-answer/attempt checks, and healthy runtime. Do not declare the sitting closed until remaining sources and already field-complete legacy out-of-scope citations are scientifically corrected.
