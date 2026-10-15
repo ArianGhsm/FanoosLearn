@@ -78,6 +78,13 @@ final class PrintedBookPageEvidence
         ), static fn(string $line): bool => $line !== ''));
         $edge = array_merge(array_slice($lines, 0, 3), array_slice($lines, -3));
         $numbers = [];
+        // Some approved PDFs put the printed label at the end of a long
+        // first-line chapter running header. Accept only that exact shape;
+        // ordinary long body lines remain excluded below.
+        if (!$allowLongHeader && isset($lines[0]) && mb_strlen($lines[0]) < 180
+            && preg_match('/^Chapter\s+[0-9]{1,3}\b.{0,170}\h{2,}([1-9][0-9]{0,3})$/u', $lines[0], $header)) {
+            $numbers[] = (int) $header[1];
+        }
         foreach ($edge as $line) {
             if (!$allowLongHeader && mb_strlen($line) >= 90) {
                 continue;
