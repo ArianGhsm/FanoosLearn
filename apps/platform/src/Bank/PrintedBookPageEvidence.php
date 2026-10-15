@@ -103,6 +103,13 @@ final class PrintedBookPageEvidence
             && preg_match('/^Chapter\s+[0-9]{1,3}\b.{0,170}\h{2,}([1-9][0-9]{0,3}(?:\.e[1-9][0-9]?)?)$/iu', $lines[0], $header)) {
             $numbers[] = str_contains($header[1], '.e') ? strtolower($header[1]) : (int) $header[1];
         }
+        // Torabinejad 6e prints some page numbers before a spaced chapter
+        // running header. Restrict this exception to the first line and the
+        // exact header shape; corroborates() still requires neighboring pages.
+        if (!$allowLongHeader && isset($lines[0]) && mb_strlen($lines[0]) < 180
+            && preg_match('/^([1-9][0-9]{0,3})\h{2,}C\h*H\h*A\h*P\h*T\h*E\h*R\h+[0-9]{1,3}\b/iu', $lines[0], $header)) {
+            $numbers[] = (int) $header[1];
+        }
         foreach ($edge as $line) {
             if (!$allowLongHeader && mb_strlen($line) >= 90) {
                 continue;
