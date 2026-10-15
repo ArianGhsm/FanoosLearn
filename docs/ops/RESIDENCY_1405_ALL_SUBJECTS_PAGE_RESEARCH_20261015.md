@@ -287,3 +287,30 @@ The **remaining 81** require further original-book page and answer validation or
 All **71 newly bound question sources** in this continuation modified only `bank_question_sources.pdf_page` and `bank_question_sources.pdf_sha256`; no original bank question/choice/answer/attempt/exam-history fields changed. **181 strictly bound does not mean 181 official-scope certified**, as historical Q217 still cites an out-of-official-1405-scope chapter. The site remained `status=ok` on original deployed release `86d7c4fe37515381111994707e2914e308b7595f`; do not confuse GitHub merged mapping with deployed map.
 
 **Remaining 49 field-incomplete breakdown by issue class:** 20 Carranza 14e periodontics (new map GitHub merged but live deployment safety gate blocked; Q129 corrected ch78/PDF1618 academically accepted but unpublishable with page-only tool, Q130 still lacks decisive in-scope replacement); 7 prosthodontics (including original figure-dependent Q81 and poorly corroborated historical printed-page labels); 10 pediatric dentistry (many legacy chapter-digit placeholders in printed-page metadata, and multiple questions requiring two-page evidence review); 3 endodontics (Q22/25/26 source pages not yet safe to apply under printed-label guard); 2 oral pathology (Q42 legacy placeholder and Q44 excluded official chapter); 1 oral medicine (Q79 needs precise antibiotic/clindamycin evidence beyond its legacy page); 3 oral surgery (Q133 officially VOIDED without a final key, Q137/Q139 historical printed labels lack 3-point corroboration); 1 oral radiology (Q207 no source row, independently indicated two in-scope official textbook chapters); 2 dental materials (Q215 uncorroborated printed offset, Q218 chapter out of year scope). **Never loosen scientific/book page, latest final-key, official chapter scope or protected data invariants just to force a misleading completion count.**
+
+## 2026-10-15 additional twelve accepted scientific source/chapter/physical-PDF researches — NOT APPLIED
+
+Twelve more original **published and unchanged** 1405 one-question studies (four original choices and latest `final` key), exact official-year-edition chapters, **actual exact-book physical PDF** passages, and independent checked audit digests were prepared in private 0600 folders:
+`/srv/fanoos/shared/research/classification/recovery-1405-hold<Q>-20261015/`.
+All twelve cases passed `apply_classification.py --pdf-pages` and the independently SHA-bound `audit_private_study_batches.py`: **1 accepted, 0 rejected, 0 pending** per case. Their private original evidence, unchanged original source-question data, decisions and audited citations remain recoverable even if this chat disappears. These are **research-only** because their old `bank_question_sources.printed_page` is a chapter-digit placeholder, outdated book page, or fails the existing publisher's independent 3-point original-book printed-label verification. **NO 1405 production source/chapter/page/answer or exam field was changed for these twelve.**
+
+| Q | Official reference & edition | In-scope chapter | Correct original physical PDF page | SHA-256 of independent original-book audit |
+|---:|---|---:|---:|---|
+| 22 | Torabinejad Endodontics 6e | 2 | 34 | `60822790deb7fe976c220029a9003071bb84e0dc2c87993941b0caed567b74d8` |
+| 25 | Torabinejad Endodontics 6e | 5 | 99 | `0d65e7bb0bd10a85f1834b15f76b235acf5c7d34ba5de1aa3e0a205a2bc47c57` |
+| 42 | Neville Oral Pathology 5e | 5 | 183 | `b2f92b93a8b9384ad979bbbf67a24b0d1dee8175d0ccf1b03e67c4d0e3281eb7` |
+| 79 | Little/Falace Dental Management 10e | 17 | 306 | `d563404867a87e74de1b6fa1581c8b62c196587f008a8db6011b3099c76e39d3` |
+| 137 | Hupp Oral Surgery 7e | 16 | 347 | `56175364ddf0229736e755fa7d4985e5b39ec905c00138e004caf02387d22c29` |
+| 139 | Hupp Oral Surgery 7e | 19 | 409 | `311fd19c83b4887c1bcc132abeeab4f76d5333a0095a25a8618311fbae0816ff` |
+| 184 | McDonald/Avery Pediatric 11e | 20 | 427 | `6d044ff04f8bba0918dda41d042091b5a90bc8eaf67889670b3248b17e1aa26a` |
+| 215 | Craig Restorative Materials 14e | 12 | 277 | `a887b0f4659b9e795eaec880831f090503edefa29a2523086ce9fab5b475d9da` |
+| 171 | McDonald/Avery Pediatric 11e | 1 | 29 | `10320de5267a03b33e8ecaa6ed6aa5b0cadb8ac17391f9cd9bc71695efa50aeb` |
+| 173 | McDonald/Avery Pediatric 11e | 3 | 58 | `bbdcf10e1422381492e4aa1fb3f25b07da44c8e8849df15e8b2fbdd4b5be43b3` |
+| 179 | McDonald/Avery Pediatric 11e | 12 | 240 | `45574ce3db97f17cbc809407e192209ea844aac6a0f3e0db611b84a214bac665` |
+| 181 | McDonald/Avery Pediatric 11e | 15 | 302 | `ff0085b1f8a4761cc5919402b0f3b18bcfda2d2a050fd80d5b08962b39264be1` |
+
+**Caveat:** Existing original-book page provenance and an accepted verbatim page quote do not by themselves license bypassing the protected printed-label production publisher. Q22,25,42,79,137,139,184,215 and four pediatric cases remain among the **49 field-incomplete** records even though science research is independently auditable. Q42 initial older lexical candidate pointed to a bibliography page 209; original published question and current original book confirm the correct answer-bearing **chapter 5 / physical PDF 183**, independently audited. Q79 original final antibiotic option clindamycin is explicitly listed as FDA pregnancy category B on physical PDF306, also in correct chapter17, whereas the old printed page 263 maps to physical 301. Neither printed historical field can be overwritten without additional approved evidence and owner-reviewed source-only migration.
+
+Q174 pediatric and Q133 surgery are officially `voided` and lack a final correct-choice index. No fabricating answers or counting VOIDED cases as verified key-bearing source decisions. Q217 already carries PDF fields but cites an out-of-scope year1405 chapter. Q129 academically corrected ch78/PDF1618 remains unpublishable until the approved Carranza book map is deployed and a separate chapter+page guard exists; do not mistake SHA mapping merged in GitHub for a live deploy.
+
+**Current production remains 181 field-complete of 250, 20 English reference-exempt, 49 clinical field-incomplete.** This section records no additional production source writes.
