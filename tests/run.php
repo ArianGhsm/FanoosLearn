@@ -51,6 +51,7 @@ use Fanoos\Tests\Operations\ExamRankingTest;
 use Fanoos\Tests\Operations\StudyPlanLayoutTest;
 use Fanoos\Tests\Operations\QuestionBankRowTest;
 use Fanoos\Tests\Operations\SourcePageBackfillTest;
+use Fanoos\Tests\Operations\SourceChapterCorrectionGuardTest;
 use Fanoos\Tests\Operations\ReferenceLibraryImportPolicyTest;
 use Fanoos\Tests\Operations\StudyScheduleTest;
 use Fanoos\Tests\Operations\ZibalPaymentGatewayTest;
@@ -90,6 +91,8 @@ try {
     echo "PASS question bank row mapping\n";
     $assertions += (new SourcePageBackfillTest())->run();
     echo "PASS legacy source page backfill rules\n";
+    $assertions += (new SourceChapterCorrectionGuardTest())->run();
+    echo "PASS independent source chapter correction audit binding\n";
     $assertions += (new ReferenceLibraryImportPolicyTest())->run();
     echo "PASS reference library partial-import policy\n";
     $assertions += (new ExamRankingTest())->run();
