@@ -184,3 +184,20 @@ A new single-question private research package `/srv/fanoos/shared/research/clas
 ### Remaining exact-year scope
 
 After the 16 verified non-periodontics applies, unfinished book-based counts are: periodontics 20, prosthodontics 17, oral surgery 14, pediatric dentistry 13, endodontics 13, oral medicine 12, oral pathology 12, dental materials 2, radiology 1; all other textbook-based subject backlogs are 0. Total 104. Existing out-of-official-scope source chapters Q44, Q129, Q130, Q218 and pre-existing field-complete Q217 remain on scientific hold, as does source-free Q207 with two distinct in-scope original references. **Do not call the entire exam certified or complete until source/page verification and year scope are both satisfied.**
+
+## Same-day independently applied second batch: Q30, Q46, Q62, Q131
+
+**Supersedes the 126/104 count above:** Following the first sixteen valid applies, four additional questions were independently examined against the exact official edition and their final published answers. Original private one-question studies were constructed from unchanged live stems, four choices and latest official final keys, with answer-bearing short quotations on the approved original PDF pages:
+
+| Question | Year-1405 official reference | Chapter | Physical PDF page | Verified book printed label | Accepted provenance audit SHA-256 |
+|---:|---|---:|---:|---:|---|
+| 30 | Torabinejad Endodontics 6e | 12 | 241 | 234 | `4b31bfa95b3bd01ef27b64edad3a4a05920618ae0695b787de1b40ad2a728855` |
+| 46 | Neville Oral Pathology 5e | 10 | 384 | 374 | `060937be32842995a297d08f57a00ffa8d0a4baecedd88e083a13a0560b83bda` |
+| 62 | Burket Oral Medicine 13e | 3 | 75 | 55 | `50d013ba406e3f92eb4b988f0cfd738c23743cc32176aa241f880e5c10cdfdd6` |
+| 131 | Hupp Oral Surgery 7e | 1 | 20 | 6 | `c73f2bb7cead1b8352be16cc96b763826b141557134b82fd32a74d34123c315b` |
+
+All four independent original-book classification validators and SHA-pinned provenance auditors returned **one accepted, zero rejected, zero pending** per case. The corresponding protected research roots are `/srv/fanoos/shared/research/classification/recovery-1405-evidence<Q>-20261015/` for the listed Q values. The protected 0600 plans `/srv/fanoos/shared/research/classification/reports/1405-evidence-new-page-preview-20261015-<subject>.json` all passed rollback-only preview and were then applied via the deployed guarded **source-only** operator, with the same fresh verified full backup `20261015T000409Z-2f26750c`, to unique private `1405-evidence-new-page-applied-20261015-<subject>.json` receipts.
+
+A **separate read-only live DB re-query** verified all four published source identifiers, existing unchanged in-scope chapters, original and printed pages, unchanged original anchor digests and AI provenance, correct physical PDF page and SHA; new field-complete count was **130/250**, with **20 English exempt** and **100 textbook-based questions incomplete**. Before/after immutable-content check across the original exact sitting: all **250 original question rows**, **1000 choices**, **250 official answer rows** have identical SHA-256 to the pre-write baseline. Protected report: `/srv/fanoos/shared/research/classification/reports/1405-immutable-content-after-20-sources-round1-20261015.json`. Public health stayed `status=ok`, old live release unchanged. No attempt/assessment or question/choice/answer write occurred. The old source-only page repairs **do not** solve Q217’s out-of-official-scope chapter or the remaining Q44/Q129/Q130/Q218/Q207 holds.
+
+The year 1405 is **not finished** by this milestone; 100 book-based incomplete sources remain pending verified original-page scientific review and/or safe publisher availability.
