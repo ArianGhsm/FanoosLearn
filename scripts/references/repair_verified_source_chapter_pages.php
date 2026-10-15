@@ -167,7 +167,7 @@ SQL);
                 || !is_string($oldChapter) || !preg_match('/^[0-9]+(?:\.[0-9]+)?$/D', $oldChapter)
                 || !is_int($page) || $page < 1 || $page > 6000
                 || !is_string($sha) || !preg_match('/^[a-f0-9]{64}$/D', $sha)
-                || !is_string($printed) || !preg_match('/^[1-9][0-9]{0,3}$/D', $printed)
+                || !is_string($printed) || !preg_match('/^[1-9][0-9]{0,3}(?:\.e[1-9][0-9]?)?$/D', $printed)
                 || !array_key_exists('expected_legacy_page', $item)
                 || ($expectedLegacy !== null && !is_string($expectedLegacy))
                 || !array_key_exists('expected_stored_printed_page', $item)
