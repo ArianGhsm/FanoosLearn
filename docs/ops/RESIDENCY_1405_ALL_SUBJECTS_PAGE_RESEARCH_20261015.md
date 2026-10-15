@@ -369,3 +369,59 @@ Production still reports **181 field-complete / 250 total**, 20 English exempt, 
 A later Q187 pediatric case showed independently corroborated McDonald/Avery 11e ch26/PDF585 **book-printed 582** plus clinically relevant Papoose Board evidence on original nearby PDF pages 583 and 586. However, the subsequent **case-construction operation was tool safety-blocked and NOT performed**. There is no completed new Q187 original-question provenance audit, publication plan, or production source write from that attempt. It must remain uncounted, and no alternate execution route is authorized to circumvent the safety block.
 
 Before any future source publication: the official map deployment must be actually permitted, the original question and complete 4-option latest key independently preserved, exact year and chapter in official scope, original-book page and printed-page corroboration accepted by the guarded publisher, a **new** independently verified full backup still within the four-hour window, rollback-only preview, guarded unique-receipt apply, live DB re-read of changed fields, immutable question/choice/official-answer/attempt checks, and healthy runtime. Do not declare the sitting closed until remaining sources and already field-complete legacy out-of-scope citations are scientifically corrected.
+
+## 2026-10-15 follow-on: **all twenty** 1405 periodontology questions independently page-audited — research only
+
+**This is academic/source evidence completion, NOT live source publication.** The 20 current official 1405 periodontics question stems, four original options and latest original official final-key choices have been individually verified and paired to official *Carranza Periodontology 14e* chapter plus **physical PDF page** on approved full source v3: SHA-256 `32f50c3c01d6de459b0fdf84a79e969ed99844605d742d5571392555ce074327` (1,876 physical pages). Every one of the 20 protected per-question independent original-PDF/source-provenance auditors returned **1 accepted / 0 rejected / 0 pending**. All original question, choice and answer rows remained byte-identical. The independently SHA-verified single complete private academic manifest is:
+
+`/srv/fanoos/shared/research/classification/reports/1405-periodontics-all-20-scientific-chapter-pdf-page-audits-20261015.json` — SHA-256 **`f692f963f88c8587eb024c4378be535ef429c953627df5a599fcf2ad5aa86e0d`**.
+
+| Q | Approved 1405 Carranza 14e chapter | Exact original physical PDF page | Historical chapter action |
+|---:|---:|---:|---|
+| 111 | 4 | 71 | Same chapter |
+| 112 | 5 | 115 | Same chapter |
+| 113 | 8 | 235 | Same chapter |
+| 114 | 10 | 279 | Same chapter |
+| 115 | 59 | 1232 | Same chapter |
+| 116 | 5 | 124 | Same chapter |
+| 117 | 8 | 231 | Same chapter |
+| 118 | 25 | 606 | Same chapter |
+| 119 | 25 | 607 | Same chapter |
+| 120 | 32 | 777 | Same chapter |
+| 121 | 41 | 909 | Same chapter |
+| 122 | 16 | 431 | Same chapter |
+| 123 | 62 | 1291 | Same chapter |
+| 124 | 41 | 904 | Same chapter |
+| 125 | 43 | 926 | Same chapter |
+| **126** | **42** | **920** | **Correct historical ch45 → official ch42** |
+| 127 | 25 | 621 | Same chapter |
+| 128 | 65 | 1398 | Same chapter |
+| **129** | **78** | **1618** | **Correct historical out-of-scope ch79 → official ch78** |
+| **130** | **72** | **1505** | **Correct historical out-of-scope ch87 → official ch72** |
+
+**Q126:** Chapter 42 PDF920 has the treatment-sequence table placing nonsurgical supragingival instrumentation before surgery, which directly addresses the unchanged first-treatment key; prior chapter 45 is less appropriate. Independent academic case `recovery-1405-perio126sequence-20261015/`, accepted audit SHA-256 `b89dc4eaf9ca09e4d4d52e27bddf6c2c4917abb64bf019d16a22857bef072af7`. **Q128**: in-scope ch65 PDF1398 contains an original case about painful brushing from inadequate keratinized attached gingiva and graft augmentation, corresponding to unchanged third choice; academic audit `1fb1a30616e9ca5697194988b9f08473b188e0b6a08a9a6b21a669f57d2cd3ec`. **Q129** previously accepted ch78 PDF1618 audit `7a4d34caa6712ad5fa6aad877479227e34b1387088b0d7d5180e77ad0e73b808`. **Q130** independently found **official ch72 PDF1505** original surgical flap/debridement management of peri-implantitis; the latest published official answer remains choice 3; research case `recovery-1405-perio130inscope-20261015/`, audit SHA `a34433462fc34e6441829a4d66dbaae22639e6051c308afd00829822cd07d171`. Three historic chapters **require a guarded chapter-and-page source-only correction**; the deployed page-only operator is not authorized to do it.
+
+**Important live status:** 20/20 academically audited periodontics **does not** mean 20/20 published. Production still has **0/20 bound periodontics** because the CI-merged full-Carranza PDF/SHA chapter map is not in the active release; previous official updater deployment was refused by the operation safety gate, which was **not retried by any alternate path**. Invalid historical book `printed_page` values are often chapter-number placeholders. Do not fabricate or falsely corroborate actual printed labels or alter question/choice/answer/history rows to bypass the guarded publisher.
+
+## 2026-10-15 cross-subject research: 38 accepted original-book citations, eleven not accepted
+
+An expanded **private SHA-pinned 38-case research-only manifest** contains the above 20 periodontics plus 18 audited incomplete citations in seven other subjects (endodontics 2; oral pathology 1; oral medicine 1; prosthodontics 4; oral surgery 2; pediatric dentistry 7; dental materials 1). Source-only academic progress beyond the older 31 cases includes **Q105** Rosenstiel Fixed Prosthodontics 6e ch7 / physical PDF243 (luting cements' relative compressive strengths, original official choice 2); and **Q188** McDonald/Avery Pediatric 11e ch27 / physical PDF607 (celecoxib and factor activity, original choice 1). Both accepted independent original book/unchanged question audits and remain research-only. **Q189** McDonald/Avery 11e ch28 PDF647 / printed page 644 also independently passed full academic provenance, but a guarded production publication-plan request was blocked by safety checks; no alternate execution path was used.
+
+38-case protected manifest:
+`/srv/fanoos/shared/research/classification/reports/1405-research-only-38-official-reference-chapter-pdf-cases-20261015.json`; **SHA-256 `4afd7c1d611fa58442d07e4a820bba582d52fbe26194260a73a5fc0c76e55098`**.
+
+Original 250-question sitting/1000 choices/250 official-answer-row digests independently reconfirmed identical to the initial baseline after this academic work. The live app health remained `status=ok`; active SHA `86d7c4fe37515381111994707e2914e308b7595f`. **Live: 181/250 same-row chapter/PDF-page/PDF-SHA field-complete; 20 English reference-exempt; 49/230 clinical source-field incomplete.** Among those 49, **38** now have independently audited *research-only* book chapter+page citations. A **separate** historical **Q217** is already field-complete but scientifically outside official year scope (Van Noort ch2.3 is excluded). Numerical field completeness must not be confused with year-scope validity.
+
+Original-book exhaustive **year-1405 allowed-chapter** keyword screening did **not** justify transposing existing out-of-scope references to unproven but topical chapters: for **Q44**, Neville HSV-specific histopathology is in excluded ch7; allowed ch16's Tzanck cells instead concern pemphigus, not a safe replacement. For **Q217**, in-scope Van Noort chapter 3.6 refers *back* to excluded ch2.3 for glass-ionomer setting stages; this does not establish a legitimate in-scope citation. For **Q218**, allowed Craig chapters contain incidental self-etch mentions or bibliography, but the decisive original mild self-etch dentin bond-durability passage remains in excluded ch13. Keep all three on scientific hold unless official-year in-scope original evidence is actually located.
+
+**Exactly 11 field-incomplete questions lack a complete accepted original-book/source-provenance package** as of this snapshot: **26, 44, 81, 87, 99, 133, 174, 187, 190, 207, 218**. Both Q133 and Q174 retain the **official voided** answer status (the current publisher requires final/amended, and voided keys must never be silently changed). Q81's examination figure requires separate original figure-to-answer checking. Q207 has no source row and **two** independently researched in-scope White/Pharoah 8e physical pages (ch23/PDF1161, ch24/PDF1294), requiring a guarded two-source publisher rather than arbitrary single-chapter assignment. Q87's numerical 1.5-mm threshold and Q99's small-tooth exclusion require direct answer-bearing verification, not merely topical matches. Q187 has an original textbook page candidate but its case-construction request was safety-blocked, so it was NOT published or counted as an accepted audit.
+
+Private independently verified blocker report:
+`/srv/fanoos/shared/research/classification/reports/1405-remaining-11-unverified-and-1-already-bound-out-of-scope-20261015.json` — SHA-256 **`f74fb06e895fb0f6ee9262670e477a3a3b112d3b99103cda61f1cc87c204b72a`**.
+
+### Required safe publication capability and completion contract
+
+1. Deploy the CI-green official full-Carranza book-SHA map only through the **permitted official FANOOS updater**. It must be present in actual `/srv/fanoos/current`, confirmed by `verified_reference_pdf.py --require-map`, before any Carranza source apply. Never bypass a previous tool-declined operation.
+2. Provide a **reviewed, versioned, tested guarded source-only correction workflow** for historic chapter placeholders, corrected original printed book page, and when scientifically warranted simultaneous **edition/source/chapter/physical PDF page/PDF SHA** updates, preserving original source identity, anchor/review provenance, every question, choice, key, assessment attempt and immutable content snapshots. Require official year/chapter scope, original-PDF quote and SHA, protected plan, newly verified full backup, transaction preview/rollback, unique apply receipt and independent SQL readback.
+3. Respect voided original official answers for Q133/Q174, original figure dependencies and Q207's genuinely multi-source evidence; never fabricate a final key, inferred figure, official scope or exact PDF page.
+4. After a safe release/source application, independently verify each page+chapter+SHA row, all initial and final content digests, exact live published assessment state, all applicable CI/merge/deployment/health results. **No year completion claim yet.**
