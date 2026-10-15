@@ -228,3 +228,96 @@ chapter and is a separate scientific hold. Q81's figure/key ambiguity and
 Q99's insufficient decisive original-book evidence remain unresolved. Thus
 the **periodontics source-field backlog is closed**, while the full 1405
 exam classification cannot yet be declared complete.
+
+## Same-day continuation: seventeen more verified sources, 223/250 field coverage
+
+This section supersedes the **206/250** field count above. No sitting import,
+question/choice/key edit, assessment republish, attempt edit, or raw SQL source
+update was performed. All source changes used the deployed guarded operators
+with separate SHA-pinned private plans, rollback-only previews, verified fresh
+full backups and unique mode-0600 receipts. Independently read-back source IDs,
+chapters, original source-anchor and immutable exam-content hashes agreed with
+the protected plans after commit.
+
+PR #414 merged the previous periodontics handoff to `main`. PR #416 added a
+bounded first-line parser for Torabinejad 6e's numbered, spaced `CHAPTER`
+running header. PR #417 added bounded first-line patterns for McDonald/Avery
+11e's alternating chapter/PART headers and Craig 14e's book-title header. All
+three PRs passed five CI jobs. Merged `main` at `826c6942fbbf8ff877c62b42c1d4a96960357c17`
+initially had a MySQL CI failure because the external MySQL container registry
+returned `toomanyrequests`; rerunning that failed job passed, and all five
+jobs were green for the exact commit. The official updater deployed it by
+request `01a140f7-e91f-7af9-af19-725b858adcc8`, which succeeded at
+2026-10-15 19:11:38 UTC. Its full backup
+`/var/backups/fanoos/20261015T191117Z-ee83a1ea` independently verified 114
+files. The later exact green `main` at
+`67c3b2326393fbf32cad194d9877a6c385481dce` was officially deployed by
+request `01a14103-7aea-7d5a-9270-5afbd5792919`, succeeded at
+2026-10-15 19:23:52 UTC, and produced independently verified 114-file full
+backup `/var/backups/fanoos/20261015T192327Z-8177c659`. Both deployments
+passed live `/health` and server `check-sync.sh` checks against GitHub `main`.
+
+| Question(s) | Exact original edition | Bound chapter, physical PDF page and printed book page | Source change |
+|---|---|---|---|
+| 22, 25, 26 | Torabinejad Endodontics 6e | ch2/34/27; ch5/99/92; ch6/114/107 | PDF page and SHA only |
+| 42 | Neville Oral Pathology 5e | ch5/183/173 | Corrected placeholder printed `5`; bound PDF page and SHA |
+| 79 | Little/Falace Dental Management 10e | ch17/306/268 | Corrected old printed `263`; bound PDF page and SHA |
+| 137, 139 | Hupp Oral Surgery 7e | ch16/347/333; ch19/409/395 | PDF page and SHA only |
+| 171, 173, 179, 181, 188, 190 | McDonald/Avery Pediatric 11e | ch1/29/16; ch3/58/45; ch12/240/229; ch15/302/291; ch27/607/604; ch29/666/663 | Corrected printed page; bound PDF page and SHA |
+| 184, 189 | McDonald/Avery Pediatric 11e | ch20/427/421; ch28/647/644 | PDF page and SHA only |
+| 215 | Craig Restorative Materials 14e | ch12/277/266 | PDF page and SHA only |
+| 187 | McDonald/Avery Pediatric 11e | ch26/586/583 | New one-question original-PDF audit; corrected old printed `582`; bound PDF page and SHA |
+
+For Q187, the unchanged published stem, four original choices and latest
+official final key were placed in a protected study-only package
+`recovery-1405-pedi187-20261015`. Direct reading of physical PDF page 586
+showed the ASD context and Papoose Board recommendation on that same original
+page; the printed label 583 and neighbors passed the deployed verifier. The
+primary classification validator accepted **1/1**, and the independent
+provenance auditor accepted **1/1, 0 pending**. The private audit SHA-256 is
+`ca0436d22e5030f01e412b298fc6a6d04b682e71afbc29d5e4e0dd0a1533d8f4`.
+Its guarded chapter/printed/PDF correction rollback preview and apply each
+reported one source and zero question, choice or answer changes. Independent
+post-apply database readback rechecked its immutable-content digests.
+
+The sixteen existing independently accepted one-question audits above were
+reused for the other sixteen updates. The exact private protected plans and
+receipts remain under
+`/srv/fanoos/shared/research/classification/reports/` as
+`1405-endo-q<N>-page-{plan,applied}-20261015.json` for `N=22,25,26`,
+`1405-q<N>-followup-{correction,page}-{plan,applied}-20261015.json` for
+`N=42,79,137,139`,
+`1405-q<N>-pediatric-craig-{correction,page}-{plan,applied}-20261015.json` for
+`N=173,179,181,190,215`, and
+`1405-q<N>-pediatric-late-{correction,page}-{plan,applied}-20261015.json` for
+`N=171,184,188,189`; Q187 uses
+`1405-q187-pediatric-correction-{plan,applied}-20261015.json`. The Q22,
+Q25 and Q26 applies used the first verified backup above; the other fourteen
+used the second. All task-only PHP scripts were removed from the protected
+research temporary directory after readback.
+
+The final direct database recount is **223/250** with a chapter, physical PDF
+page and approved PDF SHA on the **same source row**. The 20 residency-English
+questions remain explicitly reference-exempt, leaving **7/230 clinical
+questions field-incomplete**. Endodontics, oral medicine and periodontics are
+each **20/20**; pediatric dentistry is **19/20**. The seven remaining field
+gaps are **Q44** oral pathology, **Q81/Q99** prosthodontics, **Q133** oral
+surgery, **Q174** pediatric dentistry, **Q207** oral radiology, and **Q218**
+dental materials. Q133 and Q174 have official *voided* keys, so the current
+publisher must not invent final answers. Q44 and Q218's current chapters are
+outside year-1405 official scope; answer-bearing in-scope replacement is not
+established. Q81 needs original exam-figure/key reconciliation. Q99 lacks a
+decisive original-book passage for its keyed exclusion. Q207 needs the two
+independently indicated in-scope original-book citations, not an arbitrary
+one-source collapse. The already field-complete Q217 still cites an
+out-of-scope chapter and remains a separate scientific hold. **The full 1405
+exam is not scientifically closed.**
+
+The current public server health is `ok`; live release and updater checkout
+both equal exact GitHub `main` `67c3b23`. This session did not create another
+permanent checkout. The prior duplicate-branch cleanup removed 110 exact-tip
+remote branches; the remaining 11 remote branches are `main`, the open draft
+PR #388 and nine distinct-tip historical branches. Their differing work was
+preserved rather than silently deleted. The work done above is fully merged
+into the single canonical `main` and deployed; no 1405 change from this
+continuation remains in an unmerged branch after this report is merged.
