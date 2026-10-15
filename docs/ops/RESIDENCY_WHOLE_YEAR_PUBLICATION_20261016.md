@@ -4,6 +4,25 @@
 devices, servers and import scripts.** Read `AGENTS.md` and
 `docs/PROJECT_PRINCIPLES.md` before any operation.
 
+### Voided items: scientific citations required, official scores immutable
+
+An officially voided residency question is **not** exempt from the
+book reference mapping. Every non-English voided question still needs
+an in-scope original reference edition, exact **chapter and physical
+PDF page** and approved book SHA bound to the original source row.
+Keep its official answer status `voided`, correct-choice NULL,
+original question `draft` exclusion, four choices and all frozen
+historical exams/attempts. The existence of a voided key must never be
+used as an excuse to leave a year unclassified, nor may citations
+convert a voided question into a graded one.
+
+Use the independently audited guarded source-only voided metadata
+workflow in `docs/ops/VOIDED_QUESTION_CHAPTER_PDF_SOURCE_20261016.md`
+for already existing original AI sources. Its release, actual proof
+and independent production readback are mandatory before reporting
+scientific completion. The current scored sitting still correctly
+omits voided items from the graded projection.
+
 ## Hard rule
 
 A dentistry-residency exam (one official **year + round**) is the
