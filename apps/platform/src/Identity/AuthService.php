@@ -17,7 +17,7 @@ final class AuthService
         private readonly PDO $database,
         private readonly PasswordHasher $passwordHasher,
         private readonly AuditLogger $audit,
-        private readonly int $sessionLifetimeSeconds = 43200,
+        private readonly int $sessionLifetimeSeconds = SessionCookie::MAX_LIFETIME_SECONDS,
         private readonly int $maximumFailures = 5,
         private readonly int $lockSeconds = 900,
     ) {
