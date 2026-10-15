@@ -82,5 +82,12 @@ proven under a reviewed publisher. Do not count academic research or visual
 page inference as a production apply.
 
 The two local work branches that held earlier squash-merged PR #408/#409
-copies were removed after verifying the implemented files on main. No remote
-branch or another contributor's working tree was deleted.
+copies were removed after verifying the implemented files on main. Following
+the deployment and this report's PR #410 merge, a separate exact-SHA inventory
+matched 110 remote branch tips to their merged PR head commits; none had an
+open PR. Those 110 completed branch refs were deleted with explicit Git
+force-with-lease checks (15 residency-1405 refs and 95 older refs). A fresh
+GitHub listing confirmed the branch count fell from **121 to 11**. `main`, the
+open PR #388 branch, and nine refs whose tips differed from their merged PR
+heads were retained for review; no other contributor's working tree was
+changed. Branch deletion did not change the live release or database.
