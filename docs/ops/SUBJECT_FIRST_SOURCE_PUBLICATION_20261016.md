@@ -1,5 +1,17 @@
 # Subject-first chapter/page classification and bulk site publication
 
+> **SUPERSEDED for residency exam site publication — owner 2026-10-16.**
+> Dentistry-residency classification research now proceeds in **30–40-question
+> private batches**, but the site may publish/republish a frozen residency
+> exam version **only after the ENTIRE year is classified, verified and
+> independently audited**. The server-side `ResidencyYearPublicationGate`
+> checks every question before version creation, including 1405 and later.
+> Previously published historical versions remain unchanged. Internal
+> source-only transaction caps/receipts and all backup safeguards continue
+> to apply. The binding policy is `docs/PROJECT_PRINCIPLES.md` and
+> `docs/ops/RESIDENCY_WHOLE_YEAR_PUBLICATION_20261016.md`.
+
+
 **Binding owner decision: 2026-10-16.** Authority:
 `docs/PROJECT_PRINCIPLES.md` §3, and
 `docs/product/09_CHAPTER_CLASSIFICATION.md` §7.

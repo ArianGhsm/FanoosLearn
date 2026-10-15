@@ -118,68 +118,66 @@ any chapter, and retain historical raw source counts as labeled diagnostics.
 Explicit no-book-source exemptions (residency English, §3A) are reported
 separately and never given synthetic chapter/page rows.
 
-### Subject-first batch classification and site publication — owner decision 2026-10-16
+### Residency WHOLE-YEAR classification gate — superseding owner decision 2026-10-16
 
-**Default unit of progress and publication is ONE COMPLETE SUBJECT, or TWO
-COMPLETE SUBJECTS in one publication cycle**, for one exam type, year and
-round. Stop publishing citations one question at a time as the normal
-workflow. First search and independently validate the **official chapter
-AND physical original-PDF page** of every eligible question in that
-subject. If two subjects are ready, publish their validated source
-metadata in the same scheduled cycle. Move immediately to the next
-eligible subject(s); do not wait for an unrelated subject or year.
+**No dentistry-residency exam year may be newly published or republished
+on the public site until the entire official question inventory for that
+year and round is completely classified.** The unit of **site publication
+is ONE COMPLETE YEAR**, not one question, one subject, a 12-item source
+transaction or a group of 30–40 questions. This supersedes the earlier
+one/two-subject *publication* scheduling instruction, and applies
+equally to every human, AI agent, device, batch worker, CLI, owner
+and assistant. Neither a temporary notebook nor a private tool result
+authorizes a partial-year release.
 
-A *complete-subject batch* means an **exhaustive question inventory** for
-that subject, reconciled from the current production sitting with each
-question in exactly one of three mutually exclusive states:
-`already_verified_and_bound` (independently verified, year-in-scope),
-`ready_to_publish` (original-question / exact-PDF chapter+page / citation
-audit accepted), or `hold` (explicit unresolved reason). A hold does not
-authorize fabricating a chapter, page or key; it does **not** make the
-subject 100% classified. It also does not prevent bulk publication of
-all other verified entries in that subject. Keep voided official answers,
-image-dependent and multi-source cases visible as holds until they have
-an approved safe publication route. Residency English remains exempt.
+**Research / staging is different from publishing.** Process exact-edition
+chapter **AND original physical PDF page** decisions in convenient
+**30–40-question research batches** (last batch may be smaller) until
+**every subject and every question in the year** has been accounted for.
+For each book-based item the *same* source row must have a verified
+official-year/subject/edition in-scope chapter node, positive 1-based
+`pdf_page`, and current approved original PDF SHA-256; page-local
+original-book evidence must pass independent scientific validation.
+The official English no-book-reference exemption remains valid only
+with an eligible `final` or `amended` answer. Void, disputed, missing
+figures, unsupported chapters, incomplete PDF maps or unsupported
+multi-source citations remain **explicit unresolved gates**; they
+must not be made up, silently omitted from the inventory or converted
+into a scored answer just to trigger publication.
 
-**Two separate stages, two separate counters.** Complete scientific
-research for the chosen full subject(s) before scheduling the site-write
-cycle. Do not mistake an audited research decision for a published source
-or a non-null legacy citation for a scientifically valid in-scope one.
-After preflight for the **entire subject inventory**, use a single
-verified full-backup / site-publication window for all eligible sources
-of one or two subjects, with one aggregate cycle manifest and report.
-The read-only, fail-closed planner
-`scripts/references/plan_subject_publication_cycle.py` verifies the
-one/two-subject coverage partition and original protected source-plan
-SHA-256s; it **does not** certify live DB state or write anything.
+**Mandatory server-side enforcement.** Every normal residency
+`BankPublisher::publish()` path, for both the initial publication and
+every later frozen-version republish, must check the *actual production
+DB* against the sitting's declared `question_count`. Reject whenever
+any question is missing, any English item lacks a valid official key,
+or any book-based item lacks a same-row chapter+PDF-page+SHA for an
+official in-scope reference for that exact year and subject. The
+versioned `ResidencyYearPublicationGate` is an immutable preflight:
+failure must occur **before creating an assessment or version** and
+return a conspicuous error, not a warning. A structurally complete DB
+does not replace the original-page scientific audit, verified backup,
+CI or operational authorization. Existing already-published frozen
+versions and student attempts remain intact; do **not** remove the
+historical exam from students because a later research cycle is pending.
 
-**Never loosen a writer's safety limits to gain speed.** A subject can
-contain 10–30 questions even when an existing guarded page-repair writer
-accepts at most **12 entries per transaction**, or a guarded
-chapter+page-correction writer accepts **one per transaction**. Split
-verified source updates into these existing bounded transactional chunks,
-but treat them as **one subject-level operational cycle**: preflight
-every chunk and both subjects **before the first apply**, verify a fresh
-full backup, apply each permitted chunk with its own unique receipt and
-immediate independent production read-back, and stop if any fails.
-Earlier committed chunks must be reported explicitly as *partial*;
-never claim cycle-level atomicity, undo them by unbacked ad hoc edits,
-blindly retry, or quietly move to the next subject. If the backup expires,
-reverify/create another before any further commit.
+**One final year-level release.** After all 30–40-question private
+research batches are approved, run a full-year independent scientific
+and source-only database audit, fresh verified backup, guarded writes
+where needed, preview, unique receipts, and read-back. Then publish
+the entire residency year's frozen assessment **once**, with the
+existing operator authorization, two-person review/owner exception,
+CI/merge, approved updater deployment and live health checks.
+If a gate fails, publish **nothing new** for that year; preserve the
+historical published version if present and keep work pending. Never
+mislabel private research, a code merge, a source-only SQL write or a
+successful `/health` check as full-year publication.
 
-**One frozen-assessment publication per successful cycle**, when required
-and authorized, *after* all planned verified source writes and
-whole-sitting immutable-content preflight pass. An existing published
-sitting does not require a question-text reimport to add citations.
-Preserve stems, options, answers (including voided/amended), frozen prior
-versions, attempts and source provenance. Count a subject/site cycle as
-completed only after all permitted chunks' receipts, whole-subject SQL
-read-back, original assessment hash checks, any necessary authorized
-publish, release/CI/health verification and the permanent GitHub+private
-server handoff have succeeded. Otherwise report partial counts and
-holds, and resume safely from verified receipts. The detailed runbook
-is `docs/product/09_CHAPTER_CLASSIFICATION.md` §7 and
-`docs/ops/SUBJECT_FIRST_SOURCE_PUBLICATION_20261016.md`.
+This policy is binding for all agents via repository-root `AGENTS.md`,
+`docs/product/09_CHAPTER_CLASSIFICATION.md`, and
+`docs/ops/RESIDENCY_WHOLE_YEAR_PUBLICATION_20261016.md`. The older
+`docs/ops/SUBJECT_FIRST_SOURCE_PUBLICATION_20261016.md` is now a
+**staged-research / guarded-writer chunking reference only**; it must
+never be construed to authorize partial-year site publication.
 
 ### Pre-1396 retrospective reference policy — owner decision 2026-10-11
 

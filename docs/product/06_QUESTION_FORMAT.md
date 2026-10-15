@@ -1,5 +1,17 @@
 # Question format — file, database, site
 
+> **SUPERSEDED for residency exam site publication — owner 2026-10-16.**
+> Dentistry-residency classification research now proceeds in **30–40-question
+> private batches**, but the site may publish/republish a frozen residency
+> exam version **only after the ENTIRE year is classified, verified and
+> independently audited**. The server-side `ResidencyYearPublicationGate`
+> checks every question before version creation, including 1405 and later.
+> Previously published historical versions remain unchanged. Internal
+> source-only transaction caps/receipts and all backup safeguards continue
+> to apply. The binding policy is `docs/PROJECT_PRINCIPLES.md` and
+> `docs/ops/RESIDENCY_WHOLE_YEAR_PUBLICATION_20261016.md`.
+
+
 How a dental residency question exists at each stage, from the owner's
 source files to the screen. The design behind it is
 `05_DENTAL_RESIDENCY_DATA_MODEL.md`; this is its concrete form.

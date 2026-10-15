@@ -171,7 +171,7 @@ Report the counts separately, leaving the raw source-row count honest:
 
 ## 3. The procedure
 
-One batch is one sitting and one subject (10–30 questions).
+One scientific *research* batch is 30–40 questions from the same residency year (the final research batch may be smaller). Complete all subjects of that year before any public exam-version publication.
 **This is the scientific research unit, not permission for one-question-at-a-time
 site writes.** Site publication is scheduled by **one or two entire subjects**
 as defined in §7 and `docs/PROJECT_PRINCIPLES.md`. Each question still needs
@@ -393,68 +393,51 @@ its own page and quote replace the nearest-edition source.
 
 ## 7. Putting it on the site
 
-### Mandatory whole-subject site cycle (owner decision 2026-10-16)
+### Mandatory whole-YEAR residency publication gate (owner superseding decision 2026-10-16)
 
-**Default: finish scientific chapter+PDF-page work for one whole subject,
-then submit all of its eligible verified citations together; where two
-subjects are ready, process both in the same site-publication cycle.**
-An isolated question is not a normal publication cycle. If the current
-subject contains unresolved questions, put each in an explicit hold
-category, then publish every other verified source for that subject in
-the same cycle. A subject with holds is **partially** classified, not
-complete; do not block otherwise publishable citations indefinitely.
+**Research batches: 30–40 questions; public exam publication: ONE ENTIRE
+RESIDENCY YEAR.** This replaces the older one/two-subject publication
+policy. Independently search and verify the exact-year approved
+reference and **chapter PLUS original physical PDF page** for all
+subjects, in private 30–40-question batches (last batch may be shorter).
+A subject, a completed study file, a protected per-plan apply receipt
+or a merged PR is **not** a license to publish a partial residency year.
 
-1. **Freeze and reconcile the full production subject inventory** for
-   this exam type/year/round. Record *every* question exactly once:
-   already independently year-in-scope **and** chapter/PDF-page/SHA
-   bound; newly audit-accepted and ready; or held with a specific
-   reason (including voided official answer, missing figure, absent
-   exact-PDF page, out-of-syllabus chapter or unauthorized source edit).
-   No raw question text or protected book passage in GitHub.
-2. **Build a protected subject cycle manifest** for **exactly one or two
-   subjects**, pin its read-only current question-inventory SHA, all
-   official edition/original-PDF evidence digests and every protected
-   prevalidated plan SHA. Use the read-only coverage checker:
-   `python3 -B scripts/references/plan_subject_publication_cycle.py
-   --manifest=<protected-cycle.json>`. It rejects incomplete
-   inventories, overlaps, a third subject, wrong years, plan tampering,
-   unsafe operators and any original writer size-cap violation. This is
-   planning, **not** a database identity, backup or scientific audit.
-3. **One shared preflight / fresh verified full-backup window:** before
-   the first production update, separately verify original question,
-   choice, latest official answer, exact edition/year/scope, current
-   deployed PDF map, physical page, original book printed pagination,
-   every accepted independent audit, frozen assessment and current DB
-   source row for *all eligible questions of both subjects*. Preview
-   **all** protected source plans with rollback, independently verify
-   the complete backup and only then start commits. A held question is
-   not silently forced through a gate.
-4. **Apply by guarded bounded transactions, grouped into the subject
-   cycle.** The current PDF-page repair operator supports **up to 12**
-   entries in a protected plan; the current protected chapter+PDF-page
-   correction operator supports **one**. Retain these caps: split a
-   20–30-question course into required bounded plans, each with
-   unique private receipt and immediately verified DB read-back.
-   Fail **closed** on the first rejection; record any partial commits
-   rather than claiming an imaginary atomic all-course transaction.
-   Neither the research script nor a study-only sitting is a
-   production writer.
-5. **Finish once per successful site cycle**, not once per question:
-   verify counts and citation fields by subject, unchanged original
-   stems/choices/keys/attempts and published assessment versions,
-   execute any *authorized* frozen-assessment publish **once** if
-   required, then verify CI/deployed SHA and site health. Record the
-   aggregate receipt manifest, each protected receipt SHA and the exact
-   holds. If any proof fails, retain a partial state and resume from
-   verified receipts without blind reapply.
+The only allowed public exam publication trigger is the **full
+sitting's declared `question_count`** matching the actual imported
+question inventory and *every* book-based question possessing at
+least one original-year official in-scope chapter/source with same-row
+positive `pdf_page` and `pdf_sha256`, independently verified against
+the original approved PDF. English is exempt from a book citation
+only with valid official final/amended choice. No voided official
+choice can be silently changed, and image-dependent, insufficiently
+audited or out-of-syllabus references are blocking holds.
 
-The operational manifest schema, safe command order and sample
-one/two-subject cycles are in
-`docs/ops/SUBJECT_FIRST_SOURCE_PUBLICATION_20261016.md`.
-This coordination rule never expands a protected operator's write
-permission, drops source evidence thresholds, converts voided keys to
-final or relaxes the mandatory chapter+page atomic decision.
+This is enforced inside **`BankPublisher::publish()`** by
+`ResidencyYearPublicationGate`, BEFORE creating an assessment or
+version, on both first publication and republishing. It returns
+`residency_year_classification_incomplete` (HTTP 422) on a failed
+year-level inventory/source check. This is a **structural DB gate**,
+not a replacement for the independent science/official-book audit.
+Previously published frozen exam versions remain live and immutable
+during research; do not withdraw them merely because a future
+revision is incomplete.
 
+After all 30–40-question research batches are verified, complete
+source-only production repairs only with the existing guarded operators
+within their transaction limits and fresh full verified backup.
+Independent whole-year SQL readback, official-scope and exact-PDF
+science audit must pass. Then authorize, review and **publish one
+whole-year frozen exam version**, verify the new assessment and
+historical attempts, CI/merge/updater deploy and `/health`.
+If even one question is pending, do not publish a new version.
+
+Full operational contract:
+`docs/ops/RESIDENCY_WHOLE_YEAR_PUBLICATION_20261016.md`.
+The older `docs/ops/SUBJECT_FIRST_SOURCE_PUBLICATION_20261016.md`
+describes **internal guarded chunking only**; its one/two-subject
+release framing is superseded and MUST NOT be followed for residency
+exam publication.
 
 **New source-only workflow for existing published, unsourced questions
 (2026-10-10):** Follow
@@ -462,10 +445,7 @@ final or relaxes the mandatory chapter+page atomic decision.
 `scripts/references/import_verified_sources.php` inserts **only**
 `bank_question_sources`, with exact-edition/scope, current live
 question+choice+answer matching, all-or-nothing rollback-only preview,
-verified full backup, and private post-commit receipt. Apply the validated, guarded **bounded chunks for the one/two-subject
-cycle** under the common preflight, verify each receipt and live row,
-then make **one aggregate subject-level completion check** before starting
-the next subject(s). A study-only JSON file must **never** be passed to the full
+verified full backup, and private post-commit receipt. Stage verified 30–40-question research batches privately. After ALL year subjects are scientifically complete, use guarded source-only transactions with independent receipts and whole-year readback, then publish the frozen exam ONCE for the completed year. A study-only JSON file must **never** be passed to the full
 `import-bank.php` sitting importer. No `publish` action is needed when
 an already published question acquires a source-only row. The historic
 complete-sitting procedure below is only for true full-sitting updates,

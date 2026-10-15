@@ -43,7 +43,7 @@ final class BankPublisher
     public function publish(string $workspaceId, string $examType, int $year, int $round, string $actorUserId, string $reviewerUserId, array $options = []): array
     {
         $sitting = $this->database->prepare(<<<'SQL'
-SELECT sitting.id, sitting.assessment_id, type.type_key, type.name AS type_name
+SELECT sitting.id, sitting.assessment_id, sitting.question_count, sitting.exam_year, type.id AS exam_type_id, type.type_key, type.name AS type_name
 FROM bank_exam_sittings sitting
 JOIN bank_exam_types type ON type.id = sitting.exam_type_id
 WHERE sitting.workspace_id = :workspace AND type.type_key = :type AND sitting.exam_year = :year AND sitting.exam_round = :round
@@ -52,6 +52,17 @@ SQL);
         $row = $sitting->fetch();
         if ($row === false) {
             throw new PlatformException('bank_sitting_not_found', 'That exam is not in the bank.', 404);
+        }
+
+        // A residency paper is published only as a WHOLE classified year,
+        // never after a partial subject/30–40-question source batch. This
+        // applies to republishing an existing assessment version as well.
+        // All checks precede any assessment/version/audit mutation.
+        if ($examType === 'residency') {
+            (new ResidencyYearPublicationGate($this->database))->requireComplete(
+                $workspaceId, (string) $row['id'], (string) $row['exam_type_id'],
+                (int) $row['exam_year'], (int) $row['question_count'],
+            );
         }
 
         [$questions, $leftOut, $included] = $this->questions($workspaceId, (string) $row['id']);

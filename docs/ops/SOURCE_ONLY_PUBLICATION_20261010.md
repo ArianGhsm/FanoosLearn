@@ -1,5 +1,17 @@
 # Controlled source-only publication — 2026-10-10
 
+> **SUPERSEDED for residency exam site publication — owner 2026-10-16.**
+> Dentistry-residency classification research now proceeds in **30–40-question
+> private batches**, but the site may publish/republish a frozen residency
+> exam version **only after the ENTIRE year is classified, verified and
+> independently audited**. The server-side `ResidencyYearPublicationGate`
+> checks every question before version creation, including 1405 and later.
+> Previously published historical versions remain unchanged. Internal
+> source-only transaction caps/receipts and all backup safeguards continue
+> to apply. The binding policy is `docs/PROJECT_PRINCIPLES.md` and
+> `docs/ops/RESIDENCY_WHOLE_YEAR_PUBLICATION_20261016.md`.
+
+
 > **1398 reference-list update (2026-10-10):** The later four-page, owner-supplied complete notice adds official reference-validity scopes for oral pathology, prosthodontics, community dentistry and dental materials (six additional references; 19 total across 12 clinical subjects). The earlier “1398 syllabus missing” remarks below are historical checkpoints and are superseded **only for source-list validity**, not for unverified question citations. See [1398 complete notice](RESIDENCY_1398_COMPLETE_NOTICE_20261010.md).\n\n
 > **Current scheduling rule (owner, 2026-10-16):** This guide's
 > per-batch transactions remain the approved **atomic writers**, but site

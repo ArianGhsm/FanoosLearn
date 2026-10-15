@@ -124,6 +124,39 @@ a blanket delete.
   Missing secure reader or workspace is a dependency to document and
   implement under the normal PR process, not a reason to demand a laptop.
 
+## 3A. Binding residency whole-year release gate — owner 2026-10-16
+
+This rule binds **every AI model, device, human operator, hosted agent,
+CLI, script and connected app** working on dentistry-residency
+classification, regardless of their own conversation history.
+
+**Never publish or republish a residency year's exam on the public site
+while any official book-based question in that year/round lacks an
+independently verified, official-year in-scope chapter **AND exact
+physical original-PDF page/SHA**.** The separate no-book-reference
+English exception requires a valid official final/amended key. Do not
+relabel unsupported, voided, image-dependent or disputed items as
+complete; preserve existing official answer states, students' frozen
+versions and attempts.
+
+**How to work quickly:** Classify in **30–40-question private research
+batches** until **100% of the entire year** is complete. Multiple
+subjects/batches may be processed in parallel. Protected, source-only
+metadata operators may internally use bounded transactions and unique
+receipts, but a research batch, a subject, an import, a code PR or a
+healthy web service does NOT authorize a partial-year frozen exam
+publication. Only after the full-year scientific manifest, full-year
+live DB inventory, same-row chapter+PDF-page+SHA, complete official
+scope, source evidence and fresh backup are all independently verified,
+use the approved single year-level publication workflow and the
+`BankPublisher` server-side gate; verify the new frozen version,
+review/authorization, CI, deployment and health. If a gate fails,
+publish nothing new; keep any previously published historical version.
+
+This supersedes the earlier one/two-subject **site-publication** rule
+from PR #419. Consult `docs/PROJECT_PRINCIPLES.md` and
+`docs/ops/RESIDENCY_WHOLE_YEAR_PUBLICATION_20261016.md`.
+
 ## 4. GitHub-to-server delivery
 
 1. Fetch latest `main`; create a focused branch.
