@@ -1,7 +1,19 @@
 # Residency 1405: guarded chapter and original-page correction
 
-Status: **code proposal only**. This document does not claim a source write,
-new strict count, production deployment, or approval of a private case. The
+Status (2026-10-15): the guarded operator was merged to GitHub `main` in
+[PR #408](https://github.com/ArianGhsm/FanoosLearn/pull/408), merge SHA
+`8731dcd1902a9d0b658600c87c48c005b40eb658`. Both PR CI and exact-merge
+CI run `38714664543` passed all five jobs. The direct server read-only
+`/srv/fanoos/current` symlink still points to release
+`86d7c4fe37515381111994707e2914e308b7595f`; the merged operator is **not
+deployed**. This session's direct shell returned `Permission denied` for the
+protected research directory; the request for higher access ended without a
+grant when the turn was interrupted. The earlier official updater action was
+declined by its safety gate. No alternative privilege or deployment route was
+used.
+
+This document does not claim a source write, new strict count, production
+deployment, or approval of a private case. The
 last independently documented production count is 181/250 same-row chapter,
 physical PDF page and PDF SHA, with 20 English exemptions and 49 clinical
 field-incomplete. The 20 Carranza cases have research audits but 0/20 live
