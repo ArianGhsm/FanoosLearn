@@ -256,7 +256,7 @@ SQL)->execute(['ws' => $ws, 'question' => $secondKey]);
             $this->assert($error->errorCode === 'residency_year_classification_incomplete' && $error->httpStatus === 422,
                 'Partial-year gate returned the wrong rejection: ' . $error->errorCode);
         }
-        $this->assert($this->scalar('SELECT assessment_id FROM bank_exam_sittings WHERE workspace_id=:ws_sitting AND exam_year=1404 AND exam_round=1 AND exam_type_id=(SELECT id FROM bank_exam_types WHERE workspace_id=:ws_type AND type_key=\'residency\')', ['ws_sitting' => $ws, 'ws_type' => $ws]) === null,
+        $this->assert($this->scalar('SELECT COUNT(*) FROM bank_exam_sittings WHERE workspace_id=:ws_sitting AND exam_year=1404 AND exam_round=1 AND assessment_id IS NOT NULL AND exam_type_id=(SELECT id FROM bank_exam_types WHERE workspace_id=:ws_type AND type_key=\'residency\')', ['ws_sitting' => $ws, 'ws_type' => $ws]) === 0,
             'Partial-year rejection created a frozen assessment.');
         $this->database->prepare(<<<'SQL'
 UPDATE bank_question_sources s
