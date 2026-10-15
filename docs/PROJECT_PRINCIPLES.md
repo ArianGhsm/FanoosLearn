@@ -118,6 +118,41 @@ any chapter, and retain historical raw source counts as labeled diagnostics.
 Explicit no-book-source exemptions (residency English, §3A) are reported
 separately and never given synthetic chapter/page rows.
 
+### Voided residency questions must also be chapter-and-page classified — owner clarification 2026-10-16
+
+**A voided question is NOT exempt from reference classification.** For
+every dental-residency year, classify **all clinical questions**,
+including those officially `voided`, `draft`, excluded from grading
+or missing a scoreable key. Independently identify the officially
+approved reference edition from that exam year, the original
+**chapter AND exact physical PDF page** (bound to the actual approved
+server PDF SHA-256), with original-page scientific evidence. Record
+the source on the original question without fabricating a correct
+answer; preserve official `voided` status, null choice position,
+`draft` grading/exclusion status, all questions/options, existing
+frozen versions and student attempts **unchanged**.
+
+A separate guarded **source-only** metadata operator,
+`scripts/references/repair_verified_voided_source_pages.php`,
+provides a publication-independent way to correct original book
+printed-page labels and physical PDF page/SHA for an unreviewed
+existing citation of a voided, non-scored question. It never changes
+the answer key, question status, question text or any grading state.
+Require the independent private, SHA-pinned original-PDF scientific
+audit, official-year syllabus, original question/choice/voided-key
+identity, printed-page-neighbor corroboration, rollback-only preview,
+fresh full verified backup, unique commit receipt and independent
+live DB readback. It refuses all final/amended/published questions,
+duplicate plans, changed original content and unsupported pages.
+
+**Two independent requirements:** every voided question must have
+chapter+page source fields; voided questions must simultaneously
+remain excluded from scoring. Even if the whole-year gate is
+scientifically complete, never convert a voided question into a
+scored question just to permit publishing. Treat ambiguity about a
+voided question's original *design source* as scientific hold to
+resolve, not permission to mark the year complete.
+
 ### Residency WHOLE-YEAR classification gate — superseding owner decision 2026-10-16
 
 **No dentistry-residency exam year may be newly published or republished
