@@ -238,7 +238,52 @@ SQL);
         $page->execute(['key' => $key]);
         $this->assert($page->fetchAll(PDO::FETCH_COLUMN) === ['257'], 'An import overwrote a reviewed source.');
 
-        // Publish, take, review.
+        // A residency year MUST NOT publish or add a frozen version while
+        // even one of its book-based questions lacks its own PDF page.
+        // The completeness gate protects existing assessment history too.
+        $secondKey = BankImporter::questionKey('residency', 1404, 1, 2);
+        $this->database->prepare(<<<'SQL'
+UPDATE bank_question_sources s
+JOIN bank_questions q ON q.id=s.question_id AND q.workspace_id=s.workspace_id
+SET s.pdf_page=NULL
+WHERE q.workspace_id=:ws AND q.question_key=:question
+SQL)->execute(['ws' => $ws, 'question' => $secondKey]);
+        $publisher = new BankPublisher($this->database, $this->exams());
+        try {
+            $publisher->publish($ws, 'residency', 1404, 1, $f['manager'], $f['reviewer']);
+            $this->assert(false, 'Partial residency year was published.');
+        } catch (PlatformException $error) {
+            $this->assert($error->errorCode === 'residency_year_classification_incomplete' && $error->httpStatus === 422,
+                'Partial-year gate returned the wrong rejection: ' . $error->errorCode);
+        }
+        $this->assert($this->scalar('SELECT assessment_id FROM bank_exam_sittings WHERE workspace_id=:ws AND exam_year=1404 AND exam_round=1 AND exam_type_id=(SELECT id FROM bank_exam_types WHERE workspace_id=:ws AND type_key=\'residency\')', ['ws' => $ws]) === null,
+            'Partial-year rejection created a frozen assessment.');
+        $this->database->prepare(<<<'SQL'
+UPDATE bank_question_sources s
+JOIN bank_questions q ON q.id=s.question_id AND q.workspace_id=s.workspace_id
+SET s.pdf_page=272
+WHERE q.workspace_id=:ws AND q.question_key=:question
+SQL)->execute(['ws' => $ws, 'question' => $secondKey]);
+
+        // An incomplete declared whole-year inventory is also rejected.
+        $this->database->prepare(<<<'SQL'
+UPDATE bank_exam_sittings si JOIN bank_exam_types et ON et.id=si.exam_type_id AND et.workspace_id=si.workspace_id
+SET si.question_count=si.question_count+1
+WHERE si.workspace_id=:ws AND et.type_key='residency' AND si.exam_year=1404 AND si.exam_round=1
+SQL)->execute(['ws' => $ws]);
+        try {
+            $publisher->publish($ws, 'residency', 1404, 1, $f['manager'], $f['reviewer']);
+            $this->assert(false, 'An incomplete declared year was published.');
+        } catch (PlatformException $error) {
+            $this->assert($error->errorCode === 'residency_year_classification_incomplete', 'Wrong count gate response.');
+        }
+        $this->database->prepare(<<<'SQL'
+UPDATE bank_exam_sittings si JOIN bank_exam_types et ON et.id=si.exam_type_id AND et.workspace_id=si.workspace_id
+SET si.question_count=si.question_count-1
+WHERE si.workspace_id=:ws AND et.type_key='residency' AND si.exam_year=1404 AND si.exam_round=1
+SQL)->execute(['ws' => $ws]);
+
+        // Publish, take, review, only after the WHOLE year is classified.
         $publisher = new BankPublisher($this->database, $this->exams());
         $published = $publisher->publish($ws, 'residency', 1404, 1, $f['manager'], $f['reviewer'], ['time_limit_minutes' => 30]);
         $this->assert($published['new_exam'] === true && $published['questions'] === 2 && $published['left_out'] === [], 'Publish: ' . json_encode($published));
