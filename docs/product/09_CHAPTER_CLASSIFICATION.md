@@ -172,6 +172,11 @@ Report the counts separately, leaving the raw source-row count honest:
 ## 3. The procedure
 
 One batch is one sitting and one subject (10–30 questions).
+**This is the scientific research unit, not permission for one-question-at-a-time
+site writes.** Site publication is scheduled by **one or two entire subjects**
+as defined in §7 and `docs/PROJECT_PRINCIPLES.md`. Each question still needs
+its own independently verified chapter **and original physical PDF page**.
+
 
 **Step 1 — open the batch.**
 
@@ -388,15 +393,79 @@ its own page and quote replace the nearest-edition source.
 
 ## 7. Putting it on the site
 
+### Mandatory whole-subject site cycle (owner decision 2026-10-16)
+
+**Default: finish scientific chapter+PDF-page work for one whole subject,
+then submit all of its eligible verified citations together; where two
+subjects are ready, process both in the same site-publication cycle.**
+An isolated question is not a normal publication cycle. If the current
+subject contains unresolved questions, put each in an explicit hold
+category, then publish every other verified source for that subject in
+the same cycle. A subject with holds is **partially** classified, not
+complete; do not block otherwise publishable citations indefinitely.
+
+1. **Freeze and reconcile the full production subject inventory** for
+   this exam type/year/round. Record *every* question exactly once:
+   already independently year-in-scope **and** chapter/PDF-page/SHA
+   bound; newly audit-accepted and ready; or held with a specific
+   reason (including voided official answer, missing figure, absent
+   exact-PDF page, out-of-syllabus chapter or unauthorized source edit).
+   No raw question text or protected book passage in GitHub.
+2. **Build a protected subject cycle manifest** for **exactly one or two
+   subjects**, pin its read-only current question-inventory SHA, all
+   official edition/original-PDF evidence digests and every protected
+   prevalidated plan SHA. Use the read-only coverage checker:
+   `python3 -B scripts/references/plan_subject_publication_cycle.py
+   --manifest=<protected-cycle.json>`. It rejects incomplete
+   inventories, overlaps, a third subject, wrong years, plan tampering,
+   unsafe operators and any original writer size-cap violation. This is
+   planning, **not** a database identity, backup or scientific audit.
+3. **One shared preflight / fresh verified full-backup window:** before
+   the first production update, separately verify original question,
+   choice, latest official answer, exact edition/year/scope, current
+   deployed PDF map, physical page, original book printed pagination,
+   every accepted independent audit, frozen assessment and current DB
+   source row for *all eligible questions of both subjects*. Preview
+   **all** protected source plans with rollback, independently verify
+   the complete backup and only then start commits. A held question is
+   not silently forced through a gate.
+4. **Apply by guarded bounded transactions, grouped into the subject
+   cycle.** The current PDF-page repair operator supports **up to 12**
+   entries in a protected plan; the current protected chapter+PDF-page
+   correction operator supports **one**. Retain these caps: split a
+   20–30-question course into required bounded plans, each with
+   unique private receipt and immediately verified DB read-back.
+   Fail **closed** on the first rejection; record any partial commits
+   rather than claiming an imaginary atomic all-course transaction.
+   Neither the research script nor a study-only sitting is a
+   production writer.
+5. **Finish once per successful site cycle**, not once per question:
+   verify counts and citation fields by subject, unchanged original
+   stems/choices/keys/attempts and published assessment versions,
+   execute any *authorized* frozen-assessment publish **once** if
+   required, then verify CI/deployed SHA and site health. Record the
+   aggregate receipt manifest, each protected receipt SHA and the exact
+   holds. If any proof fails, retain a partial state and resume from
+   verified receipts without blind reapply.
+
+The operational manifest schema, safe command order and sample
+one/two-subject cycles are in
+`docs/ops/SUBJECT_FIRST_SOURCE_PUBLICATION_20261016.md`.
+This coordination rule never expands a protected operator's write
+permission, drops source evidence thresholds, converts voided keys to
+final or relaxes the mandatory chapter+page atomic decision.
+
+
 **New source-only workflow for existing published, unsourced questions
 (2026-10-10):** Follow
 `docs/ops/SOURCE_ONLY_PUBLICATION_20261010.md`. The vetted
 `scripts/references/import_verified_sources.php` inserts **only**
 `bank_question_sources`, with exact-edition/scope, current live
 question+choice+answer matching, all-or-nothing rollback-only preview,
-verified full backup, and private post-commit receipt. Apply one validated
-batch, verify live source count and published content, then proceed to the
-next. A study-only JSON file must **never** be passed to the full
+verified full backup, and private post-commit receipt. Apply the validated, guarded **bounded chunks for the one/two-subject
+cycle** under the common preflight, verify each receipt and live row,
+then make **one aggregate subject-level completion check** before starting
+the next subject(s). A study-only JSON file must **never** be passed to the full
 `import-bank.php` sitting importer. No `publish` action is needed when
 an already published question acquires a source-only row. The historic
 complete-sitting procedure below is only for true full-sitting updates,

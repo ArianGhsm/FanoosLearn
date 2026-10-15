@@ -1,6 +1,22 @@
 # Controlled source-only publication — 2026-10-10
 
 > **1398 reference-list update (2026-10-10):** The later four-page, owner-supplied complete notice adds official reference-validity scopes for oral pathology, prosthodontics, community dentistry and dental materials (six additional references; 19 total across 12 clinical subjects). The earlier “1398 syllabus missing” remarks below are historical checkpoints and are superseded **only for source-list validity**, not for unverified question citations. See [1398 complete notice](RESIDENCY_1398_COMPLETE_NOTICE_20261010.md).\n\n
+> **Current scheduling rule (owner, 2026-10-16):** This guide's
+> per-batch transactions remain the approved **atomic writers**, but site
+> source-publication is now organized into **one or two entire subjects per
+> cycle**, not independently scheduled per question. Build a complete
+> subject inventory with already-verified, ready and held entries; audit
+> all eligible entries, preview every guarded plan, and run the necessary
+> bounded per-operator transactions against one fresh verified backup
+> window. Then perform one aggregated whole-subject DB/content read-back
+> and at most one authorized frozen-assessment publication. A held or
+> voided case is explicitly reported, not fabricated or silently erased.
+> Preserve the operators' existing hard size caps and stop on first error.
+> See `docs/PROJECT_PRINCIPLES.md` and
+> `docs/ops/SUBJECT_FIRST_SOURCE_PUBLICATION_20261016.md`.
+> This scheduling improvement does not retroactively change the historical
+> single-batch execution records below.
+
 **Objective:** after each evidence-validated residency question batch, safely
 publish its exact official book, chapter node and page to the live bank,
 without rewriting a question, option, image, answer key, status or user review.
