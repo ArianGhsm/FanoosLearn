@@ -218,3 +218,27 @@ The year 1405 is **not finished** by this milestone; 100 book-based incomplete s
 Each of five independently pinned `1405-evidence-six-preview-20261015-<subject>.json` source-only protected plans passed the official rollback preview. The approved `repair_verified_source_pages.php` then reported **applied** for every plan, backed by the same fresh independently verified full backup `20261015T000409Z-2f26750c`. Five **unique** private receipts `1405-evidence-six-applied-20261015-<subject>.json` record exactly six repaired sources. Independent live DB re-read compared all six source UUIDs against unchanged chapter, original page/printed label, original anchor SHA, AI provenance, source object PDF SHA, and the expected physical PDF page. **All passed**, giving **136** field-complete sources. Before/after hashes of all **250 exact-year/round questions**, **1000 choices** and **250 final answer rows** remain identical to the original protected baseline. Report: `/srv/fanoos/shared/research/classification/reports/1405-immutable-content-after-26-sources-round1-20261015.json`. Public health `status=ok`; current live release SHA remains unchanged, pending an authorized Carranza map deployment.
 
 **Scientific caveat:** 136 is strict non-null field coverage, not 136 certified year-in-scope sources, because the historical published Q217 source still cites an outside-scope chapter; Q44/Q129/Q130/Q218/Q207 remain unresolved/pending applied correction. Twenty-six new verified source page/sha pairs have been applied in this session. All subsequent repair attempts must keep a fresh verified full backup within the operator's four-hour window; never reuse the backup after it expires.
+
+## 2026-10-15 fourth applied batch — 13 new exact-page source repairs
+
+**Supersedes prior live counts: currently 149/250 strict same-row chapter+PDF physical page+approved-object SHA, 20 English exempt, 81 textbook-based questions remaining.** Separate complete original-published-stem, four-options and latest final-key private evidence packages were created for the below thirteen questions, at `/srv/fanoos/shared/research/classification/recovery-1405-evidence<Q>-20261015/`. An issue with the *research-only Q49 draft quotation* splitting a Poppler column-end word was corrected after reading the original PDF page, with old and new draft digests independently recorded at `recovery-1405-evidence49-20261015/classification/reports/1405-q49-research-draft-quote-correction.json`. No published source anchor or exam content was altered. Each of the thirteen original-PDF source/page validators and independent exact PDF SHA/unchanged original question provenance auditors accepted **1/1**, no rejection or pending.
+
+| Q | Subject | Official same-year edition | Existing in-scope chapter | Verified PDF page | Original book printed label |
+|---:|---|---|---:|---:|---:|
+| 32 | Endodontics | Torabinejad 6e | 14 | 320 | 313 |
+| 40 | Endodontics | Torabinejad 6e | 10 | 197 | 190 |
+| 45 | Oral pathology | Neville 5e | 9 | 338 | 328 |
+| 47 | Oral pathology | Neville 5e | 10 | 444 | 434 |
+| 49 | Oral pathology | Neville 5e | 11 | 501 | 491 |
+| 55 | Oral pathology | Neville 5e | 14 | 676 | 666 |
+| 67 | Oral medicine | Burket 13e | 5 | 175 | 155 |
+| 75 | Oral medicine | Little/Falace 10e | 14 | 267 | 235 |
+| 91 | Prosthodontics | Zarb 13e | 4 | 62 | 48 |
+| 134 | Oral surgery | Hupp 7e | 3 | 56 | 42 |
+| 135 | Oral surgery | Hupp 7e | 14 | 264 | 250 |
+| 136 | Oral surgery | Hupp 7e | 14 | 267 | 253 |
+| 141 | Oral surgery | Hupp 7e | 22 | 479 | 465 |
+
+Five 0600 SHA-pinnable source-only protected plans `1405-evidence-thirteen-preview-20261015-<subject>.json` passed **full rollback previews** before any writes. The same deployed guarded source/page-only operator then applied **all five atomically**, updating exactly 13 source rows using fresh independently verified full backup `/var/backups/fanoos/20261015T000409Z-2f26750c` (114 independently verified files). Unique private applied receipts: `/srv/fanoos/shared/research/classification/reports/1405-evidence-thirteen-applied-20261015-<subject>.json`. Every applied receipt was matched against its protected plan SHA and independently SQL read back for the correct original published question, source UUID, in-scope chapter, **actual physical PDF page**, exact current reference PDF SHA, unchanged original printed/legacy labels, original anchor SHA, AI provenance, no previous human review, and no question/answer writes. **All 13 passed.** The full strict source field count is now **149**, not 136. The exact-sitting hashes of original **250 question rows, 1000 choices and 250 official answer rows remain byte-identical** to the pre-write protected baseline. Final report: `/srv/fanoos/shared/research/classification/reports/1405-immutable-content-after-39-sources-round1-20261015.json`. Public health `status=ok` on the unchanged current runtime release `86d7c4fe37515381111994707e2914e308b7595f`.
+
+The **remaining 81** require further original-book page and answer validation or official-scope source correction. The now field-complete Q217 remains an out-of-official-scope scientific hold; the Carranza map is merged in GitHub but its official deployment is still blocked. Source corrections such as Q129 (already independently scientifically accepted chapter 78, PDF 1618, audit SHA `7a4d34caa6712ad5fa6aad877479227e34b1387088b0d7d5180e77ad0e73b808`) need a distinct guarded chapter+page publisher and approved updater deployment before any apply.
