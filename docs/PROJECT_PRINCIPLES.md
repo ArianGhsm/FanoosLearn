@@ -118,6 +118,69 @@ any chapter, and retain historical raw source counts as labeled diagnostics.
 Explicit no-book-source exemptions (residency English, §3A) are reported
 separately and never given synthetic chapter/page rows.
 
+### Subject-first batch classification and site publication — owner decision 2026-10-16
+
+**Default unit of progress and publication is ONE COMPLETE SUBJECT, or TWO
+COMPLETE SUBJECTS in one publication cycle**, for one exam type, year and
+round. Stop publishing citations one question at a time as the normal
+workflow. First search and independently validate the **official chapter
+AND physical original-PDF page** of every eligible question in that
+subject. If two subjects are ready, publish their validated source
+metadata in the same scheduled cycle. Move immediately to the next
+eligible subject(s); do not wait for an unrelated subject or year.
+
+A *complete-subject batch* means an **exhaustive question inventory** for
+that subject, reconciled from the current production sitting with each
+question in exactly one of three mutually exclusive states:
+`already_verified_and_bound` (independently verified, year-in-scope),
+`ready_to_publish` (original-question / exact-PDF chapter+page / citation
+audit accepted), or `hold` (explicit unresolved reason). A hold does not
+authorize fabricating a chapter, page or key; it does **not** make the
+subject 100% classified. It also does not prevent bulk publication of
+all other verified entries in that subject. Keep voided official answers,
+image-dependent and multi-source cases visible as holds until they have
+an approved safe publication route. Residency English remains exempt.
+
+**Two separate stages, two separate counters.** Complete scientific
+research for the chosen full subject(s) before scheduling the site-write
+cycle. Do not mistake an audited research decision for a published source
+or a non-null legacy citation for a scientifically valid in-scope one.
+After preflight for the **entire subject inventory**, use a single
+verified full-backup / site-publication window for all eligible sources
+of one or two subjects, with one aggregate cycle manifest and report.
+The read-only, fail-closed planner
+`scripts/references/plan_subject_publication_cycle.py` verifies the
+one/two-subject coverage partition and original protected source-plan
+SHA-256s; it **does not** certify live DB state or write anything.
+
+**Never loosen a writer's safety limits to gain speed.** A subject can
+contain 10–30 questions even when an existing guarded page-repair writer
+accepts at most **12 entries per transaction**, or a guarded
+chapter+page-correction writer accepts **one per transaction**. Split
+verified source updates into these existing bounded transactional chunks,
+but treat them as **one subject-level operational cycle**: preflight
+every chunk and both subjects **before the first apply**, verify a fresh
+full backup, apply each permitted chunk with its own unique receipt and
+immediate independent production read-back, and stop if any fails.
+Earlier committed chunks must be reported explicitly as *partial*;
+never claim cycle-level atomicity, undo them by unbacked ad hoc edits,
+blindly retry, or quietly move to the next subject. If the backup expires,
+reverify/create another before any further commit.
+
+**One frozen-assessment publication per successful cycle**, when required
+and authorized, *after* all planned verified source writes and
+whole-sitting immutable-content preflight pass. An existing published
+sitting does not require a question-text reimport to add citations.
+Preserve stems, options, answers (including voided/amended), frozen prior
+versions, attempts and source provenance. Count a subject/site cycle as
+completed only after all permitted chunks' receipts, whole-subject SQL
+read-back, original assessment hash checks, any necessary authorized
+publish, release/CI/health verification and the permanent GitHub+private
+server handoff have succeeded. Otherwise report partial counts and
+holds, and resume safely from verified receipts. The detailed runbook
+is `docs/product/09_CHAPTER_CLASSIFICATION.md` §7 and
+`docs/ops/SUBJECT_FIRST_SOURCE_PUBLICATION_20261016.md`.
+
 ### Pre-1396 retrospective reference policy — owner decision 2026-10-11
 
 **For exam sittings dated 1395 or earlier (year < 1396), classify using the
