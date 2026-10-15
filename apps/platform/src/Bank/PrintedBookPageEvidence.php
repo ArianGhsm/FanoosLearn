@@ -82,7 +82,7 @@ final class PrintedBookPageEvidence
         // first-line chapter running header. Accept only that exact shape;
         // ordinary long body lines remain excluded below.
         if (!$allowLongHeader && isset($lines[0]) && mb_strlen($lines[0]) < 180
-            && preg_match('/^Chapter\s+[0-9]{1,3}\b.{0,170}\h{2,}([1-9][0-9]{0,3})$/u', $lines[0], $header)) {
+            && preg_match('/^Chapter\s+[0-9]{1,3}\b.{0,170}\h{2,}([1-9][0-9]{0,3})$/iu', $lines[0], $header)) {
             $numbers[] = (int) $header[1];
         }
         foreach ($edge as $line) {
