@@ -156,3 +156,31 @@ This iteration **safely unblocked the existing non-Carranza source-only repair p
 | Prosthodontics | 97 | Zarb 13e ch10 / 240 | `1405-verified-page-preview-20261015-prosthodontics.json` |
 
 **Production publication check:** a verified fresh full backup is mandatory, then each plan is applied only through the same guarded operator with `--apply --backup=<verified-path> --receipt=<new protected path>`. Require independent per-question/source/choice/answer/attempt readback and the scoped total, plus renewed health. **A rollback-only preview is not an applied change.** At this documentation checkpoint the full backup operation had been started and no live 1405 source update was yet claimed.
+
+## 2026-10-15 verified production apply and immutable-content closure for the first 16
+
+**This section supersedes the prior rollback-only state for exactly the sixteen questions below.** The previously approved fail-closed `repair_verified_source_pages.php` was used under service account `fanoosupd` for **eight independently successful applied transactions**, all guarded by the same independently verified official **full backup** `/var/backups/fanoos/20261015T000409Z-2f26750c` (114 files independently verified). The backup manifest excluded verified reference-only PDF objects by documented policy, not the original source assets from live storage. The operator's receipts are private 0600 files `/srv/fanoos/shared/research/classification/reports/1405-source-page-applied-20261015-q68.json` and `1405-source-page-applied-20261015-<subject>.json` for each subject in the seven-subject preview table above.
+
+All eight receipts explicitly returned `mode=applied`, correct plan SHA-256, the backup ID and **only** `pdf_page` and `pdf_sha256` as updated columns. An independent subsequent production query reloaded each of all **16 unique source UUIDs** and compared published question number, exact subject, unchanged original chapter, old book-printed page, historical page, unchanged original anchor digest, AI provenance and no human review, the expected exact PDF physical page and source object SHA, and the receipt-plan binding. **All 16 passed.**
+
+The exact-sitting live production count changed from **110/250** field-complete to **126/250**, with **20 English reference-exempt** and **104/230 clinical/book-based incomplete**. The newly applied source records are:
+
+| Subject | Q → exact approved physical PDF page |
+|---|---|
+| Oral medicine | 68→167, 70→326 |
+| Dental materials | 211→48, 212→51, 219→222 |
+| Oral surgery | 147→356, 148→336, 149→273 |
+| Pediatric dentistry | 176→197, 180→279, 182→344, 183→356 |
+| Oral pathology | 56→719 |
+| Endodontics | 31→276, 39→453 |
+| Prosthodontics | 97→240 |
+
+Protected exact-round1 **before/after immutable-content digests** are under `/srv/fanoos/shared/research/classification/reports/1405-immutable-content-{before,after}-source-pages-round1-20261015.json`. SHA-256 byte-for-byte comparison across **250 complete bank-question rows**, **1000 published choice rows**, and **250 official answer rows** is **unchanged for all three sets**. Note: an earlier extra file without the `round1` suffix used a raw CLI text serialization that counted embedded newlines as separate rows; it was superseded by this exact-year/round, escaped batch output and **must not** be used as a before/after baseline. The live `/health` remained `status=ok`. The new Carranza map remains GitHub-merged, **not deployed**; current production release is still `86d7c4fe37515381111994707e2914e308b7595f`. No deployment was implied by the source-only database changes.
+
+### Protected original-question-preserving official Q129 alternative: accepted research, not production applied
+
+A new single-question private research package `/srv/fanoos/shared/research/classification/recovery-1405-official129-20261015/` was recreated directly from the original published Q129 and four unchanged choices and latest final answer. An exact, locally decisive original-book passage on the current complete Carranza 14e physical PDF **page 1618**, **officially in-scope chapter 78**, confirms the correct answer about tension-free closure by an inner periosteal incision. `apply_classification.py --pdf-pages` accepted **1/1** and `audit_private_study_batches.py` independently accepted **1/1, 0 pending** with unchanged original question/answer provenance. Pinned audit SHA-256: `7a4d34caa6712ad5fa6aad877479227e34b1387088b0d7d5180e77ad0e73b808`. The historical Q129 source chapter **79** is outside the official year-1405 scope. **No source chapter replacement was applied** because the existing page-only publisher is forbidden to change `node_id`; a separately approved chapter-and-PDF-page correction, deployed map and fresh verified backup are required.
+
+### Remaining exact-year scope
+
+After the 16 verified non-periodontics applies, unfinished book-based counts are: periodontics 20, prosthodontics 17, oral surgery 14, pediatric dentistry 13, endodontics 13, oral medicine 12, oral pathology 12, dental materials 2, radiology 1; all other textbook-based subject backlogs are 0. Total 104. Existing out-of-official-scope source chapters Q44, Q129, Q130, Q218 and pre-existing field-complete Q217 remain on scientific hold, as does source-free Q207 with two distinct in-scope original references. **Do not call the entire exam certified or complete until source/page verification and year scope are both satisfied.**
