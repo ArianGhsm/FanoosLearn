@@ -314,3 +314,58 @@ All twelve cases passed `apply_classification.py --pdf-pages` and the independen
 Q174 pediatric and Q133 surgery are officially `voided` and lack a final correct-choice index. No fabricating answers or counting VOIDED cases as verified key-bearing source decisions. Q217 already carries PDF fields but cites an out-of-scope year1405 chapter. Q129 academically corrected ch78/PDF1618 remains unpublishable until the approved Carranza book map is deployed and a separate chapter+page guard exists; do not mistake SHA mapping merged in GitHub for a live deploy.
 
 **Current production remains 181 field-complete of 250, 20 English reference-exempt, 49 clinical field-incomplete.** This section records no additional production source writes.
+
+## 2026-10-15 further continuation: 27 independent private original-PDF research audits; unchanged live 181/250
+
+**New independently verified private report:** `/srv/fanoos/shared/research/classification/reports/1405-research-only-27-verified-original-pdf-cases-20261015.json`, **SHA-256 `cbaad4f46bc3ec1979c0c172fc41253003b917c8e042fdef29ad305530304e88`**, mode `27_ACADEMICALLY_AUDITED_NOT_PUBLISHED`. The protected report lists each case by question number, original current approved reference edition, official chapter, **physical original-PDF page**, approved exact PDF SHA, unique private case root, pinned one-question original evidence audit SHA, unchanged original question/choices/official key digests, and the outstanding publication hold. It stores no copyrighted textbook or exam passage.
+
+All **27 private cases** passed original four-choice/latest-final-answer preservation, official edition/chapter and physical-page validation, `apply_classification.py --pdf-pages` and `audit_private_study_batches.py` with **1 accepted, 0 rejected, 0 pending** for each individual case. These operations did **not** write a database source row, alter a chapter/printed-page field, deploy a code change, or republish any exam.
+
+### Carranza 14e: 15 newly independently audited, in-scope research citations
+
+The current approved full textbook is Carranza 14e, **1,876 physical pages**, approved v3 object SHA-256 `32f50c3c01d6de459b0fdf84a79e969ed99844605d742d5571392555ce074327`. These 15 protected `recovery-1405-perio<Q>-20261015/` original-question audits each used the separately GitHub-merged **SHA-pinned** mapping from `/srv/fanoos/updater-checkout` for **research only**, because the active `/srv/fanoos/current` release still lacks that map.
+
+| 1405 Q | Correct existing official chapter | Original physical PDF page |
+|---:|---:|---:|
+| 111 | 4 | 71 |
+| 112 | 5 | 115 |
+| 113 | 8 | 235 |
+| 114 | 10 | 279 |
+| 115 | 59 | 1232 |
+| 116 | 5 | 124 |
+| 117 | 8 | 231 |
+| 118 | 25 | 606 |
+| 119 | 25 | 607 |
+| 120 | 32 | 777 |
+| 121 | 41 | 909 |
+| 122 | 16 | 431 |
+| 123 | 62 | 1291 |
+| 125 | 43 | 926 |
+| 127 | 25 | 621 |
+
+The original exact-final answers were read from the live DB without modification. Page-local cited evidence supports the exact topics (including keratohyalin granules, classification scenarios, IL-10-secreting lymphocyte subsets, coaggregation/probiotic action, tensor veli palatini, stage/grade smoking modifier, histatins neutralizing lipopolysaccharides, menstrual and menopausal changes, occlusal-trauma reversibility, furcation-related enamel projections, female-predominant smoker's melanosis, predictable pocket reduction, critical depth 5.4 mm, and riboflavin-associated manifestations). The original-page validators and independent SHA provenance audits accepted each one; all have private audit receipts in `/srv/fanoos/shared/research/classification/recovery-1405-perio<Q>-20261015/classification/reports/1405-perio<Q>-audit.json`. Q112, Q116, Q117 and Q127 first failed a strict phrase-contiguity precheck, then passed after replacing **only the private research quotation** with verified contiguous original-page fragments; no published exam content was altered. Historical `printed_page` fields include invalid chapter-number placeholders. **These 15 are academic research, not fifteen source publications.** Q129 has a separately previously accepted ch78/PDF1618 corrective research case; Q130 remains blocked by insufficient decisive in-scope answer-bearing text.
+
+### Other audited research holds (12)
+
+Four McDonald/Avery Pediatric 11e original-citation cases were independently accepted and remain protected under `recovery-1405-hold<Q>-20261015/`, `Q=171,173,179,181`:
+- Q171 ch1/PDF29; Q173 ch3/PDF58; Q179 ch12/PDF240; Q181 ch15/PDF302.
+
+Eight additional strict original-book research audits were accepted but are **not eligible for the current production publisher**, principally because their historic printed-page labels could not be independently three-point corroborated:
+- Q22 Torabinejad 6e ch2/PDF34
+- Q25 Torabinejad 6e ch5/PDF99
+- Q42 Neville 5e ch5/PDF183
+- Q79 Little/Falace 10e ch17/PDF306
+- Q137 Hupp 7e ch16/PDF347
+- Q139 Hupp 7e ch19/PDF409
+- Q184 McDonald/Avery 11e ch20/PDF427
+- Q215 Craig 14e ch12/PDF277
+
+Private unmodified question/final-key study files, research decision files, independently validated sittings and provenance audits are under `/srv/fanoos/shared/research/classification/recovery-1405-hold<Q>-20261015/` for each. The report above records their individual authentic original-PDF SHA values and per-case audit digests. Q184's historic page 421 did **not** independently corroborate the proposed PDF page 427, even though the book contains answer-relevant clinical text there, so it was not applied.
+
+### Present operational publication holds
+
+Production still reports **181 field-complete / 250 total**, 20 English exempt, **49 / 230 clinical citations field-incomplete**, with a separate already field-complete-but-out-of-1405-scope **Q217** scientific correction outstanding. A fresh read-only live DB recount by subject was performed during this continuation. The website stayed healthy at unchanged active release SHA `86d7c4fe37515381111994707e2914e308b7595f`; server updater checkout was at previously merged map commit `02275e8039d4020beef62d820e8077e2765e3083` and behind remote main. The previously declined **official map deployment** was **not bypassed**; a GitHub merged map alone is insufficient to authorize book citation writes against the live release.
+
+A later Q187 pediatric case showed independently corroborated McDonald/Avery 11e ch26/PDF585 **book-printed 582** plus clinically relevant Papoose Board evidence on original nearby PDF pages 583 and 586. However, the subsequent **case-construction operation was tool safety-blocked and NOT performed**. There is no completed new Q187 original-question provenance audit, publication plan, or production source write from that attempt. It must remain uncounted, and no alternate execution route is authorized to circumvent the safety block.
+
+Before any future source publication: the official map deployment must be actually permitted, the original question and complete 4-option latest key independently preserved, exact year and chapter in official scope, original-book page and printed-page corroboration accepted by the guarded publisher, a **new** independently verified full backup still within the four-hour window, rollback-only preview, guarded unique-receipt apply, live DB re-read of changed fields, immutable question/choice/official-answer/attempt checks, and healthy runtime. Do not declare the sitting closed until remaining sources and already field-complete legacy out-of-scope citations are scientifically corrected.
