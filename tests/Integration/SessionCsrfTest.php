@@ -18,6 +18,7 @@ use Fanoos\Platform\Http\Request;
 use Fanoos\Platform\Identity\AuthService;
 use Fanoos\Platform\Identity\PasswordHasher;
 use Fanoos\Platform\Identity\SessionCsrf;
+use Fanoos\Platform\Identity\SessionCookie;
 use Fanoos\Platform\Support\Uuid;
 use Fanoos\Platform\Web\AssetVersioner;
 use Fanoos\Platform\Web\PageRenderer;
@@ -49,6 +50,7 @@ final class SessionCsrfTest
         $this->assertRenderedPagesTokenIsAcceptedByRequireCsrf();
         $this->assertWriteAcceptedWithTokenRefusedWithoutOrWrong();
         $this->assertLogoutRevokesTheSession();
+        $this->assertPersistentDeviceSessions();
         $this->assertOwnerSelectingAWorkspaceRevealsExamsNav();
 
         return $this->assertions;
@@ -161,6 +163,43 @@ final class SessionCsrfTest
 
         $afterLogout = $kernel->handle(new Request('GET', '/api/v1/account', ['authorization' => 'Bearer ' . $token]));
         $this->assert($afterLogout->status === 401, 'A revoked session must no longer authenticate.');
+    }
+
+    private function assertPersistentDeviceSessions(): void
+    {
+        $suffix = $this->suffix();
+        $userId = $this->plainUser('Persistent Device User ' . $suffix);
+        $identifier = 'session-persistent-' . $suffix . '@example.test';
+        $this->seedPasswordAuthenticator($userId, $identifier, 'a correct horse battery staple');
+        $auth = new AuthService($this->database, new PasswordHasher(), new AuditLogger($this->database));
+        $phone = $auth->login($identifier, 'a correct horse battery staple', 'phone-source');
+        $laptop = $auth->login($identifier, 'a correct horse battery staple', 'laptop-source');
+        $this->assert($phone->token !== $laptop->token && $phone->sessionId !== $laptop->sessionId,
+            'Two devices must have independent authenticated sessions.');
+
+        $cookie = SessionCookie::issue($phone);
+        $this->assert(str_contains($cookie, 'Max-Age=') && str_contains($cookie, 'HttpOnly')
+            && str_contains($cookie, 'Secure') && str_contains($cookie, 'SameSite=Lax')
+            && !str_contains($cookie, 'Domain='),
+            'The browser cookie must be durable, secure, HttpOnly, same-site and host-only.');
+        preg_match('/Max-Age=(\\d+)/', $cookie, $match);
+        $remaining = (int) ($match[1] ?? 0);
+        $this->assert($remaining >= 29 * 86400 && $remaining <= SessionCookie::MAX_LIFETIME_SECONDS,
+            'The new device session cookie must survive restarts for approximately 30 days.');
+        $this->assert(str_contains(SessionCookie::expire(), 'Max-Age=0'),
+            'Logout must explicitly expire its cookie.');
+
+        $auth->logout($phone);
+        $other = $auth->authenticate($laptop->token);
+        $this->assert($other->userId === $userId,
+            'Logging out on one device must not log out another.');
+        try {
+            $auth->authenticate($phone->token);
+            $this->assert(false, 'A logged out device stayed authenticated.');
+        } catch (\Fanoos\Platform\Support\PlatformException $error) {
+            $this->assert($error->errorCode === 'unauthenticated',
+                'A logged out device returned the wrong authentication failure.');
+        }
     }
 
     private function assertOwnerSelectingAWorkspaceRevealsExamsNav(): void
