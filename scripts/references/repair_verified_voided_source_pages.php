@@ -61,7 +61,7 @@ try {
     $plan = json_decode($rawPlan, true, 32, JSON_THROW_ON_ERROR);
     if (($plan['format'] ?? null) !== 'fanoos.verified-voided-source-page-repair/1'
         || ($plan['exam_type'] ?? null) !== 'residency'
-        || ($plan['year'] ?? null) !== 1405
+        || !is_int($plan['year'] ?? null) || $plan['year'] < 1396 || $plan['year'] > 1500
         || !is_string($plan['subject'] ?? null)
         || preg_match('/^[a-z][a-z0-9-]{1,59}$/D', $plan['subject']) !== 1
         || !is_array($plan['entries'] ?? null)
@@ -79,7 +79,8 @@ try {
         || (realpath(dirname($auditPath)) !== $privateReports
             && preg_match(
                 '~^' . preg_quote($privateClassification, '~')
-                . '/recovery-1405-[a-zA-Z0-9-]+/classification/reports/[^/]+\.json$~D',
+                . '/recovery-' . (string) $plan['year']
+                . '-[a-zA-Z0-9-]+/classification/reports/[^/]+\.json$~D',
                 $auditReal,
             ) !== 1)) {
         throw new RuntimeException('Independently accepted private citation audit absent or changed.');
