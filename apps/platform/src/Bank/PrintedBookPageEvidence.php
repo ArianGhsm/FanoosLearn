@@ -110,6 +110,17 @@ final class PrintedBookPageEvidence
             && preg_match('/^([1-9][0-9]{0,3})\h{2,}C\h*H\h*A\h*P\h*T\h*E\h*R\h+[0-9]{1,3}\b/iu', $lines[0], $header)) {
             $numbers[] = (int) $header[1];
         }
+        // McDonald/Avery 11e alternates chapter-title and PART running
+        // headers. Craig 14e puts the label before its full book title.
+        // Accept these first-line book header shapes only; adjacent physical
+        // pages must still corroborate the printed sequence.
+        if (!$allowLongHeader && isset($lines[0]) && mb_strlen($lines[0]) < 180) {
+            if (preg_match('/^[1-9][0-9]?\h*•\h*[^\r\n]{5,150}\h{2,}([1-9][0-9]{0,3})$/u', $lines[0], $header)
+                || preg_match('/^([1-9][0-9]{0,3})\h{2,}PART\h+[1-9][0-9]?\h*•/iu', $lines[0], $header)
+                || preg_match('/^([1-9][0-9]{0,3})\h{2,}CRAIG[’\x27]S\h+RESTORATIVE\h+DENTAL\h+MATERIALS$/iu', $lines[0], $header)) {
+                $numbers[] = (int) $header[1];
+            }
+        }
         foreach ($edge as $line) {
             if (!$allowLongHeader && mb_strlen($line) >= 90) {
                 continue;
