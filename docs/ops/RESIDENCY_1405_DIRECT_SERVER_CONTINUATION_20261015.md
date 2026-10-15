@@ -166,3 +166,65 @@ pagination guard. This also means the 1405 classification file **cannot yet
 be closed as complete**. A fresh remote inventory after PR #413 confirmed
 **11 branches** remain: `main`, open PR #388, and nine differing-tip refs
 retained for individual review.
+
+## Final periodontics continuation: all 20 sources field-complete
+
+This section supersedes the **199/250**, periodontics **13/20**, and seven
+periodontics publication holds above. The approved original Carranza 14e PDF
+uses actual inserted book labels, including `108.e2` and `779.e1`. Its
+`bank_question_sources.printed_page` database field is `VARCHAR(20)` and
+already supports exact textual labels. PR #415 added narrowly bounded
+first/last-line extraction of these labels and requires the immediately
+previous **and** next physical PDF pages to show the exact predecessor and
+successor labels. The ordinary numeric two-neighbor check remains in place.
+Both guarded source correction operators now accept the exact insert-label
+syntax. PR #415 and its merged `main` commit passed all five CI jobs. The
+official updater deployed release
+`2c685cca2b28c71cd1149f259c28d1414656531e` through request
+`01a13fcf-78bf-706a-8235-bd90fb08652f`, state `SUCCEEDED` at
+2026-10-15 13:48:18 UTC. Live `/health` and `check-sync.sh` matched that
+commit. The fresh full backup
+`/var/backups/fanoos/20261015T134742Z-f1118c79` was independently verified
+with 114 files.
+
+| Q | Official chapter | Exact printed label | Original physical PDF page | Historical source correction |
+|---:|---:|---|---:|---|
+| 113 | 8 | `108.e2` | 235 | printed 1 replaced |
+| 114 | 10 | `136.e1` | 279 | printed 10 replaced |
+| 118 | 25 | `364.e1` | 606 | printed 25 replaced |
+| 119 | 25 | `364.e2` | 607 | printed 1 replaced |
+| 127 | 25 | `373.e1` | 621 | printed 25 replaced |
+| 128 | 65 | `779.e1` | 1398 | printed 2 replaced |
+| 130 | **72 (was out-of-scope 87)** | `845` | 1505 | chapter and printed 87 replaced |
+
+The seven previously accepted independent original-question, four-choice,
+official-answer and original-PDF audits were rechecked in seven protected
+one-row plans. Each target label and its two adjacent original-PDF labels
+passed the new verifier against the exact approved Carranza PDF SHA-256
+`32f50c3c01d6de459b0fdf84a79e969ed99844605d742d5571392555ce074327`.
+The guarded chapter/printed/page operator accepted a rollback-only preview
+for **each** plan, checking its independent audit digest, immutable source
+anchor, stem, choices and latest final/amended answer, official-year chapter
+scope, bound chapter-page map and short original-page evidence. Seven
+separate applies then used the verified backup and unique mode-0600
+receipts. Plans and receipts are
+`/srv/fanoos/shared/research/classification/reports/1405-perio-q<N>-insert-{plan,applied}-20261015.json`,
+where `N=113,114,118,119,127,128,130`. The receipts report zero question,
+choice and answer changes. Independent live SQL readback compared all seven
+source IDs and every pinned source/question/choice/answer digest to their
+plans, and confirmed the exact printed labels, chapters, physical PDF pages
+and PDF hash after commit. Q130 alone changed its chapter node; the other
+six retained their existing in-scope chapter nodes. The legacy `page` field
+and all human review, attempts and published assessment history were left
+unchanged.
+
+The live **field-complete count is 206/250**: 20 English questions are
+reference-exempt, and **24/230 clinical questions remain field-incomplete**.
+Periodontics is **20/20**; prosthodontics is **28/30**. The remaining clinical
+field gaps are pediatric dentistry 10, endodontics 3, oral surgery 3, oral
+pathology 2, dental materials 2, prosthodontics 2, oral medicine 1 and oral
+radiology 1. Historical field-complete Q217 still cites an out-of-1405-scope
+chapter and is a separate scientific hold. Q81's figure/key ambiguity and
+Q99's insufficient decisive original-book evidence remain unresolved. Thus
+the **periodontics source-field backlog is closed**, while the full 1405
+exam classification cannot yet be declared complete.
