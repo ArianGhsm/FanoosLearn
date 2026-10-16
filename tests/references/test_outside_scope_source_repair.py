@@ -21,6 +21,17 @@ class OutsideScopeSourceRepairContract(unittest.TestCase):
         self.assertIn("outside_scope_exam_question", gate)
         self.assertIn("mb_strlen(trim($source['official_scope_note'])) < 12", gate)
 
+    def test_unprinted_page_path_keeps_printed_label_null_and_records_pdf_page(self):
+        source = (ROOT / "scripts/references/mark_verified_outside_scope_sources.php").read_text()
+        evidence = (ROOT / "apps/platform/src/Bank/PrintedBookPageEvidence.php").read_text()
+        self.assertIn("printed_page_label_unavailable", source)
+        self.assertIn("hasNoPrintedPageLabel", source)
+        self.assertIn("array_key_exists('printed_page', $item) && $item['printed_page'] === null", source)
+        self.assertIn("'pdf ' . $item['pdf_page']", source)
+        self.assertRegex(source, r"printed_page=[:][a-z_]+")
+        self.assertIn("public static function hasNoPrintedPageLabel", evidence)
+        self.assertIn("return $labels === [];", evidence)
+
 
 if __name__ == "__main__":
     unittest.main()

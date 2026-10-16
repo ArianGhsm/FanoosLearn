@@ -76,7 +76,7 @@ SQL);
     $choices = $db->prepare('SELECT position,text,image FROM bank_question_choices WHERE workspace_id=:ws AND question_id=:qid ORDER BY position');
     $answer = $db->prepare('SELECT status,choice_position,also_correct_positions,source,recorded_at FROM bank_official_answers WHERE workspace_id=:ws AND question_id=:qid ORDER BY recorded_at DESC,id DESC LIMIT 1');
     $write = $db->prepare(<<<'SQL'
-UPDATE bank_question_sources SET page=:printed,printed_page=:printed2,pdf_page=:pdf,pdf_sha256=:sha,
+UPDATE bank_question_sources SET page=:source_page,printed_page=:printed,pdf_page=:pdf,pdf_sha256=:sha,
  official_scope_status='outside_scope_exam_question',official_scope_note=:note
 WHERE workspace_id=:ws AND id=:sid AND page <=> :old_page AND printed_page <=> :old_printed
  AND pdf_page <=> :old_pdf AND pdf_sha256 <=> :old_sha AND official_scope_status='in_scope' AND official_scope_note IS NULL
@@ -88,9 +88,17 @@ SQL);
             if (!array_key_exists($field, $item)) throw new RuntimeException('Missing protected field: ' . $field);
         }
         $number = $item['number'] ?? null;
+        $printedLabelAvailable = is_string($item['printed_page'])
+            && preg_match('/^[1-9][0-9]{0,3}$/D', $item['printed_page']) === 1;
+        $printedLabelUnavailable = array_key_exists('printed_page', $item) && $item['printed_page'] === null
+            && ($item['printed_page_label_unavailable'] ?? null) === true
+            && str_contains((string) $item['note'], 'شماره صفحه چاپی در PDF ثبت نشده');
         if (!is_int($number) || !is_int($item['pdf_page']) || preg_match('/^[a-f0-9]{64}$/D', (string) $item['pdf_sha256']) !== 1
             || mb_strlen(trim((string) $item['note'])) < 12 || !str_contains((string) $item['note'], 'خارج از محدوده')) {
             throw new RuntimeException('Invalid outside-scope entry.');
+        }
+        if (!$printedLabelAvailable && !$printedLabelUnavailable) {
+            throw new RuntimeException('Printed page must be exact or explicitly unavailable on this PDF page.');
         }
         $read->execute(['ws'=>$workspace,'sid'=>$item['source_id'],'number'=>$number,'year'=>$plan['year']]);
         $rows = $read->fetchAll(PDO::FETCH_ASSOC);
@@ -116,17 +124,21 @@ SQL);
         $map = $maps['editions'][$item['edition']] ?? null;
         $inside = false;
         foreach (($map['runs'] ?? []) as $run) if ((string) $run[0] === (string) $item['chapter'] && $item['pdf_page'] >= $run[1] && $item['pdf_page'] <= $run[2]) $inside = true;
-        if (($map['source_pdf_sha256'] ?? null) !== $item['pdf_sha256'] || !$inside
-            || !PrintedBookPageEvidence::corroborates($item['edition'], $item['pdf_page'], (string) $item['printed_page'], $item['pdf_sha256'])
+        $paginationVerified = $printedLabelAvailable
+            ? PrintedBookPageEvidence::corroborates($item['edition'], $item['pdf_page'], $item['printed_page'], $item['pdf_sha256'])
+            : PrintedBookPageEvidence::hasNoPrintedPageLabel($item['edition'], $item['pdf_page'], $item['pdf_sha256']);
+        if (($map['source_pdf_sha256'] ?? null) !== $item['pdf_sha256'] || !$inside || !$paginationVerified
             || !PrintedBookPageEvidence::pageContainsEvidence($item['edition'], $item['pdf_page'], [(string) $item['evidence']], $item['pdf_sha256'])) {
             throw new RuntimeException("Q{$number}: exact original-page evidence failed.");
         }
-        $write->execute(['printed'=>(string)$item['printed_page'],'printed2'=>(string)$item['printed_page'],'pdf'=>$item['pdf_page'],'sha'=>$item['pdf_sha256'],'note'=>$item['note'],
+        $sourcePage = $printedLabelAvailable ? $item['printed_page'] : 'pdf ' . $item['pdf_page'];
+        $write->execute(['source_page'=>$sourcePage,'printed'=>$item['printed_page'],'pdf'=>$item['pdf_page'],'sha'=>$item['pdf_sha256'],'note'=>$item['note'],
             'ws'=>$workspace,'sid'=>$item['source_id'],'old_page'=>$item['expected_page'] ?? null,'old_printed'=>$item['expected_printed_page'] ?? null,
             'old_pdf'=>$item['expected_pdf_page'] ?? null,'old_sha'=>$item['expected_pdf_sha256'] ?? null]);
         if ($write->rowCount() !== 1) throw new RuntimeException("Q{$number}: guarded write ambiguous.");
         $out[] = ['number'=>$number,'source_id'=>$item['source_id'],'edition'=>$item['edition'],'chapter'=>(string)$item['chapter'],
-            'printed_page'=>(string)$item['printed_page'],'pdf_page'=>$item['pdf_page'],'pdf_sha256'=>$item['pdf_sha256'],'official_scope_status'=>'outside_scope_exam_question','official_scope_note'=>$item['note']];
+            'page'=>$sourcePage,'printed_page'=>$item['printed_page'],'printed_page_label_unavailable'=>$printedLabelUnavailable,
+            'pdf_page'=>$item['pdf_page'],'pdf_sha256'=>$item['pdf_sha256'],'official_scope_status'=>'outside_scope_exam_question','official_scope_note'=>$item['note']];
     }
     if ($apply) $db->commit(); else $db->rollBack();
     $result = ['format'=>'fanoos.outside-scope-source-repair-receipt/1','mode'=>$apply?'applied':'rollback-preview','year'=>$plan['year'],
