@@ -188,6 +188,12 @@ final class PrintedBookPageEvidence
             if (!$allowLongHeader && mb_strlen($line) >= 90) {
                 continue;
             }
+            // Numeric table keys (for example, ICDAS `1 = ...`) can occur
+            // at the edge of a scanned page. They are content labels, not
+            // printed book-page numbers.
+            if (!$allowLongHeader && preg_match('/^\h*[0-9]{1,4}\h*=\h*/u', $line) === 1) {
+                continue;
+            }
             if (preg_match('/^([0-9]{1,4}(?:\.e[1-9][0-9]?)?)(?:\s|$)/iu', $line, $match)
                 || preg_match('/(?:^|\s)([0-9]{1,4}(?:\.e[1-9][0-9]?)?)$/iu', $line, $match)) {
                 $numbers[] = str_contains($match[1], '.e') ? strtolower($match[1]) : (int) $match[1];
