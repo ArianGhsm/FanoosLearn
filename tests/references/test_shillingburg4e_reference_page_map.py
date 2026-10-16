@@ -15,6 +15,7 @@ class Shillingburg4ePageMapTests(unittest.TestCase):
         cls.edition = json.loads(MAP.read_text(encoding="utf-8"))["editions"][EDITION]
 
     def test_map_matches_exact_approved_pdf_and_covers_all_pages(self):
+        self.assertEqual(self.edition["source"], "verified-server-pdf")
         self.assertEqual(self.edition["source_pdf_sha256"], SHA256)
         runs = self.edition["runs"]
         self.assertEqual(runs[0], [None, 1, 1])
