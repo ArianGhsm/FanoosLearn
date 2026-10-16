@@ -310,7 +310,13 @@ final class PrintedBookPageEvidence
         // Poppler may hard-wrap a word with a discretionary hyphen at the
         // physical end of a line. Rejoin only that pattern; keep in-line
         // hyphens and all other punctuation to preserve strict quote matching.
-        $joined = preg_replace('/-\h*\R\h*/u', '', $text);
+        // Persian PDFs may contain Unicode bidi formatting controls between
+        // visible characters. They affect display direction, not the quote.
+        $directionless = preg_replace('/[\x{061C}\x{200E}\x{200F}\x{202A}-\x{202E}\x{2066}-\x{2069}]/u', '', $text);
+        if ($directionless === null) {
+            return '';
+        }
+        $joined = preg_replace('/-\h*\R\h*/u', '', $directionless);
         if ($joined === null) {
             return '';
         }
