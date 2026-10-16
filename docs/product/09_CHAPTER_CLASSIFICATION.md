@@ -111,6 +111,9 @@ pdf_sha256 IS NOT NULL`. Raw source counts and legacy printed/any-page
 counts can be shown for diagnostics, clearly marked incomplete. An audit
 must also independently confirm PDF hash, chapter boundaries, syllabus
 scope and page evidence before calling the row scientifically verified.
+Printed-page parsing treats numeric table keys such as `1 = ...` as page
+content; a printed-page label still needs exact-page or adjacent-page
+corroboration.
 
 ## 2. What the work needs
 

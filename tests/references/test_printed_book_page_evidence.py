@@ -113,6 +113,25 @@ class PrintedBookPageEvidenceTests(unittest.TestCase):
         )
         self.assertEqual(json.loads(run.stdout), [True, False, False])
 
+    def test_table_numeric_codes_followed_by_equals_are_not_page_labels(self):
+        text = (
+            "codes)                         Second digit\n"
+            "0 = Not sealed or restored     0 = Sound tooth surface\n"
+            "1 = Partial sealant            1 = First visual change\n"
+            "2 = Full sealant               2 = Distinct visual change\n"
+            "body text\n"
+        )
+        code = (
+            "require $argv[1];"
+            "echo json_encode(Fanoos\\Platform\\Bank\\PrintedBookPageEvidence::"
+            "pageLabelsFromText($argv[2]));"
+        )
+        run = subprocess.run(
+            ["php", "-r", code, str(VERIFIER), text],
+            text=True, capture_output=True, check=True
+        )
+        self.assertEqual(json.loads(run.stdout), [])
+
     def test_long_running_header_needs_neighbor_corroboration(self):
         long_header = "Long running section title " * 5 + "549"
         code = (
