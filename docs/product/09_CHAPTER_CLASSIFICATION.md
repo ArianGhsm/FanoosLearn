@@ -24,6 +24,9 @@ an exact official in-scope original PDF page with page-local evidence and
 question, option, key, anchor, source, and review fingerprints. Its sole DB
 updates are `pdf_page` and `pdf_sha256`; it preserves `origin`, chapter,
 edition, printed-page fields, anchor text, and every human review field. A
+plan may supply one to four short exact excerpts from the same page when a
+table or Persian PDF splits the evidence into separate text runs; every excerpt
+is checked independently against that page. A
 missing printed label remains null. A draft/voided human source can use this
 operator only with an audit that pins both the draft and voided states; it
 never creates a key or changes scoreability. AI-origin voided sources retain

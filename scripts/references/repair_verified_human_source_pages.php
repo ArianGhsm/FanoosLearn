@@ -140,12 +140,20 @@ SQL);
             }
             $sourceId = $item['source_id']; $edition = $item['edition']; $chapter = $item['chapter'];
             $page = $item['pdf_page']; $sha = strtolower((string) $item['pdf_sha256']);
+            $evidenceValue = $item['evidence'] ?? null;
+            $evidenceQuotes = is_string($evidenceValue) ? [$evidenceValue] : $evidenceValue;
+            if (!is_array($evidenceQuotes) || !array_is_list($evidenceQuotes)
+                || count($evidenceQuotes) < 1 || count($evidenceQuotes) > 4
+                || array_filter($evidenceQuotes, static fn(mixed $quote): bool =>
+                    !is_string($quote) || mb_strlen(trim($quote)) < 6 || strlen($quote) > 190) !== []) {
+                throw new RuntimeException("Q{$number}: provide one to four short verbatim page excerpts.");
+            }
             if (!is_string($sourceId) || preg_match('/^[a-f0-9-]{36}$/D', $sourceId) !== 1
                 || !is_string($edition) || preg_match('/^[a-z0-9-]+@[a-z0-9]+$/D', $edition) !== 1
                 || !is_string($chapter) || preg_match('/^[0-9]+(?:\.[0-9]+)?$/D', $chapter) !== 1
                 || !is_int($page) || $page < 1 || $page > 6000
                 || !preg_match('/^[a-f0-9]{64}$/D', $sha)
-                || !is_string($item['evidence']) || strlen($item['evidence']) < 16 || strlen($item['evidence']) > 190) {
+                || !is_array($evidenceQuotes)) {
                 throw new RuntimeException("Q{$number}: invalid source/page/evidence identity.");
             }
             $matches = $auditRows[$number] ?? [];
@@ -212,7 +220,7 @@ SQL);
                     throw new RuntimeException("Q{$number}: stored human printed label does not match exact PDF page.");
                 }
             }
-            if (!PrintedBookPageEvidence::pageContainsEvidence($edition,$page,[$item['evidence']],$sha)) {
+            if (!PrintedBookPageEvidence::pageContainsEvidence($edition,$page,$evidenceQuotes,$sha)) {
                 throw new RuntimeException("Q{$number}: exact original-page evidence failed.");
             }
             $update->execute(['page'=>$page,'sha'=>$sha,'ws'=>$workspace,'sid'=>$sourceId,

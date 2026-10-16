@@ -324,7 +324,7 @@ final class PrintedBookPageEvidence
         // hyphens and all other punctuation to preserve strict quote matching.
         // Persian PDFs may contain Unicode bidi formatting controls between
         // visible characters. They affect display direction, not the quote.
-        $directionless = preg_replace('/[\x{061C}\x{200E}\x{200F}\x{202A}-\x{202E}\x{2066}-\x{2069}]/u', '', $text);
+        $directionless = preg_replace('/[\x{061C}\x{200C}-\x{200F}\x{202A}-\x{202E}\x{2066}-\x{2069}]/u', '', $text);
         if ($directionless === null) {
             return '';
         }
