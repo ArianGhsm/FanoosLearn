@@ -23,9 +23,11 @@ final class PrintedBookPageEvidence
         }
         $target = self::readPageLabels($edition, $pdfPage, $expectedPdfSha256, $allowLongHeader);
         $targetLabel = str_contains($printedPage, '.e') ? $printedPage : (int) $printedPage;
-        if ($target === null || !in_array($targetLabel, $target, true)) {
+        if ($target === null) {
             return false;
         }
+
+        $targetHasLabel = in_array($targetLabel, $target, true);
 
         if (is_int($targetLabel)) {
             $neighbors = 0;
@@ -40,9 +42,31 @@ final class PrintedBookPageEvidence
                     ++$neighbors;
                 }
             }
-            if ($neighbors >= 2) {
+            if ($targetHasLabel && $neighbors >= 2) {
                 return true;
             }
+
+            // Full-page figures and tables sometimes omit the running page
+            // number. Accept that omission only when both immediately
+            // adjacent physical pages prove the exact printed sequence and
+            // the target page has no nearby, conflicting printed label.
+            if (!$targetHasLabel && $pdfPage >= 2 && $targetLabel >= 2) {
+                $before = self::readPageLabels($edition, $pdfPage - 1, $expectedPdfSha256, $allowLongHeader);
+                $after = self::readPageLabels($edition, $pdfPage + 1, $expectedPdfSha256, $allowLongHeader);
+                $nearbyConflict = array_filter(
+                    $target,
+                    static fn(int|string $label): bool => is_int($label) && abs($label - $targetLabel) <= 4,
+                );
+                if ($nearbyConflict === [] && $before !== null && $after !== null
+                    && in_array($targetLabel - 1, $before, true)
+                    && in_array($targetLabel + 1, $after, true)) {
+                    return true;
+                }
+            }
+        }
+
+        if (!$targetHasLabel) {
+            return false;
         }
 
         // Inserted book pages use labels such as 136.e1, 136.e2, then 137.
@@ -117,7 +141,8 @@ final class PrintedBookPageEvidence
         if (!$allowLongHeader && isset($lines[0]) && mb_strlen($lines[0]) < 180) {
             if (preg_match('/^[1-9][0-9]?\h*•\h*[^\r\n]{5,150}\h{2,}([1-9][0-9]{0,3})$/u', $lines[0], $header)
                 || preg_match('/^([1-9][0-9]{0,3})\h{2,}PART\h+[1-9][0-9]?\h*•/iu', $lines[0], $header)
-                || preg_match('/^([1-9][0-9]{0,3})\h{2,}CRAIG[’\x27]S\h+RESTORATIVE\h+DENTAL\h+MATERIALS$/iu', $lines[0], $header)) {
+                || preg_match('/^([1-9][0-9]{0,3})\h{2,}CRAIG[’\x27]S\h+RESTORATIVE\h+DENTAL\h+MATERIALS$/iu', $lines[0], $header)
+                || preg_match('/^[1-9][0-9]?\.\h+[^\r\n]{5,150}\h{2,}([1-9][0-9]{0,3})$/u', $lines[0], $header)) {
                 $numbers[] = (int) $header[1];
             }
         }
@@ -136,10 +161,12 @@ final class PrintedBookPageEvidence
     /** @param array<int, list<int>> $pages Page number => labels found on that page. */
     public static function corroboratesPageLabels(array $pages, int $pdfPage, string $printedPage): bool
     {
-        if ($pdfPage < 1 || !preg_match('/^[1-9][0-9]{0,3}$/D', $printedPage)
-            || !in_array((int) $printedPage, $pages[$pdfPage] ?? [], true)) {
+        if ($pdfPage < 1 || !preg_match('/^[1-9][0-9]{0,3}$/D', $printedPage)) {
             return false;
         }
+        $target = (int) $printedPage;
+        $targetLabels = $pages[$pdfPage] ?? [];
+        $targetHasLabel = in_array($target, $targetLabels, true);
         $neighbors = 0;
         foreach ([-2, -1, 1, 2] as $step) {
             $page = $pdfPage + $step;
@@ -149,7 +176,16 @@ final class PrintedBookPageEvidence
                 ++$neighbors;
             }
         }
-        return $neighbors >= 2;
+        if ($targetHasLabel) {
+            return $neighbors >= 2;
+        }
+        $nearbyConflict = array_filter(
+            $targetLabels,
+            static fn(int $label): bool => abs($label - $target) <= 4,
+        );
+        return $pdfPage >= 2 && $target >= 2 && $nearbyConflict === []
+            && in_array($target - 1, $pages[$pdfPage - 1] ?? [], true)
+            && in_array($target + 1, $pages[$pdfPage + 1] ?? [], true);
     }
 
     private static function validRequest(string $edition, int $pdfPage, string $printedPage): bool

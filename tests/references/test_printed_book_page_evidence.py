@@ -53,6 +53,25 @@ class PrintedBookPageEvidenceTests(unittest.TestCase):
         self.assertFalse(self.verified(pages, printed="102x"))
         self.assertFalse(self.verified(pages, printed="-1"))
 
+    def test_accepts_unlabelled_figure_page_only_with_exact_adjacent_sequence(self):
+        self.assertTrue(self.verified({119: [101], 120: [], 121: [103]}, printed="102"))
+        self.assertTrue(self.verified({119: [101], 120: [3, 4], 121: [103]}, printed="102"))
+        self.assertFalse(self.verified({119: [101], 120: [], 121: [104]}, printed="102"))
+        self.assertFalse(self.verified({119: [101], 120: [100], 121: [103]}, printed="102"))
+
+    def test_numbered_chapter_title_running_header_exposes_printed_label(self):
+        text = "14. Digital Imaging and Processing for Restorations          299\nbody"
+        code = (
+            "require $argv[1];"
+            "echo json_encode(Fanoos\\Platform\\Bank\\PrintedBookPageEvidence::"
+            "pageLabelsFromText($argv[2]));"
+        )
+        run = subprocess.run(
+            ["php", "-r", code, str(VERIFIER), text],
+            text=True, capture_output=True, check=True
+        )
+        self.assertEqual(json.loads(run.stdout), [299])
+
     def test_long_running_header_needs_neighbor_corroboration(self):
         long_header = "Long running section title " * 5 + "549"
         code = (
