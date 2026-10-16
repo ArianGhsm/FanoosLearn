@@ -112,6 +112,18 @@ final class PrintedBookPageEvidence
         return true;
     }
 
+    /** Return true only when this exact, hash-pinned page exposes no printed-page label. */
+    public static function hasNoPrintedPageLabel(
+        string $edition, int $pdfPage, string $expectedPdfSha256
+    ): bool {
+        if (!preg_match('/^[a-z0-9][a-z0-9-]*@[a-z0-9]+$/D', $edition)
+            || $pdfPage < 1 || !preg_match('/^[a-f0-9]{64}$/D', $expectedPdfSha256)) {
+            return false;
+        }
+        $labels = self::readPageLabels($edition, $pdfPage, $expectedPdfSha256, false);
+        return $labels === [];
+    }
+
     /** @return list<int|string> */
     public static function pageLabelsFromText(string $text, bool $allowLongHeader = false): array
     {
