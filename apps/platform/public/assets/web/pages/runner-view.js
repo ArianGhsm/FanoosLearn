@@ -838,7 +838,8 @@ function renderQuestionMeta(question) {
         el('span', { className: 'x-source__icon' }, icon('book')),
         el('span', { className: 'x-source__body' },
             el('span', { className: 'x-source__chapter' }, ...bidiNodes(faText(facts.chapter))),
-            original ? el('span', { className: 'x-source__book', attrs: { dir: 'ltr', title: original }, text: original }) : null));
+            original ? el('span', { className: 'x-source__book', attrs: { dir: 'ltr', title: original }, text: original }) : null,
+            facts.scopeNote ? el('span', { className: 'x-source__scope-note' }, ...bidiNodes(faText(facts.scopeNote))) : null));
 
     return el('div', { className: 'x-question__meta' },
         chips.length ? el('div', { className: 'x-question__chips' }, ...chips) : null,

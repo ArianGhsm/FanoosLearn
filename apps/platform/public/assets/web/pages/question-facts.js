@@ -19,7 +19,7 @@ const text = (value) => (typeof value === 'string' ? value.trim() : '');
 
 /**
  * @returns {{exam: ?string, number: ?string, subject: ?string, topic: ?string,
- *   chapter: ?string, chapterEn: ?string, book: ?string}}
+ *   chapter: ?string, chapterEn: ?string, book: ?string, scopeNote: ?string}}
  */
 export function questionFacts(question) {
     const bank = question && typeof question.bank === 'object' ? question.bank : null;
@@ -36,6 +36,7 @@ export function questionFacts(question) {
     let chapter = null;
     let chapterEn = null;
     let book = null;
+    let scopeNote = null;
     const c = bank?.chapter;
     if (c && typeof c === 'object' && text(c.title) !== '') {
         const label = text(c.number) !== '' ? `فصل ${faDigits(text(c.number))}` : 'فصل';
@@ -43,6 +44,9 @@ export function questionFacts(question) {
         chapter = `${label} · ${fa || text(c.title)}`;
         chapterEn = fa ? text(c.title) : null;
         book = [text(c.book), text(c.edition)].filter((part) => part !== '').join(' · ') || null;
+        scopeNote = c.official_scope_status === 'outside_scope_exam_question'
+            ? (text(c.official_scope_note) || 'محل طراحی این سؤال خارج از محدودهٔ رسمی آزمون بوده است.')
+            : null;
     }
 
     return {
@@ -53,5 +57,6 @@ export function questionFacts(question) {
         chapter,
         chapterEn,
         book,
+        scopeNote,
     };
 }
