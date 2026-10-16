@@ -27,7 +27,8 @@ edition, printed-page fields, anchor text, and every human review field. A
 missing printed label remains null. A draft/voided human source can use this
 operator only with an audit that pins both the draft and voided states; it
 never creates a key or changes scoreability. AI-origin voided sources retain
-their separate guarded workflow.
+their separate guarded workflow. Persian page-local quote checks ignore only
+Unicode bidi display controls; they retain visible letters and punctuation.
 
 > **1398 reference-list update (2026-10-10):** The later four-page, owner-supplied complete notice adds official reference-validity scopes for oral pathology, prosthodontics, community dentistry and dental materials (six additional references; 19 total across 12 clinical subjects). The earlier “1398 syllabus missing” remarks below are historical checkpoints and are superseded **only for source-list validity**, not for unverified question citations. See [1398 complete notice](../ops/RESIDENCY_1398_COMPLETE_NOTICE_20261010.md).\n\n
 How a question gets its source: which official reference, which chapter,
