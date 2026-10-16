@@ -54,7 +54,7 @@ class PrintedBookPageEvidenceTests(unittest.TestCase):
         self.assertFalse(self.verified(pages, printed="-1"))
 
     def test_quote_normalization_ignores_only_directional_format_controls(self):
-        text = "س\u202bلام\u202c, x-ray"
+        text = "س\u200c\u202bلام\u202c, x-ray"
         code = (
             "require $argv[1];"
             "$method=new ReflectionMethod(Fanoos\\Platform\\Bank\\PrintedBookPageEvidence::class,'normalize');"

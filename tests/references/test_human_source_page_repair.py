@@ -30,6 +30,8 @@ class HumanSourcePageRepairContract(unittest.TestCase):
             self.assertIn(marker, source)
         self.assertIn("human_source_provenance_changed'=>0", source)
         self.assertIn("human_review_metadata_changed'=>0", source)
+        self.assertIn("count($evidenceQuotes) > 4", source)
+        self.assertIn("PrintedBookPageEvidence::pageContainsEvidence($edition,$page,$evidenceQuotes,$sha)", source)
 
 
 if __name__ == "__main__":
