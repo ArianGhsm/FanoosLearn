@@ -72,6 +72,19 @@ class PrintedBookPageEvidenceTests(unittest.TestCase):
         )
         self.assertEqual(json.loads(run.stdout), [299])
 
+    def test_watermark_then_spaced_chapter_header_exposes_printed_label(self):
+        text = "www.example.invalid\n44      C H A P T E R 2     Dental Caries\nbody"
+        code = (
+            "require $argv[1];"
+            "echo json_encode(Fanoos\\Platform\\Bank\\PrintedBookPageEvidence::"
+            "pageLabelsFromText($argv[2]));"
+        )
+        run = subprocess.run(
+            ["php", "-r", code, str(VERIFIER), text],
+            text=True, capture_output=True, check=True
+        )
+        self.assertEqual(json.loads(run.stdout), [44])
+
     def test_long_running_header_needs_neighbor_corroboration(self):
         long_header = "Long running section title " * 5 + "549"
         code = (

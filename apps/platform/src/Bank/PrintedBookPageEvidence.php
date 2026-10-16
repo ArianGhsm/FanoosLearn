@@ -146,6 +146,20 @@ final class PrintedBookPageEvidence
                 $numbers[] = (int) $header[1];
             }
         }
+        // Some verified scans prepend a short watermark line and put a
+        // widely spaced CHAPTER running header on the next line. Examine
+        // only the first three lines and only these two exact header shapes.
+        if (!$allowLongHeader) {
+            foreach (array_slice($lines, 0, 3) as $headerLine) {
+                if (mb_strlen($headerLine) > 320) {
+                    continue;
+                }
+                if (preg_match('/^([1-9][0-9]{0,3})\h+C\h*H\h*A\h*P\h*T\h*E\h*R\h+[0-9]{1,3}\b/iu', $headerLine, $header)
+                    || preg_match('/^C\h*H\h*A\h*P\h*T\h*E\h*R\h+[0-9]{1,3}\b.{5,300}\h{2,}([1-9][0-9]{0,3})$/iu', $headerLine, $header)) {
+                    $numbers[] = (int) $header[1];
+                }
+            }
+        }
         foreach ($edge as $line) {
             if (!$allowLongHeader && mb_strlen($line) >= 90) {
                 continue;
