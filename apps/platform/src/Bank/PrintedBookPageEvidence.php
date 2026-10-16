@@ -121,7 +121,19 @@ final class PrintedBookPageEvidence
             return false;
         }
         $labels = self::readPageLabels($edition, $pdfPage, $expectedPdfSha256, false);
-        return $labels === [];
+        return $labels !== null && self::hasNoPrintedPageLabels($labels);
+    }
+
+    /** A numeric table entry such as zero is not a printed page label. */
+    public static function hasNoPrintedPageLabels(array $labels): bool
+    {
+        foreach ($labels as $label) {
+            if ((is_int($label) && $label > 0)
+                || (is_string($label) && preg_match('/^[1-9][0-9]{0,3}(?:\.e[1-9][0-9]?)?$/D', $label) === 1)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** @return list<int|string> */
