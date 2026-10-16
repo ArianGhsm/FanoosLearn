@@ -46,3 +46,42 @@ This document and the merged code do **not** claim a production Q207 source
 until a rollback preview, backed-up apply, unique receipt and independent
 readback actually succeed. The year remains unpublished while any other
 scientific or source-field holds persist.
+
+## 2026-10-16 production result
+
+PR **#425** passed all five CI jobs, was merged as
+`e7a194b580c66532f24740356380223552a87dad`, and that exact `main` commit
+passed all five post-merge CI jobs. Official updater request
+`01a143a8-ff04-7d2f-880c-019169d06b99` succeeded. The live release and
+updater checkout both matched `e7a194b`; public `/health` returned `status=ok`.
+The updater-created backup `/var/backups/fanoos/20261016T074431Z-1e18d94e`
+independently verified **114 files** before the data apply.
+
+The private plan
+`/srv/fanoos/shared/research/classification/reports/1405-radiology207-two-source-plan-20261016.json`
+has SHA-256 `87a2fa24d4865c27ae70c22eda4835fefefb2f07120beb0e256d9cc4e91ee3f2`.
+Its exact transaction first passed rollback preview, then applied both rows
+atomically under `fanoosupd`. The protected applied receipt is
+`/srv/fanoos/shared/research/classification/reports/1405-radiology207-two-source-applied-20261016.json`,
+SHA-256 `eb687a706c91316e6c9865d659c73777e27d6f4fde19fcb055122c8feee88ea3`.
+
+Independent live SQL readback matched both new source IDs: primary chapter 23
+/ physical PDF 1161 and supporting chapter 24 / physical PDF 1294, both bound
+to approved White/Pharoah 8e SHA
+`228ceb46982c3057d8a7d78b1d10759e72ed1a3a385a76a9affc38e45874c25a`.
+The current stem, ordered four choices and latest `final` answer position 4
+still match the immutable hashes bound into the plan. The strict source-field
+count is now **226/230 book-based**, plus **20/20 English exemptions**.
+
+Four source-field gaps remain: Q44, Q81, Q99 and Q218. Q44 and Q218 retain
+outside-year-scope historical chapters without a proven in-scope replacement;
+Q81 still needs the original exam figure reconciled to the official key; Q99's
+stored ellipsis evidence still fails the deployed exact-page guard and its
+write remains safety-blocked. Q217 is separately field-complete but its chapter
+is outside official 1405 scope. Therefore the whole-year scientific gate still
+fails: no new frozen 1405 exam version was published and Issue #422 remains
+open.
+
+After verifying GitHub PR head identities, the already squash-merged branches
+for PRs #419, #420, #421, #423 and #424 were deleted with exact SHA leases.
+The unique unmerged 1400 documentation branch and draft PR #388 remain intact.
