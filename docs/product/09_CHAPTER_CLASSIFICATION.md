@@ -1,5 +1,15 @@
 # Chapter classification
 
+## Outside-scope design location (owner decision 2026-10-16)
+
+If the exact page in the verified official-edition PDF explains the official
+answer but its chapter is outside the announced syllabus, preserve the true
+chapter and page. Set `official_scope_status=outside_scope_exam_question` and
+write a clear Persian note stating that the design location was outside the
+official exam scope. This flag does not expand the syllabus. The whole-year
+publication gate accepts it only with the same physical PDF page and SHA-256
+requirements as an in-scope source.
+
 **Owner decision 2026-10-13:** AI agents perform evidence-backed chapter
 classification through the validators and audited publication workflow;
 human review is not a prerequisite. Confidence below 0.85 remains pending.

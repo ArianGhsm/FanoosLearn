@@ -50,7 +50,7 @@ SQL);
         }
 
         $sources = $this->db->prepare(<<<'SQL'
-SELECT s.node_id,s.pdf_page,s.pdf_sha256,n.edition_id
+SELECT s.node_id,s.pdf_page,s.pdf_sha256,s.official_scope_status,s.official_scope_note,n.edition_id
 FROM bank_question_sources s
 LEFT JOIN bank_reference_nodes n ON n.id=s.node_id AND n.workspace_id=s.workspace_id
 WHERE s.workspace_id=:ws AND s.question_id=:qid
@@ -110,20 +110,22 @@ SQL);
                 if (!is_array($listed)) {
                     continue;
                 }
-                if ($listed !== [] && !in_array(
+                $outsideListedScope = $listed !== [] && !in_array(
                     (string) $official['number'],
                     array_map(static fn (array $chapter): string => (string) ($chapter['number'] ?? ''), $listed),
                     true,
-                )) {
-                    continue;
-                }
+                );
                 $scopeText = (string) ($official['scope'] ?? '');
-                if ($listed === [] && (
+                $outsideTextScope = $listed === [] && (
                     str_contains($scopeText, 'منتخب') || str_contains($scopeText, 'به جز')
                     || str_contains($scopeText, 'بجز') || str_contains($scopeText, 'غیر از')
                     || stripos($scopeText, 'except') !== false
                     || stripos($scopeText, 'excluding') !== false
-                )) {
+                );
+                if (($outsideListedScope || $outsideTextScope)
+                    && ($source['official_scope_status'] !== 'outside_scope_exam_question'
+                        || !is_string($source['official_scope_note'])
+                        || mb_strlen(trim($source['official_scope_note'])) < 12)) {
                     continue;
                 }
                 $valid = true;

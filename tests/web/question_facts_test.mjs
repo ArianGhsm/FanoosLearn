@@ -16,6 +16,16 @@ test('a classified bank question names its exam, year, number and chapter', () =
     assert.equal(facts.chapter, 'فصل ۱۴ · پاک‌سازی و شکل‌دهی');
     assert.equal(facts.chapterEn, 'Cleaning and Shaping');
     assert.equal(facts.book, 'Endodontics: Principles and Practice · 6th edition');
+    assert.equal(facts.scopeNote, null);
+});
+
+test('an outside-scope citation keeps its chapter and shows the explicit warning', () => {
+    const note = 'محل طراحی سؤال خارج از محدودهٔ رسمی آزمون ۱۴۰۵ بوده است.';
+    const facts = questionFacts({ bank: { exam: 'دستیاری', exam_key: 'residency', year: 1405, round: 1,
+        number: 44, subject: 'آسیب‌شناسی دهان', chapter: { ...chapter,
+            official_scope_status: 'outside_scope_exam_question', official_scope_note: note } } });
+    assert.equal(facts.chapter, 'فصل ۱۴ · پاک‌سازی و شکل‌دهی');
+    assert.equal(facts.scopeNote, note);
 });
 
 test('a national round is its month', () => {

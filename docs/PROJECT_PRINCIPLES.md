@@ -281,11 +281,13 @@ The binding procedure is
 `scripts/references/apply_classification.py` against the exact verified PDF
 page and the page-to-chapter map. The authority order is: official year
 validity and scope → exact verified edition PDF/page → short verbatim evidence
-from that page → validator → audited import. An answer found only outside the
-announced chapter or partial-page scope remains pending official-syllabus
-evidence; lowering confidence does not authorize an excluded citation. Audit
-older outside-scope rows individually, including human-origin records, before
-any correction. An unlocated fact stays **undecided**, not `none`.
+from that page → validator → audited import. When that exact design location
+is outside the announced scope, store the true chapter, physical PDF page and
+hash and set `official_scope_status=outside_scope_exam_question` with a clear
+note (owner decision 2026-10-16). This labelled evidence exception does not
+change the official syllabus and supersedes the earlier instruction to leave
+such a located citation pending. Audit older outside-scope rows individually.
+An unlocated fact stays **undecided**, not `none`.
 
 
 ## 3A. Dentistry-residency English: final answer key is sufficient (owner decision 2026-10-10)
