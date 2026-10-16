@@ -21,3 +21,28 @@ Report SHA-256 `2b1f59080f1a41b4935ee1824502de84aa9705f0c5377c2ec0b9859528b1a8bc
 `SourceOnlyPublisher::run` currently enforces **exactly one source per accepted question** (`count($sources) !== 1` fails closed), whereas Q207's correct official option cites two distinct conditions described in **different official chapters**. Recording only one chapter with one page as a complete citation would hide essential correct-answer support, conflicting with the requirement that **every chosen chapter must have its actual PDF page**. Therefore Q207 is a **scientifically verified TWO-CHAPTER research hold**, not a completed bank source or publication. Any eventual source-only workflow should support a reviewed two-source mapping, independently audit both exact pages, preserve the original question/key/choices and frozen assessment attempts, and obtain unique write receipts plus independent live readback.
 
 This is not a request to change the official answer or rewrite a published exam. The radiology question is *not* marked fully sourced pending a safe two-citation publisher and evidence audit.
+
+## 2026-10-16 guarded two-source route
+
+`scripts/references/insert_verified_two_sources.php` adds a separate atomic
+source-only route for one currently source-free, published residency question.
+It requires exactly two distinct official-year chapters, a SHA-pinned private
+independent original-PDF audit, a protected plan, unchanged stem/four choices/
+latest final answer hashes, both actual PDF-page quotes, a deployed SHA-bound
+chapter map, and an explicit official-year scope check for each chapter.
+The first source is primary; the second is supporting. Both receive physical
+`pdf_page` and the same approved original PDF SHA. A preview rolls back its
+transaction. Apply requires `fanoosupd`, a verified full backup no older than
+four hours, and a new private receipt. A failed precondition commits neither
+source. Frozen versions and grades are never written by this operator.
+
+For Q207 the protected plan uses format `fanoos.two-source-citation-plan/1`,
+`exam_type=residency`, `year=1405`, `subject=oral-radiology`, `number=207`,
+SHA-256 of the original stem, ordered four-choice rows, and latest official
+answer row, `audit_path` and `audit_sha256`, plus exactly two `sources` matching
+the audit's chapter/page/quote and approved PDF SHA. Physical page labels may
+be stored as `pdf N` where no printed label has been independently verified.
+This document and the merged code do **not** claim a production Q207 source
+until a rollback preview, backed-up apply, unique receipt and independent
+readback actually succeed. The year remains unpublished while any other
+scientific or source-field holds persist.
