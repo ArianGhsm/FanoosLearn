@@ -321,3 +321,46 @@ PR #388 and nine distinct-tip historical branches. Their differing work was
 preserved rather than silently deleted. The work done above is fully merged
 into the single canonical `main` and deployed; no 1405 change from this
 continuation remains in an unmerged branch after this report is merged.
+
+## 2026-10-16 Q81 and Q99 final prosthodontics source-page apply
+
+This section supersedes the Q81/Q99 holds and older **223/250** count above.
+The original content-addressed Q81 exam image was reopened and SHA-verified as
+`3a13fae6eb2c173cd4de23c7c010d1baf8e919718f92bdec72212a4e7186b7ce`.
+The retained teeth independently resolve to maxillary Kennedy **Class I,
+modification IV** and mandibular Kennedy **Class III, modification III**,
+matching the unchanged final official choice 1. McCracken RPD 13e chapter 3,
+physical PDF page **30**, printed page **17**, contains the Kennedy definitions
+and modification-space rule on the same original page. Approved PDF SHA-256:
+`4e05bee57d1066601b8a2b30c2ae72d4a5bf65298747b600ae3fdd8248a192d9`.
+
+For Q99, direct rereading of Zarb Edentulous 13e chapter 13, physical PDF
+page **315**, printed page **301**, found the complete original passage:
+large prosthetic teeth with steep cusp forms provide enough tooth volume for
+adjustment toward bilateral balanced occlusion. This directly supports the
+unchanged final-key exclusion of small prosthetic teeth (choice 1), without
+the ellipsis that invalidated the earlier stored research quote. Approved PDF
+SHA-256: `bcf92916cd0a01915695d1cb5aad8c51e7f2dac5909477c4df4454d229156a3d`.
+
+Protected two-entry plan
+`/srv/fanoos/shared/research/classification/reports/1405-final-prosth-q81-q99-page-plan-20261016.json`
+has SHA-256 `e00c1c6fa8ba207651e92e6d6cdefc936e141a1e3737a1ea6a384ce7f61642dd`.
+The deployed guarded page-only operator passed rollback preview for both rows,
+then applied them atomically under `fanoosupd` using independently verified
+114-file backup `/var/backups/fanoos/20261016T081623Z-1cdc307c`. Receipt:
+`/srv/fanoos/shared/research/classification/reports/1405-final-prosth-q81-q99-page-applied-20261016.json`,
+SHA-256 `a4bd181dd8979a448f20af342dd54992b802bb1a59849329f3f58082fb8263ef`.
+It records exactly two source-row `pdf_page`/`pdf_sha256` updates and zero
+question, choice or answer changes. Independent SQL readback matched both
+source IDs, editions, chapters, printed pages, physical pages and PDF hashes.
+
+The strict live count is now **228/230 book-based**, plus **20/20 English
+exemptions**. Only Q44 and Q218 lack complete source fields. Both still point
+to their scientifically correct original-book chapters (Neville 5e chapter 7
+for HSV histopathology; Craig 14e chapter 13 for mild self-etch dentin bond
+durability), but those chapters are explicitly outside the structured official
+1405 syllabus. Prior direct screening of every allowed chapter found no
+decisive answer-bearing replacement. The already field-complete Q217 remains
+a third official-scope anomaly. These rows must not be reassigned merely to
+make the counter reach 230. No new frozen year version was published and
+Issue #422 remains open pending a legitimate official-scope resolution.
