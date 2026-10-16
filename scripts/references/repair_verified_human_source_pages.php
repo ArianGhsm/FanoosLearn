@@ -166,8 +166,8 @@ SQL);
                     throw new RuntimeException("Q{$number}: audit and protected plan differ at $field.");
                 }
             }
-            if (($matches[0]['question_status'] ?? null) !== $item['expected_question_status']
-                || ($matches[0]['official_answer_status'] ?? null) !== $item['expected_answer_status']) {
+            if (($matches[0]['expected_question_status'] ?? null) !== $item['expected_question_status']
+                || ($matches[0]['expected_answer_status'] ?? null) !== $item['expected_answer_status']) {
                 throw new RuntimeException("Q{$number}: question/key status differs from its independent audit.");
             }
 
