@@ -24,8 +24,10 @@ an exact official in-scope original PDF page with page-local evidence and
 question, option, key, anchor, source, and review fingerprints. Its sole DB
 updates are `pdf_page` and `pdf_sha256`; it preserves `origin`, chapter,
 edition, printed-page fields, anchor text, and every human review field. A
-missing printed label remains null. Voided/draft questions continue through
-the separate voided-source audit workflow.
+missing printed label remains null. A draft/voided human source can use this
+operator only with an audit that pins both the draft and voided states; it
+never creates a key or changes scoreability. AI-origin voided sources retain
+their separate guarded workflow.
 
 > **1398 reference-list update (2026-10-10):** The later four-page, owner-supplied complete notice adds official reference-validity scopes for oral pathology, prosthodontics, community dentistry and dental materials (six additional references; 19 total across 12 clinical subjects). The earlier “1398 syllabus missing” remarks below are historical checkpoints and are superseded **only for source-list validity**, not for unverified question citations. See [1398 complete notice](../ops/RESIDENCY_1398_COMPLETE_NOTICE_20261010.md).\n\n
 How a question gets its source: which official reference, which chapter,
@@ -379,7 +381,9 @@ A future year is added to this table when its sitting is first imported.
 - For an unchanged human-origin chapter citation, add its exact PDF page/hash
   only through `repair_verified_human_source_pages.php`. Keep its original
   human provenance, reviewer, chapter, edition, printed-page label, and anchor
-  untouched. Use the special voided-source workflow for draft/voided entries.
+  untouched. For a draft/voided human source, the audit also pins the draft
+  and voided states; no key or scoreability changes are allowed. AI-origin
+  voided entries use their separate guarded workflow.
 - Questions whose **exact official edition** is unavailable, whose approved
 PDF cannot be securely read, or whose direct-PDF chapter map is not verified
   stay undecided and are listed in the pending report. Continue eligible

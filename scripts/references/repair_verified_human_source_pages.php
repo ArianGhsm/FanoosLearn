@@ -135,7 +135,7 @@ SQL);
             foreach (['source_id','edition','chapter','pdf_page','pdf_sha256','expected_legacy_page',
                 'expected_stored_printed_page','expected_anchor_sha256','expected_stem_sha256',
                 'expected_choices_sha256','expected_answer_sha256','expected_reviewed_at',
-                'expected_reviewed_by_user_id','evidence'] as $field) {
+                'expected_reviewed_by_user_id','expected_question_status','expected_answer_status','evidence'] as $field) {
                 if (!array_key_exists($field, $item)) throw new RuntimeException("Q{$number}: missing $field.");
             }
             $sourceId = $item['source_id']; $edition = $item['edition']; $chapter = $item['chapter'];
@@ -158,6 +158,10 @@ SQL);
                     throw new RuntimeException("Q{$number}: audit and protected plan differ at $field.");
                 }
             }
+            if (($matches[0]['question_status'] ?? null) !== $item['expected_question_status']
+                || ($matches[0]['official_answer_status'] ?? null) !== $item['expected_answer_status']) {
+                throw new RuntimeException("Q{$number}: question/key status differs from its independent audit.");
+            }
 
             $read->execute(['ws'=>$workspace,'sid'=>$sourceId,'number'=>$number,
                 'year'=>$plan['year'],'subject'=>$plan['subject']]);
@@ -168,7 +172,17 @@ SQL);
             $choiceRows = $choicesQuery->fetchAll(PDO::FETCH_ASSOC);
             $answerQuery->execute(['ws'=>$workspace,'qid'=>$s['question_id']]);
             $answer = $answerQuery->fetch(PDO::FETCH_ASSOC);
-            if ($s['question_status'] !== 'published' || $s['origin'] !== 'human'
+            $answerIsArray = is_array($answer);
+            $publishedScorable = $answerIsArray && $s['question_status'] === 'published'
+                && in_array($answer['status'] ?? null, ['final','amended'], true)
+                && ($answer['choice_position'] ?? null) !== null;
+            $draftVoided = $answerIsArray && $s['question_status'] === 'draft'
+                && ($answer['status'] ?? null) === 'voided'
+                && ($answer['choice_position'] ?? null) === null;
+            if ((!$publishedScorable && !$draftVoided)
+                || $s['question_status'] !== $item['expected_question_status']
+                || ($answer['status'] ?? null) !== $item['expected_answer_status']
+                || $s['origin'] !== 'human'
                 || $s['reference_key'].'@'.$s['edition_key'] !== $edition
                 || (string)$s['chapter_no'] !== $chapter || $s['kind'] !== 'chapter' || (int)$s['is_official'] !== 1
                 || $s['page'] !== $item['expected_legacy_page']
@@ -179,7 +193,7 @@ SQL);
                 || hash('sha256',(string)$s['stem']) !== $item['expected_stem_sha256']
                 || hash('sha256',(string)$s['anchor_text']) !== $item['expected_anchor_sha256']
                 || hash('sha256',json_encode($choiceRows,JSON_THROW_ON_ERROR)) !== $item['expected_choices_sha256']
-                || !is_array($answer) || !in_array($answer['status'],['final','amended'],true) || $answer['choice_position'] === null
+                || !is_array($answer)
                 || hash('sha256',json_encode($answer,JSON_THROW_ON_ERROR)) !== $item['expected_answer_sha256']) {
                 throw new RuntimeException("Q{$number}: human source, review, question, choices, key or state changed.");
             }

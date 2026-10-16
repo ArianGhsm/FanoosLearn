@@ -25,7 +25,7 @@ class HumanSourcePageRepairContract(unittest.TestCase):
             "expected_anchor_sha256", "scope_chapters", "v.is_official",
             "source_pdf_sha256", "PrintedBookPageEvidence::pageContainsEvidence",
             "BackupManifest::verify", "$db->rollBack();", "$db->commit();",
-            "fanoos.human-source-pdf-page-audit/1", "research_only",
+            "fanoos.human-source-pdf-page-audit/1", "research_only", "$draftVoided",
         ]:
             self.assertIn(marker, source)
         self.assertIn("human_source_provenance_changed'=>0", source)
