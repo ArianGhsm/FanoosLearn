@@ -98,6 +98,21 @@ class PrintedBookPageEvidenceTests(unittest.TestCase):
         )
         self.assertEqual(json.loads(run.stdout), [44])
 
+    def test_table_zero_is_not_a_printed_page_label(self):
+        code = (
+            "require $argv[1];"
+            "echo json_encode(["
+            "Fanoos\\Platform\\Bank\\PrintedBookPageEvidence::hasNoPrintedPageLabels([0]),"
+            "Fanoos\\Platform\\Bank\\PrintedBookPageEvidence::hasNoPrintedPageLabels([0, 221]),"
+            "Fanoos\\Platform\\Bank\\PrintedBookPageEvidence::hasNoPrintedPageLabels(['736.e2'])"
+            "]);"
+        )
+        run = subprocess.run(
+            ["php", "-r", code, str(VERIFIER)],
+            text=True, capture_output=True, check=True
+        )
+        self.assertEqual(json.loads(run.stdout), [True, False, False])
+
     def test_long_running_header_needs_neighbor_corroboration(self):
         long_header = "Long running section title " * 5 + "549"
         code = (

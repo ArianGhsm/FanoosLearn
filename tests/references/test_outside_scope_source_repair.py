@@ -30,7 +30,8 @@ class OutsideScopeSourceRepairContract(unittest.TestCase):
         self.assertIn("'pdf ' . $item['pdf_page']", source)
         self.assertRegex(source, r"printed_page=[:][a-z_]+")
         self.assertIn("public static function hasNoPrintedPageLabel", evidence)
-        self.assertIn("return $labels === [];", evidence)
+        self.assertIn("return $labels !== null && self::hasNoPrintedPageLabels($labels);", evidence)
+        self.assertIn("public static function hasNoPrintedPageLabels", evidence)
 
 
 if __name__ == "__main__":
