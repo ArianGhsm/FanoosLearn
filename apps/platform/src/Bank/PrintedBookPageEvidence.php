@@ -31,6 +31,7 @@ final class PrintedBookPageEvidence
 
         if (is_int($targetLabel)) {
             $neighbors = 0;
+            $neighborLabels = [];
             foreach ([-2, -1, 1, 2] as $step) {
                 $neighborPage = $pdfPage + $step;
                 $neighborPrinted = $targetLabel + $step;
@@ -38,11 +39,18 @@ final class PrintedBookPageEvidence
                     continue;
                 }
                 $labels = self::readPageLabels($edition, $neighborPage, $expectedPdfSha256, $allowLongHeader);
-                if ($labels !== null && in_array($neighborPrinted, $labels, true)) {
-                    ++$neighbors;
+                if ($labels !== null) {
+                    $neighborLabels[$neighborPage] = $labels;
+                    if (in_array($neighborPrinted, $labels, true)) {
+                        ++$neighbors;
+                    }
                 }
             }
             if ($targetHasLabel && $neighbors >= 2) {
+                return true;
+            }
+            if ($targetHasLabel
+                && self::hasInsertedPageSequenceNeighbors($neighborLabels, $pdfPage, $targetLabel)) {
                 return true;
             }
 
@@ -202,7 +210,7 @@ final class PrintedBookPageEvidence
         return array_values(array_unique($numbers));
     }
 
-    /** @param array<int, list<int>> $pages Page number => labels found on that page. */
+    /** @param array<int, list<int|string>> $pages Page number => labels found on that page. */
     public static function corroboratesPageLabels(array $pages, int $pdfPage, string $printedPage): bool
     {
         if ($pdfPage < 1 || !preg_match('/^[1-9][0-9]{0,3}$/D', $printedPage)) {
@@ -214,22 +222,83 @@ final class PrintedBookPageEvidence
         $neighbors = 0;
         foreach ([-2, -1, 1, 2] as $step) {
             $page = $pdfPage + $step;
-            $label = (int) $printedPage + $step;
+            $label = $target + $step;
             if ($page > 0 && $label > 0
                 && in_array($label, $pages[$page] ?? [], true)) {
                 ++$neighbors;
             }
         }
+        if ($targetHasLabel && $neighbors >= 2) {
+            return true;
+        }
         if ($targetHasLabel) {
-            return $neighbors >= 2;
+            $neighborLabels = [];
+            foreach ([-2, -1, 1, 2] as $step) {
+                $page = $pdfPage + $step;
+                if ($page > 0 && isset($pages[$page])) {
+                    $neighborLabels[$page] = $pages[$page];
+                }
+            }
+            return self::hasInsertedPageSequenceNeighbors($neighborLabels, $pdfPage, $target);
         }
         $nearbyConflict = array_filter(
             $targetLabels,
-            static fn(int $label): bool => abs($label - $target) <= 4,
+            static function (int|string $label) use ($target): bool {
+                $base = self::printedPageBase($label);
+                return $base !== null && abs($base - $target) <= 4;
+            },
         );
         return $pdfPage >= 2 && $target >= 2 && $nearbyConflict === []
             && in_array($target - 1, $pages[$pdfPage - 1] ?? [], true)
             && in_array($target + 1, $pages[$pdfPage + 1] ?? [], true);
+    }
+
+    /**
+     * An inserted .e page can sit between the numeric predecessor, target,
+     * and numeric successor. Accept a numeric target only when the exact
+     * target label is present and both sides of its printed-page sequence
+     * are independently visible within two physical PDF pages.
+     *
+     * @param array<int, list<int|string>> $neighborLabels
+     */
+    private static function hasInsertedPageSequenceNeighbors(
+        array $neighborLabels, int $pdfPage, int $target
+    ): bool {
+        $before = false;
+        foreach ([-2, -1] as $step) {
+            foreach ($neighborLabels[$pdfPage + $step] ?? [] as $label) {
+                if (self::printedPageBase($label) === $target - 1) {
+                    $before = true;
+                }
+            }
+        }
+
+        $after = false;
+        foreach ([1, 2] as $step) {
+            foreach ($neighborLabels[$pdfPage + $step] ?? [] as $label) {
+                $base = self::printedPageBase($label);
+                $nextNumericPage = $base === $target + 1
+                    && (!is_string($label) || $label === (string) ($target + 1));
+                $insertedPageAfterTarget = $base === $target && is_string($label)
+                    && preg_match('/^' . preg_quote((string) $target, '/') . '\\.e[1-9][0-9]?$/D', $label) === 1;
+                if ($nextNumericPage || $insertedPageAfterTarget) {
+                    $after = true;
+                }
+            }
+        }
+
+        return $before && $after;
+    }
+
+    private static function printedPageBase(int|string $label): ?int
+    {
+        if (is_int($label)) {
+            return $label > 0 ? $label : null;
+        }
+        if (preg_match('/^([1-9][0-9]{0,3})(?:\\.e[1-9][0-9]?)?$/D', strtolower($label), $match) !== 1) {
+            return null;
+        }
+        return (int) $match[1];
     }
 
     private static function validRequest(string $edition, int $pdfPage, string $printedPage): bool

@@ -56,6 +56,19 @@ sudo -u fanoosupd python3 -B scripts/references/build_chapter_pages.py \
   --only <edition>
 ```
 
+## Inserted printed-page labels
+
+Some approved PDFs place separately labeled insert pages, such as 388.e1,
+between ordinary printed pages. A numeric target is still accepted only when
+its exact printed label appears on the target PDF page and the printed-page
+sequence is confirmed on both sides within two physical pages. A predecessor
+may use the immediately preceding numeric base with an .eN suffix; a successor
+may be an .eN insert after the target or the next numeric page. This accounts
+for supplemental pages without relying on a fixed printed-to-PDF offset. The
+exact PDF SHA, mapped chapter, selected-page evidence and source-only guards
+remain required. If either side of the sequence is missing or conflicts, leave
+the classification pending.
+
 ## Historical cleanup and release state
 
 The previous workflow did create temporary full-book page-text indexes. On
