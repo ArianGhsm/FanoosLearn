@@ -118,14 +118,8 @@ function validateOriginalQuestion1403(PDO $db, array $row, array $original): voi
         ORDER BY recorded_at DESC,id DESC LIMIT 1 FOR UPDATE');
     $answer->execute($params);
     $a = $answer->fetch(PDO::FETCH_ASSOC);
-    $current = is_array($a) ? [
-        'choice' => $a['choice_position'] === null ? null : (int) $a['choice_position'],
-        'also_correct' => $a['also_correct_positions']
-            ? json_decode((string) $a['also_correct_positions'], true, 32, JSON_THROW_ON_ERROR) : [],
-        'status' => $a['status'],
-    ] : null;
-    if ($current !== $original['answer'] || !in_array((string) ($current['status'] ?? ''),
-        ['final', 'amended'], true)) {
+    if (!is_array($a) || !is_array($original['answer'] ?? null)
+        || !Residency1403AiSourceCitationCorrectionGuard::officialAnswerMatches($a, $original['answer'])) {
         throw new RuntimeException("Q{$n}: final official answer changed or is invalid.");
     }
 }

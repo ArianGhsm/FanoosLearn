@@ -81,6 +81,59 @@ final class Residency1403AiSourceCitationCorrectionGuard
     }
 
     /**
+     * Compare the answer data while ignoring provenance-only keys such as
+     * `source` that the canonical export keeps but the DB row does not.
+     *
+     * @param array<string,mixed> $live
+     * @param array<string,mixed> $original
+     */
+    public static function officialAnswerMatches(array $live, array $original): bool
+    {
+        $liveChoice = $live['choice_position'] ?? null;
+        $originalChoice = $original['choice'] ?? null;
+        if (($live['status'] ?? null) !== ($original['status'] ?? null)
+            || !in_array(($live['status'] ?? null), ['final', 'amended'], true)
+            || ($liveChoice !== null && !is_numeric($liveChoice))
+            || ($originalChoice !== null && !is_numeric($originalChoice))) {
+            return false;
+        }
+        $liveChoice = $liveChoice === null ? null : (int) $liveChoice;
+        $originalChoice = $originalChoice === null ? null : (int) $originalChoice;
+        if ($liveChoice === null || $originalChoice === null
+            || $liveChoice < 1 || $liveChoice > 4 || $originalChoice < 1 || $originalChoice > 4) {
+            return false;
+        }
+
+        try {
+            $liveAlso = $live['also_correct_positions'] ?? [];
+            if (is_string($liveAlso) && $liveAlso !== '') {
+                $liveAlso = json_decode($liveAlso, true, 32, JSON_THROW_ON_ERROR);
+            }
+        } catch (\JsonException) {
+            return false;
+        }
+        $originalAlso = $original['also_correct'] ?? [];
+        if ($liveAlso === null) {
+            $liveAlso = [];
+        }
+        if (!is_array($liveAlso) || !array_is_list($liveAlso)
+            || !is_array($originalAlso) || !array_is_list($originalAlso)) {
+            return false;
+        }
+        $liveAlso = array_map('intval', $liveAlso);
+        $originalAlso = array_map('intval', $originalAlso);
+        foreach (array_merge($liveAlso, $originalAlso) as $position) {
+            if ($position < 1 || $position > 4) {
+                return false;
+            }
+        }
+        sort($liveAlso);
+        sort($originalAlso);
+
+        return $liveChoice === $originalChoice && $liveAlso === $originalAlso;
+    }
+
+    /**
      * @param array<string,mixed> $item
      * @param array<string,mixed> $audit
      * @param array<mixed> $decisions
