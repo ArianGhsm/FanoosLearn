@@ -64,6 +64,31 @@ evidence, or a non-unique replacement chapter node. A preview report must say
 After apply, hash the private receipt and independently read back each source
 row and the year-level paired/incomplete counts before continuing.
 
+## Explicitly out-of-scope human citations
+
+For a source whose exact original-book chapter is **absent** from the official
+year/subject scope, use
+`scripts/references/repair_verified_human_outside_scope_chapter_pages.php`.
+It changes only the existing source row's chapter, page, printed-page/PDF
+binding and outside-scope status/note. The note must explicitly say in Persian
+that the item is outside the exam scope. It rejects any chapter listed in the
+official scope, including partial chapters; a page beyond a partial boundary
+needs a separate boundary-aware review. The exact printed page must be
+corroborated on the original PDF page and its neighbors. Long running headers
+are accepted only when the plan records that case and the neighboring PDF
+pages prove the sequential labels.
+
+The status is a classification finding, not a scoring change or release
+waiver. The question, choices, key, review data, frozen assessments and
+attempts remain unchanged, and an outside-scope row does not count as an
+in-scope chapter for the whole-year publication gate.
+
+The private plan/audit use format
+`fanoos.verified-human-outside-scope-chapter-page-repair/1`; apply uses the
+same workspace, backup and unique-receipt arguments as the in-scope operator.
+Require its rollback preview and independent receipt/DB readback before the
+next batch.
+
 ## Validation
 
 The pure guard is covered by
