@@ -59,6 +59,7 @@ use Fanoos\Tests\Operations\VerifiedHumanChapterPageRepairGuardTest;
 use Fanoos\Tests\Operations\VerifiedHumanReferenceChapterPageGuardTest;
 use Fanoos\Tests\Operations\VerifiedHumanScopeUnverifiedPageGuardTest;
 use Fanoos\Tests\Operations\OfficialScopePageGuardTest;
+use Fanoos\Tests\Operations\VerifiedSourcePrintedLabelGuardTest;
 use Fanoos\Tests\Operations\VerifiedHumanOutsideScopeChapterPageGuardTest;
 use Fanoos\Tests\Operations\VerifiedHumanOutsideScopeChapterPageRepairGuardTest;
 use Fanoos\Tests\Operations\VerifiedAiOutsideScopeChapterPageGuardTest;
@@ -120,6 +121,8 @@ try {
     echo "PASS scope-unverified partial-page source guard\n";
     $assertions += (new OfficialScopePageGuardTest())->run();
     echo "PASS official chapter/page partial-scope boundary guard\n";
+    $assertions += (new VerifiedSourcePrintedLabelGuardTest())->run();
+    echo "PASS printed-label-only source audit guard\n";
     $assertions += (new VerifiedHumanOutsideScopeChapterPageGuardTest())->run();
     echo "PASS verified human out-of-scope chapter/page guard\n";
     $assertions += (new VerifiedAiOutsideScopeChapterPageGuardTest())->run();
