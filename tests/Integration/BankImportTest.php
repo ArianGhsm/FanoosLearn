@@ -270,7 +270,7 @@ SQL)->execute(['ws' => $ws, 'question' => $secondKey]);
         $this->database->prepare(<<<'SQL'
 UPDATE bank_question_sources s
 JOIN bank_questions q ON q.id=s.question_id AND q.workspace_id=s.workspace_id
-SET s.official_scope_status='scope_unverified',s.official_scope_note=:note
+SET s.scope_unverified=TRUE,s.official_scope_note=:note
 WHERE q.workspace_id=:ws AND q.question_key=:question
 SQL)->execute([
             'note' => 'صفحهٔ چاپی این محل برای سرفصل جزئی تأیید نشده است.',
@@ -287,7 +287,7 @@ SQL)->execute([
         $this->database->prepare(<<<'SQL'
 UPDATE bank_question_sources s
 JOIN bank_questions q ON q.id=s.question_id AND q.workspace_id=s.workspace_id
-SET s.official_scope_status='in_scope',s.official_scope_note=NULL
+SET s.scope_unverified=FALSE,s.official_scope_note=NULL
 WHERE q.workspace_id=:ws AND q.question_key=:question
 SQL)->execute(['ws' => $ws, 'question' => $secondKey]);
 
