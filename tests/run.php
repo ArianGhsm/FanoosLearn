@@ -55,6 +55,7 @@ use Fanoos\Tests\Operations\SourceChapterCorrectionGuardTest;
 use Fanoos\Tests\Operations\VerifiedHumanChapterPageRepairGuardTest;
 use Fanoos\Tests\Operations\VerifiedHumanOutsideScopeChapterPageGuardTest;
 use Fanoos\Tests\Operations\VerifiedHumanOutsideScopeChapterPageRepairGuardTest;
+use Fanoos\Tests\Operations\VerifiedHumanSourcePageBundleGuardTest;
 use Fanoos\Tests\Operations\VoidedSourceCitationGuardTest;
 use Fanoos\Tests\Operations\TwoSourceCitationGuardTest;
 use Fanoos\Tests\Operations\ReferenceLibraryImportPolicyTest;
@@ -104,6 +105,8 @@ try {
     echo "PASS verified human out-of-scope chapter/page guard\n";
     $assertions += (new VerifiedHumanOutsideScopeChapterPageRepairGuardTest())->run();
     echo "PASS verified human outside-scope repair source-only contract\n";
+    $assertions += (new VerifiedHumanSourcePageBundleGuardTest())->run();
+    echo "PASS verified human multi-page source bundle guard\n";
     $assertions += (new VoidedSourceCitationGuardTest())->run();
     echo "PASS voided-question source-only citation provenance guard\n";
     $assertions += (new TwoSourceCitationGuardTest())->run();
