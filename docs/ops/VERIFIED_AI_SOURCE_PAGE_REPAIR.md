@@ -2,24 +2,29 @@
 
 Use `scripts/references/repair_verified_ai_source_pages.php` only for one
 existing, published, unreviewed AI source whose official-year edition and
-full in-scope chapter are already correct, but whose physical PDF page or
-AI confidence vector needs an original-book re-audit. It can fill a missing
-page or re-score a page already bound by a previous guarded repair.
+chapter are already correct, but whose physical PDF page or AI confidence
+vector needs an original-book re-audit. It can fill a missing page or re-score
+a page already bound by a previous guarded repair. Full chapters and
+structured partial chapters are accepted only when the verified printed page
+falls inside the official boundary.
 
-The writer changes only `bank_question_sources.pdf_page`, `pdf_sha256`,
-`confidence_source`, `confidence_node`, and `confidence_page`. All three
+The writer changes only `bank_question_sources.printed_page`, `pdf_page`,
+`pdf_sha256`, `confidence_source`, `confidence_node`, and `confidence_page`. All three
 accepted confidence values must be at least 0.85, match the independent audit,
-and be no lower than any stored value. It refuses a partial-scope chapter, an
-invalid key, changed question/choice/key fingerprints, a human-reviewed row,
-an unverified edition PDF/map, or a page without quoted evidence and a
-corroborated printed-page sequence. The source edition, chapter, legacy and
+and be no lower than any stored value. A partial chapter is accepted only when
+its verified printed page falls inside the explicit official boundary; the
+operator stores that label so the whole-year gate can verify the same bound.
+It refuses an excluded or unparsed partial page, invalid key, changed
+question/choice/key fingerprints, human-reviewed row, unverified edition
+PDF/map, or a page without quoted evidence and a corroborated printed-page
+sequence. The source edition, chapter, legacy and
 printed pages, anchor, question, choices, answer, review state, frozen
 assessments, and attempts remain unchanged.
 
 ## Protected plan
 
 The single-entry plan format is
-`fanoos.verified-ai-source-page-repair/2`.
+`fanoos.verified-ai-source-page-repair/3`.
 
 Store a single-entry plan and its separate independent provenance audit under
 `/srv/fanoos/shared/research/classification/reports/`, both mode `0600`. The
