@@ -42,6 +42,22 @@ final class Residency1403AiSourceCitationCorrectionGuardTest
             ++$checks;
         }
 
+        $liveAnswer = ['status'=>'final','choice_position'=>3,'also_correct_positions'=>null];
+        $originalAnswer = ['status'=>'final','choice'=>3,'source'=>'official answer provenance'];
+        $this->check(Residency1403AiSourceCitationCorrectionGuard::officialAnswerMatches($liveAnswer,$originalAnswer),
+            'Official answer provenance-only fields must not make an unchanged key mismatch.');
+        ++$checks;
+        foreach ([
+            [['status'=>'final','choice_position'=>2,'also_correct_positions'=>null],$originalAnswer],
+            [$liveAnswer,['status'=>'amended','choice'=>3]],
+            [['status'=>'final','choice_position'=>3,'also_correct_positions'=>'{bad'],$originalAnswer],
+            [['status'=>'voided','choice_position'=>3,'also_correct_positions'=>null],['status'=>'voided','choice'=>3]],
+        ] as [$live,$original]) {
+            $this->check(!Residency1403AiSourceCitationCorrectionGuard::officialAnswerMatches($live,$original),
+                'Changed or invalid official answer fields passed the guard.');
+            ++$checks;
+        }
+
         $entry = [
             'number' => 216,
             'subject' => 'dental-materials',
