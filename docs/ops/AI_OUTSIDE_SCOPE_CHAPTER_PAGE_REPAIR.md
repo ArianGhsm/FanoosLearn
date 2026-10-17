@@ -16,10 +16,13 @@ The writer changes only these fields on `bank_question_sources`:
 
 It preserves the question, choices, official answer, source edition and
 anchor, human review fields, frozen assessment versions, and attempts. It
-refuses any target chapter present in the official full or partial scope.
-It also requires the exact edition PDF SHA, chapter map, printed-page
-neighbor sequence, original-page quote, immutable question/choice/key
-fingerprints, and an accepted private audit bound to the same plan.
+refuses any target page present in the official full or partial scope. For a
+partial chapter, the guard evaluates the structured boundary and printed
+label; it fails closed when the boundary cannot be parsed or the printed
+label is unavailable. It also requires the exact edition PDF SHA, chapter
+map, printed-page neighbor sequence, original-page quote, immutable
+question/choice/key fingerprints, and an accepted private audit bound to the
+same plan.
 
 ## Private audit and plan
 

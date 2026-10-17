@@ -9,6 +9,7 @@ declare(strict_types=1);
  * fresh full backup and a unique private receipt.
  */
 use Fanoos\Platform\Bank\PrintedBookPageEvidence;
+use Fanoos\Platform\Bank\OfficialScopePageGuard;
 use Fanoos\Platform\Bank\VerifiedAiOutsideScopeChapterPageGuard;
 use Fanoos\Platform\Operations\BackupManifest;
 use Fanoos\Platform\Support\DatabaseConnection;
@@ -214,8 +215,8 @@ SQL);
             }
 
             $scope = json_decode((string) $s['scope_chapters'], true, 32, JSON_THROW_ON_ERROR);
-            if (!VerifiedAiOutsideScopeChapterPageGuard::chapterIsOutOfScope($scope, $chapter)) {
-                throw new RuntimeException("Q{$number}: target chapter is listed in official full or partial scope.");
+            if (OfficialScopePageGuard::pageDisposition($scope, $chapter, $printed) !== false) {
+                throw new RuntimeException("Q{$number}: target chapter/page is inside or ambiguous against official scope.");
             }
             $choicesQuery->execute(['ws'=>$workspace,'qid'=>$s['question_id']]);
             $choices = $choicesQuery->fetchAll(PDO::FETCH_ASSOC);

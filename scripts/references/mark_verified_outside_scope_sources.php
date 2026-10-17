@@ -7,6 +7,7 @@ declare(strict_types=1);
  * official exam scope. Preview rolls back; --apply requires a fresh backup.
  */
 use Fanoos\Platform\Bank\PrintedBookPageEvidence;
+use Fanoos\Platform\Bank\OfficialScopePageGuard;
 use Fanoos\Platform\Operations\BackupManifest;
 use Fanoos\Platform\Support\DatabaseConnection;
 use Fanoos\Platform\Support\RuntimeConfig;
@@ -117,9 +118,10 @@ SQL);
             || $s['pdf_sha256'] !== ($item['expected_pdf_sha256'] ?? null) || $s['official_scope_status'] !== 'in_scope' || $s['official_scope_note'] !== null) {
             throw new RuntimeException("Q{$number}: protected source or question changed.");
         }
-        $scope = json_decode((string) $s['scope_chapters'], true, 32, JSON_THROW_ON_ERROR);
-        foreach (is_array($scope) ? $scope : [] as $allowed) {
-            if ((string) ($allowed['number'] ?? '') === (string) $item['chapter']) throw new RuntimeException("Q{$number}: chapter is inside official scope.");
+        if (OfficialScopePageGuard::pageDisposition(
+            $s['scope_chapters'], (string) $item['chapter'], $item['printed_page'],
+        ) !== false) {
+            throw new RuntimeException("Q{$number}: book chapter/page is inside or ambiguous against official scope.");
         }
         $map = $maps['editions'][$item['edition']] ?? null;
         $inside = false;

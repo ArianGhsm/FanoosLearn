@@ -29,7 +29,7 @@ class ExistingSourcePageRepairContracts(unittest.TestCase):
 
     def test_official_and_exact_original_pdf_guards(self):
         for guard in (
-            "v.is_official", "scope_chapters", "empty($entry['partial'])",
+            "v.is_official", "scope_chapters", "OfficialScopePageGuard::pageDisposition",
             "source_pdf_sha256", "PrintedBookPageEvidence::corroborates(",
             "PrintedBookPageEvidence::pageContainsEvidence(", "expected_anchor_sha256",
             "reviewed_by_user_id", "reviewed_at", "s['origin'] !== 'ai'",

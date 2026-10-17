@@ -41,24 +41,9 @@ final class VerifiedHumanOutsideScopeChapterPageGuard
         return true;
     }
 
-    /** Reject any chapter listed in full or partial official scope. */
-    public static function chapterIsOutOfScope(mixed $scope, string $chapter): bool
+    /** Reject pages in any full or partial official scope. */
+    public static function chapterIsOutOfScope(mixed $scope, string $chapter, ?string $printedPage = null): bool
     {
-        if (is_string($scope)) {
-            try {
-                $scope = json_decode($scope, true, 32, JSON_THROW_ON_ERROR);
-            } catch (\JsonException) {
-                return false;
-            }
-        }
-        if (!is_array($scope)) {
-            return false;
-        }
-        foreach ($scope as $entry) {
-            if (is_array($entry) && (string) ($entry['number'] ?? '') === $chapter) {
-                return false;
-            }
-        }
-        return true;
+        return OfficialScopePageGuard::pageDisposition($scope, $chapter, $printedPage) === false;
     }
 }

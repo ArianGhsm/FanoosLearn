@@ -181,8 +181,8 @@ SQL);
                 ||$s['question_status']!==$item['expected_question_status']) {
                 throw new RuntimeException("Q{$number}: human source, scope, chapter or question state changed.");
             }
-            if(!VerifiedHumanOutsideScopeChapterPageGuard::chapterIsOutOfScope($s['scope_chapters'],$chapter))
-                throw new RuntimeException("Q{$number}: target chapter appears in official scope, including partial scope.");
+            if(!VerifiedHumanOutsideScopeChapterPageGuard::chapterIsOutOfScope($s['scope_chapters'],$chapter,$printed))
+                throw new RuntimeException("Q{$number}: target chapter/page appears in official scope or has an unparsed partial boundary.");
             $choicesQuery->execute(['ws'=>$workspace,'qid'=>$s['question_id']]);$choices=$choicesQuery->fetchAll(PDO::FETCH_ASSOC);
             $answerQuery->execute(['ws'=>$workspace,'qid'=>$s['question_id']]);$answer=$answerQuery->fetch(PDO::FETCH_ASSOC);
             $publishedScorable=is_array($answer)&&$s['question_status']==='published'

@@ -21,6 +21,7 @@ declare(strict_types=1);
  * assessment or attempts.
  */
 use Fanoos\Platform\Bank\PrintedBookPageEvidence;
+use Fanoos\Platform\Bank\OfficialScopePageGuard;
 use Fanoos\Platform\Bank\SourceChapterCorrectionGuard;
 use Fanoos\Platform\Operations\BackupManifest;
 use Fanoos\Platform\Support\DatabaseConnection;
@@ -204,15 +205,8 @@ SQL);
                 || (int) $s['is_official'] !== 1) {
                 throw new RuntimeException("Q{$number}: protected source identity or state changed.");
             }
-            $scope = json_decode((string) $s['scope_chapters'], true, 32, JSON_THROW_ON_ERROR);
-            $allowed = false;
-            foreach (is_array($scope) ? $scope : [] as $entry) {
-                if (($entry['number'] ?? null) === $chapter && empty($entry['partial'])) {
-                    $allowed = true;
-                }
-            }
-            if (!$allowed) {
-                throw new RuntimeException("Q{$number}: book chapter not fully in official scope.");
+            if (OfficialScopePageGuard::pageDisposition($s['scope_chapters'], $chapter, $printed) !== true) {
+                throw new RuntimeException("Q{$number}: book chapter/printed page is not proven inside official scope.");
             }
             if (hash('sha256', (string) $s['stem']) !== $questionHash) {
                 throw new RuntimeException("Q{$number}: published question wording changed.");

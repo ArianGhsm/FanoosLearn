@@ -50,7 +50,7 @@ SQL);
         }
 
         $sources = $this->db->prepare(<<<'SQL'
-SELECT s.node_id,s.pdf_page,s.pdf_sha256,s.official_scope_status,s.official_scope_note,
+SELECT s.node_id,s.pdf_page,s.printed_page,s.pdf_sha256,s.official_scope_status,s.official_scope_note,
        s.scope_unverified,n.edition_id
 FROM bank_question_sources s
 LEFT JOIN bank_reference_nodes n ON n.id=s.node_id AND n.workspace_id=s.workspace_id
@@ -118,11 +118,6 @@ SQL);
                 if (!is_array($listed)) {
                     continue;
                 }
-                $outsideListedScope = $listed !== [] && !in_array(
-                    (string) $official['number'],
-                    array_map(static fn (array $chapter): string => (string) ($chapter['number'] ?? ''), $listed),
-                    true,
-                );
                 $scopeText = (string) ($official['scope'] ?? '');
                 $outsideTextScope = $listed === [] && (
                     str_contains($scopeText, 'منتخب') || str_contains($scopeText, 'به جز')
@@ -130,7 +125,17 @@ SQL);
                     || stripos($scopeText, 'except') !== false
                     || stripos($scopeText, 'excluding') !== false
                 );
-                if (($outsideListedScope || $outsideTextScope)
+                $pageScope = OfficialScopePageGuard::pageDisposition(
+                    $listed,
+                    (string) $official['number'],
+                    is_string($source['printed_page'] ?? null) ? $source['printed_page'] : null,
+                );
+                if (($pageScope === null && !$outsideTextScope)
+                    || ($listed === [] && !$outsideTextScope)) {
+                    continue;
+                }
+                $outsideScope = $pageScope === false || $outsideTextScope;
+                if ($outsideScope
                     && ($source['official_scope_status'] !== 'outside_scope_exam_question'
                         || !is_string($source['official_scope_note'])
                         || mb_strlen(trim($source['official_scope_note'])) < 12)) {
