@@ -13,9 +13,9 @@ declare(strict_types=1);
  * Apply requires --apply --backup=/var/backups/fanoos/<fresh verified full backup>
  * and --receipt=/srv/fanoos/shared/research/classification/reports/<unused>.json.
  *
- * For an originally unnumbered historic source, a separately verified book
- * printed-page label may be supplied without changing the stored NULL value.
- * Never change chapter, edition, historical printed label, original anchor,
+ * For a source without a stored printed-page label, the independently
+ * verified label is written so partial-page syllabus scope can be enforced.
+ * Never change chapter, edition, an existing historical printed label, original anchor,
  * question, choices, key, review state, assessment or attempts.
  */
 use Fanoos\Platform\Bank\PrintedBookPageEvidence;
@@ -113,13 +113,15 @@ ORDER BY recorded_at DESC,id DESC LIMIT 1
 SQL);
     $choicesQuery = $db->prepare('SELECT position,text,image FROM bank_question_choices WHERE workspace_id=:ws AND question_id=:qid ORDER BY position');
     $update = $db->prepare(<<<'SQL'
-UPDATE bank_question_sources SET pdf_page=:page,pdf_sha256=:sha
+UPDATE bank_question_sources SET printed_page=:printed,pdf_page=:page,pdf_sha256=:sha
 WHERE workspace_id=:ws AND id=:id AND pdf_page IS NULL AND pdf_sha256 IS NULL
+  AND printed_page <=> :old_printed
   AND origin='ai' AND reviewed_at IS NULL AND reviewed_by_user_id IS NULL
 SQL);
 
     $seen = [];
     $results = [];
+    $changedSourceFields = ['pdf_page'=>true,'pdf_sha256'=>true];
     $db->beginTransaction();
     try {
         foreach ($plan['entries'] as $item) {
@@ -202,9 +204,12 @@ SQL);
             if (count($choicesQuery->fetchAll(PDO::FETCH_ASSOC)) < 2) {
                 throw new RuntimeException("Q{$number}: incomplete choices.");
             }
-            $update->execute(['page'=>$page,'sha'=>$sha,'ws'=>$ws,'id'=>$id]);
+            $update->execute(['printed'=>$printed,'page'=>$page,'sha'=>$sha,'old_printed'=>$storedPrinted,'ws'=>$ws,'id'=>$id]);
             if ($update->rowCount() !== 1) {
                 throw new RuntimeException("Q{$number}: zero/ambiguous source-only update.");
+            }
+            if ($storedPrinted === null) {
+                $changedSourceFields['printed_page'] = true;
             }
             $results[] = ['number'=>$number,'source_id'=>$id,'edition'=>$edition,
                 'chapter'=>$chapter,'pdf_page'=>$page,'printed_page'=>$printed,'pdf_sha256'=>$sha];
@@ -225,7 +230,7 @@ SQL);
         'year'=>$plan['year'],'subject'=>$plan['subject'],'count'=>count($results),
         'plan_sha256'=>hash('sha256', $raw),
         'questions_changed'=>0,'choices_changed'=>0,'answers_changed'=>0,
-        'source_fields_changed'=>['pdf_page','pdf_sha256'],'sources'=>$results];
+        'source_fields_changed'=>array_keys($changedSourceFields),'sources'=>$results];
     if ($apply) {
         $receipt['backup_id'] = basename($backup);
         $receipt['at_utc'] = gmdate('Y-m-d\TH:i:s\Z');
