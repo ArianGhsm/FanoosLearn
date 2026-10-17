@@ -28,6 +28,15 @@ test('an outside-scope citation keeps its chapter and shows the explicit warning
     assert.equal(facts.scopeNote, note);
 });
 
+test('an unverified partial-scope page shows a warning without claiming it is outside', () => {
+    const note = 'فصل ۹ تا صفحهٔ چاپی ۲۱۷ در سرفصل است؛ شمارهٔ چاپی این صفحه تأیید نشده است.';
+    const facts = questionFacts({ bank: { exam: 'دستیاری', exam_key: 'residency', year: 1404, round: 1,
+        number: 164, subject: 'دندانپزشکی ترمیمی', chapter: { ...chapter, number: '9', title: 'Bonding', title_fa: 'باندینگ',
+            official_scope_status: 'in_scope', scope_unverified: true, official_scope_note: note } } });
+    assert.equal(facts.chapter, 'فصل ۹ · باندینگ');
+    assert.equal(facts.scopeNote, note);
+});
+
 test('a national round is its month', () => {
     const facts = questionFacts({ bank: { exam: 'ملی', exam_key: 'national', year: 1405, round: 2, number: null, subject: 'پریو', chapter: null } });
     assert.equal(facts.exam, 'ملی ۱۴۰۵ · دی');

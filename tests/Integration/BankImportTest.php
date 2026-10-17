@@ -265,6 +265,32 @@ SET s.pdf_page=272
 WHERE q.workspace_id=:ws AND q.question_key=:question
 SQL)->execute(['ws' => $ws, 'question' => $secondKey]);
 
+        // A recorded physical page whose partial chapter scope could not be
+        // resolved remains visible but must never satisfy the year gate.
+        $this->database->prepare(<<<'SQL'
+UPDATE bank_question_sources s
+JOIN bank_questions q ON q.id=s.question_id AND q.workspace_id=s.workspace_id
+SET s.scope_unverified=TRUE,s.official_scope_note=:note
+WHERE q.workspace_id=:ws AND q.question_key=:question
+SQL)->execute([
+            'note' => 'صفحهٔ چاپی این محل برای سرفصل جزئی تأیید نشده است.',
+            'ws' => $ws,
+            'question' => $secondKey,
+        ]);
+        try {
+            $publisher->publish($ws, 'residency', 1404, 1, $f['manager'], $f['reviewer']);
+            $this->assert(false, 'A residency year with an unresolved page scope was published.');
+        } catch (PlatformException $error) {
+            $this->assert($error->errorCode === 'residency_year_classification_incomplete',
+                'Scope-unverified source did not block publication.');
+        }
+        $this->database->prepare(<<<'SQL'
+UPDATE bank_question_sources s
+JOIN bank_questions q ON q.id=s.question_id AND q.workspace_id=s.workspace_id
+SET s.scope_unverified=FALSE,s.official_scope_note=NULL
+WHERE q.workspace_id=:ws AND q.question_key=:question
+SQL)->execute(['ws' => $ws, 'question' => $secondKey]);
+
         // An incomplete declared whole-year inventory is also rejected.
         $this->database->prepare(<<<'SQL'
 UPDATE bank_exam_sittings si JOIN bank_exam_types et ON et.id=si.exam_type_id AND et.workspace_id=si.workspace_id

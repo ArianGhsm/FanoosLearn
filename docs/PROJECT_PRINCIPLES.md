@@ -109,6 +109,17 @@ and safely repaired via the approved, backed-up source-only workflow. Do not
 erase existing chapters, keys, assessments or source provenance merely to
 satisfy the new metric.
 
+**Partial scope with an unreadable printed label:** If the exact official
+PDF page, chapter map and page-local evidence are verified, but an official
+partial-chapter cutoff cannot be compared because that PDF page has no
+corroborated printed label, an audited source-only operation may record the
+physical `pdf_page` and `pdf_sha256` with
+`scope_unverified=true` and a clear Persian note. This is a
+recorded design location only; it is neither an in-scope completion nor an
+outside-scope finding. The year-level publication gate must reject it until
+the scope is authoritatively resolved. Never guess the printed page or mark
+the item outside-scope to work around a missing label.
+
 Every future backlog, import receipt, progress dashboard and handoff must
 use `EXISTS` on a **single source row** containing `node_id`,
 `pdf_page` and `pdf_sha256` for the strict **chapter+page recorded**
