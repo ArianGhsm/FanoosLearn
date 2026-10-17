@@ -86,7 +86,7 @@
     }
   ],
   "validity": [
-    { "exam_type": "residency", "year": 1404, "subject": "endodontics", "edition": "torabinejad@6e", "official": true, "source_document": "منابع اعلام‌شده‌ی آزمون دستیاری ۱۴۰۴ (نمونه)" }
+    { "exam_type": "residency", "year": 1404, "subject": "endodontics", "edition": "torabinejad@6e", "official": true, "scope_chapters": [{ "number": "14" }], "source_document": "منابع اعلام‌شده‌ی آزمون دستیاری ۱۴۰۴ (نمونه)" }
   ],
   "edition_mappings": [
     { "from": "torabinejad@5e#ch13", "to": "torabinejad@6e#ch14", "relation": "equivalent", "origin": "human" }
