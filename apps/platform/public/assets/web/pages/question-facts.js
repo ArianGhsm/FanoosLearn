@@ -44,9 +44,11 @@ export function questionFacts(question) {
         chapter = `${label} · ${fa || text(c.title)}`;
         chapterEn = fa ? text(c.title) : null;
         book = [text(c.book), text(c.edition)].filter((part) => part !== '').join(' · ') || null;
-        scopeNote = c.official_scope_status === 'outside_scope_exam_question'
-            ? (text(c.official_scope_note) || 'محل طراحی این سؤال خارج از محدودهٔ رسمی آزمون بوده است.')
-            : null;
+        if (c.scope_unverified === true) {
+            scopeNote = text(c.official_scope_note) || 'انطباق صفحهٔ منبع با محدودهٔ رسمی آزمون هنوز تأیید نشده است.';
+        } else if (c.official_scope_status === 'outside_scope_exam_question') {
+            scopeNote = text(c.official_scope_note) || 'محل طراحی این سؤال خارج از محدودهٔ رسمی آزمون بوده است.';
+        }
     }
 
     return {

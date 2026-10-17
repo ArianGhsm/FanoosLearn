@@ -50,7 +50,8 @@ SQL);
         }
 
         $sources = $this->db->prepare(<<<'SQL'
-SELECT s.node_id,s.pdf_page,s.pdf_sha256,s.official_scope_status,s.official_scope_note,n.edition_id
+SELECT s.node_id,s.pdf_page,s.pdf_sha256,s.official_scope_status,s.official_scope_note,
+       s.scope_unverified,n.edition_id
 FROM bank_question_sources s
 LEFT JOIN bank_reference_nodes n ON n.id=s.node_id AND n.workspace_id=s.workspace_id
 WHERE s.workspace_id=:ws AND s.question_id=:qid
@@ -94,6 +95,13 @@ SQL);
                     || (int) ($source['pdf_page'] ?? 0) < 1
                     || !is_string($source['pdf_sha256'])
                     || preg_match('/^[a-f0-9]{64}$/D', $source['pdf_sha256']) !== 1) {
+                    continue;
+                }
+                // A physical PDF location is useful research progress, but a
+                // partial chapter with no corroborated printed label has no
+                // established year-scope disposition. Never publish it as
+                // either in-scope or outside-scope by inference.
+                if ((bool) ($source['scope_unverified'] ?? false)) {
                     continue;
                 }
                 $scope->execute([

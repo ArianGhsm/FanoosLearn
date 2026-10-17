@@ -10,6 +10,17 @@ official exam scope. This flag does not expand the syllabus. The whole-year
 publication gate accepts it only with the same physical PDF page and SHA-256
 requirements as an in-scope source.
 
+## Partial scope with an unreadable printed page label
+
+When the exact original PDF page and chapter are verified but a partial
+chapter's printed-page cutoff cannot be checked because the selected page has
+no corroborated printed label, record the physical page and PDF SHA only via
+`scripts/references/record_verified_human_scope_unverified_page.php`. Set
+`scope_unverified=true` and add a clear Persian note. Keep
+the true chapter and physical PDF page. Do not treat this as in-scope or
+outside-scope; the year-level publication gate rejects this status until an
+authoritative page/scope resolution is available.
+
 **Owner decision 2026-10-13:** AI agents perform evidence-backed chapter
 classification through the validators and audited publication workflow;
 human review is not a prerequisite. Confidence below 0.85 remains pending.

@@ -26,7 +26,7 @@ final class BankQuestionFacts
 
     /**
      * @return array{exam:string,exam_key:string,year:int,round:int,number:?int,subject:string,
-     *     chapter:?array{book:string,edition:string,number:?string,title:string,title_fa:?string,pdf_page:?int,official_scope_status:string,official_scope_note:?string}}|null
+     *     chapter:?array{book:string,edition:string,number:?string,title:string,title_fa:?string,pdf_page:?int,official_scope_status:string,official_scope_note:?string,scope_unverified:bool}}|null
      */
     public function forQuestion(string $workspaceId, string $questionKey): ?array
     {
@@ -57,11 +57,12 @@ SQL);
         ];
     }
 
-    /** @return array{book:string,edition:string,number:?string,title:string,title_fa:?string,pdf_page:?int,official_scope_status:string,official_scope_note:?string}|null */
+    /** @return array{book:string,edition:string,number:?string,title:string,title_fa:?string,pdf_page:?int,official_scope_status:string,official_scope_note:?string,scope_unverified:bool}|null */
     private function chapter(string $workspaceId, string $questionId): ?array
     {
         $query = $this->database->prepare(<<<'SQL'
 SELECT link.node_id, link.pdf_page, link.official_scope_status, link.official_scope_note,
+       link.scope_unverified,
        reference.title AS book, edition.edition_label
 FROM bank_question_sources link
 JOIN bank_reference_editions edition ON edition.id = link.edition_id
@@ -100,6 +101,7 @@ SQL);
             'pdf_page' => $source['pdf_page'] === null ? null : (int) $source['pdf_page'],
             'official_scope_status' => (string) $source['official_scope_status'],
             'official_scope_note' => $source['official_scope_note'] === null ? null : (string) $source['official_scope_note'],
+            'scope_unverified' => (bool) $source['scope_unverified'],
         ];
     }
 
