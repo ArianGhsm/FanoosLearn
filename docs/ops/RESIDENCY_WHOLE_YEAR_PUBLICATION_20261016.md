@@ -83,6 +83,9 @@ The guard validates:
   existing chapter-node ancestry to an **official** validity edition
   for the exact year/exam-type/subject, an in-syllabus chapter,
   positive physical `pdf_page` and 64-hex `pdf_sha256`;
+- for a partial chapter, the bound `printed_page` must fall inside its
+  explicit page boundary; a page outside that boundary needs an audited
+  outside-scope disposition, and an unparseable boundary stays on hold;
 - a selected/excluded syllabus without structured allowed chapter
   scope does **not** pass as unrestricted;
 - English receives no fabricated book reference, but its latest

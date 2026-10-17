@@ -18,10 +18,10 @@ class ExistingSourcePageRepairContracts(unittest.TestCase):
     def setUpClass(cls):
         cls.source = OPERATOR.read_text(encoding="utf-8")
 
-    def test_only_mutable_fields_are_pdf_page_and_pdf_sha(self):
+    def test_only_source_page_metadata_is_mutated(self):
         mutations = re.findall(r"\b(?:UPDATE|INSERT\s+INTO|DELETE\s+FROM)\s+(bank_[a-z_]+)", self.source)
         self.assertEqual(mutations, ["bank_question_sources"])
-        self.assertRegex(self.source, r"UPDATE bank_question_sources SET pdf_page=:page,pdf_sha256=:sha")
+        self.assertRegex(self.source, r"UPDATE bank_question_sources SET printed_page=:printed,pdf_page=:page,pdf_sha256=:sha")
         self.assertNotRegex(self.source, r"UPDATE\s+bank_questions|UPDATE\s+bank_official_answers")
         self.assertIn("$db->rollBack();", self.source)
         self.assertIn("$db->commit();", self.source)
@@ -29,7 +29,7 @@ class ExistingSourcePageRepairContracts(unittest.TestCase):
 
     def test_official_and_exact_original_pdf_guards(self):
         for guard in (
-            "v.is_official", "scope_chapters", "empty($entry['partial'])",
+            "v.is_official", "scope_chapters", "OfficialScopePageGuard::pageDisposition",
             "source_pdf_sha256", "PrintedBookPageEvidence::corroborates(",
             "PrintedBookPageEvidence::pageContainsEvidence(", "expected_anchor_sha256",
             "reviewed_by_user_id", "reviewed_at", "s['origin'] !== 'ai'",
@@ -49,20 +49,21 @@ class ExistingSourcePageRepairContracts(unittest.TestCase):
         ):
             self.assertIn(guard, self.source)
 
-    def test_nullable_historic_page_is_explicitly_guarded_and_never_written(self):
-        # An original source can lack an old printed label. Its newly
-        # independently verified PDF printed number is evidence only.
+    def test_nullable_historic_printed_page_is_filled_only_from_verified_pdf(self):
+        # A missing printed label is populated only after direct PDF and
+        # neighbor validation, and the original value is pinned with CAS.
         for guard in (
             "array_key_exists('expected_legacy_page', $item)",
             "array_key_exists('expected_stored_printed_page', $item)",
             "$s['page'] !== $expectedLegacy",
             "$s['printed_page'] !== $storedPrinted",
+            "printed_page <=> :old_printed",
+            "if ($storedPrinted === null)",
             "PrintedBookPageEvidence::corroborates(",
             "PrintedBookPageEvidence::pageContainsEvidence(",
-            "UPDATE bank_question_sources SET pdf_page=:page,pdf_sha256=:sha",
+            "UPDATE bank_question_sources SET printed_page=:printed,pdf_page=:page,pdf_sha256=:sha",
         ):
             self.assertIn(guard, self.source)
-        self.assertNotIn("SET printed_page=", self.source)
         self.assertNotIn("SET page=", self.source)
 
     @unittest.skipUnless(shutil.which("php"), "PHP required")

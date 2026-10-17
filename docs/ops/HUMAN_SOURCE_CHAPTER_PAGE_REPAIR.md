@@ -71,11 +71,12 @@ year/subject scope, use
 `scripts/references/repair_verified_human_outside_scope_chapter_pages.php`.
 It changes only the existing source row's chapter, page, printed-page/PDF
 binding and outside-scope status/note. The note must explicitly say in Persian
-that the item is outside the exam scope. It rejects any chapter listed in the
-official scope, including partial chapters; a page beyond a partial boundary
-needs a separate boundary-aware review. The exact printed page must be
-corroborated on the original PDF page and its neighbors. Long running headers
-are accepted only when the plan records that case and the neighboring PDF
+that the item is outside the exam scope. It rejects pages inside a full or
+partial chapter scope. For a partial chapter, it parses only explicit numeric
+page boundaries; an unparseable boundary or unavailable printed label stays
+pending. The exact printed page must be corroborated on the original PDF page
+and its neighbors. Long running headers are accepted only when the plan
+records that case and the neighboring PDF
 pages prove the sequential labels.
 
 The status is a classification finding, not a scoring change or release

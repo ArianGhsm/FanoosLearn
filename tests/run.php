@@ -58,6 +58,7 @@ use Fanoos\Tests\Operations\SourceChapterCorrectionGuardTest;
 use Fanoos\Tests\Operations\VerifiedHumanChapterPageRepairGuardTest;
 use Fanoos\Tests\Operations\VerifiedHumanReferenceChapterPageGuardTest;
 use Fanoos\Tests\Operations\VerifiedHumanScopeUnverifiedPageGuardTest;
+use Fanoos\Tests\Operations\OfficialScopePageGuardTest;
 use Fanoos\Tests\Operations\VerifiedHumanOutsideScopeChapterPageGuardTest;
 use Fanoos\Tests\Operations\VerifiedHumanOutsideScopeChapterPageRepairGuardTest;
 use Fanoos\Tests\Operations\VerifiedAiOutsideScopeChapterPageGuardTest;
@@ -117,6 +118,8 @@ try {
     echo "PASS verified human cross-edition source correction guard\n";
     $assertions += (new VerifiedHumanScopeUnverifiedPageGuardTest())->run();
     echo "PASS scope-unverified partial-page source guard\n";
+    $assertions += (new OfficialScopePageGuardTest())->run();
+    echo "PASS official chapter/page partial-scope boundary guard\n";
     $assertions += (new VerifiedHumanOutsideScopeChapterPageGuardTest())->run();
     echo "PASS verified human out-of-scope chapter/page guard\n";
     $assertions += (new VerifiedAiOutsideScopeChapterPageGuardTest())->run();

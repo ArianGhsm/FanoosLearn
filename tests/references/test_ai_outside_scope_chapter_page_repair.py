@@ -34,7 +34,7 @@ class AiOutsideScopeChapterPageRepairContract(unittest.TestCase):
             "expected_stem_sha256", "expected_choices_sha256", "expected_answer_sha256",
             "expected_anchor_sha256", "expected_old_confidence_page", "new_confidence_page",
             "VerifiedAiOutsideScopeChapterPageGuard::auditMatches",
-            "VerifiedAiOutsideScopeChapterPageGuard::chapterIsOutOfScope",
+            "OfficialScopePageGuard::pageDisposition",
             "PrintedBookPageEvidence::corroborates", "PrintedBookPageEvidence::pageContainsEvidence",
             "BackupManifest::verify", "$db->rollBack();", "$db->commit();",
             "خارج از محدوده", "'attempts_changed'=>0",
