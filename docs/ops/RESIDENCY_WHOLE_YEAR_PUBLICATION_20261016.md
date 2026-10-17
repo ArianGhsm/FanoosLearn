@@ -119,6 +119,10 @@ all scope evidence before attempting publication.
    `scripts/references/repair_verified_ai_outside_scope_chapter_pages.php`
    workflow in `docs/ops/AI_OUTSIDE_SCOPE_CHAPTER_PAGE_REPAIR.md`;
    preserve the original key and record unresolved source/key conflicts.
+   When an existing bound PDF page lacks only its printed label, use
+   `scripts/references/repair_verified_source_printed_labels.php` to add the
+   label needed for the page-level partial-scope check, following
+   `docs/ops/VERIFIED_SOURCE_PRINTED_LABEL_REPAIR.md`.
 3. Independently verify the **whole** year, not merely one subject,
    including English exemptions, newest scope, full official inventory,
    every chapter and physical page, approved SHA maps, prior assessment
