@@ -19,7 +19,7 @@ class VerifiedAiSourcePageRepairContracts(unittest.TestCase):
         self.assertEqual(mutations, ["bank_question_sources"])
         self.assertRegex(
             self.source,
-            r"SET pdf_page=:page,pdf_sha256=:sha,\s*confidence_source=:confidence_source,confidence_node=:confidence_node,confidence_page=:confidence_page",
+            r"SET printed_page=:printed,pdf_page=:page,pdf_sha256=:sha,\s*confidence_source=:confidence_source,confidence_node=:confidence_node,confidence_page=:confidence_page",
         )
         self.assertNotRegex(self.source, r"UPDATE\s+bank_questions|UPDATE\s+bank_official_answers")
         self.assertIn("$db->rollBack();", self.source)
@@ -29,7 +29,7 @@ class VerifiedAiSourcePageRepairContracts(unittest.TestCase):
     def test_confidence_and_audit_are_fail_closed(self):
         for guard in (
             "SourceChapterCorrectionGuard::auditMatches",
-            "fanoos.verified-ai-source-page-repair/2",
+            "fanoos.verified-ai-source-page-repair/3",
             "$confidence < 0.85",
             "$confidence > 1.0",
             "(float) $confidence < (float) $s['confidence_source']",
@@ -68,6 +68,11 @@ class VerifiedAiSourcePageRepairContracts(unittest.TestCase):
             "expected_pdf_sha256",
             "pdf_page <=> :old_pdf_page",
             "pdf_sha256 <=> :old_pdf_sha",
+            "printed_page <=> :old_printed",
+            "scope_unverified=0",
+            "official_scope_status='in_scope'",
+            "OfficialScopePageGuard::pageDisposition($scopes, $chapter, $printed)",
+            "source_fields_changed",
             "reviewed_by_user_id",
             "reviewed_at",
             "s['origin'] !== 'ai'",
@@ -75,7 +80,7 @@ class VerifiedAiSourcePageRepairContracts(unittest.TestCase):
             "['final','amended']",
         ):
             self.assertIn(guard, self.source)
-        self.assertIn("$fullChapter", self.source)
+        self.assertNotIn("$fullChapter", self.source)
 
     def test_fresh_backup_and_unique_private_receipt_are_required_for_apply(self):
         for guard in (

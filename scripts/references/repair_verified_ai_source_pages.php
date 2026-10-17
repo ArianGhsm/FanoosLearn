@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 /**
  * Bind a verified original PDF page and accepted confidence vector to one
- * existing, unreviewed AI source in a fully in-scope chapter. It can fill a
- * missing page or re-score a page already bound by an earlier safe repair.
+ * existing, unreviewed AI source at an in-scope original-PDF page. It can fill
+ * a missing page, persist the verified printed label needed by a partial
+ * chapter, or re-score a page already bound by an earlier safe repair.
  * This operator never changes the source edition, chapter, printed/legacy
  * page, anchor, question, choices, answer, review state, assessment, or attempts.
  *
@@ -52,7 +53,7 @@ try {
     }
     $raw = (string) file_get_contents($planPath);
     $plan = json_decode($raw, true, 48, JSON_THROW_ON_ERROR);
-    if (($plan['format'] ?? null) !== 'fanoos.verified-ai-source-page-repair/2'
+    if (($plan['format'] ?? null) !== 'fanoos.verified-ai-source-page-repair/3'
         || ($plan['exam_type'] ?? null) !== 'residency'
         || !is_int($plan['year'] ?? null) || $plan['year'] < 1396 || $plan['year'] > 1500
         || !is_string($plan['subject'] ?? null)
@@ -102,6 +103,7 @@ try {
 SELECT s.id,s.page,s.printed_page,s.pdf_page,s.pdf_sha256,s.anchor_text,
        s.origin,s.reviewed_at,s.reviewed_by_user_id,
        s.confidence_source,s.confidence_node,s.confidence_page,
+       s.scope_unverified,s.official_scope_status,
        q.id AS question_id,q.stem,q.status AS question_status,
        e.edition_key,r.reference_key,n.number AS chapter_no,n.kind,
        v.scope_chapters,v.is_official
@@ -128,10 +130,12 @@ SQL);
     $choicesQuery = $db->prepare('SELECT position,text,image FROM bank_question_choices WHERE workspace_id=:ws AND question_id=:qid ORDER BY position');
     $update = $db->prepare(<<<'SQL'
 UPDATE bank_question_sources
-SET pdf_page=:page,pdf_sha256=:sha,
+SET printed_page=:printed,pdf_page=:page,pdf_sha256=:sha,
     confidence_source=:confidence_source,confidence_node=:confidence_node,confidence_page=:confidence_page
 WHERE workspace_id=:ws AND id=:id AND pdf_page <=> :old_pdf_page AND pdf_sha256 <=> :old_pdf_sha
+  AND printed_page <=> :old_printed
   AND origin='ai' AND reviewed_at IS NULL AND reviewed_by_user_id IS NULL
+  AND scope_unverified=0 AND official_scope_status='in_scope'
   AND confidence_source=:old_confidence_source AND confidence_node=:old_confidence_node
   AND confidence_page=:old_confidence_page
 SQL);
@@ -224,6 +228,7 @@ SQL);
             || $storedPdfPage !== $expectedPdfPage || $storedPdfSha !== $expectedPdfSha
             || $s['page'] !== $item['expected_legacy_page']
             || $s['printed_page'] !== $item['expected_stored_printed_page']
+            || (bool) $s['scope_unverified'] || $s['official_scope_status'] !== 'in_scope'
             || hash('sha256', (string) $s['anchor_text']) !== $item['expected_anchor_sha256']
             || $s['reference_key'] . '@' . $s['edition_key'] !== $edition
             || (string) $s['chapter_no'] !== $chapter || $s['kind'] !== 'chapter'
@@ -243,16 +248,8 @@ SQL);
         }
 
         $scopes = json_decode((string) $s['scope_chapters'], true, 32, JSON_THROW_ON_ERROR);
-        $fullChapter = false;
-        foreach (is_array($scopes) ? $scopes : [] as $scopeEntry) {
-            if (is_array($scopeEntry) && ($scopeEntry['number'] ?? null) === $chapter
-                && !isset($scopeEntry['partial'])) {
-                $fullChapter = true;
-                break;
-            }
-        }
-        if (!$fullChapter || OfficialScopePageGuard::pageDisposition($scopes, $chapter, $printed) !== true) {
-            throw new RuntimeException("Q{$number}: chapter/page is not proven fully inside official scope.");
+        if (OfficialScopePageGuard::pageDisposition($scopes, $chapter, $printed) !== true) {
+            throw new RuntimeException("Q{$number}: chapter/printed page is not proven inside official scope.");
         }
 
         $runs = $map['editions'][$edition]['runs'] ?? [];
@@ -291,6 +288,9 @@ SQL);
         }
 
         $sourceFieldsChanged = [];
+        if ($s['printed_page'] !== $printed) {
+            $sourceFieldsChanged[] = 'printed_page';
+        }
         if ($storedPdfPage !== $page) {
             $sourceFieldsChanged[] = 'pdf_page';
         }
@@ -310,7 +310,8 @@ SQL);
             throw new RuntimeException("Q{$number}: plan would not change any source field.");
         }
 
-        $update->execute(['page'=>$page,'sha'=>$sha,
+        $update->execute(['printed'=>$printed,'old_printed'=>$item['expected_stored_printed_page'],
+            'page'=>$page,'sha'=>$sha,
             'old_pdf_page'=>$expectedPdfPage,'old_pdf_sha'=>$expectedPdfSha,
             'confidence_source'=>number_format((float) $confidence, 3, '.', ''),
             'confidence_node'=>number_format((float) $confidence, 3, '.', ''),
@@ -323,6 +324,8 @@ SQL);
         }
         $result = ['number'=>$number,'source_id'=>$id,'edition'=>$edition,'chapter'=>$chapter,
             'pdf_page'=>$page,'printed_page_verified'=>$printed,'pdf_sha256'=>$sha,
+            'old_printed_page'=>$item['expected_stored_printed_page'],
+            'printed_page'=>$printed,
             'old_pdf_page'=>$expectedPdfPage,'old_pdf_sha256'=>$expectedPdfSha,
             'old_confidence_source'=>$expectedSourceConfidence,
             'old_confidence_node'=>$expectedNodeConfidence,
@@ -343,7 +346,7 @@ SQL);
         throw $error;
     }
 
-    $receipt = ['format'=>'fanoos.verified-ai-source-page-repair-receipt/2',
+    $receipt = ['format'=>'fanoos.verified-ai-source-page-repair-receipt/3',
         'mode'=>$apply ? 'applied' : 'rollback-preview','year'=>$plan['year'],'subject'=>$plan['subject'],
         'plan_sha256'=>hash('sha256', $raw),'audit_sha256'=>$auditSha,
         'questions_changed'=>0,'choices_changed'=>0,'answers_changed'=>0,
