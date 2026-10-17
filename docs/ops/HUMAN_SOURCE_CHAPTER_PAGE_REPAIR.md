@@ -89,6 +89,26 @@ same workspace, backup and unique-receipt arguments as the in-scope operator.
 Require its rollback preview and independent receipt/DB readback before the
 next batch.
 
+## Human citations supported by multiple pages
+
+When a question's source evidence is split across two or more pages in the
+same official edition and chapter, use
+`scripts/references/repair_verified_human_source_page_bundle.php`. The plan
+contains two to four distinct, exact original PDF pages; every page needs its
+own short quotation, chapter-map check, current PDF hash, and official-scope
+check. The transaction binds the existing human row to the first page and adds
+secondary AI-origin citation rows for the other pages. It accepts only a
+question with exactly one existing source row, retains the original human row
+and its attribution, and leaves the question, choices, answer, assessments and
+attempts unchanged.
+
+Use the guarded two-source insertion workflow for source-free questions that
+need separate chapters/references. Do not use the page-bundle operator to
+combine different books, chapters, editions or scopes. Its format is
+`fanoos.verified-human-source-page-bundle-repair/1`; preview, fresh verified
+backup, unique receipt, and independent readback are required as for the
+single-page operator.
+
 ## Validation
 
 The pure guard is covered by
