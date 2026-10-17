@@ -178,6 +178,8 @@ def audit_batch(root: Path, spec: str,
         pages[str(n)] = {
             "ref": item["ref"],
             "pdf_page": int(decision["page"]),
+            "confidence_source": round(float(confidence["source"]), 3),
+            "confidence_node": round(float(confidence["node"]), 3),
             "confidence_page": round(float(confidence["page"]), 3),
         }
     return {

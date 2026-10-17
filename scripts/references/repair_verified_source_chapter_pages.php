@@ -58,9 +58,9 @@ try {
     }
     $raw = (string) file_get_contents($planPath);
     $plan = json_decode($raw, true, 48, JSON_THROW_ON_ERROR);
-    if (($plan['format'] ?? '') !== 'fanoos.verified-source-chapter-page-correction/1'
+    if (($plan['format'] ?? '') !== 'fanoos.verified-source-chapter-page-correction/2'
         || ($plan['exam_type'] ?? '') !== 'residency'
-        || ($plan['year'] ?? null) !== 1405
+        || !is_int($plan['year'] ?? null) || $plan['year'] < 1396 || $plan['year'] > 1500
         || !is_string($plan['subject'] ?? null)
         || !preg_match('/^[a-z][a-z0-9-]{1,59}$/D', $plan['subject'])
         || !is_array($plan['entries'] ?? null) || !array_is_list($plan['entries'])
@@ -73,7 +73,8 @@ try {
     $auditReal = realpath($auditPath);
     $caseAudit = $classification !== false && $auditReal !== false
         && preg_match('~^' . preg_quote($classification, '~')
-            . '/recovery-1405-[a-zA-Z0-9-]+/classification/reports/[^/]+\.json$~D', $auditReal) === 1;
+            . '/recovery-' . preg_quote((string) $plan['year'], '~')
+            . '-[a-zA-Z0-9-]+/classification/reports/[^/]+\.json$~D', $auditReal) === 1;
     if ((realpath(dirname($auditPath)) !== $reports && !$caseAudit)
         || is_link($auditPath) || !is_file($auditPath)
         || !preg_match('/^[a-f0-9]{64}$/D', $auditSha)
@@ -105,6 +106,7 @@ try {
     $sourceQuery = $db->prepare(<<<'SQL'
 SELECT s.id,s.node_id,s.edition_id,s.page,s.printed_page,s.pdf_page,s.pdf_sha256,s.anchor_text,
        s.origin,s.reviewed_at,s.reviewed_by_user_id,
+       s.confidence_source,s.confidence_node,s.confidence_page,
        q.id AS question_id,q.question_key,q.stem,q.status AS question_status,
        e.edition_key,r.reference_key,n.node_key,n.number AS chapter_no,n.kind,
        v.scope_chapters,v.is_official
@@ -135,10 +137,13 @@ WHERE workspace_id=:ws AND edition_id=:edition AND kind='chapter' AND number=:ch
 SQL);
     $update = $db->prepare(<<<'SQL'
 UPDATE bank_question_sources
-SET node_id=:new_node,printed_page=:printed,pdf_page=:page,pdf_sha256=:sha
+SET node_id=:new_node,printed_page=:printed,pdf_page=:page,pdf_sha256=:sha,
+    confidence_source=:confidence_source,confidence_node=:confidence_node,confidence_page=:confidence_page
 WHERE workspace_id=:ws AND id=:id AND node_id=:old_node
   AND pdf_page IS NULL AND pdf_sha256 IS NULL
   AND origin='ai' AND reviewed_at IS NULL AND reviewed_by_user_id IS NULL
+  AND confidence_source=:old_confidence_source AND confidence_node=:old_confidence_node
+  AND confidence_page=:old_confidence_page
 SQL);
 
     $seen = [];
@@ -161,6 +166,10 @@ SQL);
             $questionHash = $item['expected_stem_sha256'] ?? null;
             $choicesHash = $item['expected_choices_sha256'] ?? null;
             $answerHash = $item['expected_answer_sha256'] ?? null;
+            $confidence = $item['accepted_confidence'] ?? null;
+            $expectedSourceConfidence = $item['expected_confidence_source'] ?? null;
+            $expectedNodeConfidence = $item['expected_confidence_node'] ?? null;
+            $expectedPageConfidence = $item['expected_confidence_page'] ?? null;
             if (!is_int($number) || $number < 1 || $number > 300 || isset($seen[$number])
                 || !is_string($id) || !preg_match('/^[a-f0-9-]{36}$/D', $id)
                 || !is_string($edition) || !preg_match('/^[a-z0-9-]+@[a-z0-9]+$/D', $edition)
@@ -179,11 +188,30 @@ SQL);
                 || !is_string($questionHash) || !preg_match('/^[a-f0-9]{64}$/D', $questionHash)
                 || !is_string($choicesHash) || !preg_match('/^[a-f0-9]{64}$/D', $choicesHash)
                 || !is_string($answerHash) || !preg_match('/^[a-f0-9]{64}$/D', $answerHash)
-                || !is_string($quote) || strlen($quote) < 16 || strlen($quote) > 190) {
+                || !is_string($quote) || strlen($quote) < 16 || strlen($quote) > 190
+                || (!is_float($confidence) && !is_int($confidence))
+                || $confidence < 0.85 || $confidence > 1.0
+                || !is_string($expectedSourceConfidence)
+                || !preg_match('/^(?:0\.[0-9]{3}|1\.000)$/D', $expectedSourceConfidence)
+                || !is_string($expectedNodeConfidence)
+                || !preg_match('/^(?:0\.[0-9]{3}|1\.000)$/D', $expectedNodeConfidence)
+                || !is_string($expectedPageConfidence)
+                || !preg_match('/^(?:0\.[0-9]{3}|1\.000)$/D', $expectedPageConfidence)) {
                 throw new RuntimeException('Invalid source/page/evidence identity in protected plan.');
             }
             if (!SourceChapterCorrectionGuard::auditMatches($audit, $plan, $item)) {
                 throw new RuntimeException("Q{$number}: independent audit is for another chapter or PDF.");
+            }
+            $mapped = $audit['batches'][0]['mapped'][(string) $number] ?? [];
+            $auditedSourceConfidence = $mapped['confidence_source'] ?? null;
+            $auditedNodeConfidence = $mapped['confidence_node'] ?? null;
+            $auditedPageConfidence = $mapped['confidence_page'] ?? null;
+            if (!is_numeric($auditedSourceConfidence) || !is_numeric($auditedNodeConfidence)
+                || !is_numeric($auditedPageConfidence)
+                || abs((float) $auditedSourceConfidence - (float) $confidence) > 0.0005
+                || abs((float) $auditedNodeConfidence - (float) $confidence) > 0.0005
+                || abs((float) $auditedPageConfidence - (float) $confidence) > 0.0005) {
+                throw new RuntimeException("Q{$number}: confidence vector differs from the accepted provenance audit.");
             }
             $seen[$number] = true;
             $sourceQuery->execute([
@@ -202,7 +230,15 @@ SQL);
                 || hash('sha256', (string) $s['anchor_text']) !== $anchorHash
                 || $s['reference_key'] . '@' . $s['edition_key'] !== $edition
                 || (string) $s['chapter_no'] !== $oldChapter || $s['kind'] !== 'chapter'
-                || (int) $s['is_official'] !== 1) {
+                || (int) $s['is_official'] !== 1
+                || !is_numeric($s['confidence_source']) || !is_numeric($s['confidence_node'])
+                || !is_numeric($s['confidence_page'])
+                || number_format((float) $s['confidence_source'], 3, '.', '') !== $expectedSourceConfidence
+                || number_format((float) $s['confidence_node'], 3, '.', '') !== $expectedNodeConfidence
+                || number_format((float) $s['confidence_page'], 3, '.', '') !== $expectedPageConfidence
+                || (float) $confidence < (float) $s['confidence_source']
+                || (float) $confidence < (float) $s['confidence_node']
+                || (float) $confidence < (float) $s['confidence_page']) {
                 throw new RuntimeException("Q{$number}: protected source identity or state changed.");
             }
             if (OfficialScopePageGuard::pageDisposition($s['scope_chapters'], $chapter, $printed) !== true) {
@@ -249,14 +285,26 @@ SQL);
                 throw new RuntimeException("Q{$number}: corrected chapter node not unique or inconsistent.");
             }
             $update->execute(['new_node'=>$nodes[0]['id'],'old_node'=>$s['node_id'],
-                'printed'=>$printed,'page'=>$page,'sha'=>$sha,'ws'=>$ws,'id'=>$id]);
+                'printed'=>$printed,'page'=>$page,'sha'=>$sha,
+                'confidence_source'=>number_format((float) $confidence, 3, '.', ''),
+                'confidence_node'=>number_format((float) $confidence, 3, '.', ''),
+                'confidence_page'=>number_format((float) $confidence, 3, '.', ''),
+                'old_confidence_source'=>$expectedSourceConfidence,
+                'old_confidence_node'=>$expectedNodeConfidence,
+                'old_confidence_page'=>$expectedPageConfidence,'ws'=>$ws,'id'=>$id]);
             if ($update->rowCount() !== 1) {
                 throw new RuntimeException("Q{$number}: zero/ambiguous source-only update.");
             }
             $results[] = ['number'=>$number,'source_id'=>$id,'edition'=>$edition,
                 'old_chapter'=>$oldChapter,'chapter'=>$chapter,'old_node_id'=>$s['node_id'],
                 'new_node_id'=>$nodes[0]['id'],'old_printed_page'=>$storedPrinted,
-                'printed_page'=>$printed,'pdf_page'=>$page,'pdf_sha256'=>$sha];
+                'printed_page'=>$printed,'pdf_page'=>$page,'pdf_sha256'=>$sha,
+                'old_confidence_source'=>$expectedSourceConfidence,
+                'old_confidence_node'=>$expectedNodeConfidence,
+                'old_confidence_page'=>$expectedPageConfidence,
+                'confidence_source'=>number_format((float) $confidence, 3, '.', ''),
+                'confidence_node'=>number_format((float) $confidence, 3, '.', ''),
+                'confidence_page'=>number_format((float) $confidence, 3, '.', '')];
         }
         if ($apply) {
             $db->commit();
@@ -269,13 +317,16 @@ SQL);
         }
         throw $error;
     }
-    $receipt = ['format'=>'fanoos.verified-source-chapter-page-correction-receipt/1',
+    $receipt = ['format'=>'fanoos.verified-source-chapter-page-correction-receipt/2',
         'mode'=>$apply ? 'applied' : 'rollback-preview',
         'year'=>$plan['year'],'subject'=>$plan['subject'],'count'=>count($results),
         'plan_sha256'=>hash('sha256', $raw),
         'audit_sha256'=>$auditSha,
         'questions_changed'=>0,'choices_changed'=>0,'answers_changed'=>0,
-        'source_fields_changed'=>['node_id','printed_page','pdf_page','pdf_sha256'],'sources'=>$results];
+        'source_fields_changed'=>[
+            'node_id','printed_page','pdf_page','pdf_sha256',
+            'confidence_source','confidence_node','confidence_page',
+        ],'sources'=>$results];
     if ($apply) {
         $receipt['backup_id'] = basename($backup);
         $receipt['at_utc'] = gmdate('Y-m-d\TH:i:s\Z');

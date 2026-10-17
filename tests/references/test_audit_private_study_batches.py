@@ -70,6 +70,8 @@ class AuditTests(unittest.TestCase):
         result = audit.audit_batch(self.root, "1402:community-dentistry:community")
         self.assertEqual((result["questions"], result["accepted"], result["pending"]), (1, 1, 0))
         self.assertTrue(result["question_content_identical"])
+        self.assertEqual(result["mapped"]["222"]["confidence_source"], .97)
+        self.assertEqual(result["mapped"]["222"]["confidence_node"], .97)
         self.assertEqual(result["mapped"]["222"]["confidence_page"], .97)
         self.source["page"] = "17"
         self.save()
