@@ -53,6 +53,7 @@ use Fanoos\Tests\Operations\QuestionBankRowTest;
 use Fanoos\Tests\Operations\SourcePageBackfillTest;
 use Fanoos\Tests\Operations\SourceChapterCorrectionGuardTest;
 use Fanoos\Tests\Operations\VerifiedHumanChapterPageRepairGuardTest;
+use Fanoos\Tests\Operations\VerifiedHumanReferenceChapterPageGuardTest;
 use Fanoos\Tests\Operations\VerifiedHumanOutsideScopeChapterPageGuardTest;
 use Fanoos\Tests\Operations\VerifiedHumanOutsideScopeChapterPageRepairGuardTest;
 use Fanoos\Tests\Operations\VerifiedHumanSourcePageBundleGuardTest;
@@ -101,6 +102,8 @@ try {
     echo "PASS independent source chapter correction audit binding\n";
     $assertions += (new VerifiedHumanChapterPageRepairGuardTest())->run();
     echo "PASS verified human source chapter/page repair guard\n";
+    $assertions += (new VerifiedHumanReferenceChapterPageGuardTest())->run();
+    echo "PASS verified human cross-edition source correction guard\n";
     $assertions += (new VerifiedHumanOutsideScopeChapterPageGuardTest())->run();
     echo "PASS verified human out-of-scope chapter/page guard\n";
     $assertions += (new VerifiedHumanOutsideScopeChapterPageRepairGuardTest())->run();
