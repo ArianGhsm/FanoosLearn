@@ -111,6 +111,11 @@ all scope evidence before attempting publication.
    verified full backup, unique receipts, and independent live SQL
    readback. These bounded updates are internal to year preparation,
    **not** intermediate site-exam publications.
+   For an AI-origin source whose re-audited chapter is outside official
+   scope, use the separate guarded
+   `scripts/references/repair_verified_ai_outside_scope_chapter_pages.php`
+   workflow in `docs/ops/AI_OUTSIDE_SCOPE_CHAPTER_PAGE_REPAIR.md`;
+   preserve the original key and record unresolved source/key conflicts.
 3. Independently verify the **whole** year, not merely one subject,
    including English exemptions, newest scope, full official inventory,
    every chapter and physical page, approved SHA maps, prior assessment
