@@ -1,11 +1,12 @@
 # Residency 1404 — Q153/Q163 corrections and remaining gates
 
-**Latest verified state (2026-10-17):** 226/230 book-based questions have a
+**Historical checkpoint (before the final source-location writes):** 226/230 book-based questions have a
 same-row chapter, original PDF page and PDF SHA; 220 are in-scope. Six are
 explicitly marked outside the announced syllabus, and four still lack a
 verified source/page pair. The 20 English questions meet the official-key
-exemption. The year-level gate is **not green**; do not publish a new 1404
-assessment version.
+exemption. This count is not current. The live status, final receipts and
+remaining publication gates are recorded in the
+[source-location closeout](RESIDENCY_1404_SOURCE_LOCATION_CLOSEOUT_20261017.md).
 
 ## Source corrections completed
 
