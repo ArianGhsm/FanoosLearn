@@ -19,8 +19,9 @@ Store a single-entry plan and its separate independent provenance audit under
 `/srv/fanoos/shared/research/classification/reports/`, both mode `0600`. The
 audit must be the accepted one-question output of
 `audit_private_study_batches.py`, with unchanged live question content and
-matching year, subject, chapter, PDF page, and PDF SHA. Bind the plan to the
-audit's SHA-256. Include the current source ID, exact edition and chapter,
+matching year, subject, chapter, PDF page, PDF SHA, and audited page
+confidence. Bind the plan's accepted confidence exactly to that audit and
+bind the plan to the audit's SHA-256. Include the current source ID, exact edition and chapter,
 original PDF page and SHA, book-printed page, one or more short exact page
 quotation fragments (use separate fragments only when original PDF column
 order splits the text layer),

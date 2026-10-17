@@ -30,13 +30,17 @@ class VerifiedAiSourcePageRepairContracts(unittest.TestCase):
         for guard in (
             "SourceChapterCorrectionGuard::auditMatches",
             "$confidence < 0.85",
-            "$confidence > 0.999",
+            "$confidence > 1.0",
             "(float) $confidence < (float) $s['confidence_page']",
             "confidence_page=:old_confidence",
             "expected_confidence_page",
+            "confidence_page'] ?? null",
+            "plan confidence differs from the accepted provenance audit",
             "audit_sha256",
         ):
             self.assertIn(guard, self.source)
+        self.assertIn('"confidence_page": round(float(confidence["page"]), 3)',
+                      (ROOT / "scripts/references/audit_private_study_batches.py").read_text(encoding="utf-8"))
 
     def test_source_identity_scope_original_page_and_content_are_pinned(self):
         for guard in (

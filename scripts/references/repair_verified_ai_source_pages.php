@@ -155,9 +155,10 @@ SQL);
         || (is_array($evidence) && ($evidence === [] || count($evidence) > 4
             || array_filter($evidence, static fn (mixed $quote): bool =>
                 !is_string($quote) || strlen($quote) < 6 || strlen($quote) > 190) !== []))
-        || !is_float($confidence) && !is_int($confidence)
-        || $confidence < 0.85 || $confidence > 0.999
-        || !is_string($expectedConfidence) || !preg_match('/^0\.[0-9]{3}$/D', $expectedConfidence)
+        || (!is_float($confidence) && !is_int($confidence))
+        || $confidence < 0.85 || $confidence > 1.0
+        || !is_string($expectedConfidence)
+        || !preg_match('/^(?:0\.[0-9]{3}|1\.000)$/D', $expectedConfidence)
         || !array_key_exists('expected_legacy_page', $item)
         || ($item['expected_legacy_page'] !== null && !is_string($item['expected_legacy_page']))
         || !array_key_exists('expected_stored_printed_page', $item)
@@ -174,6 +175,11 @@ SQL);
     }
     if (!SourceChapterCorrectionGuard::auditMatches($audit, $plan, $item)) {
         throw new RuntimeException("Q{$number}: accepted independent audit is for another question/page/PDF.");
+    }
+    $auditedConfidence = $audit['batches'][0]['mapped'][(string) $number]['confidence_page'] ?? null;
+    if (!is_numeric($auditedConfidence)
+        || abs((float) $auditedConfidence - (float) $confidence) > 0.0005) {
+        throw new RuntimeException("Q{$number}: plan confidence differs from the accepted provenance audit.");
     }
 
     $result = [];
