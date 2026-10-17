@@ -46,6 +46,8 @@ class VerifiedAiSourcePageRepairContracts(unittest.TestCase):
             "source_pdf_sha256",
             "PrintedBookPageEvidence::corroborates(",
             "PrintedBookPageEvidence::pageContainsEvidence(",
+            "is_array($evidence) ? $evidence : [$evidence]",
+            "count($evidence) > 4",
             "expected_anchor_sha256",
             "expected_stem_sha256",
             "expected_choices_sha256",

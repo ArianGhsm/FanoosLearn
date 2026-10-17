@@ -140,7 +140,7 @@ SQL);
     $page = $item['pdf_page'] ?? null;
     $sha = $item['pdf_sha256'] ?? null;
     $printed = $item['printed_page'] ?? null;
-    $quote = $item['evidence'] ?? null;
+    $evidence = $item['evidence'] ?? null;
     $confidence = $item['accepted_confidence_page'] ?? null;
     $expectedConfidence = $item['expected_confidence_page'] ?? null;
     if (!is_int($number) || $number < 1 || $number > 300
@@ -150,7 +150,11 @@ SQL);
         || !is_int($page) || $page < 1 || $page > 6000
         || !is_string($sha) || !preg_match('/^[a-f0-9]{64}$/D', $sha)
         || !is_string($printed) || !preg_match('/^[1-9][0-9]{0,3}(?:\.e[1-9][0-9]?)?$/D', $printed)
-        || !is_string($quote) || strlen($quote) < 16 || strlen($quote) > 190
+        || (!is_string($evidence) && !is_array($evidence))
+        || (is_string($evidence) && (strlen($evidence) < 16 || strlen($evidence) > 190))
+        || (is_array($evidence) && ($evidence === [] || count($evidence) > 4
+            || array_filter($evidence, static fn (mixed $quote): bool =>
+                !is_string($quote) || strlen($quote) < 6 || strlen($quote) > 190) !== []))
         || !is_float($confidence) && !is_int($confidence)
         || $confidence < 0.85 || $confidence > 0.999
         || !is_string($expectedConfidence) || !preg_match('/^0\.[0-9]{3}$/D', $expectedConfidence)
@@ -228,7 +232,9 @@ SQL);
         }
         if (!$inside
             || !PrintedBookPageEvidence::corroborates($edition, $page, $printed, $sha)
-            || !PrintedBookPageEvidence::pageContainsEvidence($edition, $page, [$quote], $sha)) {
+            || !PrintedBookPageEvidence::pageContainsEvidence(
+                $edition, $page, is_array($evidence) ? $evidence : [$evidence], $sha
+            )) {
             throw new RuntimeException("Q{$number}: exact original page, printed label, or evidence failed.");
         }
 

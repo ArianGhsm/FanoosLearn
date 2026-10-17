@@ -21,7 +21,9 @@ audit must be the accepted one-question output of
 `audit_private_study_batches.py`, with unchanged live question content and
 matching year, subject, chapter, PDF page, and PDF SHA. Bind the plan to the
 audit's SHA-256. Include the current source ID, exact edition and chapter,
-original PDF page and SHA, book-printed page, a short exact page quotation,
+original PDF page and SHA, book-printed page, one or more short exact page
+quotation fragments (use separate fragments only when original PDF column
+order splits the text layer),
 current legacy/printed-page values, anchor hash, question/choice/latest-key
 hashes, prior `confidence_page`, and independently accepted confidence.
 
