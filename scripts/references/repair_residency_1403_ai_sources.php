@@ -22,32 +22,30 @@ declare(strict_types=1);
  */
 
 use Fanoos\Platform\Bank\PrintedBookPageEvidence;
+use Fanoos\Platform\Bank\Residency1403AiSourceCitationCorrectionGuard;
+use Fanoos\Platform\Bank\Residency1403AiSourceCitationCorrectionWriter;
 use Fanoos\Platform\Operations\BackupManifest;
 use Fanoos\Platform\Support\DatabaseConnection;
+use Fanoos\Platform\Support\RuntimeConfig;
 
 require dirname(__DIR__, 2) . '/apps/platform/bootstrap.php';
 
 const FANOOS_1403_REPORTS = '/srv/fanoos/shared/research/classification/reports';
 const FANOOS_1403_CANONICAL = '/srv/fanoos/shared/research/bank-sittings/1403/canonical-export-20261011/residency-1403-1.json';
-const FANOOS_1403_CANONICAL_SHA = '5a903b491496ed3b7f912dde0fdc37607ff102f33b36a9c5e723baab19a1fcc7';
-const FANOOS_1403_RESEARCH_SHA = '1285dd66b7de3c967534ec15b483e5e8f8a0c92b6ddc56022a4d85e755f6c3ab';
 const FANOOS_1403_LOCK = 'fanoos:1403:ai-source-citation-correction';
-
-function strictlyPrivateFile1403(string $file, string $parent): bool
-{
-    return !is_link($file) && is_file($file) && realpath($file) === $file
-        && realpath(dirname($file)) === $parent;
-}
 
 function independentlyAudited1403(array $i, array &$receipts): void
 {
     $n = $i['number'];
     $report = $i['audit_path'];
     $decisionPath = $i['decisions_path'];
-    $prefix = '/srv/fanoos/shared/research/tmp/1403-';
     foreach ([$report, $decisionPath] as $p) {
-        if (!is_string($p) || !str_starts_with($p, $prefix)
-            || is_link($p) || !is_file($p) || realpath($p) !== $p) {
+        if (!is_string($p) || !str_starts_with($p, '/srv/fanoos/shared/research/tmp/1403-')
+            || !Residency1403AiSourceCitationCorrectionGuard::isPrivateFile(
+                $p,
+                '/srv/fanoos/shared/research/tmp',
+                false,
+            )) {
             throw new RuntimeException("Q{$n}: independently audited private file missing.");
         }
     }
@@ -57,27 +55,9 @@ function independentlyAudited1403(array $i, array &$receipts): void
     }
     $audit = json_decode((string) file_get_contents($report), true, 128, JSON_THROW_ON_ERROR);
     $decisions = json_decode((string) file_get_contents($decisionPath), true, 128, JSON_THROW_ON_ERROR);
-    $batch = $audit['batches'][0] ?? null;
-    $key = "1403:{$i['subject']}:";
-    if (($audit['research_only'] ?? null) !== true
-        || ($audit['batch_count'] ?? null) !== 1
-        || !is_array($batch) || !str_starts_with((string) ($batch['batch'] ?? ''), $key)
-        || ($batch['classification_basis'] ?? null) !== 'official_exam_year'
-        || ($batch['question_content_identical'] ?? null) !== true
-        || ($batch['decisions_sha256'] ?? null) !== $i['decisions_sha256']
-        || ($batch['mapped'][(string) $n]['ref'] ?? null)
-            !== $i['new_ref'] . '#ch' . str_pad($i['new_ch'], 2, '0', STR_PAD_LEFT)
-        || ($batch['mapped'][(string) $n]['pdf_page'] ?? null) !== $i['pdf_page']
-        || ($batch['source_pdf_provenance'][$i['new_ref']]['sha256'] ?? null) !== $i['pdf_sha']) {
-        throw new RuntimeException("Q{$n}: independent same-year original-PDF audit mismatch.");
-    }
-    $matches = array_values(array_filter($decisions,
-        static fn($d): bool => ($d['number'] ?? null) === $n));
-    if (count($matches) !== 1 || ($matches[0]['edition'] ?? '') !== $i['new_ref']
-        || (string) ($matches[0]['chapter'] ?? '') !== $i['new_ch']
-        || ($matches[0]['page'] ?? null) !== $i['pdf_page']
-        || ($matches[0]['evidence'] ?? '') !== $i['evidence']) {
-        throw new RuntimeException("Q{$n}: source citation differs from independently approved decision.");
+    if (!is_array($decisions)
+        || !Residency1403AiSourceCitationCorrectionGuard::independentAuditMatches($i, $audit, $decisions)) {
+        throw new RuntimeException("Q{$n}: independent same-year original-PDF audit or decision mismatch.");
     }
     $receipts[] = ['q' => $n, 'audit_sha256' => $i['audit_sha256'],
         'decisions_sha256' => $i['decisions_sha256']];
@@ -85,7 +65,12 @@ function independentlyAudited1403(array $i, array &$receipts): void
 
 function readOriginal1403(): array
 {
-    if (hash_file('sha256', FANOOS_1403_CANONICAL) !== FANOOS_1403_CANONICAL_SHA) {
+    if (!Residency1403AiSourceCitationCorrectionGuard::isPrivateFile(
+        FANOOS_1403_CANONICAL,
+        '/srv/fanoos/shared/research/bank-sittings/1403',
+        false,
+    ) || hash_file('sha256', FANOOS_1403_CANONICAL)
+        !== Residency1403AiSourceCitationCorrectionGuard::CANONICAL_SHA256) {
         throw new RuntimeException('The original canonical 250-question bank changed.');
     }
     $canonical = json_decode((string) file_get_contents(FANOOS_1403_CANONICAL),
@@ -168,16 +153,34 @@ try {
     }
     $reportDir = realpath(FANOOS_1403_REPORTS);
     $path = (string) $args['plan'];
-    if ($reportDir === false || !strictlyPrivateFile1403($path, $reportDir)) {
+    if ($reportDir === false || !Residency1403AiSourceCitationCorrectionGuard::isPrivateFile(
+        $path,
+        FANOOS_1403_REPORTS,
+    )) {
         throw new RuntimeException('Plan must be an existing original private report.');
     }
     $planSha = hash_file('sha256', $path);
     $plan = json_decode((string) file_get_contents($path), true, 128, JSON_THROW_ON_ERROR);
+    if (!Residency1403AiSourceCitationCorrectionGuard::isPrivateFile(
+        Residency1403AiSourceCitationCorrectionGuard::RESEARCH_MANIFEST_PATH,
+        '/srv/fanoos/shared/research/tmp',
+        false,
+    ) || hash_file('sha256', Residency1403AiSourceCitationCorrectionGuard::RESEARCH_MANIFEST_PATH)
+        !== Residency1403AiSourceCitationCorrectionGuard::RESEARCH_MANIFEST_SHA256) {
+        throw new RuntimeException('The pinned original research-only reconciliation changed or is not private.');
+    }
+    $researchManifest = json_decode((string) file_get_contents(
+        Residency1403AiSourceCitationCorrectionGuard::RESEARCH_MANIFEST_PATH,
+    ),
+        true, 128, JSON_THROW_ON_ERROR);
+    if (!Residency1403AiSourceCitationCorrectionGuard::researchManifestMatches($researchManifest)) {
+        throw new RuntimeException('The original 1403 research-only reconciliation failed its pinned integrity checks.');
+    }
     $entries = $plan['entries'] ?? null;
     if (($plan['format'] ?? null) !== 'fanoos.residency1403.ai-source-correction/1'
         || ($plan['exam_year'] ?? null) !== 1403
-        || ($plan['canonical_sha256'] ?? null) !== FANOOS_1403_CANONICAL_SHA
-        || ($plan['research_sha256'] ?? null) !== FANOOS_1403_RESEARCH_SHA
+        || ($plan['canonical_sha256'] ?? null) !== Residency1403AiSourceCitationCorrectionGuard::CANONICAL_SHA256
+        || ($plan['research_sha256'] ?? null) !== Residency1403AiSourceCitationCorrectionGuard::RESEARCH_MANIFEST_SHA256
         || !is_array($entries) || !array_is_list($entries)
         || count($entries) < 1 || count($entries) > 12) {
         throw new RuntimeException('Wrong exact-1403 source-only protected proposal.');
@@ -249,6 +252,7 @@ try {
         }
     }
 
+    RuntimeConfig::load();
     $db = DatabaseConnection::fromEnvironment();
     if ((int) $db->query("SELECT GET_LOCK('" . FANOOS_1403_LOCK . "',0)")->fetchColumn() !== 1) {
         throw new RuntimeException('Exclusive residency 1403 AI source correction already active.');
@@ -284,20 +288,6 @@ WHERE e.workspace_id=:ws AND r.reference_key=:ref AND e.edition_key=:edition
  AND n.node_key=:node AND et.type_key='residency' AND v.exam_year=1403
  AND sb.subject_key=:subject AND v.is_official=1
 SQL);
-    $update = $db->prepare(<<<'SQL'
-UPDATE bank_question_sources
-SET edition_id=:new_edition,node_id=:new_node,
-    page=:page,printed_page=NULL,pdf_page=:pdf_page,
-    pdf_sha256=:sha,anchor_text=:anchor
-WHERE id=:src AND workspace_id=:ws AND question_id=:qid
-  AND edition_id=:old_edition AND node_id=:old_node
-  AND pdf_page IS NULL AND pdf_sha256 IS NULL
-  AND origin='ai' AND reviewed_at IS NULL AND reviewed_by_user_id IS NULL
-SQL);
-    $readback = $db->prepare('SELECT edition_id,node_id,page,printed_page,pdf_page,
-        pdf_sha256,anchor_text FROM bank_question_sources
-        WHERE id=:sid AND question_id=:qid FOR UPDATE');
-
     $results = [];
     $db->beginTransaction();
     try {
@@ -347,32 +337,19 @@ SQL);
                 throw new RuntimeException("Q{$n}: original chapter excluded by official 1403 syllabus.");
             }
             $target = $nodeRows[0];
-            $label = 'pdf ' . $i['pdf_page'];
-            $update->execute([
-                'new_edition' => $target['edition_id'], 'new_node' => $target['node_id'],
-                'page' => $label, 'pdf_page' => $i['pdf_page'],
-                'sha' => $i['pdf_sha'], 'anchor' => $i['evidence'],
-                'src' => $i['source_id'], 'ws' => $old['workspace_id'],
-                'qid' => $old['question_id'], 'old_edition' => $old['edition_id'],
-                'old_node' => $old['node_id'],
-            ]);
-            if ($update->rowCount() !== 1) {
-                throw new RuntimeException("Q{$n}: locked source citation compare-and-swap failed.");
-            }
-            $readback->execute(['sid' => $i['source_id'], 'qid' => $old['question_id']]);
-            $v = $readback->fetch(PDO::FETCH_ASSOC);
-            if (!is_array($v) || $v['edition_id'] !== $target['edition_id']
-                || $v['node_id'] !== $target['node_id'] || $v['page'] !== $label
-                || $v['printed_page'] !== null || (int) $v['pdf_page'] !== $i['pdf_page']
-                || $v['pdf_sha256'] !== $i['pdf_sha']
-                || $v['anchor_text'] !== $i['evidence']) {
-                throw new RuntimeException("Q{$n}: original citation readback mismatch.");
-            }
+            $sourceReadback = Residency1403AiSourceCitationCorrectionWriter::write(
+                $db,
+                $old,
+                ['edition_id'=>$target['edition_id'],'node_id'=>$target['node_id']],
+                $i['pdf_page'],
+                $i['pdf_sha'],
+                $i['evidence'],
+            );
             $results[] = [
                 'number' => $n, 'source_id' => $i['source_id'],
                 'old_ref' => $i['old_ref'], 'old_ch' => $i['old_ch'],
                 'ref' => $i['new_ref'], 'chapter' => $i['new_ch'],
-                'pdf_page' => $i['pdf_page'], 'pdf_sha256' => $i['pdf_sha'],
+                'pdf_page' => $sourceReadback['pdf_page'], 'pdf_sha256' => $sourceReadback['pdf_sha256'],
                 'old_source_anchor_sha256' => $i['old_anchor_sha256'],
                 'audit_sha256' => $i['audit_sha256'],
             ];
@@ -399,8 +376,8 @@ SQL);
     $reply = [
         'format' => 'fanoos.residency1403.ai-source-correction-receipt/1',
         'applied' => $apply, 'question_count' => count($results), 'exam_year' => 1403,
-        'original_bank_sha256' => FANOOS_1403_CANONICAL_SHA,
-        'original_research_sha256' => FANOOS_1403_RESEARCH_SHA,
+        'original_bank_sha256' => Residency1403AiSourceCitationCorrectionGuard::CANONICAL_SHA256,
+        'original_research_sha256' => Residency1403AiSourceCitationCorrectionGuard::RESEARCH_MANIFEST_SHA256,
         'plan_sha256' => $planSha,
         'source_fields_only' => ['edition_id','node_id','page','printed_page',
             'pdf_page','pdf_sha256','anchor_text'],

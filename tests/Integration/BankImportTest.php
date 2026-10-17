@@ -12,6 +12,7 @@ use Fanoos\Platform\Bank\BankImporter;
 use Fanoos\Platform\Bank\BankImportException;
 use Fanoos\Platform\Bank\BankPublisher;
 use Fanoos\Platform\Bank\BankSittingExporter;
+use Fanoos\Platform\Bank\Residency1403AiSourceCitationCorrectionWriter;
 use Fanoos\Platform\Content\CustomPracticeService;
 use Fanoos\Platform\Content\ExamQuestionRateGuard;
 use Fanoos\Platform\Content\ExamScheduleService;
@@ -112,6 +113,104 @@ final class BankImportTest
         $pages->execute(['key' => $key]);
         $this->assert($pages->fetch(PDO::FETCH_ASSOC) == ['pdf_page' => 271, 'printed_page' => '256', 'page' => '256'], 'The source page fields were not stored apart.');
         $this->assert($this->scalar('SELECT x.source_pdf_page FROM bank_explanations x JOIN bank_questions q ON q.id = x.question_id WHERE q.question_key = :key AND x.is_current = TRUE', ['key' => $key]) === 271, 'The explanation does not record the page it was written from.');
+
+        // The 1403-only writer's exact source-row compare-and-swap works on the
+        // isolated integration DB. Roll back the fixture after verifying that
+        // question text, choices and every official answer-history row stay fixed.
+        $sourceLookup = $this->database->prepare(<<<'SQL'
+SELECT s.id source_id,s.workspace_id,s.question_id,s.edition_id,s.node_id,s.page,s.printed_page,
+       s.pdf_page,s.pdf_sha256,s.anchor_text,s.table_ref,s.figure_ref,s.box_ref,s.origin,s.is_primary,
+       s.reviewed_at,s.reviewed_by_user_id
+FROM bank_question_sources s JOIN bank_questions q
+  ON q.id=s.question_id AND q.workspace_id=s.workspace_id
+WHERE s.workspace_id=:ws AND q.question_key=:key
+SQL);
+        $sourceLookup->execute(['ws' => $ws, 'key' => $key]);
+        $sourceBefore = $sourceLookup->fetch(PDO::FETCH_ASSOC);
+        $this->assert(is_array($sourceBefore) && $sourceBefore['origin'] === 'ai', 'Test fixture must use an AI source row.');
+        $stemBefore = $this->scalar('SELECT stem FROM bank_questions WHERE workspace_id=:ws AND question_key=:key', ['ws' => $ws, 'key' => $key]);
+        $choiceQuery = $this->database->prepare('SELECT position,text,image FROM bank_question_choices WHERE workspace_id=:ws AND question_id=:qid ORDER BY position');
+        $choiceQuery->execute(['ws' => $ws, 'qid' => $sourceBefore['question_id']]);
+        $choicesBefore = $choiceQuery->fetchAll(PDO::FETCH_ASSOC);
+        $answerQuery = $this->database->prepare('SELECT status,choice_position,also_correct_positions,source,recorded_at FROM bank_official_answers WHERE workspace_id=:ws AND question_id=:qid ORDER BY recorded_at,id');
+        $answerQuery->execute(['ws' => $ws, 'qid' => $sourceBefore['question_id']]);
+        $answersBefore = $answerQuery->fetchAll(PDO::FETCH_ASSOC);
+        try {
+            Residency1403AiSourceCitationCorrectionWriter::write(
+                $this->database,
+                $sourceBefore,
+                ['edition_id' => (string) $sourceBefore['edition_id'], 'node_id' => (string) $sourceBefore['node_id']],
+                271,
+                str_repeat('a', 64),
+                'Test-only exact original page citation evidence for the source writer.',
+            );
+            $this->assert(false, 'The source writer accepted a call outside a transaction.');
+        } catch (RuntimeException $error) {
+            $this->assert(str_contains($error->getMessage(), 'inside a transaction'),
+                'The source writer rejected an untransactional call for the wrong reason.');
+        }
+        $this->database->beginTransaction();
+        try {
+            $this->database->prepare('UPDATE bank_question_sources SET pdf_page=NULL,pdf_sha256=NULL WHERE workspace_id=:ws AND id=:source')
+                ->execute(['ws' => $ws, 'source' => $sourceBefore['source_id']]);
+            $sourceLookup->execute(['ws' => $ws, 'key' => $key]);
+            $unboundSource = $sourceLookup->fetch(PDO::FETCH_ASSOC);
+            $this->assert(is_array($unboundSource) && $unboundSource['pdf_page'] === null && $unboundSource['pdf_sha256'] === null,
+                'The integration source fixture did not enter the expected unbound state.');
+            $humanSource = $unboundSource;
+            $humanSource['origin'] = 'human';
+            try {
+                Residency1403AiSourceCitationCorrectionWriter::write(
+                    $this->database,
+                    $humanSource,
+                    ['edition_id' => (string) $humanSource['edition_id'], 'node_id' => (string) $humanSource['node_id']],
+                    271,
+                    str_repeat('a', 64),
+                    'Test-only exact original page citation evidence for the source writer.',
+                );
+                $this->assert(false, 'The source writer accepted a human-origin source.');
+            } catch (RuntimeException $error) {
+                $this->assert(str_contains($error->getMessage(), 'non-primary, reviewed, bound or malformed'),
+                    'The source writer rejected a human source for the wrong reason.');
+            }
+            $writerResult = Residency1403AiSourceCitationCorrectionWriter::write(
+                $this->database,
+                $unboundSource,
+                ['edition_id' => (string) $unboundSource['edition_id'], 'node_id' => (string) $unboundSource['node_id']],
+                271,
+                str_repeat('a', 64),
+                'Test-only exact original page citation evidence for the source writer.',
+            );
+            $this->assert($writerResult['page'] === 'pdf 271' && $writerResult['printed_page'] === null
+                && $writerResult['pdf_page'] === 271 && $writerResult['pdf_sha256'] === str_repeat('a', 64),
+                'The source-only writer did not persist its exact citation fields.');
+            $this->assert($this->scalar('SELECT stem FROM bank_questions WHERE workspace_id=:ws AND question_key=:key', ['ws' => $ws, 'key' => $key]) === $stemBefore,
+                'Source repair changed the question stem.');
+            $choiceQuery->execute(['ws' => $ws, 'qid' => $sourceBefore['question_id']]);
+            $this->assert($choiceQuery->fetchAll(PDO::FETCH_ASSOC) === $choicesBefore,
+                'Source repair changed question choices.');
+            $answerQuery->execute(['ws' => $ws, 'qid' => $sourceBefore['question_id']]);
+            $this->assert($answerQuery->fetchAll(PDO::FETCH_ASSOC) === $answersBefore,
+                'Source repair changed official answer history.');
+            try {
+                Residency1403AiSourceCitationCorrectionWriter::write(
+                    $this->database,
+                    $unboundSource,
+                    ['edition_id' => (string) $unboundSource['edition_id'], 'node_id' => (string) $unboundSource['node_id']],
+                    271,
+                    str_repeat('a', 64),
+                    'Test-only exact original page citation evidence for the source writer.',
+                );
+                $this->assert(false, 'A stale source plan was applied twice.');
+            } catch (RuntimeException $error) {
+                $this->assert(str_contains($error->getMessage(), 'compare-and-swap'),
+                    'A stale source plan failed for the wrong reason.');
+            }
+        } finally {
+            if ($this->database->inTransaction()) {
+                $this->database->rollBack();
+            }
+        }
 
         // A file without the source list (a wording fix, a new key) leaves the classification alone.
         $bare = $sitting;
