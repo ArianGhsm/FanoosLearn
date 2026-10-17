@@ -175,7 +175,11 @@ def audit_batch(root: Path, spec: str,
                 or any(abs(float(confidence.get(k, 0)) - float(decision["confidence"])) > .0005
                        for k in ("source", "node", "page"))):
             raise ValueError(f"{spec}: unsupported confidence for Q{n}")
-        pages[str(n)] = {"ref": item["ref"], "pdf_page": int(decision["page"])}
+        pages[str(n)] = {
+            "ref": item["ref"],
+            "pdf_page": int(decision["page"]),
+            "confidence_page": round(float(confidence["page"]), 3),
+        }
     return {
         "batch": spec,
         "classification_basis": BASIS if is_retrospective(year_n) else "official_exam_year",
