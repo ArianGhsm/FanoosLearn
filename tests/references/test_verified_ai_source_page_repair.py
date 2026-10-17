@@ -19,7 +19,7 @@ class VerifiedAiSourcePageRepairContracts(unittest.TestCase):
         self.assertEqual(mutations, ["bank_question_sources"])
         self.assertRegex(
             self.source,
-            r"SET pdf_page=:page,pdf_sha256=:sha,confidence_page=:confidence",
+            r"SET pdf_page=:page,pdf_sha256=:sha,\s*confidence_source=:confidence_source,confidence_node=:confidence_node,confidence_page=:confidence_page",
         )
         self.assertNotRegex(self.source, r"UPDATE\s+bank_questions|UPDATE\s+bank_official_answers")
         self.assertIn("$db->rollBack();", self.source)
@@ -29,18 +29,26 @@ class VerifiedAiSourcePageRepairContracts(unittest.TestCase):
     def test_confidence_and_audit_are_fail_closed(self):
         for guard in (
             "SourceChapterCorrectionGuard::auditMatches",
+            "fanoos.verified-ai-source-page-repair/2",
             "$confidence < 0.85",
             "$confidence > 1.0",
+            "(float) $confidence < (float) $s['confidence_source']",
+            "(float) $confidence < (float) $s['confidence_node']",
             "(float) $confidence < (float) $s['confidence_page']",
-            "confidence_page=:old_confidence",
+            "confidence_source=:old_confidence_source",
+            "confidence_node=:old_confidence_node",
+            "confidence_page=:old_confidence_page",
             "expected_confidence_page",
+            "confidence_source'] ?? null",
+            "confidence_node'] ?? null",
             "confidence_page'] ?? null",
-            "plan confidence differs from the accepted provenance audit",
+            "confidence vector differs from the provenance audit",
             "audit_sha256",
         ):
             self.assertIn(guard, self.source)
-        self.assertIn('"confidence_page": round(float(confidence["page"]), 3)',
-                      (ROOT / "scripts/references/audit_private_study_batches.py").read_text(encoding="utf-8"))
+        audit = (ROOT / "scripts/references/audit_private_study_batches.py").read_text(encoding="utf-8")
+        for field in ("confidence_source", "confidence_node", "confidence_page"):
+            self.assertIn(f'"{field}": round(float(confidence[', audit)
 
     def test_source_identity_scope_original_page_and_content_are_pinned(self):
         for guard in (
@@ -56,6 +64,10 @@ class VerifiedAiSourcePageRepairContracts(unittest.TestCase):
             "expected_stem_sha256",
             "expected_choices_sha256",
             "expected_answer_sha256",
+            "expected_pdf_page",
+            "expected_pdf_sha256",
+            "pdf_page <=> :old_pdf_page",
+            "pdf_sha256 <=> :old_pdf_sha",
             "reviewed_by_user_id",
             "reviewed_at",
             "s['origin'] !== 'ai'",

@@ -77,3 +77,12 @@ Next 1401 gate examples are Q10, Q55, Q57, Q60, Q64, Q68, Q71, Q77, Q78, Q80,
 Q82, and Q84. Resolve each with the exact official edition, chapter, original
 PDF page, scope boundary, and protected source-only workflow; preserve the
 Q41 size note and all official keys.
+
+**Confidence-vector follow-up:** the first Q41/Q43 page-only re-audit changed
+`confidence_page` from 0.750 to the accepted score, but the existing
+`confidence_source` and `confidence_node` values remain 0.750. These two rows
+must remain pending for scientific completion until the accepted full
+confidence vector is written through the guarded format-2 source page repair
+and independently read back. The structural publication gate does not check
+these confidence columns, so its 50-incomplete count must not be presented as
+a scientific-completion count.

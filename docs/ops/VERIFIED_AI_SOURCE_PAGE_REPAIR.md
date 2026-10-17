@@ -1,32 +1,43 @@
-# Verified original-PDF page and confidence repair for AI sources
+# Verified original-PDF page and confidence-vector repair for AI sources
 
 Use `scripts/references/repair_verified_ai_source_pages.php` only for one
 existing, published, unreviewed AI source whose official-year edition and
-full in-scope chapter are already correct, but whose physical PDF page and
-page confidence need an original-book re-audit.
+full in-scope chapter are already correct, but whose physical PDF page or
+AI confidence vector needs an original-book re-audit. It can fill a missing
+page or re-score a page already bound by a previous guarded repair.
 
-The writer changes only `bank_question_sources.pdf_page`, `pdf_sha256`, and
-`confidence_page`. It refuses a confidence below 0.85 or below the stored
-score, a partial-scope chapter, an invalid key, changed question/choice/key
-fingerprints, a human-reviewed row, an unverified edition PDF/map, or a page
-without the quoted evidence and corroborated printed-page sequence. The
-source edition, chapter, legacy and printed pages, anchor, question, choices,
-answer, review state, frozen assessments, and attempts remain unchanged.
+The writer changes only `bank_question_sources.pdf_page`, `pdf_sha256`,
+`confidence_source`, `confidence_node`, and `confidence_page`. All three
+accepted confidence values must be at least 0.85, match the independent audit,
+and be no lower than any stored value. It refuses a partial-scope chapter, an
+invalid key, changed question/choice/key fingerprints, a human-reviewed row,
+an unverified edition PDF/map, or a page without quoted evidence and a
+corroborated printed-page sequence. The source edition, chapter, legacy and
+printed pages, anchor, question, choices, answer, review state, frozen
+assessments, and attempts remain unchanged.
 
 ## Protected plan
+
+The single-entry plan format is
+`fanoos.verified-ai-source-page-repair/2`.
 
 Store a single-entry plan and its separate independent provenance audit under
 `/srv/fanoos/shared/research/classification/reports/`, both mode `0600`. The
 audit must be the accepted one-question output of
 `audit_private_study_batches.py`, with unchanged live question content and
-matching year, subject, chapter, PDF page, PDF SHA, and audited page
-confidence. Bind the plan's accepted confidence exactly to that audit and
-bind the plan to the audit's SHA-256. Include the current source ID, exact edition and chapter,
-original PDF page and SHA, book-printed page, one or more short exact page
+matching year, subject, chapter, PDF page, PDF SHA, and all three audited
+confidence values. Bind the plan's accepted confidence exactly to the audit
+and bind the plan to the audit's SHA-256. Include the current source ID, exact
+edition and chapter, current PDF page/SHA (or both null), original PDF page
+and SHA, book-printed page, one or more short exact page
 quotation fragments (use separate fragments only when original PDF column
 order splits the text layer),
 current legacy/printed-page values, anchor hash, question/choice/latest-key
-hashes, prior `confidence_page`, and independently accepted confidence.
+hashes, prior `confidence_source`, `confidence_node`, and `confidence_page`,
+and independently accepted confidence. The plan must also pin
+`expected_pdf_page` and `expected_pdf_sha256` together: both null for a missing
+page, or both equal to the already verified page/PDF pair when only confidence
+needs repair.
 
 ## Preview and apply
 

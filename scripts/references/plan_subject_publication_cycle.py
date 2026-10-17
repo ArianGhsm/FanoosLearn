@@ -17,7 +17,7 @@ FORMAT = "fanoos.subject-publication-cycle/1"
 OPERATORS = {
     "repair_verified_source_pages.php": ("fanoos.verified-source-page-repair/1", 12),
     "repair_verified_source_chapter_pages.php": (
-        "fanoos.verified-source-chapter-page-correction/1", 1
+        "fanoos.verified-source-chapter-page-correction/2", 1
     ),
 }
 SUBJECT = re.compile(r"^[a-z][a-z0-9-]{1,59}$")

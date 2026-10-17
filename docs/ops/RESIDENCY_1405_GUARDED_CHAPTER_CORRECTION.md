@@ -1,5 +1,14 @@
 # Residency 1405: guarded chapter and original-page correction
 
+**Historical 1405 checkpoint.** This file records the original 1405-only
+version-1 design and its deployment status at the date below. The current
+operator has since been generalized to residency 1396–1500 and now requires
+format-2 plans with audit-bound `confidence_source`, `confidence_node`, and
+`confidence_page`. For any new correction, use
+[`VERIFIED_AI_SOURCE_CHAPTER_PAGE_REPAIR.md`](VERIFIED_AI_SOURCE_CHAPTER_PAGE_REPAIR.md)
+and regenerate a matching format-2 plan; the example format-1 plan below is
+not accepted by the current operator.
+
 Status (2026-10-15): the guarded operator was merged to GitHub `main` in
 [PR #408](https://github.com/ArianGhsm/FanoosLearn/pull/408), merge SHA
 `8731dcd1902a9d0b658600c87c48c005b40eb658`. Both PR CI and exact-merge
