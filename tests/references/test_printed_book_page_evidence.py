@@ -33,6 +33,36 @@ class PrintedBookPageEvidenceTests(unittest.TestCase):
         self.assertFalse(self.verified(pages, printed="103"))
         self.assertFalse(self.verified(pages, printed="120"))
 
+    def test_accepts_numeric_labels_across_inserted_e_pages(self):
+        pages = {
+            1176: ["545.e39"],
+            1177: ["545.e40"],
+            1178: [546],
+            1179: ["546.e1"],
+            1180: [547],
+        }
+        self.assertTrue(self.verified(pages, pdf_page=1178, printed="546"))
+
+        carranza_pages = {
+            853: [388],
+            854: ["388.e1"],
+            855: [389],
+            856: [390],
+            857: ["390.e1"],
+        }
+        self.assertTrue(self.verified(carranza_pages, pdf_page=855, printed="389"))
+
+    def test_rejects_numeric_label_when_inserted_neighbor_sequence_conflicts(self):
+        pages = {
+            1176: ["545.e39"],
+            1177: ["545.e40"],
+            1178: [546],
+            1179: [548],
+            1180: [549],
+        }
+        self.assertFalse(self.verified(pages, pdf_page=1178, printed="546"))
+        self.assertFalse(self.verified(pages, pdf_page=1178, printed="547"))
+
     def test_rejects_single_neighbor_and_body_only_label(self):
         pages = {119: [101], 120: [102], 121: []}
         self.assertFalse(self.verified(pages))
