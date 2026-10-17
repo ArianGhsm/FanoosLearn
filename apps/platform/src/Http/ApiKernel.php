@@ -31,6 +31,7 @@ use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Identity\AccountPhoneService;
 use Fanoos\Platform\Identity\AuthService;
 use Fanoos\Platform\Identity\AuthenticatedSession;
+use Fanoos\Platform\Identity\SessionCookie;
 use Fanoos\Platform\Identity\OwnerRecoveryService;
 use Fanoos\Platform\Identity\StudentRegistrationService;
 use Fanoos\Platform\Onboarding\DirectoryReadService;
@@ -123,7 +124,7 @@ final class ApiKernel
                     'token' => $session->token, 'csrf_token' => $session->csrfToken,
                     'expires_at' => $session->expiresAt, 'account' => $this->auth->account($session),
                 ],
-                'headers' => ['Set-Cookie: fanoos_session=' . rawurlencode($session->token) . '; Path=/; HttpOnly; Secure; SameSite=Lax'],
+                'headers' => [SessionCookie::issue($session)],
             ];
         }
 
@@ -155,7 +156,7 @@ final class ApiKernel
             return [
                 'status' => 201,
                 'data' => ['csrf_token' => $session->csrfToken, 'expires_at' => $session->expiresAt],
-                'headers' => ['Set-Cookie: fanoos_session=' . rawurlencode($session->token) . '; Path=/; HttpOnly; Secure; SameSite=Lax'],
+                'headers' => [SessionCookie::issue($session)],
             ];
         }
 
@@ -167,7 +168,7 @@ final class ApiKernel
                     'token' => $session->token, 'csrf_token' => $session->csrfToken,
                     'expires_at' => $session->expiresAt, 'account' => $this->auth->account($session),
                 ],
-                'headers' => ['Set-Cookie: fanoos_session=' . rawurlencode($session->token) . '; Path=/; HttpOnly; Secure; SameSite=Lax'],
+                'headers' => [SessionCookie::issue($session)],
             ];
         }
 
@@ -187,7 +188,7 @@ final class ApiKernel
 
         if ($request->method === 'POST' && $request->path === '/api/v1/auth/logout') {
             $this->auth->logout($session);
-            return ['status' => 200, 'data' => ['logged_out' => true], 'headers' => ['Set-Cookie: fanoos_session=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax']];
+            return ['status' => 200, 'data' => ['logged_out' => true], 'headers' => [SessionCookie::expire()]];
         }
         if ($request->method === 'POST' && $request->path === '/api/v1/auth/password') {
             $this->auth->setPassword($session, (string) ($request->body['new_password'] ?? ''));

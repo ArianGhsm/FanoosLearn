@@ -17,8 +17,8 @@ use PDO;
  *
  * Read straight from the bank tables, counting only questions that are
  * published (their sitting is on the site as an exam). Machine
- * classification is used only where it may be shown as fact: reviewed by a
- * person, or at the owner's confidence threshold (data model §4).
+ * classification is shown at the evidence confidence threshold. Legacy
+ * human-origin rows remain attributed as historical source records.
  *
  * A study set is built by CustomPracticeService::createFromQuestions, which
  * keeps only questions the student may already open in their own exam, so
@@ -374,7 +374,8 @@ SQL);
      * with every chapter and how many questions come from it; with an exam
      * type, only that type's questions. A book on the type's latest official
      * list says so (listed_year). Only sources that may be shown as fact are
-     * counted: set or reviewed by a person, or at the confidence threshold.
+     * counted: evidence-qualified rows at the confidence threshold, with
+     * legacy provenance retained for existing human-origin citations.
      *
      * @return array<string, mixed>
      */

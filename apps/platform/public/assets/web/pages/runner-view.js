@@ -634,7 +634,7 @@ function renderReveal(reveal, question, chosen, { explanationVisible = true, onS
         })
         : (reveal.explanation
             ? el('div', {}, renderMarkdown(reveal.explanation),
-                el('p', { className: 'x-explanation__origin', text: 'این توضیح با کمک هوش مصنوعی نوشته شده و بازبینی انسانی نشده است.' }))
+                el('p', { className: 'x-explanation__origin', text: 'این توضیح با کمک هوش مصنوعی تهیه شده است.' }))
             : el('p', { className: 'f-tiny', text: 'برای این سؤال توضیحی ثبت نشده است.' }));
 
     return el('section', { className: `x-revealed${right ? ' is-right' : ''}` },
@@ -838,7 +838,8 @@ function renderQuestionMeta(question) {
         el('span', { className: 'x-source__icon' }, icon('book')),
         el('span', { className: 'x-source__body' },
             el('span', { className: 'x-source__chapter' }, ...bidiNodes(faText(facts.chapter))),
-            original ? el('span', { className: 'x-source__book', attrs: { dir: 'ltr', title: original }, text: original }) : null));
+            original ? el('span', { className: 'x-source__book', attrs: { dir: 'ltr', title: original }, text: original }) : null,
+            facts.scopeNote ? el('span', { className: 'x-source__scope-note' }, ...bidiNodes(faText(facts.scopeNote))) : null));
 
     return el('div', { className: 'x-question__meta' },
         chips.length ? el('div', { className: 'x-question__chips' }, ...chips) : null,
@@ -1141,7 +1142,7 @@ export function renderReviewQuestion(entry, position, questionCount, actions, as
                 ? el('section', { className: 'x-explanation' },
                     el('h3', { text: 'چرا؟' }),
                     renderMarkdown(entry.explanation),
-                    el('p', { className: 'x-explanation__origin', text: 'این توضیح با کمک هوش مصنوعی نوشته شده و بازبینی انسانی نشده است.' }))
+                    el('p', { className: 'x-explanation__origin', text: 'این توضیح با کمک هوش مصنوعی تهیه شده است.' }))
                 : el('p', { className: 'f-tiny', text: 'برای این سؤال توضیحی ثبت نشده است.' }),
             renderQuestionStats(entry.stats ?? null)),
         el('p', { className: 'x-review__done' },

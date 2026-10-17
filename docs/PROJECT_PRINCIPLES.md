@@ -24,8 +24,12 @@ chapter, page, evidence, and edition-independent concepts.
    and privacy constraints; old answers contradicted by newer editions must
    be labeled rather than silently treated as current.
 5. AI-produced source, chapter, page, similarity, and explanations carry
-   origin and confidence. The owner reviews values below **0.85**. Human
-   decisions cannot be replaced silently.
+   origin, confidence, and verifiable evidence. AI completes chapter
+   classification through the exact-edition PDF and independent validators;
+   no human review is required. A decision below **0.85** or without
+   decisive page evidence remains pending. Earlier human-origin records
+   retain their provenance; an AI correction needs an evidence-backed
+   reason, guarded source-only transaction, and auditable before/after receipt.
 
 ## 2. Two authorities: GitHub and the server
 
@@ -100,10 +104,21 @@ chapter title or unverified pagination.
 When an exact page cannot be found and verified, leave the new decision
 **pending with neither a new chapter assignment nor a fabricated page**;
 continue other eligible questions. Historical incomplete source records
-remain intact, including human-reviewed records, until individually audited
+remain intact, including human-origin records, until individually audited
 and safely repaired via the approved, backed-up source-only workflow. Do not
-erase existing chapters, keys, assessments or human decisions merely to
+erase existing chapters, keys, assessments or source provenance merely to
 satisfy the new metric.
+
+**Partial scope with an unreadable printed label:** If the exact official
+PDF page, chapter map and page-local evidence are verified, but an official
+partial-chapter cutoff cannot be compared because that PDF page has no
+corroborated printed label, an audited source-only operation may record the
+physical `pdf_page` and `pdf_sha256` with
+`scope_unverified=true` and a clear Persian note. This is a
+recorded design location only; it is neither an in-scope completion nor an
+outside-scope finding. The year-level publication gate must reject it until
+the scope is authoritatively resolved. Never guess the printed page or mark
+the item outside-scope to work around a missing label.
 
 Every future backlog, import receipt, progress dashboard and handoff must
 use `EXISTS` on a **single source row** containing `node_id`,
@@ -113,6 +128,102 @@ Report incomplete rows with a chapter separately from questions without
 any chapter, and retain historical raw source counts as labeled diagnostics.
 Explicit no-book-source exemptions (residency English, §3A) are reported
 separately and never given synthetic chapter/page rows.
+
+### Voided residency questions must also be chapter-and-page classified — owner clarification 2026-10-16
+
+**A voided question is NOT exempt from reference classification.** For
+every dental-residency year, classify **all clinical questions**,
+including those officially `voided`, `draft`, excluded from grading
+or missing a scoreable key. Independently identify the officially
+approved reference edition from that exam year, the original
+**chapter AND exact physical PDF page** (bound to the actual approved
+server PDF SHA-256), with original-page scientific evidence. Record
+the source on the original question without fabricating a correct
+answer; preserve official `voided` status, null choice position,
+`draft` grading/exclusion status, all questions/options, existing
+frozen versions and student attempts **unchanged**.
+
+A separate guarded **source-only** metadata operator,
+`scripts/references/repair_verified_voided_source_pages.php`,
+provides a publication-independent way to correct original book
+printed-page labels and physical PDF page/SHA for an unreviewed
+existing citation of a voided, non-scored question. It never changes
+the answer key, question status, question text or any grading state.
+Require the independent private, SHA-pinned original-PDF scientific
+audit, official-year syllabus, original question/choice/voided-key
+identity, printed-page-neighbor corroboration, rollback-only preview,
+fresh full verified backup, unique commit receipt and independent
+live DB readback. It refuses all final/amended/published questions,
+duplicate plans, changed original content and unsupported pages.
+
+**Two independent requirements:** every voided question must have
+chapter+page source fields; voided questions must simultaneously
+remain excluded from scoring. Even if the whole-year gate is
+scientifically complete, never convert a voided question into a
+scored question just to permit publishing. Treat ambiguity about a
+voided question's original *design source* as scientific hold to
+resolve, not permission to mark the year complete.
+
+### Residency WHOLE-YEAR classification gate — superseding owner decision 2026-10-16
+
+**No dentistry-residency exam year may be newly published or republished
+on the public site until the entire official question inventory for that
+year and round is completely classified.** The unit of **site publication
+is ONE COMPLETE YEAR**, not one question, one subject, a 12-item source
+transaction or a group of 30–40 questions. This supersedes the earlier
+one/two-subject *publication* scheduling instruction, and applies
+equally to every human, AI agent, device, batch worker, CLI, owner
+and assistant. Neither a temporary notebook nor a private tool result
+authorizes a partial-year release.
+
+**Research / staging is different from publishing.** Process exact-edition
+chapter **AND original physical PDF page** decisions in convenient
+**30–40-question research batches** (last batch may be smaller) until
+**every subject and every question in the year** has been accounted for.
+For each book-based item the *same* source row must have a verified
+official-year/subject/edition in-scope chapter node, positive 1-based
+`pdf_page`, and current approved original PDF SHA-256; page-local
+original-book evidence must pass independent scientific validation.
+The official English no-book-reference exemption remains valid only
+with an eligible `final` or `amended` answer. Void, disputed, missing
+figures, unsupported chapters, incomplete PDF maps or unsupported
+multi-source citations remain **explicit unresolved gates**; they
+must not be made up, silently omitted from the inventory or converted
+into a scored answer just to trigger publication.
+
+**Mandatory server-side enforcement.** Every normal residency
+`BankPublisher::publish()` path, for both the initial publication and
+every later frozen-version republish, must check the *actual production
+DB* against the sitting's declared `question_count`. Reject whenever
+any question is missing, any English item lacks a valid official key,
+or any book-based item lacks a same-row chapter+PDF-page+SHA for an
+official in-scope reference for that exact year and subject. The
+versioned `ResidencyYearPublicationGate` is an immutable preflight:
+failure must occur **before creating an assessment or version** and
+return a conspicuous error, not a warning. A structurally complete DB
+does not replace the original-page scientific audit, verified backup,
+CI or operational authorization. Existing already-published frozen
+versions and student attempts remain intact; do **not** remove the
+historical exam from students because a later research cycle is pending.
+
+**One final year-level release.** After all 30–40-question private
+research batches are approved, run a full-year independent scientific
+and source-only database audit, fresh verified backup, guarded writes
+where needed, preview, unique receipts, and read-back. Then publish
+the entire residency year's frozen assessment **once**, with the
+existing operator authorization, two-person review/owner exception,
+CI/merge, approved updater deployment and live health checks.
+If a gate fails, publish **nothing new** for that year; preserve the
+historical published version if present and keep work pending. Never
+mislabel private research, a code merge, a source-only SQL write or a
+successful `/health` check as full-year publication.
+
+This policy is binding for all agents via repository-root `AGENTS.md`,
+`docs/product/09_CHAPTER_CLASSIFICATION.md`, and
+`docs/ops/RESIDENCY_WHOLE_YEAR_PUBLICATION_20261016.md`. The older
+`docs/ops/SUBJECT_FIRST_SOURCE_PUBLICATION_20261016.md` is now a
+**staged-research / guarded-writer chunking reference only**; it must
+never be construed to authorize partial-year site publication.
 
 ### Pre-1396 retrospective reference policy — owner decision 2026-10-11
 
@@ -181,13 +292,13 @@ The binding procedure is
 `scripts/references/apply_classification.py` against the exact verified PDF
 page and the page-to-chapter map. The authority order is: official year
 validity and scope → exact verified edition PDF/page → short verbatim evidence
-from that page → validator → reviewed import. An answer found only outside the
-announced chapter or partial-page scope remains pending official-syllabus
-review; lowering confidence does not authorize an excluded citation. Review
-older outside-scope rows individually, including human decisions, before any
-correction.
-An unlocated fact stays **undecided**, not `none`; existing human-reviewed
-sources remain protected.
+from that page → validator → audited import. When that exact design location
+is outside the announced scope, store the true chapter, physical PDF page and
+hash and set `official_scope_status=outside_scope_exam_question` with a clear
+note (owner decision 2026-10-16). This labelled evidence exception does not
+change the official syllabus and supersedes the earlier instruction to leave
+such a located citation pending. Audit older outside-scope rows individually.
+An unlocated fact stays **undecided**, not `none`.
 
 
 ## 3A. Dentistry-residency English: final answer key is sufficient (owner decision 2026-10-10)
@@ -358,6 +469,17 @@ its verified PDF page are one indivisible classification decision. Unverified
 or page-less chapters are incomplete in every new progress report and cannot
 be created by new imports. The 2026-10-11 production audit and sitting-level
 backlog are documented in `docs/ops/BANK_CLASSIFICATION_PAGE_BACKLOG_20261011.md`.
+
+**2026-10-13 — AI classification authority (supersedes the 2026-10-03 owner
+review threshold and human-approval wording above):** AI agents make and
+publish exact-edition chapter/page decisions autonomously after the original
+PDF, official scope, independent validator, immutable question/key checks,
+verified backup and source-only receipt all pass. Confidence below 0.85 is
+pending further evidence, not a human-review queue. An earlier human-origin
+source remains an attributed historical record; it can be superseded only by
+a separately audited, evidence-backed source-only correction that records
+the old and new citation and leaves question, answer and frozen attempts
+unchanged. No human sign-off is a classification prerequisite.
 
 ## 7. Open implementation items (do not assume completed)
 

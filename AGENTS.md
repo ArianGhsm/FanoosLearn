@@ -92,7 +92,7 @@ a blanket delete.
 - Work with **eligible verified server editions** first. Set missing or
   incomplete editions aside as pending; no fabricated chapters and **no
   new nearest-edition fallback by default**. Preserve previously audited
-  legacy assignments and human-reviewed sources.
+  legacy assignments and source provenance until an audited correction.
 - If a verified PDF page is not readable by the page-at-a-time reader, inspect
   the original page in a PDF viewer or leave that question pending. Do not
   create OCR output or a text version to fill the gap.
@@ -102,10 +102,17 @@ a blanket delete.
   exact official edition and supported by direct original-PDF evidence.
   A printed or legacy `page` field alone is insufficient. Leave
   unverified chapter+page proposals pending; preserve older incomplete
-  records and human reviews pending audited repairs. Report completion
+  records and provenance pending audited repairs. Report completion
   only using same-row `node_id + pdf_page + pdf_sha256`, with
   residency-English official-key exemptions separately counted. See
   `docs/ops/BANK_CLASSIFICATION_PAGE_BACKLOG_20261011.md`.
+- **AI classification authority (owner 2026-10-13):** No human-review gate
+  or owner confidence queue. The AI may publish a decision only after exact
+  original-PDF evidence, official scope, independent validation, verified
+  backup and source-only readback. Confidence below 0.85 stays pending.
+  Human-origin legacy citations retain attribution but may be corrected by
+  an evidence-backed, audited source-only transaction without human sign-off;
+  question text, keys and frozen attempts stay untouched.
 - Use `scripts/references/` search and evidence validator end-to-end.
   Every decision needs the book's own verbatim evidence, chapter, PDF page,
   edition and confidence; unanswered matches remain undecided, not `none`.
@@ -116,6 +123,60 @@ a blanket delete.
 - Avoid duplicating large PDFs, especially while disk usage is high.
   Missing secure reader or workspace is a dependency to document and
   implement under the normal PR process, not a reason to demand a laptop.
+
+## 3AA. Voided questions REQUIRE original-book chapter + PDF page
+
+For **every** residency year, including 1405, a question that is
+officially **voided** must still receive an independently verified
+original-year book **chapter AND exact physical PDF page/SHA** like
+every other book-based question. **Never** equate `voided` with
+`unclassifiable` or `citation-exempt`; do not omit these items
+from the full-year science/citation census. They remain **ungraded**,
+with official answer `voided`, null correct choice, and original
+question status and attempts unchanged.
+
+For existing AI-origin voided sources, use only the versioned,
+reviewed, protected `repair_verified_voided_source_pages.php` operator
+with original-PDF quote, independently accepted SHA-pinned audit,
+original stem/choices/voided-key hashes, corroborated book printed
+page, protected rollback preview, fresh verified backup and receipt
+under the authorized updater. Do not convert voided into final,
+publish a draft question, or bypass any separate deployment safety
+gate. The entire year remains unclosed if any voided item's chapter
+or page is missing. See `docs/PROJECT_PRINCIPLES.md`.
+
+## 3A. Binding residency whole-year release gate — owner 2026-10-16
+
+This rule binds **every AI model, device, human operator, hosted agent,
+CLI, script and connected app** working on dentistry-residency
+classification, regardless of their own conversation history.
+
+**Never publish or republish a residency year's exam on the public site
+while any official book-based question in that year/round lacks an
+independently verified, official-year in-scope chapter **AND exact
+physical original-PDF page/SHA**.** The separate no-book-reference
+English exception requires a valid official final/amended key. Do not
+relabel unsupported, voided, image-dependent or disputed items as
+complete; preserve existing official answer states, students' frozen
+versions and attempts.
+
+**How to work quickly:** Classify in **30–40-question private research
+batches** until **100% of the entire year** is complete. Multiple
+subjects/batches may be processed in parallel. Protected, source-only
+metadata operators may internally use bounded transactions and unique
+receipts, but a research batch, a subject, an import, a code PR or a
+healthy web service does NOT authorize a partial-year frozen exam
+publication. Only after the full-year scientific manifest, full-year
+live DB inventory, same-row chapter+PDF-page+SHA, complete official
+scope, source evidence and fresh backup are all independently verified,
+use the approved single year-level publication workflow and the
+`BankPublisher` server-side gate; verify the new frozen version,
+review/authorization, CI, deployment and health. If a gate fails,
+publish nothing new; keep any previously published historical version.
+
+This supersedes the earlier one/two-subject **site-publication** rule
+from PR #419. Consult `docs/PROJECT_PRINCIPLES.md` and
+`docs/ops/RESIDENCY_WHOLE_YEAR_PUBLICATION_20261016.md`.
 
 ## 4. GitHub-to-server delivery
 

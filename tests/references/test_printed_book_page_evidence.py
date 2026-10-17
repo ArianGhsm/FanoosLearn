@@ -53,6 +53,85 @@ class PrintedBookPageEvidenceTests(unittest.TestCase):
         self.assertFalse(self.verified(pages, printed="102x"))
         self.assertFalse(self.verified(pages, printed="-1"))
 
+    def test_quote_normalization_ignores_only_directional_format_controls(self):
+        text = "س\u200c\u202bلام\u202c, x-ray"
+        code = (
+            "require $argv[1];"
+            "$method=new ReflectionMethod(Fanoos\\Platform\\Bank\\PrintedBookPageEvidence::class,'normalize');"
+            "echo $method->invoke(null,$argv[2]);"
+        )
+        run = subprocess.run(
+            ["php", "-r", code, str(VERIFIER), text],
+            text=True, capture_output=True, check=True
+        )
+        self.assertEqual(run.stdout, "سلام, x-ray")
+
+    def test_accepts_unlabelled_figure_page_only_with_exact_adjacent_sequence(self):
+        self.assertTrue(self.verified({119: [101], 120: [], 121: [103]}, printed="102"))
+        self.assertTrue(self.verified({119: [101], 120: [3, 4], 121: [103]}, printed="102"))
+        self.assertFalse(self.verified({119: [101], 120: [], 121: [104]}, printed="102"))
+        self.assertFalse(self.verified({119: [101], 120: [100], 121: [103]}, printed="102"))
+
+    def test_numbered_chapter_title_running_header_exposes_printed_label(self):
+        text = "14. Digital Imaging and Processing for Restorations          299\nbody"
+        code = (
+            "require $argv[1];"
+            "echo json_encode(Fanoos\\Platform\\Bank\\PrintedBookPageEvidence::"
+            "pageLabelsFromText($argv[2]));"
+        )
+        run = subprocess.run(
+            ["php", "-r", code, str(VERIFIER), text],
+            text=True, capture_output=True, check=True
+        )
+        self.assertEqual(json.loads(run.stdout), [299])
+
+    def test_watermark_then_spaced_chapter_header_exposes_printed_label(self):
+        text = "www.example.invalid\n44      C H A P T E R 2     Dental Caries\nbody"
+        code = (
+            "require $argv[1];"
+            "echo json_encode(Fanoos\\Platform\\Bank\\PrintedBookPageEvidence::"
+            "pageLabelsFromText($argv[2]));"
+        )
+        run = subprocess.run(
+            ["php", "-r", code, str(VERIFIER), text],
+            text=True, capture_output=True, check=True
+        )
+        self.assertEqual(json.loads(run.stdout), [44])
+
+    def test_table_zero_is_not_a_printed_page_label(self):
+        code = (
+            "require $argv[1];"
+            "echo json_encode(["
+            "Fanoos\\Platform\\Bank\\PrintedBookPageEvidence::hasNoPrintedPageLabels([0]),"
+            "Fanoos\\Platform\\Bank\\PrintedBookPageEvidence::hasNoPrintedPageLabels([0, 221]),"
+            "Fanoos\\Platform\\Bank\\PrintedBookPageEvidence::hasNoPrintedPageLabels(['736.e2'])"
+            "]);"
+        )
+        run = subprocess.run(
+            ["php", "-r", code, str(VERIFIER)],
+            text=True, capture_output=True, check=True
+        )
+        self.assertEqual(json.loads(run.stdout), [True, False, False])
+
+    def test_table_numeric_codes_followed_by_equals_are_not_page_labels(self):
+        text = (
+            "codes)                         Second digit\n"
+            "0 = Not sealed or restored     0 = Sound tooth surface\n"
+            "1 = Partial sealant            1 = First visual change\n"
+            "2 = Full sealant               2 = Distinct visual change\n"
+            "body text\n"
+        )
+        code = (
+            "require $argv[1];"
+            "echo json_encode(Fanoos\\Platform\\Bank\\PrintedBookPageEvidence::"
+            "pageLabelsFromText($argv[2]));"
+        )
+        run = subprocess.run(
+            ["php", "-r", code, str(VERIFIER), text],
+            text=True, capture_output=True, check=True
+        )
+        self.assertEqual(json.loads(run.stdout), [])
+
     def test_long_running_header_needs_neighbor_corroboration(self):
         long_header = "Long running section title " * 5 + "549"
         code = (

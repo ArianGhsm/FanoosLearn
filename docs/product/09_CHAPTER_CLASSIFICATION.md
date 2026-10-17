@@ -1,5 +1,49 @@
 # Chapter classification
 
+## Outside-scope design location (owner decision 2026-10-16)
+
+If the exact page in the verified official-edition PDF explains the official
+answer but its chapter is outside the announced syllabus, preserve the true
+chapter and page. Set `official_scope_status=outside_scope_exam_question` and
+write a clear Persian note stating that the design location was outside the
+official exam scope. This flag does not expand the syllabus. The whole-year
+publication gate accepts it only with the same physical PDF page and SHA-256
+requirements as an in-scope source.
+
+## Partial scope with an unreadable printed page label
+
+When the exact original PDF page and chapter are verified but a partial
+chapter's printed-page cutoff cannot be checked because the selected page has
+no corroborated printed label, record the physical page and PDF SHA only via
+`scripts/references/record_verified_human_scope_unverified_page.php`. Set
+`scope_unverified=true` and add a clear Persian note. Keep
+the true chapter and physical PDF page. Do not treat this as in-scope or
+outside-scope; the year-level publication gate rejects this status until an
+authoritative page/scope resolution is available.
+
+**Owner decision 2026-10-13:** AI agents perform evidence-backed chapter
+classification through the validators and audited publication workflow;
+human review is not a prerequisite. Confidence below 0.85 remains pending.
+Earlier human-origin citations are historical provenance, not automatic
+authority over a better proven exact-edition PDF citation. Correction of an
+existing citation still requires an explicit comparison and guarded receipt.
+
+For an unchanged human-origin chapter citation whose exact physical PDF page
+has not yet been recorded, use
+`scripts/references/repair_verified_human_source_pages.php`. It accepts only
+an exact official in-scope original PDF page with page-local evidence and
+question, option, key, anchor, source, and review fingerprints. Its sole DB
+updates are `pdf_page` and `pdf_sha256`; it preserves `origin`, chapter,
+edition, printed-page fields, anchor text, and every human review field. A
+plan may supply one to four short exact excerpts from the same page when a
+table or Persian PDF splits the evidence into separate text runs; every excerpt
+is checked independently against that page. A
+missing printed label remains null. A draft/voided human source can use this
+operator only with an audit that pins both the draft and voided states; it
+never creates a key or changes scoreability. AI-origin voided sources retain
+their separate guarded workflow. Persian page-local quote checks ignore only
+Unicode bidi display controls; they retain visible letters and punctuation.
+
 > **1398 reference-list update (2026-10-10):** The later four-page, owner-supplied complete notice adds official reference-validity scopes for oral pathology, prosthodontics, community dentistry and dental materials (six additional references; 19 total across 12 clinical subjects). The earlier “1398 syllabus missing” remarks below are historical checkpoints and are superseded **only for source-list validity**, not for unverified question citations. See [1398 complete notice](../ops/RESIDENCY_1398_COMPLETE_NOTICE_20261010.md).\n\n
 How a question gets its source: which official reference, which chapter,
 which page. The procedure is the same for every exam type the catalog
@@ -69,7 +113,7 @@ for display but cannot replace `pdf_page` or its file SHA-256. For an
 unlocated or unreadable page, keep **both** the proposed chapter and page
 pending; do not emit a chapter-only source or treat it as complete.
 Historical rows missing page/hash are backlog, not newly completed work;
-preserve human-reviewed assignments pending separately approved repair.
+preserve their original attribution pending an audited source-only repair.
 The policy-final residency English exemption remains source-free (§3A).
 
 For all new progress reports, use one same-row predicate:
@@ -78,6 +122,9 @@ pdf_sha256 IS NOT NULL`. Raw source counts and legacy printed/any-page
 counts can be shown for diagnostics, clearly marked incomplete. An audit
 must also independently confirm PDF hash, chapter boundaries, syllabus
 scope and page evidence before calling the row scientifically verified.
+Printed-page parsing treats numeric table keys such as `1 = ...` as page
+content; a printed-page label still needs exact-page or adjacent-page
+corroboration.
 
 ## 2. What the work needs
 
@@ -164,7 +211,12 @@ Report the counts separately, leaving the raw source-row count honest:
 
 ## 3. The procedure
 
-One batch is one sitting and one subject (10–30 questions).
+One scientific *research* batch is 30–40 questions from the same residency year (the final research batch may be smaller). Complete all subjects of that year before any public exam-version publication.
+**This is the scientific research unit, not permission for one-question-at-a-time
+site writes.** Site publication is scheduled by **one or two entire subjects**
+as defined in §7 and `docs/PROJECT_PRINCIPLES.md`. Each question still needs
+its own independently verified chapter **and original physical PDF page**.
+
 
 **Step 1 — open the batch.**
 
@@ -218,7 +270,7 @@ do not locate support, leave the question undecided (§5).
   refers to it in passing.
 - The page is outside the year's announced `scope`: look for the same fact
   inside the scope. If the only support is outside, leave the question
-  undecided for official-syllabus review. Lower confidence does not make an
+  undecided pending authoritative syllabus evidence. Lower confidence does not make an
   excluded chapter eligible. For a partially included chapter, verify the
   official printed-page or section limit on the original PDF page before
   publication; a chapter-list check alone cannot validate that limit.
@@ -258,10 +310,9 @@ files are read for a sitting, by the `<year>-` prefix):
   copied as printed; avoid fragments with symbols (`≤`, `•`, `‐`, `#`,
   superscript reference numbers) when a plain run of words is available.
 - `confidence`: 0.95+ when the quote states the answer outright; 0.85–0.94
-  when it states it but the wording differs or two chapters teach it;
-  0.6–0.84 when it is the right section but the exact fact is inferred;
-  below 0.6 only after re-searching, and it goes to the owner's review
-  queue (PROJECT_PRINCIPLES decision 5).
+  when it states it but the wording differs or two chapters teach it.
+  Below 0.85, keep the decision pending and search again; there is no
+  human-review queue or confidence-based exception to the PDF evidence gate.
 - **New batches use the exact official edition only.** For auditing earlier
   nearest-edition assignments, the `--include-nearest` batch flag and
   `--allow-nearest` apply flag must be explicitly supplied; the chapter
@@ -274,8 +325,8 @@ The validator rejects a chapter outside an explicit `scope_chapters` list.
 If the official scope describes selected or excluded chapters but has no
 structured chapter list, the decision stays pending until the catalog is
 corrected from the official notice. The full sitting importer applies the
-same chapter-level gate; partial page and section limits still need explicit
-human review against the original PDF before a source is published.
+same chapter-level gate; partial page and section limits require an
+independent check against the official notice and original PDF page.
 
 ```sh
 sudo -u fanoosupd python3 -B scripts/references/apply_classification.py --sitting=<sitting.json> \
@@ -336,13 +387,21 @@ A future year is added to this table when its sitting is first imported.
   re-searching is left **out of the decisions file** (undecided). Undecided
   questions keep whatever source they already have and are retried when
   books are added.
-- **A human-checked source is never replaced silently.** If the sitting
-  already carries a source with `origin: human`, a decision for a different
-  chapter — or `none` — is rejected unless it carries `"override_human":
-  "<why this one is better>"`. The same chapter keeps the human source as
-  it is. When the AI and the human disagree, compare both pages and keep the
-  human chapter unless the quote clearly states the fact and the other does
-  not.
+- **Earlier source attribution is preserved in the audit.** The validator's
+  legacy `override_human` field is an evidence rationale, not a request for
+  human approval. If the AI proposes a different chapter from a prior
+  human-origin source, it must compare both original PDF pages and record
+  why the new exact-edition passage better supports the official answer.
+  An unchanged chapter keeps the existing citation. A correction may reach
+  production only through a separately guarded source-only operator with a
+  before/after receipt; never use a full-sitting import to overwrite the
+  prior source or invent `none` for a fact that remains unlocated.
+- For an unchanged human-origin chapter citation, add its exact PDF page/hash
+  only through `repair_verified_human_source_pages.php`. Keep its original
+  human provenance, reviewer, chapter, edition, printed-page label, and anchor
+  untouched. For a draft/voided human source, the audit also pins the draft
+  and voided states; no key or scoreability changes are allowed. AI-origin
+  voided entries use their separate guarded workflow.
 - Questions whose **exact official edition** is unavailable, whose approved
 PDF cannot be securely read, or whose direct-PDF chapter map is not verified
   stay undecided and are listed in the pending report. Continue eligible
@@ -380,15 +439,78 @@ its own page and quote replace the nearest-edition source.
 
 ## 7. Putting it on the site
 
+### Binding clarification: voided questions still require chapter AND PDF page
+
+**Do not exclude voided/draft questions from *scientific citation coverage*.**
+All non-English dentistry-residency questions, including officially
+`voided` and excluded-from-scoring items, must have the approved
+year-specific book chapter and exact original physical PDF page/SHA.
+Voided questions keep their official voided answers (null correct
+choice), original draft/scoring state, four original options and
+unchanged prior attempts and frozen exams. Citation completion is not
+the same as turning a question into a scored item.
+
+For existing AI-origin voided/draft sources use the separate guarded
+`repair_verified_voided_source_pages.php` after accepted private
+original-book scientific audit, exact page and printed neighbor
+checks, rollback preview, new verified full backup and unique receipt.
+Never attempt to pass voided items into a writer that explicitly
+requires `final/amended`; **do not alter the key** to work around it.
+See `docs/ops/VOIDED_QUESTION_CHAPTER_PDF_SOURCE_20261016.md`.
+
+### Mandatory whole-YEAR residency publication gate (owner superseding decision 2026-10-16)
+
+**Research batches: 30–40 questions; public exam publication: ONE ENTIRE
+RESIDENCY YEAR.** This replaces the older one/two-subject publication
+policy. Independently search and verify the exact-year approved
+reference and **chapter PLUS original physical PDF page** for all
+subjects, in private 30–40-question batches (last batch may be shorter).
+A subject, a completed study file, a protected per-plan apply receipt
+or a merged PR is **not** a license to publish a partial residency year.
+
+The only allowed public exam publication trigger is the **full
+sitting's declared `question_count`** matching the actual imported
+question inventory and *every* book-based question possessing at
+least one original-year official in-scope chapter/source with same-row
+positive `pdf_page` and `pdf_sha256`, independently verified against
+the original approved PDF. English is exempt from a book citation
+only with valid official final/amended choice. No voided official
+choice can be silently changed, and image-dependent, insufficiently
+audited or out-of-syllabus references are blocking holds.
+
+This is enforced inside **`BankPublisher::publish()`** by
+`ResidencyYearPublicationGate`, BEFORE creating an assessment or
+version, on both first publication and republishing. It returns
+`residency_year_classification_incomplete` (HTTP 422) on a failed
+year-level inventory/source check. This is a **structural DB gate**,
+not a replacement for the independent science/official-book audit.
+Previously published frozen exam versions remain live and immutable
+during research; do not withdraw them merely because a future
+revision is incomplete.
+
+After all 30–40-question research batches are verified, complete
+source-only production repairs only with the existing guarded operators
+within their transaction limits and fresh full verified backup.
+Independent whole-year SQL readback, official-scope and exact-PDF
+science audit must pass. Then authorize, review and **publish one
+whole-year frozen exam version**, verify the new assessment and
+historical attempts, CI/merge/updater deploy and `/health`.
+If even one question is pending, do not publish a new version.
+
+Full operational contract:
+`docs/ops/RESIDENCY_WHOLE_YEAR_PUBLICATION_20261016.md`.
+The older `docs/ops/SUBJECT_FIRST_SOURCE_PUBLICATION_20261016.md`
+describes **internal guarded chunking only**; its one/two-subject
+release framing is superseded and MUST NOT be followed for residency
+exam publication.
+
 **New source-only workflow for existing published, unsourced questions
 (2026-10-10):** Follow
 `docs/ops/SOURCE_ONLY_PUBLICATION_20261010.md`. The vetted
 `scripts/references/import_verified_sources.php` inserts **only**
 `bank_question_sources`, with exact-edition/scope, current live
 question+choice+answer matching, all-or-nothing rollback-only preview,
-verified full backup, and private post-commit receipt. Apply one validated
-batch, verify live source count and published content, then proceed to the
-next. A study-only JSON file must **never** be passed to the full
+verified full backup, and private post-commit receipt. Stage verified 30–40-question research batches privately. After ALL year subjects are scientifically complete, use guarded source-only transactions with independent receipts and whole-year readback, then publish the frozen exam ONCE for the completed year. A study-only JSON file must **never** be passed to the full
 `import-bank.php` sitting importer. No `publish` action is needed when
 an already published question acquires a source-only row. The historic
 complete-sitting procedure below is only for true full-sitting updates,
@@ -427,7 +549,7 @@ the corrected questions as changed, the answers and option order stay, and
 | A reference that is not official that year (Craig for 1399–1401 materials) | the edition must be in that year's `validity` |
 | A carried-over chapter landed on the wrong chapter after a reorganisation | carry-over only by identical title; otherwise `official_chapter` |
 | The docx sitting of 1404 would have rewritten 171 stems | §4 table; dry run must show `questions_changed: 0` |
-| An AI pass overwrote human-checked chapters (49 on 1404) | `override_human` required to replace a human source |
+| An AI pass overwrote 49 earlier attributed chapters on 1404 without evidence | `override_human` retains the explicit evidence rationale; source-only correction needs an auditable before/after receipt |
 | `none` used for "not found", removing an existing source | §5: not found stays undecided |
 | Deploy requested before CI on `main` finished | WORKFLOW: request deployment only after CI on the merge commit is green |
 | Persian chapter numbers were present as `n فصل`, but the map skipped 19 of 24 chapters and put front matter in chapter 1 | recognise the standalone Persian heading and pin each chapter to its first occurrence; test the boundary and front matter |

@@ -26,8 +26,9 @@ of it into migrations, with tests, in its own change.
    instead of re-classifying it.
 5. **Repeating a question and repeating a concept are different things**,
    stored differently.
-6. **Every machine-made classification carries a confidence and an origin**,
-   and is reviewed by a person below the threshold.
+6. **Every machine-made classification carries a confidence and an origin**.
+   Values below 0.85 remain pending stronger original-book evidence; no
+   person-review gate applies to chapter classification.
 7. **An answer is judged against a reference edition.** A question can be
    correct for the year it was set and wrong under today's edition; the
    model records both.
@@ -132,17 +133,20 @@ A question whose official answer belongs to an older reference carries the
 notice, e.g. «پاسخ رسمی مربوط به رفرنس آزمون ۱۳۹۶ است؛ در ویرایش فعلی این مطلب
 تغییر کرده است.»
 
-## 4. Review workflow for machine classification
+## 4. Evidence workflow for machine classification
 
 1. An import or an AI pass writes sources, concepts, similarity, currency and
    explanations with `origin = ai` and a confidence per field.
-2. Anything below the threshold (0.85, decided by the owner; per-field
-   thresholds allowed) is in the review queue and is not shown to students
-   as fact. The owner is the reviewer.
-3. A reviewer confirms or corrects it; the row records who and when, and
-   `origin` becomes `human`.
-4. Nothing reviewed is overwritten by a later AI pass; a re-run proposes
-   changes, it does not apply them.
+2. Anything below 0.85 remains pending additional source evidence and is
+   not shown to students as established fact. An exact-edition chapter
+   decision also requires its verified original PDF page, file hash,
+   official scope and independent validator.
+3. AI may publish a supported classification through the guarded source-only
+   workflow without human sign-off. An earlier `origin = human` value remains
+   attribution to the historical decision, not a veto or automatic proof.
+4. A re-run can correct an existing citation only with an explicit comparison
+   of old and new evidence, guarded transaction and before/after audit;
+   question wording, official keys and frozen attempts are unchanged.
 
 ## 5. Relationship to the current platform
 
@@ -168,7 +172,7 @@ becomes a selection from it:
 2. **Questions** — questions, choices, official answers; importer for past
    papers; publishing a sitting as an exam.
 3. **Sources and concepts** — question sources and concepts with
-   confidence; the review queue and its admin screen.
+   confidence; pending-evidence reports and audited source correction.
 4. **Explanations** — structured explanations, per-choice reasons; shown in
    the runner's review.
 5. **Reference-aware mode** — validity, currency, edition mappings; the

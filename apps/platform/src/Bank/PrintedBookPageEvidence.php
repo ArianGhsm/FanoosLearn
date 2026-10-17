@@ -22,23 +22,65 @@ final class PrintedBookPageEvidence
             return false;
         }
         $target = self::readPageLabels($edition, $pdfPage, $expectedPdfSha256, $allowLongHeader);
-        if ($target === null || !in_array((int) $printedPage, $target, true)) {
+        $targetLabel = str_contains($printedPage, '.e') ? $printedPage : (int) $printedPage;
+        if ($target === null) {
             return false;
         }
 
-        $neighbors = 0;
-        foreach ([-2, -1, 1, 2] as $step) {
-            $neighborPage = $pdfPage + $step;
-            $neighborPrinted = (int) $printedPage + $step;
-            if ($neighborPage < 1 || $neighborPrinted < 1) {
-                continue;
+        $targetHasLabel = in_array($targetLabel, $target, true);
+
+        if (is_int($targetLabel)) {
+            $neighbors = 0;
+            foreach ([-2, -1, 1, 2] as $step) {
+                $neighborPage = $pdfPage + $step;
+                $neighborPrinted = $targetLabel + $step;
+                if ($neighborPage < 1 || $neighborPrinted < 1) {
+                    continue;
+                }
+                $labels = self::readPageLabels($edition, $neighborPage, $expectedPdfSha256, $allowLongHeader);
+                if ($labels !== null && in_array($neighborPrinted, $labels, true)) {
+                    ++$neighbors;
+                }
             }
-            $labels = self::readPageLabels($edition, $neighborPage, $expectedPdfSha256, $allowLongHeader);
-            if ($labels !== null && in_array($neighborPrinted, $labels, true)) {
-                ++$neighbors;
+            if ($targetHasLabel && $neighbors >= 2) {
+                return true;
+            }
+
+            // Full-page figures and tables sometimes omit the running page
+            // number. Accept that omission only when both immediately
+            // adjacent physical pages prove the exact printed sequence and
+            // the target page has no nearby, conflicting printed label.
+            if (!$targetHasLabel && $pdfPage >= 2 && $targetLabel >= 2) {
+                $before = self::readPageLabels($edition, $pdfPage - 1, $expectedPdfSha256, $allowLongHeader);
+                $after = self::readPageLabels($edition, $pdfPage + 1, $expectedPdfSha256, $allowLongHeader);
+                $nearbyConflict = array_filter(
+                    $target,
+                    static fn(int|string $label): bool => is_int($label) && abs($label - $targetLabel) <= 4,
+                );
+                if ($nearbyConflict === [] && $before !== null && $after !== null
+                    && in_array($targetLabel - 1, $before, true)
+                    && in_array($targetLabel + 1, $after, true)) {
+                    return true;
+                }
             }
         }
-        return $neighbors >= 2;
+
+        if (!$targetHasLabel) {
+            return false;
+        }
+
+        // Inserted book pages use labels such as 136.e1, 136.e2, then 137.
+        // Require both immediately adjacent original PDF pages to show the
+        // exact predecessor and successor; never truncate an insert label.
+        [$previous, $next] = self::adjacentPrintedLabels($printedPage);
+        if ($pdfPage < 2 || $previous === [] || $next === []) {
+            return false;
+        }
+        $before = self::readPageLabels($edition, $pdfPage - 1, $expectedPdfSha256, $allowLongHeader);
+        $after = self::readPageLabels($edition, $pdfPage + 1, $expectedPdfSha256, $allowLongHeader);
+        return $before !== null && $after !== null
+            && array_intersect($previous, array_map('strval', $before)) !== []
+            && array_intersect($next, array_map('strval', $after)) !== [];
     }
 
     /** Check short, reviewer-selected evidence on one exact PDF page. */
@@ -70,7 +112,31 @@ final class PrintedBookPageEvidence
         return true;
     }
 
-    /** @return list<int>|null */
+    /** Return true only when this exact, hash-pinned page exposes no printed-page label. */
+    public static function hasNoPrintedPageLabel(
+        string $edition, int $pdfPage, string $expectedPdfSha256
+    ): bool {
+        if (!preg_match('/^[a-z0-9][a-z0-9-]*@[a-z0-9]+$/D', $edition)
+            || $pdfPage < 1 || !preg_match('/^[a-f0-9]{64}$/D', $expectedPdfSha256)) {
+            return false;
+        }
+        $labels = self::readPageLabels($edition, $pdfPage, $expectedPdfSha256, false);
+        return $labels !== null && self::hasNoPrintedPageLabels($labels);
+    }
+
+    /** A numeric table entry such as zero is not a printed page label. */
+    public static function hasNoPrintedPageLabels(array $labels): bool
+    {
+        foreach ($labels as $label) {
+            if ((is_int($label) && $label > 0)
+                || (is_string($label) && preg_match('/^[1-9][0-9]{0,3}(?:\.e[1-9][0-9]?)?$/D', $label) === 1)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** @return list<int|string> */
     public static function pageLabelsFromText(string $text, bool $allowLongHeader = false): array
     {
         $lines = array_values(array_filter(array_map(
@@ -78,13 +144,59 @@ final class PrintedBookPageEvidence
         ), static fn(string $line): bool => $line !== ''));
         $edge = array_merge(array_slice($lines, 0, 3), array_slice($lines, -3));
         $numbers = [];
+        // Some approved PDFs put the printed label at the end of a long
+        // first-line chapter running header. Accept only that exact shape;
+        // ordinary long body lines remain excluded below.
+        if (!$allowLongHeader && isset($lines[0]) && mb_strlen($lines[0]) < 180
+            && preg_match('/^Chapter\s+[0-9]{1,3}\b.{0,170}\h{2,}([1-9][0-9]{0,3}(?:\.e[1-9][0-9]?)?)$/iu', $lines[0], $header)) {
+            $numbers[] = str_contains($header[1], '.e') ? strtolower($header[1]) : (int) $header[1];
+        }
+        // Torabinejad 6e prints some page numbers before a spaced chapter
+        // running header. Restrict this exception to the first line and the
+        // exact header shape; corroborates() still requires neighboring pages.
+        if (!$allowLongHeader && isset($lines[0]) && mb_strlen($lines[0]) < 180
+            && preg_match('/^([1-9][0-9]{0,3})\h{2,}C\h*H\h*A\h*P\h*T\h*E\h*R\h+[0-9]{1,3}\b/iu', $lines[0], $header)) {
+            $numbers[] = (int) $header[1];
+        }
+        // McDonald/Avery 11e alternates chapter-title and PART running
+        // headers. Craig 14e puts the label before its full book title.
+        // Accept these first-line book header shapes only; adjacent physical
+        // pages must still corroborate the printed sequence.
+        if (!$allowLongHeader && isset($lines[0]) && mb_strlen($lines[0]) < 180) {
+            if (preg_match('/^[1-9][0-9]?\h*•\h*[^\r\n]{5,150}\h{2,}([1-9][0-9]{0,3})$/u', $lines[0], $header)
+                || preg_match('/^([1-9][0-9]{0,3})\h{2,}PART\h+[1-9][0-9]?\h*•/iu', $lines[0], $header)
+                || preg_match('/^([1-9][0-9]{0,3})\h{2,}CRAIG[’\x27]S\h+RESTORATIVE\h+DENTAL\h+MATERIALS$/iu', $lines[0], $header)
+                || preg_match('/^[1-9][0-9]?\.\h+[^\r\n]{5,150}\h{2,}([1-9][0-9]{0,3})$/u', $lines[0], $header)) {
+                $numbers[] = (int) $header[1];
+            }
+        }
+        // Some verified scans prepend a short watermark line and put a
+        // widely spaced CHAPTER running header on the next line. Examine
+        // only the first three lines and only these two exact header shapes.
+        if (!$allowLongHeader) {
+            foreach (array_slice($lines, 0, 3) as $headerLine) {
+                if (mb_strlen($headerLine) > 320) {
+                    continue;
+                }
+                if (preg_match('/^([1-9][0-9]{0,3})\h+C\h*H\h*A\h*P\h*T\h*E\h*R\h+[0-9]{1,3}\b/iu', $headerLine, $header)
+                    || preg_match('/^C\h*H\h*A\h*P\h*T\h*E\h*R\h+[0-9]{1,3}\b.{5,300}\h{2,}([1-9][0-9]{0,3})$/iu', $headerLine, $header)) {
+                    $numbers[] = (int) $header[1];
+                }
+            }
+        }
         foreach ($edge as $line) {
             if (!$allowLongHeader && mb_strlen($line) >= 90) {
                 continue;
             }
-            if (preg_match('/^([0-9]{1,4})(?:\s|$)/u', $line, $match)
-                || preg_match('/(?:^|\s)([0-9]{1,4})$/u', $line, $match)) {
-                $numbers[] = (int) $match[1];
+            // Numeric table keys (for example, ICDAS `1 = ...`) can occur
+            // at the edge of a scanned page. They are content labels, not
+            // printed book-page numbers.
+            if (!$allowLongHeader && preg_match('/^\h*[0-9]{1,4}\h*=\h*/u', $line) === 1) {
+                continue;
+            }
+            if (preg_match('/^([0-9]{1,4}(?:\.e[1-9][0-9]?)?)(?:\s|$)/iu', $line, $match)
+                || preg_match('/(?:^|\s)([0-9]{1,4}(?:\.e[1-9][0-9]?)?)$/iu', $line, $match)) {
+                $numbers[] = str_contains($match[1], '.e') ? strtolower($match[1]) : (int) $match[1];
             }
         }
         return array_values(array_unique($numbers));
@@ -93,10 +205,12 @@ final class PrintedBookPageEvidence
     /** @param array<int, list<int>> $pages Page number => labels found on that page. */
     public static function corroboratesPageLabels(array $pages, int $pdfPage, string $printedPage): bool
     {
-        if ($pdfPage < 1 || !preg_match('/^[1-9][0-9]{0,3}$/D', $printedPage)
-            || !in_array((int) $printedPage, $pages[$pdfPage] ?? [], true)) {
+        if ($pdfPage < 1 || !preg_match('/^[1-9][0-9]{0,3}$/D', $printedPage)) {
             return false;
         }
+        $target = (int) $printedPage;
+        $targetLabels = $pages[$pdfPage] ?? [];
+        $targetHasLabel = in_array($target, $targetLabels, true);
         $neighbors = 0;
         foreach ([-2, -1, 1, 2] as $step) {
             $page = $pdfPage + $step;
@@ -106,17 +220,43 @@ final class PrintedBookPageEvidence
                 ++$neighbors;
             }
         }
-        return $neighbors >= 2;
+        if ($targetHasLabel) {
+            return $neighbors >= 2;
+        }
+        $nearbyConflict = array_filter(
+            $targetLabels,
+            static fn(int $label): bool => abs($label - $target) <= 4,
+        );
+        return $pdfPage >= 2 && $target >= 2 && $nearbyConflict === []
+            && in_array($target - 1, $pages[$pdfPage - 1] ?? [], true)
+            && in_array($target + 1, $pages[$pdfPage + 1] ?? [], true);
     }
 
     private static function validRequest(string $edition, int $pdfPage, string $printedPage): bool
     {
         return preg_match('/^[a-z0-9][a-z0-9-]*@[a-z0-9]+$/D', $edition) === 1
             && $pdfPage >= 1
-            && preg_match('/^[1-9][0-9]{0,3}$/D', $printedPage) === 1;
+            && preg_match('/^[1-9][0-9]{0,3}(?:\.e[1-9][0-9]?)?$/D', $printedPage) === 1;
     }
 
-    /** @return list<int>|null */
+    /** @return array{list<string>,list<string>} */
+    private static function adjacentPrintedLabels(string $printedPage): array
+    {
+        if (preg_match('/^([1-9][0-9]{0,3})(?:\.e([1-9][0-9]?))?$/D', $printedPage, $parts) !== 1) {
+            return [[], []];
+        }
+        $base = (int) $parts[1];
+        $insert = isset($parts[2]) ? (int) $parts[2] : null;
+        if ($insert === null) {
+            return [$base > 1 ? [(string) ($base - 1)] : [],
+                array_values(array_filter([$base < 9999 ? (string) ($base + 1) : null, $base . '.e1']))];
+        }
+        return [$insert === 1 ? [(string) $base] : [$base . '.e' . ($insert - 1)],
+            array_values(array_filter([$insert < 99 ? $base . '.e' . ($insert + 1) : null,
+                $base < 9999 ? (string) ($base + 1) : null]))];
+    }
+
+    /** @return list<int|string>|null */
     private static function readPageLabels(
         string $edition, int $pdfPage, ?string $expectedPdfSha256, bool $allowLongHeader
     ): ?array
@@ -188,7 +328,13 @@ final class PrintedBookPageEvidence
         // Poppler may hard-wrap a word with a discretionary hyphen at the
         // physical end of a line. Rejoin only that pattern; keep in-line
         // hyphens and all other punctuation to preserve strict quote matching.
-        $joined = preg_replace('/-\h*\R\h*/u', '', $text);
+        // Persian PDFs may contain Unicode bidi formatting controls between
+        // visible characters. They affect display direction, not the quote.
+        $directionless = preg_replace('/[\x{061C}\x{200C}-\x{200F}\x{202A}-\x{202E}\x{2066}-\x{2069}]/u', '', $text);
+        if ($directionless === null) {
+            return '';
+        }
+        $joined = preg_replace('/-\h*\R\h*/u', '', $directionless);
         if ($joined === null) {
             return '';
         }
