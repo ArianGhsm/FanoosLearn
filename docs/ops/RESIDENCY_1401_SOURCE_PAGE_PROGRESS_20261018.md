@@ -28,8 +28,15 @@ unchanged.
   `40b9697504565679b57744689844ae8b770cc824`; merge-commit CI passed 5/5.
   Official deployment request `01a14d42-f475-7120-98cd-1fa4de4507e3`
   succeeded, and the public `/health` plus updater sync check both passed.
+- PR #460 added a guarded source-free outside-scope insertion route for exact
+  official-edition locations in wholly unlisted chapters. Merge commit
+  `f4867898b8669c3f54f16ad41b20e510f4f16fef`; CI passed 5/5 and deployment
+  request `01a14d78-b7aa-7f6b-9280-ea826c553e0c` succeeded.
+- PR #461 updated this public progress checkpoint. Merge commit
+  `acbb93a26976bfe08f66feb03c4f39d6a3463d4f`; merge-commit CI passed 5/5 and
+  deployment request `01a14d97-3308-74d9-9459-8495113f003e` succeeded.
 - The live release and updater checkout are
-  `40b9697504565679b57744689844ae8b770cc824`.
+  `acbb93a26976bfe08f66feb03c4f39d6a3463d4f`.
   `/health` is healthy and `check-sync.sh` reports in sync.
 - Source repairs used verified full backups: `20261017T223754Z-54de61f4`,
   `20261017T224521Z-ab1cb215`, `20261017T232008Z-1b462620`,
@@ -322,19 +329,47 @@ Summit 4e Q165/Q168 remain pending: their bound PDF pages (476/438) have no
 printed label on the page or adjacent searchable pages, so the partial
 chapter-9 cutoff cannot be established. No printed value was inferred.
 
+### Oral-surgery Q146 source-page repair
+
+Q146's existing Malamed 7e chapter-18 source now binds printed page 333 / PDF
+page 350, SHA-256
+`cc668f86a731bed4c016feb1a3e20be033637c7d0a30da86358dbc9b2a4c08e7`.
+Independent study audit accepted the exact page and original question/key
+identity. The guarded repair added the PDF page/hash and raised the existing
+source confidence vector from .750 to .900; the printed page and old anchor
+were preserved. Receipt SHA-256
+`709a97c8392b24d27a2c3222c578b25d2d8117ecc4d4860298eb7affe1ad63f7`, plan
+SHA-256 `f4fb772768927c1d27d9e72a187b4355f8741316416a7b021454b3da03eccfe6`,
+and audit SHA-256
+`8ce02c03776c934868d8a7e0e34aebf4f7803a5a14c79f9b968add7280611453`.
+Independent readback
+`1401-q146-malamed-source-independent-readback-20261018-v1.json`, SHA-256
+`346b44467e5319f35a89d1b35fbbfebf5a597d5becaacac361f13662eff57c7b`,
+confirms the source row and unchanged final key choice 4. The cited page
+supports the CO2/seizure-threshold relation, but does not resolve the whole
+all-but-one item; keep Q146 as a scientific answer-alignment hold. Backup
+`20261018T060323Z-0e476ec9` verified with 114 files.
+
 ## Whole-year state and next work
 
 The latest live official gate reports 249/249 questions in the 1401 inventory
-with **7 structurally incomplete**. The 1400 inventory remains 250/250 with **139
+with **6 structurally incomplete**. The 1400 inventory remains 250/250 with **139
 incomplete**. 1399 has not started. Neither 1401 nor 1400 is ready for
 publication, and no new frozen version or issue closure is authorized.
 
-The 7 structural gate holds are Q123, Q128, Q146, Q165, Q168, Q204 and Q208.
+The 6 structural gate holds are Q123, Q128, Q165, Q168, Q204 and Q208.
 Q123's answer-bearing phrase is split
 into a two-word terminal fragment, below the validator's evidence minimum.
-Q128's only located direct answer is in an end-of-chapter review question;
-instructional pages have not yielded answer-bearing evidence. Q146 retains an
-unresolved source/key conflict. Q192 now has its true chapter/page recorded,
+The latest Carranza13e page re-read confirmed no alternate four-word exact
+fragment; protected follow-up report
+`1401-q123-carranza-followup-search-20261018-v2.json`, SHA-256
+`afe3ef7e85c2e0d86eadbe895234e78c5dfbb2aa288b4df18ffcdc84dda0064c`.
+Q128's only located answer is Carranza13e ch64/PDF1454 (printed 659.e1), an
+end-of-chapter case-scenario question rather than instructional evidence;
+private hold report `1401-q128-review-only-page-hold-20261018-v1.json`, SHA-256
+`9c3204b8386158acad458f8216843e2fb124aaaf55ff90e74eb3e50793ed0a78`.
+Q146 now has a
+source page but retains an unresolved source/key conflict. Q192 now has its true chapter/page recorded,
 but its page does not establish the keyed differential. Q193's high-dose key
 conflicts with the page's low-dose hormesis discussion. Q210's keyed proximity
 is an inference and remains a science hold. Q209's pseudocyst location is
@@ -346,8 +381,9 @@ The second in-scope-only search for Q204/Q208 is recorded in private report
 `ee0855c73b652b681532c8e8143ba0092fecd14a1594b8d98483b29df9b60d7e`; it
 found no decisive original-page evidence and made no assignment.
 
-The current 35-question batch has 28 applied source rows: prosthodontics
-3/3, periodontics 5/7, oral surgery 5/6, operative dentistry 2/4, pediatric
-dentistry 9/9, and oral radiology 4/6. Q146 remains pending; Q147 and Q150
-have source receipts as recorded above. Preserve all official keys. No year
+The current 35-question batch has 29 applied source rows: prosthodontics
+3/3, periodontics 5/7, oral surgery 6/6, operative dentistry 2/4, pediatric
+dentistry 9/9, and oral radiology 4/6. Q147 and Q150 have source receipts as
+recorded above. Q146's source row is complete but its answer alignment remains
+open. Preserve all official keys. No year
 publication or issue closure is authorized.
