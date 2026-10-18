@@ -23,6 +23,8 @@ confirmed those invariants; 1402 remains on published assessment version 12.
 |---:|---|---|---|
 | 54 | Little & Falace 9e, ch. 1, print 3 / PDF 43 | Outside official scope; final choice 4 preserved. | `20261018T123425Z-d8f1963f` |
 | 107 | Zarb 13e, ch. 9, print 192 / PDF 206 | Corrected the old ch. 5 assignment; key 3 unchanged. | `20261018T132849Z-a8da4d8a` |
+| 164 | McDonald/Avery 11e, ch. 20, print 404 / PDF 410 | Corrected old ch. 4; exact page supports the mandibular canine root completing after primary molar roots; key 4 preserved. | `20261018T153354Z-0fe8444c` |
+| 104 | Zarb 13e: primary ch. 5, print 59 / PDF 73; supporting ch. 4 / PDF 63 | Primary page supports thick cheeks affecting retention. Supporting page documents ridge-related stability/retention challenges; the specific knife-edge-to-stability mapping remains inferential. Preserve key 2. | `20261018T152150Z-546d4a00` |
 | 243 | Van Noort 4e, ch. 2.1, print 65 / PDF 80 | Corrected old ch. 3.8; ch. 2.1 is outside official scope; key 4 unchanged. | `20261018T134023Z-983c8c8f` |
 | 135, 137 | Carranza 13e: Q135 ch. 18, print 249 / PDF 624; Q137 ch. 3, print 25 / PDF 68 | Both exact pages are in scope. Q137's source confidence was raised to .950 after the accepted page audit. | `20261018T135515Z-b5810e84` |
 | 139 | Carranza 13e, ch. 34, print 412.e2 / PDF 892 | Outside official scope; page links family history with aggressive-periodontitis predisposition. The first-degree-screening wording remains inferential; key 2 unchanged. | `20261018T140220Z-dbcd5fe9` |
@@ -40,6 +42,8 @@ are:
 |---:|---|---|
 | 54 | `87a1071a077bfe04feba5493a639da87763c51fc8f0b719eb9735568c79e192a` | `f0695a29647030e3f7d95bcf3b242ff88251187264d862d4ecae8fd3235207cb` |
 | 107 | `95208504b171392155682bccc0c13f7dda21b1c02ac382e062ddf881bdc192e3` | `705afb1f439764acc61e28c9682c5b19763f193c8cc57bc2565cd7317b0bb894` |
+| 164 | `3a8d8ada9526ad81afce50d0d7932566ac847ae2be5ce125673e2e40f491cf5a` | `c75c3205fe7aaad98dc8138c2f1378331761ea20539e03db79b823e80051ea79` |
+| 104 | `910685a46d055bf05b6ed813282fb47e97d096c97126f0d5f7a63a878e5b9e90`; `045aef0329fead1a74469721d24e54bee11a8cbe629c7f901444311a52c2194f` | `8188e50f2ceb79805ffe63637ef144179716d5edb1e6524a54ac625fc84c49e7` |
 | 243 | `29ac3194a34aabfcbf1dceec9b3c7c6cdad9760f1c3d788a7457c4d71f723a65` | `9d4331dabde384df8fab8181502a0d117903fe8cb2c94baf4f4a6832e54da9fa` |
 | 135, 137 | `3ca0dbf8db63e1663ae2f551d17e5546ea7c447fedbf6ec91838bda3fd64ef53`; `6281fd0838218e5bf3ca4da1b371c993b07b2083c3543ddddc133f2221d34b71` | `81d1747322f2d253494da9ceaf8f072e4f46a994e1bbc7df99a2d4878d379ec0` |
 | 139 | `32036d705f406a0717eac97e8b4eef2f35b719ea9c3b1964c0e334c184003a11` | `a1b37b6a46fbe04e38d49f219fdcebae3e7636399f8cbfcf7f6d69dc4c73a757` |
@@ -53,17 +57,17 @@ zero attempts.
 
 ## Current official gate and open items
 
-The read-only production `ResidencyYearPublicationGate` census at
-2026-10-18 15:05 UTC reports:
+The latest read-only production `ResidencyYearPublicationGate` census at
+2026-10-18 15:35 UTC reports:
 
 Private gate receipt:
-`/srv/fanoos/shared/research/classification/reports/residency-1401-1405-gates-after-1402-q151-20261018-v2.json`, SHA-256
-`acb49c1278cbf19dba04a83678e41910f588e4d51c0ef5c0a64469a7b54a4d07`.
+`/srv/fanoos/shared/research/classification/reports/residency-1401-1405-gates-after-1402-q164-20261018-v1.json`, SHA-256
+`8943b1fccd31a36c727e79cb6e8b1a3e71f254eb5ed499a051a79d0cfb52ae03`.
 
 | Year | Inventory | Structural result | Remaining structural questions |
 |---:|---:|---|---|
 | 1401 | 249 | HOLD: 5 | 123, 128, 165, 168, 204 |
-| 1402 | 250 | HOLD: 6 | 7, 104, 164, 175, 190, 244 |
+| 1402 | 250 | HOLD: 4 | 7, 175, 190, 244 |
 | 1403 | 250 | PASS | Structural gate passes; the separate year-wide science review is not closed. |
 | 1404 | 250 | HOLD: 3 | 12, 18, 164 |
 | 1405 | 250 | HOLD: 4 | 2, 10, 19, 168 |
@@ -71,8 +75,7 @@ Private gate receipt:
 For the remaining 1402 questions, the exact work is:
 
 - **Q7:** Torabinejad 6e ch. 6 PDF 115 introduces the AAE difficulty form but does not establish that taurodontism maps to the keyed moderate category. Keep the answer-source relationship pending.
-- **Q104:** Zarb 13e PDF 73 supports the thick-cheek/retention part. The second knife-edge-ridge/stability location is still not verified; the item needs both answer-bearing facts.
-- **Q164:** the McDonald/Avery 11e ch. 4 pages reviewed so far discuss tooth morphology, not which primary root finishes last. No location has been guessed.
+- **Q104:** The two source pages are now recorded. The key is preserved, but assigning the knife-edge-ridge clue specifically to stability remains inferential, so keep it on the year-wide scientific review list.
 - **Q175:** Summit 4e ch. 9 PDF 441 supports three-step etch-and-rinse as the gold standard. Its page and neighboring pages do not expose a corroborated printed label, so the partial-chapter cutoff at print 217 cannot be evaluated.
 - **Q190:** Craig 14e ch. 13 print 277 / PDF 288 directly discusses the 20–30 second etch for deciduous unground enamel. The existing row is Summit 4e ch. 9 PDF 450 with no corroborated printed label. The current approved writers cannot replace the edition on this already-bound row, so no alternate write was attempted.
 - **Q244:** Craig 14e ch. 9 print 154 / PDF 165 discusses bulk-fill materials and gives filler volume percentages; the official item compares a weight percentage. The existing source points to Van Noort 4e ch. 2.2, outside the listed 1402 sections. The answer/source alignment and guarded edition replacement remain unresolved.
