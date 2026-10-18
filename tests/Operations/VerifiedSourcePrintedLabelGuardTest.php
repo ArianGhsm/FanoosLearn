@@ -30,6 +30,9 @@ final class VerifiedSourcePrintedLabelGuardTest
             'expected_answer_sha256'=>str_repeat('e', 64),
             'expected_question_status'=>'published',
             'expected_answer_status'=>'final',
+            'expected_origin'=>'ai',
+            'expected_reviewed_at'=>null,
+            'expected_reviewed_by_user_id'=>null,
         ];
         $plan = ['year'=>1401, 'subject'=>'orthodontics', 'entries'=>[$item]];
         $audit = [
@@ -64,6 +67,34 @@ final class VerifiedSourcePrintedLabelGuardTest
         $outside = $audit;
         $outside['records'][0]['scope_page_disposition'] = 'outside_scope';
         $this->check(!VerifiedSourcePrintedLabelGuard::auditMatches($outside, $plan, $item), 'Out-of-scope page passed the in-scope label writer.');
+        ++$checks;
+
+        $humanItem = array_replace($item, [
+            'expected_origin'=>'human',
+            'expected_confidence_page'=>null,
+            'expected_reviewed_at'=>'2026-10-10 12:00:00.000000',
+            'expected_reviewed_by_user_id'=>'01a11be7-0000-7000-8000-000000000001',
+        ]);
+        $humanAudit = [
+            'format'=>'fanoos.human-source-printed-label-audit/1',
+            'research_only'=>true,
+            'year'=>1401,
+            'subject'=>'orthodontics',
+            'records'=>[array_merge($humanItem, [
+                'accepted'=>true,
+                'chapter_map_page_valid'=>true,
+                'pdf_sha_valid'=>true,
+                'printed_label_neighbor_check'=>true,
+                'scope_page_disposition'=>'in_scope',
+            ])],
+        ];
+        $this->check(VerifiedSourcePrintedLabelGuard::auditMatches($humanAudit, $plan, $humanItem),
+            'Valid human-source printed-label audit rejected.');
+        ++$checks;
+        $badHuman = $humanAudit;
+        $badHuman['records'][0]['expected_reviewed_by_user_id'] = '01a11be7-0000-7000-8000-000000000002';
+        $this->check(!VerifiedSourcePrintedLabelGuard::auditMatches($badHuman, $plan, $humanItem),
+            'Human reviewer attribution changed in the audit.');
         ++$checks;
 
         return $checks;

@@ -4,12 +4,22 @@ declare(strict_types=1);
 
 namespace Fanoos\Platform\Bank;
 
-/** Pure identity check for adding a printed label to a bound AI source page. */
+/** Pure identity check for adding a printed label to a bound AI or human source page. */
 final class VerifiedSourcePrintedLabelGuard
 {
     public static function auditMatches(array $audit, array $plan, array $item): bool
     {
-        if (($audit['format'] ?? null) !== 'fanoos.ai-source-printed-label-audit/1'
+        $origin = $item['expected_origin'] ?? 'ai';
+        $auditFormat = $origin === 'human'
+            ? 'fanoos.human-source-printed-label-audit/1'
+            : 'fanoos.ai-source-printed-label-audit/1';
+        $confidence = $item['expected_confidence_page'] ?? null;
+        if (!in_array($origin, ['ai', 'human'], true)
+            || ($origin === 'ai' && (!is_numeric($confidence) || (float) $confidence < 0.85))
+            || ($origin === 'ai' && (($item['expected_reviewed_at'] ?? null) !== null
+                || ($item['expected_reviewed_by_user_id'] ?? null) !== null))
+            || ($origin === 'human' && $confidence !== null && !is_numeric($confidence))
+            || ($audit['format'] ?? null) !== $auditFormat
             || ($audit['research_only'] ?? null) !== true
             || ($audit['year'] ?? null) !== ($plan['year'] ?? null)
             || ($audit['subject'] ?? null) !== ($plan['subject'] ?? null)
@@ -41,6 +51,12 @@ final class VerifiedSourcePrintedLabelGuard
             if (!array_key_exists($field, $item) || ($matches[0][$field] ?? null) !== $item[$field]) {
                 return false;
             }
+        }
+
+        if (($matches[0]['expected_origin'] ?? $origin) !== $origin
+            || ($matches[0]['expected_reviewed_at'] ?? null) !== ($item['expected_reviewed_at'] ?? null)
+            || ($matches[0]['expected_reviewed_by_user_id'] ?? null) !== ($item['expected_reviewed_by_user_id'] ?? null)) {
+            return false;
         }
 
         return ($matches[0]['chapter_map_page_valid'] ?? null) === true
