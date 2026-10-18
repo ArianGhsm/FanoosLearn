@@ -23,14 +23,21 @@ unchanged.
   each fragment. Merge commit `15cd6404f58e5514004f160a85a0ff6966a815eb`;
   all five CI jobs passed. Deploy request
   `01a14c74-991d-70de-8d17-950c7fe6418d` succeeded.
+- PR #459 added the guarded supporting-source operator for questions that
+  already have one exact-page source. Merge commit
+  `40b9697504565679b57744689844ae8b770cc824`; merge-commit CI passed 5/5.
+  Official deployment request `01a14d42-f475-7120-98cd-1fa4de4507e3`
+  succeeded, and the public `/health` plus updater sync check both passed.
 - The live release and updater checkout are
-  `15cd6404f58e5514004f160a85a0ff6966a815eb`.
+  `40b9697504565679b57744689844ae8b770cc824`.
   `/health` is healthy and `check-sync.sh` reports in sync.
 - Source repairs used verified full backups: `20261017T223754Z-54de61f4`,
   `20261017T224521Z-ab1cb215`, `20261017T232008Z-1b462620`,
   `20261017T233728Z-29fca03c`, `20261017T235448Z-56d03b46`,
   `20261018T002016Z-d98240b3`, `20261018T004643Z-1b2d79df`, and
   `20261018T005923Z-b3552a10`. Each backup was verified with 114 files.
+  The Q147/Q150 group used deployment backup `20261018T043039Z-79da43a6`,
+  independently verified with 114 files.
 
 ## Applied source locations
 
@@ -68,6 +75,8 @@ Confidence is shown as source/node/page after the latest applied operation.
 | 136 | Hupp 7e, ch15 | 283 / 297 | .990 / .990 / .990 | Corrected the printed label 282 to 283. The page sets the no-modification threshold at a stable implant gap under 1 mm. |
 | 137 | Hupp 7e, ch17 | 338 / 352 | .970 / .970 / .970 | Corrected the stored ch16/page322. The page connects buccal-space infection with a cutaneous sinus tract. |
 | 142 | Hupp 7e, ch26 | 585 / 599 | .980 / .980 / .980 | Corrected the printed label 556 to 585. The page lists DO's stability/TMJ/neurosensory advantages and separately notes its two-procedure requirement. |
+| 147 | Malamed 7e, ch13 | 213 / 230 | .900 / .900 / .900 | ASA page supports anterior teeth and premolar coverage in 72% when the MSA nerve is present; the official four-injection count is an inference, caveat preserved. Supporting source ch13/PDF222. |
+| 150 | Malamed 7e, ch14 | 255 / 272 | .950 / .950 / .950 | Existing primary source retained; supporting sources ch14/PDF273 and ch13/PDF225 directly support the two techniques' no-bone-contact statements. |
 
 The source PDF SHA-256 values are Burket 12e
 `ebb1c0a98c24b21778f19e038127402a205b672ae6a31356eee722c27d199ab7`, Little &
@@ -159,24 +168,123 @@ The applied groups used independently verified backups `20261018T002016Z-d98240b
 `20261018T004643Z-1b2d79df`, `20261018T005923Z-b3552a10`, and
 `20261018T012037Z-fee7f4ab` (114 files each).
 
+### PR #459 deployment and Q147/Q150 supporting citations
+
+PR #459 added `scripts/references/insert_verified_supporting_sources.php` for
+published residency questions with exactly one existing source row. The new
+operator preserves the primary source and appends one or two audited secondary
+citations only after matching the immutable question/choice/key fingerprints,
+official year scope, exact PDF hash, mapped chapter and page evidence. PR and
+merge-commit CI passed 5/5. Merge commit `40b9697504565679b57744689844ae8b770cc824`
+was deployed by request `01a14d42-f475-7120-98cd-1fa4de4507e3`; live health is
+`ok`, and updater/live/main are in sync.
+
+- **Q150** — primary Malamed 7e ch14, printed 255/PDF272; supporting citations
+  ch14/PDF273 and ch13/PDF225. Applied page receipt SHA-256
+  `6f6b47781ab621d561d13f53cd18729d531e076461ee795d208422b69859b852`;
+  supporting-source receipt SHA-256
+  `c09739cb2da86e0927808da196a75c38ebd2f4943159bda3c1e119f34899b7d2`.
+- **Q147** — primary Malamed 7e ch13, printed 213/PDF230; supporting citation
+  ch13/PDF222. Applied page receipt SHA-256
+  `a02cfc604e4b8e1de6a36e16ac2b4db6e84aeb1647f8c65d89b4d3d3acc1a37d`;
+  supporting-source receipt SHA-256
+  `86674cd16afc6b781d455adb2d03fb1cd5e11eab89e9581c19c8b5fbe0f3ae20`.
+- Grouped independent readback
+  `residency-1401-malamed-q147-q150-supporting-independent-readback-20261018-v1.json`,
+  SHA-256 `36ffd35c24618fa4a11d10be96c5f7de62111788a985e52a5fa310b1af95ac81`,
+  verifies all five source rows and exact PDF evidence. Stem, four choices and
+  latest final keys remain identical; assessment version remains **6/249**,
+  with six versions, zero attempts and six review records. All apply receipts
+  show zero question, choice, answer and assessment changes.
+- Q147's official key is unchanged. Its four-injection count is an explicit
+  inference using the listed maxillary techniques and the ASA page's 72% MSA
+  conditional for premolars. Carry that limitation into the final year
+  scientific manifest.
+
+### Pediatric Q172–Q189 source-page repairs
+
+Nine previously existing AI-source rows had no physical PDF page. The
+protected Nowak 6e audits and exact original-page validators passed, followed
+by fresh rollback previews and guarded source-only applies. All nine rows now
+bind the official PDF SHA-256
+`80278bc5831dc36c040be27a39958ae1b0e8acd29a9b74a8d45e9b62abbf165f`.
+Chapter corrections are Q172 (20 → 12), Q175 (3 → 26), and Q183 (30 → 31).
+
+| Question | Edition / chapter | Printed / PDF page | Confidence | Applied-receipt SHA-256 |
+| ---: | --- | ---: | ---: | --- |
+| 172 | Nowak 6e, ch12 | 174 / 213 | .980 | `f645dd37005b12beff4768802614c27cca4b0218aed6e689b056df8ef37db162` |
+| 173 | Nowak 6e, ch14 | 207 / 248 | .960 | `2ba8bef7fa779c10df36752b05407ad27200525402e78cf01e830ad423e2ea9d` |
+| 174 | Nowak 6e, ch16 | 233 / 275 | .980 | `0b1baf6c1709afc2db326c3043680ef473ae5b3f3bcd84312abc7156283fd511` |
+| 175 | Nowak 6e, ch26 | 380 / 437 | .980 | `b96f64bcebb4ccbdfde9aae10a1dfacc31af7bbd2f1bceb5c692cbbcf47a9a79` |
+| 178 | Nowak 6e, ch23 | 345 / 398 | .900 | `5986ddd1f3e16dfb71d26de3ef80493e797da04c53f9d3098502dfe5a41538fa` |
+| 183 | Nowak 6e, ch31 | 433 / 501 | .990 | `430ac425dcb7919904f3843e0ee033e1de9aafcd9e70cca7621bd3486a62ddbd` |
+| 184 | Nowak 6e, ch32 | 456 / 528 | .950 | `2ffc62ee5130a3b99021a86c3a1a646d13f833c29af1f2faf3ae3de7f125b254` |
+| 187 | Nowak 6e, ch34 | 487 / 561 | .960 | `1a6c4ef80587fd89481fd747355b8b506018146e306c2b486fc8af0646ace7cd` |
+| 189 | Nowak 6e, ch39 | 589 / 672 | .990 | `24a8c8d8dd5aa7d6fb3105405c4a639e80f086f3d7c2b131e3e69898c8081990` |
+
+The independent live readback at
+`/srv/fanoos/shared/research/classification/reports/1401-pediatric-q172-q189-source-readback-20261018-v1.json`
+has SHA-256
+`7a9be5465686d1e0b88eae8f30c3831215df1f890a3d8683d0447942e432664e`.
+It verifies all nine source IDs, editions, chapters, printed/PDF pages,
+PDF hashes and confidence values; stem, four-choice and latest-key hashes
+match the protected pre-apply plans in all nine rows. Current assessment
+remains published version **6/249**, six versions, zero attempts and six
+review records. The published-assessment preflight independently reports
+the full 249-question content identical. Backup
+`20261018T045302Z-b9f691be` verified at 114 files and was used by every
+apply. The backup-retention run then reduced completed full backups to the
+five-set limit.
+
+Source location is now recorded for Q178 and Q184, but their answer
+alignment remains a scientific hold: Q178's official antibiotic key is not
+recommended by the cited figure, and Q184's cited page says 0.5% APF while
+the official keyed option says 0.05%. The keys were preserved. The protected
+hold note is
+`residency-1401-pediatric-answer-alignment-holds-20261018.json`, SHA-256
+`62fcc3f970032175d7e3291324c952fc3739f924d036ef11a8be34be077c99f2`.
+
+### Oral-radiology Q193 source location
+
+Q193's exact source location is White & Pharoah 8e, chapter 3, PDF page 119,
+bound to PDF SHA-256
+`228ceb46982c3057d8a7d78b1d10759e72ed1a3a385a76a9affc38e45874c25a`.
+The private 6-question study audit accepted Q193 and left five questions
+pending (audit SHA-256
+`65d48fc6073372c0d2eb2e52afbd4c29eea5e8045e2dd995b84bddc6c9b9df10`).
+The source-only apply receipt SHA-256 is
+`b08b81808535354bebd93fcee1f19fe4ddaf125b66e160f49e28c4db10b40248`.
+Independent live readback
+`1401-q193-hormesis-independent-readback-20261018-v1.json` has SHA-256
+`30d2635510182eee0fb07e6c114610e38bb48febe2d71d7fc41156c1964b63a8`.
+The question, four choices and latest final key match the original study.
+The key remains unchanged, but the keyed high-dose protective effect conflicts
+with this page's discussion of possible low-dose protective hormesis; retain
+Q193 as a scientific hold despite the recorded page.
+
 ## Whole-year state and next work
 
 The latest live official gate reports 249/249 questions in the 1401 inventory
-with **24 incomplete**. The 1400 inventory remains 250/250 with **139
+with **12 structurally incomplete**. The 1400 inventory remains 250/250 with **139
 incomplete**. 1399 has not started. Neither 1401 nor 1400 is ready for
 publication, and no new frozen version or issue closure is authorized.
 
-The current 1401 gate examples are Q123, Q128, Q146, Q147, Q150, Q151, Q160,
-Q165, Q168, Q172, Q173, and Q174. Q123's exact answer-bearing phrase is split
-in the PDF text layer into a two-word terminal fragment, so the four-word
-evidence rule still prevents a guarded write. Q128's only located direct
-answer is in an end-of-chapter review question, which cannot serve as source
-evidence; the instructional pages have not yet yielded an answer-bearing
-passage. Keep both pending and continue the other items independently.
+The 12 structural gate holds are Q123, Q128, Q146, Q151, Q160, Q165, Q168,
+Q192, Q204, Q208, Q209, and Q210. Q123's answer-bearing phrase is split
+into a two-word terminal fragment, below the validator's evidence minimum.
+Q128's only located direct answer is in an end-of-chapter review question;
+instructional pages have not yielded answer-bearing evidence. Q192, Q209 and
+Q210 have candidate source locations in chapters 26, 28 and 27, respectively,
+outside the announced radiology scope 1–25; they need exact page evidence and
+an audited outside-scope disposition before a source row can be inserted.
+Q146 retains an unresolved source/key conflict. Q193 now has a source row but
+its high-dose key conflicts with the page's low-dose hormesis discussion.
+Q204 and Q208 still lack decisive evidence for the exact projection and lesion
+distinctions. Q178 and Q184 have complete source-page rows but remain separate
+scientific answer-alignment holds.
 
-The current 35-question batch has 11 applied items: prosthodontics 3/3,
-periodontics 5/7, oral surgery 3/6, operative dentistry 0/4, pediatric
-dentistry 0/9, and oral radiology 0/6. Oral-surgery Q146, Q147, and Q150
-remain pending while their cross-chapter evidence is checked; preserve the
-official keys and do not compress separate facts into an unsupported single
-source.
+The current 35-question batch has 23 applied source rows: prosthodontics
+3/3, periodontics 5/7, oral surgery 5/6, operative dentistry 0/4, pediatric
+dentistry 9/9, and oral radiology 1/6. Q146 remains pending; Q147 and Q150
+have source receipts as recorded above. Preserve all official keys. No year
+publication or issue closure is authorized.

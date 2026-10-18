@@ -153,6 +153,23 @@ def scope_issue(validity: dict, chapter: str) -> str | None:
     return None
 
 
+def whole_chapter_is_unlisted(validity: dict, chapter: str) -> bool:
+    """Only the explicit outside-scope path may cite an unlisted full chapter."""
+    listed = validity.get('scope_chapters')
+    if not isinstance(listed, list) or not listed:
+        return False
+    numbers = set()
+    for item in listed:
+        if not isinstance(item, dict) or not isinstance(item.get('number'), (str, int)):
+            return False
+        numbers.add(str(item['number']))
+    return chapter not in numbers
+
+
+def valid_outside_scope_note(note: object) -> bool:
+    return isinstance(note, str) and len(note.strip()) >= 24 and 'خارج از محدوده' in note
+
+
 def words(title: str) -> set[str]:
     return {w for w in re.findall(r'[a-z0-9]+', title.lower()) if len(w) > 2}
 
@@ -197,6 +214,8 @@ def main() -> int:
     parser.add_argument('--partial', action='store_true', help='write the accepted decisions even if some were rejected')
     parser.add_argument('--allow-nearest', action='store_true',
                         help='historical audit only: permit previously approved nearest-edition substitutions')
+    parser.add_argument('--allow-outside-scope', action='store_true',
+                        help='private research only: validate an unlisted whole chapter with an explicit Persian scope note; production writes still require the dedicated guarded operator')
     parser.add_argument('--pdf-pages', action='store_true',
                         help='store PDF page numbers rather than printed page labels')
     parser.add_argument('--storage-root', type=Path, default=Path('/srv/fanoos/shared/storage'))
@@ -234,6 +253,7 @@ def main() -> int:
     for d in decisions:
         n = d.get('number')
         why = None
+        outside_scope = False
         q = questions.get(n)
         if q is None:
             why = 'no such question in the sitting'
@@ -295,7 +315,17 @@ def main() -> int:
             if why is None and chapter not in nodes:
                 why = f'{edition} has no chapter {chapter}'
             if why is None and cite in names:
-                why = scope_issue(names[cite], cite_chapter)
+                scope_error = scope_issue(names[cite], cite_chapter)
+                outside_note = d.get('outside_scope_note')
+                if scope_error is not None:
+                    if (args.allow_outside_scope and cite == edition
+                        and whole_chapter_is_unlisted(names[cite], cite_chapter)
+                        and valid_outside_scope_note(outside_note)):
+                        outside_scope = True
+                    else:
+                        why = scope_error
+                elif outside_note is not None:
+                    why = 'outside-scope note is only allowed for an unlisted whole chapter'
             if why is None:
                 in_chapter = any(r[0] == chapter and r[1] <= int(page) <= r[2] for r in runs.get(edition, {}).get('runs', []))
                 if not in_chapter:
@@ -335,6 +365,9 @@ def main() -> int:
                     'origin': 'ai',
                     'confidence': {'source': confidence, 'node': confidence, 'page': confidence},
                 }
+                if outside_scope:
+                    accepted[n]['official_scope_status'] = 'outside_scope_exam_question'
+                    accepted[n]['official_scope_note'] = str(d['outside_scope_note']).strip()
                 if cite != edition:
                     accepted[n]['found_in'] = f'{edition}#ch{chapter} (nearest edition; the official one was not available)'
         if why is None and n in accepted:
