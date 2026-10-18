@@ -281,7 +281,8 @@ SQL);
                 $pageRecords[]=['pdf_page'=>$pageItem['pdf_page'],'printed_page'=>$pageItem['printed_page'],
                     'evidence'=>$pageItem['evidence'],'anchor_text'=>implode('...',$pageItem['evidence'])];
             }
-            $nodeQuery->execute(['ws'=>$workspace,'edition_id'=>$s['edition_id'],'chapter'=>$item['chapter']]);$nodes=$nodeQuery->fetchAll(PDO::FETCH_ASSOC);
+            $nodeQuery->execute(['ws'=>$workspace,'edition_id'=>$s['edition_id'],'chapter'=>$item['chapter'],
+                'year'=>$plan['year'],'subject'=>$plan['subject']]);$nodes=$nodeQuery->fetchAll(PDO::FETCH_ASSOC);
             if(count($nodes)!==1||$nodes[0]['kind']!=='chapter'||(string)$nodes[0]['number']!==$item['chapter']||(int)$nodes[0]['is_official']!==1)
                 throw new RuntimeException('Official chapter node is not unique.');
             $primary=array_values(array_filter($pageRecords,static fn(array $page):bool=>$page['pdf_page']===$item['primary_pdf_page']));
