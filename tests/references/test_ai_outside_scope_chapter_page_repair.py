@@ -16,13 +16,19 @@ class AiOutsideScopeChapterPageRepairContract(unittest.TestCase):
         self.assertEqual(len(updates), 1)
         fields = re.findall(r"([a-z0-9_]+)\s*=", updates[0], re.I)
         self.assertEqual(fields, [
-            "node_id", "page", "printed_page", "pdf_page", "pdf_sha256",
-            "official_scope_status", "official_scope_note", "confidence_page",
+            "node_id", "page", "printed_page", "pdf_page", "pdf_sha256", "anchor_text",
+            "official_scope_status", "official_scope_note",
+            "confidence_source", "confidence_node", "confidence_page",
         ])
         self.assertIn("origin='ai'", source)
         self.assertIn("reviewed_at IS NULL", source)
         self.assertIn("reviewed_by_user_id IS NULL", source)
-        self.assertIn("confidence_page=:old_confidence", source)
+        self.assertIn("confidence_source=:old_confidence_source", source)
+        self.assertIn("confidence_node=:old_confidence_node", source)
+        self.assertIn("confidence_page=:old_confidence_page", source)
+        self.assertIn("anchor_text <=> :old_anchor", source)
+        self.assertIn("anchor_text=:new_anchor_text", source)
+        self.assertNotIn("$oldChapter === $chapter", source)
         self.assertNotIn("UPDATE bank_questions", source)
         self.assertNotIn("UPDATE bank_question_choices", source)
         self.assertNotIn("UPDATE bank_official_answers", source)
@@ -32,7 +38,9 @@ class AiOutsideScopeChapterPageRepairContract(unittest.TestCase):
         guard = GUARD.read_text()
         for marker in [
             "expected_stem_sha256", "expected_choices_sha256", "expected_answer_sha256",
-            "expected_anchor_sha256", "expected_old_confidence_page", "new_confidence_page",
+            "expected_anchor_sha256", "expected_old_confidence_source", "expected_old_confidence_node",
+            "expected_old_confidence_page", "new_confidence_page", "new_anchor_text",
+            "outside-scope source-only readback mismatch", "printedPageLabelIsValid",
             "VerifiedAiOutsideScopeChapterPageGuard::auditMatches",
             "OfficialScopePageGuard::pageDisposition",
             "PrintedBookPageEvidence::corroborates", "PrintedBookPageEvidence::pageContainsEvidence",
