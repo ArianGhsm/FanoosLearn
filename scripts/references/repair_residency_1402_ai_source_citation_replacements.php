@@ -92,7 +92,7 @@ SQL);
     $answerQuery->execute(['ws'=>$workspace,'qid'=>$q['question_id']]);
     $answer = $answerQuery->fetch(PDO::FETCH_ASSOC);
     if (!is_array($answer) || $answer['status'] !== 'final'
-        || (int)$answer['choice_position'] !== 3
+        || (int)$answer['choice_position'] !== (int)$entry['answer_choice']
         || hash('sha256',json_encode($answer,JSON_THROW_ON_ERROR)) !== $entry['answer_sha256']) {
         throw new RuntimeException('Q' . $entry['number'] . ': final official answer differs from the protected plan.');
     }

@@ -53,6 +53,7 @@ final class Residency1402AiSourceCitationReplacementGuardTest
             array_replace($entries[1],['reference'=>'summit-operative@4e']),
             array_replace($entries[3],['pdf_sha256'=>str_repeat('b',64)]),
             array_replace($entries[3],['source_id'=>'00000000-0000-7000-8000-000000000000']),
+            array_replace($entries[0],['answer_choice'=>1]),
         ] as $badEntry){
             $bad=$plan;$bad['entries'][array_search($badEntry['number']??-1,[139,175,190,244],true)??0]=$badEntry;
             $this->check(!Guard::planMatches($bad),'Mutated exact citation plan passed its pin.');++$checks;
