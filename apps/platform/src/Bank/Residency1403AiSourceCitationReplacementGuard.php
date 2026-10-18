@@ -73,6 +73,19 @@ final class Residency1403AiSourceCitationReplacementGuard
         return array_keys(self::SPECS);
     }
 
+    public static function modeArgumentsValid(
+        bool $apply,
+        bool $hasBackup,
+        bool $hasReceipt,
+        bool $hasPreviewReceipt,
+    ): bool {
+        if ($apply) {
+            return $hasBackup && $hasReceipt && $hasPreviewReceipt;
+        }
+
+        return !$hasBackup && !$hasReceipt;
+    }
+
     /** Validate that the private research package and its exact-page decision agree. */
     public static function researchMatches(
         int $number,

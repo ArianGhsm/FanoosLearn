@@ -15,6 +15,19 @@ final class Residency1403AiSourceCitationReplacementGuardTest
         ++$checks;
         $this->check(Guard::spec(151) === null, 'An unpinned question entered the correction route.');
         ++$checks;
+        foreach ([
+            [false, false, false, false, true],
+            [false, false, false, true, true],
+            [false, true, false, true, false],
+            [false, false, true, true, false],
+            [true, true, true, true, true],
+            [true, true, true, false, false],
+            [true, false, true, true, false],
+        ] as [$apply, $backup, $receipt, $preview, $expected]) {
+            $this->check(Guard::modeArgumentsValid($apply, $backup, $receipt, $preview) === $expected,
+                'Apply and rollback-preview command argument rules are incorrect.');
+            ++$checks;
+        }
 
         foreach ([152, 162] as $number) {
             $spec = Guard::spec($number);
@@ -153,6 +166,7 @@ final class Residency1403AiSourceCitationReplacementGuardTest
         ++$checks;
         foreach (['FOR UPDATE', 'GET_LOCK', 'BackupManifest::verify', 'PrintedBookPageEvidence::corroborates',
             'PrintedBookPageEvidence::pageContainsEvidence', 'OfficialScopePageGuard::pageDisposition',
+            'Guard::modeArgumentsValid',
             'replacementAssessmentSnapshot', 'Rollback preview does not match this exact plan.',
             'private_plan_sha256', '$db->rollBack();', '$db->commit();'] as $marker) {
             $this->check(str_contains($operator, $marker), "Operator is missing guard {$marker}.");
