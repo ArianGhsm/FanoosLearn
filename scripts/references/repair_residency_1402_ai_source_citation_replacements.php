@@ -266,7 +266,7 @@ SQL);
         $update=$db->prepare(<<<'SQL'
 UPDATE bank_question_sources SET edition_id=:new_edition,node_id=:new_node,page=:new_page,
  printed_page=:new_printed,pdf_page=:new_pdf_page,pdf_sha256=:new_pdf_sha,anchor_text=:new_anchor,
- confidence_source=:confidence,confidence_node=:confidence,confidence_page=:confidence,
+ confidence_source=:confidence_source,confidence_node=:confidence_node,confidence_page=:confidence_page,
  official_scope_status='in_scope',official_scope_note=NULL,scope_unverified=FALSE
 WHERE workspace_id=:ws AND id=:source_id AND edition_id=:old_edition AND node_id=:old_node
  AND page=:old_page AND printed_page <=> :old_printed AND pdf_page <=> :old_pdf_page
@@ -325,7 +325,9 @@ SQL);
             $update->execute([
                 'new_edition'=>$nodes[0]['edition_id'],'new_node'=>$nodes[0]['node_id'],'new_page'=>$newPrinted,
                 'new_printed'=>$newPrinted,'new_pdf_page'=>$newPage,'new_pdf_sha'=>$newSha,'new_anchor'=>$entry['evidence'],
-                'confidence'=>number_format((float)$entry['confidence'],3,'.',''),
+                'confidence_source'=>number_format((float)$entry['confidence'],3,'.',''),
+                'confidence_node'=>number_format((float)$entry['confidence'],3,'.',''),
+                'confidence_page'=>number_format((float)$entry['confidence'],3,'.',''),
                 'ws'=>$workspace,'source_id'=>$old['source_id'],'old_edition'=>$old['edition_id'],'old_node'=>$old['node_id'],
                 'old_page'=>$old['page'],'old_printed'=>$old['printed_page'],'old_pdf_page'=>$old['pdf_page'],'old_pdf_sha'=>$old['pdf_sha256'],
                 'old_anchor'=>$old['anchor_text'],'old_confidence'=>$spec['old_confidence'],'old_scope_status'=>$old['official_scope_status'],
