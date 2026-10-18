@@ -145,6 +145,14 @@ This one-pass research rule removes redundant classification stages; it does
 not remove the validator, protected backup, guarded source-only write or
 independent production readback required before changing the live bank.
 
+**Continuous execution:** Do not pause for owner approval between eligible
+questions or research batches. Continue across the whole year, carrying only
+genuine evidence or access blockers forward in one concise report. Run the
+research decision and chapter lookup together; batch validation checks that
+work once. The verified backup, guarded write and independent readback are
+the only required live-database checkpoints, and they do not repeat source
+discovery.
+
 **Partial scope with an unreadable printed label:** If the exact official
 PDF page, chapter map and page-local evidence are verified, but an official
 partial-chapter cutoff cannot be compared because that PDF page has no

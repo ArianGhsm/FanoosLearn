@@ -179,6 +179,16 @@ use the approved single year-level publication workflow and the
 review/authorization, CI, deployment and health. If a gate fails,
 publish nothing new; keep any previously published historical version.
 
+**Keep the work continuous.** For each question, find the answer-bearing page
+and read its chapter from that page's verified map in the same pass; record
+both together. Do not create chapter-only staging lists, request owner approval
+between eligible questions or batches, or stop after a clean batch. Continue
+through the year and collect unresolved questions into one concise blocker
+report while proceeding with all other eligible work. The only production-data
+checkpoint is the required verified backup, guarded source-only write and
+independent readback; these protect the live bank and do not repeat the
+research.
+
 This supersedes the earlier one/two-subject **site-publication** rule
 from PR #419. Consult `docs/PROJECT_PRINCIPLES.md` and
 `docs/ops/RESIDENCY_WHOLE_YEAR_PUBLICATION_20261016.md`.
