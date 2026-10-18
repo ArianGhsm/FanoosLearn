@@ -65,6 +65,9 @@ Confidence is shown as source/node/page after the latest applied operation.
 | 122 | Carranza 13e, ch52 | 556 / 1193 | .980 / .980 / .980 | Table 52.1 lists excellent oral absorption for amoxicillin. |
 | 126 | Carranza 13e, ch64 | 653.e1 / 1441 | .990 / .990 / .990 | Corrected the legacy ch35 assignment. The chapter abstract directly contrasts guarded-to-poor prognosis for furcation involvement with fair-to-good prognosis for equivalent attachment loss on a single-rooted tooth. |
 | 130 | Carranza 13e, ch72 | 716 / 1606 | .960 / .960 / .960 | Table 72.1 associates controlled history of periodontal treatment with posterior bitewing examinations. The printed-page row alignment was checked on the original page. |
+| 136 | Hupp 7e, ch15 | 283 / 297 | .990 / .990 / .990 | Corrected the printed label 282 to 283. The page sets the no-modification threshold at a stable implant gap under 1 mm. |
+| 137 | Hupp 7e, ch17 | 338 / 352 | .970 / .970 / .970 | Corrected the stored ch16/page322. The page connects buccal-space infection with a cutaneous sinus tract. |
+| 142 | Hupp 7e, ch26 | 585 / 599 | .980 / .980 / .980 | Corrected the printed label 556 to 585. The page lists DO's stability/TMJ/neurosensory advantages and separately notes its two-procedure requirement. |
 
 The source PDF SHA-256 values are Burket 12e
 `ebb1c0a98c24b21778f19e038127402a205b672ae6a31356eee722c27d199ab7`, Little &
@@ -73,8 +76,8 @@ Neville 4e `6fbc9bcba9003deda2f8fc006ccc4f23f9e15db0bcd0e237c56ddf6788578bb6`,
 Proffit 6e `5f18cc196553b691635b0c136f9761a4e7c478bf115424d1c7f26f04b5b50015`,
 Zarb 13e `bcf92916cd0a01915695d1cb5aad8c51e7f2dac5909477c4df4454d229156a3d`,
 McCracken RPD 13e `4e05bee57d1066601b8a2b30c2ae72d4a5bf65298747b600ae3fdd8248a192d9`,
-and Carranza 13e
-`f0e411898ae010688ca5c0d21afe312cef6f5dae86d0e2e45648bc51ca8e2adf`.
+Carranza 13e `f0e411898ae010688ca5c0d21afe312cef6f5dae86d0e2e45648bc51ca8e2adf`,
+and Hupp 7e `35e3c37fec67a831a4464205c1817cc1e51c0a9f8a0bd8660a1881ecd2f10a83`.
 
 ## Receipts and independent readbacks
 
@@ -138,6 +141,9 @@ zero question, choice, and answer changes.
   Q122: `c56d1009592dff64e814d80582d2db6a819c5ae9ad51edb2843c655f1f1d018e`;
   Q126: `222c7491cfb1bc883e4ada8c378f38e8b3d5237dac86a31bab6cf5421a578084`;
   Q130: `e5ed14df5137a3f4f74dafa811523cd73e1b7763c0fd20a11bb8ec5dd395ba27`.
+- Q136: `892f88f845dfcb9750556abb8027324979e0e990afc94f05296d32fdf82c6141`;
+  Q137: `245d59413b7ea3018d375c68b687a2f6b0c5c4ab29e7b60c07c8cd205dcbb8ee`;
+  Q142: `57e9857a663bc32e91232890ae4eebc1f3760ce6ab7211e08f70765d24dc15a6`.
 
 Independent live readbacks for the additional rows:
 
@@ -147,21 +153,30 @@ Independent live readbacks for the additional rows:
 - Q122/Q130: `05e735ec66826b68c2e91f62182bc2d4ae5da0f33e9619e39998a959e09eb6e1`.
 - Q118: `e7e7516fa702f21687de91a745c5548d3e77cee248c41a54466973c33f6000da`.
 - Q114: `985083b6fca23576fe8575476cafb6348788c29cca13f3ce2af6e5c3e8fa4446`.
+- Q136/Q137/Q142: `d13c2e94af23bd628ce5cbb91bce85bdc80e86104b9f7f42c0762111ef4c2d`.
 
 The applied groups used independently verified backups `20261018T002016Z-d98240b3`,
-`20261018T004643Z-1b2d79df`, and `20261018T005923Z-b3552a10` (114 files each).
+`20261018T004643Z-1b2d79df`, `20261018T005923Z-b3552a10`, and
+`20261018T012037Z-fee7f4ab` (114 files each).
 
 ## Whole-year state and next work
 
 The latest live official gate reports 249/249 questions in the 1401 inventory
-with **27 incomplete**. The 1400 inventory remains 250/250 with **139
+with **24 incomplete**. The 1400 inventory remains 250/250 with **139
 incomplete**. 1399 has not started. Neither 1401 nor 1400 is ready for
 publication, and no new frozen version or issue closure is authorized.
 
-The current 1401 gate examples are Q123, Q128, Q136, Q137, Q142, Q146, Q147,
-Q150, Q151, Q160, Q165, and Q168. Q123's exact answer-bearing phrase is split
+The current 1401 gate examples are Q123, Q128, Q146, Q147, Q150, Q151, Q160,
+Q165, Q168, Q172, Q173, and Q174. Q123's exact answer-bearing phrase is split
 in the PDF text layer into a two-word terminal fragment, so the four-word
 evidence rule still prevents a guarded write. Q128's only located direct
 answer is in an end-of-chapter review question, which cannot serve as source
 evidence; the instructional pages have not yet yielded an answer-bearing
 passage. Keep both pending and continue the other items independently.
+
+The current 35-question batch has 11 applied items: prosthodontics 3/3,
+periodontics 5/7, oral surgery 3/6, operative dentistry 0/4, pediatric
+dentistry 0/9, and oral radiology 0/6. Oral-surgery Q146, Q147, and Q150
+remain pending while their cross-chapter evidence is checked; preserve the
+official keys and do not compress separate facts into an unsupported single
+source.
