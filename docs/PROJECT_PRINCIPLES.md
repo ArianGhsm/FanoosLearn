@@ -109,6 +109,42 @@ and safely repaired via the approved, backed-up source-only workflow. Do not
 erase existing chapters, keys, assessments or source provenance merely to
 satisfy the new metric.
 
+### One-pass source location: page determines chapter immediately — owner decision 2026-10-18
+
+For every new or corrected book-based question, locate the answer-bearing
+passage in the exact official-edition PDF. **The physical page found is the
+page decision; its chapter is read directly from that same edition's verified
+page map in the same pass.** This is one source-location decision, not a
+chapter-first phase followed later by a separate page-research phase. Never
+write a chapter-only provisional source or leave a known page waiting for a
+second chapter pass.
+
+Within each 30–40-question private batch, check the official catalog, live
+PDF availability, current PDF SHA-256 and chapter map once per exact edition.
+For each question, search for the fact that makes the official keyed answer
+correct; inspect the candidate page in the original PDF; confirm the evidence;
+read that page's chapter from the verified map; and establish the printed
+label only when partial-syllabus boundaries depend on it. Record edition,
+chapter node, physical `pdf_page`, current `pdf_sha256`, page evidence,
+confidence and any needed corroborated `printed_page` together as one
+decision. A later independent batch audit checks those recorded decisions and
+their provenance; it is not another chapter/page discovery phase.
+
+If the evidence, page, chapter or scope is unresolved, state exactly what is
+missing and keep that question pending while continuing eligible items. A
+partial-chapter page with no corroborated printed label may use only the
+audited `scope_unverified` recording path and remains incomplete for year
+publication. For a located outside-scope source, preserve its true
+chapter/page and record the explicit outside-scope disposition. A question
+needing multiple pages or sources must retain every answer-bearing location
+through the appropriate audited route. Do not report an available exact PDF
+as a missing-book dependency when the remaining task is to locate or validate
+the question's passage in it.
+
+This one-pass research rule removes redundant classification stages; it does
+not remove the validator, protected backup, guarded source-only write or
+independent production readback required before changing the live bank.
+
 **Partial scope with an unreadable printed label:** If the exact official
 PDF page, chapter map and page-local evidence are verified, but an official
 partial-chapter cutoff cannot be compared because that PDF page has no

@@ -89,6 +89,11 @@ a blanket delete.
   only that page in memory, then discard it. Record the PDF SHA-256 and page
   number in the audit. Check selected evidence on the original PDF page,
   especially where columns, Persian shaping or figures affect reading order.
+- **One-pass source location:** find the answer-bearing passage in the exact
+  official-edition PDF, then derive its chapter immediately from that same
+  edition's verified page map. Record page, chapter and evidence together;
+  never create a chapter-only provisional source or defer chapter lookup to
+  another phase. Follow `docs/PROJECT_PRINCIPLES.md`.
 - Work with **eligible verified server editions** first. Set missing or
   incomplete editions aside as pending; no fabricated chapters and **no
   new nearest-edition fallback by default**. Preserve previously audited
