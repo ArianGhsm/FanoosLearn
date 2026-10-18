@@ -198,7 +198,7 @@ SQL);
     $updatePrimary=$db->prepare(<<<'SQL'
 UPDATE bank_question_sources
 SET page=:new_page,printed_page=:new_printed,pdf_page=:new_pdf_page,pdf_sha256=:new_pdf_sha,
- anchor_text=:new_anchor,confidence_source=:confidence,confidence_node=:confidence,confidence_page=:confidence
+ anchor_text=:new_anchor,confidence_source=:confidence_source,confidence_node=:confidence_node,confidence_page=:confidence_page
 WHERE workspace_id=:ws AND id=:source_id AND question_id=:question_id
  AND page <=> :old_page AND printed_page <=> :old_printed
  AND pdf_page <=> :old_pdf_page AND pdf_sha256 <=> :old_pdf_sha
@@ -213,7 +213,7 @@ INSERT INTO bank_question_sources
 (id,workspace_id,question_id,edition_id,node_id,page,pdf_page,printed_page,pdf_sha256,anchor_text,is_primary,
  confidence_source,confidence_node,confidence_page,origin,created_at)
 VALUES (:id,:ws,:qid,:edition_id,:node_id,:page,:pdf_page,:printed_page,:pdf_sha,:anchor,FALSE,
- :confidence,:confidence,:confidence,'ai',UTC_TIMESTAMP(6))
+ :confidence_source,:confidence_node,:confidence_page,'ai',UTC_TIMESTAMP(6))
 SQL);
     $duplicate=$db->prepare(<<<'SQL'
 SELECT id FROM bank_question_sources
@@ -290,7 +290,8 @@ SQL);
 
             $updatePrimary->execute(['new_page'=>$primary[0]['printed_page'],'new_printed'=>$primary[0]['printed_page'],
                 'new_pdf_page'=>$primary[0]['pdf_page'],'new_pdf_sha'=>$item['pdf_sha256'],'new_anchor'=>$primary[0]['anchor_text'],
-                'confidence'=>$item['accepted_confidence'],'ws'=>$workspace,'source_id'=>$s['id'],'question_id'=>$s['question_id'],
+                'confidence_source'=>$item['accepted_confidence'],'confidence_node'=>$item['accepted_confidence'],
+                'confidence_page'=>$item['accepted_confidence'],'ws'=>$workspace,'source_id'=>$s['id'],'question_id'=>$s['question_id'],
                 'old_page'=>$s['page'],'old_printed'=>$s['printed_page'],'old_pdf_page'=>$s['pdf_page'],'old_pdf_sha'=>$s['pdf_sha256'],
                 'old_anchor'=>$s['anchor_text'],'old_confidence_source'=>$item['expected_confidence_source'],
                 'old_confidence_node'=>$item['expected_confidence_node'],'old_confidence_page'=>$item['expected_confidence_page']]);
@@ -305,7 +306,8 @@ SQL);
                 $insertSecondary->execute(['id'=>$newId,'ws'=>$workspace,'qid'=>$s['question_id'],'edition_id'=>$s['edition_id'],
                     'node_id'=>$s['node_id'],'page'=>$pageRecord['printed_page'],'pdf_page'=>$pageRecord['pdf_page'],
                     'printed_page'=>$pageRecord['printed_page'],'pdf_sha'=>$item['pdf_sha256'],'anchor'=>$pageRecord['anchor_text'],
-                    'confidence'=>$item['accepted_confidence']]);
+                    'confidence_source'=>$item['accepted_confidence'],'confidence_node'=>$item['accepted_confidence'],
+                    'confidence_page'=>$item['accepted_confidence']]);
                 if($insertSecondary->rowCount()!==1)throw new RuntimeException('Secondary page citation insert failed.');
                 $secondarySources[]=['source_id'=>$newId,'chapter'=>$item['chapter'],'pdf_page'=>$pageRecord['pdf_page'],
                     'printed_page'=>$pageRecord['printed_page'],'pdf_sha256'=>$item['pdf_sha256'],
