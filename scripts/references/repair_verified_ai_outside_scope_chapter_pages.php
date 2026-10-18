@@ -90,7 +90,8 @@ try {
     $db = DatabaseConnection::fromEnvironment();
     $sourceQuery = $db->prepare(<<<'SQL'
 SELECT s.id,s.workspace_id,s.question_id,s.node_id,s.edition_id,s.page,s.printed_page,s.pdf_page,s.pdf_sha256,
-       s.anchor_text,s.origin,s.reviewed_at,s.reviewed_by_user_id,s.confidence_page,
+       s.anchor_text,s.origin,s.reviewed_at,s.reviewed_by_user_id,
+       s.confidence_source,s.confidence_node,s.confidence_page,
        s.official_scope_status,s.official_scope_note,
        q.number_in_sitting,q.stem,q.status question_status,
        n.number old_chapter,n.kind,e.edition_key,r.reference_key,v.scope_chapters,v.is_official
@@ -122,12 +123,15 @@ SQL);
     $update = $db->prepare(<<<'SQL'
 UPDATE bank_question_sources
 SET node_id=:new_node,page=:new_page,printed_page=:printed,pdf_page=:pdf_page,pdf_sha256=:pdf_sha,
+    anchor_text=:new_anchor_text,
     official_scope_status='outside_scope_exam_question',official_scope_note=:scope_note,
-    confidence_page=:new_confidence
+    confidence_source=:new_confidence_source,confidence_node=:new_confidence_node,
+    confidence_page=:new_confidence_page
 WHERE workspace_id=:ws AND id=:id AND node_id=:old_node
  AND page <=> :old_page AND printed_page <=> :old_printed
  AND pdf_page <=> :old_pdf_page AND pdf_sha256 <=> :old_pdf_sha
- AND confidence_page=:old_confidence
+ AND confidence_source=:old_confidence_source AND confidence_node=:old_confidence_node
+ AND confidence_page=:old_confidence_page
  AND official_scope_status='in_scope' AND official_scope_note IS NULL
  AND origin='ai' AND reviewed_at IS NULL AND reviewed_by_user_id IS NULL
  AND anchor_text <=> :old_anchor
@@ -145,8 +149,9 @@ SQL);
             $seen[$number] = true;
             foreach ([
                 'source_id','edition','expected_chapter','chapter','printed_page','pdf_page','pdf_sha256',
-                'evidence','note','expected_legacy_page','expected_stored_printed_page','expected_pdf_page',
-                'expected_pdf_sha256','expected_old_confidence_page','new_confidence_page',
+                'evidence','new_anchor_text','note','expected_legacy_page','expected_stored_printed_page','expected_pdf_page',
+                'expected_pdf_sha256','expected_old_confidence_source','expected_old_confidence_node',
+                'expected_old_confidence_page','new_confidence_page',
                 'expected_scope_status','expected_scope_note','expected_anchor_sha256','expected_stem_sha256',
                 'expected_choices_sha256','expected_answer_sha256','expected_question_status','expected_answer_status',
             ] as $field) {
@@ -163,20 +168,24 @@ SQL);
             $sha = strtolower((string) $item['pdf_sha256']);
             $note = $item['note'];
             $evidence = $item['evidence'];
+            $newAnchor = $item['new_anchor_text'];
+            $oldSourceConfidence = $item['expected_old_confidence_source'];
+            $oldNodeConfidence = $item['expected_old_confidence_node'];
             $oldConfidence = $item['expected_old_confidence_page'];
             $newConfidence = $item['new_confidence_page'];
             if (!is_string($id) || preg_match('/^[a-f0-9-]{36}$/D', $id) !== 1
                 || !is_string($edition) || preg_match('/^[a-z0-9-]+@[a-z0-9]+$/D', $edition) !== 1
                 || !is_string($oldChapter) || preg_match('/^[0-9]+(?:\.[0-9]+)?$/D', $oldChapter) !== 1
                 || !is_string($chapter) || preg_match('/^[0-9]+(?:\.[0-9]+)?$/D', $chapter) !== 1
-                || $oldChapter === $chapter
-                || !is_string($printed) || preg_match('/^[1-9][0-9]{0,3}$/D', $printed) !== 1
+                || !VerifiedAiOutsideScopeChapterPageGuard::printedPageLabelIsValid($printed)
                 || !is_int($page) || $page < 1 || $page > 6000
                 || preg_match('/^[a-f0-9]{64}$/D', $sha) !== 1
                 || !is_string($note) || mb_strlen(trim($note)) < 12 || !str_contains($note, 'خارج از محدوده')
                 || !is_array($evidence) || !array_is_list($evidence) || count($evidence) < 1 || count($evidence) > 4
                 || array_filter($evidence, static fn (mixed $quote): bool => !is_string($quote)
                     || mb_strlen(trim($quote)) < 6 || strlen($quote) > 190) !== []
+                || !is_string($oldSourceConfidence) || !is_numeric($oldSourceConfidence)
+                || !is_string($oldNodeConfidence) || !is_numeric($oldNodeConfidence)
                 || !is_string($oldConfidence) || !is_numeric($oldConfidence)
                 || !is_string($newConfidence) || !is_numeric($newConfidence)
                 || (float) $newConfidence < 0.85 || (float) $newConfidence > 1.0
@@ -205,7 +214,12 @@ SQL);
                 || $s['official_scope_status'] !== $item['expected_scope_status']
                 || $s['official_scope_note'] !== $item['expected_scope_note']
                 || $s['official_scope_status'] !== 'in_scope' || $s['official_scope_note'] !== null
-                || (string) $s['confidence_page'] !== $oldConfidence
+                || number_format((float) $s['confidence_source'], 3, '.', '')
+                    !== number_format((float) $oldSourceConfidence, 3, '.', '')
+                || number_format((float) $s['confidence_node'], 3, '.', '')
+                    !== number_format((float) $oldNodeConfidence, 3, '.', '')
+                || number_format((float) $s['confidence_page'], 3, '.', '')
+                    !== number_format((float) $oldConfidence, 3, '.', '')
                 || hash('sha256', (string) $s['anchor_text']) !== $item['expected_anchor_sha256']
                 || $s['reference_key'] . '@' . $s['edition_key'] !== $edition
                 || (string) $s['old_chapter'] !== $oldChapter || $s['kind'] !== 'chapter'
@@ -259,18 +273,43 @@ SQL);
 
             $update->execute([
                 'new_node'=>$nodes[0]['id'],'new_page'=>$printed,'printed'=>$printed,'pdf_page'=>$page,'pdf_sha'=>$sha,
-                'scope_note'=>$note,'new_confidence'=>$newConfidence,'ws'=>$workspace,'id'=>$id,'old_node'=>$s['node_id'],
+                'scope_note'=>$note,'new_confidence_source'=>$newConfidence,'new_confidence_node'=>$newConfidence,
+                'new_confidence_page'=>$newConfidence,'ws'=>$workspace,'id'=>$id,'old_node'=>$s['node_id'],
+                'new_anchor_text'=>$newAnchor,
                 'old_page'=>$item['expected_legacy_page'],'old_printed'=>$item['expected_stored_printed_page'],
                 'old_pdf_page'=>$item['expected_pdf_page'],'old_pdf_sha'=>$item['expected_pdf_sha256'],
-                'old_confidence'=>$oldConfidence,'old_anchor'=>$s['anchor_text'],
+                'old_confidence_source'=>$oldSourceConfidence,'old_confidence_node'=>$oldNodeConfidence,
+                'old_confidence_page'=>$oldConfidence,'old_anchor'=>$s['anchor_text'],
             ]);
             if ($update->rowCount() !== 1) {
                 throw new RuntimeException("Q{$number}: guarded outside-scope source update is ambiguous.");
             }
+            $readback = $db->prepare(<<<'SQL'
+SELECT node_id,page,printed_page,pdf_page,pdf_sha256,anchor_text,
+       official_scope_status,official_scope_note,
+       confidence_source,confidence_node,confidence_page
+FROM bank_question_sources WHERE workspace_id=:ws AND id=:id AND question_id=:qid FOR UPDATE
+SQL);
+            $readback->execute(['ws'=>$workspace,'id'=>$id,'qid'=>$s['question_id']]);
+            $after = $readback->fetch(PDO::FETCH_ASSOC);
+            if (!is_array($after) || $after['node_id'] !== $nodes[0]['id']
+                || $after['page'] !== $printed || $after['printed_page'] !== $printed
+                || (int) $after['pdf_page'] !== $page || strtolower((string) $after['pdf_sha256']) !== $sha
+                || $after['anchor_text'] !== $newAnchor
+                || $after['official_scope_status'] !== 'outside_scope_exam_question'
+                || $after['official_scope_note'] !== $note
+                || number_format((float) $after['confidence_source'], 3, '.', '') !== number_format((float) $newConfidence, 3, '.', '')
+                || number_format((float) $after['confidence_node'], 3, '.', '') !== number_format((float) $newConfidence, 3, '.', '')
+                || number_format((float) $after['confidence_page'], 3, '.', '') !== number_format((float) $newConfidence, 3, '.', '')) {
+                throw new RuntimeException("Q{$number}: outside-scope source-only readback mismatch.");
+            }
             $results[] = [
                 'number'=>$number,'source_id'=>$id,'edition'=>$edition,'old_chapter'=>$oldChapter,'chapter'=>$chapter,
                 'page'=>$printed,'printed_page'=>$printed,'pdf_page'=>$page,'pdf_sha256'=>$sha,
-                'old_confidence_page'=>$oldConfidence,'confidence_page'=>$newConfidence,
+                'old_confidence_source'=>$oldSourceConfidence,'old_confidence_node'=>$oldNodeConfidence,
+                'old_confidence_page'=>$oldConfidence,'confidence_source'=>$newConfidence,
+                'confidence_node'=>$newConfidence,'confidence_page'=>$newConfidence,
+                'anchor_sha256'=>hash('sha256',$newAnchor),
                 'official_scope_status'=>'outside_scope_exam_question','official_scope_note'=>$note,
             ];
         }
@@ -290,7 +329,8 @@ SQL);
         'format'=>'fanoos.verified-ai-outside-scope-chapter-page-repair-receipt/1',
         'mode'=>$apply ? 'applied' : 'rollback-preview','year'=>$plan['year'],'subject'=>$plan['subject'],
         'count'=>count($results),'plan_sha256'=>hash('sha256',$rawPlan),'audit_sha256'=>$auditSha,
-        'only_fields_changed'=>['node_id','page','printed_page','pdf_page','pdf_sha256','official_scope_status','official_scope_note','confidence_page'],
+        'only_fields_changed'=>['node_id','page','printed_page','pdf_page','pdf_sha256','official_scope_status',
+            'official_scope_note','anchor_text','confidence_source','confidence_node','confidence_page'],
         'questions_changed'=>0,'choices_changed'=>0,'answers_changed'=>0,
         'assessment_versions_changed'=>0,'attempts_changed'=>0,'sources'=>$results,
     ];
