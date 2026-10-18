@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Fanoos\Platform\Bank;
 
-/** Exact 1402 source-citation replacements for Q139, Q175, Q190 and Q244. */
-final class Residency1402AiSourceCitationReplacementGuard
+/** Exact, audited source-citation replacements for the supported 1401/1402 rows. */
+final class ResidencyAiSourceCitationReplacementGuard
 {
     /** @var array<int,array<string,mixed>> */
     private const SPECS = [
         139 => [
+            'year' => 1402,
             'subject' => 'periodontics',
             'stem_sha256' => '135de36f7a19697892436ec03757e00ea25a701bdbcb77af353452f204429b78',
             'choices_sha256' => '130db2fbd2cf0eef8dca766eddd20f1cd4ed24374cf82cd25083e588a1393c16',
@@ -35,7 +36,62 @@ final class Residency1402AiSourceCitationReplacementGuard
             'note' => 'Carranza 13e chapter 28, printed page 353 / PDF 785, describes familial aggregation and recommends verifying similar family cases. The page does not specify first-degree relatives; preserve official final choice 2 and record that qualifier as an inference.',
             'confidence' => 0.900,
         ],
+        165 => [
+            'year' => 1401,
+            'subject' => 'operative-dentistry',
+            'stem_sha256' => '21365d473541477aac5b6b871fd2d75bdac4e3b970812cd5b5f7561c75752a64',
+            'choices_sha256' => '1d56e451c8d02c428619ef24b95e93e20e5f9956bb28929d695f437b57c0e343',
+            'answer_sha256' => 'f3f070afa8ad5df580cdec18672f8a8a762ce4a246ea20368622cf59b1a15794',
+            'answer_choice' => 3,
+            'source_id' => '01a11be7-9b0a-7a10-ae22-ebb6236b36cc',
+            'old_reference' => 'summit-operative@4e',
+            'old_chapter' => '9',
+            'old_legacy_page' => 'pdf 476',
+            'old_printed_page' => null,
+            'old_pdf_page' => 476,
+            'old_pdf_sha256' => 'a634d3519e67001151d0d406c3fb91dbeea30ff546c92ed3dec8dfade5a3d6f6',
+            'old_anchor_sha256' => 'f48bf520cf951de997509393be0b22f9e6f063952f1ba395a69a591196777292',
+            'old_confidence' => '0.800',
+            'old_official_scope_status' => 'in_scope',
+            'old_official_scope_note_sha256' => null,
+            'reference' => 'craig-restorative-materials@14e',
+            'chapter' => '13',
+            'pdf_page' => 290,
+            'printed_page' => '279',
+            'pdf_sha256' => '333e81ae8a1818cdff57f00e3f870698776e3b8e02fcc49169f397f2fbaf90b9',
+            'evidence' => 'With these systems, the smear layer is dis- ... solved and incorporated into the hybrid layer',
+            'note' => 'Craig 14e chapter 13, printed page 279 / PDF 290, says self-etch systems dissolve and incorporate the smear layer. This supports the self-etch mechanism but does not distinguish two-step from one-step self-etch; preserve official choice 3 and record the specificity conflict.',
+            'confidence' => 0.900,
+        ],
+        168 => [
+            'year' => 1401,
+            'subject' => 'operative-dentistry',
+            'stem_sha256' => '9894149f16b8c4f5160b22b131066fe0b1488f1bc5f52116e6159832c9b9926b',
+            'choices_sha256' => '447a03a20ec9ba71dcd5f7d09b4b537256cb97cda1beecbddbc7864a8d74041a',
+            'answer_sha256' => '23b0f883c3f687ed853c0b4f115570b444e98a796af732fd08e8095a8ad28215',
+            'answer_choice' => 3,
+            'source_id' => '01a11be7-9b21-7284-8862-7a777020edd6',
+            'old_reference' => 'summit-operative@4e',
+            'old_chapter' => '9',
+            'old_legacy_page' => 'pdf 438',
+            'old_printed_page' => null,
+            'old_pdf_page' => 438,
+            'old_pdf_sha256' => 'a634d3519e67001151d0d406c3fb91dbeea30ff546c92ed3dec8dfade5a3d6f6',
+            'old_anchor_sha256' => 'd6cf18397643df3dcedd11a7b0a45be993777ce73566556aeb0fb1b40058ce19',
+            'old_confidence' => '0.900',
+            'old_official_scope_status' => 'in_scope',
+            'old_official_scope_note_sha256' => null,
+            'reference' => 'craig-restorative-materials@14e',
+            'chapter' => '13',
+            'pdf_page' => 290,
+            'printed_page' => '279',
+            'pdf_sha256' => '333e81ae8a1818cdff57f00e3f870698776e3b8e02fcc49169f397f2fbaf90b9',
+            'evidence' => 'Self-etch systems have the great advantages of ... initial acidity and high water content',
+            'note' => 'Craig 14e chapter 13, printed page 279 / PDF 290, identifies high water content as an advantage of self-etch systems. Preserve official final choice 3.',
+            'confidence' => 0.950,
+        ],
         175 => [
+            'year' => 1402,
             'subject' => 'operative-dentistry',
             'stem_sha256' => '384991e96437bcb328e44fff014a07a5d58ba0f14dc4ae1e780893e525f00311',
             'choices_sha256' => '59d80234cac471fe5445295af65a11a5c3b44a0b4e33b4ded1ca7a4bfc3bf71f',
@@ -62,6 +118,7 @@ final class Residency1402AiSourceCitationReplacementGuard
             'confidence' => 0.95,
         ],
         190 => [
+            'year' => 1402,
             'subject' => 'operative-dentistry',
             'stem_sha256' => '879d051bc4e280d5311b0f014f83adbac121d3b7669e06929b3e38dea51f2fa7',
             'choices_sha256' => 'e00b9b3f3e6c3b896bede6aa41d79c405d4fc82cb65f0693099653456649f417',
@@ -88,6 +145,7 @@ final class Residency1402AiSourceCitationReplacementGuard
             'confidence' => 0.95,
         ],
         244 => [
+            'year' => 1402,
             'subject' => 'dental-materials',
             'stem_sha256' => 'c696829eb9e906464a9dd460514ac6885c44be0b87d89751b8b360598c62d20b',
             'choices_sha256' => '4d88ce4708f3a9b0596728b389e84e5b0b19fc2f31295193a5b8c0932814ab61',
@@ -122,9 +180,12 @@ final class Residency1402AiSourceCitationReplacementGuard
     }
 
     /** @return list<int> */
-    public static function supportedQuestions(): array
+    public static function supportedQuestions(?int $year = null): array
     {
-        return [139,175,190,244];
+        if ($year === null) {
+            return array_keys(self::SPECS);
+        }
+        return array_keys(array_filter(self::SPECS,static fn(array $spec):bool=>$spec['year']===$year));
     }
 
     public static function modeArgumentsValid(bool $apply, bool $hasBackup, bool $hasReceipt, bool $hasPreview): bool
@@ -143,17 +204,17 @@ final class Residency1402AiSourceCitationReplacementGuard
     /** @param array<string,mixed> $plan */
     public static function planMatches(array $plan): bool
     {
-        if (($plan['format'] ?? null) !== 'fanoos.residency1402.ai-source-citation-replacement-plan/1'
-            || ($plan['year'] ?? null) !== 1402 || ($plan['round'] ?? null) !== 1
+        if (($plan['format'] ?? null) !== 'fanoos.residency-ai-source-citation-replacement-plan/1'
+            || !in_array($plan['year'] ?? null,[1401,1402],true) || ($plan['round'] ?? null) !== 1
             || !is_string($plan['audit_path'] ?? null)
-            || !preg_match('~^/srv/fanoos/shared/research/classification/recovery-1402-[a-z0-9-]+/classification/reports/[^/]+\.json$~D', $plan['audit_path'])
+            || !preg_match('~^/srv/fanoos/shared/research/classification/recovery-(?:1401|1402)-[a-z0-9-]+/classification/reports/[^/]+\.json$~D', $plan['audit_path'])
             || !self::sha($plan['audit_sha256'] ?? null)
             || !is_array($plan['entries'] ?? null) || !array_is_list($plan['entries'])
             || $plan['entries'] === [] || count($plan['entries']) > count(self::SPECS)) {
             return false;
         }
         $numbers=array_column($plan['entries'],'number');
-        $supportedInPlan=array_values(array_filter(self::supportedQuestions(),static fn(int $number):bool=>in_array($number,$numbers,true)));
+        $supportedInPlan=array_values(array_filter(self::supportedQuestions((int)$plan['year']),static fn(int $number):bool=>in_array($number,$numbers,true)));
         if($numbers!==$supportedInPlan||count(array_unique($numbers))!==count($numbers))return false;
 
         foreach ($plan['entries'] as $entry) {
@@ -161,10 +222,10 @@ final class Residency1402AiSourceCitationReplacementGuard
                 return false;
             }
             $spec = self::spec($entry['number']);
-            if ($spec === null) {
+            if ($spec === null || $spec['year'] !== $plan['year']) {
                 return false;
             }
-            foreach (['subject','stem_sha256','choices_sha256','answer_sha256','source_id','old_reference',
+            foreach (['year','subject','stem_sha256','choices_sha256','answer_sha256','source_id','old_reference',
                 'old_chapter','old_legacy_page','old_printed_page','old_pdf_page','old_pdf_sha256',
                 'old_anchor_sha256','old_confidence','old_official_scope_status','old_official_scope_note_sha256','answer_choice',
                 'reference','chapter','pdf_page','printed_page','pdf_sha256','evidence','note','confidence'] as $key) {
@@ -175,6 +236,7 @@ final class Residency1402AiSourceCitationReplacementGuard
             if (!in_array($entry['confidence'] ?? null,[0.90,0.95],true)
                 || !is_string($entry['audit_batch'] ?? null)
                 || !in_array($entry['audit_batch'], [
+                    '1401:operative-dentistry:q165-q168',
                     '1402:periodontics:q139',
                     '1402:operative-dentistry:q175-q190',
                     '1402:dental-materials:q244',
@@ -221,7 +283,7 @@ final class Residency1402AiSourceCitationReplacementGuard
             $mapped = is_array($batch) ? ($batch['mapped'][$question] ?? null) : null;
             $pdf = is_array($batch)
                 ? ($batch['source_pdf_provenance'][$entry['reference']] ?? null) : null;
-            if (!is_array($batch) || ($batch['exam_year'] ?? null) !== 1402
+            if (!is_array($batch) || ($batch['exam_year'] ?? null) !== ($plan['year'] ?? null)
                 || ($batch['subject'] ?? null) !== $entry['subject']
                 || ($batch['question_content_identical'] ?? null) !== true
                 || !is_array($mapped)
