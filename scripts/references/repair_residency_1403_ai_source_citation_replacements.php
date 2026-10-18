@@ -166,8 +166,12 @@ try {
     $workspace = (string) ($args['workspace'] ?? '');
     $apply = isset($args['apply']);
     if (!preg_match('/^[0-9a-f-]{36}$/D', $workspace)
-        || $apply !== isset($args['backup']) || $apply !== isset($args['receipt'])
-        || $apply !== isset($args['preview-receipt'])) {
+        || !Guard::modeArgumentsValid(
+            $apply,
+            isset($args['backup']),
+            isset($args['receipt']),
+            isset($args['preview-receipt']),
+        )) {
         throw new RuntimeException('Workspace required; apply needs its rollback-preview receipt, backup and unique receipt.');
     }
     if ($apply && (!function_exists('posix_getpwuid')
