@@ -3,15 +3,15 @@
 declare(strict_types=1);
 
 /**
- * Replace the exact audited AI source citations for residency 1402 Q175, Q190
- * and Q244. The default transaction is rolled back. Apply requires its exact
+ * Replace exact audited residency AI source citations for the pinned 1401/1402
+ * question set. The default transaction is rolled back. Apply requires its exact
  * preview receipt and a fresh verified full production backup.
  *
  * Only bank_question_sources citation/scope/confidence metadata is updated.
  */
 use Fanoos\Platform\Bank\OfficialScopePageGuard;
 use Fanoos\Platform\Bank\PrintedBookPageEvidence;
-use Fanoos\Platform\Bank\Residency1402AiSourceCitationReplacementGuard as Guard;
+use Fanoos\Platform\Bank\ResidencyAiSourceCitationReplacementGuard as Guard;
 use Fanoos\Platform\Bank\SourceChapterCorrectionGuard;
 use Fanoos\Platform\Operations\BackupManifest;
 use Fanoos\Platform\Support\DatabaseConnection;
@@ -19,10 +19,10 @@ use Fanoos\Platform\Support\RuntimeConfig;
 
 require dirname(__DIR__, 2) . '/apps/platform/bootstrap.php';
 
-const RESIDENCY_1402_REPLACEMENT_REPORTS = '/srv/fanoos/shared/research/classification/reports';
+const RESIDENCY_SOURCE_REPLACEMENT_REPORTS = '/srv/fanoos/shared/research/classification/reports';
 
 /** @return array<string,mixed> */
-function residency1402ReplacementAssessment(PDO $db, string $workspace, string $sitting): array
+function residencySourceReplacementAssessment(PDO $db, string $workspace, string $sitting): array
 {
     $statement = $db->prepare(<<<'SQL'
 SELECT s.question_count,a.id assessment_id,a.status,a.current_version_no,v.id version_id,
@@ -53,7 +53,7 @@ SQL);
 }
 
 /** @return array<string,mixed> */
-function residency1402ReplacementQuestion(PDO $db, string $workspace, array $entry): array
+function residencySourceReplacementQuestion(PDO $db, string $workspace, array $entry): array
 {
     $question = $db->prepare(<<<'SQL'
 SELECT q.id question_id,q.stem,q.status question_status,si.id sitting_id,
@@ -62,11 +62,11 @@ FROM bank_questions q
 JOIN bank_exam_sittings si ON si.id=q.sitting_id AND si.workspace_id=q.workspace_id
 JOIN bank_exam_types et ON et.id=si.exam_type_id AND et.workspace_id=q.workspace_id
 JOIN bank_subjects sb ON sb.id=q.subject_id AND sb.workspace_id=q.workspace_id
-WHERE q.workspace_id=:ws AND et.type_key='residency' AND si.exam_year=1402
+WHERE q.workspace_id=:ws AND et.type_key='residency' AND si.exam_year=:year
   AND si.exam_round=1 AND sb.subject_key=:subject AND q.number_in_sitting=:number
 FOR UPDATE
 SQL);
-    $question->execute(['ws'=>$workspace,'subject'=>$entry['subject'],'number'=>$entry['number']]);
+    $question->execute(['ws'=>$workspace,'year'=>$entry['year'],'subject'=>$entry['subject'],'number'=>$entry['number']]);
     $questions = $question->fetchAll(PDO::FETCH_ASSOC);
     if (count($questions) !== 1 || $questions[0]['question_status'] !== 'published'
         || hash('sha256',(string)$questions[0]['stem']) !== $entry['stem_sha256']) {
@@ -109,7 +109,7 @@ SQL);
     ];
 }
 
-function residency1402WritePrivateJson(string $path, array $payload): void
+function residencySourceWritePrivateJson(string $path, array $payload): void
 {
     $json = json_encode($payload,JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR) . "\n";
     $handle = @fopen($path,'x');
@@ -152,7 +152,7 @@ try {
         throw new RuntimeException('Only updater service identity may apply.');
     }
 
-    $reports=realpath(RESIDENCY_1402_REPLACEMENT_REPORTS);
+    $reports=realpath(RESIDENCY_SOURCE_REPLACEMENT_REPORTS);
     $planPath=(string)($args['plan']??'');
     if ($reports===false || realpath(dirname($planPath))!==$reports || is_link($planPath) || !is_file($planPath)
         || (fileperms($planPath)&0077)!==0) {
@@ -161,14 +161,14 @@ try {
     $rawPlan=(string)file_get_contents($planPath);
     $plan=json_decode($rawPlan,true,64,JSON_THROW_ON_ERROR);
     if (!Guard::planMatches($plan)) {
-        throw new RuntimeException('Plan is not the exact audited 1402 Q175/Q190/Q244 source replacement set.');
+        throw new RuntimeException('Plan is not an exact audited source-citation replacement set.');
     }
     $classification=realpath('/srv/fanoos/shared/research/classification');
     $auditPath=(string)$plan['audit_path'];
     $auditReal=realpath($auditPath);
     if ($classification===false || $auditReal===false || is_link($auditPath)
         || !is_file($auditPath) || (fileperms($auditPath)&0077)!==0
-        || !str_starts_with($auditReal,$classification.'/recovery-1402-')
+        || !str_starts_with($auditReal,$classification.'/recovery-'.$plan['year'].'-')
         || hash_file('sha256',$auditReal)!==$plan['audit_sha256']) {
         throw new RuntimeException('Protected research audit is absent, public or has changed.');
     }
@@ -184,7 +184,7 @@ try {
             throw new RuntimeException('A private rollback-preview receipt is required before apply.');
         }
         $preview=json_decode((string)file_get_contents($previewPath),true,64,JSON_THROW_ON_ERROR);
-        if (($preview['format']??null)!=='fanoos.residency1402.ai-source-citation-replacement-receipt/1'
+        if (($preview['format']??null)!=='fanoos.residency-ai-source-citation-replacement-receipt/1'
             || ($preview['mode']??null)!=='rollback-preview'
             || ($preview['private_plan_sha256']??null)!==hash('sha256',$rawPlan)
             || ($preview['question_stem_choices_official_key_unchanged']??null)!==true
@@ -214,9 +214,9 @@ try {
     $map=json_decode((string)file_get_contents($root.'/data/bank/reference-chapter-pages.json'),true,64,JSON_THROW_ON_ERROR);
     RuntimeConfig::load();
     $db=DatabaseConnection::fromEnvironment();
-    $lock=$db->query("SELECT GET_LOCK('fanoos:residency-1402-ai-source-citation-replacements',30)")->fetchColumn();
+    $lock=$db->query("SELECT GET_LOCK('fanoos:residency-ai-source-citation-replacements',30)")->fetchColumn();
     if ((int)$lock!==1) {
-        throw new RuntimeException('Could not acquire the 1402 source-correction writer lock.');
+        throw new RuntimeException('Could not acquire the residency source-correction writer lock.');
     }
 
     $releaseLock=true;
@@ -226,12 +226,12 @@ try {
         $sittingQuery=$db->prepare(<<<'SQL'
 SELECT si.id,si.workspace_id,si.question_count FROM bank_exam_sittings si
 JOIN bank_exam_types et ON et.id=si.exam_type_id AND et.workspace_id=si.workspace_id
-WHERE si.workspace_id=:ws AND et.type_key='residency' AND si.exam_year=1402 AND si.exam_round=1
+WHERE si.workspace_id=:ws AND et.type_key='residency' AND si.exam_year=:year AND si.exam_round=1
 SQL);
-        $sittingQuery->execute(['ws'=>$workspace]);$sittings=$sittingQuery->fetchAll(PDO::FETCH_ASSOC);
-        if(count($sittings)!==1)throw new RuntimeException('1402 sitting identity is not unique.');
+        $sittingQuery->execute(['ws'=>$workspace,'year'=>$plan['year']]);$sittings=$sittingQuery->fetchAll(PDO::FETCH_ASSOC);
+        if(count($sittings)!==1)throw new RuntimeException('Exact residency sitting identity is not unique.');
         $sitting=$sittings[0];
-        $assessmentBefore=residency1402ReplacementAssessment($db,$workspace,(string)$sitting['id']);
+        $assessmentBefore=residencySourceReplacementAssessment($db,$workspace,(string)$sitting['id']);
         $sourceQuery=$db->prepare(<<<'SQL'
 SELECT s.id source_id,s.edition_id,s.node_id,s.page,s.printed_page,s.pdf_page,LOWER(s.pdf_sha256) pdf_sha256,s.anchor_text,
        s.origin,s.is_primary,s.reviewed_at,s.reviewed_by_user_id,s.confidence_source,s.confidence_node,s.confidence_page,
@@ -250,7 +250,7 @@ JOIN bank_reference_nodes n ON n.id=s.node_id AND n.workspace_id=s.workspace_id
 JOIN bank_reference_validity v ON v.edition_id=e.id AND v.workspace_id=e.workspace_id
  AND v.exam_type_id=et.id AND v.subject_id=sb.id AND v.exam_year=si.exam_year
 WHERE s.workspace_id=:ws AND LOWER(s.id)=:source_id AND q.number_in_sitting=:number
-  AND si.exam_year=1402 AND si.exam_round=1 AND et.type_key='residency' AND sb.subject_key=:subject
+  AND si.exam_year=:year AND si.exam_round=1 AND et.type_key='residency' AND sb.subject_key=:subject
 FOR UPDATE
 SQL);
         $newNodeQuery=$db->prepare(<<<'SQL'
@@ -261,7 +261,7 @@ JOIN bank_reference_validity v ON v.edition_id=e.id AND v.workspace_id=e.workspa
 JOIN bank_subjects sb ON sb.id=v.subject_id AND sb.workspace_id=v.workspace_id
 JOIN bank_exam_types et ON et.id=v.exam_type_id AND et.workspace_id=v.workspace_id
 WHERE r.workspace_id=:ws AND r.reference_key=:reference AND e.edition_key=:edition
- AND n.kind='chapter' AND n.number=:chapter AND v.exam_year=1402 AND sb.subject_key=:subject
+ AND n.kind='chapter' AND n.number=:chapter AND v.exam_year=:year AND sb.subject_key=:subject
  AND et.type_key='residency' AND v.is_official=1
 SQL);
         $update=$db->prepare(<<<'SQL'
@@ -281,7 +281,7 @@ SQL);
         $beforeImmutable=[];$afterImmutableByNumber=[];$changes=[];
         foreach($plan['entries'] as $entry){
             $spec=Guard::spec((int)$entry['number']);
-            $sourceQuery->execute(['ws'=>$workspace,'source_id'=>$entry['source_id'],'number'=>$entry['number'],'subject'=>$entry['subject']]);
+            $sourceQuery->execute(['ws'=>$workspace,'source_id'=>$entry['source_id'],'number'=>$entry['number'],'year'=>$plan['year'],'subject'=>$entry['subject']]);
             $rows=$sourceQuery->fetchAll(PDO::FETCH_ASSOC);
             if(count($rows)!==1)throw new RuntimeException('Q'.$entry['number'].': source identity is not unique.');
             $old=$rows[0];
@@ -302,7 +302,7 @@ SQL);
                 throw new RuntimeException('Q'.$entry['number'].': live source differs from exact audited old citation.');
             }
 
-            $immutableBefore=residency1402ReplacementQuestion($db,$workspace,$entry);
+            $immutableBefore=residencySourceReplacementQuestion($db,$workspace,$entry);
             $beforeImmutable[(string)$entry['number']]=$immutableBefore['immutable'];
 
             $newEdition=$entry['reference'];$newChapter=$entry['chapter'];$newPage=$entry['pdf_page'];
@@ -318,12 +318,12 @@ SQL);
             }
 
             [$referenceKey,$editionKey]=explode('@',$newEdition,2);
-            $newNodeQuery->execute(['ws'=>$workspace,'reference'=>$referenceKey,'edition'=>$editionKey,'chapter'=>$newChapter,'subject'=>$entry['subject']]);
+            $newNodeQuery->execute(['ws'=>$workspace,'reference'=>$referenceKey,'edition'=>$editionKey,'chapter'=>$newChapter,'subject'=>$entry['subject'],'year'=>$plan['year']]);
             $nodes=$newNodeQuery->fetchAll(PDO::FETCH_ASSOC);
             if(count($nodes)!==1||$nodes[0]['kind']!=='chapter'||(string)$nodes[0]['number']!==$newChapter
                 ||(int)$nodes[0]['is_official']!==1
                 ||OfficialScopePageGuard::pageDisposition($nodes[0]['scope_chapters'],$newChapter,$newPrinted)!==true){
-                throw new RuntimeException('Q'.$entry['number'].': replacement chapter/page is not in exact 1402 official scope.');
+                throw new RuntimeException('Q'.$entry['number'].': replacement chapter/page is not in exact official-year scope.');
             }
 
             $update->execute([
@@ -341,7 +341,7 @@ SQL);
             ]);
             if($update->rowCount()!==1)throw new RuntimeException('Q'.$entry['number'].': source-only compare-and-swap did not update exactly one row.');
 
-            $immutableAfter=residency1402ReplacementQuestion($db,$workspace,$entry);
+            $immutableAfter=residencySourceReplacementQuestion($db,$workspace,$entry);
             if($immutableAfter['immutable']!==$immutableBefore['immutable'])throw new RuntimeException('Q'.$entry['number'].': question/key changed during source update.');
             $afterImmutableRows=$db->prepare(<<<'SQL'
 SELECT r.reference_key,e.edition_key,n.number chapter,s.page,s.printed_page,s.pdf_page,LOWER(s.pdf_sha256) pdf_sha256,
@@ -365,13 +365,13 @@ SQL);$afterImmutableRows->execute(['ws'=>$workspace,'id'=>$old['source_id']]);$n
         if(count($changes)!==count($plan['entries'])||!Guard::immutableSnapshotsMatch($beforeImmutable,$afterImmutableByNumber)){
             throw new RuntimeException('The planned source citations and unchanged question/key snapshots are required.');
         }
-        $assessmentAfter=residency1402ReplacementAssessment($db,$workspace,(string)$sitting['id']);
+        $assessmentAfter=residencySourceReplacementAssessment($db,$workspace,(string)$sitting['id']);
         $assessmentUnchanged=$assessmentAfter===$assessmentBefore;
         $attemptsUnchanged=$assessmentAfter['attempts']===$assessmentBefore['attempts'];
         if(!$assessmentUnchanged)throw new RuntimeException('Frozen assessment, review or attempt snapshot changed.');
 
-        $result=['format'=>'fanoos.residency1402.ai-source-citation-replacement-receipt/1',
-            'mode'=>$apply?'applied':'rollback-preview','year'=>1402,'round'=>1,'question_count'=>250,
+        $result=['format'=>'fanoos.residency-ai-source-citation-replacement-receipt/1',
+            'mode'=>$apply?'applied':'rollback-preview','year'=>$plan['year'],'round'=>1,'question_count'=>(int)$sitting['question_count'],
             'changed_source_count'=>count($changes),'changes'=>$changes,'only_changed_table'=>'bank_question_sources',
             'only_changed_columns'=>['edition_id','node_id','page','printed_page','pdf_page','pdf_sha256','anchor_text',
                 'confidence_source','confidence_node','confidence_page','official_scope_status','official_scope_note','scope_unverified'],
@@ -384,12 +384,12 @@ SQL);$afterImmutableRows->execute(['ws'=>$workspace,'id'=>$old['source_id']]);$n
             'verified_backup'=>$apply?basename($backup):null,'at_utc'=>gmdate('Y-m-d\TH:i:s\Z')];
         if($apply){
             $receiptPath=(string)$args['receipt'];
-            residency1402WritePrivateJson($receiptPath,$result);
+            residencySourceWritePrivateJson($receiptPath,$result);
             $changedReceipt=$receiptPath;
             $db->commit();
         }else{
             $db->rollBack();
-            residency1402WritePrivateJson($previewPath,$result);
+            residencySourceWritePrivateJson($previewPath,$result);
         }
         echo json_encode($result,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR).PHP_EOL;
     }catch(Throwable $error){
@@ -397,9 +397,9 @@ SQL);$afterImmutableRows->execute(['ws'=>$workspace,'id'=>$old['source_id']]);$n
         if($changedReceipt!==''&&is_file($changedReceipt))@unlink($changedReceipt);
         throw $error;
     }finally{
-        $db->query("SELECT RELEASE_LOCK('fanoos:residency-1402-ai-source-citation-replacements')");
+        $db->query("SELECT RELEASE_LOCK('fanoos:residency-ai-source-citation-replacements')");
     }
 } catch(Throwable $error) {
-    fwrite(STDERR,'Residency 1402 source citation replacement refused: '.$error->getMessage().PHP_EOL);
+    fwrite(STDERR,'Residency source citation replacement refused: '.$error->getMessage().PHP_EOL);
     exit(1);
 }
