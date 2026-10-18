@@ -66,6 +66,7 @@ use Fanoos\Tests\Operations\VerifiedAiOutsideScopeChapterPageGuardTest;
 use Fanoos\Tests\Operations\VerifiedHumanSourcePageBundleGuardTest;
 use Fanoos\Tests\Operations\VoidedSourceCitationGuardTest;
 use Fanoos\Tests\Operations\TwoSourceCitationGuardTest;
+use Fanoos\Tests\Operations\SupportingSourceCitationGuardTest;
 use Fanoos\Tests\Operations\ReferenceLibraryImportPolicyTest;
 use Fanoos\Tests\Operations\StudyScheduleTest;
 use Fanoos\Tests\Operations\ZibalPaymentGatewayTest;
@@ -134,7 +135,8 @@ try {
     $assertions += (new VoidedSourceCitationGuardTest())->run();
     echo "PASS voided-question source-only citation provenance guard\n";
     $assertions += (new TwoSourceCitationGuardTest())->run();
-    echo "PASS two-source original-PDF citation guard\n";
+    $assertions += (new SupportingSourceCitationGuardTest())->run();
+    echo "PASS multi-source original-PDF citation guards\n";
     $assertions += (new ReferenceLibraryImportPolicyTest())->run();
     echo "PASS reference library partial-import policy\n";
     $assertions += (new ExamRankingTest())->run();
