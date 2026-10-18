@@ -4,11 +4,36 @@ declare(strict_types=1);
 
 namespace Fanoos\Platform\Bank;
 
-/** Exact 1402 source-citation replacements for Q175, Q190 and Q244. */
+/** Exact 1402 source-citation replacements for Q139, Q175, Q190 and Q244. */
 final class Residency1402AiSourceCitationReplacementGuard
 {
     /** @var array<int,array<string,mixed>> */
     private const SPECS = [
+        139 => [
+            'subject' => 'periodontics',
+            'stem_sha256' => '135de36f7a19697892436ec03757e00ea25a701bdbcb77af353452f204429b78',
+            'choices_sha256' => '130db2fbd2cf0eef8dca766eddd20f1cd4ed24374cf82cd25083e588a1393c16',
+            'answer_sha256' => 'd99140b505ae44ee35fc6950e8a72a99040471d1e38b8572f876faf5b170edb9',
+            'source_id' => '01a11b0f-a157-7fab-846d-72bde05e5622',
+            'old_reference' => 'carranza-periodontology@13e',
+            'old_chapter' => '34',
+            'old_legacy_page' => '412.e2',
+            'old_printed_page' => '412.e2',
+            'old_pdf_page' => 892,
+            'old_pdf_sha256' => 'f0e411898ae010688ca5c0d21afe312cef6f5dae86d0e2e45648bc51ca8e2adf',
+            'old_anchor_sha256' => '56c35cf8277b15fabd277c166ec5b2357581ba3cbe8d4d2c5fdac867b4fd82a8',
+            'old_confidence' => '0.900',
+            'old_official_scope_status' => 'outside_scope_exam_question',
+            'old_official_scope_note_sha256' => 'af20fd1be878f445b582946e3a4db84be3208de64e083d5c419cf5ae3db7cfe5',
+            'reference' => 'carranza-periodontology@13e',
+            'chapter' => '28',
+            'pdf_page' => 785,
+            'printed_page' => '353',
+            'pdf_sha256' => 'f0e411898ae010688ca5c0d21afe312cef6f5dae86d0e2e45648bc51ca8e2adf',
+            'evidence' => 'Familiar aggregation of aggressive peri- ... advisable to verify similar cases in the family',
+            'note' => 'Carranza 13e chapter 28, printed page 353 / PDF 785, describes familial aggregation and recommends verifying similar family cases. The page does not specify first-degree relatives; preserve official final choice 2 and record that qualifier as an inference.',
+            'confidence' => 0.900,
+        ],
         175 => [
             'subject' => 'operative-dentistry',
             'stem_sha256' => '384991e96437bcb328e44fff014a07a5d58ba0f14dc4ae1e780893e525f00311',
@@ -23,6 +48,8 @@ final class Residency1402AiSourceCitationReplacementGuard
             'old_pdf_sha256' => null,
             'old_anchor_sha256' => 'c7b72d1152c945076e492fd723a816bf2069cb3af670ab418712b5fb30d323ef',
             'old_confidence' => '0.850',
+            'old_official_scope_status' => 'in_scope',
+            'old_official_scope_note_sha256' => null,
             'reference' => 'craig-restorative-materials@14e',
             'chapter' => '13',
             'pdf_page' => 288,
@@ -30,6 +57,7 @@ final class Residency1402AiSourceCitationReplacementGuard
             'pdf_sha256' => '333e81ae8a1818cdff57f00e3f870698776e3b8e02fcc49169f397f2fbaf90b9',
             'evidence' => 'three-step etch-and-rinse systems as a group remain the “gold standard” for adhesive systems, in both laboratory and clinical evaluations',
             'note' => 'Craig 14e chapter 13, printed page 277 / PDF 288, directly identifies three-step etch-and-rinse systems as the gold standard. Preserve official final choice 3.',
+            'confidence' => 0.95,
         ],
         190 => [
             'subject' => 'operative-dentistry',
@@ -45,6 +73,8 @@ final class Residency1402AiSourceCitationReplacementGuard
             'old_pdf_sha256' => 'a634d3519e67001151d0d406c3fb91dbeea30ff546c92ed3dec8dfade5a3d6f6',
             'old_anchor_sha256' => 'c5919929151a7f59626d5af7c16f3b3972ed8b960f9cfb376f17347a878fa9f6',
             'old_confidence' => '0.600',
+            'old_official_scope_status' => 'in_scope',
+            'old_official_scope_note_sha256' => null,
             'reference' => 'craig-restorative-materials@14e',
             'chapter' => '13',
             'pdf_page' => 288,
@@ -52,6 +82,7 @@ final class Residency1402AiSourceCitationReplacementGuard
             'pdf_sha256' => '333e81ae8a1818cdff57f00e3f870698776e3b8e02fcc49169f397f2fbaf90b9',
             'evidence' => 'contains some prismless enamel that has not yet worn away and requires longer etching times (20 to 30 seconds)',
             'note' => 'Craig 14e chapter 13, printed page 277 / PDF 288, directly gives 20 to 30 seconds for deciduous unground enamel. Preserve official final choice 3.',
+            'confidence' => 0.95,
         ],
         244 => [
             'subject' => 'dental-materials',
@@ -67,6 +98,8 @@ final class Residency1402AiSourceCitationReplacementGuard
             'old_pdf_sha256' => null,
             'old_anchor_sha256' => '15239a7d2b0e69b3b1168c1c95335ac268a1ba7b0bbf825bca88bc95f667cdad',
             'old_confidence' => '0.400',
+            'old_official_scope_status' => 'in_scope',
+            'old_official_scope_note_sha256' => null,
             'reference' => 'powers-wataha-materials@11e',
             'chapter' => '4',
             'pdf_page' => 67,
@@ -74,6 +107,7 @@ final class Residency1402AiSourceCitationReplacementGuard
             'pdf_sha256' => 'df1b471c7c2949422cbe9f883a792800cb811e39c7217dbae781084df8478399',
             'evidence' => 'particles with a filler loading of 66% to 70% by volume',
             'note' => 'Powers and Wataha 11e chapter 4, printed page 49 / PDF 67, says 66–70% by volume; the official option says by weight. That unit difference supports the keyed “not correct” option 3. Preserve the official final key.',
+            'confidence' => 0.95,
         ],
     ];
 
@@ -86,7 +120,7 @@ final class Residency1402AiSourceCitationReplacementGuard
     /** @return list<int> */
     public static function supportedQuestions(): array
     {
-        return array_keys(self::SPECS);
+        return [139,175,190,244];
     }
 
     public static function modeArgumentsValid(bool $apply, bool $hasBackup, bool $hasReceipt, bool $hasPreview): bool
@@ -99,9 +133,7 @@ final class Residency1402AiSourceCitationReplacementGuard
     /** @param array<int|string,array<string,mixed>> $before @param array<int|string,array<string,mixed>> $after */
     public static function immutableSnapshotsMatch(array $before, array $after): bool
     {
-        return array_keys($before) === [175,190,244]
-            && array_keys($after) === [175,190,244]
-            && $before === $after;
+        return $before !== [] && $before === $after;
     }
 
     /** @param array<string,mixed> $plan */
@@ -113,9 +145,12 @@ final class Residency1402AiSourceCitationReplacementGuard
             || !preg_match('~^/srv/fanoos/shared/research/classification/recovery-1402-[a-z0-9-]+/classification/reports/[^/]+\.json$~D', $plan['audit_path'])
             || !self::sha($plan['audit_sha256'] ?? null)
             || !is_array($plan['entries'] ?? null) || !array_is_list($plan['entries'])
-            || array_column($plan['entries'], 'number') !== [175, 190, 244]) {
+            || $plan['entries'] === [] || count($plan['entries']) > count(self::SPECS)) {
             return false;
         }
+        $numbers=array_column($plan['entries'],'number');
+        $supportedInPlan=array_values(array_filter(self::supportedQuestions(),static fn(int $number):bool=>in_array($number,$numbers,true)));
+        if($numbers!==$supportedInPlan||count(array_unique($numbers))!==count($numbers))return false;
 
         foreach ($plan['entries'] as $entry) {
             if (!is_array($entry) || !is_int($entry['number'] ?? null)) {
@@ -127,20 +162,19 @@ final class Residency1402AiSourceCitationReplacementGuard
             }
             foreach (['subject','stem_sha256','choices_sha256','answer_sha256','source_id','old_reference',
                 'old_chapter','old_legacy_page','old_printed_page','old_pdf_page','old_pdf_sha256',
-                'old_anchor_sha256','old_confidence','reference','chapter','pdf_page','printed_page',
-                'pdf_sha256','evidence','note'] as $key) {
+                'old_anchor_sha256','old_confidence','old_official_scope_status','old_official_scope_note_sha256',
+                'reference','chapter','pdf_page','printed_page','pdf_sha256','evidence','note','confidence'] as $key) {
                 if (!array_key_exists($key, $entry) || $entry[$key] !== $spec[$key]) {
                     return false;
                 }
             }
-            if (($entry['confidence'] ?? null) !== 0.95
+            if (!in_array($entry['confidence'] ?? null,[0.90,0.95],true)
                 || !is_string($entry['audit_batch'] ?? null)
                 || !in_array($entry['audit_batch'], [
+                    '1402:periodontics:q139',
                     '1402:operative-dentistry:q175-q190',
                     '1402:dental-materials:q244',
                 ], true)
-                || !is_string($entry['old_official_scope_status'] ?? null)
-                || $entry['old_official_scope_status'] !== 'in_scope'
                 || ($entry['old_scope_unverified'] ?? null) !== false) {
                 return false;
             }
@@ -153,10 +187,9 @@ final class Residency1402AiSourceCitationReplacementGuard
     {
         if (($audit['format'] ?? null) !== 'fanoos.classification.provenance-audit/1'
             || ($audit['research_only'] ?? null) !== true
-            || ($audit['batch_count'] ?? null) !== 2
-            || ($audit['questions'] ?? null) !== 3
-            || ($audit['accepted'] ?? null) !== 3 || ($audit['pending'] ?? null) !== 0
-            || !is_array($audit['batches'] ?? null) || count($audit['batches']) !== 2) {
+            || !is_array($audit['batches'] ?? null)
+            || ($audit['questions'] ?? null) !== count($plan['entries'])
+            || ($audit['accepted'] ?? null) !== count($plan['entries']) || ($audit['pending'] ?? null) !== 0) {
             return false;
         }
         $batches = [];
@@ -165,10 +198,10 @@ final class Residency1402AiSourceCitationReplacementGuard
                 $batches[$batch['batch']] = $batch;
             }
         }
-        $expectedBatchNumbers = [
-            '1402:operative-dentistry:q175-q190' => ['175','190'],
-            '1402:dental-materials:q244' => ['244'],
-        ];
+        $expectedBatchNumbers=[];
+        foreach($plan['entries'] as $entry){$expectedBatchNumbers[$entry['audit_batch']][]=(string)$entry['number'];}
+        if(($audit['batch_count']??null)!==count($expectedBatchNumbers)
+            ||count($audit['batches'])!==count($expectedBatchNumbers))return false;
         foreach ($expectedBatchNumbers as $name => $numbers) {
             $batch = $batches[$name] ?? null;
             if (!is_array($batch) || ($batch['questions'] ?? null) !== count($numbers)

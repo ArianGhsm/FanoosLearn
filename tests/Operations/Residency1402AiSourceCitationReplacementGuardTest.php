@@ -11,9 +11,9 @@ final class Residency1402AiSourceCitationReplacementGuardTest
     public function run(): int
     {
         $checks=0;
-        $this->check(Guard::supportedQuestions()===[175,190,244],'Only the three audited 1402 source rows are eligible.');++$checks;
+        $this->check(Guard::supportedQuestions()===[139,175,190,244],'Only the four audited 1402 source rows are eligible.');++$checks;
         $this->check(Guard::spec(174)===null,'An unlisted question entered the citation replacement route.');++$checks;
-        $immutable=[175=>['stem'=>'a','choices'=>'b','answer'=>'c'],190=>['stem'=>'d','choices'=>'e','answer'=>'f'],244=>['stem'=>'g','choices'=>'h','answer'=>'i']];
+        $immutable=[139=>['stem'=>'0','choices'=>'1','answer'=>'2'],175=>['stem'=>'a','choices'=>'b','answer'=>'c'],190=>['stem'=>'d','choices'=>'e','answer'=>'f'],244=>['stem'=>'g','choices'=>'h','answer'=>'i']];
         $this->check(Guard::immutableSnapshotsMatch($immutable,$immutable),'Unchanged item fingerprints were rejected.');++$checks;
         $changed=$immutable;$changed[190]['answer']='changed';
         $this->check(!Guard::immutableSnapshotsMatch($immutable,$changed),'Changed answer passed immutable comparison.');++$checks;
@@ -36,9 +36,7 @@ final class Residency1402AiSourceCitationReplacementGuardTest
             $spec=Guard::spec($number);
             $entries[]=$spec+[
                 'number'=>$number,
-                'confidence'=>0.95,
-                'audit_batch'=>$number===244?'1402:dental-materials:q244':'1402:operative-dentistry:q175-q190',
-                'old_official_scope_status'=>'in_scope',
+                'audit_batch'=>match($number){139=>'1402:periodontics:q139',244=>'1402:dental-materials:q244',default=>'1402:operative-dentistry:q175-q190'},
                 'old_scope_unverified'=>false,
             ];
         }
@@ -49,23 +47,27 @@ final class Residency1402AiSourceCitationReplacementGuardTest
             'audit_sha256'=>str_repeat('a',64),
             'entries'=>$entries,
         ];
-        $this->check(Guard::planMatches($plan),'Exact three-question replacement plan was rejected.');++$checks;
+        $this->check(Guard::planMatches($plan),'Exact four-question replacement plan was rejected.');++$checks;
         foreach([
-            array_replace($entries[0],['pdf_page'=>289]),
+            array_replace($entries[0],['pdf_page'=>786]),
             array_replace($entries[1],['reference'=>'summit-operative@4e']),
-            array_replace($entries[2],['pdf_sha256'=>str_repeat('b',64)]),
-            array_replace($entries[2],['source_id'=>'00000000-0000-7000-8000-000000000000']),
+            array_replace($entries[3],['pdf_sha256'=>str_repeat('b',64)]),
+            array_replace($entries[3],['source_id'=>'00000000-0000-7000-8000-000000000000']),
         ] as $badEntry){
-            $bad=$plan;$bad['entries'][array_search($badEntry['number']??-1,[175,190,244],true)??0]=$badEntry;
+            $bad=$plan;$bad['entries'][array_search($badEntry['number']??-1,[139,175,190,244],true)??0]=$badEntry;
             $this->check(!Guard::planMatches($bad),'Mutated exact citation plan passed its pin.');++$checks;
         }
-        $bad=$plan;$bad['entries']=array_slice($entries,0,2);
-        $this->check(!Guard::planMatches($bad),'Partial-year replacement batch passed.');++$checks;
+        $bad=$plan;$bad['entries'][1]['number']=172;
+        $this->check(!Guard::planMatches($bad),'An unpinned source-correction target passed.');++$checks;
 
         $audit=[
             'format'=>'fanoos.classification.provenance-audit/1','research_only'=>true,
-            'batch_count'=>2,'questions'=>3,'accepted'=>3,'pending'=>0,
+            'batch_count'=>3,'questions'=>4,'accepted'=>4,'pending'=>0,
             'batches'=>[
+                ['batch'=>'1402:periodontics:q139','exam_year'=>1402,'subject'=>'periodontics',
+                    'questions'=>1,'accepted'=>1,'pending'=>0,'question_content_identical'=>true,
+                    'mapped'=>['139'=>['ref'=>'carranza-periodontology@13e#ch28','pdf_page'=>785]],
+                    'source_pdf_provenance'=>['carranza-periodontology@13e'=>['sha256'=>Guard::spec(139)['pdf_sha256']]]],
                 ['batch'=>'1402:operative-dentistry:q175-q190','exam_year'=>1402,'subject'=>'operative-dentistry',
                     'questions'=>2,'accepted'=>2,'pending'=>0,'question_content_identical'=>true,
                     'mapped'=>[
@@ -80,10 +82,20 @@ final class Residency1402AiSourceCitationReplacementGuardTest
             ],
         ];
         $this->check(Guard::researchMatches($audit,$plan),'Matching independent original-PDF audit was rejected.');++$checks;
-        $badAudit=$audit;$badAudit['batches'][0]['mapped']['190']['pdf_page']=450;
+        $badAudit=$audit;$badAudit['batches'][1]['mapped']['190']['pdf_page']=450;
         $this->check(!Guard::researchMatches($badAudit,$plan),'Changed page in independent audit passed.');++$checks;
-        $badAudit=$audit;$badAudit['batches'][1]['question_content_identical']=false;
+        $badAudit=$audit;$badAudit['batches'][2]['question_content_identical']=false;
         $this->check(!Guard::researchMatches($badAudit,$plan),'Changed question content passed research audit.');++$checks;
+
+        $singlePlan=$plan;$singlePlan['entries']=[$entries[0]];
+        $singleAudit=['format'=>'fanoos.classification.provenance-audit/1','research_only'=>true,
+            'batch_count'=>1,'questions'=>1,'accepted'=>1,'pending'=>0,
+            'batches'=>[['batch'=>'1402:periodontics:q139','exam_year'=>1402,'subject'=>'periodontics',
+                'questions'=>1,'accepted'=>1,'pending'=>0,'question_content_identical'=>true,
+                'mapped'=>['139'=>['ref'=>'carranza-periodontology@13e#ch28','pdf_page'=>785]],
+                'source_pdf_provenance'=>['carranza-periodontology@13e'=>['sha256'=>Guard::spec(139)['pdf_sha256']]]]]];
+        $this->check(Guard::planMatches($singlePlan)&&Guard::researchMatches($singleAudit,$singlePlan),
+            'Exact pinned Q139 source correction cannot be run as an independent single-question operation.');++$checks;
 
         $root=dirname(__DIR__,2);
         $operator=file_get_contents($root.'/scripts/references/repair_residency_1402_ai_source_citation_replacements.php');
@@ -91,7 +103,7 @@ final class Residency1402AiSourceCitationReplacementGuardTest
         $this->check(str_contains($operator,"\$afterImmutableByNumber[(string)\$entry['number']]=\$immutableAfter['immutable'];")
             &&str_contains($operator,'Guard::immutableSnapshotsMatch($beforeImmutable,$afterImmutableByNumber)')
             &&!str_contains($operator,"\$afterImmutable[(string)\$entry['number']]=\$afterImmutable['immutable'];"),
-            'Operator must keep distinct before/after immutable maps for all three questions.');++$checks;
+            'Operator must keep distinct before/after immutable maps for all four questions.');++$checks;
         $updates=preg_match_all('/UPDATE\s+bank_question_sources\s+SET\s+(.+?)\s+WHERE/is',$operator,$matches);
         $fields=$updates===1&&preg_match_all('/(?:^|,)\s*([a-z0-9_]+)\s*=/i',$matches[1][0],$fieldMatches)
             ? array_map('strtolower',$fieldMatches[1]):[];

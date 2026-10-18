@@ -12,6 +12,7 @@ declare(strict_types=1);
 use Fanoos\Platform\Bank\OfficialScopePageGuard;
 use Fanoos\Platform\Bank\PrintedBookPageEvidence;
 use Fanoos\Platform\Bank\Residency1402AiSourceCitationReplacementGuard as Guard;
+use Fanoos\Platform\Bank\SourceChapterCorrectionGuard;
 use Fanoos\Platform\Operations\BackupManifest;
 use Fanoos\Platform\Support\DatabaseConnection;
 use Fanoos\Platform\Support\RuntimeConfig;
@@ -295,7 +296,9 @@ SQL);
                 ||$old['reviewed_by_user_id']!==null||number_format((float)$old['confidence_source'],3,'.','')!==$spec['old_confidence']
                 ||number_format((float)$old['confidence_node'],3,'.','')!==$spec['old_confidence']
                 ||number_format((float)$old['confidence_page'],3,'.','')!==$spec['old_confidence']
-                ||$old['official_scope_status']!=='in_scope'||$old['official_scope_note']!==null||(bool)$old['scope_unverified']){
+                ||$old['official_scope_status']!==$spec['old_official_scope_status']
+                ||($old['official_scope_note']===null?null:hash('sha256',(string)$old['official_scope_note']))!==$spec['old_official_scope_note_sha256']
+                ||(bool)$old['scope_unverified']){
                 throw new RuntimeException('Q'.$entry['number'].': live source differs from exact audited old citation.');
             }
 
@@ -308,8 +311,9 @@ SQL);
             if(!is_array($mapEntry)||($mapEntry['source_pdf_sha256']??null)!==$newSha
                 ||!is_array($mapEntry['runs']??null))throw new RuntimeException('Q'.$entry['number'].': current verified page map differs.');
             $mapped=false;foreach($mapEntry['runs'] as $run){if(is_array($run)&&count($run)===3&&(string)$run[0]===$newChapter&&$newPage>=$run[1]&&$newPage<=$run[2]){$mapped=true;break;}}
-            if(!$mapped||!PrintedBookPageEvidence::corroborates($newEdition,$newPage,$newPrinted,$newSha)
-                ||!PrintedBookPageEvidence::pageContainsEvidence($newEdition,$newPage,[$entry['evidence']],$newSha)){
+            $evidenceFragments=SourceChapterCorrectionGuard::evidenceFragments($entry['evidence']);
+            if(!$mapped||!is_array($evidenceFragments)||!PrintedBookPageEvidence::corroborates($newEdition,$newPage,$newPrinted,$newSha)
+                ||!PrintedBookPageEvidence::pageContainsEvidence($newEdition,$newPage,$evidenceFragments,$newSha)){
                 throw new RuntimeException('Q'.$entry['number'].': exact original PDF page, printed label or evidence rejected.');
             }
 
@@ -358,8 +362,8 @@ SQL);$afterImmutableRows->execute(['ws'=>$workspace,'id'=>$old['source_id']]);$n
                     'pdf_sha256'=>$newSha,'anchor_sha256'=>hash('sha256',$entry['evidence']),'confidence'=>$entry['confidence']],
                 'science_note'=>$entry['note']];
         }
-        if(count($changes)!==3||!Guard::immutableSnapshotsMatch($beforeImmutable,$afterImmutableByNumber)){
-            throw new RuntimeException('Exactly three source citations and unchanged question/key snapshots are required.');
+        if(count($changes)!==count($plan['entries'])||!Guard::immutableSnapshotsMatch($beforeImmutable,$afterImmutableByNumber)){
+            throw new RuntimeException('The planned source citations and unchanged question/key snapshots are required.');
         }
         $assessmentAfter=residency1402ReplacementAssessment($db,$workspace,(string)$sitting['id']);
         $assessmentUnchanged=$assessmentAfter===$assessmentBefore;
@@ -368,7 +372,7 @@ SQL);$afterImmutableRows->execute(['ws'=>$workspace,'id'=>$old['source_id']]);$n
 
         $result=['format'=>'fanoos.residency1402.ai-source-citation-replacement-receipt/1',
             'mode'=>$apply?'applied':'rollback-preview','year'=>1402,'round'=>1,'question_count'=>250,
-            'changed_source_count'=>3,'changes'=>$changes,'only_changed_table'=>'bank_question_sources',
+            'changed_source_count'=>count($changes),'changes'=>$changes,'only_changed_table'=>'bank_question_sources',
             'only_changed_columns'=>['edition_id','node_id','page','printed_page','pdf_page','pdf_sha256','anchor_text',
                 'confidence_source','confidence_node','confidence_page','official_scope_status','official_scope_note','scope_unverified'],
             'question_stem_choices_official_key_unchanged'=>Guard::immutableSnapshotsMatch($beforeImmutable,$afterImmutableByNumber),
