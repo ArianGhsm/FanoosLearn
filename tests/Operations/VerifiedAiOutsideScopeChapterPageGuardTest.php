@@ -11,6 +11,15 @@ final class VerifiedAiOutsideScopeChapterPageGuardTest
 {
     public function run(): int
     {
+        $this->check(VerifiedAiOutsideScopeChapterPageGuard::printedPageLabelIsValid('967'),
+            'Integer printed-page label was rejected.');
+        $this->check(VerifiedAiOutsideScopeChapterPageGuard::printedPageLabelIsValid('663.e8'),
+            'Inserted printed-page label was rejected.');
+        $this->check(!VerifiedAiOutsideScopeChapterPageGuard::printedPageLabelIsValid('663.e0'),
+            'Zero inserted-page label was accepted.');
+        $this->check(!VerifiedAiOutsideScopeChapterPageGuard::printedPageLabelIsValid('0'),
+            'Zero printed-page label was accepted.');
+        $checks = 4;
         $sha = str_repeat('a', 64);
         $plan = ['year'=>1401, 'subject'=>'dental-materials'];
         $item = [
@@ -23,6 +32,7 @@ final class VerifiedAiOutsideScopeChapterPageGuardTest
             'pdf_page'=>159,
             'pdf_sha256'=>$sha,
             'evidence'=>['permanent deformation'],
+            'new_anchor_text'=>'permanent deformation',
             'note'=>'Van Noort 4e chapter 2.7 is خارج از محدوده آزمون.',
             'expected_legacy_page'=>'35',
             'expected_stored_printed_page'=>'35',
@@ -30,6 +40,8 @@ final class VerifiedAiOutsideScopeChapterPageGuardTest
             'expected_pdf_sha256'=>null,
             'expected_scope_status'=>'in_scope',
             'expected_scope_note'=>null,
+            'expected_old_confidence_source'=>'0.550',
+            'expected_old_confidence_node'=>'0.550',
             'expected_old_confidence_page'=>'0.550',
             'new_confidence_page'=>'0.900',
             'expected_stem_sha256'=>str_repeat('b', 64),
@@ -60,12 +72,14 @@ final class VerifiedAiOutsideScopeChapterPageGuardTest
             VerifiedAiOutsideScopeChapterPageGuard::auditMatches($audit, $plan, $item),
             'Valid AI outside-scope audit rejected.',
         );
-        $checks = 1;
+        ++$checks;
         foreach ([
             ['chapter'=>'2.8'],
             ['pdf_page'=>160],
             ['pdf_sha256'=>str_repeat('f', 64)],
             ['new_confidence_page'=>'0.800'],
+            ['new_anchor_text'=>'not from the evidence fragments'],
+            ['expected_old_confidence_source'=>'0.950'],
             ['evidence'=>['different phrase']],
             ['expected_answer_sha256'=>str_repeat('f', 64)],
         ] as $change) {
@@ -109,6 +123,31 @@ final class VerifiedAiOutsideScopeChapterPageGuardTest
             'Malformed scope JSON was accepted.',
         );
         ++$checks;
+
+        $root = dirname(__DIR__, 2);
+        $operator = file_get_contents($root . '/scripts/references/repair_verified_ai_outside_scope_chapter_pages.php');
+        $this->check(is_string($operator), 'AI outside-scope source repair operator is missing.');
+        ++$checks;
+        $updates = preg_match_all('/UPDATE\s+bank_question_sources\s+SET\s+(.+?)\s+WHERE/is', $operator, $updateMatches);
+        $fields = $updates === 1 && preg_match_all('/(?:^|,)\s*([a-z0-9_]+)\s*=/i', $updateMatches[1][0], $fieldMatches)
+            ? array_map('strtolower', $fieldMatches[1]) : [];
+        $this->check($fields === ['node_id','page','printed_page','pdf_page','pdf_sha256','anchor_text',
+            'official_scope_status','official_scope_note','confidence_source','confidence_node','confidence_page'],
+            'Outside-scope writer must only change its audited source row metadata.');
+        ++$checks;
+        foreach (['confidence_source=:new_confidence_source','confidence_node=:new_confidence_node',
+            'anchor_text=:new_anchor_text','outside-scope source-only readback mismatch',
+            'printedPageLabelIsValid','OfficialScopePageGuard::pageDisposition','PrintedBookPageEvidence::corroborates',
+            'PrintedBookPageEvidence::pageContainsEvidence','BackupManifest::verify'] as $marker) {
+            $this->check(str_contains($operator, $marker), "Outside-scope operator is missing {$marker}.");
+            ++$checks;
+        }
+        foreach (['UPDATE bank_questions','UPDATE bank_question_choices','UPDATE bank_official_answers',
+            'UPDATE exam_assessments','UPDATE exam_attempts','BankPublisher::publish',
+            '$oldChapter === $chapter'] as $forbidden) {
+            $this->check(!str_contains($operator, $forbidden), "Outside-scope operator contains forbidden mutation or restriction {$forbidden}.");
+            ++$checks;
+        }
 
         return $checks;
     }

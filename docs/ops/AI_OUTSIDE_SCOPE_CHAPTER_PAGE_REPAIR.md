@@ -1,21 +1,27 @@
 # Guarded AI outside-scope chapter and page correction
 
 Use `scripts/references/repair_verified_ai_outside_scope_chapter_pages.php`
-only when a pre-existing, unreviewed AI source has an independently
-re-audited exact source chapter that is absent from the official year and
-subject scope. It corrects the source chapter, binds the original PDF page
-and SHA, records the printed page and an explicit Persian outside-scope note,
-and replaces the old page-confidence score with the accepted re-audit score.
+when a pre-existing, unreviewed AI source has an independently re-audited
+exact design location outside the official year and subject page scope. The
+target chapter may be absent from the official list, or may be a selected
+chapter whose exact printed page is explicitly excluded. The chapter may stay
+the same when its page is outside scope. The operator binds the original PDF
+page and SHA, records the printed page and a Persian outside-scope note, and
+updates the accepted confidence vector.
 
 The writer changes only these fields on `bank_question_sources`:
 
-- `node_id`, `page`, `printed_page`, `pdf_page`, and `pdf_sha256`;
+- `node_id`, `page`, `printed_page`, `pdf_page`, `pdf_sha256`, and the
+  source anchor rebuilt from the accepted exact-page evidence fragments;
 - `official_scope_status` and `official_scope_note`;
-- `confidence_page`, only when the audit accepts the page at **0.85 or
-  higher** and the new score does not lower the stored score.
+- `confidence_source`, `confidence_node`, and `confidence_page` together,
+  only when the audit accepts the decision at **0.85 or higher** and the new
+  score does not lower any stored confidence field.
 
-It preserves the question, choices, official answer, source edition and
-anchor, human review fields, frozen assessment versions, and attempts. It
+It preserves the question, choices, official answer, source edition, human
+review fields, frozen assessment versions, and attempts. It replaces the old
+source anchor only with the exact evidence fragments listed in the accepted
+audit and plan, joined by `...`. It
 refuses any target page present in the official full or partial scope. For a
 partial chapter, the guard evaluates the structured boundary and printed
 label; it fails closed when the boundary cannot be parsed or the printed
@@ -29,9 +35,12 @@ same plan.
 Store the audit, plan, rollback receipt, apply receipt and independent
 readback only in
 `/srv/fanoos/shared/research/classification/reports/`, with mode `0600`.
-The plan and audit must agree on the year, subject, source ID, old and new
-chapter, printed page, physical PDF page, SHA, evidence quote, confidence
-and immutable fingerprints. The note must explicitly say
+The plan and audit must agree on the year, subject, source ID, previous and
+target chapter, printed page (including a verified inserted-page label such
+as `663.e8`), physical PDF page, SHA, evidence excerpts and matching anchor,
+confidence vector and immutable fingerprints. Previous and target chapter
+may match only if the exact page is excluded from a partial chapter's scope.
+The note must explicitly say
 `خارج از محدوده` and keep the official key unchanged. Each plan is limited
 to 12 source rows.
 
