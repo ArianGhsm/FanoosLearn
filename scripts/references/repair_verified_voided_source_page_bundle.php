@@ -30,7 +30,7 @@ require $root . '/apps/platform/bootstrap.php';
 function voidedBundleImmutableSnapshot(PDO $db, string $workspace, string $questionId): array
 {
     $question = $db->prepare(<<<'SQL'
-SELECT stem,status FROM bank_questions WHERE workspace_id=:ws AND id=:qid
+SELECT stem,status FROM bank_questions WHERE workspace_id=:ws AND id=:qid FOR UPDATE
 SQL);
     $question->execute(['ws'=>$workspace,'qid'=>$questionId]);
     $row = $question->fetch(PDO::FETCH_ASSOC);
@@ -40,7 +40,7 @@ SQL);
 
     $choicesQuery = $db->prepare(<<<'SQL'
 SELECT position,text,image FROM bank_question_choices
-WHERE workspace_id=:ws AND question_id=:qid ORDER BY position
+WHERE workspace_id=:ws AND question_id=:qid ORDER BY position FOR UPDATE
 SQL);
     $choicesQuery->execute(['ws'=>$workspace,'qid'=>$questionId]);
     $choices = $choicesQuery->fetchAll(PDO::FETCH_ASSOC);
@@ -79,6 +79,7 @@ JOIN bank_exam_sittings s ON s.assessment_id=a.id AND s.workspace_id=a.workspace
 JOIN exam_assessment_versions v ON v.assessment_id=a.id AND v.workspace_id=a.workspace_id
  AND v.version_no=a.current_version_no
 WHERE a.workspace_id=:ws AND s.id=:sitting
+FOR UPDATE
 SQL);
     $statement->execute(['ws'=>$workspace,'sitting'=>$sittingId]);
     $row = $statement->fetch(PDO::FETCH_ASSOC);
@@ -192,8 +193,8 @@ JOIN bank_exam_types et ON et.id=v.exam_type_id AND et.workspace_id=v.workspace_
 WHERE n.workspace_id=:ws AND e.id=:edition_id AND n.kind='chapter' AND n.number=:chapter
  AND v.exam_year=:year AND sb.subject_key=:subject AND et.type_key='residency' AND v.is_official=1
 SQL);
-    $choicesQuery=$db->prepare('SELECT position,text,image FROM bank_question_choices WHERE workspace_id=:ws AND question_id=:qid ORDER BY position');
-    $answerQuery=$db->prepare('SELECT status,choice_position,also_correct_positions,source,recorded_at FROM bank_official_answers WHERE workspace_id=:ws AND question_id=:qid ORDER BY recorded_at DESC,id DESC LIMIT 1');
+    $choicesQuery=$db->prepare('SELECT position,text,image FROM bank_question_choices WHERE workspace_id=:ws AND question_id=:qid ORDER BY position FOR UPDATE');
+    $answerQuery=$db->prepare('SELECT status,choice_position,also_correct_positions,source,recorded_at FROM bank_official_answers WHERE workspace_id=:ws AND question_id=:qid ORDER BY recorded_at DESC,id DESC LIMIT 1 FOR UPDATE');
     $updatePrimary=$db->prepare(<<<'SQL'
 UPDATE bank_question_sources
 SET page=:new_page,printed_page=:new_printed,pdf_page=:new_pdf_page,pdf_sha256=:new_pdf_sha,
