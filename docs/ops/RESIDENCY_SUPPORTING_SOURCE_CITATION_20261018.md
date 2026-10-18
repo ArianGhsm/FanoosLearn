@@ -46,7 +46,7 @@ The operator rejects source-free questions, questions with more than one
 existing source, reviewed/non-AI original sources, partial or unspecified
 chapter scope, stale source identity, stale original PDF hashes, changed
 question/choice/key fingerprints, duplicate citation pages, and unsupported
-quotes. Do not substitute the source-free two-chapter insertion operator for
+quotes. Do not substitute the source-free two-page insertion operator for
 this route; its stronger source-free precondition is intentional.
 
 ## Receipt and independent readback

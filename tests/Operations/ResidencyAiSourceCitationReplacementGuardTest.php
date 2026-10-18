@@ -12,7 +12,7 @@ final class ResidencyAiSourceCitationReplacementGuardTest
     {
         $checks=0;
         $this->check(Guard::supportedQuestions(1402)===[139,175,190,244],'Pinned 1402 rows are incorrect.');++$checks;
-        $this->check(Guard::supportedQuestions(1401)===[165,168],'Pinned 1401 rows are incorrect.');++$checks;
+        $this->check(Guard::supportedQuestions(1401)===[123,128,165,168],'Pinned 1401 rows are incorrect.');++$checks;
         $this->check(Guard::spec(174)===null,'An unlisted question entered the citation replacement route.');++$checks;
         $immutable=[139=>['stem'=>'0','choices'=>'1','answer'=>'2'],175=>['stem'=>'a','choices'=>'b','answer'=>'c'],190=>['stem'=>'d','choices'=>'e','answer'=>'f'],244=>['stem'=>'g','choices'=>'h','answer'=>'i']];
         $this->check(Guard::immutableSnapshotsMatch($immutable,$immutable),'Unchanged item fingerprints were rejected.');++$checks;
@@ -100,7 +100,7 @@ final class ResidencyAiSourceCitationReplacementGuardTest
             'Exact pinned Q139 source correction cannot be run as an independent single-question operation.');++$checks;
 
         $entries1401=[];
-        foreach(Guard::supportedQuestions(1401) as $number){
+        foreach([165,168] as $number){
             $spec=Guard::spec($number);
             $entries1401[]=$spec+['number'=>$number,'audit_batch'=>'1401:operative-dentistry:q165-q168','old_scope_unverified'=>false];
         }
@@ -117,6 +117,25 @@ final class ResidencyAiSourceCitationReplacementGuardTest
                 ],'source_pdf_provenance'=>['craig-restorative-materials@14e'=>['sha256'=>Guard::spec(165)['pdf_sha256']]]]]];
         $this->check(Guard::planMatches($plan1401)&&Guard::researchMatches($audit1401,$plan1401),
             'Exact pinned 1401 Q165/Q168 source replacement plan was rejected.');++$checks;
+
+        $entriesPerio1401=[];
+        foreach([123,128] as $number){
+            $spec=Guard::spec($number);
+            $entriesPerio1401[]=$spec+['number'=>$number,'audit_batch'=>'1401:periodontics:q123-q128','old_scope_unverified'=>false];
+        }
+        $planPerio1401=['format'=>'fanoos.residency-ai-source-citation-replacement-plan/1','year'=>1401,'round'=>1,
+            'audit_path'=>'/srv/fanoos/shared/research/classification/recovery-1401-q123-q128-fixture/classification/reports/audit.json',
+            'audit_sha256'=>str_repeat('c',64),'entries'=>$entriesPerio1401];
+        $auditPerio1401=['format'=>'fanoos.classification.provenance-audit/1','research_only'=>true,
+            'batch_count'=>1,'questions'=>2,'accepted'=>2,'pending'=>0,
+            'batches'=>[['batch'=>'1401:periodontics:q123-q128','exam_year'=>1401,'subject'=>'periodontics',
+                'questions'=>2,'accepted'=>2,'pending'=>0,'question_content_identical'=>true,
+                'mapped'=>[
+                    '123'=>['ref'=>'carranza-periodontology@13e#ch49','pdf_page'=>1112],
+                    '128'=>['ref'=>'carranza-periodontology@13e#ch64','pdf_page'=>1454],
+                ],'source_pdf_provenance'=>['carranza-periodontology@13e'=>['sha256'=>Guard::spec(123)['pdf_sha256']]]]]];
+        $this->check(Guard::planMatches($planPerio1401)&&Guard::researchMatches($auditPerio1401,$planPerio1401),
+            'Exact pinned 1401 Q123/Q128 source replacement plan was rejected.');++$checks;
 
         $root=dirname(__DIR__,2);
         $operator=file_get_contents($root.'/scripts/references/repair_residency_ai_source_citation_replacements.php');

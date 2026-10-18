@@ -4,7 +4,9 @@ For a question that already has one exact-page source but needs additional
 answer-bearing pages, use the reviewed supplemental-source route in
 `docs/ops/RESIDENCY_SUPPORTING_SOURCE_CITATION_20261018.md`. The route appends
 secondary citations without editing the existing source row; the source-free
-two-chapter operator remains restricted to questions with no existing source.
+two-page operator remains restricted to questions with no existing source.
+Its two distinct PDF pages may map to different chapters or to separate pages
+in the same chapter.
 
 ## Outside-scope design location (owner decision 2026-10-16)
 

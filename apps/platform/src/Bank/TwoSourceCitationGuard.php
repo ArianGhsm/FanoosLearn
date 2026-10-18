@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Fanoos\Platform\Bank;
 
-/** A source-free residency question whose correct answer needs two chapters. */
+/** A source-free residency question whose correct answer needs two exact pages. */
 final class TwoSourceCitationGuard
 {
     public static function validate(array $plan, array $audit, array $map): bool
@@ -37,7 +37,6 @@ final class TwoSourceCitationGuard
                 || !preg_match('/^[a-z0-9-]+@[a-z0-9]+$/D', $source['edition'])
                 || !is_string($source['chapter'] ?? null)
                 || !preg_match('/^[1-9][0-9]{0,2}$/D', $source['chapter'])
-                || isset($seen[$source['chapter']])
                 || !is_int($source['pdf_page'] ?? null)
                 || $source['pdf_page'] < 1 || $source['pdf_page'] > 6000
                 || !self::sha($source['pdf_sha256'] ?? null)
@@ -51,7 +50,14 @@ final class TwoSourceCitationGuard
                 || ($map['editions'][$source['edition']]['source_pdf_sha256'] ?? null) !== $source['pdf_sha256']) {
                 return false;
             }
-            $seen[$source['chapter']] = true;
+            // Two answer-bearing pages may be in different chapters or in
+            // separate parts of one chapter. Reject only a duplicate citation
+            // to the same edition, chapter and physical PDF page.
+            $pageKey = $source['edition'] . '#ch' . $source['chapter'] . '#pdf' . $source['pdf_page'];
+            if (isset($seen[$pageKey])) {
+                return false;
+            }
+            $seen[$pageKey] = true;
             $inside = false;
             foreach ($map['editions'][$source['edition']]['runs'] ?? [] as $run) {
                 if (is_array($run) && count($run) === 3
