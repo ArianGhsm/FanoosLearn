@@ -13,6 +13,12 @@ final class Residency1402AiSourceCitationReplacementGuardTest
         $checks=0;
         $this->check(Guard::supportedQuestions()===[175,190,244],'Only the three audited 1402 source rows are eligible.');++$checks;
         $this->check(Guard::spec(174)===null,'An unlisted question entered the citation replacement route.');++$checks;
+        $immutable=[175=>['stem'=>'a','choices'=>'b','answer'=>'c'],190=>['stem'=>'d','choices'=>'e','answer'=>'f'],244=>['stem'=>'g','choices'=>'h','answer'=>'i']];
+        $this->check(Guard::immutableSnapshotsMatch($immutable,$immutable),'Unchanged item fingerprints were rejected.');++$checks;
+        $changed=$immutable;$changed[190]['answer']='changed';
+        $this->check(!Guard::immutableSnapshotsMatch($immutable,$changed),'Changed answer passed immutable comparison.');++$checks;
+        $missing=$immutable;unset($missing[244]);
+        $this->check(!Guard::immutableSnapshotsMatch($immutable,$missing),'Missing item passed immutable comparison.');++$checks;
         foreach([
             [false,false,false,false,true],
             [false,false,false,true,true],
@@ -82,6 +88,10 @@ final class Residency1402AiSourceCitationReplacementGuardTest
         $root=dirname(__DIR__,2);
         $operator=file_get_contents($root.'/scripts/references/repair_residency_1402_ai_source_citation_replacements.php');
         $this->check(is_string($operator),'Versioned citation-replacement operator is missing.');++$checks;
+        $this->check(str_contains($operator,"\$afterImmutableByNumber[(string)\$entry['number']]=\$immutableAfter['immutable'];")
+            &&str_contains($operator,'Guard::immutableSnapshotsMatch($beforeImmutable,$afterImmutableByNumber)')
+            &&!str_contains($operator,"\$afterImmutable[(string)\$entry['number']]=\$afterImmutable['immutable'];"),
+            'Operator must keep distinct before/after immutable maps for all three questions.');++$checks;
         $updates=preg_match_all('/UPDATE\s+bank_question_sources\s+SET\s+(.+?)\s+WHERE/is',$operator,$matches);
         $fields=$updates===1&&preg_match_all('/(?:^|,)\s*([a-z0-9_]+)\s*=/i',$matches[1][0],$fieldMatches)
             ? array_map('strtolower',$fieldMatches[1]):[];
@@ -90,7 +100,7 @@ final class Residency1402AiSourceCitationReplacementGuardTest
             'Operator writes outside citation, scope and confidence metadata.');++$checks;
         foreach(['FOR UPDATE','GET_LOCK','BackupManifest::verify','PrintedBookPageEvidence::corroborates',
             'PrintedBookPageEvidence::pageContainsEvidence','OfficialScopePageGuard::pageDisposition',
-            'Guard::researchMatches','residency1402ReplacementAssessment','$db->rollBack();','$db->commit();'] as $marker){
+            'Guard::researchMatches','Guard::immutableSnapshotsMatch','residency1402ReplacementAssessment','$db->rollBack();','$db->commit();'] as $marker){
             $this->check(str_contains($operator,$marker),"Operator is missing guard {$marker}.");++$checks;
         }
         foreach(['confidence_source=:confidence_source','confidence_node=:confidence_node','confidence_page=:confidence_page',

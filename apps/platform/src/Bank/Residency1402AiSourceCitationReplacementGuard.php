@@ -96,6 +96,14 @@ final class Residency1402AiSourceCitationReplacementGuard
             : !$hasBackup && !$hasReceipt;
     }
 
+    /** @param array<int|string,array<string,mixed>> $before @param array<int|string,array<string,mixed>> $after */
+    public static function immutableSnapshotsMatch(array $before, array $after): bool
+    {
+        return array_keys($before) === [175,190,244]
+            && array_keys($after) === [175,190,244]
+            && $before === $after;
+    }
+
     /** @param array<string,mixed> $plan */
     public static function planMatches(array $plan): bool
     {

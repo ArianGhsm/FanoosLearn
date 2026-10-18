@@ -277,7 +277,7 @@ WHERE workspace_id=:ws AND id=:source_id AND edition_id=:old_edition AND node_id
  AND scope_unverified=:old_scope_unverified
 SQL);
 
-        $beforeImmutable=[];$afterImmutable=[];$changes=[];
+        $beforeImmutable=[];$afterImmutableByNumber=[];$changes=[];
         foreach($plan['entries'] as $entry){
             $spec=Guard::spec((int)$entry['number']);
             $sourceQuery->execute(['ws'=>$workspace,'source_id'=>$entry['source_id'],'number'=>$entry['number'],'subject'=>$entry['subject']]);
@@ -337,8 +337,8 @@ SQL);
             ]);
             if($update->rowCount()!==1)throw new RuntimeException('Q'.$entry['number'].': source-only compare-and-swap did not update exactly one row.');
 
-            $afterImmutable=residency1402ReplacementQuestion($db,$workspace,$entry);
-            if($afterImmutable['immutable']!==$immutableBefore['immutable'])throw new RuntimeException('Q'.$entry['number'].': question/key changed during source update.');
+            $immutableAfter=residency1402ReplacementQuestion($db,$workspace,$entry);
+            if($immutableAfter['immutable']!==$immutableBefore['immutable'])throw new RuntimeException('Q'.$entry['number'].': question/key changed during source update.');
             $afterImmutableRows=$db->prepare(<<<'SQL'
 SELECT r.reference_key,e.edition_key,n.number chapter,s.page,s.printed_page,s.pdf_page,LOWER(s.pdf_sha256) pdf_sha256,
        s.anchor_text,s.confidence_source,s.confidence_node,s.confidence_page,s.official_scope_status,s.official_scope_note,s.scope_unverified
@@ -350,7 +350,7 @@ SQL);$afterImmutableRows->execute(['ws'=>$workspace,'id'=>$old['source_id']]);$n
                 ||$new['printed_page']!==$newPrinted||(int)$new['pdf_page']!==$newPage||$new['pdf_sha256']!==$newSha
                 ||$new['anchor_text']!==$entry['evidence']||$new['official_scope_status']!=='in_scope'
                 ||$new['official_scope_note']!==null||(bool)$new['scope_unverified'])throw new RuntimeException('Q'.$entry['number'].': replacement source did not read back exactly.');
-            $afterImmutable[(string)$entry['number']]=$afterImmutable['immutable'];
+            $afterImmutableByNumber[(string)$entry['number']]=$immutableAfter['immutable'];
             $changes[]=['number'=>$entry['number'],'source_id'=>$old['source_id'],'subject'=>$entry['subject'],
                 'old'=>['reference'=>$oldEdition,'chapter'=>$old['chapter'],'legacy_page'=>$old['page'],'printed_page'=>$old['printed_page'],
                     'pdf_page'=>$oldPdfPage,'pdf_sha256'=>$old['pdf_sha256'],'anchor_sha256'=>$spec['old_anchor_sha256']],
@@ -358,7 +358,9 @@ SQL);$afterImmutableRows->execute(['ws'=>$workspace,'id'=>$old['source_id']]);$n
                     'pdf_sha256'=>$newSha,'anchor_sha256'=>hash('sha256',$entry['evidence']),'confidence'=>$entry['confidence']],
                 'science_note'=>$entry['note']];
         }
-        if(count($changes)!==3)throw new RuntimeException('Exactly three source citations must be replaced.');
+        if(count($changes)!==3||!Guard::immutableSnapshotsMatch($beforeImmutable,$afterImmutableByNumber)){
+            throw new RuntimeException('Exactly three source citations and unchanged question/key snapshots are required.');
+        }
         $assessmentAfter=residency1402ReplacementAssessment($db,$workspace,(string)$sitting['id']);
         $assessmentUnchanged=$assessmentAfter===$assessmentBefore;
         $attemptsUnchanged=$assessmentAfter['attempts']===$assessmentBefore['attempts'];
@@ -369,9 +371,9 @@ SQL);$afterImmutableRows->execute(['ws'=>$workspace,'id'=>$old['source_id']]);$n
             'changed_source_count'=>3,'changes'=>$changes,'only_changed_table'=>'bank_question_sources',
             'only_changed_columns'=>['edition_id','node_id','page','printed_page','pdf_page','pdf_sha256','anchor_text',
                 'confidence_source','confidence_node','confidence_page','official_scope_status','official_scope_note','scope_unverified'],
-            'question_stem_choices_official_key_unchanged'=>$beforeImmutable===$afterImmutable,
+            'question_stem_choices_official_key_unchanged'=>Guard::immutableSnapshotsMatch($beforeImmutable,$afterImmutableByNumber),
             'assessment_version_and_reviews_unchanged'=>$assessmentUnchanged,'attempts_unchanged'=>$attemptsUnchanged,
-            'immutable_question_before_after'=>['before'=>$beforeImmutable,'after'=>$afterImmutable],
+            'immutable_question_before_after'=>['before'=>$beforeImmutable,'after'=>$afterImmutableByNumber],
             'assessment_before_after'=>['before'=>$assessmentBefore,'after'=>$assessmentAfter],
             'research_audit_sha256'=>$plan['audit_sha256'],'private_plan_sha256'=>hash('sha256',$rawPlan),
             'preview_receipt_sha256'=>$apply?hash_file('sha256',$previewPath):null,
