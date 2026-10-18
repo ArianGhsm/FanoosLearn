@@ -21,9 +21,9 @@ final class VoidedSourcePageBundleGuardTest
             'primary_printed_page'=>'42',
             'pdf_sha256'=>$sha,
             'pages'=>[
-                ['pdf_page'=>50,'printed_page'=>'40','evidence'=>['Transplantation experiments demonstrate that not all skeletal']],
-                ['pdf_page'=>51,'printed_page'=>'41','evidence'=>['In more precise later experiments, however, nasal septal cartilage']],
-                ['pdf_page'=>52,'printed_page'=>'42','evidence'=>['the cranial base synchondroses can and do act as independently']],
+                ['pdf_page'=>50,'printed_page'=>'40','evidence'=>['transplantation evidence for nasal cartilage growth']],
+                ['pdf_page'=>51,'printed_page'=>'41','evidence'=>['experimental findings about relative cartilage growth']],
+                ['pdf_page'=>52,'printed_page'=>'42','evidence'=>['summary evidence of independent cartilage growth']],
             ],
             'expected_source_page'=>'pdf 52',
             'expected_source_printed_page'=>null,
