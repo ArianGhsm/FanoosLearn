@@ -152,7 +152,8 @@ final class ResidencyAiSourceCitationReplacementGuardTest
             'Operator writes outside citation, scope and confidence metadata.');++$checks;
         foreach(['FOR UPDATE','GET_LOCK','BackupManifest::verify','PrintedBookPageEvidence::corroborates',
             'PrintedBookPageEvidence::pageContainsEvidence','OfficialScopePageGuard::pageDisposition',
-            'Guard::researchMatches','Guard::immutableSnapshotsMatch','residencySourceReplacementAssessment','$db->rollBack();','$db->commit();'] as $marker){
+            'Guard::researchMatches','Guard::immutableSnapshotsMatch','residencySourceReplacementAssessment',
+            'page <=> :old_page','$db->rollBack();','$db->commit();'] as $marker){
             $this->check(str_contains($operator,$marker),"Operator is missing guard {$marker}.");++$checks;
         }
         foreach(['confidence_source=:confidence_source','confidence_node=:confidence_node','confidence_page=:confidence_page',
