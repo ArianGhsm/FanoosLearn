@@ -1,0 +1,196 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Fanoos\Platform\Bank;
+
+/** Exact 1402 source-citation replacements for Q175, Q190 and Q244. */
+final class Residency1402AiSourceCitationReplacementGuard
+{
+    /** @var array<int,array<string,mixed>> */
+    private const SPECS = [
+        175 => [
+            'subject' => 'operative-dentistry',
+            'stem_sha256' => '384991e96437bcb328e44fff014a07a5d58ba0f14dc4ae1e780893e525f00311',
+            'choices_sha256' => '59d80234cac471fe5445295af65a11a5c3b44a0b4e33b4ded1ca7a4bfc3bf71f',
+            'answer_sha256' => '955c6627f3adfbcf8f1e9b39108431a0d82c90e44157f5eb0289b74b29bde510',
+            'source_id' => '01a11b0f-a231-7abd-bac7-84996734e589',
+            'old_reference' => 'summit-operative@4e',
+            'old_chapter' => '9',
+            'old_legacy_page' => '2',
+            'old_printed_page' => '2',
+            'old_pdf_page' => null,
+            'old_pdf_sha256' => null,
+            'old_anchor_sha256' => 'c7b72d1152c945076e492fd723a816bf2069cb3af670ab418712b5fb30d323ef',
+            'old_confidence' => '0.850',
+            'reference' => 'craig-restorative-materials@14e',
+            'chapter' => '13',
+            'pdf_page' => 288,
+            'printed_page' => '277',
+            'pdf_sha256' => '333e81ae8a1818cdff57f00e3f870698776e3b8e02fcc49169f397f2fbaf90b9',
+            'evidence' => 'three-step etch-and-rinse systems as a group remain the “gold standard” for adhesive systems, in both laboratory and clinical evaluations',
+            'note' => 'Craig 14e chapter 13, printed page 277 / PDF 288, directly identifies three-step etch-and-rinse systems as the gold standard. Preserve official final choice 3.',
+        ],
+        190 => [
+            'subject' => 'operative-dentistry',
+            'stem_sha256' => '879d051bc4e280d5311b0f014f83adbac121d3b7669e06929b3e38dea51f2fa7',
+            'choices_sha256' => 'e00b9b3f3e6c3b896bede6aa41d79c405d4fc82cb65f0693099653456649f417',
+            'answer_sha256' => 'bad5084d87dd35adc3c2fb945dee8e5c72be5703361b221daa63b7cfdb27b4fb',
+            'source_id' => '01a11b0f-a28c-7da3-8039-d054645e11c3',
+            'old_reference' => 'summit-operative@4e',
+            'old_chapter' => '9',
+            'old_legacy_page' => 'pdf 450',
+            'old_printed_page' => null,
+            'old_pdf_page' => 450,
+            'old_pdf_sha256' => 'a634d3519e67001151d0d406c3fb91dbeea30ff546c92ed3dec8dfade5a3d6f6',
+            'old_anchor_sha256' => 'c5919929151a7f59626d5af7c16f3b3972ed8b960f9cfb376f17347a878fa9f6',
+            'old_confidence' => '0.600',
+            'reference' => 'craig-restorative-materials@14e',
+            'chapter' => '13',
+            'pdf_page' => 288,
+            'printed_page' => '277',
+            'pdf_sha256' => '333e81ae8a1818cdff57f00e3f870698776e3b8e02fcc49169f397f2fbaf90b9',
+            'evidence' => 'contains some prismless enamel that has not yet worn away and requires longer etching times (20 to 30 seconds)',
+            'note' => 'Craig 14e chapter 13, printed page 277 / PDF 288, directly gives 20 to 30 seconds for deciduous unground enamel. Preserve official final choice 3.',
+        ],
+        244 => [
+            'subject' => 'dental-materials',
+            'stem_sha256' => 'c696829eb9e906464a9dd460514ac6885c44be0b87d89751b8b360598c62d20b',
+            'choices_sha256' => '4d88ce4708f3a9b0596728b389e84e5b0b19fc2f31295193a5b8c0932814ab61',
+            'answer_sha256' => '18eb8874bb78dba77c2dd6b91ce112e085c364f8c52e942cc6fdb4257e30050f',
+            'source_id' => '01a11b0f-a346-780b-a249-8db4bb80bd14',
+            'old_reference' => 'van-noort-materials@4e',
+            'old_chapter' => '2.2',
+            'old_legacy_page' => '74',
+            'old_printed_page' => '74',
+            'old_pdf_page' => null,
+            'old_pdf_sha256' => null,
+            'old_anchor_sha256' => '15239a7d2b0e69b3b1168c1c95335ac268a1ba7b0bbf825bca88bc95f667cdad',
+            'old_confidence' => '0.400',
+            'reference' => 'powers-wataha-materials@11e',
+            'chapter' => '4',
+            'pdf_page' => 67,
+            'printed_page' => '49',
+            'pdf_sha256' => 'df1b471c7c2949422cbe9f883a792800cb811e39c7217dbae781084df8478399',
+            'evidence' => 'particles with a filler loading of 66% to 70% by volume',
+            'note' => 'Powers and Wataha 11e chapter 4, printed page 49 / PDF 67, says 66–70% by volume; the official option says by weight. That unit difference supports the keyed “not correct” option 3. Preserve the official final key.',
+        ],
+    ];
+
+    /** @return array<string,mixed>|null */
+    public static function spec(int $number): ?array
+    {
+        return self::SPECS[$number] ?? null;
+    }
+
+    /** @return list<int> */
+    public static function supportedQuestions(): array
+    {
+        return array_keys(self::SPECS);
+    }
+
+    public static function modeArgumentsValid(bool $apply, bool $hasBackup, bool $hasReceipt, bool $hasPreview): bool
+    {
+        return $apply
+            ? $hasBackup && $hasReceipt && $hasPreview
+            : !$hasBackup && !$hasReceipt;
+    }
+
+    /** @param array<string,mixed> $plan */
+    public static function planMatches(array $plan): bool
+    {
+        if (($plan['format'] ?? null) !== 'fanoos.residency1402.ai-source-citation-replacement-plan/1'
+            || ($plan['year'] ?? null) !== 1402 || ($plan['round'] ?? null) !== 1
+            || !is_string($plan['audit_path'] ?? null)
+            || !preg_match('~^/srv/fanoos/shared/research/classification/recovery-1402-[a-z0-9-]+/classification/reports/[^/]+\.json$~D', $plan['audit_path'])
+            || !self::sha($plan['audit_sha256'] ?? null)
+            || !is_array($plan['entries'] ?? null) || !array_is_list($plan['entries'])
+            || array_column($plan['entries'], 'number') !== [175, 190, 244]) {
+            return false;
+        }
+
+        foreach ($plan['entries'] as $entry) {
+            if (!is_array($entry) || !is_int($entry['number'] ?? null)) {
+                return false;
+            }
+            $spec = self::spec($entry['number']);
+            if ($spec === null) {
+                return false;
+            }
+            foreach (['subject','stem_sha256','choices_sha256','answer_sha256','source_id','old_reference',
+                'old_chapter','old_legacy_page','old_printed_page','old_pdf_page','old_pdf_sha256',
+                'old_anchor_sha256','old_confidence','reference','chapter','pdf_page','printed_page',
+                'pdf_sha256','evidence','note'] as $key) {
+                if (!array_key_exists($key, $entry) || $entry[$key] !== $spec[$key]) {
+                    return false;
+                }
+            }
+            if (($entry['confidence'] ?? null) !== 0.95
+                || !is_string($entry['audit_batch'] ?? null)
+                || !in_array($entry['audit_batch'], [
+                    '1402:operative-dentistry:q175-q190',
+                    '1402:dental-materials:q244',
+                ], true)
+                || !is_string($entry['old_official_scope_status'] ?? null)
+                || $entry['old_official_scope_status'] !== 'in_scope'
+                || ($entry['old_scope_unverified'] ?? null) !== false) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** @param array<string,mixed> $audit @param array<string,mixed> $plan */
+    public static function researchMatches(array $audit, array $plan): bool
+    {
+        if (($audit['format'] ?? null) !== 'fanoos.classification.provenance-audit/1'
+            || ($audit['research_only'] ?? null) !== true
+            || ($audit['batch_count'] ?? null) !== 2
+            || ($audit['questions'] ?? null) !== 3
+            || ($audit['accepted'] ?? null) !== 3 || ($audit['pending'] ?? null) !== 0
+            || !is_array($audit['batches'] ?? null) || count($audit['batches']) !== 2) {
+            return false;
+        }
+        $batches = [];
+        foreach ($audit['batches'] as $batch) {
+            if (is_array($batch) && is_string($batch['batch'] ?? null)) {
+                $batches[$batch['batch']] = $batch;
+            }
+        }
+        $expectedBatchNumbers = [
+            '1402:operative-dentistry:q175-q190' => ['175','190'],
+            '1402:dental-materials:q244' => ['244'],
+        ];
+        foreach ($expectedBatchNumbers as $name => $numbers) {
+            $batch = $batches[$name] ?? null;
+            if (!is_array($batch) || ($batch['questions'] ?? null) !== count($numbers)
+                || ($batch['accepted'] ?? null) !== count($numbers) || ($batch['pending'] ?? null) !== 0
+                || !is_array($batch['mapped'] ?? null)
+                || array_map('strval',array_keys($batch['mapped'])) !== $numbers) {
+                return false;
+            }
+        }
+        foreach ($plan['entries'] as $entry) {
+            $batch = $batches[$entry['audit_batch']] ?? null;
+            $question = (string) $entry['number'];
+            $mapped = is_array($batch) ? ($batch['mapped'][$question] ?? null) : null;
+            $pdf = is_array($batch)
+                ? ($batch['source_pdf_provenance'][$entry['reference']] ?? null) : null;
+            if (!is_array($batch) || ($batch['exam_year'] ?? null) !== 1402
+                || ($batch['subject'] ?? null) !== $entry['subject']
+                || ($batch['question_content_identical'] ?? null) !== true
+                || !is_array($mapped)
+                || ($mapped['ref'] ?? null) !== $entry['reference'] . '#ch' . str_pad($entry['chapter'], 2, '0', STR_PAD_LEFT)
+                || ($mapped['pdf_page'] ?? null) !== $entry['pdf_page']
+                || !is_array($pdf) || ($pdf['sha256'] ?? null) !== $entry['pdf_sha256']) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static function sha(mixed $value): bool
+    {
+        return is_string($value) && preg_match('/^[a-f0-9]{64}$/D', $value) === 1;
+    }
+}
