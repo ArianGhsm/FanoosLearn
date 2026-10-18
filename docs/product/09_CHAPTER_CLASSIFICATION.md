@@ -16,6 +16,17 @@ official exam scope. This flag does not expand the syllabus. The whole-year
 publication gate accepts it only with the same physical PDF page and SHA-256
 requirements as an in-scope source.
 
+For a source-free AI question whose exact design chapter is wholly absent
+from a structured official chapter list, use the dedicated
+`scripts/references/insert_verified_ai_outside_scope_sources.php` route in
+[`docs/ops/AI_OUTSIDE_SCOPE_SOURCE_INSERT_20261018.md`](../ops/AI_OUTSIDE_SCOPE_SOURCE_INSERT_20261018.md).
+Its research-only validator requires an explicit Persian outside-scope note,
+an independent original-PDF audit, unchanged live question/choice/key
+fingerprints, exact official edition and page, rollback preview, fresh
+verified backup, unique receipt and independent readback. The ordinary
+source-only importer remains limited to in-scope sources; an outside-scope
+study-only result must not be sent to it.
+
 ## Partial scope with an unreadable printed page label
 
 When the exact original PDF page and chapter are verified but a partial

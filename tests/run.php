@@ -63,6 +63,7 @@ use Fanoos\Tests\Operations\VerifiedSourcePrintedLabelGuardTest;
 use Fanoos\Tests\Operations\VerifiedHumanOutsideScopeChapterPageGuardTest;
 use Fanoos\Tests\Operations\VerifiedHumanOutsideScopeChapterPageRepairGuardTest;
 use Fanoos\Tests\Operations\VerifiedAiOutsideScopeChapterPageGuardTest;
+use Fanoos\Tests\Operations\VerifiedAiOutsideScopeSourceInsertGuardTest;
 use Fanoos\Tests\Operations\VerifiedHumanSourcePageBundleGuardTest;
 use Fanoos\Tests\Operations\VoidedSourceCitationGuardTest;
 use Fanoos\Tests\Operations\TwoSourceCitationGuardTest;
@@ -128,6 +129,8 @@ try {
     echo "PASS verified human out-of-scope chapter/page guard\n";
     $assertions += (new VerifiedAiOutsideScopeChapterPageGuardTest())->run();
     echo "PASS verified AI out-of-scope chapter/page and confidence guard\n";
+    $assertions += (new VerifiedAiOutsideScopeSourceInsertGuardTest())->run();
+    echo "PASS verified AI source-free outside-scope insertion guard\n";
     $assertions += (new VerifiedHumanOutsideScopeChapterPageRepairGuardTest())->run();
     echo "PASS verified human outside-scope repair source-only contract\n";
     $assertions += (new VerifiedHumanSourcePageBundleGuardTest())->run();
