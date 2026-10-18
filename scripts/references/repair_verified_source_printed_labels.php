@@ -117,8 +117,8 @@ SQL);
 UPDATE bank_question_sources SET printed_page=:printed
 WHERE workspace_id=:ws AND id=:id AND printed_page IS NULL
  AND page <=> :old_page AND pdf_page=:pdf_page AND pdf_sha256=:pdf_sha
- AND origin='ai' AND reviewed_at IS NULL AND reviewed_by_user_id IS NULL
- AND confidence_page=:confidence_page AND official_scope_status='in_scope'
+ AND origin=:origin AND reviewed_at <=> :reviewed_at AND reviewed_by_user_id <=> :reviewed_by_user_id
+ AND confidence_page <=> :confidence_page AND official_scope_status='in_scope'
  AND official_scope_note IS NULL AND scope_unverified=0 AND anchor_text <=> :anchor
 SQL);
 
@@ -136,7 +136,8 @@ SQL);
                 'source_id','edition','chapter','pdf_page','printed_page','pdf_sha256','expected_page',
                 'expected_pdf_page','expected_pdf_sha256','expected_confidence_page','expected_anchor_sha256',
                 'expected_stem_sha256','expected_choices_sha256','expected_answer_sha256',
-                'expected_question_status','expected_answer_status',
+                'expected_question_status','expected_answer_status','expected_origin',
+                'expected_reviewed_at','expected_reviewed_by_user_id',
             ] as $field) {
                 if (!array_key_exists($field, $item)) {
                     throw new RuntimeException("Q{$number}: missing {$field}.");
@@ -146,6 +147,9 @@ SQL);
             $pdfPage=$item['pdf_page'];$printed=$item['printed_page'];$sha=strtolower((string)$item['pdf_sha256']);
             $oldPdfPage=$item['expected_pdf_page'];$oldPdfSha=$item['expected_pdf_sha256'];
             $oldConfidence=$item['expected_confidence_page'];
+            $expectedOrigin=$item['expected_origin'];
+            $expectedReviewedAt=$item['expected_reviewed_at'];
+            $expectedReviewerId=$item['expected_reviewed_by_user_id'];
             if (!is_string($id)||preg_match('/^[a-f0-9-]{36}$/D',$id)!==1
                 || !is_string($edition)||preg_match('/^[a-z0-9-]+@[a-z0-9]+$/D',$edition)!==1
                 || !is_string($chapter)||preg_match('/^[0-9]+(?:\.[0-9]+)?$/D',$chapter)!==1
@@ -153,7 +157,12 @@ SQL);
                 || !is_string($printed)||preg_match('/^[1-9][0-9]{0,3}(?:\.e[1-9][0-9]?)?$/D',$printed)!==1
                 || !is_string($sha)||preg_match('/^[a-f0-9]{64}$/D',$sha)!==1
                 || !is_int($oldPdfPage)||$oldPdfPage!==$pdfPage||$oldPdfSha!==$sha
-                || !is_string($oldConfidence)||!is_numeric($oldConfidence)||(float)$oldConfidence<0.85
+                || !in_array($expectedOrigin,['ai','human'],true)
+                || ($expectedReviewedAt!==null&&!is_string($expectedReviewedAt))
+                || ($expectedReviewerId!==null&&(!is_string($expectedReviewerId)||preg_match('/^[a-f0-9-]{36}$/D',$expectedReviewerId)!==1))
+                || ($expectedOrigin==='ai'&&(!is_string($oldConfidence)||!is_numeric($oldConfidence)||(float)$oldConfidence<0.85))
+                || ($expectedOrigin==='ai'&&($expectedReviewedAt!==null||$expectedReviewerId!==null))
+                || ($expectedOrigin==='human'&&$oldConfidence!==null&&!is_numeric($oldConfidence))
                 || !is_string($item['expected_page'])
                 || !is_string($item['expected_answer_status'])) {
                 throw new RuntimeException("Q{$number}: invalid printed-label-only source identity.");
@@ -165,11 +174,14 @@ SQL);
             $rows=$sourceQuery->fetchAll(PDO::FETCH_ASSOC);
             if(count($rows)!==1)throw new RuntimeException("Q{$number}: source/official validity identity is not unique.");
             $s=$rows[0];
+            $storedConfidence=$s['confidence_page']===null?null:number_format((float)$s['confidence_page'],3,'.','');
+            $expectedConfidence=$oldConfidence===null?null:number_format((float)$oldConfidence,3,'.','');
             if($s['question_status']!==$item['expected_question_status']||$s['question_status']!=='published'
-                ||$s['origin']!=='ai'||$s['reviewed_at']!==null||$s['reviewed_by_user_id']!==null
+                ||$s['origin']!==$expectedOrigin||$s['reviewed_at']!==$expectedReviewedAt
+                ||$s['reviewed_by_user_id']!==$expectedReviewerId||$storedConfidence!==$expectedConfidence
                 ||$s['printed_page']!==null||$s['page']!==$item['expected_page']
                 ||(int)$s['pdf_page']!==$oldPdfPage||$s['pdf_sha256']!==$oldPdfSha
-                ||(string)$s['confidence_page']!==$oldConfidence||$s['scope_unverified']
+                ||$s['scope_unverified']
                 ||$s['official_scope_status']!=='in_scope'||$s['official_scope_note']!==null
                 ||$s['reference_key'].'@'.$s['edition_key']!==$edition||(string)$s['chapter_no']!==$chapter
                 ||$s['kind']!=='chapter'||(int)$s['is_official']!==1
@@ -195,9 +207,12 @@ SQL);
                 throw new RuntimeException("Q{$number}: choices or official answer changed.");
             }
             $update->execute(['printed'=>$printed,'ws'=>$workspace,'id'=>$id,'old_page'=>$s['page'],
-                'pdf_page'=>$pdfPage,'pdf_sha'=>$sha,'confidence_page'=>$oldConfidence,'anchor'=>$s['anchor_text']]);
+                'pdf_page'=>$pdfPage,'pdf_sha'=>$sha,'origin'=>$expectedOrigin,
+                'reviewed_at'=>$expectedReviewedAt,'reviewed_by_user_id'=>$expectedReviewerId,
+                'confidence_page'=>$oldConfidence,'anchor'=>$s['anchor_text']]);
             if($update->rowCount()!==1)throw new RuntimeException("Q{$number}: printed-label-only update ambiguous.");
             $results[]=['number'=>$number,'source_id'=>$id,'edition'=>$edition,'chapter'=>$chapter,
+                'origin'=>$expectedOrigin,'human_review_metadata_preserved'=>true,
                 'pdf_page'=>$pdfPage,'printed_page'=>$printed,'pdf_sha256'=>$sha,'confidence_page'=>$oldConfidence];
         }
         if($apply)$db->commit();else$db->rollBack();
