@@ -1,5 +1,11 @@
 # Chapter classification
 
+For a question that already has one exact-page source but needs additional
+answer-bearing pages, use the reviewed supplemental-source route in
+`docs/ops/RESIDENCY_SUPPORTING_SOURCE_CITATION_20261018.md`. The route appends
+secondary citations without editing the existing source row; the source-free
+two-chapter operator remains restricted to questions with no existing source.
+
 ## Outside-scope design location (owner decision 2026-10-16)
 
 If the exact page in the verified official-edition PDF explains the official
