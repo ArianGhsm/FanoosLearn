@@ -124,7 +124,7 @@ final class ResidencyAiSourceCitationReplacementGuardTest
         $this->check(str_contains($operator,"\$afterImmutableByNumber[(string)\$entry['number']]=\$immutableAfter['immutable'];")
             &&str_contains($operator,'Guard::immutableSnapshotsMatch($beforeImmutable,$afterImmutableByNumber)')
             &&!str_contains($operator,"\$afterImmutable[(string)\$entry['number']]=\$afterImmutable['immutable'];"),
-            'Operator must keep distinct before/after immutable maps for all four questions.');++$checks;
+            'Operator must keep distinct before/after immutable maps for every planned question.');++$checks;
         $updates=preg_match_all('/UPDATE\s+bank_question_sources\s+SET\s+(.+?)\s+WHERE/is',$operator,$matches);
         $fields=$updates===1&&preg_match_all('/(?:^|,)\s*([a-z0-9_]+)\s*=/i',$matches[1][0],$fieldMatches)
             ? array_map('strtolower',$fieldMatches[1]):[];
@@ -133,7 +133,7 @@ final class ResidencyAiSourceCitationReplacementGuardTest
             'Operator writes outside citation, scope and confidence metadata.');++$checks;
         foreach(['FOR UPDATE','GET_LOCK','BackupManifest::verify','PrintedBookPageEvidence::corroborates',
             'PrintedBookPageEvidence::pageContainsEvidence','OfficialScopePageGuard::pageDisposition',
-            'Guard::researchMatches','Guard::immutableSnapshotsMatch','residency1402ReplacementAssessment','$db->rollBack();','$db->commit();'] as $marker){
+            'Guard::researchMatches','Guard::immutableSnapshotsMatch','residencySourceReplacementAssessment','$db->rollBack();','$db->commit();'] as $marker){
             $this->check(str_contains($operator,$marker),"Operator is missing guard {$marker}.");++$checks;
         }
         foreach(['confidence_source=:confidence_source','confidence_node=:confidence_node','confidence_page=:confidence_page',
