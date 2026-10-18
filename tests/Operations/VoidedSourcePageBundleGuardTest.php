@@ -135,6 +135,11 @@ final class VoidedSourcePageBundleGuardTest
             && str_contains($operator, 'INSERT INTO bank_question_sources'),
             'The guarded operator does not contain both source-only write paths.');
         ++$checks;
+        $this->check(is_string($operator)
+            && preg_match('/confidence_source\s*=\s*:confidence_source\s*,\s*confidence_node\s*=\s*:confidence_node\s*,\s*confidence_page\s*=\s*:confidence_page/s', $operator) === 1
+            && preg_match('/VALUES\s*\([^;]*:confidence_source\s*,\s*:confidence_node\s*,\s*:confidence_page\s*,\s*\x27ai\x27/s', $operator) === 1,
+            'Source confidence values must use distinct bound SQL parameters.');
+        ++$checks;
         foreach ([
             'UPDATE bank_questions', 'UPDATE bank_question_choices', 'UPDATE bank_official_answers',
             'INSERT INTO bank_official_answers', 'UPDATE exam_assessment_versions', 'UPDATE exam_attempts',
