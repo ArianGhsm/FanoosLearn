@@ -1,5 +1,10 @@
 # Residency 1401 oral medicine: Burket Q41, Q43, Q50 source pages
 
+**Historical checkpoint.** Its 50-incomplete count and Q41/Q43 confidence
+follow-up are superseded by
+[`RESIDENCY_1401_SOURCE_PAGE_PROGRESS_20261018.md`](RESIDENCY_1401_SOURCE_PAGE_PROGRESS_20261018.md),
+which records later source repairs and the current whole-year gate.
+
 This checkpoint records three source-only repairs. It does **not** complete
 the 1401 sitting or authorize a new frozen exam version.
 
