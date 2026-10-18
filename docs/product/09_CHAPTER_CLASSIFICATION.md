@@ -228,11 +228,46 @@ Report the counts separately, leaving the raw source-row count honest:
 
 ## 3. The procedure
 
-One scientific *research* batch is 30–40 questions from the same residency year (the final research batch may be smaller). Complete all subjects of that year before any public exam-version publication.
-**This is the scientific research unit, not permission for one-question-at-a-time
-site writes.** Site publication is scheduled by **one or two entire subjects**
-as defined in §7 and `docs/PROJECT_PRINCIPLES.md`. Each question still needs
-its own independently verified chapter **and original physical PDF page**.
+One scientific *research* batch is 30–40 questions from the same residency
+year (the final research batch may be smaller). Complete all subjects of that
+year before any public exam-version publication. Research batching is private
+work organization; the only residency site-publication unit is the **entire
+year**, as defined in §7 and `docs/PROJECT_PRINCIPLES.md`.
+
+### One-pass lookup: the found page determines its chapter immediately
+
+For each new or corrected book-based classification, first check the official
+year/subject reference and live verified-PDF inventory once for each exact
+edition used by the batch. Find and inspect the answer-bearing passage in
+that edition's PDF. **The physical page where the passage is found is the page
+decision; read its chapter immediately from the same edition's verified
+page-to-chapter map.** This is one lookup, not separate chapter and page
+phases. Never assign a chapter from the question topic or title and defer
+finding its page. A chapter-only proposal is not an interim result and must
+not be written as a new source record.
+
+The first pass must establish, together:
+
+1. exact official edition and year/subject scope;
+2. positive 1-based physical PDF page and the current PDF SHA-256;
+3. edition-specific chapter containing that page;
+4. original-page evidence that supports the official keyed answer, including
+   any necessary figure, table or second page; and
+5. the printed-page label when a partial chapter's official page boundary
+   depends on printed pagination.
+
+Record those fields as one decision in the same research pass. The later
+independent batch audit checks the recorded citation and provenance; it must
+not restart page or chapter discovery. Validate the accepted batch and use the
+guarded source-only writer. If page, chapter, scope or answer evidence is
+unresolved, keep the new classification pending and state exactly what is
+missing; continue other eligible questions in the batch. If a verified page has no
+corroborated printed label, use the audited `scope_unverified` route only when
+it applies, and do not count that row as year-complete. If the true design
+location is outside the official scope, record that location and its explicit
+outside-scope disposition rather than moving the citation to a guessed
+in-scope chapter. Multi-page or multi-source support must retain every
+answer-bearing location through its approved audited route.
 
 
 **Step 1 — open the batch.**
@@ -275,22 +310,29 @@ prints only selected page numbers and short candidate quotes. The query file
 and any redirected search output are temporary and are removed after the
 operation. No PDF text file or index is written.
 
-**Step 4 — decide from the PDF page.** Open each candidate page in the
-original PDF and verify that it states the fact making the correct option
-correct (or the incorrect options incorrect), rather than merely mentioning
-the topic. Check column order, Persian shaping and figures visually. A search
-hit or short quote alone is not a decision. If page text is unreadable, review
-the PDF visually; do not export OCR or build a text copy. If repeated searches
-do not locate support, leave the question undecided (§5).
+**Step 4 — locate the passage and identify its chapter in one pass.** Open
+each candidate physical page in the exact original PDF and verify that it states
+the fact making the correct option correct (or the incorrect options
+incorrect), rather than merely mentioning the topic. Confirm its chapter from
+the verified page-to-chapter map and its page-local headings. Check column
+order, Persian shaping, tables and figures visually. A search hit or short
+quote alone is not a decision. If page text is unreadable, review the original
+PDF visually; do not export OCR or build a text copy. If repeated searches do
+not locate support, leave the question undecided (§5).
 
 - The fact is in two chapters: take the one that teaches it, not the one that
   refers to it in passing.
-- The page is outside the year's announced `scope`: look for the same fact
-  inside the scope. If the only support is outside, leave the question
-  undecided pending authoritative syllabus evidence. Lower confidence does not make an
-  excluded chapter eligible. For a partially included chapter, verify the
-  official printed-page or section limit on the original PDF page before
-  publication; a chapter-list check alone cannot validate that limit.
+- The page is outside the year's announced `scope`: first check whether the
+  same answer-bearing fact has an exact in-scope source. If the actual design
+  location is outside scope, keep its true chapter/page and use the guarded
+  outside-scope disposition with a clear note; do not relabel it as in-scope
+  or leave its known location unrecorded. This records where the question was
+  designed, not that the question is syllabus-valid. If the page/key evidence
+  conflicts, record the conflict and preserve the official key. Lower
+  confidence does not make an excluded chapter eligible. For a partially
+  included chapter, verify the official printed-page or section limit on the
+  original PDF page before calling it in-scope; a chapter-list check alone
+  cannot validate that limit.
 - Review questions at the end of a chapter, the index, tables of contents
   and reference lists are never the evidence page.
 
@@ -315,10 +357,12 @@ files are read for a sitting, by the `<year>-` prefix):
   label was read on that page; `apply_classification.py` writes all three for
   the cited edition's own PDF. A descriptive answer is later written from
   that page, so a source without `pdf_page` is incomplete.
-- `page` in a decision and its audit receipt is the PDF page number. A printed
-  page label may be saved for display only after it is checked on that exact
-  PDF page and neighboring pages; retain the PDF page number and source PDF
-  SHA-256 in the audit.
+- `page` in a decision and its audit receipt is the 1-based physical PDF page
+  number, never the printed label. A printed page label may be saved only
+  after it is checked on that exact PDF page and neighboring pages; retain
+  both values and the source PDF SHA-256 in the audit when the label is
+  available. Use the `scope_unverified` procedure when the original page is
+  proved but the printed label cannot be corroborated.
 - `evidence` is copied **word for word from the original PDF page**, using
   the search output's `quote:` line only as a candidate. Several fragments are
   joined with `...`; every fragment has at least four words. Never a
