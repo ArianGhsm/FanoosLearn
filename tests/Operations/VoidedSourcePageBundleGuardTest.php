@@ -140,6 +140,10 @@ final class VoidedSourcePageBundleGuardTest
             && preg_match('/VALUES\s*\([^;]*:confidence_source\s*,\s*:confidence_node\s*,\s*:confidence_page\s*,\s*\x27ai\x27/s', $operator) === 1,
             'Source confidence values must use distinct bound SQL parameters.');
         ++$checks;
+        $this->check(is_string($operator)
+            && str_contains($operator, "'year'=>\$plan['year'],'subject'=>\$plan['subject']"),
+            'Official chapter-node lookup must bind the year and subject scope.');
+        ++$checks;
         foreach ([
             'UPDATE bank_questions', 'UPDATE bank_question_choices', 'UPDATE bank_official_answers',
             'INSERT INTO bank_official_answers', 'UPDATE exam_assessment_versions', 'UPDATE exam_attempts',
