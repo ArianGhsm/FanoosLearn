@@ -272,7 +272,7 @@ WHERE workspace_id=:ws AND id=:source_id AND edition_id=:old_edition AND node_id
  AND page=:old_page AND printed_page <=> :old_printed AND pdf_page <=> :old_pdf_page
  AND pdf_sha256 <=> :old_pdf_sha AND anchor_text=:old_anchor AND origin='ai' AND is_primary=1
  AND reviewed_at IS NULL AND reviewed_by_user_id IS NULL
- AND confidence_source=:old_confidence AND confidence_node=:old_confidence AND confidence_page=:old_confidence
+ AND confidence_source=:old_confidence_source AND confidence_node=:old_confidence_node AND confidence_page=:old_confidence_page
  AND official_scope_status=:old_scope_status AND official_scope_note <=> :old_scope_note
  AND scope_unverified=:old_scope_unverified
 SQL);
@@ -330,7 +330,9 @@ SQL);
                 'confidence_page'=>number_format((float)$entry['confidence'],3,'.',''),
                 'ws'=>$workspace,'source_id'=>$old['source_id'],'old_edition'=>$old['edition_id'],'old_node'=>$old['node_id'],
                 'old_page'=>$old['page'],'old_printed'=>$old['printed_page'],'old_pdf_page'=>$old['pdf_page'],'old_pdf_sha'=>$old['pdf_sha256'],
-                'old_anchor'=>$old['anchor_text'],'old_confidence'=>$spec['old_confidence'],'old_scope_status'=>$old['official_scope_status'],
+                'old_anchor'=>$old['anchor_text'],'old_confidence_source'=>$spec['old_confidence'],
+                'old_confidence_node'=>$spec['old_confidence'],'old_confidence_page'=>$spec['old_confidence'],
+                'old_scope_status'=>$old['official_scope_status'],
                 'old_scope_note'=>$old['official_scope_note'],'old_scope_unverified'=>(int)$old['scope_unverified'],
             ]);
             if($update->rowCount()!==1)throw new RuntimeException('Q'.$entry['number'].': source-only compare-and-swap did not update exactly one row.');
