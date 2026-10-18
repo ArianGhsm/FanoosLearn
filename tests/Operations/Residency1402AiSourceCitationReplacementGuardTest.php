@@ -88,6 +88,10 @@ final class Residency1402AiSourceCitationReplacementGuardTest
         $root=dirname(__DIR__,2);
         $operator=file_get_contents($root.'/scripts/references/repair_residency_1402_ai_source_citation_replacements.php');
         $this->check(is_string($operator),'Versioned citation-replacement operator is missing.');++$checks;
+        $this->check(str_contains($operator,"\$afterImmutableByNumber[(string)\$entry['number']]=\$immutableAfter['immutable'];")
+            &&str_contains($operator,'Guard::immutableSnapshotsMatch($beforeImmutable,$afterImmutableByNumber)')
+            &&!str_contains($operator,"\$afterImmutable[(string)\$entry['number']]=\$afterImmutable['immutable'];"),
+            'Operator must keep distinct before/after immutable maps for all three questions.');++$checks;
         $updates=preg_match_all('/UPDATE\s+bank_question_sources\s+SET\s+(.+?)\s+WHERE/is',$operator,$matches);
         $fields=$updates===1&&preg_match_all('/(?:^|,)\s*([a-z0-9_]+)\s*=/i',$matches[1][0],$fieldMatches)
             ? array_map('strtolower',$fieldMatches[1]):[];
