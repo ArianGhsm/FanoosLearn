@@ -93,7 +93,8 @@ final class Residency1402AiSourceCitationReplacementGuardTest
             'Guard::researchMatches','residency1402ReplacementAssessment','$db->rollBack();','$db->commit();'] as $marker){
             $this->check(str_contains($operator,$marker),"Operator is missing guard {$marker}.");++$checks;
         }
-        foreach(['confidence_source=:confidence_source','confidence_node=:confidence_node','confidence_page=:confidence_page'] as $binding){
+        foreach(['confidence_source=:confidence_source','confidence_node=:confidence_node','confidence_page=:confidence_page',
+            'confidence_source=:old_confidence_source','confidence_node=:old_confidence_node','confidence_page=:old_confidence_page'] as $binding){
             $this->check(str_contains($operator,$binding),"Operator is missing the unique confidence bind {$binding}.");++$checks;
         }
         foreach(['UPDATE bank_questions','UPDATE bank_question_choices','UPDATE bank_official_answers',
