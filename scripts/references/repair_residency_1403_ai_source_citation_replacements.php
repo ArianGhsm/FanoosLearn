@@ -370,7 +370,7 @@ SQL);
         $old = $sourceQuery->fetch(PDO::FETCH_ASSOC);
         $expected = $plan['expected_source'];
         if (!is_array($old) || $sourceQuery->fetch(PDO::FETCH_ASSOC) !== false
-            || $old['id'] !== $expected['source_id']
+            || $old['source_id'] !== $expected['source_id']
             || $old['reference_key'] . '@' . $old['edition_key'] !== $spec['old_reference']
             || (string) $old['chapter'] !== $spec['old_chapter'] || $old['kind'] !== 'chapter'
             || $old['page'] !== $spec['old_legacy_page'] || $old['printed_page'] !== null
