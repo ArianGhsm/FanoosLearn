@@ -52,6 +52,7 @@ use Fanoos\Tests\Operations\StudyPlanLayoutTest;
 use Fanoos\Tests\Operations\QuestionBankRowTest;
 use Fanoos\Tests\Operations\SourcePageBackfillTest;
 use Fanoos\Tests\Operations\Residency1403AiSourceCitationCorrectionGuardTest;
+use Fanoos\Tests\Operations\Residency1403AiSourceCitationReplacementGuardTest;
 use Fanoos\Tests\Operations\Residency1403AiSourceBundleCorrectionGuardTest;
 use Fanoos\Tests\Operations\Residency1403AiSourceBundleRepairContractTest;
 use Fanoos\Tests\Operations\SourceChapterCorrectionGuardTest;
@@ -109,6 +110,8 @@ try {
     echo "PASS legacy source page backfill rules\n";
     $assertions += (new Residency1403AiSourceCitationCorrectionGuardTest())->run();
     echo "PASS 1403 AI source-citation audit, private-file and source-only correction guard\n";
+    $assertions += (new Residency1403AiSourceCitationReplacementGuardTest())->run();
+    echo "PASS pinned 1403 AI source citation replacement guard\n";
     $assertions += (new Residency1403AiSourceBundleCorrectionGuardTest())->run();
     echo "PASS 1403 AI multi-page source-bundle evidence guard\n";
     $assertions += (new Residency1403AiSourceBundleRepairContractTest())->run();
