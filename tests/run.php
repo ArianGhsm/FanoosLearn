@@ -68,6 +68,7 @@ use Fanoos\Tests\Operations\VerifiedAiOutsideScopeChapterPageGuardTest;
 use Fanoos\Tests\Operations\VerifiedAiOutsideScopeSourceInsertGuardTest;
 use Fanoos\Tests\Operations\VerifiedHumanSourcePageBundleGuardTest;
 use Fanoos\Tests\Operations\VoidedSourceCitationGuardTest;
+use Fanoos\Tests\Operations\VoidedSourcePageBundleGuardTest;
 use Fanoos\Tests\Operations\TwoSourceCitationGuardTest;
 use Fanoos\Tests\Operations\SupportingSourceCitationGuardTest;
 use Fanoos\Tests\Operations\ReferenceLibraryImportPolicyTest;
@@ -143,6 +144,8 @@ try {
     echo "PASS verified human multi-page source bundle guard\n";
     $assertions += (new VoidedSourceCitationGuardTest())->run();
     echo "PASS voided-question source-only citation provenance guard\n";
+    $assertions += (new VoidedSourcePageBundleGuardTest())->run();
+    echo "PASS voided multi-page source bundle audit guard\n";
     $assertions += (new TwoSourceCitationGuardTest())->run();
     $assertions += (new SupportingSourceCitationGuardTest())->run();
     echo "PASS multi-source original-PDF citation guards\n";
