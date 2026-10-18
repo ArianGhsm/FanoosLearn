@@ -16,7 +16,7 @@ declare(strict_types=1);
  *
  * The protected plan must pin the previous chapter/printed/legacy values,
  * independently accepted provenance audit, immutable question/choices/key,
- * and an exact quotation from the corrected chapter's original PDF page.
+ * and exact quotation fragment(s) from the corrected chapter's original PDF page.
  * Never change edition, original anchor, question, choices, key, review state,
  * assessment or attempts.
  */
@@ -167,6 +167,7 @@ SQL);
             $choicesHash = $item['expected_choices_sha256'] ?? null;
             $answerHash = $item['expected_answer_sha256'] ?? null;
             $confidence = $item['accepted_confidence'] ?? null;
+            $evidenceFragments = SourceChapterCorrectionGuard::evidenceFragments($quote);
             $expectedSourceConfidence = $item['expected_confidence_source'] ?? null;
             $expectedNodeConfidence = $item['expected_confidence_node'] ?? null;
             $expectedPageConfidence = $item['expected_confidence_page'] ?? null;
@@ -188,7 +189,7 @@ SQL);
                 || !is_string($questionHash) || !preg_match('/^[a-f0-9]{64}$/D', $questionHash)
                 || !is_string($choicesHash) || !preg_match('/^[a-f0-9]{64}$/D', $choicesHash)
                 || !is_string($answerHash) || !preg_match('/^[a-f0-9]{64}$/D', $answerHash)
-                || !is_string($quote) || strlen($quote) < 16 || strlen($quote) > 190
+                || !is_array($evidenceFragments)
                 || (!is_float($confidence) && !is_int($confidence))
                 || $confidence < 0.85 || $confidence > 1.0
                 || !is_string($expectedSourceConfidence)
@@ -262,7 +263,7 @@ SQL);
             }
             if (!$inside
                 || !PrintedBookPageEvidence::corroborates($edition, $page, $printed, $sha)
-                || !PrintedBookPageEvidence::pageContainsEvidence($edition, $page, [$quote], $sha)) {
+                || !PrintedBookPageEvidence::pageContainsEvidence($edition, $page, $evidenceFragments, $sha)) {
                 throw new RuntimeException("Q{$number}: verified original page/printed pagination/evidence failed.");
             }
             $keyQuery->execute(['ws'=>$ws,'qid'=>$s['question_id']]);

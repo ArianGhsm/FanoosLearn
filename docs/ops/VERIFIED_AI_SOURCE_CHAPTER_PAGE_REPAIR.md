@@ -27,12 +27,18 @@ page/confidence repair instead. The separate accepted one-question
 PDF page, PDF SHA, unchanged question content, and all three accepted
 confidence scores. The plan pins the audit SHA-256.
 
+`evidence` may contain one or more exact page fragments joined by `...` or
+`…`, for example when the original page uses two columns. Every fragment must
+contain at least four words, stay within the 190-byte plan limit, and match
+the same hash-pinned original PDF page independently. The operator checks all
+fragments; a search hit or a paraphrase is not accepted.
+
 The operator also verifies exact official-year reference validity, full
 chapter or page-bounded scope, mapped chapter containment, actual book-page
-label with neighboring-page corroboration, and the exact page quote. The
-accepted confidence must be at least 0.85 and no lower than any stored
-confidence. It updates the three confidence values only to the score in the
-accepted audit.
+label with neighboring-page corroboration, and every exact page quote
+fragment. The accepted confidence must be at least 0.85 and no lower than any
+stored confidence. It updates the three confidence values only to the score
+in the accepted audit.
 
 ## Preview and apply
 
