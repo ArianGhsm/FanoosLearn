@@ -403,3 +403,47 @@ publication or issue closure is authorized.
 - The 35-question batch now has **30 applied source rows**, including Q208: prosthodontics 3/3, periodontics 5/7, oral surgery 6/6, operative dentistry 2/4, pediatric dentistry 9/9, and oral radiology 5/6.
 - Combined private follow-up report `classification/reports/1401-open6-followup-search-and-q208-apply-20261018-v1.json` has SHA-256 `d2ab931a5c910f55728c901291b3d94a8122aaffc09c6ceb1ccd78a24553e6bf`.
 - The live structural gate is now **5 incomplete**: Q123, Q128, Q165, Q168, and Q204. The 1401 assessment remains published version **6/249**, six versions, zero attempts, and six reviews. The 1400 inventory remains 139 incomplete; 1399 remains untouched. No new assessment version was published.
+
+## Latest continuation: Q123, Q128, Q165, Q168 and Q204 (2026-10-18)
+
+The source-only changes below were previewed, backed up, applied through the
+guarded operators, and independently read back. The 1401 frozen assessment
+remains version **6/249**, with six reviews and zero attempts. No question,
+choice or official key changed.
+
+| Question | Exact 1401 reference location | Result and remaining science note |
+| ---: | --- | --- |
+| 123 | Carranza 13e, ch49, printed 529 / PDF 1112 | The page locates the baking-soda malodor item. The visible sentence connects inhibition with bactericidal effects, while the two-column text layer splits that continuation; the validated anchor is the exact eight-word clause. Official choice 3 remains unchanged. |
+| 128 | Carranza 13e, ch64, printed 659.e1 / PDF 1454 | This page contains the same maxillary-molar furcation question and choices. It does not mark the answer. Preserve official choice 1 (mesial); answer alignment remains open. |
+| 165 | Craig Restorative Materials 14e, ch13, printed 279 / PDF 290 | The page supports the self-etch mechanism. It does not distinguish two-step from one-step self-etch; preserve choice 3 and retain that specificity caveat. |
+| 168 | Craig Restorative Materials 14e, ch13, printed 279 / PDF 290 | The page identifies high water content as an advantage of self-etch systems; choice 3 remains unchanged. |
+| 204 | White & Pharoah 8e, ch8, PDF 414 and PDF 393 | Figure 8.10 labels the inferior orbital fissure on the reverse Towne projection; Table 8.1 shows the SMV resultant image and defines SMV as submentovertex. The second page supports the keyed pair by visual image correlation; choice 1 remains unchanged. |
+
+Guarded replacement for Q165/Q168 used backup
+`20261018T175555Z-add488a6`; apply-receipt SHA-256
+`fc8885fb3b6db3ed4097c9e24b923151854a84ffe491a04420fbe38ccd747393` and
+independent readback SHA-256
+`1e1d32fed85e0777b7d54a44d706d4a4aa970f1446d095d3af14e77cf431266b`.
+The independent Carranza audit for Q123/Q128 is SHA-256
+`c9c23c28af304efa71ce714de1cea606755f0c8b8a85aaa9c6467d5a26986384`;
+their combined apply-receipt SHA-256 is
+`c311a70ceab1a71a57c1bc0ca0fad2e8236a4d25bd947036e0ecd672617baa7b`.
+Q204's original-page audit SHA-256 is
+`7e17432d1b7fa9f540383caf6b243681344f8c93c1224a705415f9517bb7e865`; its
+two-source apply-receipt SHA-256 is
+`bd613c52a55ce87b333f40246a9b0fdb95887937b69166858094563ad42471a4`.
+The grouped independent live readback for Q123/Q128/Q204 has SHA-256
+`3d339c7c991f50f3eb9f6caeb0eb4285b1919e411f22fcf72ccd88f546d7c8bf`.
+
+The latest read-only gate census is
+`/srv/fanoos/shared/research/classification/reports/residency-1400-1405-gate-after-1401-q123-q128-q204-20261018-v1.json`, SHA-256
+`e7220334530b3deb147b67a9936630df76b021d3c5ab68df28bf2d7900d80d8c`.
+It reports 1401 **PASS, 0 structurally incomplete out of 249 questions**;
+1402 and 1403 also pass. The separate 1401 scientific review remains open
+because the Q128 source page does not mark the correct option, alongside the
+previously documented answer-alignment caveats. No new 1401 exam version was
+published; Issue #422 remains open. PR #483 merged with 5/5 CI as
+`996cc2818eca916f37b13ca9f1006e2657e5b22e`; updater request
+`01a1503b-b584-70f1-bdb2-95a264e91f80` succeeded. `/health`, updater smoke and
+`check-sync.sh` all passed. Pre-deploy backup
+`20261018T181949Z-be9e4431` verified with 114 files.
