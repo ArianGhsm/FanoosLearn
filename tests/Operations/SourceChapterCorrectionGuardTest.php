@@ -33,7 +33,30 @@ final class SourceChapterCorrectionGuardTest
         $this->check(!SourceChapterCorrectionGuard::auditMatches($audit, $wrongYear, $item), 'Wrong year accepted.');
         $audit['batches'][0]['question_content_identical'] = false;
         $this->check(!SourceChapterCorrectionGuard::auditMatches($audit, $plan, $item), 'Modified question accepted.');
-        return 8;
+        $fragments = SourceChapterCorrectionGuard::evidenceFragments(
+            'cobalt chromium is preferred...the bar is attached by soldering',
+        );
+        $this->check($fragments === [
+            'cobalt chromium is preferred',
+            'the bar is attached by soldering',
+        ], 'Valid multi-fragment original-page evidence was rejected.');
+        $unicodeFragments = SourceChapterCorrectionGuard::evidenceFragments(
+            'cobalt chromium is preferred…the bar is soldered carefully',
+        );
+        $this->check($unicodeFragments === [
+            'cobalt chromium is preferred',
+            'the bar is soldered carefully',
+        ], 'Unicode ellipsis did not split original-page evidence.');
+        $this->check(SourceChapterCorrectionGuard::evidenceFragments(
+            'cobalt chromium is preferred...the bar is',
+        ) === null, 'Evidence fragment shorter than four words was accepted.');
+        $this->check(SourceChapterCorrectionGuard::evidenceFragments(
+            '...cobalt chromium is preferred',
+        ) === null, 'Empty leading evidence fragment was accepted.');
+        $this->check(SourceChapterCorrectionGuard::evidenceFragments(
+            'cobalt chromium is preferred…' . str_repeat('evidence ', 30),
+        ) === null, 'Overlong evidence was accepted.');
+        return 13;
     }
 
     private function check(bool $okay, string $message): void

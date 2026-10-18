@@ -4,9 +4,34 @@ declare(strict_types=1);
 
 namespace Fanoos\Platform\Bank;
 
-/** Pure identity check between a protected one-question plan and its independent audit. */
+/** Pure guards for protected one-question plans and their independent audits. */
 final class SourceChapterCorrectionGuard
 {
+    /** @return list<string>|null */
+    public static function evidenceFragments(mixed $evidence): ?array
+    {
+        if (!is_string($evidence) || strlen($evidence) < 16 || strlen($evidence) > 190) {
+            return null;
+        }
+
+        $fragments = preg_split('/\s*(?:\.{3}|…)\s*/u', trim($evidence));
+        if (!is_array($fragments) || $fragments === []) {
+            return null;
+        }
+
+        foreach ($fragments as $fragment) {
+            if (!is_string($fragment) || trim($fragment) === '') {
+                return null;
+            }
+            $words = preg_split('/\s+/u', trim($fragment), -1, PREG_SPLIT_NO_EMPTY);
+            if (!is_array($words) || count($words) < 4) {
+                return null;
+            }
+        }
+
+        return array_map('trim', $fragments);
+    }
+
     public static function auditMatches(array $audit, array $plan, array $item): bool
     {
         if (($audit['format'] ?? null) !== 'fanoos.classification.provenance-audit/1'

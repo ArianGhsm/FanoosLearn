@@ -70,6 +70,13 @@ class VerifiedAiSourceChapterPageCorrectionContracts(unittest.TestCase):
             self.assertIn(guard, self.source)
         self.assertNotIn("($plan['year'] ?? null) !== 1405", self.source)
 
+    def test_multi_fragment_evidence_is_page_checked_fragment_by_fragment(self):
+        guard = (ROOT / "apps/platform/src/Bank/SourceChapterCorrectionGuard.php").read_text(encoding="utf-8")
+        self.assertIn("public static function evidenceFragments(mixed $evidence): ?array", guard)
+        self.assertIn("count($words) < 4", guard)
+        self.assertIn("SourceChapterCorrectionGuard::evidenceFragments($quote)", self.source)
+        self.assertIn("PrintedBookPageEvidence::pageContainsEvidence($edition, $page, $evidenceFragments, $sha)", self.source)
+
     @unittest.skipUnless(shutil.which("php"), "PHP required")
     def test_php_syntax(self):
         result = subprocess.run(["php", "-l", str(OPERATOR)], text=True, capture_output=True, check=False)
