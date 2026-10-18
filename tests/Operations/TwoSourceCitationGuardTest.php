@@ -37,6 +37,35 @@ final class TwoSourceCitationGuardTest
         $count = 0;
         $this->check(TwoSourceCitationGuard::validate($plan,$audit,$map), 'Valid two-page evidence rejected.');
         ++$count;
+        $sameChapterSources = [
+            ['edition'=>'white-pharoah-radiology@8e','chapter'=>'8','pdf_page'=>414,
+                'pdf_sha256'=>$sha,'evidence'=>'Fig. 8.10 identifies the reverse Towne projection'],
+            ['edition'=>'white-pharoah-radiology@8e','chapter'=>'8','pdf_page'=>393,
+                'pdf_sha256'=>$sha,'evidence'=>'Table 8.1 identifies the SMV resultant image'],
+        ];
+        $sameChapterPlan = array_replace($plan,['year'=>1401,'number'=>204,'sources'=>$sameChapterSources]);
+        $sameChapterAudit = array_replace($audit,['year'=>1401,'question'=>204,'supporting_pages'=>[
+            ['chapter'=>'8','pdf_page'=>414,'exact_quote'=>$sameChapterSources[0]['evidence']],
+            ['chapter'=>'8','pdf_page'=>393,'exact_quote'=>$sameChapterSources[1]['evidence']],
+        ]]);
+        $sameChapterMap = ['editions'=>['white-pharoah-radiology@8e'=>[
+            'source_pdf_sha256'=>$sha,'runs'=>[['8',390,414]],
+        ]]];
+        $this->check(TwoSourceCitationGuard::validate($sameChapterPlan,$sameChapterAudit,$sameChapterMap),
+            'Two distinct evidence pages in the same official chapter were rejected.');
+        ++$count;
+        $duplicatePageSources = [
+            $sameChapterSources[0],
+            array_replace($sameChapterSources[1],['pdf_page'=>414]),
+        ];
+        $duplicatePagePlan = array_replace($sameChapterPlan,['sources'=>$duplicatePageSources]);
+        $duplicatePageAudit = array_replace($sameChapterAudit,['supporting_pages'=>[
+            ['chapter'=>'8','pdf_page'=>414,'exact_quote'=>$duplicatePageSources[0]['evidence']],
+            ['chapter'=>'8','pdf_page'=>414,'exact_quote'=>$duplicatePageSources[1]['evidence']],
+        ]]);
+        $this->check(!TwoSourceCitationGuard::validate($duplicatePagePlan,$duplicatePageAudit,$sameChapterMap),
+            'A duplicate physical page was accepted as two citations.');
+        ++$count;
         foreach ([
             ['sources'=>[$sources[0]]],
             ['sources'=>[$sources[0],$sources[0]]],

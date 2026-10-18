@@ -270,7 +270,7 @@ UPDATE bank_question_sources SET edition_id=:new_edition,node_id=:new_node,page=
  confidence_source=:confidence_source,confidence_node=:confidence_node,confidence_page=:confidence_page,
  official_scope_status='in_scope',official_scope_note=NULL,scope_unverified=FALSE
 WHERE workspace_id=:ws AND id=:source_id AND edition_id=:old_edition AND node_id=:old_node
- AND page=:old_page AND printed_page <=> :old_printed AND pdf_page <=> :old_pdf_page
+ AND page <=> :old_page AND printed_page <=> :old_printed AND pdf_page <=> :old_pdf_page
  AND pdf_sha256 <=> :old_pdf_sha AND anchor_text=:old_anchor AND origin='ai' AND is_primary=1
  AND reviewed_at IS NULL AND reviewed_by_user_id IS NULL
  AND confidence_source=:old_confidence_source AND confidence_node=:old_confidence_node AND confidence_page=:old_confidence_page

@@ -26,11 +26,12 @@ This is not a request to change the official answer or rewrite a published exam.
 
 `scripts/references/insert_verified_two_sources.php` adds a separate atomic
 source-only route for one currently source-free, published residency question.
-It requires exactly two distinct official-year chapters, a SHA-pinned private
-independent original-PDF audit, a protected plan, unchanged stem/four choices/
-latest final answer hashes, both actual PDF-page quotes, a deployed SHA-bound
-chapter map, and an explicit official-year scope check for each chapter.
-The first source is primary; the second is supporting. Both receive physical
+It requires exactly two distinct official-year PDF pages, which may be in
+different chapters or on separate pages in the same chapter, a SHA-pinned
+private independent original-PDF audit, a protected plan, unchanged stem/four
+choices/latest final answer hashes, both actual page quotes, a deployed
+SHA-bound chapter map, and an explicit official-year scope check. The first
+source is primary; the second is supporting. Both receive a physical
 `pdf_page` and the same approved original PDF SHA. A preview rolls back its
 transaction. Apply requires `fanoosupd`, a verified full backup no older than
 four hours, and a new private receipt. A failed precondition commits neither
