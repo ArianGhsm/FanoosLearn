@@ -353,11 +353,12 @@ all-but-one item; keep Q146 as a scientific answer-alignment hold. Backup
 ## Whole-year state and next work
 
 The latest live official gate reports 249/249 questions in the 1401 inventory
-with **6 structurally incomplete**. The 1400 inventory remains 250/250 with **139
+with **5 structurally incomplete**. The 1400 gate was rechecked at 250/250 with **139
 incomplete**. 1399 has not started. Neither 1401 nor 1400 is ready for
 publication, and no new frozen version or issue closure is authorized.
 
-The 6 structural gate holds are Q123, Q128, Q165, Q168, Q204 and Q208.
+At the previous checkpoint, six structural gate holds were Q123, Q128,
+Q165, Q168, Q204 and Q208; Q208 was cleared in the later continuation below.
 Q123's answer-bearing phrase is split
 into a two-word terminal fragment, below the validator's evidence minimum.
 The latest Carranza13e page re-read confirmed no alternate four-word exact
@@ -373,17 +374,32 @@ source page but retains an unresolved source/key conflict. Q192 now has its true
 but its page does not establish the keyed differential. Q193's high-dose key
 conflicts with the page's low-dose hormesis discussion. Q210's keyed proximity
 is an inference and remains a science hold. Q209's pseudocyst location is
-recorded, with the duration caveat above. Q204 and Q208 still lack decisive
-evidence for the exact projection and lesion distinctions. Q178 and Q184
+recorded, with the duration caveat above. Q204 still lacks decisive evidence
+for the exact projection pair. Q208's source is recorded in the latest
+continuation below. Q178 and Q184
 have complete source-page rows but remain separate scientific answer holds.
-The second in-scope-only search for Q204/Q208 is recorded in private report
+The earlier in-scope-only search for Q204/Q208 is recorded in private report
 `1401-oral-radiology-q204-q208-followup-search-20261018-v1.json`, SHA-256
 `ee0855c73b652b681532c8e8143ba0092fecd14a1594b8d98483b29df9b60d7e`; it
-found no decisive original-page evidence and made no assignment.
+found no decisive original-page evidence at that checkpoint; Q208 was later
+resolved as recorded below.
 
-The current 35-question batch has 29 applied source rows: prosthodontics
+The current 35-question batch had 29 applied source rows before the Q208
+insert recorded below: prosthodontics
 3/3, periodontics 5/7, oral surgery 6/6, operative dentistry 2/4, pediatric
 dentistry 9/9, and oral radiology 4/6. Q147 and Q150 have source receipts as
 recorded above. Q146's source row is complete but its answer alignment remains
 open. Preserve all official keys. No year
 publication or issue closure is authorized.
+
+## Latest continuation: Q208 source and full-book follow-up (2026-10-18)
+
+- A read-only search of the complete approved Carranza 13e, Summit 4e, and White & Pharoah 8e PDFs found no acceptable alternate evidence for Q123, Q128, Q165, Q168, or Q204. The search retained only page numbers and short candidate snippets in memory; temporary inputs and scripts were removed.
+- Q128 remains unresolved. A focused scan of Carranza 13e chapters 3, 58, and 64 found no instructional statement identifying which maxillary-molar furcation is most coronal. PDF 1454 is a review question; PDF 1442 discusses root-trunk anatomy without establishing the keyed comparison.
+- Q165 and Q168 still have exact Summit 4e chapter-9 PDF locations, and the relevant pages support their adhesive facts. Chapter 9 is only in scope through printed page 217; target and nearby pages have no corroborated printed labels. Their page/scope status remains unresolved; no printed page was inferred.
+- Q204 remains pending. The searched White & Pharoah pages describe extraoral projections or nearby orbital anatomy but do not establish the keyed inferior-orbital-fissure projection pair. No source row was inserted.
+- **Q208** is now recorded as White & Pharoah 8e, chapter 23, PDF page 1146, PDF SHA-256 `228ceb46982c3057d8a7d78b1d10759e72ed1a3a385a76a9affc38e45874c25a`. The exact page compares the radiographic margin characteristics of an OKC and a simple bone cyst. Chapter 23 is fully listed in the official 1401 oral-radiology scope. The page and adjacent pages have no printed label, so `printed_page` remains null and the source record displays `pdf 1146`.
+- The guarded source-only operation inserted exactly one source row. Its accepted original-PDF study audit SHA-256 is `44129bcd42d69617c158e6be230aa3388bd83f821cf2100310b0d5a227156ab5`; apply receipt SHA-256 is `d2b6c6bb43dbacb5bfb199292b39db48562df65b3e77f8ee74290e010119f8ab`; independent live readback SHA-256 is `60f3e900661c66aa456bd8e4c2b39a4323f2ba45ae9577bf1d206e54ca6e97fe`. The readback passed 13/13 source and immutable-content checks. Full backup `20261018T063000Z-aabff3e1` reverified with 114 files.
+- The 35-question batch now has **30 applied source rows**, including Q208: prosthodontics 3/3, periodontics 5/7, oral surgery 6/6, operative dentistry 2/4, pediatric dentistry 9/9, and oral radiology 5/6.
+- Combined private follow-up report `classification/reports/1401-open6-followup-search-and-q208-apply-20261018-v1.json` has SHA-256 `d2ab931a5c910f55728c901291b3d94a8122aaffc09c6ceb1ccd78a24553e6bf`.
+- The live structural gate is now **5 incomplete**: Q123, Q128, Q165, Q168, and Q204. The 1401 assessment remains published version **6/249**, six versions, zero attempts, and six reviews. The 1400 inventory remains 139 incomplete; 1399 remains untouched. No new assessment version was published.
