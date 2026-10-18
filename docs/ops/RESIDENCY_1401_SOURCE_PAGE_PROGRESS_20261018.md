@@ -262,29 +262,92 @@ The key remains unchanged, but the keyed high-dose protective effect conflicts
 with this page's discussion of possible low-dose protective hormesis; retain
 Q193 as a scientific hold despite the recorded page.
 
+### Oral-radiology Q192/Q209/Q210 outside-scope source locations
+
+The user-approved outside-scope route is now active after PR #460,
+merge/deploy SHA `f4867898b8669c3f54f16ad41b20e510f4f16fef`, CI 5/5. The three
+questions were source-free; the exact White & Pharoah 8e original pages were
+validated and recorded with `official_scope_status=outside_scope_exam_question`
+and Persian notes that name the out-of-scope chapters. The approved PDF SHA
+for all three is
+`228ceb46982c3057d8a7d78b1d10759e72ed1a3a385a76a9affc38e45874c25a`.
+None of the selected pages has a corroborated printed label, so printed-page
+stays null and the physical PDF page is displayed in the source record.
+
+| Question | Chapter / PDF page | Confidence | Alignment note |
+| ---: | ---: | ---: | --- |
+| 192 | 26 / 1422 | .900 | Page locates ameloblastic carcinoma but does not establish the keyed giant-cell differential; preserve the final key and keep the science hold. |
+| 209 | 28 / 1554 | .980 | Page identifies retention pseudocyst and reports that it may disappear from imaging within days; the question's six-month interval is not stated exactly. |
+| 210 | 27 / 1518 | .950 | Page places zygomatic-arch fractures about 1 cm posterior to the zygomaticotemporal suture; matching the keyed proximity is an inference. Preserve the key. |
+
+The three-row source-only receipt SHA-256 is
+`c1e95f5471f16e75992311e5bed4c10f223c9ec7e1e96d645c87ceb5b7209763`.
+Plan SHA-256 is
+`9ee86e311383a42b710cb9985741a07ab85d5374c1c159cec07608deb9dc5a1e`;
+the independent 6-question PDF audit SHA-256 is
+`43f857ef68c90845f024f70f3a770152e1cf86ff2fbd724dd8079d2178ec6520`.
+Independent live readback
+`1401-open35-oral-radiology-outside-independent-readback-20261018-v1.json`,
+SHA-256 `5af5969843c5ffc503c52498c5eebec409941fa159a580cb3ddaef89427b199a`,
+passes all three source and immutable content checks. Assessment remains
+6/249 with six versions, zero attempts and six reviews; the published-content
+preflight reports all 249 question definitions identical. Apply backup
+`20261018T053007Z-b63c3b12` verified with 114 files.
+
+### Operative Q151/Q160 printed-page labels
+
+The existing Sturdevant 7e chapter-1 rows already had exact PDF pages and
+SHA. The guarded printed-label-only operator filled the two labels after
+checking the original PDF target page, adjacent-page sequence, partial scope,
+source identity and immutable question/key fingerprints. It changed only
+`printed_page`:
+
+| Question | Edition / chapter | Printed / PDF page | Confidence |
+| ---: | --- | ---: | ---: |
+| 151 | Sturdevant 7e, ch1 | 11 / 24 | .900 |
+| 160 | Sturdevant 7e, ch1 | 4 / 17 | .950 |
+
+Apply receipt SHA-256
+`38ab04a7f98c7ffa193bf759815e3eecf24239258f4314c4f6a52bb7d36947b4`;
+independent live readback
+`1401-operative-q151-q160-printed-label-independent-readback-20261018-v1.json`,
+SHA-256 `4831c64af5cafc1f6d3d15e8feeac868cbeb9371c407ad9275daa352b0d19964`.
+Q151's page relates cementum thickening to attritional wear; identifying the
+cellular subtype uses its apical association and remains an inference. Q160's
+page directly states that enamel solubility increases toward the DEJ. Both
+official keys remain unchanged. Backup `20261018T054935Z-3992ce78` verified
+with 114 files.
+
+Summit 4e Q165/Q168 remain pending: their bound PDF pages (476/438) have no
+printed label on the page or adjacent searchable pages, so the partial
+chapter-9 cutoff cannot be established. No printed value was inferred.
+
 ## Whole-year state and next work
 
 The latest live official gate reports 249/249 questions in the 1401 inventory
-with **12 structurally incomplete**. The 1400 inventory remains 250/250 with **139
+with **7 structurally incomplete**. The 1400 inventory remains 250/250 with **139
 incomplete**. 1399 has not started. Neither 1401 nor 1400 is ready for
 publication, and no new frozen version or issue closure is authorized.
 
-The 12 structural gate holds are Q123, Q128, Q146, Q151, Q160, Q165, Q168,
-Q192, Q204, Q208, Q209, and Q210. Q123's answer-bearing phrase is split
+The 7 structural gate holds are Q123, Q128, Q146, Q165, Q168, Q204 and Q208.
+Q123's answer-bearing phrase is split
 into a two-word terminal fragment, below the validator's evidence minimum.
 Q128's only located direct answer is in an end-of-chapter review question;
-instructional pages have not yielded answer-bearing evidence. Q192, Q209 and
-Q210 have candidate source locations in chapters 26, 28 and 27, respectively,
-outside the announced radiology scope 1–25; they need exact page evidence and
-an audited outside-scope disposition before a source row can be inserted.
-Q146 retains an unresolved source/key conflict. Q193 now has a source row but
-its high-dose key conflicts with the page's low-dose hormesis discussion.
-Q204 and Q208 still lack decisive evidence for the exact projection and lesion
-distinctions. Q178 and Q184 have complete source-page rows but remain separate
-scientific answer-alignment holds.
+instructional pages have not yielded answer-bearing evidence. Q146 retains an
+unresolved source/key conflict. Q192 now has its true chapter/page recorded,
+but its page does not establish the keyed differential. Q193's high-dose key
+conflicts with the page's low-dose hormesis discussion. Q210's keyed proximity
+is an inference and remains a science hold. Q209's pseudocyst location is
+recorded, with the duration caveat above. Q204 and Q208 still lack decisive
+evidence for the exact projection and lesion distinctions. Q178 and Q184
+have complete source-page rows but remain separate scientific answer holds.
+The second in-scope-only search for Q204/Q208 is recorded in private report
+`1401-oral-radiology-q204-q208-followup-search-20261018-v1.json`, SHA-256
+`ee0855c73b652b681532c8e8143ba0092fecd14a1594b8d98483b29df9b60d7e`; it
+found no decisive original-page evidence and made no assignment.
 
-The current 35-question batch has 23 applied source rows: prosthodontics
-3/3, periodontics 5/7, oral surgery 5/6, operative dentistry 0/4, pediatric
-dentistry 9/9, and oral radiology 1/6. Q146 remains pending; Q147 and Q150
+The current 35-question batch has 28 applied source rows: prosthodontics
+3/3, periodontics 5/7, oral surgery 5/6, operative dentistry 2/4, pediatric
+dentistry 9/9, and oral radiology 4/6. Q146 remains pending; Q147 and Q150
 have source receipts as recorded above. Preserve all official keys. No year
 publication or issue closure is authorized.
