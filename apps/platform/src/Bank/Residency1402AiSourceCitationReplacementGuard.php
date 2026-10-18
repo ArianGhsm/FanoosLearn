@@ -14,6 +14,7 @@ final class Residency1402AiSourceCitationReplacementGuard
             'stem_sha256' => '135de36f7a19697892436ec03757e00ea25a701bdbcb77af353452f204429b78',
             'choices_sha256' => '130db2fbd2cf0eef8dca766eddd20f1cd4ed24374cf82cd25083e588a1393c16',
             'answer_sha256' => 'd99140b505ae44ee35fc6950e8a72a99040471d1e38b8572f876faf5b170edb9',
+            'answer_choice' => 2,
             'source_id' => '01a11b0f-a157-7fab-846d-72bde05e5622',
             'old_reference' => 'carranza-periodontology@13e',
             'old_chapter' => '34',
@@ -39,6 +40,7 @@ final class Residency1402AiSourceCitationReplacementGuard
             'stem_sha256' => '384991e96437bcb328e44fff014a07a5d58ba0f14dc4ae1e780893e525f00311',
             'choices_sha256' => '59d80234cac471fe5445295af65a11a5c3b44a0b4e33b4ded1ca7a4bfc3bf71f',
             'answer_sha256' => '955c6627f3adfbcf8f1e9b39108431a0d82c90e44157f5eb0289b74b29bde510',
+            'answer_choice' => 3,
             'source_id' => '01a11b0f-a231-7abd-bac7-84996734e589',
             'old_reference' => 'summit-operative@4e',
             'old_chapter' => '9',
@@ -64,6 +66,7 @@ final class Residency1402AiSourceCitationReplacementGuard
             'stem_sha256' => '879d051bc4e280d5311b0f014f83adbac121d3b7669e06929b3e38dea51f2fa7',
             'choices_sha256' => 'e00b9b3f3e6c3b896bede6aa41d79c405d4fc82cb65f0693099653456649f417',
             'answer_sha256' => 'bad5084d87dd35adc3c2fb945dee8e5c72be5703361b221daa63b7cfdb27b4fb',
+            'answer_choice' => 3,
             'source_id' => '01a11b0f-a28c-7da3-8039-d054645e11c3',
             'old_reference' => 'summit-operative@4e',
             'old_chapter' => '9',
@@ -89,6 +92,7 @@ final class Residency1402AiSourceCitationReplacementGuard
             'stem_sha256' => 'c696829eb9e906464a9dd460514ac6885c44be0b87d89751b8b360598c62d20b',
             'choices_sha256' => '4d88ce4708f3a9b0596728b389e84e5b0b19fc2f31295193a5b8c0932814ab61',
             'answer_sha256' => '18eb8874bb78dba77c2dd6b91ce112e085c364f8c52e942cc6fdb4257e30050f',
+            'answer_choice' => 3,
             'source_id' => '01a11b0f-a346-780b-a249-8db4bb80bd14',
             'old_reference' => 'van-noort-materials@4e',
             'old_chapter' => '2.2',
@@ -162,7 +166,7 @@ final class Residency1402AiSourceCitationReplacementGuard
             }
             foreach (['subject','stem_sha256','choices_sha256','answer_sha256','source_id','old_reference',
                 'old_chapter','old_legacy_page','old_printed_page','old_pdf_page','old_pdf_sha256',
-                'old_anchor_sha256','old_confidence','old_official_scope_status','old_official_scope_note_sha256',
+                'old_anchor_sha256','old_confidence','old_official_scope_status','old_official_scope_note_sha256','answer_choice',
                 'reference','chapter','pdf_page','printed_page','pdf_sha256','evidence','note','confidence'] as $key) {
                 if (!array_key_exists($key, $entry) || $entry[$key] !== $spec[$key]) {
                     return false;
