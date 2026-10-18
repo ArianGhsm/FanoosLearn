@@ -18,12 +18,19 @@ unchanged.
   partial chapters; merge commit `dbfec5474164c99297f335b194ee64903d281801`,
   all five CI jobs green, deploy request
   `01a14c47-835c-74dc-90a4-6831e5065a14`.
-- The live release and updater checkout are `dbfec5474164c99297f335b194ee64903d281801`.
+- PR #457 lets the guarded AI chapter-correction operator validate several
+  exact page fragments independently, preserving the four-word minimum for
+  each fragment. Merge commit `15cd6404f58e5514004f160a85a0ff6966a815eb`;
+  all five CI jobs passed. Deploy request
+  `01a14c74-991d-70de-8d17-950c7fe6418d` succeeded.
+- The live release and updater checkout are
+  `15cd6404f58e5514004f160a85a0ff6966a815eb`.
   `/health` is healthy and `check-sync.sh` reports in sync.
 - Source repairs used verified full backups: `20261017T223754Z-54de61f4`,
   `20261017T224521Z-ab1cb215`, `20261017T232008Z-1b462620`,
-  `20261017T233728Z-29fca03c`, and `20261017T235448Z-56d03b46`. Each backup
-  was verified with 114 files.
+  `20261017T233728Z-29fca03c`, `20261017T235448Z-56d03b46`,
+  `20261018T002016Z-d98240b3`, `20261018T004643Z-1b2d79df`, and
+  `20261018T005923Z-b3552a10`. Each backup was verified with 114 files.
 
 ## Applied source locations
 
@@ -45,12 +52,29 @@ Confidence is shown as source/node/page after the latest applied operation.
 | 77 | Neville 4e, ch15 | 676 / 683 | .970 / .970 / .970 | The page identifies root resorption with central odontogenic fibroma. |
 | 78 | Neville 4e, ch16 | 716 / 723 | .970 / .970 / .970 | The page identifies interleukin-6 in paraneoplastic pemphigus. |
 | 80 | Neville 4e, ch17 | 772 / 779 | .850 / .850 / .850 | The page links candidiasis to iron deficiency. The keyed pernicious-anemia exception is supported by comparison across the chapter; the source does not state an explicit negative. Keep this key-alignment caveat. |
+| 82 | Zarb 13e, ch14 | 309 / 323 | .980 / .980 / .980 | Corrected the legacy ch12/page264 location. The chapter explains static mounting of the casts for a mandibular RPD opposing a maxillary complete denture. |
+| 84 | Zarb 13e, ch7 | 139 / 153 | .980 / .980 / .980 | Heat-activated PMMA reaches water saturation more slowly because its water-diffusion coefficient is lower. |
+| 91 | McCracken RPD 13e, ch11 | 136 / 149 | .900 / .900 / .900 | Corrected the stored printed page 133 to 136; the page explains cervical convergence and retentive undercut. |
+| 93 | McCracken RPD 13e, ch12 | 150 / 163 | .930 / .930 / .930 | Corrected the legacy ch15/page207. The figure caption explains use of guide planes to establish a path of insertion. |
+| 94 | McCracken RPD 13e, ch6 | 61 / 74 | .970 / .970 / .970 | An internal rest removes the visible buccal clasp arm, supporting the keyed esthetic advantage. |
+| 96 | McCracken RPD 13e, ch10 | 125 / 138 | .980 / .980 / .980 | Corrected the legacy ch13/page186. Multiple exact fragments across the two-column page establish the Co-Cr splint-bar material and soldered attachment. |
+| 98 | McCracken RPD 13e, ch18 | 252 / 265 | .980 / .980 / .980 | Corrected the legacy ch19/page271. Multiple exact fragments establish the existing denture remount at initial delivery after processing. |
+| 100 | McCracken RPD 13e, ch24 | 314 / 327 | .990 / .990 / .990 | Corrected the legacy ch25/page329. Figure 24-5 matches the keyed ball clasp and second-molar circumferential clasp without occlusal interference. |
+| 114 | Carranza 13e, ch16 | 241 / 608 | .880 / .880 / .880 | Inference is explicit: the page describes protective IgA/IgG/IgM antibody roles but does not directly name IgE as absent. The official key is unchanged. |
+| 118 | Carranza 13e, ch25 | 332 / 743 | .880 / .880 / .880 | Inference is explicit: the figure caption identifies periodontal-ligament-space widening and the adjacent figure marks injury/repair stages; no standalone sentence states the equivalence. |
+| 122 | Carranza 13e, ch52 | 556 / 1193 | .980 / .980 / .980 | Table 52.1 lists excellent oral absorption for amoxicillin. |
+| 126 | Carranza 13e, ch64 | 653.e1 / 1441 | .990 / .990 / .990 | Corrected the legacy ch35 assignment. The chapter abstract directly contrasts guarded-to-poor prognosis for furcation involvement with fair-to-good prognosis for equivalent attachment loss on a single-rooted tooth. |
+| 130 | Carranza 13e, ch72 | 716 / 1606 | .960 / .960 / .960 | Table 72.1 associates controlled history of periodontal treatment with posterior bitewing examinations. The printed-page row alignment was checked on the original page. |
 
 The source PDF SHA-256 values are Burket 12e
 `ebb1c0a98c24b21778f19e038127402a205b672ae6a31356eee722c27d199ab7`, Little &
 Falace 9e `d01cae23d09cd39eccbe3577765196dc5d3a50261af9bb3de3c09ad3a7b15cc0`,
 Neville 4e `6fbc9bcba9003deda2f8fc006ccc4f23f9e15db0bcd0e237c56ddf6788578bb6`,
-and Proffit 6e `5f18cc196553b691635b0c136f9761a4e7c478bf115424d1c7f26f04b5b50015`.
+Proffit 6e `5f18cc196553b691635b0c136f9761a4e7c478bf115424d1c7f26f04b5b50015`,
+Zarb 13e `bcf92916cd0a01915695d1cb5aad8c51e7f2dac5909477c4df4454d229156a3d`,
+McCracken RPD 13e `4e05bee57d1066601b8a2b30c2ae72d4a5bf65298747b600ae3fdd8248a192d9`,
+and Carranza 13e
+`f0e411898ae010688ca5c0d21afe312cef6f5dae86d0e2e45648bc51ca8e2adf`.
 
 ## Receipts and independent readbacks
 
@@ -95,16 +119,49 @@ They confirm unchanged question, four choices, latest official answer, and
 published assessment version **6/249**. All source operators report zero
 question/choice/answer changes. No new assessment version was published.
 
+### Additional guarded applies on 2026-10-18
+
+All receipts are private under `/srv/fanoos/shared/research/classification/reports/`.
+Each line gives the applied-receipt SHA-256; the source-only operators report
+zero question, choice, and answer changes.
+
+- Q82: `6f4b2ec2c18ff9a86f95ad72eed5c6e4dbe2f115fbf6f0cfd8135c6098735a25`;
+  Q84: `0fef4aa226cc150338df0a509b2d070437829fab7b45c6aa28a928f3215b72d4`;
+  Q91: `8db8c59fb372afbada13c332aa5f3074e3da7dc90fb0cbbc8ec123e9e5fae507`;
+  Q93: `f427e7ecc7bb290ce64622d293a6b7f892e62b283e3c8ff8d7e3455922c0775a`;
+  Q94: `05fbd5e1f36cc8c1062e09806854829286a111f560be7d0da46e37a336a647f2`.
+- Q96: `88b212e90ffaa7384a4374fec1232199eeb263e8b88b3321f7418e47b8607b59`;
+  Q98: `fb345792995468e3cff37ba2fe751b55916f7cdd4e1988129bff39ce1bb1d458`;
+  Q100: `7349b82fa7c018bd864783b81aea04cb29db9eb8e4009487815470ae18f5fea7`.
+- Q114: `4ee1a2309bf449174adae888cb1a61223f773c5e4a51a27df6317528d62c5c04`;
+  Q118: `21e4bc4c015587753b4a65ecb7ed75330971ab5aaa3fa85bb97ae50aad76b73b`;
+  Q122: `c56d1009592dff64e814d80582d2db6a819c5ae9ad51edb2843c655f1f1d018e`;
+  Q126: `222c7491cfb1bc883e4ada8c378f38e8b3d5237dac86a31bab6cf5421a578084`;
+  Q130: `e5ed14df5137a3f4f74dafa811523cd73e1b7763c0fd20a11bb8ec5dd395ba27`.
+
+Independent live readbacks for the additional rows:
+
+- Q82/Q84/Q91/Q93/Q94: `087ccbf708e35ea90d5869468298fdf62f24c043ac528faccb3740f3c5936fb7`.
+- Q100: `9dc25c526db30e0c2e1f0835bd3e571758df2447bb3c1bb46cbef828bb935b41`.
+- Q96/Q98/Q126: `c8331d5d55f737497b3d231fc8e8b4da1921481aba3bce3fe9e645cca78a3233`.
+- Q122/Q130: `05e735ec66826b68c2e91f62182bc2d4ae5da0f33e9619e39998a959e09eb6e1`.
+- Q118: `e7e7516fa702f21687de91a745c5548d3e77cee248c41a54466973c33f6000da`.
+- Q114: `985083b6fca23576fe8575476cafb6348788c29cca13f3ce2af6e5c3e8fa4446`.
+
+The applied groups used independently verified backups `20261018T002016Z-d98240b3`,
+`20261018T004643Z-1b2d79df`, and `20261018T005923Z-b3552a10` (114 files each).
+
 ## Whole-year state and next work
 
-The read-only official gate currently reports 249/249 questions in the 1401
-inventory with **40 incomplete**. The 1400 inventory remains 250/250 with
-**139 incomplete**. The 1401 sitting is not complete, 1400 has not been
-started, and 1399 remains untouched under the user's year-order requirement.
-Do not publish or close a year until its complete scientific audit and
-whole-year gate pass.
+The latest live official gate reports 249/249 questions in the 1401 inventory
+with **27 incomplete**. The 1400 inventory remains 250/250 with **139
+incomplete**. 1399 has not started. Neither 1401 nor 1400 is ready for
+publication, and no new frozen version or issue closure is authorized.
 
-The next 1401 gate examples are Q82, Q84, Q91, Q93, Q94, Q96, Q98, Q100,
-Q114, Q118, Q122, and Q123. Q80's source page is now stored, but its key
-relationship remains explicitly inferential as described above; do not hide
-that caveat or change the official key.
+The current 1401 gate examples are Q123, Q128, Q136, Q137, Q142, Q146, Q147,
+Q150, Q151, Q160, Q165, and Q168. Q123's exact answer-bearing phrase is split
+in the PDF text layer into a two-word terminal fragment, so the four-word
+evidence rule still prevents a guarded write. Q128's only located direct
+answer is in an end-of-chapter review question, which cannot serve as source
+evidence; the instructional pages have not yet yielded an answer-bearing
+passage. Keep both pending and continue the other items independently.
