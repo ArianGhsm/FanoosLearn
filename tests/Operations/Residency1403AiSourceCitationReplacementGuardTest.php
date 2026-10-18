@@ -157,6 +157,11 @@ final class Residency1403AiSourceCitationReplacementGuardTest
         $operator = file_get_contents($root . '/scripts/references/repair_residency_1403_ai_source_citation_replacements.php');
         $this->check(is_string($operator), 'Citation replacement operator is missing.');
         ++$checks;
+        $this->check(str_contains($operator, 'SELECT s.id source_id')
+            && str_contains($operator, "\$old['source_id'] !== \$expected['source_id']")
+            && !str_contains($operator, "\$old['id']"),
+            'Locked source snapshot comparison must use the selected source_id alias.');
+        ++$checks;
         $updates = preg_match_all('/UPDATE\s+bank_question_sources\s+SET\s+(.+?)\s+WHERE/is', $operator, $matches);
         $fields = $updates === 1 && preg_match_all('/(?:^|,)\s*([a-z0-9_]+)\s*=/i', $matches[1][0], $fieldMatches)
             ? array_map('strtolower', $fieldMatches[1]) : [];
