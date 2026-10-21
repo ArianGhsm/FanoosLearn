@@ -463,8 +463,10 @@ SQL);
                     && str_contains($src['official_scope_note'], 'خارج از محدوده')
                     && str_contains($src['official_scope_note'], '۱۳۹۷')
                     && str_contains($src['official_scope_note'], '۱۴۰۶');
-                if (!in_array($src['chapter'], $numbers, true) && !$explicitlyOutside1406Syllabus) {
-                    throw new RuntimeException('Year-specific official syllabus scope is missing this chapter.');
+                if (!in_array($src['chapter'], $numbers, true)) {
+                    if (!$explicitlyOutside1406Syllabus) {
+                        throw new RuntimeException('Year-specific official syllabus scope is missing this chapter.');
+                    }
                 }
                 $insert->execute([
                     'id' => Uuid::v7(), 'ws' => $workspace, 'qid' => $q['id'],
