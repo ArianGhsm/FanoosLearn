@@ -119,7 +119,7 @@ REFERENCES = [
     (['phillip'], 'phillips-materials', "Phillips' Science of Dental Materials", 'Shen C, Rawls HR, Esquivel-Upshaw JF', 'dental-materials',
      {'2022': ('13e', '13th edition', 2022)}),
     (['contemporary fixed'], 'rosenstiel-fixed', 'Contemporary Fixed Prosthodontics', 'Rosenstiel SF, Land MF, Walter R', 'prosthodontics',
-     {'2023': ('6e', '6th edition', 2023)}),
+     {'2016': ('5e', '5th edition', 2016), '2022': ('6e', '6th edition', 2023), '2023': ('6e', '6th edition', 2023)}),
     (['fundamentals of fixed'], 'shillingburg-fixed', 'Fundamentals of Fixed Prosthodontics', 'Shillingburg HT', 'prosthodontics',
      {'2012': ('4e', '4th edition', 2012)}),
     (['mccracken'], 'mccracken-rpd', "McCracken's Removable Partial Prosthodontics", 'Carr AB, Brown DT', 'prosthodontics',
@@ -136,6 +136,8 @@ REFERENCES += [
     (['pathways of the pulp'], 'cohen-pathways', "Cohen's Pathways of the Pulp", 'Berman LH, Hargreaves KM', 'endodontics',
      {'2020': ('12e', '12th edition', 2020)}),
     (['microsurgery in endodontics'], 'kim-microsurgery', 'Microsurgery in Endodontics', 'Kim S, Kratchman S, Karabucak B, Kohli M, Setzer F', 'endodontics',
+     {'2017': ('1e', '1st edition', 2017)}),
+    (['contemporary surgical endodontics'], 'torabinejad-surgical-endodontics', 'The Art and Science of Contemporary Surgical Endodontics', 'Torabinejad M, Rubinstein R', 'endodontics',
      {'2017': ('1e', '1st edition', 2017)}),
     (['endodontic advances'], 'ahmed-dummer-endodontic-advances', 'Endodontic Advances and Evidence-Based Clinical Guidelines', 'Ahmed HMA, Dummer PMH', 'endodontics',
      {'2022': ('1e', '1st edition', 2022)}),
@@ -156,7 +158,7 @@ REFERENCES += [
     (['clinical maxillofacial prosthetics'], 'taylor-maxillofacial-prosthetics', 'Clinical Maxillofacial Prosthetics', 'Taylor TD', 'prosthodontics',
      {'2000': ('1e', '1st edition', 2000)}),
     (['dental implant prosthetics'], 'misch-implant-prosthetics', 'Dental Implant Prosthetics', 'Misch CE', 'prosthodontics',
-     {'2015': ('2e', '2nd edition', 2015)}),
+     {'2015': ('2e', '2nd edition', 2015), '2016': ('2e', '2nd edition', 2015)}),
     (['oral and maxillofacial surgery (fonseca)'], 'fonseca-oral-surgery', 'Oral and Maxillofacial Surgery', 'Fonseca RJ', 'oral-surgery',
      {'2017': ('3e', '3rd edition', 2017)}),
     (["peterson's principles"], 'peterson-principles', "Peterson's Principles of Oral and Maxillofacial Surgery", 'Miloro M, Ghali GE, Larsen PE, Waite PD', 'oral-surgery',
@@ -168,17 +170,17 @@ REFERENCES += [
     (['clinical pathologic correlations'], 'regezi-oral-pathology', 'Oral Pathology: Clinical Pathologic Correlations', 'Regezi JA, Sciubba JJ, Jordan RCK', 'oral-pathology',
      {'2017': ('7e', '7th edition', 2017)}),
     (["ten cate's oral histology"], 'ten-cate-histology', "Ten Cate's Oral Histology", 'Nanci A', 'oral-pathology',
-     {'2024': ('10e', '10th edition', 2024)}),
+     {'2018': ('9e', '9th edition', 2018), '2024': ('10e', '10th edition', 2024)}),
     (['pathologic basis of disease'], 'robbins-pathology', 'Robbins, Cotran and Kumar Pathologic Basis of Disease', 'Kumar V, Abbas AK, Aster JC', 'oral-pathology',
-     {'2024': ('11e', '11th edition', 2024)}),
+     {'2021': ('10e', '10th edition', 2021), '2024': ('11e', '11th edition', 2024)}),
     (['oral pathology (woo)'], 'woo-oral-pathology', 'Oral Pathology: A Comprehensive Atlas and Text', 'Woo SB', 'oral-pathology',
-     {'2024': ('3e', '3rd edition', 2024)}),
+     {'2017': ('2e', '2nd edition', 2017), '2024': ('3e', '3rd edition', 2024)}),
     (['head and neck imaging'], 'som-head-neck-imaging', 'Head and Neck Imaging', 'Som PM, Curtin HD', 'oral-radiology',
      {'2011': ('5e', '5th edition', 2011)}),
     (['differential diagnosis of oral and maxillofacial lesions'], 'wood-goaz-differential', 'Differential Diagnosis of Oral and Maxillofacial Lesions', 'Wood NK, Goaz PW', 'oral-radiology',
      {'1997': ('5e', '5th edition', 1997)}),
     (['radiologic science for technologists'], 'bushong-radiologic-science', 'Radiologic Science for Technologists', 'Bushong SC', 'oral-radiology',
-     {'2021': ('12e', '12th edition', 2021)}),
+     {'2020': ('12e', '12th edition', 2021), '2021': ('12e', '12th edition', 2021)}),
     (['principles of dental imaging'], 'langland-dental-imaging', 'Principles of Dental Imaging', 'Langland OE, Langlais RP', 'oral-radiology',
      {'2002': ('2e', '2nd edition', 2002)}),
     (['diagnostic imaging: oral and maxillofacial'], 'koenig-diagnostic-imaging', 'Diagnostic Imaging: Oral and Maxillofacial', 'Koenig LJ', 'oral-radiology',
@@ -203,6 +205,52 @@ REFERENCES += [
      {'2022': ('4e', '4th edition', 2022)}),
     (['innovations in preventive dentistry'], 'splieth-preventive', 'Innovations in Preventive Dentistry', 'Splieth CH', 'pediatric-dentistry',
      {'2021': ('1e', '1st edition', 2021)}),
+    (['primary preventive dentistry'], 'harris-primary-preventive', 'Primary Preventive Dentistry', 'Harris NO, Garcia-Godoy F, Nathe CN', 'pediatric-dentistry',
+     {'2014': ('8e', '8th edition', 2014)}),
+    (['clear aligner technique'], 'tai-clear-aligner', 'Clear Aligner Technique', 'Tai S', 'orthodontics',
+     {'2018': ('1e', '1st edition', 2018)}),
+    (['orthodontic aligner treatment'], 'eliades-aligner-treatment', 'Orthodontic Aligner Treatment', 'Eliades T, Eliades G', 'orthodontics',
+     {'2021': ('1e', '1st edition', 2021)}),
+    (['digital restorative dentistry'], 'tamimi-digital-restorative', 'Digital Restorative Dentistry', 'Tamimi F, Hirayama H', 'operative-dentistry',
+     {'2019': ('1e', '1st edition', 2019)}),
+]
+
+# Earlier editions explicitly named by the recovered historical notices. Aliases
+# keep an explicitly stated edition's identity when a notice gives a printing
+# year instead of its copyright year; they never select a nearest edition.
+HISTORICAL_EDITION_VARIANTS = {
+    'ingle-endodontics': {'2008': ('6e', '6th edition', 2008)},
+    'cohen-pathways': {'2016': ('11e', '11th edition', 2016)},
+    'lindhe-clinical-periodontology': {'2015': ('6e', '6th edition', 2015)},
+    'misch-contemporary-implant': {'2008': ('3e', '3rd edition', 2008), '2018': ('3e', '3rd edition', 2008)},
+    'peterson-principles': {'2012': ('3e', '3rd edition', 2012)},
+    'schwartz-surgery': {'2015': ('10e', '10th edition', 2015)},
+    'okeson-tmd': {'2013': ('7e', '7th edition', 2013), '2019': ('8e', '8th edition', 2020)},
+    'bushong-radiologic-science': {'2013': ('10e', '10th edition', 2013), '2017': ('11e', '11th edition', 2017)},
+    'graber-orthodontics': {'2017': ('6e', '6th edition', 2017)},
+    'burstone-biomechanics': {'2015': ('1e', '1st edition', 2015)},
+    'andreasen-traumatic-injuries': {'2007': ('4e', '4th edition', 2007)},
+    'lotfazar-barrier-membranes-fa': {'1392': ('1392', 'چاپ ۱۳۹۲؛ شمارهٔ ویرایش اعلام نشده', None), '1397': ('2', 'ویرایش جدید، چاپ دوم', None)},
+    'phillips-materials': {'2021': ('13e', '13th edition', 2022)},
+}
+for _reference in REFERENCES:
+    _reference[5].update(HISTORICAL_EDITION_VARIANTS.get(_reference[1], {}))
+
+REFERENCES += [
+    (['seltzer and bender'], 'seltzer-dental-pulp', "Seltzer and Bender's Dental Pulp", 'Hargreaves KM, Goodis HE, Tay FR', 'endodontics',
+     {'2012': ('2e', '2nd edition', 2012)}),
+    (['endodontic microbiology'], 'fouad-endodontic-microbiology', 'Endodontic Microbiology', 'Fouad AF', 'endodontics',
+     {'2017': ('2e', '2nd edition', 2017)}),
+    (['cone beam computed tomography in endodontics'], 'patel-endodontic-cbct', 'Cone Beam Computed Tomography in Endodontics', 'Patel S, Harvey S, Shemesh H', 'endodontics',
+     {'2016': ('1e', '1st edition', 2016)}),
+    (['evidence-based orthodontics'], 'huang-evidence-based-orthodontics', 'Evidence-Based Orthodontics', 'Huang GJ, Richmond S, Vig KWL', 'orthodontics',
+     {'2011': ('1e', '1st edition', 2011), '2018': ('2e', '2nd edition', 2018)}),
+    (['early-age orthodontic treatment'], 'bahreman-early-orthodontics', 'Early-Age Orthodontic Treatment', 'Bahreman A', 'pediatric-dentistry',
+     {'2013': ('1e', '1st edition', 2013)}),
+    (['diagnostic surgical pathology of the head and neck'], 'gnepp-head-neck-pathology', 'Diagnostic Surgical Pathology of the Head and Neck', 'Gnepp DR', 'oral-pathology',
+     {'2021': ('3e', '3rd edition', 2021)}),
+    (["rosai and ackerman"], 'rosai-surgical-pathology', "Rosai and Ackerman's Surgical Pathology", 'Goldblum JR', 'oral-pathology',
+     {'2018': ('11e', '11th edition', 2018)}),
 ]
 
 # The journals and named articles a specialty list adds, one row per subject and
@@ -341,15 +389,18 @@ def clean(value) -> str:
 def build() -> dict:
     rows = read_sheet(WORKBOOK, SHEET)
     header, rows = rows[0], [(r + [None] * (12 - len(r)))[:12] + [['residency']] for r in rows[1:] if r]
+    notes: list[str] = []
     for extra in EXTRA_YEARS:
         data = json.loads(extra.read_text(encoding='utf-8'))
         for r in data['rows']:
+            if r.get('pending_reason'):
+                notes.append(f'{extra.name}: {r["year"]} {r["subject"]} "{r["title"]}" pending: {r["pending_reason"]}; not added to validity')
+                continue
             for year in [r['year'], *data.get('also_years', {})]:
                 rows.append([year, r.get('period'), r['subject'], r['title'], r.get('authors'), r.get('pub_year'), r.get('edition'),
                              r.get('scope'), r.get('evidence', data.get('evidence')), None,
                              r.get('source_document', data.get('source_document')), None,
                              r.get('exam_types', data.get('exam_types', ['residency']))])
-    notes: list[str] = []
     validity: dict[tuple, dict] = {}
     used: dict[str, set] = {}
 

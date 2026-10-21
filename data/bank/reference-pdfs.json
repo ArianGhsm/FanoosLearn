@@ -3,7 +3,8 @@
   "notes": [
     "The exact approved private server PDF is the only reference-book source. The workflow reads requested PDF pages one at a time and never writes page text, full-book text, OCR output or a search index. A selected short evidence quote may be saved with its exact PDF page in a durable decision.",
     "Availability is time-sensitive. `pdf: verified-server-pdf` is only a catalog disposition; scripts/references/verified_reference_pdf.py and scripts/ops/reference-library-inventory.php verify the current approved PDF at use time. `missing` records an edition to leave pending; `nearest` is historical information and never authorizes a new substitution by default.",
-    "2026-10-10 inventory dispositions cover every official edition currently listed in catalog validity across residency, national, board and promotion exams. The live inventory is rechecked at use time."
+    "2026-10-10 inventory dispositions cover every official edition currently listed in catalog validity across residency, national, board and promotion exams. The live inventory is rechecked at use time.",
+    "2026-10-21: added dispositions for the recovered board/national historical official editions. The live library still contains 42 approved PDFs; downloading an official source-list notice does not add a reference-book PDF."
   ],
   "editions": {
     "burket-oral-medicine@12e": {
@@ -362,6 +363,234 @@
     },
     "zarb-edentulous@14e": {
       "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+    },
+    "andreasen-traumatic-injuries@4e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-endodontics@1398": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-endodontics@1399": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-endodontics@1401": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-endodontics@1402": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-endodontics@1403": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-endodontics@1404": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-operative-dentistry@1398": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-operative-dentistry@1401": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-operative-dentistry@1402": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-operative-dentistry@1403": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-operative-dentistry@1404": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-oral-pathology@1401": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-oral-pathology@1402": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-oral-pathology@1403": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-oral-pathology@1404": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-oral-radiology@1398": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-oral-radiology@1399": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-oral-radiology@1401": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-oral-radiology@1402": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-oral-radiology@1403": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-oral-radiology@1404": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-oral-surgery@1398": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-oral-surgery@1399": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-oral-surgery@1401": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-oral-surgery@1402": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-oral-surgery@1403": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-oral-surgery@1404": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-orthodontics@1398": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-orthodontics@1399": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-orthodontics@1401": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-orthodontics@1402": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-orthodontics@1403": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-orthodontics@1404": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-pediatric-dentistry@1398": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-pediatric-dentistry@1399": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-pediatric-dentistry@1404": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-periodontics@1398": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-periodontics@1399": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-periodontics@1401": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-periodontics@1402": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-periodontics@1403": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-periodontics@1404": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-prosthodontics@1399": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-prosthodontics@1401": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-prosthodontics@1402": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-prosthodontics@1403": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "announced-articles-prosthodontics@1404": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "bahreman-early-orthodontics@1e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "bushong-radiologic-science@10e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "bushong-radiologic-science@11e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "cohen-pathways@11e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "eliades-aligner-treatment@1e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "fouad-endodontic-microbiology@2e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "gnepp-head-neck-pathology@3e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "graber-orthodontics@6e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "harris-primary-preventive@8e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "huang-evidence-based-orthodontics@1e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "huang-evidence-based-orthodontics@2e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "ingle-endodontics@6e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "lindhe-clinical-periodontology@6e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "lotfazar-barrier-membranes-fa@1392": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "misch-contemporary-implant@3e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "okeson-tmd@7e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "patel-endodontic-cbct@1e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "peterson-principles@3e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "robbins-pathology@10e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "rosai-surgical-pathology@11e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "rosenstiel-fixed@5e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "schwartz-surgery@10e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "seltzer-dental-pulp@2e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "tai-clear-aligner@1e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "tamimi-digital-restorative@1e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "ten-cate-histology@9e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "torabinejad-surgical-endodontics@1e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "woo-oral-pathology@2e": {
+      "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
     }
   }
 }
