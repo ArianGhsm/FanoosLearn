@@ -114,9 +114,12 @@ the 1397 official list. Record `reference_year=1406` and
 and says the citation is outside the 1397 official reference list. Use only
 the exact approved 1406 PDF and SHA-bound map, quote decisive evidence from
 the cited PDF page, and require the chapter to be within the official 1406
-subject scope. The guarded 1397 writer accepts only the 12 official residency
-subjects and the exact one-per-subject research batches. Do not generalize
-this exception to another exam year or type.
+reference-subject scope. One cross-subject exception is allowed: 1397
+endodontics Q95 may cite Hupp 7e from the 1406 oral-surgery list, provided its
+outside-scope note identifies both the question subject and reference
+subject. The guarded 1397 writer otherwise accepts only the 12 official
+residency subjects and the exact whitelisted research batches. Do not
+generalize this exception to another question, exam year or type.
 
 ## 1. What a result must be
 

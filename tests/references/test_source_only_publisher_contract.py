@@ -123,6 +123,22 @@ class PublisherSafetyContracts(unittest.TestCase):
                        "hash_file('sha256'", "year < 1399"]:
             self.assertIn(marker, self.cli)
 
+    def test_1397_exact_q88_and_single_cross_subject_q95_are_narrow(self):
+        for marker in [
+            "$n === 88",
+            "torabinejad-endodontics@5e",
+            "(string) ($decision['chapter'] ?? '') === '13'",
+            "($decision['page'] ?? null) === 235",
+            "$n === 95",
+            "hupp-oral-surgery@7e",
+            "جراحی دهان",
+            "$referenceSubject !== $subject && !$crossSubject1397HuppQ95",
+            "$src['reference_subject']",
+        ]:
+            self.assertIn(marker, self.service)
+        self.assertIn("$exact1397EndodonticsQ88Batch", self.cli)
+        self.assertIn("recovery-1397-official-endo-q88-20261021", self.cli)
+
 
 if __name__ == "__main__":
     unittest.main()
