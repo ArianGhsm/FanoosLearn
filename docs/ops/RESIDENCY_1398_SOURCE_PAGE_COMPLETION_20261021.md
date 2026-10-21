@@ -1,23 +1,33 @@
 # Residency 1398 source-page completion — 2026-10-21
 
-## Continuation status — 2026-10-21 08:43 UTC
+## Final status — 2026-10-21 12:16 UTC
 
-PR #490 was merged as `c898e26f30708d210a62c9327c260b6ff9f6a897` and PR #491
-as `fdd3e3f82a078450ddec5dd59d3afed477698287`; all five required CI jobs
-passed on both merge commits. The production release is still
-`f939bc031f213c1aa15e79d0888c4cace4cc604d` and `/health` is OK. No 1398
-production source rows were changed: the latest readback remains 178/227
-book-based rows complete, 49 source-free, and 9 existing source rows below
-0.85 confidence. The rollback previews described below changed no live rows.
+PRs #490, #491 and #492 are merged; all five required CI jobs passed on each
+merge commit. The official updater deployed
+`90424b17196196f7107ca0dabb8f6e8771685dfa` successfully. `/health` is OK and
+the server-first sync check reports GitHub `main`, updater checkout and active
+release in sync. Deployment request `01a15e5b-4ae9-7776-92a0-66c785fbbe38`
+used verified backup `20261021T120919Z-0baff8fc` (114 files).
+
+The final live census is 247 questions: 20 valid English questions exempt from
+book sources and 227 book-based questions. All 227 have a chapter, PDF page
+and PDF hash; no source-free or below-threshold rows remain. There are 228
+source rows because Q221 has a validated two-page source bundle. Seventeen
+rows are visibly marked outside official scope, each with a note: 14 use the
+authorized Hupp 7e 1406 proxy, and Q45, Q186 and Q189 are the other documented
+scope cases.
+
+The frozen assessment remains version 10 with the same checksum, 10 reviews
+and zero attempts. Source-only operations did not republish or rekey any
+question. Q97 remains draft/voided with its null-choice answer.
 
 ## Scope and live baseline
 
-This continuation covers only the 1398 residency sitting. Before any database
-apply, the live sitting had 247 questions: 20 English questions with valid
-final/amended keys (reference-exempt) and 227 book-based questions. The last
-independent live census was 178/227 same-row chapter+PDF-page+PDF-SHA sources,
-49 source-free questions and 9 already-sourced rows below the 0.85 confidence
-threshold. Re-read the database before each apply; these are dated counts.
+This continuation covers only the 1398 residency sitting. The verified final
+state is 247 questions: 20 English questions with valid final/amended keys
+(reference-exempt) and 227 book-based questions, each with a same-row chapter,
+PDF page and PDF SHA. One book-based question (Q221) retains two citations,
+so the database has 228 source rows for 227 questions.
 
 The official 1398 catalog has 19 edition-validity rows. Eighteen exact PDFs
 are ready in the private library; the only absent book is **Hupp Oral Surgery
@@ -30,15 +40,15 @@ reference proxy. They must be stored as `outside_scope_exam_question`, with a
 note that Hupp 7e is not in the 1398 official reference list. This exception
 does not change the 1398 catalog or answer key.
 
-## Audited source-only batches prepared
+## Applied source-only batches
 
 All reports below are private and SHA-bound to the exact study, decisions,
-validated pages, and current private reference PDFs. The guarded source-only
-writer passed a rollback preview for every batch. **No production source rows
-were changed while preparing this runbook.** Apply only after the reviewed
-code is merged, CI is green, and the updater has deployed it.
+validated pages, and current private reference PDFs. Every guarded source-only
+writer passed rollback preview, applied against the verified backup above and
+was independently read back. Receipts report zero question, choice and answer
+changes.
 
-| Batch | Questions accepted | Citation set | Independent audit SHA-256 |
+| Batch | Rows applied | Citation set | Independent audit SHA-256 |
 |---|---:|---|---|
 | 1398 oral surgery, official Malamed 7e | 2 | Q123 ch3 PDF110; Q124 ch11 PDF211 | `b2643a0bef3df19fe5108f74cb78701008b398ccde86761fee21231ac8a47633` |
 | 1398 oral surgery, updated Hupp 7e proxy (reference year 1406) | 14 | Q110 ch11 PDF203; Q111 ch4 PDF60; Q112 ch3 PDF56; Q113 ch15 PDF298; Q114 ch19 PDF417; Q115 ch17 PDF373; Q116 ch23 PDF502; Q117 ch25 PDF547; Q118 ch24 PDF526; Q119 ch21 PDF452; Q120 ch26 PDF574; Q121 ch31 PDF672; Q122 ch2 PDF43; Q129 ch13 PDF237 | `fa57b42810d44f95672c6120ce3a60516613220c83ee587eafc270ed05589ea2` |
@@ -47,6 +57,8 @@ code is merged, CI is green, and the updater has deployed it.
 | 1398 operative dentistry | 1 | Q188, Summit 4e ch11 PDF610 | `bfc5099f898a2f6687e691d4243388a8016a93a8fd516d56cdc71753b20baa90` |
 | 1398 oral radiology | 1 | Q225, White & Pharoah 7e ch24 PDF457 | `0f3b75f96fa2c9679b07653304f8753245b0b99929a5160891a4d03a04a17c24` |
 | 1398 prosthodontics voided Q97 | 1 | Shillingburg 4e ch22 PDF430 | `eaea25f22f5d6be09b53c24b10d3fd8a0846c45b18ecba1cb663d97dc5af6a8f` |
+
+Applied receipt SHA-256 values, in table order: Malamed `a9da61834337637ae08627801e5d193633ef5aadc0e6325cae9071ecd0b2955f`; Hupp proxy `82ee4c8c7cc2c8516e55157a8e4edfd5831bd43843de4049f9e3fa3ee3670df2`; pediatric `35593e9f05887dd4a15fc316c916f52729a6c8afd3e7919d318a82db7c9e425b`; periodontics `027c49742fbcdf04ee71287694ce8be81bba51cf54078a89139112692c82d59c`; operative Q188 `6ded54d03832dc0541bd7d454facb4811c04abedf950195762fba8b7b9c184a6`; radiology Q225 `3cc65bae8f1b887f9218b08a7e6640ea12d270c871ef3045a2c69e1b941974e6`; voided Q97 `48ffbe5ee272dd78d2dad8d102a97fe41a3bbf7784ab302ac2a3b05bdf84d8f0`.
 
 The 14 pediatric and 14 periodontal citations use the exact official 1398
 editions. For each batch, the live writer rechecks question status, stem,
@@ -64,75 +76,59 @@ Every stored official key, question stem, choice, question status, frozen
 assessment version, review, attempt and score remains unchanged. A source page
 does not authorize rekeying an exam item.
 
-## Code and deployment gate
+## Code, deployment and immutable assessment
 
-The active release is `f939bc031f213c1aa15e79d0888c4cace4cc604d` and remains
-healthy. PR #490 (`c898e26f30708d210a62c9327c260b6ff9f6a897`) adds the exact-page
-1398 source-only gates, decimal Van Noort section-node support, and explicit
-Hupp 7e updated-reference proxy labeling. CI passed 5/5 on both the PR and
-merge commit.
+PRs #490, #491 and #492 are merged. Main is
+`90424b17196196f7107ca0dabb8f6e8771685dfa`; all five required CI jobs passed
+on each merge commit. The official updater deployed that SHA using request
+`01a15e5b-4ae9-7776-92a0-66c785fbbe38` and verified backup
+`20261021T120919Z-0baff8fc` (114 files). The deployment used the official
+`platform-primary` target, passed migration/tests/smoke checks, and left the
+host healthy and in sync.
 
-The updater checkout is still on `codex/retention-two-20261019` at the older
-release SHA and has eight pre-existing dirty files for backup-retention work.
-The updater requires a clean canonical checkout. Those unrelated changes were
-left untouched; no deployment request was queued and no release files were
-edited. Deployment and all production applies remain blocked until that
-checkout can be made clean through its own reviewed workflow. Do not bypass
-the official updater.
+The pre-existing backup-retention work was preserved as a local WIP commit
+`ea5cb28` on `codex/retention-two-20261019`; it was not included in this release.
 
-After deployment, use a fresh verified full backup and apply each source-free
-batch with `scripts/references/import_verified_sources.php --case-root=...`,
-the exact private audit SHA above, a unique receipt and independent readback.
-Apply the four audited existing-row citation corrections with
-`scripts/references/repair_residency_ai_source_citation_replacements.php`,
-using the private Q48/Q176/Q180/Q182 plan and its matching rollback-preview
-receipt. Apply the five materials confidence repairs with
-`scripts/references/repair_verified_ai_source_pages.php`. Each operator still
-requires the fresh backup and its own unique receipt.
-The Hupp batch must retain `classification_basis=updated_reference_proxy`,
-`reference_years=[1406]` and the outside-scope note in every inserted row.
-Re-run the frozen-assessment preflight for the published question groups.
-Do not create a new assessment version while any 1398 question remains
-uncited or any citation is outside the 1398 official list without this
-explicit proxy label.
+The five Van Noort confidence updates used
+`scripts/references/repair_verified_ai_source_pages.php`. The four existing
+citation replacements used
+`scripts/references/repair_residency_ai_source_citation_replacements.php`.
+The Q48/Q176/Q182 key conflicts remain documented in the private alignment
+report; the official keys were preserved. Q188 and Q225 conflicts are recorded
+in their private research audits. The Q97 source was inserted without changing
+its `draft` status or null-choice `voided` answer.
 
-## Remaining work
+Six post-apply frozen-assessment preflights passed. Assessment version 10,
+checksum `ed956277b88933db4fb15ae367b6ec88385da161d8073b9c63af9b23b5bb806d`,
+10 reviews and zero attempts remain unchanged. No new assessment version was
+published.
 
-All nine low-confidence rows now have independent exact-page evidence and
-protected plans; none has been applied. The five dental-materials confidence
-repairs passed rollback preview against the decimal-node map merged by PR #490:
+## Completion result
 
-- Dental materials: Q241, Q246, Q247, Q248, Q250 (Van Noort 4e fractional
-  sections; audit nodes such as `1.6` resolve to catalog keys such as
-  `ch01.6`). Their plan SHA-256 values are Q241
-  `9509c03c144408b34cbce4b96a357af73d48f393eca79368007f6e7e1e3ac9f2`, Q246
-  `c336aa9243639b38721f98efb0886709b9b2ee2b554f00636875674d975df1be`, Q247
-  `8ea6180068da45544158da8b4149f4a25d6177179f263f87fb9dcfa521dff0b6`, Q248
-  `f1307cc226064e350df5ca431ed6f71d6177e69d4d47c08c729663c6c2bdfa4f`, and
-  Q250 `f6825141636e69c699464f05d2e07e766776cfcce26c39cefcb4c9b2a712182e`.
+The final verified coverage is 227/227 book-based questions and 20/20 valid
+English keys exempt from book citations. There are zero uncited book questions,
+zero source rows below 0.85 confidence, zero incomplete page/hash rows and zero
+scope-unverified rows. The 228 source records include the two-page Q221 bundle
+(White & Pharoah 7e, chapter 25, PDF pages 472 and 486).
 
-The other four rows passed an independent two-batch audit (4 accepted, 0
-pending; SHA-256
-`41f81bc577cd421d41d428d770d28611dd84637eb5a2f94f8cd7c67acb4dcdde`) and an
-exact guarded rollback preview. The private plan SHA-256 is
-`1f73f5e1e33d5593bf086ba1a6db35bff7c0b1c5ce883d8b744e9216ba3c1ff1`; preview
-receipt SHA-256 is
-`e6b4c7d8249c59ee9605f5ed5b5cdcf4b2f57dd7d00ab33757fa76e8b796926b`.
+The nine lower-confidence rows are corrected and read back at 0.970:
 
-- Q48: Burket 12e ch7, printed 153 / PDF 170.
-- Q176: Sturdevant 7e ch10, printed 318 / PDF 331.
-- Q180: Sturdevant 7e ch10, printed 347 / PDF 360.
-- Q182: Sturdevant 7e ch5, printed 156 / PDF 169.
+- Dental materials: Q241 Van Noort 4e §1.6, printed 33 / PDF 48; Q246 §2.7,
+  printed 148 / PDF 163; Q247 §3.8, printed 228 / PDF 243; Q248 §3.5, printed
+  202 / PDF 217; Q250 §3.3, printed 184 / PDF 199.
+- Operative dentistry: Q176 Sturdevant 7e ch10, printed 318 / PDF 331; Q180
+  ch10, printed 347 / PDF 360; Q182 ch5, printed 156 / PDF 169.
+- Oral medicine: Q48 Burket 12e ch7, printed 153 / PDF 170.
 
-The audit records official-key conflicts for Q48, Q176 and Q182; every
-official key remains unchanged. Q180's source supports its official key. The
-source-only operator changes only citation and confidence metadata, and the
-preview verified unchanged stems, choices, official keys, frozen assessment,
-reviews and attempts.
+Source/key conflicts are documented while all official keys remain unchanged:
+Q48, Q176, Q182, Q188 and Q225. Q180's page supports its official key. The
+three other sources outside the official 1398 scope are Q45, Q186 and Q189;
+their source pages carry `outside_scope_exam_question` notes. The fourteen Hupp
+7e proxy citations are also visibly marked outside the 1398 official reference
+list, with reference year 1406 recorded in their applied receipt and note.
 
-In addition, the proxy citations above are complete source locations but are
-not part of the official 1398 reference list. Keep that distinction visible
-in the live source note, census and any future publication gate. The 49
-source-free rows and nine low-confidence rows must still be applied and
-independently read back before 1398 can be called complete. Do not publish or
-close the sitting while either group remains.
+All source-only receipts and the final readback are in the private checkpoint
+`/srv/fanoos/shared/research/classification/reports/residency-1398-completion-checkpoint-20261021-v6.json`
+(SHA-256 `31ee911258cfe42f45d2b8b53e27e8c88d35afa64b799b656dc4a3e2f601a3cb`).
+The assessment remains on frozen version 10; this source-classification
+closeout did not publish another version or close unrelated issue #422.
