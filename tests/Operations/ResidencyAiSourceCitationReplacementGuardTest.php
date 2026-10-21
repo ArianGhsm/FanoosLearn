@@ -11,6 +11,7 @@ final class ResidencyAiSourceCitationReplacementGuardTest
     public function run(): int
     {
         $checks=0;
+        $this->check(Guard::supportedQuestions(1398)===[48,176,180,182],'Pinned 1398 low-confidence rows are incorrect.');++$checks;
         $this->check(Guard::supportedQuestions(1402)===[139,175,190,244],'Pinned 1402 rows are incorrect.');++$checks;
         $this->check(Guard::supportedQuestions(1401)===[123,128,165,168],'Pinned 1401 rows are incorrect.');++$checks;
         $this->check(Guard::spec(174)===null,'An unlisted question entered the citation replacement route.');++$checks;
@@ -68,18 +69,22 @@ final class ResidencyAiSourceCitationReplacementGuardTest
             'batches'=>[
                 ['batch'=>'1402:periodontics:q139','exam_year'=>1402,'subject'=>'periodontics',
                     'questions'=>1,'accepted'=>1,'pending'=>0,'question_content_identical'=>true,
-                    'mapped'=>['139'=>['ref'=>'carranza-periodontology@13e#ch28','pdf_page'=>785]],
+                    'mapped'=>['139'=>['ref'=>'carranza-periodontology@13e#ch28','pdf_page'=>785,
+                        'confidence_source'=>0.9,'confidence_node'=>0.9,'confidence_page'=>0.9]],
                     'source_pdf_provenance'=>['carranza-periodontology@13e'=>['sha256'=>Guard::spec(139)['pdf_sha256']]]],
                 ['batch'=>'1402:operative-dentistry:q175-q190','exam_year'=>1402,'subject'=>'operative-dentistry',
                     'questions'=>2,'accepted'=>2,'pending'=>0,'question_content_identical'=>true,
                     'mapped'=>[
-                        '175'=>['ref'=>'craig-restorative-materials@14e#ch13','pdf_page'=>288],
-                        '190'=>['ref'=>'craig-restorative-materials@14e#ch13','pdf_page'=>288],
+                        '175'=>['ref'=>'craig-restorative-materials@14e#ch13','pdf_page'=>288,
+                            'confidence_source'=>0.95,'confidence_node'=>0.95,'confidence_page'=>0.95],
+                        '190'=>['ref'=>'craig-restorative-materials@14e#ch13','pdf_page'=>288,
+                            'confidence_source'=>0.95,'confidence_node'=>0.95,'confidence_page'=>0.95],
                     ],
                     'source_pdf_provenance'=>['craig-restorative-materials@14e'=>['sha256'=>Guard::spec(175)['pdf_sha256']]]],
                 ['batch'=>'1402:dental-materials:q244','exam_year'=>1402,'subject'=>'dental-materials',
                     'questions'=>1,'accepted'=>1,'pending'=>0,'question_content_identical'=>true,
-                    'mapped'=>['244'=>['ref'=>'powers-wataha-materials@11e#ch04','pdf_page'=>67]],
+                    'mapped'=>['244'=>['ref'=>'powers-wataha-materials@11e#ch04','pdf_page'=>67,
+                        'confidence_source'=>0.95,'confidence_node'=>0.95,'confidence_page'=>0.95]],
                     'source_pdf_provenance'=>['powers-wataha-materials@11e'=>['sha256'=>Guard::spec(244)['pdf_sha256']]]],
             ],
         ];
@@ -94,7 +99,8 @@ final class ResidencyAiSourceCitationReplacementGuardTest
             'batch_count'=>1,'questions'=>1,'accepted'=>1,'pending'=>0,
             'batches'=>[['batch'=>'1402:periodontics:q139','exam_year'=>1402,'subject'=>'periodontics',
                 'questions'=>1,'accepted'=>1,'pending'=>0,'question_content_identical'=>true,
-                'mapped'=>['139'=>['ref'=>'carranza-periodontology@13e#ch28','pdf_page'=>785]],
+                'mapped'=>['139'=>['ref'=>'carranza-periodontology@13e#ch28','pdf_page'=>785,
+                    'confidence_source'=>0.9,'confidence_node'=>0.9,'confidence_page'=>0.9]],
                 'source_pdf_provenance'=>['carranza-periodontology@13e'=>['sha256'=>Guard::spec(139)['pdf_sha256']]]]]];
         $this->check(Guard::planMatches($singlePlan)&&Guard::researchMatches($singleAudit,$singlePlan),
             'Exact pinned Q139 source correction cannot be run as an independent single-question operation.');++$checks;
@@ -112,8 +118,10 @@ final class ResidencyAiSourceCitationReplacementGuardTest
             'batches'=>[['batch'=>'1401:operative-dentistry:q165-q168','exam_year'=>1401,'subject'=>'operative-dentistry',
                 'questions'=>2,'accepted'=>2,'pending'=>0,'question_content_identical'=>true,
                 'mapped'=>[
-                    '165'=>['ref'=>'craig-restorative-materials@14e#ch13','pdf_page'=>290],
-                    '168'=>['ref'=>'craig-restorative-materials@14e#ch13','pdf_page'=>290],
+                    '165'=>['ref'=>'craig-restorative-materials@14e#ch13','pdf_page'=>290,
+                        'confidence_source'=>0.9,'confidence_node'=>0.9,'confidence_page'=>0.9],
+                    '168'=>['ref'=>'craig-restorative-materials@14e#ch13','pdf_page'=>290,
+                        'confidence_source'=>0.95,'confidence_node'=>0.95,'confidence_page'=>0.95],
                 ],'source_pdf_provenance'=>['craig-restorative-materials@14e'=>['sha256'=>Guard::spec(165)['pdf_sha256']]]]]];
         $this->check(Guard::planMatches($plan1401)&&Guard::researchMatches($audit1401,$plan1401),
             'Exact pinned 1401 Q165/Q168 source replacement plan was rejected.');++$checks;
@@ -131,11 +139,62 @@ final class ResidencyAiSourceCitationReplacementGuardTest
             'batches'=>[['batch'=>'1401:periodontics:q123-q128','exam_year'=>1401,'subject'=>'periodontics',
                 'questions'=>2,'accepted'=>2,'pending'=>0,'question_content_identical'=>true,
                 'mapped'=>[
-                    '123'=>['ref'=>'carranza-periodontology@13e#ch49','pdf_page'=>1112],
-                    '128'=>['ref'=>'carranza-periodontology@13e#ch64','pdf_page'=>1454],
+                    '123'=>['ref'=>'carranza-periodontology@13e#ch49','pdf_page'=>1112,
+                        'confidence_source'=>0.9,'confidence_node'=>0.9,'confidence_page'=>0.9],
+                    '128'=>['ref'=>'carranza-periodontology@13e#ch64','pdf_page'=>1454,
+                        'confidence_source'=>0.95,'confidence_node'=>0.95,'confidence_page'=>0.95],
                 ],'source_pdf_provenance'=>['carranza-periodontology@13e'=>['sha256'=>Guard::spec(123)['pdf_sha256']]]]]];
         $this->check(Guard::planMatches($planPerio1401)&&Guard::researchMatches($auditPerio1401,$planPerio1401),
             'Exact pinned 1401 Q123/Q128 source replacement plan was rejected.');++$checks;
+
+        $entries1398=[];
+        foreach(Guard::supportedQuestions(1398) as $number){
+            $spec=Guard::spec($number);
+            $entries1398[]=$spec+[
+                'number'=>$number,
+                'audit_batch'=>$number===48
+                    ?'1398:oral-medicine:oral-medicine-low-confidence'
+                    :'1398:operative-dentistry:operative-low-confidence',
+                'old_scope_unverified'=>false,
+            ];
+        }
+        $plan1398=['format'=>'fanoos.residency-ai-source-citation-replacement-plan/1','year'=>1398,'round'=>1,
+            'audit_path'=>'/srv/fanoos/shared/research/classification/recovery-1398-confidence-citations-fixture/classification/reports/audit.json',
+            'audit_sha256'=>str_repeat('d',64),'entries'=>$entries1398];
+        $mappedOperative=[];
+        foreach([176,180,182] as $number){
+            $spec=Guard::spec($number);
+            $mappedOperative[(string)$number]=[
+                'ref'=>$spec['reference'].'#ch'.str_pad($spec['chapter'],2,'0',STR_PAD_LEFT),
+                'pdf_page'=>$spec['pdf_page'],
+                'confidence_source'=>$spec['confidence'],
+                'confidence_node'=>$spec['confidence'],
+                'confidence_page'=>$spec['confidence'],
+            ];
+        }
+        $spec48=Guard::spec(48);
+        $audit1398=['format'=>'fanoos.classification.provenance-audit/1','research_only'=>true,
+            'batch_count'=>2,'questions'=>4,'accepted'=>4,'pending'=>0,
+            'batches'=>[
+                ['batch'=>'1398:operative-dentistry:operative-low-confidence','exam_year'=>1398,'subject'=>'operative-dentistry',
+                    'questions'=>3,'accepted'=>3,'pending'=>0,'question_content_identical'=>true,'mapped'=>$mappedOperative,
+                    'source_pdf_provenance'=>['sturdevant-operative@7e'=>['sha256'=>Guard::spec(176)['pdf_sha256']]]],
+                ['batch'=>'1398:oral-medicine:oral-medicine-low-confidence','exam_year'=>1398,'subject'=>'oral-medicine',
+                    'questions'=>1,'accepted'=>1,'pending'=>0,'question_content_identical'=>true,
+                    'mapped'=>['48'=>[
+                        'ref'=>$spec48['reference'].'#ch'.str_pad($spec48['chapter'],2,'0',STR_PAD_LEFT),
+                        'pdf_page'=>$spec48['pdf_page'],'confidence_source'=>$spec48['confidence'],
+                        'confidence_node'=>$spec48['confidence'],'confidence_page'=>$spec48['confidence'],
+                    ]],
+                    'source_pdf_provenance'=>['burket-oral-medicine@12e'=>['sha256'=>$spec48['pdf_sha256']]]],
+            ]];
+        $this->check(Guard::planMatches($plan1398)&&Guard::researchMatches($audit1398,$plan1398),
+            'Exact four-row 1398 source correction plan was rejected.');++$checks;
+        $badAudit1398=$audit1398;$badAudit1398['batches'][0]['mapped']['182']['confidence_page']=0.80;
+        $this->check(!Guard::researchMatches($badAudit1398,$plan1398),
+            'Below-threshold confidence in a 1398 provenance audit passed.');++$checks;
+        $badPlan1398=$plan1398;$badPlan1398['entries'][2]['pdf_page']=162;
+        $this->check(!Guard::planMatches($badPlan1398),'Unpinned 1398 correction page passed the exact plan guard.');++$checks;
 
         $root=dirname(__DIR__,2);
         $operator=file_get_contents($root.'/scripts/references/repair_residency_ai_source_citation_replacements.php');
