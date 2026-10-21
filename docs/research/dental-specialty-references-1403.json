@@ -8,7 +8,7 @@
   "notes": [
     "Board 1403 orthodontics uses its own notice, not the separate board-1404/promotion-1403 member.",
     "The pediatric notice explicitly retains Garcia for board 1403; Splieth begins with board 1404.",
-    "One contradictory Burstone edition is retained as pending and excluded from catalog validity."
+    "Burstone 2nd edition 2022 was resolved against the publisher copyright/cataloging page; legacy first-edition validity remains attributed to 1e."
   ],
   "rows": [
     {
@@ -853,7 +853,8 @@
       "source_member": "منابع ارتقا و بورد ارتودانتیکس 1403.pdf",
       "source_page": 1,
       "evidence": "Official board dentistry 1403 notice; original member منابع ارتقا و بورد ارتودانتیکس 1403.pdf, page 1; PDF SHA-256 a7985bda646741eb40eae66bda773e752ee744e9262f625973ba928f4808e8ef",
-      "pending_reason": "The 1403 notice states 2nd Edition 2022, while the existing catalog and the 1404 notice label 2022 as 1st edition; resolve exact publisher identity before adding a validity row."
+      "edition_resolution_source": "https://www.quintessence-publishing.com/downloads/extract_24071_choy_burstones_biomechanical_foundation_of_clinical_orthodontics.pdf",
+      "edition_note": "Publisher copyright/cataloging page identifies second edition, 2022, ISBN 9780867159493, preceded by first edition, 2015."
     },
     {
       "year": "1403",

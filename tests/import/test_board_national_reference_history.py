@@ -31,7 +31,7 @@ class BoardNationalReferenceHistoryTest(unittest.TestCase):
     def test_recovered_years_have_the_verified_source_counts(self):
         counts = Counter((r['exam_type'], r['year']) for r in self.rows)
         self.assertEqual({y: counts['board', y] for y in (1398, 1399, 1401, 1402, 1403, 1404)},
-                         {1398: 49, 1399: 43, 1401: 60, 1402: 64, 1403: 64, 1404: 65})
+                         {1398: 49, 1399: 43, 1401: 60, 1402: 64, 1403: 65, 1404: 65})
         self.assertEqual({y: counts['national', y] for y in (1401, 1402, 1403)},
                          {1401: 19, 1402: 18, 1403: 18})
 
@@ -50,7 +50,7 @@ class BoardNationalReferenceHistoryTest(unittest.TestCase):
                    (1403, 'orthodontics', 'burstone-biomechanics@1e')]
         identities = {(r['year'], r['subject'], r['edition']) for r in self.rows if r['exam_type'] == 'board'}
         self.assertFalse(identities.intersection(pending))
-        self.assertEqual(sum('pending:' in n for n in self.catalog['review_notes']), 7)
+        self.assertEqual(sum('pending:' in n for n in self.catalog['review_notes']), 6)
 
     def test_1404_pathology_and_operative_corrections_take_precedence(self):
         for edition in ('robbins-pathology@11e', 'woo-oral-pathology@3e'):
@@ -64,6 +64,12 @@ class BoardNationalReferenceHistoryTest(unittest.TestCase):
         self.assertIn('27', nanda['scope'])
         self.assertNotEqual(nanda['scope'], 'فصل 25')
         self.assertFalse(any(r['exam_type'] == 'promotion' and 1396 <= r['year'] <= 1404 for r in self.rows))
+
+    def test_burstone_edition_identity_uses_the_publisher_dates(self):
+        self.row('board', 1403, 'orthodontics', 'burstone-biomechanics@2e')
+        reference = next(r for r in self.catalog['references'] if r['key'] == 'burstone-biomechanics')
+        years = {e['key']: e['year'] for e in reference['editions']}
+        self.assertEqual(years, {'1e': 2015, '2e': 2022})
 
     def test_pediatric_transition_is_applied_to_the_stated_board_year(self):
         self.row('board', 1403, 'pediatric-dentistry', 'harris-primary-preventive@8e')

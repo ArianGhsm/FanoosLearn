@@ -8,7 +8,6 @@
     "dental-specialty-references-1399.json: 1399 پروتزهای دندانی \"Stewart's Clinical Removable Partial Prosthodontics\" pending: Notice states 3rd edition / 2008, while the catalog identifies 2008 as fourth edition; no corrected official intent was recovered.; not added to validity",
     "dental-specialty-references-1402.json: 1402 آسیب‌شناسی دهان و فک و صورت \"Oral and Maxillofacial Pathology\" pending: The original notice specifies latest printing without a year or edition. An exact historical edition is not inferred from a later list.; not added to validity",
     "dental-specialty-references-1402.json: 1402 آسیب‌شناسی دهان و فک و صورت \"Oral Pathology: Clinical Pathologic Correlations\" pending: The original notice specifies latest printing without a year or edition. An exact historical edition is not inferred from a later list.; not added to validity",
-    "dental-specialty-references-1403.json: 1403 ارتودانتیکس \"The Biomechanical Foundation of Clinical Orthodontics\" pending: The 1403 notice states 2nd Edition 2022, while the existing catalog and the 1404 notice label 2022 as 1st edition; resolve exact publisher identity before adding a validity row.; not added to validity",
     "row 216 (national 1401, پریودانتیکس): edition not stated; recorded as 13th edition from the year 2019 — confirm",
     "row 218 (national 1401, رادیولوژی دهان و فک و صورت): edition not stated; recorded as 8th edition from the year 2019 — confirm",
     "row 314 (board 1398, اندودانتیکس): edition not stated; recorded as 1st edition from the year 2016 — confirm",
@@ -38,42 +37,42 @@
     "row 554 (board 1403, پروتزهای دندانی): edition not stated; recorded as 1st edition from the year 2000 — confirm",
     "row 562 (board 1403, دندانپزشکی ترمیمی): edition not stated; recorded as 1st edition from the year 2007 — confirm",
     "row 565 (board 1403, دندانپزشکی ترمیمی): edition not stated; recorded as 1st edition from the year 2019 — confirm",
-    "row 594 (board 1404, اندودانتیکس): edition not stated; recorded as 5th edition from the year 2019 — confirm",
-    "row 599 (board 1404, دندانپزشکی کودکان): edition not stated; recorded as 1st edition from the year 2021 — confirm",
-    "row 602 (board 1404, پریودانتیکس): edition not stated; recorded as 14th edition from the year 2023 — confirm",
-    "row 603 (board 1404, پریودانتیکس): edition not stated; recorded as 7th edition from the year 2021 — confirm",
-    "row 612 (board 1404, رادیولوژی دهان و فک و صورت): edition not stated; recorded as 2nd edition from the year 2017 — confirm",
-    "row 614 (board 1404, پروتزهای دندانی): edition not stated; recorded as 1st edition from the year 2007 — confirm",
-    "row 619 (board 1404, پروتزهای دندانی): edition not stated; recorded as 1st edition from the year 2000 — confirm",
-    "row 628 (board 1404, دندانپزشکی ترمیمی): edition not stated; recorded as 1st edition from the year 2007 — confirm",
-    "row 653 (board 1405, اندودانتیکس): edition not stated; recorded as 1st edition from the year 2017 — confirm",
-    "row 653 (promotion 1405, اندودانتیکس): edition not stated; recorded as 1st edition from the year 2017 — confirm",
-    "row 654 (board 1405, اندودانتیکس): edition not stated; recorded as 1st edition from the year 2022 — confirm",
-    "row 654 (promotion 1405, اندودانتیکس): edition not stated; recorded as 1st edition from the year 2022 — confirm",
-    "row 657 (board 1405, پریودانتیکس): edition not stated; recorded as 14th edition from the year 2023 — confirm",
-    "row 657 (promotion 1405, پریودانتیکس): edition not stated; recorded as 14th edition from the year 2023 — confirm",
-    "row 658 (board 1405, پریودانتیکس): edition not stated; recorded as 7th edition from the year 2021 — confirm",
-    "row 658 (promotion 1405, پریودانتیکس): edition not stated; recorded as 7th edition from the year 2021 — confirm",
-    "row 662 (board 1405, پروتزهای دندانی): edition not stated; recorded as 1st edition from the year 2007 — confirm",
-    "row 662 (promotion 1405, پروتزهای دندانی): edition not stated; recorded as 1st edition from the year 2007 — confirm",
-    "row 663 (board 1405, پروتزهای دندانی): edition not stated; recorded as 6th edition from the year 2023 — confirm",
-    "row 663 (promotion 1405, پروتزهای دندانی): edition not stated; recorded as 6th edition from the year 2023 — confirm",
-    "row 667 (board 1405, پروتزهای دندانی): edition not stated; recorded as 1st edition from the year 2000 — confirm",
-    "row 667 (promotion 1405, پروتزهای دندانی): edition not stated; recorded as 1st edition from the year 2000 — confirm",
-    "row 675 (board 1405, دندانپزشکی ترمیمی): edition not stated; recorded as 1st edition from the year 2007 — confirm",
-    "row 675 (promotion 1405, دندانپزشکی ترمیمی): edition not stated; recorded as 1st edition from the year 2007 — confirm",
-    "row 699 (board 1405, رادیولوژی دهان و فک و صورت): edition not stated; recorded as 2nd edition from the year 2017 — confirm",
-    "row 699 (promotion 1405, رادیولوژی دهان و فک و صورت): edition not stated; recorded as 2nd edition from the year 2017 — confirm",
-    "row 700 (board 1405, رادیولوژی دهان و فک و صورت): edition not stated; recorded as 1st edition from the year 2019 — confirm",
-    "row 700 (promotion 1405, رادیولوژی دهان و فک و صورت): edition not stated; recorded as 1st edition from the year 2019 — confirm",
-    "row 716 (board 1405, دندانپزشکی کودکان): edition not stated; recorded as 1st edition from the year 2021 — confirm",
-    "row 716 (promotion 1405, دندانپزشکی کودکان): edition not stated; recorded as 1st edition from the year 2021 — confirm",
-    "row 719 (board 1406, پروتزهای دندانی): edition not stated; recorded as 1st edition from the year 2007 — confirm",
-    "row 719 (promotion 1406, پروتزهای دندانی): edition not stated; recorded as 1st edition from the year 2007 — confirm",
-    "row 720 (board 1406, پروتزهای دندانی): edition not stated; recorded as 6th edition from the year 2023 — confirm",
-    "row 720 (promotion 1406, پروتزهای دندانی): edition not stated; recorded as 6th edition from the year 2023 — confirm",
-    "row 724 (board 1406, پروتزهای دندانی): edition not stated; recorded as 1st edition from the year 2000 — confirm",
-    "row 724 (promotion 1406, پروتزهای دندانی): edition not stated; recorded as 1st edition from the year 2000 — confirm"
+    "row 595 (board 1404, اندودانتیکس): edition not stated; recorded as 5th edition from the year 2019 — confirm",
+    "row 600 (board 1404, دندانپزشکی کودکان): edition not stated; recorded as 1st edition from the year 2021 — confirm",
+    "row 603 (board 1404, پریودانتیکس): edition not stated; recorded as 14th edition from the year 2023 — confirm",
+    "row 604 (board 1404, پریودانتیکس): edition not stated; recorded as 7th edition from the year 2021 — confirm",
+    "row 613 (board 1404, رادیولوژی دهان و فک و صورت): edition not stated; recorded as 2nd edition from the year 2017 — confirm",
+    "row 615 (board 1404, پروتزهای دندانی): edition not stated; recorded as 1st edition from the year 2007 — confirm",
+    "row 620 (board 1404, پروتزهای دندانی): edition not stated; recorded as 1st edition from the year 2000 — confirm",
+    "row 629 (board 1404, دندانپزشکی ترمیمی): edition not stated; recorded as 1st edition from the year 2007 — confirm",
+    "row 654 (board 1405, اندودانتیکس): edition not stated; recorded as 1st edition from the year 2017 — confirm",
+    "row 654 (promotion 1405, اندودانتیکس): edition not stated; recorded as 1st edition from the year 2017 — confirm",
+    "row 655 (board 1405, اندودانتیکس): edition not stated; recorded as 1st edition from the year 2022 — confirm",
+    "row 655 (promotion 1405, اندودانتیکس): edition not stated; recorded as 1st edition from the year 2022 — confirm",
+    "row 658 (board 1405, پریودانتیکس): edition not stated; recorded as 14th edition from the year 2023 — confirm",
+    "row 658 (promotion 1405, پریودانتیکس): edition not stated; recorded as 14th edition from the year 2023 — confirm",
+    "row 659 (board 1405, پریودانتیکس): edition not stated; recorded as 7th edition from the year 2021 — confirm",
+    "row 659 (promotion 1405, پریودانتیکس): edition not stated; recorded as 7th edition from the year 2021 — confirm",
+    "row 663 (board 1405, پروتزهای دندانی): edition not stated; recorded as 1st edition from the year 2007 — confirm",
+    "row 663 (promotion 1405, پروتزهای دندانی): edition not stated; recorded as 1st edition from the year 2007 — confirm",
+    "row 664 (board 1405, پروتزهای دندانی): edition not stated; recorded as 6th edition from the year 2023 — confirm",
+    "row 664 (promotion 1405, پروتزهای دندانی): edition not stated; recorded as 6th edition from the year 2023 — confirm",
+    "row 668 (board 1405, پروتزهای دندانی): edition not stated; recorded as 1st edition from the year 2000 — confirm",
+    "row 668 (promotion 1405, پروتزهای دندانی): edition not stated; recorded as 1st edition from the year 2000 — confirm",
+    "row 676 (board 1405, دندانپزشکی ترمیمی): edition not stated; recorded as 1st edition from the year 2007 — confirm",
+    "row 676 (promotion 1405, دندانپزشکی ترمیمی): edition not stated; recorded as 1st edition from the year 2007 — confirm",
+    "row 700 (board 1405, رادیولوژی دهان و فک و صورت): edition not stated; recorded as 2nd edition from the year 2017 — confirm",
+    "row 700 (promotion 1405, رادیولوژی دهان و فک و صورت): edition not stated; recorded as 2nd edition from the year 2017 — confirm",
+    "row 701 (board 1405, رادیولوژی دهان و فک و صورت): edition not stated; recorded as 1st edition from the year 2019 — confirm",
+    "row 701 (promotion 1405, رادیولوژی دهان و فک و صورت): edition not stated; recorded as 1st edition from the year 2019 — confirm",
+    "row 717 (board 1405, دندانپزشکی کودکان): edition not stated; recorded as 1st edition from the year 2021 — confirm",
+    "row 717 (promotion 1405, دندانپزشکی کودکان): edition not stated; recorded as 1st edition from the year 2021 — confirm",
+    "row 720 (board 1406, پروتزهای دندانی): edition not stated; recorded as 1st edition from the year 2007 — confirm",
+    "row 720 (promotion 1406, پروتزهای دندانی): edition not stated; recorded as 1st edition from the year 2007 — confirm",
+    "row 721 (board 1406, پروتزهای دندانی): edition not stated; recorded as 6th edition from the year 2023 — confirm",
+    "row 721 (promotion 1406, پروتزهای دندانی): edition not stated; recorded as 6th edition from the year 2023 — confirm",
+    "row 725 (board 1406, پروتزهای دندانی): edition not stated; recorded as 1st edition from the year 2000 — confirm",
+    "row 725 (promotion 1406, پروتزهای دندانی): edition not stated; recorded as 1st edition from the year 2000 — confirm"
   ],
   "decisions": [
     "row 13 (1405, زبان انگلیسی): \"تمامی کتب مرجع معرفی‌شده در دروس آزمون\" is a scope statement, not a book; kept out of the reference list",
@@ -122,7 +121,8 @@
     "row 407 (board 1401, دندانپزشکی کودکان): edition not stated; recorded as 6th edition from the year 2019 — the 2019 edition of Pediatric Dentistry: Infancy through Adolescence is the 6th",
     "row 469 (board 1402, دندانپزشکی کودکان): edition not stated; recorded as 6th edition from the year 2019 — the 2019 edition of Pediatric Dentistry: Infancy through Adolescence is the 6th",
     "row 533 (board 1403, دندانپزشکی کودکان): edition not stated; recorded as 6th edition from the year 2019 — the 2019 edition of Pediatric Dentistry: Infancy through Adolescence is the 6th",
-    "row 703 (promotion 1405, ارتودانتیکس): edition not stated; recorded as 7th edition from the year 2026 — the promotion-exam notice moves Proffit from 2019 to 2026, the year of the 7th edition",
+    "row 585 (board 1403, ارتودانتیکس): explicit second edition 2022 resolved against Quintessence ISBN 9780867159493; the first edition is 2015, ISBN 9780867156515",
+    "row 704 (promotion 1405, ارتودانتیکس): edition not stated; recorded as 7th edition from the year 2026 — the promotion-exam notice moves Proffit from 2019 to 2026, the year of the 7th edition",
     "1403 dental-materials phillips-materials@13e: scope \"Part II: Direct Restorative Materials\" read as chapters فصول 5–8 — Part II (Direct Restorative Materials) is chapters 5–8 in the publisher's contents",
     "1397 dental-materials mccabe-walls-materials@9e: scope \"فصول منتخب؛ فهرست کامل در PDF اصلی (نسخهٔ متن استخراجیِ قدیمی در بعضی اعداد RTL وارونگی دارد).\" names no chapter list; kept as text only",
     "1397 periodontics carranza-periodontology@12e: scope \"فهرست فصل‌های منتخب و بخش‌های Online در PDF؛ متن فصل‌ها به علت کیفیت فونت قدیمی با استخراج خودکار قطعی نیست.\" names no chapter list; kept as text only",
@@ -63178,6 +63178,11 @@
         {
           "key": "1e",
           "label": "1st edition",
+          "year": 2015
+        },
+        {
+          "key": "2e",
+          "label": "2nd edition",
           "year": 2022
         }
       ]
@@ -80281,6 +80286,45 @@
       "scope_chapters": [
         {
           "number": "1403"
+        }
+      ]
+    },
+    {
+      "exam_type": "board",
+      "year": 1403,
+      "subject": "orthodontics",
+      "edition": "burstone-biomechanics@2e",
+      "official": true,
+      "scope": "فصول 4 و 5 و 6 و 7 و 9 و 12 و 13 و 14 و 15",
+      "evidence": "Official board dentistry 1403 notice; original member منابع ارتقا و بورد ارتودانتیکس 1403.pdf, page 1; PDF SHA-256 a7985bda646741eb40eae66bda773e752ee744e9262f625973ba928f4808e8ef",
+      "source_document": "https://dl.konkur.in/2024/04/Reference1403-Board-Dental-%5Bkonkur.in%5D.zip",
+      "scope_chapters": [
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
         }
       ]
     },

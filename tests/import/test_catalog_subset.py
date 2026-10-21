@@ -1,5 +1,6 @@
 """scripts/import/catalog_subset.py keeps only what a catalog adds, and refuses a change it cannot carry."""
 import sys
+import copy
 import unittest
 from pathlib import Path
 
@@ -32,6 +33,22 @@ class CatalogSubsetTest(unittest.TestCase):
         new = {**BASE, 'validity': [{**BASE['validity'][0], 'scope': 'تمام فصول'}]}
         with self.assertRaises(SystemExit):
             subset(BASE, new)
+
+    def test_changed_edition_metadata_needs_explicit_opt_in(self):
+        new = copy.deepcopy(BASE)
+        new['references'][0]['editions'][0]['year'] = 2015
+        with self.assertRaises(SystemExit):
+            subset(BASE, new)
+        part = subset(BASE, new, include_edition_metadata=True)
+        self.assertEqual(part['references'][0]['editions'],
+                         [{'key': '6e', 'label': '6th edition', 'year': 2015}])
+        self.assertEqual(part['validity'], [])
+
+    def test_edition_metadata_mode_cannot_rewrite_a_chapter_tree(self):
+        new = copy.deepcopy(BASE)
+        new['references'][0]['editions'][0]['nodes'][0]['key'] = 'ch02'
+        with self.assertRaises(SystemExit):
+            subset(BASE, new, include_edition_metadata=True)
 
 
 if __name__ == '__main__':
