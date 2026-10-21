@@ -26,7 +26,7 @@ class PrivateRecoverySourceOnlyContract(unittest.TestCase):
             "dirname($case) !== $privateRoot",
             "$requested !== $case",
             "is_link($requested)",
-            "if ($year === false || $year < 1399",
+            "if ($year === false || ($year < 1399 && !$retrospective",
             "recovery-' . $year . '-[a-z0-9-]+-20[0-9]{6}",
             "$inputRoot = $case",
             "$auditDir = realpath($case . '/classification/reports')",

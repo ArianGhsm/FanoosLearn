@@ -47,11 +47,16 @@ final class SourceChapterCorrectionGuard
         if (!is_int($number) || !is_string($edition) || !is_string($chapter)) {
             return false;
         }
+        if (preg_match('/^([1-9][0-9]?)(?:\.([1-9]))?$/D', $chapter, $parts) !== 1) {
+            return false;
+        }
+        $chapterNode = 'ch' . str_pad($parts[1], 2, '0', STR_PAD_LEFT)
+            . (isset($parts[2]) ? '.' . $parts[2] : '');
         $mapped = $batch['mapped'][(string) $number] ?? null;
         return ($batch['exam_year'] ?? null) === ($plan['year'] ?? null)
             && ($batch['subject'] ?? null) === ($plan['subject'] ?? null)
             && ($batch['question_content_identical'] ?? null) === true
-            && ($mapped['ref'] ?? null) === $edition . '#ch' . str_pad($chapter, 2, '0', STR_PAD_LEFT)
+            && ($mapped['ref'] ?? null) === $edition . '#' . $chapterNode
             && ($mapped['pdf_page'] ?? null) === ($item['pdf_page'] ?? null)
             && ($batch['source_pdf_provenance'][$edition]['sha256'] ?? null) === ($item['pdf_sha256'] ?? null);
     }

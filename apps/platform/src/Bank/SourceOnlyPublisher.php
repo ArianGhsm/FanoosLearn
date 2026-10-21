@@ -10,8 +10,10 @@ use RuntimeException;
 use Throwable;
 
 /**
- * Only INSERTs new official source/chapter links for matching, published,
- * currently source-free questions. No UPDATE, DELETE or publication writes.
+ * Only INSERTs new source/chapter links for matching, published,
+ * currently source-free questions, plus the exact voided/draft 1398 Q97
+ * exception. No UPDATE, DELETE or publication writes. Updated-reference
+ * proxies are limited to the separately labelled Hupp 7e/1406 case.
  * An entire batch commits together or rolls back together.
  */
 final class SourceOnlyPublisher
@@ -21,7 +23,7 @@ final class SourceOnlyPublisher
         array $study, array $validated, array $decisions, bool $apply,
     ): int {
         $retrospective = $year >= 1300 && $year < 1396;
-        if (($year < 1399 && !$retrospective && !($year === 1398 && in_array($subject, ['endodontics', 'periodontics', 'community-dentistry', 'prosthodontics', 'operative-dentistry', 'pediatric-dentistry', 'oral-radiology'], true))) || $year > 1500
+        if (($year < 1399 && !$retrospective && !($year === 1398 && in_array($subject, ['endodontics', 'periodontics', 'community-dentistry', 'prosthodontics', 'operative-dentistry', 'pediatric-dentistry', 'oral-radiology', 'oral-surgery'], true))) || $year > 1500
             || ($study['format'] ?? '') !== 'fanoos.classification.study-only/1'
             || ($validated['format'] ?? '') !== ($study['format'] ?? '')
             || ($study['exam_type'] ?? '') !== 'residency'
@@ -54,7 +56,21 @@ final class SourceOnlyPublisher
                     || ($decision['classification_basis'] ?? '') !== 'retrospective_proxy_1397_plus') {
                     throw new RuntimeException('Pre-1396 source must declare an actual 1397+ official proxy reference year and retrospective basis.');
                 }
-            } elseif (isset($decision['reference_year']) || isset($decision['classification_basis'])) {
+            }
+            $updatedReferenceProxy = $year === 1398 && $subject === 'oral-surgery'
+                && ($decision['edition'] ?? null) === 'hupp-oral-surgery@7e'
+                && ($decision['reference_year'] ?? null) === 1406
+                && ($decision['classification_basis'] ?? null) === 'updated_reference_proxy';
+            if ($updatedReferenceProxy) {
+                $proxyNote = $decision['updated_reference_note'] ?? null;
+                if (!is_string($proxyNote) || mb_strlen(trim($proxyNote)) < 60
+                    || !str_contains($proxyNote, 'خارج از محدوده')
+                    || !str_contains($proxyNote, '۱۳۹۸') || !str_contains($proxyNote, '۱۴۰۶')) {
+                    throw new RuntimeException('Updated 1398 source proxy must be labeled outside the exam-year reference list.');
+                }
+            } elseif (!$retrospective && (isset($decision['reference_year'])
+                    || isset($decision['classification_basis'])
+                    || isset($decision['updated_reference_note']))) {
                 throw new RuntimeException('A normal exact-year source cannot claim retrospective basis.');
             }
             // Official 1398 source announcement independently identifies exact Torabinejad 5e
@@ -85,12 +101,55 @@ final class SourceOnlyPublisher
                 ], true)) {
                 throw new RuntimeException('1398 prosthodontics requires an exact officially announced edition.');
             }
-            if ($year === 1398 && $subject === 'operative-dentistry'
+            if ($year === 1398 && $subject === 'prosthodontics' && $n === 97
+                && ($decision['edition'] !== 'shillingburg-fixed@4e'
+                    || (string) $decision['chapter'] !== '22'
+                    || $decision['page'] !== 430)) {
+                throw new RuntimeException('1398 voided prosthodontic Q97 permits only the audited Shillingburg 4e chapter22 PDF430 source.');
+            }
+            if ($year === 1398 && $subject === 'operative-dentistry' && $n !== 188
                 && ($n !== 175
                     || $decision['edition'] !== 'summit-operative@4e'
                     || (string) $decision['chapter'] !== '6'
                     || $decision['page'] !== 294)) {
                 throw new RuntimeException('1398 operative source gate permits only audited Summit 4e Q175 chapter 6 exact PDF page 294.');
+            }
+            if ($year === 1398 && $subject === 'operative-dentistry' && $n === 188
+                && ($decision['edition'] !== 'summit-operative@4e'
+                    || (string) $decision['chapter'] !== '11'
+                    || $decision['page'] !== 610)) {
+                throw new RuntimeException('1398 operative Q188 permits only the audited Summit 4e chapter11 PDF610 source.');
+            }
+            if ($year === 1398 && $subject === 'oral-surgery') {
+                $expectedSurgerySource = $updatedReferenceProxy
+                    ? match ($n) {
+                        110 => ['hupp-oral-surgery@7e', '11', 203],
+                        111 => ['hupp-oral-surgery@7e', '4', 60],
+                        112 => ['hupp-oral-surgery@7e', '3', 56],
+                        113 => ['hupp-oral-surgery@7e', '15', 298],
+                        114 => ['hupp-oral-surgery@7e', '19', 417],
+                        115 => ['hupp-oral-surgery@7e', '17', 373],
+                        116 => ['hupp-oral-surgery@7e', '23', 502],
+                        117 => ['hupp-oral-surgery@7e', '25', 547],
+                        118 => ['hupp-oral-surgery@7e', '24', 526],
+                        119 => ['hupp-oral-surgery@7e', '21', 452],
+                        120 => ['hupp-oral-surgery@7e', '26', 574],
+                        121 => ['hupp-oral-surgery@7e', '31', 672],
+                        122 => ['hupp-oral-surgery@7e', '2', 43],
+                        129 => ['hupp-oral-surgery@7e', '13', 237],
+                        default => null,
+                    }
+                    : match ($n) {
+                        123 => ['malamed-medical-emergencies@7e', '3', 110],
+                        124 => ['malamed-medical-emergencies@7e', '11', 211],
+                        default => null,
+                    };
+                if (!is_array($expectedSurgerySource)
+                    || $decision['edition'] !== $expectedSurgerySource[0]
+                    || (string) $decision['chapter'] !== $expectedSurgerySource[1]
+                    || $decision['page'] !== $expectedSurgerySource[2]) {
+                    throw new RuntimeException('1398 oral-surgery source gate rejected the exact official Malamed or owner-authorized 1406 Hupp proxy page.');
+                }
             }
             if ($year === 1398 && in_array($subject, ['pediatric-dentistry', 'oral-radiology'], true)) {
                 $specific = $subject === 'pediatric-dentistry'
@@ -99,6 +158,22 @@ final class SourceOnlyPublisher
                         159 => ['mcdonald-avery-pediatric@10e', '19', 360],
                         164 => ['mcdonald-avery-pediatric@10e', '11', 215],
                         168 => ['mcdonald-avery-pediatric@10e', '8', 159],
+                        150 => ['mcdonald-avery-pediatric@10e', '16', 303],
+                        151 => ['mcdonald-avery-pediatric@10e', '19', 366],
+                        153 => ['mcdonald-avery-pediatric@10e', '7', 137],
+                        154 => ['mcdonald-avery-pediatric@10e', '2', 28],
+                        155 => ['mcdonald-avery-pediatric@10e', '27', 605],
+                        156 => ['mcdonald-avery-pediatric@10e', '26', 566],
+                        157 => ['mcdonald-avery-pediatric@10e', '25', 539],
+                        158 => ['mcdonald-avery-pediatric@10e', '25', 531],
+                        160 => ['mcdonald-avery-pediatric@10e', '16', 308],
+                        161 => ['mcdonald-avery-pediatric@10e', '15', 291],
+                        162 => ['mcdonald-avery-pediatric@10e', '13', 245],
+                        163 => ['mcdonald-avery-pediatric@10e', '13', 231],
+                        165 => ['mcdonald-avery-pediatric@10e', '10', 189],
+                        166 => ['mcdonald-avery-pediatric@10e', '3', 54],
+                        167 => ['mcdonald-avery-pediatric@10e', '9', 179],
+                        169 => ['mcdonald-avery-pediatric@10e', '4', 93],
                     ]
                     : [
                         211 => ['white-pharoah-radiology@7e', '1', 27],
@@ -114,6 +189,7 @@ final class SourceOnlyPublisher
                         222 => ['white-pharoah-radiology@7e', '23', 425],
                         223 => ['white-pharoah-radiology@7e', '25', 486],
                         224 => ['white-pharoah-radiology@7e', '22', 386],
+                        225 => ['white-pharoah-radiology@7e', '24', 457],
                         226 => ['white-pharoah-radiology@7e', '21', 355],
                         227 => ['white-pharoah-radiology@7e', '20', 333],
                         228 => ['white-pharoah-radiology@7e', '25', 473],
@@ -156,12 +232,21 @@ final class SourceOnlyPublisher
                 continue;
             }
             $d = $wanted[$n];
+            $updatedReferenceProxy = $year === 1398 && $subject === 'oral-surgery'
+                && ($d['edition'] ?? null) === 'hupp-oral-surgery@7e'
+                && ($d['reference_year'] ?? null) === 1406
+                && ($d['classification_basis'] ?? null) === 'updated_reference_proxy';
             if (!is_array($sources) || count($sources) !== 1 || !is_array($sources[0])) {
                 throw new RuntimeException('One source per accepted question is required.');
             }
             $s = $sources[0];
             $edition = (string) $d['edition'];
-            $chapter = 'ch' . str_pad((string) $d['chapter'], 2, '0', STR_PAD_LEFT);
+            $chapterNumber = (string) $d['chapter'];
+            if (!preg_match('/^([1-9][0-9]?)(?:\.([1-9]))?$/D', $chapterNumber, $chapterMatch)) {
+                throw new RuntimeException('Unsupported official chapter or section node number.');
+            }
+            $chapter = 'ch' . str_pad($chapterMatch[1], 2, '0', STR_PAD_LEFT)
+                . (isset($chapterMatch[2]) ? '.' . $chapterMatch[2] : '');
             $pageLabel = (string) ($s['page'] ?? '');
             $pdfPage = $d['page'];
             $sourcePdfPage = $s['pdf_page'] ?? null;
@@ -187,6 +272,19 @@ final class SourceOnlyPublisher
                 || ($s['origin'] ?? '') !== 'ai' || ($s['primary'] ?? false) !== true) {
                 throw new RuntimeException('Mapped source does not equal exact evidence decision.');
             }
+            if ($updatedReferenceProxy
+                && (($s['official_scope_status'] ?? null) !== 'outside_scope_exam_question'
+                    || ($s['official_scope_note'] ?? null) !== ($d['updated_reference_note'] ?? null)
+                    || ($s['classification_basis'] ?? null) !== 'updated_reference_proxy'
+                    || ($s['reference_year'] ?? null) !== 1406
+                    || ($s['scope_unverified'] ?? null) !== false)) {
+                throw new RuntimeException('Updated Hupp proxy citation must preserve the explicit outside-1398-reference label.');
+            }
+            if (!$updatedReferenceProxy
+                && (isset($s['classification_basis']) || isset($s['reference_year'])
+                    || isset($s['updated_reference_note']))) {
+                throw new RuntimeException('Exact-year source cannot carry updated-reference proxy metadata.');
+            }
             $conf = (float) $d['confidence'];
             if ($conf < .85 || $conf > 1.0) {
                 throw new RuntimeException('Unreviewed low-confidence decision.');
@@ -203,7 +301,16 @@ final class SourceOnlyPublisher
                 'pdf_sha256' => strtolower($sourcePdfHash),
                 'printed_page' => isset($s['printed_page']) ? (string) $s['printed_page'] : null,
                 'anchor' => $s['anchor'], 'conf' => $conf,
-                'reference_year' => $retrospective ? (int) $d['reference_year'] : $year];
+                'reference_year' => ($retrospective || $updatedReferenceProxy)
+                    ? (int) $d['reference_year'] : $year,
+                'classification_basis' => $updatedReferenceProxy
+                    ? 'updated_reference_proxy'
+                    : ($retrospective ? 'retrospective_proxy_1397_plus' : 'official_exam_year'),
+                'official_scope_status' => $updatedReferenceProxy
+                    ? 'outside_scope_exam_question' : 'in_scope',
+                'official_scope_note' => $updatedReferenceProxy
+                    ? (string) $d['updated_reference_note'] : null,
+                'scope_unverified' => false];
         }
         if (count($seen) !== count($original) || count($mapped) !== count($wanted)
             || $mapped === []) {
@@ -235,8 +342,10 @@ SQL);
         $insert = $db->prepare(<<<'SQL'
 INSERT INTO bank_question_sources
 (id,workspace_id,question_id,edition_id,node_id,page,pdf_page,printed_page,pdf_sha256,anchor_text,
-is_primary,confidence_source,confidence_node,confidence_page,origin,created_at)
-VALUES (:id,:ws,:qid,:edition,:node,:page,:pdf_page,:printed_page,:pdf_sha256,:anchor,1,:cs,:cn,:cp,'ai',UTC_TIMESTAMP(6))
+is_primary,confidence_source,confidence_node,confidence_page,origin,official_scope_status,
+official_scope_note,scope_unverified,created_at)
+VALUES (:id,:ws,:qid,:edition,:node,:page,:pdf_page,:printed_page,:pdf_sha256,:anchor,
+1,:cs,:cn,:cp,'ai',:scope_status,:scope_note,:scope_unverified,UTC_TIMESTAMP(6))
 SQL);
         $db->beginTransaction();
         $count = 0;
@@ -245,8 +354,13 @@ SQL);
                 $get->execute(['ws' => $workspace, 'yr' => $year, 'sub' => $subject, 'num' => $n]);
                 $q = $get->fetch(PDO::FETCH_ASSOC);
                 if (!is_array($q) || $get->fetch(PDO::FETCH_ASSOC) !== false
-                    || $q['status'] !== 'published' || $q['stem'] !== $original[$n]['stem']) {
-                    throw new RuntimeException('Site question differs from reviewed study or is not published.');
+                    || $q['stem'] !== $original[$n]['stem']) {
+                    throw new RuntimeException('Site question differs from reviewed study.');
+                }
+                $voidedDraftCandidate = $year === 1398 && $subject === 'prosthodontics'
+                    && $n === 97 && $q['status'] === 'draft';
+                if ($q['status'] !== 'published' && !$voidedDraftCandidate) {
+                    throw new RuntimeException('Only published questions and the exact voided 1398 prosthodontics Q97 draft may receive a source.');
                 }
                 $params = ['ws' => $workspace, 'qid' => $q['id']];
                 $choices->execute($params);
@@ -272,6 +386,10 @@ SQL);
                 if ($actual !== $original[$n]['answer']) {
                     throw new RuntimeException('Published answer differs from reviewed study.');
                 }
+                if ($voidedDraftCandidate
+                    && ($actual['choice'] !== null || $actual['status'] !== 'voided')) {
+                    throw new RuntimeException('Voided Q97 must retain its null-choice voided official answer.');
+                }
                 if ($retrospective && ($actual['choice'] === null
                     || !in_array($actual['status'], ['final', 'amended'], true))) {
                     throw new RuntimeException('Voided, disputed or keyless old exam question cannot receive retrospective source.');
@@ -280,10 +398,10 @@ SQL);
                 if ($existing->fetch(PDO::FETCH_ASSOC) !== false) {
                     throw new RuntimeException('Source already exists; reviewed sources are immutable.');
                 }
-                $nodes->execute([
-                    'ws' => $workspace, 'ref' => $src['ref'], 'edition' => $src['edition'],
-                    'node' => $src['node'], 'yr' => $src['reference_year'], 'sub' => $subject,
-                ]);
+            $nodes->execute([
+                'ws' => $workspace, 'ref' => $src['ref'], 'edition' => $src['edition'],
+                'node' => $src['node'], 'yr' => $src['reference_year'], 'sub' => $subject,
+            ]);
                 $mappedNode = $nodes->fetch(PDO::FETCH_ASSOC);
                 if (!is_array($mappedNode) || $nodes->fetch(PDO::FETCH_ASSOC) !== false
                     || $mappedNode['kind'] !== 'chapter') {
@@ -302,6 +420,9 @@ SQL);
                     'printed_page' => $src['printed_page'], 'pdf_sha256' => $src['pdf_sha256'],
                     'anchor' => $src['anchor'],
                     'cs' => $src['conf'], 'cn' => $src['conf'], 'cp' => $src['conf'],
+                    'scope_status' => $src['official_scope_status'],
+                    'scope_note' => $src['official_scope_note'],
+                    'scope_unverified' => $src['scope_unverified'] ? 1 : 0,
                 ]);
                 ++$count;
             }

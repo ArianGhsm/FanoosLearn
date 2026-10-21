@@ -22,6 +22,17 @@ final class SourceChapterCorrectionGuardTest
                 'mapped'=>['129'=>['ref'=>'carranza-periodontology@14e#ch78', 'pdf_page'=>1618]],
                 'source_pdf_provenance'=>['carranza-periodontology@14e'=>['sha256'=>$sha]]]]];
         $this->check(SourceChapterCorrectionGuard::auditMatches($audit, $plan, $item), 'Valid audit rejected.');
+        $fractionalPlan = ['year'=>1398, 'subject'=>'dental-materials'];
+        $fractionalItem = ['number'=>241, 'edition'=>'van-noort-materials@4e',
+            'chapter'=>'1.6', 'pdf_page'=>48, 'pdf_sha256'=>$sha];
+        $fractionalAudit = ['format'=>'fanoos.classification.provenance-audit/1',
+            'accepted'=>1, 'pending'=>0, 'questions'=>1, 'batch_count'=>1,
+            'batches'=>[['exam_year'=>1398, 'subject'=>'dental-materials',
+                'question_content_identical'=>true,
+                'mapped'=>['241'=>['ref'=>'van-noort-materials@4e#ch01.6', 'pdf_page'=>48]],
+                'source_pdf_provenance'=>['van-noort-materials@4e'=>['sha256'=>$sha]]]]];
+        $this->check(SourceChapterCorrectionGuard::auditMatches($fractionalAudit, $fractionalPlan, $fractionalItem),
+            'Valid fractional section node was rejected.');
         foreach ([
             ['chapter'=>'79'], ['pdf_page'=>1619], ['number'=>130],
             ['pdf_sha256'=>str_repeat('b', 64)], ['edition'=>'carranza-periodontology@13e'],
@@ -56,7 +67,7 @@ final class SourceChapterCorrectionGuardTest
         $this->check(SourceChapterCorrectionGuard::evidenceFragments(
             'cobalt chromium is preferred…' . str_repeat('evidence ', 30),
         ) === null, 'Overlong evidence was accepted.');
-        return 13;
+        return 14;
     }
 
     private function check(bool $okay, string $message): void
