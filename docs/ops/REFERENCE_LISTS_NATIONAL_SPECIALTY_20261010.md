@@ -1,5 +1,11 @@
 # National, board and promotion reference lists — 2026-10-10
 
+> **Historical availability statement superseded by the 2026-10-21 archive
+> recovery:** additional board and national notices were recovered from web
+> mirrors and the authorized Telegram session. See
+> [1396–1405 reference history](BOARD_NATIONAL_REFERENCE_HISTORY_1396_1405_20261021.md)
+> for verified counts, corrections, explicit gaps and actual import status.
+
 **Status:** APPLIED to production and live on `/app/references`.
 **Owner request (2026-10-10):** find the official reference lists of the
 national exam (آزمون ملی) and the specialty board exams for every year and show
