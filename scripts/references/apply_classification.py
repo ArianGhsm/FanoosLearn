@@ -50,6 +50,15 @@ import tempfile
 from pathlib import Path
 from verified_reference_pdf import chapter_coverage, open_verified_reference
 from retrospective_reference_policy import BASIS, is_retrospective, selected_reference_rows
+from updated_reference_proxy_policy import (
+    UPDATED_PROXY_BASIS,
+    UPDATED_PROXY_EDITION,
+    UPDATED_PROXY_EXAM_YEAR,
+    UPDATED_PROXY_REFERENCE_YEAR,
+    UPDATED_PROXY_SUBJECT,
+    is_updated_reference_proxy,
+    valid_updated_reference_note,
+)
 
 REPO = Path(__file__).resolve().parents[2]
 BANK = REPO / 'data' / 'bank'
@@ -216,6 +225,8 @@ def main() -> int:
                         help='historical audit only: permit previously approved nearest-edition substitutions')
     parser.add_argument('--allow-outside-scope', action='store_true',
                         help='private research only: validate an unlisted whole chapter with an explicit Persian scope note; production writes still require the dedicated guarded operator')
+    parser.add_argument('--updated-reference-proxy', action='store_true',
+                        help='owner-approved, 1398 oral-surgery only: classify against official 1406 Hupp 7e and mark the citation outside the 1398 official reference list')
     parser.add_argument('--pdf-pages', action='store_true',
                         help='store PDF page numbers rather than printed page labels')
     parser.add_argument('--storage-root', type=Path, default=Path('/srv/fanoos/shared/storage'))
@@ -226,6 +237,9 @@ def main() -> int:
 
     sitting = json.loads(Path(args.sitting).read_text(encoding='utf-8'))
     year, exam_type = int(sitting['year']), sitting['exam_type']
+    if args.updated_reference_proxy and (year != UPDATED_PROXY_EXAM_YEAR
+            or exam_type != 'residency'):
+        raise ValueError('Updated-reference proxy mode is restricted to residency 1398.')
     catalog = json.loads((BANK / 'catalog.json').read_text(encoding='utf-8'))
     pdfs = json.loads((BANK / 'reference-pdfs.json').read_text(encoding='utf-8'))['editions']
     runs = json.loads((BANK / 'reference-chapter-pages.json').read_text(encoding='utf-8'))['editions']
@@ -272,7 +286,35 @@ def main() -> int:
                 accepted[n] = None
         elif why is None:
             edition, chapter = d.get('edition', ''), str(d.get('chapter', ''))
+            proxy_reference_year = d.get('reference_year')
+            proxy_basis = d.get('classification_basis')
+            proxy_note = d.get('updated_reference_note')
+            has_proxy_metadata = any(key in d for key in (
+                'reference_year', 'classification_basis', 'updated_reference_note'))
+            updated_proxy = is_updated_reference_proxy(
+                year, q['subject'], edition, proxy_reference_year, proxy_basis)
             names = official.get(q['subject'], {})
+            if args.updated_reference_proxy and not updated_proxy:
+                why = 'updated-reference mode requires the exact owner-approved edition, subject and reference year'
+            elif has_proxy_metadata and not updated_proxy and not is_retrospective(year):
+                why = 'updated-reference metadata is not permitted for this exam year or edition'
+            elif updated_proxy:
+                if not args.updated_reference_proxy:
+                    why = 'updated-reference proxy requires the explicit owner-approved validator mode'
+                elif not valid_updated_reference_note(proxy_note):
+                    why = 'updated-reference proxy requires a note that it is outside the 1398 official reference list'
+                else:
+                    matches = [v for v in catalog.get('validity', [])
+                               if v.get('exam_type') == exam_type
+                               and int(v.get('year', 0)) == UPDATED_PROXY_REFERENCE_YEAR
+                               and v.get('subject') == UPDATED_PROXY_SUBJECT
+                               and v.get('edition') == UPDATED_PROXY_EDITION
+                               and v.get('official') is True]
+                    if len(matches) != 1:
+                        why = 'exact Hupp 7e official reference-year validity is unavailable or ambiguous'
+                    else:
+                        names = dict(names)
+                        names[edition] = matches[0]
             if is_retrospective(year) and edition in names:
                 expected_year = int(names[edition]['year'])
                 if d.get('reference_year') != expected_year or d.get('classification_basis') != BASIS:
@@ -368,6 +410,12 @@ def main() -> int:
                 if outside_scope:
                     accepted[n]['official_scope_status'] = 'outside_scope_exam_question'
                     accepted[n]['official_scope_note'] = str(d['outside_scope_note']).strip()
+                if updated_proxy:
+                    accepted[n]['official_scope_status'] = 'outside_scope_exam_question'
+                    accepted[n]['official_scope_note'] = str(proxy_note).strip()
+                    accepted[n]['scope_unverified'] = False
+                    accepted[n]['classification_basis'] = UPDATED_PROXY_BASIS
+                    accepted[n]['reference_year'] = UPDATED_PROXY_REFERENCE_YEAR
                 if cite != edition:
                     accepted[n]['found_in'] = f'{edition}#ch{chapter} (nearest edition; the official one was not available)'
         if why is None and n in accepted:

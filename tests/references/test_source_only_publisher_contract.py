@@ -86,13 +86,13 @@ class PublisherSafetyContracts(unittest.TestCase):
         self.assertIn("BackupManifest::verify", self.cli)
         self.assertIn("hash_file('sha256', $decisionsPath)", self.cli)
 
-    def test_1398_exception_is_limited_to_three_proven_subjects(self):
-        """Only three evidence-reviewed 1398 subjects pass exact-edition guards."""
+    def test_1398_exception_list_is_explicit_and_year_scoped(self):
+        """1398 additions remain constrained to exact, independently audited batches."""
         self.assertIn("$year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1', 'endodontics-location-final'], true)", self.cli)
         self.assertIn("$year === 1398 && $subject === 'endodontics'", self.service)
         self.assertIn("$decision['edition'] !== 'torabinejad-endodontics@5e'", self.service)
         self.assertIn("1398 endodontics requires exact announced Torabinejad 5e", self.service)
-        self.assertIn("$subject === 'periodontics' && in_array($stem, ['periodontics', 'periodontics-followup', 'periodontics-certified-20261012'], true)", self.cli)
+        self.assertIn("$subject === 'periodontics' && in_array($stem, ['periodontics', 'periodontics-followup', 'periodontics-certified-20261012', 'periodontics-sourcefree'], true)", self.cli)
         self.assertIn("classification/decisions/1398-{$stem}.json", self.cli)
         self.assertIn("periodontics-certified-20261012", self.cli)
         self.assertIn("$year === 1398 && $subject === 'periodontics'", self.service)
@@ -103,7 +103,17 @@ class PublisherSafetyContracts(unittest.TestCase):
         self.assertIn("$decision['edition'] !== 'national-oral-health@1394'", self.service)
         self.assertIn("1398 community dentistry requires the exact national oral-health 1394 edition", self.service)
         self.assertIn("W02-community-final-audit-stage", self.cli)
-        # Global guard remains in effect for every other 1398 subject.
+        self.assertIn("$year === 1398 && $subject === 'oral-surgery' && in_array($stem, ['surgery', 'surgery-modern-hupp7'], true)", self.cli)
+        self.assertIn("recovery-1398-oral-surgery-malamed7-20261021", self.cli)
+        self.assertIn("$expected === 2", self.cli)
+        self.assertIn("$year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-sourcefree'", self.cli)
+        self.assertIn("recovery-1398-pediatric-sourcefree-20261021", self.cli)
+        self.assertIn("recovery-1398-periodontics-sourcefree-20261021", self.cli)
+        self.assertIn("recovery-1398-surgery-modern-hupp7-20261021", self.cli)
+        self.assertIn("123 => ['malamed-medical-emergencies@7e', '3', 110]", self.service)
+        self.assertIn("124 => ['malamed-medical-emergencies@7e', '11', 211]", self.service)
+        self.assertIn("$year === 1398 && $subject === 'oral-surgery' && $stem === 'surgery'", (ROOT / "scripts/references/audit_published_assessment.php").read_text())
+        # The global gate remains in effect for 1398 batches outside this explicit list.
         self.assertIn("$year < 1399", self.service)
         self.assertIn("$year < 1399", self.cli)
 

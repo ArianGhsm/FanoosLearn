@@ -318,6 +318,21 @@ completion pass; waiting for the exact official edition is preferred unless
 the owner separately approves a specific exception and the evidence-mapping
 workflow is documented.
 
+### Owner-approved updated reference proxy for residency 1398 oral surgery — 2026-10-21
+
+For the 1398 oral-surgery questions whose official Hupp 6e PDF is unavailable
+in the verified server library, the owner explicitly requested classification
+from the newer references. The approved exception uses **Hupp 7e as the 1406
+official reference edition**, with its current verified PDF, chapter map and
+original-page evidence. This is an `updated_reference_proxy` basis; it does
+not claim that Hupp 7e was on the 1398 official reference list. Every such
+source row must be visibly marked `outside_scope_exam_question` with a note
+naming exam year 1398, reference year 1406 and the owner's updated-reference
+instruction. Keep the 1398 official catalog unchanged, preserve official
+answers and all frozen assessment/user history, and do not generalize this
+exception to another year or subject. The whole-year publication gate remains
+in force.
+
 The exact verified server PDF is the sole book source for every
 classification. Read it through the authenticated, read-only bridge in
 `scripts/references/verified_reference_pdf.py`; do not copy the PDF out of

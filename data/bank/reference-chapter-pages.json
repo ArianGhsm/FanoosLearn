@@ -3288,7 +3288,10 @@
       ],
       "chapters_seen": 31,
       "chapters_listed": 31,
-      "not_seen": []
+      "not_seen": [],
+      "source_pdf_sha256": "cc2ca3fb90039656483f6f2ddc22b482331613a9ab8889c79407f1e28baa184c",
+      "source": "verified-server-pdf",
+      "pdf_pages": 561
     },
     "mccracken-rpd@12e": {
       "runs": [

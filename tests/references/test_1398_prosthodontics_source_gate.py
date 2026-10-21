@@ -19,13 +19,13 @@ class Prosthodontics1398SourceGateTest(unittest.TestCase):
         cls.assessment = ASSESSMENT.read_text(encoding="utf-8")
 
     def test_1398_cli_exact_subject_and_sitting_stem(self):
-        self.assertIn("$year === 1398 && $subject === 'prosthodontics' && $stem === 'prosthodontics'", self.cli)
+        self.assertIn("$year === 1398 && $subject === 'prosthodontics' && in_array($stem, ['prosthodontics', 'prostho-voided-q97'], true)", self.cli)
         self.assertIn("$year < 1399", self.cli)
         self.assertIn("BackupManifest::verify", self.cli)
         self.assertIn("hash_file('sha256', $studyPath)", self.cli)
 
     def test_1398_frozen_snapshot_preflight_and_post_audit(self):
-        self.assertIn("$year === 1398 && $subject === 'prosthodontics' && $stem === 'prosthodontics'", self.assessment)
+        self.assertIn("$subject === 'prosthodontics' && in_array($stem, ['prosthodontics', 'prostho-voided-q97'], true)", self.assessment)
         self.assertIn("question_content_identical", self.assessment)
         self.assertIn("Non-citation frozen assessment content changed", self.assessment)
         self.assertIn("$year < 1399", self.assessment)
