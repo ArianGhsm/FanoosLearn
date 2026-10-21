@@ -113,8 +113,11 @@ the 1397 official list. Record `reference_year=1406` and
 `outside_scope_exam_question` and add a Persian note that names both years
 and says the citation is outside the 1397 official reference list. Use only
 the exact approved 1406 PDF and SHA-bound map, quote decisive evidence from
-the cited PDF page, and require the chapter to be within the official 1406
-reference-subject scope. One cross-subject exception is allowed: 1397
+the cited PDF page. A chapter inside the 1406 reference-subject scope may be
+recorded normally; a chapter excluded from that structured scope may be
+recorded only at its true chapter/page with `outside_scope_exam_question`
+and a Persian note stating that it is outside both the 1406 syllabus and the
+1397 official reference list. One cross-subject exception is allowed: 1397
 endodontics Q95 may cite Hupp 7e from the 1406 oral-surgery list, provided its
 outside-scope note identifies both the question subject and reference
 subject. The guarded 1397 writer otherwise accepts only the 12 official

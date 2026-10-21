@@ -455,8 +455,18 @@ SQL);
                 $scope = json_decode((string) $mappedNode['scope_chapters'], true);
                 $numbers = is_array($scope)
                     ? array_map(static fn(array $a): string => (string) ($a['number'] ?? ''), $scope) : [];
+                $explicitlyOutside1406Syllabus = $year === 1397
+                    && $updatedReferenceProxy
+                    && ($src['official_scope_status'] ?? null) === 'outside_scope_exam_question'
+                    && is_string($src['official_scope_note'] ?? null)
+                    && str_contains($src['official_scope_note'], 'سرفصل رسمی ۱۴۰۶')
+                    && str_contains($src['official_scope_note'], 'خارج از محدوده')
+                    && str_contains($src['official_scope_note'], '۱۳۹۷')
+                    && str_contains($src['official_scope_note'], '۱۴۰۶');
                 if (!in_array($src['chapter'], $numbers, true)) {
-                    throw new RuntimeException('Year-specific official syllabus scope is missing this chapter.');
+                    if (!$explicitlyOutside1406Syllabus) {
+                        throw new RuntimeException('Year-specific official syllabus scope is missing this chapter.');
+                    }
                 }
                 $insert->execute([
                     'id' => Uuid::v7(), 'ws' => $workspace, 'qid' => $q['id'],

@@ -324,10 +324,14 @@ The owner explicitly requested that residency 1397 be classified using the
 newer 1406 official reference set. This is an `updated_reference_proxy`, not
 a claim that a 1406 reference was official for the 1397 sitting. Every
 accepted citation must use an exact approved 1406 PDF, its matching
-SHA-bound chapter map and page evidence, and a chapter in the 1406 official
-scope for that subject. The single 1397 endodontics Q95 implant citation may
-use Hupp 7e from the 1406 oral-surgery list; its source note must explicitly
-identify this cross-subject reference. Store proxy rows as
+SHA-bound chapter map and page evidence. A chapter within the 1406 scope may
+be recorded normally; a chapter excluded from that structured scope may be
+recorded only for its true chapter/page, with
+`outside_scope_exam_question` and a Persian note that says it is outside both
+the 1406 syllabus and the 1397 official reference scope. The single 1397
+endodontics Q95 implant citation may use Hupp 7e from the 1406 oral-surgery
+list; its source note must explicitly identify this cross-subject reference.
+Store proxy rows as
 `outside_scope_exam_question` with a
 Persian note naming both 1397 and 1406 and explaining that it is outside the
 1397 official reference list. Preserve the official catalog, question text,
