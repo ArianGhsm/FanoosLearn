@@ -591,6 +591,9 @@
     },
     "woo-oral-pathology@2e": {
       "missing": "No approved, verified private reference PDF or selected-article bundle for this exact edition was present in the 2026-10-21 live inventory. The recovered official reference notice is available; book/page classification remains pending."
+    },
+    "burstone-biomechanics@2e": {
+      "missing": "The official 1403 notice and publisher copyright/cataloging page identify the exact 2022 second edition (ISBN 9780867159493). No approved private PDF was present in the 2026-10-21 live inventory."
     }
   }
 }

@@ -192,7 +192,7 @@ REFERENCES += [
     (['current principles and techniques'], 'graber-orthodontics', 'Orthodontics: Current Principles and Techniques', 'Graber LW, Vanarsdall RL, Vig KWL, Huang GJ', 'orthodontics',
      {'2023': ('7e', '7th edition', 2023)}),
     (['biomechanical foundation'], 'burstone-biomechanics', 'The Biomechanical Foundation of Clinical Orthodontics', 'Burstone CJ, Choy K', 'orthodontics',
-     {'2022': ('1e', '1st edition', 2022)}),
+     {'2022': ('1e', '1st edition', 2015), '2022-2e': ('2e', '2nd edition', 2022)}),
     (['orthognathic surgery'], 'naini-orthognathic', 'Orthognathic Surgery: Principles, Planning and Practice', 'Naini FB, Gill DS', 'orthodontics',
      {'2017': ('1e', '1st edition', 2017)}),
     (['esthetics and biomechanics'], 'nanda-esthetics-biomechanics', 'Esthetics and Biomechanics in Orthodontics', 'Nanda R', 'orthodontics',
@@ -430,6 +430,9 @@ def build() -> dict:
             return
         edition_key, label, _y = editions[pub]
         stated = EDITION_NUMBER.search(edition_text)
+        if key == 'burstone-biomechanics' and pub == '2022' and stated and stated.group(1) == '2':
+            edition_key, label, _y = editions['2022-2e']
+            decisions.append(f'{where}: explicit second edition 2022 resolved against Quintessence ISBN 9780867159493; the first edition is 2015, ISBN 9780867156515')
         judgement = None
         if stated and edition_key[0].isdigit() and not edition_key.startswith(stated.group(1)) and not edition_key.endswith('-fa'):
             judgement = f'workbook says "{edition_text}" for {pub}; recorded as {label}'

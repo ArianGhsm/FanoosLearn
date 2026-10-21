@@ -20,11 +20,12 @@ No reference-book text, Telegram session or credential belongs in Git.
 
 ## Verified transcription and preview
 
-The nine new public transcription files contain 407 recovered rows. Seven
+The nine new public transcription files contain 407 recovered rows. Six
 unresolved edition identities are explicitly marked `pending_reason` and
-excluded by the generator. The remaining **400** additive validity rows are
-345 board rows and 55 national rows. All previous validity rows and existing
-edition objects are unchanged. No promotion validity is added: the 1403
+excluded by the generator. The remaining **401** additive validity rows are
+346 board rows and 55 national rows. All previous validity rows are unchanged. One existing first-edition metadata
+year is corrected from 2022 to the publisher-confirmed 2015 without touching
+its chapter tree. No promotion validity is added: the 1403
 orthodontic board notice and the separate promotion notice have different
 scopes.
 
@@ -37,13 +38,13 @@ scopes.
 | 1400 | 0 | 0 | Exact notices not recovered |
 | 1401 | 60 | 19 | Pediatric selected-paper addendum not recovered |
 | 1402 | 64 | 18 | Two pathology entries say only “latest printing”; McDonald national chapter scope blank |
-| 1403 | 64 | 18 | Burstone edition and Peterson chapter-scope conflict pending; McDonald national chapter scope blank |
+| 1403 | 65 | 18 | Peterson chapter-scope conflict pending; McDonald national chapter scope blank |
 | 1404 | 65 | 18 | National count is the existing period-24 list, not a merged period-23/24 list |
 | 1405 | 67 | 18 | Existing lists retained; national periods 25/26 explicitly reuse period 24 |
 
 These are **annual subject/edition validity rows**, including announced
 article collections, not numbers of distinct books or verified book PDFs.
-There are 503 board/national validity rows within the ten-year window after
+There are 504 board/national validity rows within the ten-year window after
 the proposed addition. Board 1406's existing nine rows are outside the window
 and remain intact.
 
@@ -64,12 +65,12 @@ transcription uses that correction. The separate operative correction at
 https://t.me/dental_k/202 corrects Misch's stated year from 2018 to 2015.
 
 The 42 approved private reference PDFs were independently re-inventoried.
-The 76 newly introduced edition/article identities have no approved private
+The 77 newly introduced edition/article identities have no approved private
 PDF or article bundle and are explicitly recorded as missing in
 `reference-pdfs.json`. Official notice recovery is not book-PDF recovery.
 
 The additive subset passed the actual production importer's `check` and
-rollback `--dry-run`: 4 exam types, 14 subjects, 36 references, 76 editions,
+rollback `--dry-run`: 4 exam types, 14 subjects, 37 references, 78 edition upserts (77 new plus one metadata correction),
 zero nodes, **400 validity rows**, zero mappings. No production catalog apply
 is claimed by this preview. The subset is reproducible from the catalog at
 baseline `472670d` and the final catalog using `catalog_subset.py`.
@@ -117,3 +118,21 @@ with green CI, deploy through the updater, take/verify a fresh full backup,
 import catalog metadata only, and independently read back the reference API
 and per-year totals. Question text, answers, citations, attempts and frozen
 assessment versions are outside this task's mutation scope.
+
+## Publisher identity correction before data apply
+
+The original 400-row preview was not applied. A final publisher check resolved
+Burstone 1403 as second edition 2022, ISBN 9780867159493; the publisher
+copyright/cataloging page explicitly identifies the preceding first edition
+as 2015, ISBN 9780867156515. The existing first-edition published-year metadata
+was therefore corrected to 2015, and the separate second edition was added.
+No legacy first-edition validity row was reassigned. Primary evidence:
+https://www.quintessence-publishing.com/usa/en/product-info/814683/the-biomechanical-foundation-of-clinical-orthodontics
+and
+https://www.quintessence-publishing.com/downloads/extract_24071_choy_burstones_biomechanical_foundation_of_clinical_orthodontics.pdf.
+
+`catalog_subset.py --include-edition-metadata` explicitly includes the reviewed
+first-edition year correction without any chapter nodes. Its default mode now
+refuses silently omitted metadata corrections, and both modes reject changes
+to an existing chapter tree. Final planned apply: 401 new validity rows, 77
+new edition identities and one existing edition metadata correction.
