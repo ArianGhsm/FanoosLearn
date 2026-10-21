@@ -248,7 +248,33 @@
       "pdf": "verified-server-pdf"
     },
     "daly-public-health@2e": {
-      "pdf": "verified-server-pdf"
+      "pdf": "verified-server-pdf",
+      "chapter_pdf_starts": {
+        "1": 14,
+        "2": 25,
+        "3": 34,
+        "4": 48,
+        "5": 62,
+        "6": 79,
+        "7": 90,
+        "8": 110,
+        "9": 125,
+        "10": 137,
+        "11": 145,
+        "12": 155,
+        "13": 162,
+        "14": 170,
+        "15": 180,
+        "16": 185,
+        "17": 200,
+        "18": 208,
+        "19": 218,
+        "20": 226,
+        "21": 229,
+        "22": 242,
+        "23": 249
+      },
+      "backmatter_pdf_start": 258
     },
     "dawson-functional-occlusion@1e": {
       "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
