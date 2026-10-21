@@ -172,7 +172,13 @@ def audit_batch(root: Path, spec: str,
                 raise ValueError(f"{spec}: updated proxy edition lacks one exact official reference-year validity row")
             allowed = {str(item.get("number")) for item in validity[0].get("scope_chapters", [])
                        if isinstance(item, dict)}
-            if chapter not in allowed:
+            explicitly_outside_scope = (
+                year_n == UPDATED_PROXY_1397_EXAM_YEAR
+                and decision.get("outside_scope_note") == decision.get("updated_reference_note")
+                and "سرفصل رسمی ۱۴۰۶" in str(decision.get("updated_reference_note", ""))
+                and "خارج از محدوده" in str(decision.get("updated_reference_note", ""))
+            )
+            if chapter not in allowed and not explicitly_outside_scope:
                 raise ValueError(f"{spec}: updated proxy chapter is outside the chosen reference-year syllabus")
     for edition in sorted({str(decision["edition"]) for decision in wanted.values()}):
         pdf = open_verified_reference(edition, storage_root, mysql_defaults, database)

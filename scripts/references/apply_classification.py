@@ -365,7 +365,13 @@ def main() -> int:
                 scope_error = scope_issue(names[cite], cite_chapter)
                 outside_note = d.get('outside_scope_note')
                 if scope_error is not None:
-                    if (args.allow_outside_scope and cite == edition
+                    updated_proxy_outside_reference_scope = updated_proxy and year == UPDATED_PROXY_1397_EXAM_YEAR
+                    if (updated_proxy_outside_reference_scope
+                        and (outside_note != proxy_note
+                             or not isinstance(proxy_note, str)
+                             or 'سرفصل رسمی ۱۴۰۶' not in proxy_note)):
+                        why = 'an unlisted 1406 proxy chapter requires the same explicit note in both proxy fields'
+                    elif (args.allow_outside_scope and cite == edition
                         and whole_chapter_is_unlisted(names[cite], cite_chapter)
                         and valid_outside_scope_note(outside_note)):
                         outside_scope = True
