@@ -46,6 +46,20 @@ class UpdatedReferenceProxy1398(unittest.TestCase):
         self.assertTrue(valid_updated_reference_note(note, 1397))
         self.assertFalse(valid_updated_reference_note(note, 1398))
 
+    def test_1397_cross_subject_is_limited_to_endodontic_q95_and_hupp7(self):
+        self.assertTrue(is_updated_reference_proxy(
+            1397, "endodontics", "hupp-oral-surgery@7e", 1406,
+            "updated_reference_proxy", "oral-surgery", 95))
+        for args in [
+            (1397, "endodontics", "hupp-oral-surgery@7e", 1406,
+             "updated_reference_proxy", "oral-surgery", 94),
+            (1397, "endodontics", "hupp-oral-surgery@7e", 1406,
+             "updated_reference_proxy", "oral-surgery", 96),
+            (1397, "endodontics", "torabinejad-endodontics@6e", 1406,
+             "updated_reference_proxy", "oral-surgery", 95),
+        ]:
+            self.assertFalse(is_updated_reference_proxy(*args))
+
     def test_versioned_validator_auditor_writer_and_importer_keep_proxy_separate(self):
         classifier = (ROOT / "scripts/references/apply_classification.py").read_text()
         auditor = (ROOT / "scripts/references/audit_private_study_batches.py").read_text()
@@ -60,6 +74,10 @@ class UpdatedReferenceProxy1398(unittest.TestCase):
         self.assertIn("outside_scope_exam_question", writer)
         self.assertIn("official_scope_note", writer)
         self.assertIn("$year === 1397", writer)
+        self.assertIn("$n === 95", writer)
+        self.assertIn("$n === 88", writer)
+        self.assertIn("official-endo-q88", importer)
+        self.assertIn("recovery-1397-official-endo-q88-20261021", importer)
         self.assertIn("UPDATED_PROXY_REFERENCE_YEAR", auditor)
         self.assertIn("surgery-modern-hupp7-20261021", importer)
         self.assertIn("recovery-1397-updated-reference-proxy-20261021", importer)

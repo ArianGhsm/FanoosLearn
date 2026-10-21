@@ -325,7 +325,10 @@ newer 1406 official reference set. This is an `updated_reference_proxy`, not
 a claim that a 1406 reference was official for the 1397 sitting. Every
 accepted citation must use an exact approved 1406 PDF, its matching
 SHA-bound chapter map and page evidence, and a chapter in the 1406 official
-scope for that subject. Store it as `outside_scope_exam_question` with a
+scope for that subject. The single 1397 endodontics Q95 implant citation may
+use Hupp 7e from the 1406 oral-surgery list; its source note must explicitly
+identify this cross-subject reference. Store proxy rows as
+`outside_scope_exam_question` with a
 Persian note naming both 1397 and 1406 and explaining that it is outside the
 1397 official reference list. Preserve the official catalog, question text,
 choices, answers, frozen attempts and scores. This exception is limited to

@@ -22,16 +22,30 @@ def is_updated_reference_proxy(
     edition: object,
     reference_year: object,
     basis: object,
+    reference_subject: object | None = None,
+    question_number: object | None = None,
 ) -> bool:
     if reference_year != UPDATED_PROXY_REFERENCE_YEAR or basis != UPDATED_PROXY_BASIS:
         return False
     if exam_year == UPDATED_PROXY_EXAM_YEAR:
         return subject == UPDATED_PROXY_SUBJECT and edition == UPDATED_PROXY_EDITION
+    if (exam_year != UPDATED_PROXY_1397_EXAM_YEAR
+            or subject not in UPDATED_PROXY_1397_SUBJECTS
+            or not isinstance(edition, str)
+            or re.fullmatch(r"[a-z0-9-]+@[a-z0-9-]+", edition) is None):
+        return False
+    cited_subject = subject if reference_subject is None else reference_subject
+    if cited_subject == subject:
+        return True
+    # Owner-authorized one-question cross-subject source: the 1397
+    # endodontics implant item is supported by Hupp 7e from the 1406
+    # oral-surgery list. The source row must state this explicitly.
     return (
-        exam_year == UPDATED_PROXY_1397_EXAM_YEAR
-        and subject in UPDATED_PROXY_1397_SUBJECTS
-        and isinstance(edition, str)
-        and re.fullmatch(r"[a-z0-9-]+@[a-z0-9-]+", edition) is not None
+        exam_year == 1397
+        and subject == "endodontics"
+        and question_number == 95
+        and cited_subject == "oral-surgery"
+        and edition == "hupp-oral-surgery@7e"
     )
 
 

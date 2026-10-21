@@ -18,10 +18,14 @@ subjects. It does not change `catalog.validity`, answer keys, question text,
 choices, statuses, assessments, reviews, attempts or scores. The whole-year
 assessment publication gate remains in force.
 
-## Rechecked baseline
+## Rechecked baseline and deployment
 
-The server is on release and updater `472670dd67a49dafb5f689e761f957e3c19b3b44`,
-with `/health` and the server-first sync check healthy. The protected prior
+PR #494 was merged after all five CI jobs passed. The official updater
+deployed `73f1802229f08563a8e16c50bbaa7a4b2364fddf` with request
+`01a15e81-ede7-765a-86e1-5c6f64432cca`. Its pre-deploy full backup
+`20261021T125153Z-1f7b55f1` verifies 114 files. The live health check and
+server-first sync both pass. The server is on release and updater
+`73f1802229f08563a8e16c50bbaa7a4b2364fddf`. The protected prior
 checkpoint
 `/srv/fanoos/shared/research/classification/reports/residency-1398-1397-progress-checkpoint-20261019.json`
 has SHA-256
@@ -32,16 +36,15 @@ questions need new source rows. The 247-question sitting has 20 English
 questions with valid keys exempt from book citations. Another 63 book-based
 questions already have structurally complete source rows; 11 of those source
 rows are below the 0.85 confidence threshold and require evidence-backed
-resolution. Existing citations and the accepted nine-question endodontic
-audit are preserved; no production source write has occurred under this
-operation yet.
+resolution. Existing citations and the accepted nine-question original
+endodontic audit are preserved.
 
 All 19 official 1406 residency reference-validity rows have an approved
 private PDF and a chapter map whose recorded hash matches the live PDF hash.
 The server inventory reports 42 ready reference PDFs. Current maps and scope
 were checked for every 1406 subject before this exception was added.
 
-## Guarded code change
+## Guarded code change and exact-reference exception
 
 The deployed 1398 Hupp proxy guard did not permit a 1397 source-only batch.
 This branch extends the same protected route with a 1397/1406 proxy case,
@@ -52,14 +55,28 @@ writer remains limited to `INSERT` on `bank_question_sources` and rejects
 changes to any question, choice or answer. No raw SQL writer, alternate
 importer or catalog validity workaround is permitted.
 
+The original official 1397 Torabinejad 5e PDF remains usable for the precise
+Q88 radial-land source (chapter 13, PDF 235). Its narrow exact-year batch is
+separate from the 1406 proxy batches. Q95 may use Hupp 7e from the official
+1406 oral-surgery reference list because its tested content is implant
+placement; the source note must disclose that the 1397 question sits in
+endodontics while the cited 1406 reference is oral surgery.
+
 ## Current continuation state
 
 - Research inputs are private and isolated under
   `/srv/fanoos/shared/research/tmp/residency-1397-classification-20261021/`.
-- Current work branch: `codex/residency-1397-classification`, based on
-  `472670dd67a49dafb5f689e761f957e3c19b3b44`.
-- Source changes and targeted tests are in progress; no PR, deployment,
-  backup for new writes, or 1397 database apply has occurred yet.
+- Source package: `/srv/fanoos/shared/research/classification/recovery-1397-updated-reference-proxy-20261021/`.
+- PR #494 and its code are deployed. A second narrow code change is being
+  prepared to preserve exact official 1397 Q88 and the sole Q95 cross-subject
+  updated reference case. No 1397 production source row has been inserted yet.
+- The exact-PDF validator accepted 18/20 current 1397 endodontics study rows
+  from Torabinejad 6e after direct-page reading and map/hash checks; Q88 is
+  supported by exact 1397 Torabinejad 5e, while Q95 has a direct Hupp 7e
+  candidate page. An independent private audit confirmed the 18 accepted rows;
+  two remain pending while those two cases receive their guarded paths.
+- Full deployment backup `20261021T125153Z-1f7b55f1` is verified. Take a
+  fresh backup again before the first source import and preserve its exact ID.
 - Before any import, require green CI on the merged change, official updater
   deployment, a fresh verified full backup, successful dry-run/rollback
   preview, independent audit SHA, and source-only readback.

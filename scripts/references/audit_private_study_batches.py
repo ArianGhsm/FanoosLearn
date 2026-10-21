@@ -128,8 +128,11 @@ def audit_batch(root: Path, spec: str,
                 or len(proxy_decisions) != len(wanted)
                 or any(not is_updated_reference_proxy(
                     year_n, subject, d.get("edition"), d.get("reference_year"),
-                    d.get("classification_basis"))
+                    d.get("classification_basis"), d.get("reference_subject"),
+                    d.get("number"))
                     or not valid_updated_reference_note(d.get("updated_reference_note"), year_n)
+                    or (d.get("reference_subject", subject) != subject
+                        and "جراحی دهان" not in str(d.get("updated_reference_note", "")))
                     for d in wanted.values())):
             raise ValueError(f"{spec}: updated-reference proxy is restricted to the owner-authorized 1397/1398 cases and must label every decision")
         reference_years = [UPDATED_PROXY_REFERENCE_YEAR]
@@ -158,10 +161,11 @@ def audit_batch(root: Path, spec: str,
         for decision in wanted.values():
             edition = str(decision["edition"])
             chapter = str(decision["chapter"])
+            reference_subject = str(decision.get("reference_subject", subject))
             validity = [row for row in catalog.get("validity", [])
                         if row.get("exam_type") == "residency"
                         and row.get("year") == UPDATED_PROXY_REFERENCE_YEAR
-                        and row.get("subject") == subject
+                        and row.get("subject") == reference_subject
                         and row.get("edition") == edition
                         and row.get("official") is True]
             if len(validity) != 1:
@@ -238,10 +242,12 @@ def audit_batch(root: Path, spec: str,
                 or item.get("official_scope_note") != decision.get("updated_reference_note")
                 or item.get("reference_year") != UPDATED_PROXY_REFERENCE_YEAR
                 or item.get("classification_basis") != UPDATED_PROXY_BASIS
+                or item.get("reference_subject", subject) != decision.get("reference_subject", subject)
                 or item.get("scope_unverified") is not False):
             raise ValueError(f"{spec}: updated proxy disposition or reference-year label differs for Q{n}")
         pages[str(n)] = {
             "ref": item["ref"],
+            "reference_subject": decision.get("reference_subject", subject),
             "pdf_page": int(decision["page"]),
             "confidence_source": round(float(confidence["source"]), 3),
             "confidence_node": round(float(confidence["node"]), 3),

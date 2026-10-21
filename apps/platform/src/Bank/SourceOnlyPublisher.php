@@ -64,10 +64,26 @@ final class SourceOnlyPublisher
                     throw new RuntimeException('Pre-1396 source must declare an actual 1397+ official proxy reference year and retrospective basis.');
                 }
             }
+            $referenceSubject = (string) ($decision['reference_subject'] ?? $subject);
             $updated1397Proxy = $year === 1397
                 && in_array($subject, $updated1397Subjects, true)
                 && ($decision['reference_year'] ?? null) === 1406
                 && ($decision['classification_basis'] ?? null) === 'updated_reference_proxy';
+            $crossSubject1397HuppQ95 = $updated1397Proxy
+                && $subject === 'endodontics' && $n === 95
+                && $referenceSubject === 'oral-surgery'
+                && ($decision['edition'] ?? null) === 'hupp-oral-surgery@7e';
+            $exact1397EndodonticsQ88 = $year === 1397 && $subject === 'endodontics'
+                && $n === 88 && $referenceSubject === $subject
+                && ($decision['edition'] ?? null) === 'torabinejad-endodontics@5e'
+                && (string) ($decision['chapter'] ?? '') === '13'
+                && ($decision['page'] ?? null) === 235
+                && !isset($decision['reference_year'])
+                && !isset($decision['classification_basis'])
+                && !isset($decision['updated_reference_note']);
+            if ($referenceSubject !== $subject && !$crossSubject1397HuppQ95) {
+                throw new RuntimeException('Cross-subject reference is permitted only for the exact 1397 endodontics Q95 oral-surgery proxy.');
+            }
             $updated1398HuppProxy = $year === 1398 && $subject === 'oral-surgery'
                 && ($decision['edition'] ?? null) === 'hupp-oral-surgery@7e'
                 && ($decision['reference_year'] ?? null) === 1406
@@ -85,7 +101,10 @@ final class SourceOnlyPublisher
                 if ($year === 1397 && !$updated1397Proxy) {
                     throw new RuntimeException('1397 sources require the owner-approved 1406 updated-reference basis.');
                 }
-            } elseif ($year === 1397) {
+                if ($crossSubject1397HuppQ95 && !str_contains($proxyNote, 'جراحی دهان')) {
+                    throw new RuntimeException('1397 Q95 must disclose its 1406 oral-surgery cross-subject reference in the source note.');
+                }
+            } elseif ($year === 1397 && !$exact1397EndodonticsQ88) {
                 throw new RuntimeException('1397 source batches require the explicit 1406 updated-reference proxy metadata.');
             } elseif (!$retrospective && (isset($decision['reference_year'])
                     || isset($decision['classification_basis'])
@@ -251,6 +270,7 @@ final class SourceOnlyPublisher
                 continue;
             }
             $d = $wanted[$n];
+            $referenceSubject = (string) ($d['reference_subject'] ?? $subject);
             $updatedReferenceProxy = $year === 1397
                 && in_array($subject, $updated1397Subjects, true)
                 && ($d['reference_year'] ?? null) === 1406
@@ -327,6 +347,7 @@ final class SourceOnlyPublisher
                 'anchor' => $s['anchor'], 'conf' => $conf,
                 'reference_year' => ($retrospective || $updatedReferenceProxy)
                     ? (int) $d['reference_year'] : $year,
+                'reference_subject' => $referenceSubject,
                 'classification_basis' => $updatedReferenceProxy
                     ? 'updated_reference_proxy'
                     : ($retrospective ? 'retrospective_proxy_1397_plus' : 'official_exam_year'),
@@ -424,7 +445,7 @@ SQL);
                 }
             $nodes->execute([
                 'ws' => $workspace, 'ref' => $src['ref'], 'edition' => $src['edition'],
-                'node' => $src['node'], 'yr' => $src['reference_year'], 'sub' => $subject,
+                'node' => $src['node'], 'yr' => $src['reference_year'], 'sub' => $src['reference_subject'],
             ]);
                 $mappedNode = $nodes->fetch(PDO::FETCH_ASSOC);
                 if (!is_array($mappedNode) || $nodes->fetch(PDO::FETCH_ASSOC) !== false

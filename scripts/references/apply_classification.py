@@ -293,7 +293,8 @@ def main() -> int:
             has_proxy_metadata = any(key in d for key in (
                 'reference_year', 'classification_basis', 'updated_reference_note'))
             updated_proxy = is_updated_reference_proxy(
-                year, q['subject'], edition, proxy_reference_year, proxy_basis)
+                year, q['subject'], edition, proxy_reference_year, proxy_basis,
+                d.get('reference_subject'), n)
             names = official.get(q['subject'], {})
             if args.updated_reference_proxy and not updated_proxy:
                 why = 'updated-reference mode requires the exact owner-approved edition, subject and reference year'
@@ -304,11 +305,14 @@ def main() -> int:
                     why = 'updated-reference proxy requires the explicit owner-approved validator mode'
                 elif not valid_updated_reference_note(proxy_note, year):
                     why = f'updated-reference proxy requires an outside-scope note naming the 1397/1398 exam and 1406 reference years'
+                elif d.get('reference_subject', q['subject']) != q['subject'] and 'جراحی دهان' not in str(proxy_note):
+                    why = 'the 1397 Q95 cross-subject proxy note must name the oral-surgery reference subject'
                 else:
+                    reference_subject = d.get('reference_subject', q['subject'])
                     matches = [v for v in catalog.get('validity', [])
                                if v.get('exam_type') == exam_type
                                and int(v.get('year', 0)) == UPDATED_PROXY_REFERENCE_YEAR
-                               and v.get('subject') == q['subject']
+                               and v.get('subject') == reference_subject
                                and v.get('edition') == edition
                                and v.get('official') is True]
                     if len(matches) != 1:
@@ -417,6 +421,9 @@ def main() -> int:
                     accepted[n]['scope_unverified'] = False
                     accepted[n]['classification_basis'] = UPDATED_PROXY_BASIS
                     accepted[n]['reference_year'] = UPDATED_PROXY_REFERENCE_YEAR
+                    reference_subject = d.get('reference_subject', q['subject'])
+                    if reference_subject != q['subject']:
+                        accepted[n]['reference_subject'] = reference_subject
                 if cite != edition:
                     accepted[n]['found_in'] = f'{edition}#ch{chapter} (nearest edition; the official one was not available)'
         if why is None and n in accepted:
