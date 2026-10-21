@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 /**
- * Replace exact audited residency AI source citations for the pinned 1401/1402
- * question set. The default transaction is rolled back. Apply requires its exact
+ * Replace exact audited residency AI source citations for the pinned 1398/1401/1402
+ * question sets. The default transaction is rolled back. Apply requires its exact
  * preview receipt and a fresh verified full production backup.
  *
  * Only bank_question_sources citation/scope/confidence metadata is updated.
