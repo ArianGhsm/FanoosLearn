@@ -103,6 +103,21 @@ an audited versioned publisher implementation; do not bypass it through
 raw SQL or full-sitting imports. See
 `docs/ops/PRE_1396_RETROSPECTIVE_CLASSIFICATION_20261011.md`.
 
+### Owner-approved updated-reference proxy for residency 1397 (2026-10-21)
+
+For the residency 1397 sitting only, the owner authorized use of references
+officially listed for residency 1406. This exception applies to the remaining
+1397 classification work and does not assert that those references were on
+the 1397 official list. Record `reference_year=1406` and
+`classification_basis=updated_reference_proxy`; mark each row
+`outside_scope_exam_question` and add a Persian note that names both years
+and says the citation is outside the 1397 official reference list. Use only
+the exact approved 1406 PDF and SHA-bound map, quote decisive evidence from
+the cited PDF page, and require the chapter to be within the official 1406
+subject scope. The guarded 1397 writer accepts only the 12 official residency
+subjects and the exact one-per-subject research batches. Do not generalize
+this exception to another exam year or type.
+
 ## 1. What a result must be
 
 A question's source is **found, not guessed**. It is accepted only with:

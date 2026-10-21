@@ -21,6 +21,7 @@ from verified_reference_pdf import chapter_coverage, open_verified_reference
 from retrospective_reference_policy import BASIS, is_retrospective
 from updated_reference_proxy_policy import (
     UPDATED_PROXY_BASIS,
+    UPDATED_PROXY_1397_EXAM_YEAR,
     UPDATED_PROXY_REFERENCE_YEAR,
     is_updated_reference_proxy,
     valid_updated_reference_note,
@@ -123,14 +124,14 @@ def audit_batch(root: Path, spec: str,
                        if d.get("classification_basis") == UPDATED_PROXY_BASIS]
     updated_proxy = bool(proxy_decisions)
     if updated_proxy:
-        if (year_n != 1398 or subject != "oral-surgery"
+        if (year_n not in (UPDATED_PROXY_1397_EXAM_YEAR, 1398)
                 or len(proxy_decisions) != len(wanted)
                 or any(not is_updated_reference_proxy(
                     year_n, subject, d.get("edition"), d.get("reference_year"),
                     d.get("classification_basis"))
-                    or not valid_updated_reference_note(d.get("updated_reference_note"))
+                    or not valid_updated_reference_note(d.get("updated_reference_note"), year_n)
                     for d in wanted.values())):
-            raise ValueError(f"{spec}: updated-reference proxy is restricted to the exact 1398 Hupp 7e owner-authorized case")
+            raise ValueError(f"{spec}: updated-reference proxy is restricted to the owner-authorized 1397/1398 cases and must label every decision")
         reference_years = [UPDATED_PROXY_REFERENCE_YEAR]
     else:
         if any("reference_year" in d or "classification_basis" in d
