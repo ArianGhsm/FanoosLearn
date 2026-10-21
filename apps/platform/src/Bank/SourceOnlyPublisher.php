@@ -13,7 +13,8 @@ use Throwable;
  * Only INSERTs new source/chapter links for matching, published,
  * currently source-free questions, plus the exact voided/draft 1398 Q97
  * exception. No UPDATE, DELETE or publication writes. Updated-reference
- * proxies are limited to the separately labelled Hupp 7e/1406 case.
+ * proxies are limited to separately authorized 1397/1406 and
+ * 1398/Hupp7/1406 cases, visibly labelled outside exam-year scope.
  * An entire batch commits together or rolls back together.
  */
 final class SourceOnlyPublisher
@@ -23,7 +24,13 @@ final class SourceOnlyPublisher
         array $study, array $validated, array $decisions, bool $apply,
     ): int {
         $retrospective = $year >= 1300 && $year < 1396;
-        if (($year < 1399 && !$retrospective && !($year === 1398 && in_array($subject, ['endodontics', 'periodontics', 'community-dentistry', 'prosthodontics', 'operative-dentistry', 'pediatric-dentistry', 'oral-radiology', 'oral-surgery'], true))) || $year > 1500
+        $updated1397Subjects = ['community-dentistry', 'dental-materials', 'endodontics',
+            'operative-dentistry', 'oral-medicine', 'oral-pathology', 'oral-radiology',
+            'oral-surgery', 'orthodontics', 'pediatric-dentistry', 'periodontics',
+            'prosthodontics'];
+        if (($year < 1399 && !$retrospective
+                && !(($year === 1397 && in_array($subject, $updated1397Subjects, true))
+                    || ($year === 1398 && in_array($subject, ['endodontics', 'periodontics', 'community-dentistry', 'prosthodontics', 'operative-dentistry', 'pediatric-dentistry', 'oral-radiology', 'oral-surgery'], true)))) || $year > 1500
             || ($study['format'] ?? '') !== 'fanoos.classification.study-only/1'
             || ($validated['format'] ?? '') !== ($study['format'] ?? '')
             || ($study['exam_type'] ?? '') !== 'residency'
@@ -57,17 +64,29 @@ final class SourceOnlyPublisher
                     throw new RuntimeException('Pre-1396 source must declare an actual 1397+ official proxy reference year and retrospective basis.');
                 }
             }
-            $updatedReferenceProxy = $year === 1398 && $subject === 'oral-surgery'
+            $updated1397Proxy = $year === 1397
+                && in_array($subject, $updated1397Subjects, true)
+                && ($decision['reference_year'] ?? null) === 1406
+                && ($decision['classification_basis'] ?? null) === 'updated_reference_proxy';
+            $updated1398HuppProxy = $year === 1398 && $subject === 'oral-surgery'
                 && ($decision['edition'] ?? null) === 'hupp-oral-surgery@7e'
                 && ($decision['reference_year'] ?? null) === 1406
                 && ($decision['classification_basis'] ?? null) === 'updated_reference_proxy';
+            $updatedReferenceProxy = $updated1397Proxy || $updated1398HuppProxy;
             if ($updatedReferenceProxy) {
                 $proxyNote = $decision['updated_reference_note'] ?? null;
                 if (!is_string($proxyNote) || mb_strlen(trim($proxyNote)) < 60
                     || !str_contains($proxyNote, 'خارج از محدوده')
-                    || !str_contains($proxyNote, '۱۳۹۸') || !str_contains($proxyNote, '۱۴۰۶')) {
-                    throw new RuntimeException('Updated 1398 source proxy must be labeled outside the exam-year reference list.');
+                    || !str_contains($proxyNote, 'فهرست رسمی')
+                    || !str_contains($proxyNote, $year === 1397 ? '۱۳۹۷' : '۱۳۹۸')
+                    || !str_contains($proxyNote, '۱۴۰۶')) {
+                    throw new RuntimeException('Updated-reference proxy must name both years and disclose that it is outside the exam-year official reference list.');
                 }
+                if ($year === 1397 && !$updated1397Proxy) {
+                    throw new RuntimeException('1397 sources require the owner-approved 1406 updated-reference basis.');
+                }
+            } elseif ($year === 1397) {
+                throw new RuntimeException('1397 source batches require the explicit 1406 updated-reference proxy metadata.');
             } elseif (!$retrospective && (isset($decision['reference_year'])
                     || isset($decision['classification_basis'])
                     || isset($decision['updated_reference_note']))) {
@@ -232,10 +251,15 @@ final class SourceOnlyPublisher
                 continue;
             }
             $d = $wanted[$n];
-            $updatedReferenceProxy = $year === 1398 && $subject === 'oral-surgery'
-                && ($d['edition'] ?? null) === 'hupp-oral-surgery@7e'
+            $updatedReferenceProxy = $year === 1397
+                && in_array($subject, $updated1397Subjects, true)
                 && ($d['reference_year'] ?? null) === 1406
                 && ($d['classification_basis'] ?? null) === 'updated_reference_proxy';
+            $updatedReferenceProxy = $updatedReferenceProxy || ($year === 1398
+                && $subject === 'oral-surgery'
+                && ($d['edition'] ?? null) === 'hupp-oral-surgery@7e'
+                && ($d['reference_year'] ?? null) === 1406
+                && ($d['classification_basis'] ?? null) === 'updated_reference_proxy');
             if (!is_array($sources) || count($sources) !== 1 || !is_array($sources[0])) {
                 throw new RuntimeException('One source per accepted question is required.');
             }
@@ -278,7 +302,7 @@ final class SourceOnlyPublisher
                     || ($s['classification_basis'] ?? null) !== 'updated_reference_proxy'
                     || ($s['reference_year'] ?? null) !== 1406
                     || ($s['scope_unverified'] ?? null) !== false)) {
-                throw new RuntimeException('Updated Hupp proxy citation must preserve the explicit outside-1398-reference label.');
+                throw new RuntimeException('Updated-reference proxy citation must preserve the explicit outside-exam-year label and exact 1406 provenance.');
             }
             if (!$updatedReferenceProxy
                 && (isset($s['classification_basis']) || isset($s['reference_year'])

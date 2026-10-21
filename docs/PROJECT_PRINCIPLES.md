@@ -318,6 +318,19 @@ completion pass; waiting for the exact official edition is preferred unless
 the owner separately approves a specific exception and the evidence-mapping
 workflow is documented.
 
+### Owner-approved updated-reference proxy for residency 1397 — 2026-10-21
+
+The owner explicitly requested that residency 1397 be classified using the
+newer 1406 official reference set. This is an `updated_reference_proxy`, not
+a claim that a 1406 reference was official for the 1397 sitting. Every
+accepted citation must use an exact approved 1406 PDF, its matching
+SHA-bound chapter map and page evidence, and a chapter in the 1406 official
+scope for that subject. Store it as `outside_scope_exam_question` with a
+Persian note naming both 1397 and 1406 and explaining that it is outside the
+1397 official reference list. Preserve the official catalog, question text,
+choices, answers, frozen attempts and scores. This exception is limited to
+residency 1397; it does not create a general nearest-edition rule.
+
 ### Owner-approved updated reference proxy for residency 1398 oral surgery — 2026-10-21
 
 For the 1398 oral-surgery questions whose official Hupp 6e PDF is unavailable

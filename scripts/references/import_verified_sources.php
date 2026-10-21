@@ -33,14 +33,27 @@ try {
     $expected = filter_var($args['expected'] ?? null, FILTER_VALIDATE_INT);
     $apply = isset($args['apply']);
     $retrospective = $year !== false && $year >= 1300 && $year < 1396;
+    $updated1397ProxyCounts = [
+        'community-dentistry' => 10, 'dental-materials' => 9,
+        'endodontics' => 20, 'operative-dentistry' => 15,
+        'oral-medicine' => 20, 'oral-pathology' => 2,
+        'oral-radiology' => 20, 'oral-surgery' => 19,
+        'orthodontics' => 4, 'pediatric-dentistry' => 19,
+        'periodontics' => 10, 'prosthodontics' => 16,
+    ];
+    $updated1397ProxyBatch = $year === 1397
+        && isset($updated1397ProxyCounts[$subject])
+        && $stem === 'proxy-' . $subject
+        && $expected === $updated1397ProxyCounts[$subject];
     $updatedHuppBatch = $year === 1398 && $subject === 'oral-surgery'
         && $stem === 'surgery-modern-hupp7' && $expected === 14;
+    $updatedReferenceProxyBatch = $updated1397ProxyBatch || $updatedHuppBatch;
     if (preg_match('/^[0-9a-f-]{36}$/D', $ws) !== 1 || $year === false
-        || ($year < 1399 && !$retrospective && !(($year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1', 'endodontics-location-final'], true)) || ($year === 1398 && $subject === 'periodontics' && in_array($stem, ['periodontics', 'periodontics-followup', 'periodontics-certified-20261012', 'periodontics-sourcefree'], true)) || ($year === 1398 && $subject === 'community-dentistry' && $stem === 'community') || ($year === 1398 && $subject === 'prosthodontics' && in_array($stem, ['prosthodontics', 'prostho-voided-q97'], true)) || ($year === 1398 && $subject === 'operative-dentistry' && in_array($stem, ['operative-q175-20261012', 'operative-q188-snowplow'], true)) || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-q164-q168-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-four-20261012') || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-q159-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-q219-q226-20261012') || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-q152-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-seven-20261012') || ($year === 1398 && $subject === 'periodontics' && $stem === 'periodontics-q134-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-q218-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-q222-20261012') || ($year === 1398 && $subject === 'oral-radiology' && in_array($stem, ['radiology-q213-q216-20261013', 'radiology-q220-20261013'], true)) || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-sourcefree') || ($year === 1398 && $subject === 'oral-surgery' && in_array($stem, ['surgery', 'surgery-modern-hupp7'], true))))
+        || ($year < 1399 && !$retrospective && !$updated1397ProxyBatch && !(($year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1', 'endodontics-location-final'], true)) || ($year === 1398 && $subject === 'periodontics' && in_array($stem, ['periodontics', 'periodontics-followup', 'periodontics-certified-20261012', 'periodontics-sourcefree'], true)) || ($year === 1398 && $subject === 'community-dentistry' && $stem === 'community') || ($year === 1398 && $subject === 'prosthodontics' && in_array($stem, ['prosthodontics', 'prostho-voided-q97'], true)) || ($year === 1398 && $subject === 'operative-dentistry' && in_array($stem, ['operative-q175-20261012', 'operative-q188-snowplow'], true)) || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-q164-q168-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-four-20261012') || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-q159-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-q219-q226-20261012') || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-q152-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-seven-20261012') || ($year === 1398 && $subject === 'periodontics' && $stem === 'periodontics-q134-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-q218-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-q222-20261012') || ($year === 1398 && $subject === 'oral-radiology' && in_array($stem, ['radiology-q213-q216-20261013', 'radiology-q220-20261013'], true)) || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-sourcefree') || ($year === 1398 && $subject === 'oral-surgery' && in_array($stem, ['surgery', 'surgery-modern-hupp7'], true))))
         || $year > 1500 || $expected === false || $expected < 1 || $expected > 250
         || preg_match('/^[a-z][a-z0-9-]{1,59}$/D', $subject) !== 1
         || preg_match('/^[a-z][a-z0-9-]{1,59}$/D', $stem) !== 1) {
-        throw new RuntimeException('Workspace, exact year/subject/stem and expected count required; pre-1396 allows only explicit audited retrospective 1397+ references; 1398 still has a narrow subject gate.');
+        throw new RuntimeException('Workspace, exact year/subject/stem and expected count required; 1397 updated references and pre-1396 retrospective sources remain explicitly whitelisted.');
     }
     if ($apply !== isset($args['backup']) || $apply !== isset($args['receipt'])) {
         throw new RuntimeException('Apply requires both verified full backup and unique private receipt.');
@@ -57,8 +70,8 @@ try {
     if (isset($args['package-root']) && isset($args['case-root'])) {
         throw new RuntimeException('Specify only one protected package source.');
     }
-    if ($updatedHuppBatch && (!isset($args['case-root']) || isset($args['package-root']))) {
-        throw new RuntimeException('The Hupp 7e updated-reference proxy requires its exact immutable 1398 recovery case.');
+    if ($updatedReferenceProxyBatch && (!isset($args['case-root']) || isset($args['package-root']))) {
+        throw new RuntimeException('An updated-reference proxy requires its exact immutable same-year recovery case.');
     }
     if (isset($args['package-root'])) {
         // A coordinator-created, immutable snapshot, never a research worker's
@@ -98,6 +111,9 @@ try {
         $privateRoot = $root === false ? false : realpath($root . '/classification');
         $requested = (string) $args['case-root'];
         $case = realpath($requested);
+        $exact1397UpdatedReferenceCase = $updated1397ProxyBatch
+            && $case !== false
+            && basename($case) === 'recovery-1397-updated-reference-proxy-20261021';
         $exact1398SurgeryCase = $year === 1398 && $subject === 'oral-surgery'
             && $stem === 'surgery' && $expected === 2
             && $case !== false && basename($case) === 'recovery-1398-oral-surgery-malamed7-20261021';
@@ -119,7 +135,7 @@ try {
         $exact1398UpdatedHuppCase = $year === 1398 && $subject === 'oral-surgery'
             && $stem === 'surgery-modern-hupp7' && $expected === 14
             && $case !== false && basename($case) === 'recovery-1398-surgery-modern-hupp7-20261021';
-        if ($year === false || ($year < 1399 && !$retrospective
+        if ($year === false || ($year < 1399 && !$retrospective && !$exact1397UpdatedReferenceCase
                 && !$exact1398SurgeryCase && !$exact1398VoidedProsthoCase
                 && !$exact1398RadiologyQ225Case && !$exact1398OperativeQ188Case
                 && !$exact1398PediatricCase && !$exact1398PeriodonticsCase
@@ -179,11 +195,11 @@ try {
     if ($retrospective && ($b['classification_basis'] ?? '') !== 'retrospective_proxy_1397_plus') {
         throw new RuntimeException('Pre-1396 source audit must attest a distinct retrospective proxy basis.');
     }
-    if ($updatedHuppBatch && (($b['classification_basis'] ?? '') !== 'updated_reference_proxy'
+    if ($updatedReferenceProxyBatch && (($b['classification_basis'] ?? '') !== 'updated_reference_proxy'
             || ($b['reference_years'] ?? null) !== [1406])) {
-        throw new RuntimeException('Hupp 7e proxy audit must attest the official 1406 reference-year basis.');
+        throw new RuntimeException('Updated-reference proxy audit must attest its exact official 1406 reference-year basis.');
     }
-    if (!$updatedHuppBatch && ($b['classification_basis'] ?? '') === 'updated_reference_proxy') {
+    if (!$updatedReferenceProxyBatch && ($b['classification_basis'] ?? '') === 'updated_reference_proxy') {
         throw new RuntimeException('Updated-reference proxy audit cannot be reused by another batch.');
     }
     if (($b['accepted'] ?? 0) !== $expected || ($b['question_content_identical'] ?? false) !== true
@@ -222,9 +238,9 @@ try {
         'questions_changed' => 0, 'choices_changed' => 0, 'answers_changed' => 0,
         'audit_sha256' => hash_file('sha256', $auditPath),
         'classification_basis' => $retrospective ? 'retrospective_proxy_1397_plus'
-            : ($updatedHuppBatch ? 'updated_reference_proxy' : 'official_exam_year'),
+            : ($updatedReferenceProxyBatch ? 'updated_reference_proxy' : 'official_exam_year'),
         'reference_years' => $retrospective ? ($b['reference_years'] ?? [])
-            : ($updatedHuppBatch ? ($b['reference_years'] ?? []) : [$year]),
+            : ($updatedReferenceProxyBatch ? ($b['reference_years'] ?? []) : [$year]),
         'validated_sha256' => hash_file('sha256', $validatedPath),
     ];
     if ($apply) {
