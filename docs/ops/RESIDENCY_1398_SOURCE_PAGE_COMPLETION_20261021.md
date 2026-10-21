@@ -2,8 +2,9 @@
 
 ## Continuation status — 2026-10-21 08:43 UTC
 
-PR #490 was merged as `c898e26f30708d210a62c9327c260b6ff9f6a897`; all five
-required CI jobs passed. The production release is still
+PR #490 was merged as `c898e26f30708d210a62c9327c260b6ff9f6a897` and PR #491
+as `fdd3e3f82a078450ddec5dd59d3afed477698287`; all five required CI jobs
+passed on both merge commits. The production release is still
 `f939bc031f213c1aa15e79d0888c4cace4cc604d` and `/health` is OK. No 1398
 production source rows were changed: the latest readback remains 178/227
 book-based rows complete, 49 source-free, and 9 existing source rows below
@@ -79,9 +80,15 @@ edited. Deployment and all production applies remain blocked until that
 checkout can be made clean through its own reviewed workflow. Do not bypass
 the official updater.
 
-After deployment, use a fresh verified full backup and apply each
+After deployment, use a fresh verified full backup and apply each source-free
 batch with `scripts/references/import_verified_sources.php --case-root=...`,
 the exact private audit SHA above, a unique receipt and independent readback.
+Apply the four audited existing-row citation corrections with
+`scripts/references/repair_residency_ai_source_citation_replacements.php`,
+using the private Q48/Q176/Q180/Q182 plan and its matching rollback-preview
+receipt. Apply the five materials confidence repairs with
+`scripts/references/repair_verified_ai_source_pages.php`. Each operator still
+requires the fresh backup and its own unique receipt.
 The Hupp batch must retain `classification_basis=updated_reference_proxy`,
 `reference_years=[1406]` and the outside-scope note in every inserted row.
 Re-run the frozen-assessment preflight for the published question groups.
@@ -93,7 +100,7 @@ explicit proxy label.
 
 All nine low-confidence rows now have independent exact-page evidence and
 protected plans; none has been applied. The five dental-materials confidence
-repairs passed rollback preview against the branch's decimal-node map:
+repairs passed rollback preview against the decimal-node map merged by PR #490:
 
 - Dental materials: Q241, Q246, Q247, Q248, Q250 (Van Noort 4e fractional
   sections; audit nodes such as `1.6` resolve to catalog keys such as
