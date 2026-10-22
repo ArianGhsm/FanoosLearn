@@ -57,15 +57,41 @@ class NearestSameLineageProxyTests(unittest.TestCase):
                          [(1397, "daly@2e", True), (1397, "other-book@1e", True)])
         self.assertTrue(all(r["_eligible"] for r in selected))
 
-    def test_legacy_hash_bound_contiguous_map_without_page_count_is_eligible(self):
+    def test_legacy_map_without_page_count_still_needs_a_real_chapter(self):
         self.maps["daly@2e"] = {
-            "runs": [[None, 1, 4], ["1", 5, 20]],
+            "runs": [[None, 1, 20]],
             "source_pdf_sha256": HASH,
         }
         selected = self.select(1396)
         daly = next(r for r in selected if r["edition"].startswith("daly@"))
         self.assertEqual((daly["year"], daly["edition"], daly["_eligible"]),
-                         (1397, "daly@2e", True))
+                         (1397, "daly@2e", False))
+
+    def test_all_front_matter_map_is_not_exact_edition_eligible(self):
+        exact = row(1396, "daly@1e")
+        self.catalog["validity"].append(exact)
+        self.pdfs["daly@1e"] = {"pdf": "verified-server-pdf"}
+        self.maps["daly@1e"] = {
+            "runs": [[None, 1, 20]], "pdf_pages": 20, "source_pdf_sha256": HASH,
+        }
+        selected = self.select(1396)
+        daly = next(r for r in selected if r["edition"].startswith("daly@"))
+        self.assertEqual((daly["year"], daly["edition"], daly["_proxy"], daly["_eligible"]),
+                         (1396, "daly@1e", False, False))
+
+    def test_empty_or_unstructured_catalog_scope_is_pending(self):
+        for bad_scope in ([], [{}], ["1"], [{"number": ""}]):
+            with self.subTest(scope=bad_scope):
+                exact = row(1396, "daly@1e")
+                exact["scope_chapters"] = bad_scope
+                self.catalog["validity"].append(exact)
+                self.pdfs["daly@1e"] = {"pdf": "verified-server-pdf"}
+                self.maps["daly@1e"] = MAP
+                selected = self.select(1396)
+                daly = next(r for r in selected if r["edition"].startswith("daly@"))
+                self.assertEqual((daly["year"], daly["edition"], daly["_proxy"], daly["_eligible"]),
+                                 (1396, "daly@1e", False, False))
+                self.catalog["validity"].remove(exact)
 
     def test_exact_available_edition_always_wins(self):
         self.catalog["validity"].append(row(1396, "daly@1e"))
@@ -143,7 +169,9 @@ class NearestSameLineageProxyTests(unittest.TestCase):
         self.catalog["validity"].append(row(1396, "daly@1e"))
         self.pdfs["daly@1e"] = {"missing": "not in verified library"}
         self.maps["daly@1e"] = MAP
-        self.maps["daly@2e"] = {"runs": [["1", 1, 20]]}
+        self.maps["daly@2e"] = {
+            "runs": [[None, 1, 20]], "pdf_pages": 20, "source_pdf_sha256": HASH,
+        }
         selected = self.select(1396)
         daly = next(r for r in selected if r["edition"].startswith("daly@"))
         self.assertEqual((daly["year"], daly["edition"], daly["_proxy"], daly["_eligible"]),

@@ -24,6 +24,7 @@ class UpdatedReferenceProxy1398(unittest.TestCase):
         note = "این ویرایش ۷ منبع رسمی دستیاری ۱۴۰۶ است و در فهرست رسمی ۱۳۹۸ خارج از محدوده بوده؛ به درخواست مالک برای تعیین صفحه استفاده شد."
         self.assertTrue(valid_updated_reference_note(note))
         self.assertFalse(valid_updated_reference_note("ویرایش جدیدتر استفاده شد."))
+        self.assertFalse(valid_updated_reference_note(note + ("x" * 300)))
 
     def test_1397_allows_only_listed_subjects_with_1406_and_clear_note(self):
         subjects = {
@@ -45,6 +46,7 @@ class UpdatedReferenceProxy1398(unittest.TestCase):
         note = "این منبع رسمی دستیاری ۱۴۰۶ است؛ در فهرست رسمی ۱۳۹۷ خارج از محدوده آزمون و فقط برای یافتن محل مبحث استفاده شده است."
         self.assertTrue(valid_updated_reference_note(note, 1397))
         self.assertFalse(valid_updated_reference_note(note, 1398))
+        self.assertFalse(valid_updated_reference_note(note + ("x" * 300), 1397))
 
     def test_1397_cross_subject_is_limited_to_endodontic_q95_and_hupp7(self):
         self.assertTrue(is_updated_reference_proxy(

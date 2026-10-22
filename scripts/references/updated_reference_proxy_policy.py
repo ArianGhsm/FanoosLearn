@@ -54,6 +54,7 @@ def valid_updated_reference_note(note: object, exam_year: int = UPDATED_PROXY_EX
     return (
         isinstance(note, str)
         and len(note.strip()) >= 60
+        and len(note.strip()) <= 300
         and "خارج از محدوده" in note
         and "فهرست رسمی" in note
         and exam_year_digits is not None

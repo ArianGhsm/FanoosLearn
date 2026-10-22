@@ -31,6 +31,7 @@ class SourceClassificationProvenanceTests(unittest.TestCase):
         self.assertIn("'classification_basis' => $src['classification_basis']", writer)
         self.assertIn("'classification_note' => $src['classification_note']", writer)
         self.assertIn("Nearest same-lineage proxy must name the actual reference year", writer)
+        self.assertIn("mb_strlen(trim($proxyNote)) > 300", writer)
 
     def test_runner_projection_and_contract_expose_proxy_label(self):
         facts = (ROOT / "apps/platform/src/Bank/BankQuestionFacts.php").read_text()

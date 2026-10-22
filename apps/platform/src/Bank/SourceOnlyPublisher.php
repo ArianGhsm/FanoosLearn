@@ -125,6 +125,7 @@ final class SourceOnlyPublisher
             if ($updatedReferenceProxy) {
                 $proxyNote = $decision['updated_reference_note'] ?? null;
                 if (!is_string($proxyNote) || mb_strlen(trim($proxyNote)) < 60
+                    || mb_strlen(trim($proxyNote)) > 300
                     || !str_contains($proxyNote, 'خارج از محدوده')
                     || !str_contains($proxyNote, 'فهرست رسمی')
                     || !str_contains($proxyNote, $year === 1397 ? '۱۳۹۷' : '۱۳۹۸')

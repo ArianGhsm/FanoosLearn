@@ -12,6 +12,14 @@ page and direct evidence.
 from __future__ import annotations
 
 import re
+import sys
+from pathlib import Path
+
+REFERENCE_TOOLS = str(Path(__file__).resolve().parent)
+if REFERENCE_TOOLS not in sys.path:
+    sys.path.insert(0, REFERENCE_TOOLS)
+
+from verified_reference_pdf import chapter_coverage
 
 
 BASIS = "nearest_same_lineage_proxy"
@@ -32,35 +40,53 @@ def _verified_pdf_available(edition: str, pdfs: dict) -> bool:
     return (pdfs.get(edition) or {}).get("pdf") == "verified-server-pdf"
 
 
+def _usable_scope(row: dict) -> bool:
+    chapters = row.get("scope_chapters")
+    return (
+        isinstance(chapters, list) and bool(chapters)
+        and all(isinstance(item, dict)
+                and isinstance(item.get("number"), str)
+                and bool(item["number"].strip())
+                for item in chapters)
+    )
+
+
 def _usable(edition: str, pdfs: dict, chapter_maps: dict) -> bool:
-    pdf = pdfs.get(edition) or {}
     page_map = chapter_maps.get(edition) or {}
     digest = page_map.get("source_pdf_sha256")
     runs = page_map.get("runs")
     page_count = page_map.get("pdf_pages")
-    previous = 0
     if not isinstance(runs, list) or not runs:
         return False
     for run in runs:
-        if (not isinstance(run, list) or len(run) != 3
-                or not isinstance(run[1], int) or isinstance(run[1], bool)
-                or not isinstance(run[2], int) or isinstance(run[2], bool)
-                or run[1] != previous + 1 or run[2] < run[1]):
+        if not isinstance(run, list) or len(run) != 3:
             return False
-        previous = run[2]
-    # Older canonical page maps record a hash-bound contiguous run list but
-    # omit an explicit page-count field. The direct PDF reader independently
-    # checks the map against the current verified PDF's actual page count
-    # before search, validation or audit. When a page count is present here,
-    # still require the map to end on that exact page.
+        chapter = run[0]
+        if chapter is not None and (
+            not isinstance(chapter, str) or not chapter.strip()
+        ):
+            return False
+    # Older canonical maps omit pdf_pages. Use their declared contiguous end
+    # for candidate selection; the direct reader rechecks it against the
+    # current verified PDF's actual page count before any citation is accepted.
+    if page_count is None:
+        last = runs[-1]
+        if (not isinstance(last[2], int) or isinstance(last[2], bool)
+                or last[2] < 1):
+            return False
+        page_count = last[2]
+    if not isinstance(page_count, int) or isinstance(page_count, bool) or page_count < 1:
+        return False
+    try:
+        coverage = chapter_coverage({"editions": {edition: page_map}}, edition, page_count)
+    except (IndexError, TypeError, ValueError):
+        return False
     return (
         _verified_pdf_available(edition, pdfs)
         and isinstance(digest, str)
         and re.fullmatch(r"[a-f0-9]{64}", digest) is not None
-        and (page_count is None or (
-            isinstance(page_count, int) and not isinstance(page_count, bool)
-            and page_count > 0 and previous == page_count
-        ))
+        and coverage.get("mapped_pages") == page_count
+        and coverage.get("mapped_chapters", 0) > 0
     )
 
 
@@ -110,7 +136,7 @@ def selected_reference_rows(
         exact_pdf_rows = [row for row in family_exact
                           if _verified_pdf_available(row["edition"], pdfs)]
         usable_exact = [row for row in exact_pdf_rows
-                        if row.get("scope_chapters")
+                        if _usable_scope(row)
                         and _usable(row["edition"], pdfs, chapter_maps)]
         if usable_exact:
             chosen = min(usable_exact, key=lambda row: row["edition"])
@@ -147,7 +173,7 @@ def selected_reference_rows(
         ]
         if verified_proxy_rows:
             chosen = verified_proxy_rows[0]
-            if not chosen.get("scope_chapters") or not _usable(chosen["edition"], pdfs, chapter_maps):
+            if not _usable_scope(chosen) or not _usable(chosen["edition"], pdfs, chapter_maps):
                 result = chosen.copy()
                 result["_proxy"] = True
                 result["_eligible"] = False
@@ -192,7 +218,7 @@ def is_selected_proxy(
                and row.get("_eligible") is True
                and row.get("edition") == edition
                and row.get("year") == reference_year
-               and bool(row.get("scope_chapters"))
+               and _usable_scope(row)
                and _usable(str(row.get("edition")), pdfs, chapter_maps)
                for row in selected_reference_rows(
                    catalog, exam_type, exam_year, subject, pdfs, chapter_maps))
