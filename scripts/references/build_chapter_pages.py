@@ -174,6 +174,23 @@ def documented_openings(starts: dict[str, int], chapter_list: list[list[str]], p
     return starts
 
 
+def chapter_opening_matches(text: str, number: str, title: str) -> bool:
+    """Confirm a chapter start from its own page, with or without a CHAPTER label."""
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    if not lines:
+        return False
+    head = ' '.join(lines[:23]).lower()
+    title_words = words(title)
+    title_match = sum(word in head for word in title_words) / max(1, len(title_words))
+    number = str(number)
+    number_label = any(
+        re.fullmatch(rf'(?:chapter\s*)?{re.escape(number)}[.:]?', line, re.I) is not None
+        for line in lines[:6]
+    )
+    chapter_label = re.search(rf'\bchapter\s+{re.escape(number)}\b', head, re.I) is not None
+    return title_match >= 0.5 and (number_label or chapter_label)
+
+
 def locate(pages, chapter_list: list[list[str]],
            bookmark_starts: dict[str, int] | None = None) -> dict:
     """Assign every page a chapter so that chapters run in book order.
@@ -341,11 +358,7 @@ def main() -> int:
             if not isinstance(end, int) or not (ordered[-1] < end <= pdf.page_count):
                 raise ValueError(f'{edition}: original index page must follow the last chapter')
             for (chapter, title), opening in zip(chapter_pairs, ordered):
-                lines = [line.strip() for line in pdf.page_text(opening).splitlines() if line.strip()]
-                head = ' '.join(lines[:23]).lower()
-                title_terms = words(title)
-                title_match = sum(word in head for word in title_terms) / max(1, len(title_terms))
-                if not (('chapter' in head or 'c h a p t e r' in head) and title_match >= 0.5):
+                if not chapter_opening_matches(pdf.page_text(opening), chapter, title):
                     raise ValueError(f'{edition}: original PDF page {opening} is not confirmed chapter {chapter}')
             def is_index(page: int) -> bool:
                 lines = [line.strip() for line in pdf.page_text(page).splitlines() if line.strip()]

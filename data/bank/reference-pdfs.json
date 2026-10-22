@@ -367,7 +367,27 @@
       "pdf": "verified-server-pdf"
     },
     "sturdevant-operative@8e": {
-      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+      "pdf": "verified-server-pdf",
+      "chapter_pdf_starts": {
+        "1": 56,
+        "2": 105,
+        "3": 180,
+        "4": 214,
+        "5": 245,
+        "6": 280,
+        "7": 328,
+        "8": 375,
+        "9": 401,
+        "10": 458,
+        "11": 514,
+        "12": 577,
+        "13": 602,
+        "14": 653,
+        "15": 679,
+        "16": 749,
+        "17": 777
+      },
+      "backmatter_pdf_start": 843
     },
     "taylor-maxillofacial-prosthetics@1e": {
       "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."

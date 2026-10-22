@@ -198,8 +198,6 @@
     "promotion 1405 prosthodontics stewart-rpd@4e: scope \"همه‌ی فصول\" names no chapter list; kept as text only",
     "board 1405 prosthodontics taylor-maxillofacial-prosthetics@1e: scope \"همه‌ی فصول\" names no chapter list; kept as text only",
     "promotion 1405 prosthodontics taylor-maxillofacial-prosthetics@1e: scope \"همه‌ی فصول\" names no chapter list; kept as text only",
-    "board 1405 operative-dentistry sturdevant-operative@8e: scope \"کلیه فصول غیر از فصل 16\" names no chapter list; kept as text only",
-    "promotion 1405 operative-dentistry sturdevant-operative@8e: scope \"کلیه فصول غیر از فصل 16\" names no chapter list; kept as text only",
     "board 1405 oral-surgery fonseca-oral-surgery@3e: scope \"سه جلد به استثنای فصول جراحی دنتوآلوئولار و ایمپلنت (جلد اول، فصول 20 تا 23 و 26 تا 43)، تروما (جلد دوم، فصول 1 تا 15) و جراحی ارتوگناتیک و زیبایی (جلد سوم، فصول 1 تا 26)\" names no chapter list; kept as text only",
     "promotion 1405 oral-surgery fonseca-oral-surgery@3e: scope \"سه جلد به استثنای فصول جراحی دنتوآلوئولار و ایمپلنت (جلد اول، فصول 20 تا 23 و 26 تا 43)، تروما (جلد دوم، فصول 1 تا 15) و جراحی ارتوگناتیک و زیبایی (جلد سوم، فصول 1 تا 26)\" names no chapter list; kept as text only",
     "board 1405 oral-surgery fonseca-trauma@4e: scope \"کلیه فصول. اگر ویرایش تازه‌ی این کتاب تا شش ماه پیش از آزمون بورد چاپ شود، سؤال از آخرین چاپ طرح می‌شود.\" names no chapter list; kept as text only",
@@ -33667,7 +33665,129 @@
         {
           "key": "8e",
           "label": "8th edition",
-          "year": 2026
+          "year": 2026,
+          "nodes": [
+            {
+              "key": "ch01",
+              "kind": "chapter",
+              "number": "1",
+              "title": "Clinical significance of dental anatomy, histology, physiology, and occlusion",
+              "title_fa": "اهمیت بالینی آناتومی، بافت‌شناسی، فیزیولوژی دندان و اکلوژن",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch02",
+              "kind": "chapter",
+              "number": "2",
+              "title": "Dental caries: Etiology, clinical characteristics, risk assessment, and management",
+              "title_fa": "پوسیدگی دندان: سبب‌شناسی، ویژگی‌های بالینی، ارزیابی خطر و مدیریت",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch03",
+              "kind": "chapter",
+              "number": "3",
+              "title": "Preliminary considerations for operative dentistry",
+              "title_fa": "ملاحظات مقدماتی دندانپزشکی ترمیمی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch04",
+              "kind": "chapter",
+              "number": "4",
+              "title": "Patient assessment, examination, diagnosis, and treatment planning"
+            },
+            {
+              "key": "ch05",
+              "kind": "chapter",
+              "number": "5",
+              "title": "Tooth preparation: Concepts, instrumentation, and stages"
+            },
+            {
+              "key": "ch06",
+              "kind": "chapter",
+              "number": "6",
+              "title": "Fundamental concepts of enamel and dentin adhesion",
+              "title_fa": "مفاهیم بنیادی چسبندگی به مینا و عاج",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch07",
+              "kind": "chapter",
+              "number": "7",
+              "title": "Photo-activated polymerization of restorative materials"
+            },
+            {
+              "key": "ch08",
+              "kind": "chapter",
+              "number": "8",
+              "title": "Color and shade matching in operative dentistry",
+              "title_fa": "انطباق رنگ و شید در دندانپزشکی ترمیمی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch09",
+              "kind": "chapter",
+              "number": "9",
+              "title": "Clinical technique for direct composite resin and glass ionomer restorations",
+              "title_fa": "تکنیک بالینی ترمیم‌های مستقیم کامپوزیت رزینی و گلاس آینومر",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch10",
+              "kind": "chapter",
+              "number": "10",
+              "title": "Conservative esthetic procedures"
+            },
+            {
+              "key": "ch11",
+              "kind": "chapter",
+              "number": "11",
+              "title": "Clinical technique for amalgam restorations",
+              "title_fa": "تکنیک بالینی ترمیم‌های آمالگام",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch12",
+              "kind": "chapter",
+              "number": "12",
+              "title": "Periodontology applied to restorative dentistry"
+            },
+            {
+              "key": "ch13",
+              "kind": "chapter",
+              "number": "13",
+              "title": "Endodontics applied to operative dentistry"
+            },
+            {
+              "key": "ch14",
+              "kind": "chapter",
+              "number": "14",
+              "title": "Digital dentistry in operative dentistry",
+              "title_fa": "دندانپزشکی دیجیتال در دندانپزشکی ترمیمی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch15",
+              "kind": "chapter",
+              "number": "15",
+              "title": "Dental biomaterials"
+            },
+            {
+              "key": "ch16",
+              "kind": "chapter",
+              "number": "16",
+              "title": "Direct gold restorations",
+              "title_fa": "ترمیم‌های طلای مستقیم",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch17",
+              "kind": "chapter",
+              "number": "17",
+              "title": "Class II cast-metal restorations"
+            }
+          ]
         }
       ]
     },
@@ -67078,7 +67198,57 @@
       "official": true,
       "scope": "کلیه فصول غیر از فصل 16",
       "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
-      "source_document": "منابع آزمون های دانشنامه/گواهینامه و ارتقای رشته های تخصصی دندانپزشکی سال 1405 (zip)"
+      "source_document": "منابع آزمون های دانشنامه/گواهینامه و ارتقای رشته های تخصصی دندانپزشکی سال 1405 (zip)",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "17"
+        }
+      ]
     },
     {
       "exam_type": "board",
@@ -70740,7 +70910,57 @@
       "official": true,
       "scope": "کلیه فصول غیر از فصل 16",
       "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
-      "source_document": "منابع آزمون های دانشنامه/گواهینامه و ارتقای رشته های تخصصی دندانپزشکی سال 1405 (zip)"
+      "source_document": "منابع آزمون های دانشنامه/گواهینامه و ارتقای رشته های تخصصی دندانپزشکی سال 1405 (zip)",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "17"
+        }
+      ]
     },
     {
       "exam_type": "promotion",
