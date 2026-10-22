@@ -288,8 +288,9 @@ historical claim about the exam-year official syllabus. Keep the
 audits, handoffs and site labels when presented. The source's book and
 edition are real; the historical official status remains unverified.
 Do not manufacture `official=true` validity rows for pre-1396 years
-merely to bypass guards. For exams dated 1396 or later, the existing
-year-specific exact-edition official validity requirements remain intact.
+merely to bypass guards. For exams dated 1396 or later, exact-year editions
+remain the default; the bounded 1396–1398 exception below applies only when
+the exact edition/PDF is unavailable.
 
 **The chapter+PDF-page atomic criterion is unchanged.** Each accepted
 question must name a verified source edition and chapter plus a positive
@@ -313,10 +314,34 @@ booklets, secondary summaries, web searches, or an unavailable edition.
 
 Older classifications made via an explicitly documented nearest-edition
 substitution are preserved and identified as legacy/provisional where
-applicable. **No new nearest-edition substitution by default** during this
-completion pass; waiting for the exact official edition is preferred unless
-the owner separately approves a specific exception and the evidence-mapping
-workflow is documented.
+applicable. The owner has now authorized one additional, bounded fallback
+for exam years **1396–1398**: use the exact exam-year edition when its
+approved PDF and matching chapter map are usable; if that edition/PDF is
+unavailable, use the nearest verified official edition from the **same
+reference family and exam-type/subject lineage**. Select the source edition
+from the closest official reference year with a verified private PDF and a
+hash-bound complete chapter map; if two years are equally near, prefer the
+earlier reference year. When the exam-year reference list itself is absent,
+the nearest official list for that exam type and subject supplies the book
+families to consider. The chosen row still must be an authentic official row
+for its actual `reference_year`.
+
+This basis is `nearest_same_lineage_proxy`. Record the exam year, actual
+reference year, edition, chapter, positive physical PDF page, exact PDF SHA,
+short direct-page evidence and confidence on every decision. Store and show
+a note that names both years and labels the edition as a proxy whose official
+status for the exam year is unverified. Never create synthetic historical
+`official=true` validity rows or present the proxy as the exam-year edition.
+The fallback is allowed only because the exact edition/PDF is unavailable;
+if an exact verified edition exists but the question is not supported on a
+direct page, leave that question pending rather than trying another edition.
+
+The existing `retrospective_proxy_1397_plus` rule remains the specific basis
+for exam years **1395 and earlier**. The two rules use separate labels and
+guards. No proxy fallback is authorized for exam years after 1398 by this
+decision. Any exam type without a compatible guarded source-only publisher
+must remain pending for publication until its normal versioned workflow is
+extended; do not bypass it with a full-sitting import or raw SQL.
 
 ### Owner-approved updated-reference proxy for residency 1397 — 2026-10-21
 
@@ -510,7 +535,9 @@ and verified backups. See `docs/product/09_CHAPTER_CLASSIFICATION.md`.
    incomplete editions are set aside without blocking eligible batches.
 3. New chapter decisions use an exact available official edition and
    page-level evidence; nearest substitutes are paused by default while
-   existing reviewed decisions are preserved.
+   existing reviewed decisions are preserved. This 2026-10-09 default is
+   superseded only by the explicitly bounded 1396–1398 proxy decision dated
+   2026-10-22 and the separate 2026-10-21 updated-reference exceptions.
 4. Durable server-side private workspaces, verified backups and public
    runbooks—not chat history—carry ongoing processing across sessions.
 5. Release deployments remain controlled GitHub `main` → updater; direct
@@ -559,6 +586,16 @@ source remains an attributed historical record; it can be superseded only by
 a separately audited, evidence-backed source-only correction that records
 the old and new citation and leaves question, answer and frozen attempts
 unchanged. No human sign-off is a classification prerequisite.
+
+**2026-10-22 — bounded older-exam reference proxy:** for exam years
+1396–1398 only, use the exact exam-year edition when its approved PDF and
+hash-bound chapter map are usable; otherwise the owner authorizes the nearest
+verified official edition in the same reference family and exam-type/subject
+lineage. Keep the actual reference year, edition and visible proxy note; do
+not claim exam-year official status or create validity rows. The pre-1396
+`retrospective_proxy_1397_plus` basis remains separate. No new proxy rule is
+authorized after 1398. Implementation and operation are specified in
+`docs/ops/NEAREST_SAME_LINEAGE_PROXY_CLASSIFICATION_20261022.md`.
 
 ## 7. Open implementation items (do not assume completed)
 

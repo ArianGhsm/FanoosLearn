@@ -103,6 +103,30 @@ an audited versioned publisher implementation; do not bypass it through
 raw SQL or full-sitting imports. See
 `docs/ops/PRE_1396_RETROSPECTIVE_CLASSIFICATION_20261011.md`.
 
+### Nearest same-lineage proxy for 1396–1398
+
+For exam years **1396–1398**, use the exact official exam-year edition when
+its current approved PDF and hash-bound chapter map are usable. If that exact
+edition/PDF is unavailable, the owner permits the nearest verified edition
+from the same reference family and exam-type/subject lineage. The edition
+must be an authentic official row for its actual reference year, with an
+approved private PDF and complete map. If the exam-year list is absent, use
+the nearest official list for that exam type and subject to identify the
+reference families, then select the nearest usable edition within each
+family. A tie between reference years prefers the earlier year.
+
+Every such citation uses `classification_basis=nearest_same_lineage_proxy`
+and separately records the exam year, actual reference year, edition,
+chapter, physical PDF page, PDF SHA-256, short exact-page evidence and
+confidence. Its visible note must state that it is a proxy and that official
+status for the exam year is unverified. Never add a synthetic exam-year
+validity row. If the exact edition is available but the question is not
+supported on its direct page, leave it pending; a proxy cannot be used to
+work around absent evidence. The deployed classifier and source-only writer
+must validate this basis; `--allow-nearest` remains historical-audit-only.
+Use the workflow in
+`docs/ops/NEAREST_SAME_LINEAGE_PROXY_CLASSIFICATION_20261022.md`.
+
 ### Owner-approved updated-reference proxy for residency 1397 (2026-10-21)
 
 For the residency 1397 sitting only, the owner authorized use of references
@@ -493,9 +517,12 @@ PDF cannot be securely read, or whose direct-PDF chapter map is not verified
 
 ## 6. Historical nearest editions and `official_chapter` (legacy)
 
-**Do not use nearest-edition substitution for new classification by default
-under the 2026-10-09 owner decision.** The following preserves the rules
-needed to audit *existing* substitutions and does not authorize new ones.
+**Do not use historical nearest-edition chapter carry-over for new
+classification by default under the 2026-10-09 owner decision.** The separate
+2026-10-22 `nearest_same_lineage_proxy` exception for exam years 1396–1398 is
+documented above and never carries a chapter across editions. The following
+preserves the rules needed to audit *existing* older substitutions and does
+not authorize new ones.
 Historically, when an official edition was missing, an explicitly named
 nearest edition was searched and the official edition cited. Chapters with the same title are carried over automatically;
 the rest need `official_chapter`, chosen from the official edition's chapter

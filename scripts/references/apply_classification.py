@@ -14,9 +14,9 @@ or that it has none:
 Nothing is taken on trust. A decision is accepted only when
 - the question exists in the sitting;
 - the edition is one the official list names for this exam type, year and
-  subject -- or the nearest edition data/bank/reference-pdfs.json names for
-  a missing official one, in which case the chapter is carried over to the
-  official edition by its title and the source cites the official edition;
+  subject, or, only for exam years 1396–1398, the owner-authorized nearest
+  verified edition in the same reference family when the exact edition/PDF
+  is unavailable;
 - the chapter is a chapter of that edition in the catalog;
 - the chapter is inside the official year-specific syllabus when its chapter
   list is recorded; an unstructured selected/excluded scope stays pending;
@@ -59,6 +59,13 @@ from updated_reference_proxy_policy import (
     UPDATED_PROXY_SUBJECT,
     is_updated_reference_proxy,
     valid_updated_reference_note,
+)
+from nearest_same_lineage_proxy_policy import (
+    BASIS as SAME_LINEAGE_PROXY_BASIS,
+    is_proxy_exam_year,
+    is_selected_proxy as is_selected_same_lineage_proxy,
+    selected_reference_rows as selected_same_lineage_rows,
+    valid_proxy_note,
 )
 
 REPO = Path(__file__).resolve().parents[2]
@@ -251,6 +258,10 @@ def main() -> int:
         for subject in sorted({q['subject'] for q in sitting['questions']}):
             for row in selected_reference_rows(catalog, exam_type, year, subject, pdfs, runs):
                 official.setdefault(subject, {})[row['edition']] = row
+    elif is_proxy_exam_year(year):
+        for subject in sorted({q['subject'] for q in sitting['questions']}):
+            for row in selected_same_lineage_rows(catalog, exam_type, year, subject, pdfs, runs):
+                official.setdefault(subject, {})[row['edition']] = row
     else:
         for v in catalog['validity']:
             if v.get('exam_type') == exam_type and int(v['year']) == year:
@@ -275,12 +286,13 @@ def main() -> int:
         elif n in seen:
             why = 'decided twice'
         seen.add(n)
-        if why is None and is_retrospective(year) and (q['answer'].get('status') not in ('final', 'amended')
-                                                     or q['answer'].get('choice') is None):
-            why = 'voided/disputed or missing official answer cannot support retrospective chapter/page'
+        if why is None and (is_retrospective(year) or is_proxy_exam_year(year)) and (
+                q['answer'].get('status') not in ('final', 'amended')
+                or q['answer'].get('choice') is None):
+            why = 'voided/disputed or missing official answer cannot support older-exam chapter/page'
         if why is None and 'none' in d:
-            if is_retrospective(year):
-                why = 'retrospective missing reference remains pending; none is not a chapter+page decision'
+            if is_retrospective(year) or is_proxy_exam_year(year):
+                why = 'older-exam missing reference remains pending; none is not a chapter+page decision'
             elif official.get(q['subject']) and not str(d['none']).strip():
                 why = 'a question with official references needs a reason to have none'
             else:
@@ -290,16 +302,20 @@ def main() -> int:
             proxy_reference_year = d.get('reference_year')
             proxy_basis = d.get('classification_basis')
             proxy_note = d.get('updated_reference_note')
+            same_lineage_note = d.get('proxy_note')
             has_proxy_metadata = any(key in d for key in (
-                'reference_year', 'classification_basis', 'updated_reference_note'))
+                'reference_year', 'classification_basis', 'updated_reference_note', 'proxy_note'))
             updated_proxy = is_updated_reference_proxy(
                 year, q['subject'], edition, proxy_reference_year, proxy_basis,
                 d.get('reference_subject'), n)
+            same_lineage_proxy = is_selected_same_lineage_proxy(
+                catalog, exam_type, year, q['subject'], edition,
+                proxy_reference_year, proxy_basis, pdfs, runs)
             names = official.get(q['subject'], {})
             if args.updated_reference_proxy and not updated_proxy:
                 why = 'updated-reference mode requires the exact owner-approved edition, subject and reference year'
-            elif has_proxy_metadata and not updated_proxy and not is_retrospective(year):
-                why = 'updated-reference metadata is not permitted for this exam year or edition'
+            elif has_proxy_metadata and not updated_proxy and not same_lineage_proxy and not is_retrospective(year):
+                why = 'cross-year metadata requires an explicitly authorized proxy basis and selected reference edition'
             elif updated_proxy:
                 if not args.updated_reference_proxy:
                     why = 'updated-reference proxy requires the explicit owner-approved validator mode'
@@ -320,13 +336,20 @@ def main() -> int:
                     else:
                         names = dict(names)
                         names[edition] = matches[0]
+            elif same_lineage_proxy:
+                if not valid_proxy_note(same_lineage_note, year, int(proxy_reference_year)):
+                    why = 'nearest same-lineage proxy requires a note naming both years and disclosing that it is not confirmed official for the exam year'
+                elif edition not in names or int(names[edition].get('year', 0)) != proxy_reference_year:
+                    why = 'proxy edition and actual official reference year do not match the selected nearest same-lineage candidate'
+            elif is_proxy_exam_year(year) and edition in names and names[edition].get('_proxy') is True:
+                why = 'selected same-lineage proxy requires actual reference_year, proxy basis and an explicit proxy note'
             if is_retrospective(year) and edition in names:
                 expected_year = int(names[edition]['year'])
                 if d.get('reference_year') != expected_year or d.get('classification_basis') != BASIS:
                     why = (f'retrospective decision must explicitly name reference_year '
                            f'{expected_year} and classification_basis {BASIS}')
             cite, cite_chapter = edition, chapter
-            if edition not in names and not args.allow_nearest:
+            if edition not in names and not same_lineage_proxy and not args.allow_nearest:
                 why = 'nearest-edition substitutions are paused; use exact official edition or keep pending'
             if edition not in names and why is None:
                 # Keep explicitly recorded historical nearest-edition audits
@@ -418,6 +441,25 @@ def main() -> int:
                     'origin': 'ai',
                     'confidence': {'source': confidence, 'node': confidence, 'page': confidence},
                 }
+                if updated_proxy:
+                    accepted[n]['classification_basis'] = UPDATED_PROXY_BASIS
+                    accepted[n]['reference_year'] = UPDATED_PROXY_REFERENCE_YEAR
+                    accepted[n]['classification_note'] = str(proxy_note).strip()
+                elif same_lineage_proxy:
+                    accepted[n]['classification_basis'] = SAME_LINEAGE_PROXY_BASIS
+                    accepted[n]['reference_year'] = int(proxy_reference_year)
+                    accepted[n]['classification_note'] = str(same_lineage_note).strip()
+                elif is_retrospective(year):
+                    reference_year = int(names[edition]['year'])
+                    accepted[n]['classification_basis'] = BASIS
+                    accepted[n]['reference_year'] = reference_year
+                    accepted[n]['classification_note'] = (
+                        f'این ارجاع پروکسی از فهرست رسمی {reference_year} برای آزمون {year} است؛ '
+                        'رسمی بودن آن برای سال آزمون ادعا نمی‌شود.'
+                    )
+                else:
+                    accepted[n]['classification_basis'] = 'official_exam_year'
+                    accepted[n]['reference_year'] = year
                 if outside_scope:
                     accepted[n]['official_scope_status'] = 'outside_scope_exam_question'
                     accepted[n]['official_scope_note'] = str(d['outside_scope_note']).strip()
@@ -425,8 +467,6 @@ def main() -> int:
                     accepted[n]['official_scope_status'] = 'outside_scope_exam_question'
                     accepted[n]['official_scope_note'] = str(proxy_note).strip()
                     accepted[n]['scope_unverified'] = False
-                    accepted[n]['classification_basis'] = UPDATED_PROXY_BASIS
-                    accepted[n]['reference_year'] = UPDATED_PROXY_REFERENCE_YEAR
                     reference_subject = d.get('reference_subject', q['subject'])
                     if reference_subject != q['subject']:
                         accepted[n]['reference_subject'] = reference_subject
@@ -465,6 +505,12 @@ def main() -> int:
     if is_retrospective(year):
         sitting['notes'] += (f' {BASIS}: 1397+ exact PDF citations refer to later official '
                              'reference-year lists, not original exam-year official books.')
+    if is_proxy_exam_year(year) and any(
+            isinstance(source, dict)
+            and source.get('classification_basis') == SAME_LINEAGE_PROXY_BASIS
+            for source in accepted.values()):
+        sitting['notes'] += (' nearest_same_lineage_proxy: each citation retains its actual '
+                             'official reference year and is not asserted official for the exam year.')
     save_sitting(Path(args.out), sitting)
     print(f'wrote {args.out}')
     return 0

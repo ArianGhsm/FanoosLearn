@@ -37,6 +37,16 @@ test('an unverified partial-scope page shows a warning without claiming it is ou
     assert.equal(facts.scopeNote, note);
 });
 
+test('a nearest same-lineage proxy citation is visibly labeled with its actual source year', () => {
+    const note = 'این فصل‌بندی با نسخهٔ پروکسیِ سال ۱۳۹۷ انجام شده است؛ رسمی بودن آن برای آزمون ۱۳۹۶ تأیید نشده است.';
+    const facts = questionFacts({ bank: { exam: 'دستیاری', exam_key: 'residency', year: 1396, round: 1,
+        number: 204, subject: 'دندان‌پزشکی اجتماعی', chapter: { ...chapter,
+            reference_year: 1397, classification_basis: 'nearest_same_lineage_proxy',
+            classification_note: note } } });
+    assert.equal(facts.book, 'Endodontics: Principles and Practice · 6th edition');
+    assert.equal(facts.scopeNote, note);
+});
+
 test('a national round is its month', () => {
     const facts = questionFacts({ bank: { exam: 'ملی', exam_key: 'national', year: 1405, round: 2, number: null, subject: 'پریو', chapter: null } });
     assert.equal(facts.exam, 'ملی ۱۴۰۵ · دی');

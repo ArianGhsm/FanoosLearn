@@ -29,6 +29,9 @@ class AuditTests(unittest.TestCase):
         self.body = {"format": "fanoos.classification.study-only/1",
                      "year": 1402, "exam_type": "residency", "questions": [self.question]}
         self.source = {"ref": "fictional-book@1e#ch04", "page": "pdf 17",
+                       "reference_year": 1402,
+                       "classification_basis": "official_exam_year",
+                       "classification_note": None,
                        "origin": "ai",
                        "confidence": {"source": .97, "node": .97, "page": .97}}
         self.decision = {"number": 222, "edition": "fictional-book@1e",
@@ -154,6 +157,70 @@ class AuditTests(unittest.TestCase):
             audit.save_private(self.root, out, {"safe": False})
         with self.assertRaisesRegex(ValueError, "protected"):
             audit.save_private(self.root, self.root / "public-report.json", {"safe": True})
+
+
+class NearestProxyAuditTests(unittest.TestCase):
+    def test_same_lineage_proxy_records_actual_year_and_checks_scope(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for name in ("bank-sittings/1396", "classification/decisions",
+                         "classification/sittings", "classification/reports"):
+                (root / name).mkdir(parents=True, exist_ok=True)
+            digest = "a" * 64
+            edition = "fictional-book@1e"
+            evidence = "Synthetic direct page evidence for a proxy source"
+            proxy_note = "این آزمون ۱۳۹۶ از نسخهٔ پروکسیِ سال ۱۳۹۷ استفاده می‌کند؛ رسمی بودن آن برای سال آزمون تأیید نشده است."
+            question = {"number": 222, "stem": "Synthetic question?",
+                        "choices": ["alpha", "beta"], "answer": {"choice": 2, "status": "final"}}
+            (root / "bank-sittings/1396/community-study.json").write_text(json.dumps({
+                "format": "fanoos.classification.study-only/1", "year": 1396,
+                "exam_type": "residency", "round": 1, "questions": [question],
+            }))
+            decision = {"number": 222, "edition": edition, "reference_year": 1397,
+                        "classification_basis": "nearest_same_lineage_proxy", "proxy_note": proxy_note,
+                        "chapter": "1", "page": 17, "confidence": .97, "evidence": evidence}
+            (root / "classification/decisions/1396-community-dentistry.json").write_text(json.dumps([decision]))
+            source = {"ref": edition + "#ch01", "page": "pdf 17", "pdf_page": 17,
+                      "pdf_sha256": digest, "anchor": evidence, "origin": "ai", "primary": True,
+                      "confidence": {"source": .97, "node": .97, "page": .97},
+                      "reference_year": 1397, "classification_basis": "nearest_same_lineage_proxy",
+                      "classification_note": proxy_note, "official_scope_status": "in_scope",
+                      "scope_unverified": False}
+            (root / "classification/sittings/1396-community-validated.json").write_text(json.dumps({
+                "format": "fanoos.classification.study-only/1", "year": 1396,
+                "exam_type": "residency", "round": 1,
+                "questions": [{**question, "sources": [source]}],
+            }))
+            chapter_map = root / "reference-chapter-pages.json"
+            chapter_map.write_text(json.dumps({"editions": {edition: {
+                "runs": [["1", 1, 20]], "pdf_pages": 20, "source_pdf_sha256": digest,
+            }}}))
+            (root / "catalog.json").write_text(json.dumps({
+                "validity": [{"exam_type": "residency", "year": 1397,
+                              "subject": "community-dentistry", "edition": edition,
+                              "official": True, "scope_chapters": [{"number": "1"}]}],
+                "references": [{"key": "fictional-book", "editions": [{"key": "1e", "nodes": [
+                    {"key": "ch01", "kind": "chapter", "number": "1", "title": "Synthetic chapter"},
+                ]}]}],
+            }))
+            (root / "reference-pdfs.json").write_text(json.dumps({"editions": {
+                edition: {"pdf": "verified-server-pdf"},
+            }}))
+
+            class FakePdf:
+                def __init__(self):
+                    self.source_sha256 = digest
+                    self.page_count = 20
+
+                def page_text(self, number):
+                    return evidence
+
+            with patch.object(audit, "CHAPTERS", chapter_map), \
+                    patch.object(audit, "open_verified_reference", return_value=FakePdf()):
+                result = audit.audit_batch(root, "1396:community-dentistry:community")
+            self.assertEqual(result["classification_basis"], "nearest_same_lineage_proxy")
+            self.assertEqual(result["reference_years"], [1397])
+            self.assertEqual(result["mapped"]["222"]["reference_year"], 1397)
 
 
 if __name__ == "__main__":
