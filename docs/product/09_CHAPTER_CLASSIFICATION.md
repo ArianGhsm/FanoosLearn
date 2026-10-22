@@ -124,6 +124,36 @@ subject. The guarded 1397 writer otherwise accepts only the 12 official
 residency subjects and the exact whitelisted research batches. Do not
 generalize this exception to another question, exam year or type.
 
+### Owner-authorized proxy editions for older unfinished sittings (2026-10-22)
+
+When the exact exam-year edition is unavailable in the approved private
+library, an unfinished older sitting may cite the nearest available verified
+edition in the same reference-book lineage. The proxy edition must have an
+official catalog validity for its actual reference year and subject. Select
+the closest reference year; break a tie toward the earlier year. For exams
+before 1396, retain the dedicated rule above: begin with the 1397 list and
+continue through later years. Never use a different book series as a
+same-lineage substitute.
+
+Use only the proxy edition's own approved PDF and chapter map. The decision
+must contain that edition's exact physical PDF page, matching SHA-256, direct
+original-page evidence and confidence at least 0.85. Keep the exam year and
+actual reference year separate, set the basis to
+nearest_verified_edition_proxy, and label the citation as a proxy in its
+durable decision/audit and any user-facing citation. Never imply that the
+proxy edition was official for the exam year or transfer a page/chapter from
+another edition. Do not reopen completed source rows. An unavailable chapter
+map, unreadable page or weak evidence is not a reason to fall back when the
+exact edition itself is available.
+
+The current --include-nearest and --allow-nearest paths preserve legacy
+chapter carry-over checks; they do not by themselves implement a new proxy
+citation. The deployed source-only publisher must verify same-lineage
+eligibility and persist/show the proxy basis before a new proxy row can be
+published. Until that support is deployed, keep such proposals pending and
+continue other eligible exact-edition work. Do not bypass the publisher or
+the whole-year gate.
+
 ## 1. What a result must be
 
 A question's source is **found, not guessed**. It is accepted only with:
@@ -397,11 +427,11 @@ files are read for a sitting, by the `<year>-` prefix):
   when it states it but the wording differs or two chapters teach it.
   Below 0.85, keep the decision pending and search again; there is no
   human-review queue or confidence-based exception to the PDF evidence gate.
-- **New batches use the exact official edition only.** For auditing earlier
-  nearest-edition assignments, the `--include-nearest` batch flag and
-  `--allow-nearest` apply flag must be explicitly supplied; the chapter
-  carry-over logic and `official_chapter` are historical (§6). Do not
-  silently use these exceptions for new decisions.
+- **Prefer the exact official edition.** For an older unfinished sitting,
+  use a proxy only when its exact exam-year edition is unavailable and the
+  2026-10-22 same-lineage rules above are met. The `--include-nearest` and
+  `--allow-nearest` flags still expose the historical chapter carry-over
+  path (§6); they do not authorize carrying page evidence across editions.
 
 **Step 6 — check and write.**
 
@@ -493,11 +523,13 @@ PDF cannot be securely read, or whose direct-PDF chapter map is not verified
 
 ## 6. Historical nearest editions and `official_chapter` (legacy)
 
-**Do not use nearest-edition substitution for new classification by default
-under the 2026-10-09 owner decision.** The following preserves the rules
-needed to audit *existing* substitutions and does not authorize new ones.
-Historically, when an official edition was missing, an explicitly named
-nearest edition was searched and the official edition cited. Chapters with the same title are carried over automatically;
+**Owner update 2026-10-22:** For an older unfinished sitting whose exact
+edition is unavailable, a nearest verified same-lineage proxy may be used
+under the constraints above. The following chapter carry-over map is for
+auditing legacy citations only; it does not allow transferring an official
+edition's page or chapter onto a different edition. Historically, some rows
+searched a nearest edition but cited the official edition instead. Chapters
+with the same title were carried over automatically;
 the rest need `official_chapter`, chosen from the official edition's chapter
 list (`data/bank/reference-tocs.json`) for the fact the quote states. Pairs
 met so far:

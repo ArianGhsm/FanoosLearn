@@ -311,12 +311,39 @@ other eligible questions. Do not block all years/subjects on a handful of
 missing references and do not fabricate chapter/page matches from titles,
 booklets, secondary summaries, web searches, or an unavailable edition.
 
-Older classifications made via an explicitly documented nearest-edition
-substitution are preserved and identified as legacy/provisional where
-applicable. **No new nearest-edition substitution by default** during this
-completion pass; waiting for the exact official edition is preferred unless
-the owner separately approves a specific exception and the evidence-mapping
-workflow is documented.
+### Owner-authorized proxy edition for older exams — 2026-10-22
+
+For an **unfinished older sitting**, when its exact exam-year edition is not
+available in the approved private library, the AI may use the nearest
+available verified edition in the **same reference-book lineage**. Use an
+edition that is officially listed for its actual reference year and subject;
+select by closest reference year and, on a tie, choose the earlier year. The
+pre-1396 rule above still starts its search at the 1397 reference list. A
+missing chapter map, unreadable page, weak match, or difficult evidence search
+does not make an available exact edition unavailable and does not authorize a
+proxy.
+
+The citation must use the proxy edition's own approved original PDF, its own
+chapter map, the exact physical PDF page, matching SHA-256, direct page
+evidence, and confidence of at least 0.85. Record the exam year, actual
+reference year, actual edition, and basis
+`nearest_verified_edition_proxy` in the protected decision and audit. Label
+the citation as a **proxy** wherever it is presented; never describe the
+proxy edition as an official exam-year edition, create fabricated
+`official=true` validity, or transfer page/chapter evidence from another
+edition. Do not replace or revalidate completed source rows merely because a
+proxy rule now exists. An audited correction remains source-only and must
+preserve questions, choices, keys, frozen assessments, scores, and attempts.
+
+This 2026-10-22 authorization replaces the prior blanket default to wait for
+an exact edition for older unfinished sittings. It does not change the exact
+official-edition requirement for current sittings, and it does not change the
+named, narrower 1397/1398 updated-reference exceptions below. Older
+classifications already made with a documented nearest edition remain
+identified as legacy/provisional where applicable. If the deployed guarded
+publisher cannot persist and visibly expose the proxy basis, keep that
+proposed row pending until a compatible versioned publisher is reviewed and
+deployed; never bypass the guard with raw SQL.
 
 ### Owner-approved updated-reference proxy for residency 1397 — 2026-10-21
 
@@ -335,8 +362,9 @@ Store proxy rows as
 `outside_scope_exam_question` with a
 Persian note naming both 1397 and 1406 and explaining that it is outside the
 1397 official reference list. Preserve the official catalog, question text,
-choices, answers, frozen attempts and scores. This exception is limited to
-residency 1397; it does not create a general nearest-edition rule.
+choices, answers, frozen attempts and scores. This named 1406 reference-set
+exception retains its stated scope and notes; the general older-year proxy
+rule above does not replace it.
 
 ### Owner-approved updated reference proxy for residency 1398 oral surgery — 2026-10-21
 
@@ -349,9 +377,9 @@ not claim that Hupp 7e was on the 1398 official reference list. Every such
 source row must be visibly marked `outside_scope_exam_question` with a note
 naming exam year 1398, reference year 1406 and the owner's updated-reference
 instruction. Keep the 1398 official catalog unchanged, preserve official
-answers and all frozen assessment/user history, and do not generalize this
-exception to another year or subject. The whole-year publication gate remains
-in force.
+answers and all frozen assessment/user history, and keep this named oral-
+surgery case distinct from the general same-lineage proxy rule. The whole-year
+publication gate remains in force.
 
 The exact verified server PDF is the sole book source for every
 classification. Read it through the authenticated, read-only bridge in
