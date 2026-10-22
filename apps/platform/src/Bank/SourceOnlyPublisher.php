@@ -14,7 +14,9 @@ use Throwable;
  * currently source-free questions, plus the exact voided/draft 1398 Q97
  * exception. No UPDATE, DELETE or publication writes. Updated-reference
  * proxies are limited to separately authorized 1397/1406 and
- * 1398/Hupp7/1406 cases, visibly labelled outside exam-year scope.
+ * 1398/Hupp7/1406 cases, visibly labelled outside exam-year scope. The
+ * nearest same-lineage proxy basis is limited to 1396–1398 and stores its
+ * actual reference year and explicit proxy note on the source row.
  * An entire batch commits together or rolls back together.
  */
 final class SourceOnlyPublisher
@@ -24,11 +26,12 @@ final class SourceOnlyPublisher
         array $study, array $validated, array $decisions, bool $apply,
     ): int {
         $retrospective = $year >= 1300 && $year < 1396;
+        $nearestSameLineageProxyYear = $year >= 1396 && $year <= 1398;
         $updated1397Subjects = ['community-dentistry', 'dental-materials', 'endodontics',
             'operative-dentistry', 'oral-medicine', 'oral-pathology', 'oral-radiology',
             'oral-surgery', 'orthodontics', 'pediatric-dentistry', 'periodontics',
             'prosthodontics'];
-        if (($year < 1399 && !$retrospective
+        if (($year < 1399 && !$retrospective && !$nearestSameLineageProxyYear
                 && !(($year === 1397 && in_array($subject, $updated1397Subjects, true))
                     || ($year === 1398 && in_array($subject, ['endodontics', 'periodontics', 'community-dentistry', 'prosthodontics', 'operative-dentistry', 'pediatric-dentistry', 'oral-radiology', 'oral-surgery'], true)))) || $year > 1500
             || ($study['format'] ?? '') !== 'fanoos.classification.study-only/1'
@@ -49,6 +52,7 @@ final class SourceOnlyPublisher
             $original[$n] = $question;
         }
         $wanted = [];
+        $batchClassificationBasis = null;
         foreach ($decisions as $decision) {
             $n = $decision['number'] ?? null;
             if (!is_int($n) || isset($wanted[$n]) || !isset($original[$n])
@@ -62,6 +66,28 @@ final class SourceOnlyPublisher
                 if (!is_int($proxyYear) || $proxyYear < 1397 || $proxyYear > 1500
                     || ($decision['classification_basis'] ?? '') !== 'retrospective_proxy_1397_plus') {
                     throw new RuntimeException('Pre-1396 source must declare an actual 1397+ official proxy reference year and retrospective basis.');
+                }
+            }
+            $sameLineageProxy = $nearestSameLineageProxyYear
+                && ($decision['classification_basis'] ?? null) === 'nearest_same_lineage_proxy';
+            if ($sameLineageProxy) {
+                $proxyYear = $decision['reference_year'] ?? null;
+                $proxyNote = $decision['proxy_note'] ?? null;
+                $asciiProxyNote = is_string($proxyNote)
+                    ? strtr($proxyNote, '۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', '01234567890123456789') : '';
+                if (!is_int($proxyYear) || $proxyYear < 1390 || $proxyYear > 1500
+                    || $proxyYear === $year
+                    || !is_string($proxyNote) || mb_strlen(trim($proxyNote)) < 45
+                    || mb_strlen(trim($proxyNote)) > 300
+                    || !str_contains($proxyNote, 'پروکسی')
+                    || !str_contains($asciiProxyNote, (string) $year)
+                    || !str_contains($asciiProxyNote, (string) $proxyYear)
+                    || !str_contains($proxyNote, 'رسمی')
+                    || !(str_contains($proxyNote, 'تأیید نشده')
+                        || str_contains($proxyNote, 'رسمی نیست')
+                        || str_contains($proxyNote, 'رسمی نبوده')
+                        || str_contains($proxyNote, 'رسمی اعلام نشده'))) {
+                    throw new RuntimeException('Nearest same-lineage proxy must name the actual reference year, exam year and unverified official status.');
                 }
             }
             $referenceSubject = (string) ($decision['reference_subject'] ?? $subject);
@@ -89,6 +115,13 @@ final class SourceOnlyPublisher
                 && ($decision['reference_year'] ?? null) === 1406
                 && ($decision['classification_basis'] ?? null) === 'updated_reference_proxy';
             $updatedReferenceProxy = $updated1397Proxy || $updated1398HuppProxy;
+            $decisionBasis = $updatedReferenceProxy ? 'updated_reference_proxy'
+                : ($sameLineageProxy ? 'nearest_same_lineage_proxy'
+                    : ($retrospective ? 'retrospective_proxy_1397_plus' : 'official_exam_year'));
+            if ($batchClassificationBasis !== null && $batchClassificationBasis !== $decisionBasis) {
+                throw new RuntimeException('A source-only batch cannot mix exact-year and proxy classification bases; split it into separately audited batches.');
+            }
+            $batchClassificationBasis = $decisionBasis;
             if ($updatedReferenceProxy) {
                 $proxyNote = $decision['updated_reference_note'] ?? null;
                 if (!is_string($proxyNote) || mb_strlen(trim($proxyNote)) < 60
@@ -104,11 +137,12 @@ final class SourceOnlyPublisher
                 if ($crossSubject1397HuppQ95 && !str_contains($proxyNote, 'جراحی دهان')) {
                     throw new RuntimeException('1397 Q95 must disclose its 1406 oral-surgery cross-subject reference in the source note.');
                 }
-            } elseif ($year === 1397 && !$exact1397EndodonticsQ88) {
+            } elseif ($year === 1397 && !$exact1397EndodonticsQ88 && !$sameLineageProxy) {
                 throw new RuntimeException('1397 source batches require the explicit 1406 updated-reference proxy metadata.');
-            } elseif (!$retrospective && (isset($decision['reference_year'])
+            } elseif (!$retrospective && !$sameLineageProxy && (isset($decision['reference_year'])
                     || isset($decision['classification_basis'])
-                    || isset($decision['updated_reference_note']))) {
+                    || isset($decision['updated_reference_note'])
+                    || isset($decision['proxy_note']))) {
                 throw new RuntimeException('A normal exact-year source cannot claim retrospective basis.');
             }
             // Official 1398 source announcement independently identifies exact Torabinejad 5e
@@ -119,19 +153,19 @@ final class SourceOnlyPublisher
             // Their specific chapter exclusions are enforced below by the
             // year-specific official reference-validity scope lookup.
             // Every other 1398 subject remains blocked by the year gate.
-            if ($year === 1398 && $subject === 'endodontics'
+            if ($year === 1398 && !$sameLineageProxy && $subject === 'endodontics'
                 && $decision['edition'] !== 'torabinejad-endodontics@5e') {
                 throw new RuntimeException('1398 endodontics requires exact announced Torabinejad 5e.');
             }
-            if ($year === 1398 && $subject === 'periodontics'
+            if ($year === 1398 && !$sameLineageProxy && $subject === 'periodontics'
                 && $decision['edition'] !== 'carranza-periodontology@12e') {
                 throw new RuntimeException('1398 periodontics requires exact announced Carranza 12e.');
             }
-            if ($year === 1398 && $subject === 'community-dentistry'
+            if ($year === 1398 && !$sameLineageProxy && $subject === 'community-dentistry'
                 && $decision['edition'] !== 'national-oral-health@1394') {
                 throw new RuntimeException('1398 community dentistry requires the exact national oral-health 1394 edition.');
             }
-            if ($year === 1398 && $subject === 'prosthodontics'
+            if ($year === 1398 && !$sameLineageProxy && $subject === 'prosthodontics'
                 && !in_array((string) $decision['edition'], [
                     'shillingburg-fixed@4e',
                     'mccracken-rpd@12e',
@@ -145,20 +179,20 @@ final class SourceOnlyPublisher
                     || $decision['page'] !== 430)) {
                 throw new RuntimeException('1398 voided prosthodontic Q97 permits only the audited Shillingburg 4e chapter22 PDF430 source.');
             }
-            if ($year === 1398 && $subject === 'operative-dentistry' && $n !== 188
+            if ($year === 1398 && !$sameLineageProxy && $subject === 'operative-dentistry' && $n !== 188
                 && ($n !== 175
                     || $decision['edition'] !== 'summit-operative@4e'
                     || (string) $decision['chapter'] !== '6'
                     || $decision['page'] !== 294)) {
                 throw new RuntimeException('1398 operative source gate permits only audited Summit 4e Q175 chapter 6 exact PDF page 294.');
             }
-            if ($year === 1398 && $subject === 'operative-dentistry' && $n === 188
+            if ($year === 1398 && !$sameLineageProxy && $subject === 'operative-dentistry' && $n === 188
                 && ($decision['edition'] !== 'summit-operative@4e'
                     || (string) $decision['chapter'] !== '11'
                     || $decision['page'] !== 610)) {
                 throw new RuntimeException('1398 operative Q188 permits only the audited Summit 4e chapter11 PDF610 source.');
             }
-            if ($year === 1398 && $subject === 'oral-surgery') {
+            if ($year === 1398 && !$sameLineageProxy && $subject === 'oral-surgery') {
                 $expectedSurgerySource = $updatedReferenceProxy
                     ? match ($n) {
                         110 => ['hupp-oral-surgery@7e', '11', 203],
@@ -189,7 +223,7 @@ final class SourceOnlyPublisher
                     throw new RuntimeException('1398 oral-surgery source gate rejected the exact official Malamed or owner-authorized 1406 Hupp proxy page.');
                 }
             }
-            if ($year === 1398 && in_array($subject, ['pediatric-dentistry', 'oral-radiology'], true)) {
+            if ($year === 1398 && !$sameLineageProxy && in_array($subject, ['pediatric-dentistry', 'oral-radiology'], true)) {
                 $specific = $subject === 'pediatric-dentistry'
                     ? [
                         152 => ['mcdonald-avery-pediatric@10e', '13', 246],
@@ -242,7 +276,7 @@ final class SourceOnlyPublisher
                     throw new RuntimeException('1398 pediatric/radiology exact approved original PDF-page source gate refused.');
                 }
             }
-            if ($year === 1398 && $subject === 'periodontics' && $n === 134
+            if ($year === 1398 && !$sameLineageProxy && $subject === 'periodontics' && $n === 134
                 && ($decision['edition'] !== 'carranza-periodontology@12e'
                     || (string) $decision['chapter'] !== '20'
                     || $decision['page'] !== 664)) {
@@ -321,13 +355,35 @@ final class SourceOnlyPublisher
                     || ($s['official_scope_note'] ?? null) !== ($d['updated_reference_note'] ?? null)
                     || ($s['classification_basis'] ?? null) !== 'updated_reference_proxy'
                     || ($s['reference_year'] ?? null) !== 1406
+                    || ($s['classification_note'] ?? null) !== ($d['updated_reference_note'] ?? null)
                     || ($s['scope_unverified'] ?? null) !== false)) {
                 throw new RuntimeException('Updated-reference proxy citation must preserve the explicit outside-exam-year label and exact 1406 provenance.');
             }
-            if (!$updatedReferenceProxy
-                && (isset($s['classification_basis']) || isset($s['reference_year'])
-                    || isset($s['updated_reference_note']))) {
-                throw new RuntimeException('Exact-year source cannot carry updated-reference proxy metadata.');
+            if ($sameLineageProxy
+                && (($s['classification_basis'] ?? null) !== 'nearest_same_lineage_proxy'
+                    || ($s['reference_year'] ?? null) !== ($d['reference_year'] ?? null)
+                    || ($s['classification_note'] ?? null) !== ($d['proxy_note'] ?? null)
+                    || ($s['official_scope_status'] ?? null) !== 'in_scope'
+                    || ($s['official_scope_note'] ?? null) !== null
+                    || ($s['scope_unverified'] ?? null) !== false)) {
+                throw new RuntimeException('Nearest same-lineage proxy must retain its actual reference year and visible proxy note.');
+            }
+            if ($retrospective
+                && (($s['classification_basis'] ?? null) !== 'retrospective_proxy_1397_plus'
+                    || ($s['reference_year'] ?? null) !== ($d['reference_year'] ?? null)
+                    || ($s['classification_note'] ?? null) !== (
+                        'این ارجاع پروکسی از فهرست رسمی سال '
+                            . strtr((string) ($d['reference_year'] ?? ''), '0123456789', '۰۱۲۳۴۵۶۷۸۹')
+                            . ' برای آزمون سال ' . strtr((string) $year, '0123456789', '۰۱۲۳۴۵۶۷۸۹')
+                            . ' است؛ رسمی بودن آن برای سال آزمون ادعا نمی‌شود.'
+                    ))) {
+                throw new RuntimeException('Pre-1396 retrospective source must retain its actual proxy year and visible label.');
+            }
+            if (!$updatedReferenceProxy && !$sameLineageProxy && !$retrospective
+                && (($s['classification_basis'] ?? null) !== 'official_exam_year'
+                    || ($s['reference_year'] ?? null) !== $year
+                    || ($s['classification_note'] ?? null) !== null)) {
+                throw new RuntimeException('Exact-year source must state its actual exam-year reference basis.');
             }
             $conf = (float) $d['confidence'];
             if ($conf < .85 || $conf > 1.0) {
@@ -338,6 +394,20 @@ final class SourceOnlyPublisher
                     throw new RuntimeException('Source confidence mismatch.');
                 }
             }
+            $referenceYear = ($retrospective || $updatedReferenceProxy || $sameLineageProxy)
+                ? (int) $d['reference_year'] : $year;
+            $classificationBasis = $updatedReferenceProxy ? 'updated_reference_proxy'
+                : ($sameLineageProxy ? 'nearest_same_lineage_proxy'
+                    : ($retrospective ? 'retrospective_proxy_1397_plus' : 'official_exam_year'));
+            $classificationNote = $updatedReferenceProxy
+                ? (string) $d['updated_reference_note']
+                : ($sameLineageProxy ? (string) $d['proxy_note']
+                    : ($retrospective
+                        ? 'این ارجاع پروکسی از فهرست رسمی سال '
+                            . strtr((string) $referenceYear, '0123456789', '۰۱۲۳۴۵۶۷۸۹')
+                            . ' برای آزمون سال ' . strtr((string) $year, '0123456789', '۰۱۲۳۴۵۶۷۸۹')
+                            . ' است؛ رسمی بودن آن برای سال آزمون ادعا نمی‌شود.'
+                        : null));
             $mapped[$n] = ['ref' => $m[1], 'edition' => $m[2],
                 'node' => $chapter, 'chapter' => (string) $d['chapter'],
                 'page' => (string) $s['page'],
@@ -345,12 +415,10 @@ final class SourceOnlyPublisher
                 'pdf_sha256' => strtolower($sourcePdfHash),
                 'printed_page' => isset($s['printed_page']) ? (string) $s['printed_page'] : null,
                 'anchor' => $s['anchor'], 'conf' => $conf,
-                'reference_year' => ($retrospective || $updatedReferenceProxy)
-                    ? (int) $d['reference_year'] : $year,
+                'reference_year' => $referenceYear,
+                'classification_basis' => $classificationBasis,
+                'classification_note' => $classificationNote,
                 'reference_subject' => $referenceSubject,
-                'classification_basis' => $updatedReferenceProxy
-                    ? 'updated_reference_proxy'
-                    : ($retrospective ? 'retrospective_proxy_1397_plus' : 'official_exam_year'),
                 'official_scope_status' => $updatedReferenceProxy
                     ? 'outside_scope_exam_question' : 'in_scope',
                 'official_scope_note' => $updatedReferenceProxy
@@ -386,10 +454,12 @@ AND et.type_key='residency' AND v.is_official=1
 SQL);
         $insert = $db->prepare(<<<'SQL'
 INSERT INTO bank_question_sources
-(id,workspace_id,question_id,edition_id,node_id,page,pdf_page,printed_page,pdf_sha256,anchor_text,
+(id,workspace_id,question_id,edition_id,reference_year,classification_basis,classification_note,
+node_id,page,pdf_page,printed_page,pdf_sha256,anchor_text,
 is_primary,confidence_source,confidence_node,confidence_page,origin,official_scope_status,
 official_scope_note,scope_unverified,created_at)
-VALUES (:id,:ws,:qid,:edition,:node,:page,:pdf_page,:printed_page,:pdf_sha256,:anchor,
+VALUES (:id,:ws,:qid,:edition,:reference_year,:classification_basis,:classification_note,
+:node,:page,:pdf_page,:printed_page,:pdf_sha256,:anchor,
 1,:cs,:cn,:cp,'ai',:scope_status,:scope_note,:scope_unverified,UTC_TIMESTAMP(6))
 SQL);
         $db->beginTransaction();
@@ -435,9 +505,9 @@ SQL);
                     && ($actual['choice'] !== null || $actual['status'] !== 'voided')) {
                     throw new RuntimeException('Voided Q97 must retain its null-choice voided official answer.');
                 }
-                if ($retrospective && ($actual['choice'] === null
+                if (($retrospective || $sameLineageProxy) && ($actual['choice'] === null
                     || !in_array($actual['status'], ['final', 'amended'], true))) {
-                    throw new RuntimeException('Voided, disputed or keyless old exam question cannot receive retrospective source.');
+                    throw new RuntimeException('Voided, disputed or keyless older-exam question cannot receive a proxy source.');
                 }
                 $existing->execute($params);
                 if ($existing->fetch(PDO::FETCH_ASSOC) !== false) {
@@ -471,6 +541,9 @@ SQL);
                 $insert->execute([
                     'id' => Uuid::v7(), 'ws' => $workspace, 'qid' => $q['id'],
                     'edition' => $mappedNode['edition_id'], 'node' => $mappedNode['node_id'],
+                    'reference_year' => $src['reference_year'],
+                    'classification_basis' => $src['classification_basis'],
+                    'classification_note' => $src['classification_note'],
                     'page' => $src['page'], 'pdf_page' => $src['pdf_page'],
                     'printed_page' => $src['printed_page'], 'pdf_sha256' => $src['pdf_sha256'],
                     'anchor' => $src['anchor'],

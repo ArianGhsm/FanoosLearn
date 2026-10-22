@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Fanoos Core API
-  version: 1.10.0
+  version: 1.11.0
   description: Canonical human/browser API. Mutating authenticated operations require the existing session CSRF contract.
 servers:
   - url: /api/v1
@@ -378,13 +378,13 @@ paths:
   /workspaces/{workspaceId}/bank/references:
     get:
       operationId: readBankReferences
-      description: 'منابع آزمون: the references named for each exam year of the active exam types ([{type, type_key, year, subjects}]), newest year first and in exam-type order within a year, subject by subject, with edition, authors, chapter scope, whether the announcement is official, and the edition''s chapters in chapter order (chapters: [{key, number, title, title_fa, title_fa_reviewed, sections, in_scope, partial, questions}], questions being how many published questions of any exam are sourced to the chapter, with the reference's edition_ref; empty when the catalog has no chapter list for it). in_scope says whether the year''s announcement covers the chapter (null when it names no chapter list); partial carries its words when only some pages count; title_fa_reviewed is false for a machine translation.'
+      description: 'منابع آزمون: the references named for each exam year of the active exam types ([{type, type_key, year, subjects}]), newest year first and in exam-type order within a year, subject by subject, with edition, authors, chapter scope, whether the announcement is official, and the edition''s chapters in chapter order (chapters: [{key, number, title, title_fa, title_fa_reviewed, sections, in_scope, partial, questions}], questions being how many published questions of any exam are sourced to the chapter, with the reference''s edition_ref; empty when the catalog has no chapter list for it). in_scope says whether the year''s announcement covers the chapter (null when it names no chapter list); partial carries its words when only some pages count; title_fa_reviewed is false for a machine translation.'
       parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
       responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/bank/chapter-outline:
     get:
       operationId: readBankChapterOutline
-      description: 'سرفصل‌ها: one chapter's headings in book order -- {chapter: {number, title, title_fa, title_fa_reviewed}, sections: [{title, title_fa, title_fa_reviewed, subsections: [{title, title_fa, title_fa_reviewed}]}]}. edition is a reference''s edition_ref and chapter a chapter''s key from GET /bank/references. 404 bank_chapter_not_found.'
+      description: 'سرفصل‌ها: one chapter''s headings in book order -- {chapter: {number, title, title_fa, title_fa_reviewed}, sections: [{title, title_fa, title_fa_reviewed, subsections: [{title, title_fa, title_fa_reviewed}]}]}. edition is a reference''s edition_ref and chapter a chapter''s key from GET /bank/references. 404 bank_chapter_not_found.'
       parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { name: edition, in: query, required: true, schema: { type: string } }, { name: chapter, in: query, required: true, schema: { type: string } }]
       responses: { '200': { $ref: '#/components/responses/Success' }, '403': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' } }
   /workspaces/{workspaceId}/question-tools:
@@ -698,6 +698,14 @@ components:
                     title: { type: string }
                     title_fa: { type: [string, 'null'] }
                     pdf_page: { type: [integer, 'null'] }
+                    reference_year: { type: [integer, 'null'], description: 'Actual year of the official reference edition; distinct from the exam year for a proxy.' }
+                    classification_basis:
+                      type: [string, 'null']
+                      enum: [official_exam_year, retrospective_proxy_1397_plus, nearest_same_lineage_proxy, updated_reference_proxy, null]
+                    classification_note: { type: [string, 'null'], description: 'Visible explanation when the source edition is a proxy.' }
+                    official_scope_status: { type: string, enum: [in_scope, outside_scope_exam_question] }
+                    official_scope_note: { type: [string, 'null'] }
+                    scope_unverified: { type: boolean }
           additionalProperties: false
       additionalProperties: false
     AssessmentAttemptReviewSummary:
