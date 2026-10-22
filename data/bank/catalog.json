@@ -190,8 +190,6 @@
     "promotion 1405 periodontics lindhe-clinical-periodontology@7e: scope \"تمام فصول کتاب (دو جلد)\" names no chapter list; kept as text only",
     "board 1405 periodontics lotfazar-barrier-membranes-fa@2: scope \"تمام کتاب\" names no chapter list; kept as text only",
     "promotion 1405 periodontics lotfazar-barrier-membranes-fa@2: scope \"تمام کتاب\" names no chapter list; kept as text only",
-    "board 1405 prosthodontics dawson-functional-occlusion@1e: scope \"همه‌ی کتاب به جز فصول 23، 24، 25، 26، 27، 28، 32، 45، 46، 47\" names no chapter list; kept as text only",
-    "promotion 1405 prosthodontics dawson-functional-occlusion@1e: scope \"همه‌ی کتاب به جز فصول 23، 24، 25، 26، 27، 28، 32، 45، 46، 47\" names no chapter list; kept as text only",
     "board 1405 prosthodontics zarb-edentulous@14e: scope \"همه‌ی فصول\" names no chapter list; kept as text only",
     "promotion 1405 prosthodontics zarb-edentulous@14e: scope \"همه‌ی فصول\" names no chapter list; kept as text only",
     "board 1405 prosthodontics stewart-rpd@4e: scope \"همه‌ی فصول\" names no chapter list; kept as text only",
@@ -211,8 +209,6 @@
     "promotion 1405 orthodontics graber-orthodontics@7e: scope \"All chapters, except for chapters 1, 11, 17-part A, 18, 21, 22, 27, and 40\" names no chapter list; kept as text only",
     "board 1405 orthodontics nanda-aligners@1e: scope \"All chapters except for chapters 1, 15, 16, 17, 18, 19\" names no chapter list; kept as text only",
     "promotion 1405 orthodontics nanda-aligners@1e: scope \"All chapters except for chapters 1, 15, 16, 17, 18, 19\" names no chapter list; kept as text only",
-    "board 1406 prosthodontics dawson-functional-occlusion@1e: scope \"همه‌ی کتاب به جز فصول 23، 24، 25، 26، 27، 28، 32، 45، 46، 47\" names no chapter list; kept as text only",
-    "promotion 1406 prosthodontics dawson-functional-occlusion@1e: scope \"همه‌ی کتاب به جز فصول 23، 24، 25، 26، 27، 28، 32، 45، 46، 47\" names no chapter list; kept as text only",
     "board 1406 prosthodontics zarb-edentulous@14e: scope \"همه‌ی فصول\" names no chapter list; kept as text only",
     "promotion 1406 prosthodontics zarb-edentulous@14e: scope \"همه‌ی فصول\" names no chapter list; kept as text only",
     "board 1406 prosthodontics stewart-rpd@4e: scope \"همه‌ی فصول\" names no chapter list; kept as text only",
@@ -63236,7 +63232,295 @@
         {
           "key": "1e",
           "label": "1st edition",
-          "year": 2007
+          "year": 2007,
+          "nodes": [
+            {
+              "key": "ch01",
+              "kind": "chapter",
+              "number": "1",
+              "title": "The Concept of Complete Dentistry"
+            },
+            {
+              "key": "ch02",
+              "kind": "chapter",
+              "number": "2",
+              "title": "Perspectives on Occlusion and “Everyday Dentistry”"
+            },
+            {
+              "key": "ch03",
+              "kind": "chapter",
+              "number": "3",
+              "title": "Occlusal Disease"
+            },
+            {
+              "key": "ch04",
+              "kind": "chapter",
+              "number": "4",
+              "title": "The Determinants of Occlusion"
+            },
+            {
+              "key": "ch05",
+              "kind": "chapter",
+              "number": "5",
+              "title": "The Temporomandibular Joint"
+            },
+            {
+              "key": "ch06",
+              "kind": "chapter",
+              "number": "6",
+              "title": "The Masticatory Musculature"
+            },
+            {
+              "key": "ch07",
+              "kind": "chapter",
+              "number": "7",
+              "title": "Centric Relation",
+              "title_fa": "رابطه‌ی سنتریک",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch08",
+              "kind": "chapter",
+              "number": "8",
+              "title": "Adapted Centric Posture"
+            },
+            {
+              "key": "ch09",
+              "kind": "chapter",
+              "number": "9",
+              "title": "Determining Centric Relation"
+            },
+            {
+              "key": "ch10",
+              "kind": "chapter",
+              "number": "10",
+              "title": "Load Testing for Verification of Centric Relation"
+            },
+            {
+              "key": "ch11",
+              "kind": "chapter",
+              "number": "11",
+              "title": "Recording Centric Relation"
+            },
+            {
+              "key": "ch12",
+              "kind": "chapter",
+              "number": "12",
+              "title": "Classification of Occlusions"
+            },
+            {
+              "key": "ch13",
+              "kind": "chapter",
+              "number": "13",
+              "title": "Vertical Dimension"
+            },
+            {
+              "key": "ch14",
+              "kind": "chapter",
+              "number": "14",
+              "title": "The Neutral Zone"
+            },
+            {
+              "key": "ch15",
+              "kind": "chapter",
+              "number": "15",
+              "title": "The Envelope of Function"
+            },
+            {
+              "key": "ch16",
+              "kind": "chapter",
+              "number": "16",
+              "title": "Functional Smile Design"
+            },
+            {
+              "key": "ch17",
+              "kind": "chapter",
+              "number": "17",
+              "title": "Anterior Guidance and Its Relationship to Smile Design"
+            },
+            {
+              "key": "ch18",
+              "kind": "chapter",
+              "number": "18",
+              "title": "Restoring Lower Anterior Teeth"
+            },
+            {
+              "key": "ch19",
+              "kind": "chapter",
+              "number": "19",
+              "title": "Long Centric"
+            },
+            {
+              "key": "ch20",
+              "kind": "chapter",
+              "number": "20",
+              "title": "The Plane of Occlusion"
+            },
+            {
+              "key": "ch21",
+              "kind": "chapter",
+              "number": "21",
+              "title": "Posterior Occlusion"
+            },
+            {
+              "key": "ch22",
+              "kind": "chapter",
+              "number": "22",
+              "title": "Simplifying Instrumentation for Occlusal Analysis and Treatment"
+            },
+            {
+              "key": "ch23",
+              "kind": "chapter",
+              "number": "23",
+              "title": "Differential Diagnosis of Temporomandibular Disorders"
+            },
+            {
+              "key": "ch24",
+              "kind": "chapter",
+              "number": "24",
+              "title": "Occluso-Muscle Disorders"
+            },
+            {
+              "key": "ch25",
+              "kind": "chapter",
+              "number": "25",
+              "title": "Intracapsular Disorders of the TMJ"
+            },
+            {
+              "key": "ch26",
+              "kind": "chapter",
+              "number": "26",
+              "title": "Classification of Intracapsular Disorders"
+            },
+            {
+              "key": "ch27",
+              "kind": "chapter",
+              "number": "27",
+              "title": "Imaging the TMJs"
+            },
+            {
+              "key": "ch28",
+              "kind": "chapter",
+              "number": "28",
+              "title": "Bruxism",
+              "title_fa": "براکسیسم",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch29",
+              "kind": "chapter",
+              "number": "29",
+              "title": "Requirements for Occlusal Stability"
+            },
+            {
+              "key": "ch30",
+              "kind": "chapter",
+              "number": "30",
+              "title": "Solving Occlusal Problems Through Programmed Treatment Planning"
+            },
+            {
+              "key": "ch31",
+              "kind": "chapter",
+              "number": "31",
+              "title": "The Diagnostic Wax-up"
+            },
+            {
+              "key": "ch32",
+              "kind": "chapter",
+              "number": "32",
+              "title": "Occlusal Splints"
+            },
+            {
+              "key": "ch33",
+              "kind": "chapter",
+              "number": "33",
+              "title": "Occlusal Equilibration"
+            },
+            {
+              "key": "ch34",
+              "kind": "chapter",
+              "number": "34",
+              "title": "Neuromuscular Dentistry: Bioelectronic Instrumentation"
+            },
+            {
+              "key": "ch35",
+              "kind": "chapter",
+              "number": "35",
+              "title": "Solving Occlusal Wear Problems"
+            },
+            {
+              "key": "ch36",
+              "kind": "chapter",
+              "number": "36",
+              "title": "Solving Deep Overbite Problems"
+            },
+            {
+              "key": "ch37",
+              "kind": "chapter",
+              "number": "37",
+              "title": "Solving Anterior Overjet Problems"
+            },
+            {
+              "key": "ch38",
+              "kind": "chapter",
+              "number": "38",
+              "title": "Solving Anterior Open Bite Problems"
+            },
+            {
+              "key": "ch39",
+              "kind": "chapter",
+              "number": "39",
+              "title": "Treating End-to-End Occlusions"
+            },
+            {
+              "key": "ch40",
+              "kind": "chapter",
+              "number": "40",
+              "title": "Treating Splayed or Separated Anterior Teeth"
+            },
+            {
+              "key": "ch41",
+              "kind": "chapter",
+              "number": "41",
+              "title": "Treating the Crossbite Patient"
+            },
+            {
+              "key": "ch42",
+              "kind": "chapter",
+              "number": "42",
+              "title": "Treating Crowded, Irregular, or Interlocking Anterior Teeth"
+            },
+            {
+              "key": "ch43",
+              "kind": "chapter",
+              "number": "43",
+              "title": "Solving Severe Arch Malrelationship Problems"
+            },
+            {
+              "key": "ch44",
+              "kind": "chapter",
+              "number": "44",
+              "title": "Using Cephalometrics for Occlusal Analysis"
+            },
+            {
+              "key": "ch45",
+              "kind": "chapter",
+              "number": "45",
+              "title": "Postoperative Care of Occlusal Therapy Patients"
+            },
+            {
+              "key": "ch46",
+              "kind": "chapter",
+              "number": "46",
+              "title": "The Technological Future for Occlusal Restoration"
+            },
+            {
+              "key": "ch47",
+              "kind": "chapter",
+              "number": "47",
+              "title": "Criteria for Success of Occlusal Treatment"
+            }
+          ]
         }
       ]
     },
@@ -65292,7 +65576,120 @@
       "official": true,
       "scope": "همه‌ی کتاب به جز فصول 23، 24، 25، 26، 27، 28، 32، 45، 46، 47",
       "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
-      "source_document": "منابع آزمون ارتقاء و دانشنامه/ گواهینامه تخصصی پروتزهای دندانی ۱۴۰۵ و ۱۴۰۶.pdf"
+      "source_document": "منابع آزمون ارتقاء و دانشنامه/ گواهینامه تخصصی پروتزهای دندانی ۱۴۰۵ و ۱۴۰۶.pdf",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "29"
+        },
+        {
+          "number": "30"
+        },
+        {
+          "number": "31"
+        },
+        {
+          "number": "33"
+        },
+        {
+          "number": "34"
+        },
+        {
+          "number": "35"
+        },
+        {
+          "number": "36"
+        },
+        {
+          "number": "37"
+        },
+        {
+          "number": "38"
+        },
+        {
+          "number": "39"
+        },
+        {
+          "number": "40"
+        },
+        {
+          "number": "41"
+        },
+        {
+          "number": "42"
+        },
+        {
+          "number": "43"
+        },
+        {
+          "number": "44"
+        }
+      ]
     },
     {
       "exam_type": "board",
@@ -65605,7 +66002,120 @@
       "official": true,
       "scope": "همه‌ی کتاب به جز فصول 23، 24، 25، 26، 27، 28، 32، 45، 46، 47",
       "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
-      "source_document": "منابع آزمون ارتقاء و دانشنامه/ گواهینامه تخصصی پروتزهای دندانی ۱۴۰۵ و ۱۴۰۶.pdf"
+      "source_document": "منابع آزمون ارتقاء و دانشنامه/ گواهینامه تخصصی پروتزهای دندانی ۱۴۰۵ و ۱۴۰۶.pdf",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "29"
+        },
+        {
+          "number": "30"
+        },
+        {
+          "number": "31"
+        },
+        {
+          "number": "33"
+        },
+        {
+          "number": "34"
+        },
+        {
+          "number": "35"
+        },
+        {
+          "number": "36"
+        },
+        {
+          "number": "37"
+        },
+        {
+          "number": "38"
+        },
+        {
+          "number": "39"
+        },
+        {
+          "number": "40"
+        },
+        {
+          "number": "41"
+        },
+        {
+          "number": "42"
+        },
+        {
+          "number": "43"
+        },
+        {
+          "number": "44"
+        }
+      ]
     },
     {
       "exam_type": "promotion",
@@ -69512,7 +70022,120 @@
       "official": true,
       "scope": "همه‌ی کتاب به جز فصول 23، 24، 25، 26، 27، 28، 32، 45، 46، 47",
       "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
-      "source_document": "منابع آزمون ارتقاء و دانشنامه/ گواهینامه تخصصی پروتزهای دندانی ۱۴۰۵ و ۱۴۰۶.pdf"
+      "source_document": "منابع آزمون ارتقاء و دانشنامه/ گواهینامه تخصصی پروتزهای دندانی ۱۴۰۵ و ۱۴۰۶.pdf",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "29"
+        },
+        {
+          "number": "30"
+        },
+        {
+          "number": "31"
+        },
+        {
+          "number": "33"
+        },
+        {
+          "number": "34"
+        },
+        {
+          "number": "35"
+        },
+        {
+          "number": "36"
+        },
+        {
+          "number": "37"
+        },
+        {
+          "number": "38"
+        },
+        {
+          "number": "39"
+        },
+        {
+          "number": "40"
+        },
+        {
+          "number": "41"
+        },
+        {
+          "number": "42"
+        },
+        {
+          "number": "43"
+        },
+        {
+          "number": "44"
+        }
+      ]
     },
     {
       "exam_type": "board",
@@ -73278,7 +73901,120 @@
       "official": true,
       "scope": "همه‌ی کتاب به جز فصول 23، 24، 25، 26، 27، 28، 32، 45، 46، 47",
       "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
-      "source_document": "منابع آزمون ارتقاء و دانشنامه/ گواهینامه تخصصی پروتزهای دندانی ۱۴۰۵ و ۱۴۰۶.pdf"
+      "source_document": "منابع آزمون ارتقاء و دانشنامه/ گواهینامه تخصصی پروتزهای دندانی ۱۴۰۵ و ۱۴۰۶.pdf",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "29"
+        },
+        {
+          "number": "30"
+        },
+        {
+          "number": "31"
+        },
+        {
+          "number": "33"
+        },
+        {
+          "number": "34"
+        },
+        {
+          "number": "35"
+        },
+        {
+          "number": "36"
+        },
+        {
+          "number": "37"
+        },
+        {
+          "number": "38"
+        },
+        {
+          "number": "39"
+        },
+        {
+          "number": "40"
+        },
+        {
+          "number": "41"
+        },
+        {
+          "number": "42"
+        },
+        {
+          "number": "43"
+        },
+        {
+          "number": "44"
+        }
+      ]
     },
     {
       "exam_type": "promotion",
