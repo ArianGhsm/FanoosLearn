@@ -26,7 +26,8 @@ an official reference when a 1391–1395 question originally appeared.
 - Ineligible: year **>= 1396**, unspecified edition, absent or unverified
   original server book PDF, invalid chapter map, unverified page, unsupported
   official proxy-year chapter/scope, unsupported answer inference, or
-  human-reviewed conflicts. Absent exact evidence stays pending.
+  unresolved answer-key conflicts. Absent exact evidence stays pending; the
+  AI decides from the approved evidence and no human-review gate is required.
 - Keep the official-key-only English exception where applicable; voided or
   disputed answers stay outside confirmed scored classifications.
 
@@ -78,6 +79,40 @@ deployed; no manual SQL bypass or ordinary full-sitting importer.
   to guess its chapter or page; progress to the next documented year.
 - Previous 1391 preflight held on absence of a 1391 official list; this
   policy **supersedes only that hold**, not the scientific page requirement.
+
+## 2026-10-22 research checkpoint (not production)
+
+Two source-free batches from the exact 1391 sitting were checked against
+approved, hash-verified private PDFs and chapter maps. The actual reference
+years were recorded separately as proxy years 1397–1399; none is described as
+an official 1391 edition.
+
+| Research batch | Questions | Evidence-validated candidates | Pending |
+| --- | ---: | ---: | ---: |
+| Community dentistry + operative dentistry | 30 | 9 | 21 |
+| Oral surgery + endodontics | 39 | 16 | 23 |
+| **Total** | **69** | **25** | **44** |
+
+The private study audit confirmed the question, choice, and recorded-key
+content remained identical in all 69 items. No production source rows were
+written, no assessment was published, and no question, choice, key, status,
+attempt, or score was changed. These research decisions do not reduce the
+production backlog until the guarded source-only publisher is reviewed and
+deployed and the writes pass their own preview, verified-backup, receipt, and
+readback gates.
+
+Pending reason categories are retained in the protected server audit: direct
+answer-bearing evidence was not established, the strongest candidate page
+falls outside the announced chapter/page scope, a key conflict remains, or
+the page text reader could not verify the source-page quote. Unsupported
+items remain pending while other eligible questions continue. The temporary
+query files and single-page renders were removed after their private audits;
+the protected server study decisions and receipts are the recovery source.
+
+These figures are a dated research checkpoint, not a new production count.
+The exact per-question evidence, PDF hashes, pages, decisions, and pending
+reason codes remain in access-controlled server records and do not belong in
+this public repository.
 
 Future receipts must record the selected reference year and all
 recoverability / publication evidence. Update this document with actual

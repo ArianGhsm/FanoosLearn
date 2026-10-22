@@ -106,14 +106,18 @@ raw SQL or full-sitting imports. See
 ### Nearest same-lineage proxy for 1396–1398
 
 For exam years **1396–1398**, use the exact official exam-year edition when
-its current approved PDF and hash-bound chapter map are usable. If that exact
-edition/PDF is unavailable, the owner permits the nearest verified edition
-from the same reference family and exam-type/subject lineage. The edition
-must be an authentic official row for its actual reference year, with an
-approved private PDF and complete map. If the exam-year list is absent, use
-the nearest official list for that exam type and subject to identify the
-reference families, then select the nearest usable edition within each
-family. A tie between reference years prefers the earlier year.
+its current approved private PDF is verified and its hash-bound chapter map
+and structured official scope are usable. A different-year proxy is allowed
+only when no exact-year edition in that reference family has a verified PDF.
+If an exact-year PDF is verified but its map or structured scope is missing,
+incomplete, or invalid, leave the question pending; that map/scope failure
+does not enable fallback. If the exam-year list is absent, use the nearest
+official list for that exam type and subject to identify reference families.
+Within each family, skip editions whose PDF is not verified; the first
+nearest official edition with a verified PDF must also have a valid
+hash-bound map and usable scope. If that map or scope fails, keep the
+question pending rather than skipping to a farther edition. A tie between
+reference years prefers the earlier year.
 
 Every such citation uses `classification_basis=nearest_same_lineage_proxy`
 and separately records the exam year, actual reference year, edition,

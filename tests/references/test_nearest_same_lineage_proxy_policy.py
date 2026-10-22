@@ -84,15 +84,36 @@ class NearestSameLineageProxyTests(unittest.TestCase):
                          [(1397, "daly@2e", True)])
         self.assertNotIn("other-book@1e", [r["edition"] for r in selected])
 
-    def test_unstructured_exact_scope_uses_nearest_structured_same_family(self):
+    def test_verified_exact_pdf_with_unstructured_scope_stays_pending(self):
         exact = row(1396, "daly@1e")
         exact["scope_chapters"] = []
         self.catalog["validity"].append(exact)
         self.pdfs["daly@1e"] = {"pdf": "verified-server-pdf"}
         self.maps["daly@1e"] = MAP
         selected = self.select(1396)
-        self.assertEqual([(r["year"], r["edition"], r["_proxy"]) for r in selected],
-                         [(1397, "daly@2e", True)])
+        self.assertEqual([(r["year"], r["edition"], r["_proxy"], r["_eligible"])
+                          for r in selected], [(1396, "daly@1e", False, False)])
+
+    def test_verified_exact_pdf_with_missing_map_does_not_enable_proxy(self):
+        self.catalog["validity"].append(row(1396, "daly@1e"))
+        self.pdfs["daly@1e"] = {"pdf": "verified-server-pdf"}
+        self.maps.pop("daly@1e", None)
+        selected = self.select(1396)
+        daly = next(r for r in selected if r["edition"].startswith("daly@"))
+        self.assertEqual((daly["year"], daly["edition"], daly["_proxy"], daly["_eligible"]),
+                         (1396, "daly@1e", False, False))
+        self.assertFalse(p.is_selected_proxy(
+            self.catalog, "residency", 1396, "community-dentistry",
+            "daly@2e", 1397, p.BASIS, self.pdfs, self.maps))
+
+    def test_verified_exact_pdf_with_invalid_map_does_not_enable_proxy(self):
+        self.catalog["validity"].append(row(1396, "daly@1e"))
+        self.pdfs["daly@1e"] = {"pdf": "verified-server-pdf"}
+        self.maps["daly@1e"] = {"runs": [["1", 1, 20]]}
+        selected = self.select(1396)
+        daly = next(r for r in selected if r["edition"].startswith("daly@"))
+        self.assertEqual((daly["year"], daly["edition"], daly["_proxy"], daly["_eligible"]),
+                         (1396, "daly@1e", False, False))
 
     def test_no_exam_year_list_uses_nearest_subject_list_lineages(self):
         selected = self.select(1396)
@@ -115,7 +136,31 @@ class NearestSameLineageProxyTests(unittest.TestCase):
         self.maps["daly@1e"] = {"runs": [["1", 1, 20]]}
         selected = self.select(1396)
         daly = next(r for r in selected if r["edition"].startswith("daly@"))
-        self.assertEqual((daly["year"], daly["edition"]), (1397, "daly@2e"))
+        self.assertEqual((daly["year"], daly["edition"], daly["_eligible"]),
+                         (1395, "daly@1e", False))
+
+    def test_verified_proxy_with_invalid_map_stays_pending_instead_of_skipping_farther(self):
+        self.catalog["validity"].append(row(1396, "daly@1e"))
+        self.pdfs["daly@1e"] = {"missing": "not in verified library"}
+        self.maps["daly@1e"] = MAP
+        self.maps["daly@2e"] = {"runs": [["1", 1, 20]]}
+        selected = self.select(1396)
+        daly = next(r for r in selected if r["edition"].startswith("daly@"))
+        self.assertEqual((daly["year"], daly["edition"], daly["_proxy"], daly["_eligible"]),
+                         (1397, "daly@2e", True, False))
+
+    def test_unverified_nearer_pdf_may_be_skipped_for_verified_same_family_pdf(self):
+        self.catalog["validity"].append(row(1396, "daly@1e"))
+        self.pdfs["daly@1e"] = {"missing": "not in verified library"}
+        self.maps["daly@1e"] = MAP
+        self.pdfs["daly@2e"] = {"missing": "not in verified library"}
+        self.maps["daly@2e"] = MAP
+        self.pdfs["daly@3e"] = {"pdf": "verified-server-pdf"}
+        self.maps["daly@3e"] = MAP
+        selected = self.select(1396)
+        daly = next(r for r in selected if r["edition"].startswith("daly@"))
+        self.assertEqual((daly["year"], daly["edition"], daly["_proxy"], daly["_eligible"]),
+                         (1398, "daly@3e", True, True))
 
     def test_unusable_fallback_remains_pending_and_not_proxy_selectable(self):
         self.maps = {edition: {"runs": MAP["runs"]} for edition in self.pdfs}
@@ -195,10 +240,65 @@ class SameLineageProxyBatchTests(unittest.TestCase):
                 {"key": "222", "editions": [], "terms": []},
             ])
             self.assertIn(
-                "MISSING, pending usable same-lineage PDF and hash-bound chapter map",
+                "PENDING, nearest verified proxy PDF has no usable hash-bound chapter map",
                 stdout.getvalue(),
             )
             self.assertNotIn("legacy nearest", stdout.getvalue())
+
+    def test_exact_verified_pdf_map_failure_blocks_proxy_in_batch_output(self):
+        references = str(Path(__file__).resolve().parents[2] / "scripts" / "references")
+        if references not in sys.path:
+            sys.path.insert(0, references)
+        import classification_batch
+
+        class Capture(io.StringIO):
+            def reconfigure(self, **_kwargs):
+                pass
+
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bank = root / "bank"
+            bank.mkdir()
+            (bank / "catalog.json").write_text(json.dumps({"validity": [
+                {"exam_type": "residency", "year": 1396,
+                 "subject": "community-dentistry", "edition": "daly@1e",
+                 "official": True, "scope": "all chapters",
+                 "scope_chapters": [{"number": "1"}]},
+                {"exam_type": "residency", "year": 1397,
+                 "subject": "community-dentistry", "edition": "daly@2e",
+                 "official": True, "scope": "all chapters",
+                 "scope_chapters": [{"number": "1"}]},
+            ]}))
+            (bank / "reference-pdfs.json").write_text(json.dumps({"editions": {
+                "daly@1e": {"pdf": "verified-server-pdf"},
+                "daly@2e": {"pdf": "verified-server-pdf"},
+            }}))
+            (bank / "reference-chapter-pages.json").write_text(json.dumps({"editions": {
+                "daly@1e": {"runs": [["1", 1, 20]]},
+                "daly@2e": {"runs": MAP["runs"], "source_pdf_sha256": HASH,
+                            "pdf_pages": 20},
+            }}))
+            sitting = root / "study.json"
+            sitting.write_text(json.dumps({
+                "year": 1396, "exam_type": "residency", "round": 1,
+                "questions": [{"number": 222, "subject": "community-dentistry",
+                               "stem": "Synthetic question?", "choices": ["a", "b"],
+                               "answer": {"choice": 2, "status": "final"}}],
+            }))
+            output = root / "queries.json"
+            stdout = Capture()
+            argv = ["classification_batch.py", "--sitting", str(sitting),
+                    "--subject", "community-dentistry", "--out", str(output),
+                    "--include-nearest"]
+            with patch.object(classification_batch, "BANK", bank), \
+                    patch.object(sys, "argv", argv), \
+                    patch.object(sys, "stdout", stdout):
+                self.assertEqual(classification_batch.main(), 0)
+            self.assertEqual(json.loads(output.read_text()), [
+                {"key": "222", "editions": [], "terms": []},
+            ])
+            self.assertIn("PENDING, exact-year PDF is verified", stdout.getvalue())
+            self.assertNotIn("daly@2e", stdout.getvalue())
 
 
 if __name__ == "__main__":

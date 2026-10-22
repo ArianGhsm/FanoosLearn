@@ -100,6 +100,8 @@ def main() -> int:
             found = None
         if found == row['edition']:
             note = 'PDF source listed'
+        elif is_proxy_exam_year(year) and row.get('_eligible') is not True:
+            note = f"PENDING, {row.get('_proxy_reason') or 'no eligible verified PDF/map/scope candidate'}"
         elif is_proxy_exam_year(year) and row.get('_proxy') is True:
             note = 'MISSING, pending usable same-lineage PDF and hash-bound chapter map'
         elif found:

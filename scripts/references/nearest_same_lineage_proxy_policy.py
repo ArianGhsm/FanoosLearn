@@ -1,11 +1,13 @@
 """Owner-authorized nearest same-lineage PDF fallback for older exams.
 
 This policy is limited to exam years 1396–1398. Exact exam-year editions
-remain preferred. A proxy is selected only when the exact-year edition is
-not usable from the verified private PDF inventory and a different official
-year lists the same reference family. The returned row always retains its
-actual official reference year. The downstream page reader must still verify
-the current approved PDF, its matching chapter map, page and direct evidence.
+remain preferred. A proxy is considered only when no exact-year edition in
+that reference family has a verified private PDF. If a verified PDF exists
+but its chapter map or official scope is absent or invalid, keep the case
+pending; that map/scope failure never enables a proxy. The returned row
+always retains its actual official reference year. The downstream page
+reader must still verify the current approved PDF, its matching chapter map,
+page and direct evidence.
 """
 from __future__ import annotations
 
@@ -24,6 +26,10 @@ def is_proxy_exam_year(exam_year: object) -> bool:
 
 def _family(edition: str) -> str:
     return edition.partition("@")[0]
+
+
+def _verified_pdf_available(edition: str, pdfs: dict) -> bool:
+    return (pdfs.get(edition) or {}).get("pdf") == "verified-server-pdf"
 
 
 def _usable(edition: str, pdfs: dict, chapter_maps: dict) -> bool:
@@ -48,7 +54,7 @@ def _usable(edition: str, pdfs: dict, chapter_maps: dict) -> bool:
     # before search, validation or audit. When a page count is present here,
     # still require the map to end on that exact page.
     return (
-        pdf.get("pdf") == "verified-server-pdf"
+        _verified_pdf_available(edition, pdfs)
         and isinstance(digest, str)
         and re.fullmatch(r"[a-f0-9]{64}", digest) is not None
         and (page_count is None or (
@@ -73,11 +79,13 @@ def selected_reference_rows(
 ) -> list[dict]:
     """Return exact usable rows and only the necessary same-family proxies.
 
-    When the exam-year list is absent, its nearest official subject list
-    supplies the family set; each family then resolves to its nearest usable
-    official edition. Ties prefer the earlier reference year, then the
-    lexicographically smaller edition key. If no usable proxy exists, retain
-    the closest official row as an unavailable pending candidate.
+    A verified exact-year PDF with a missing/invalid map or scope stays
+    pending and blocks proxy selection for that family. When the exam-year
+    list is absent, its nearest official subject list supplies the family
+    set. A proxy can be selected only if the nearest reference-year candidate
+    with a verified PDF also has a usable map and scope; a map failure on
+    that verified candidate stays pending instead of searching a farther
+    year. Ties prefer the earlier reference year, then the edition key.
     """
     if not is_proxy_exam_year(exam_year):
         return []
@@ -99,7 +107,9 @@ def selected_reference_rows(
     for family in sorted(families):
         family_rows = [row for row in rows if _family(row["edition"]) == family]
         family_exact = [row for row in family_rows if row["year"] == exam_year]
-        usable_exact = [row for row in family_exact
+        exact_pdf_rows = [row for row in family_exact
+                          if _verified_pdf_available(row["edition"], pdfs)]
+        usable_exact = [row for row in exact_pdf_rows
                         if row.get("scope_chapters")
                         and _usable(row["edition"], pdfs, chapter_maps)]
         if usable_exact:
@@ -111,14 +121,41 @@ def selected_reference_rows(
             selected.append(result)
             continue
 
-        proxy_rows = [row for row in family_rows
-                      if row["year"] != exam_year
-                      and row.get("scope_chapters")
-                      and _usable(row["edition"], pdfs, chapter_maps)]
-        if proxy_rows:
-            chosen = min(proxy_rows,
-                         key=lambda row: (abs(row["year"] - exam_year),
-                                          row["year"], row["edition"]))
+        # A verified exact-year PDF with a bad/missing map is a pending
+        # dependency. Do not relabel that same edition as unavailable merely
+        # to activate a different-year fallback.
+        if exact_pdf_rows:
+            chosen = min(exact_pdf_rows, key=lambda row: row["edition"])
+            result = chosen.copy()
+            result["_proxy"] = False
+            result["_eligible"] = False
+            result["_proxy_reason"] = (
+                "exact-year PDF is verified but its chapter map or official scope is unusable; keep pending"
+            )
+            selected.append(result)
+            continue
+
+        proxy_rows = sorted(
+            (row for row in family_rows if row["year"] != exam_year),
+            key=lambda row: (abs(row["year"] - exam_year), row["year"], row["edition"]),
+        )
+        # Missing PDFs may be skipped. The first verified PDF is the nearest
+        # actually available candidate; if its map/scope fails, keep pending
+        # and do not silently advance to a farther edition.
+        verified_proxy_rows = [
+            row for row in proxy_rows if _verified_pdf_available(row["edition"], pdfs)
+        ]
+        if verified_proxy_rows:
+            chosen = verified_proxy_rows[0]
+            if not chosen.get("scope_chapters") or not _usable(chosen["edition"], pdfs, chapter_maps):
+                result = chosen.copy()
+                result["_proxy"] = True
+                result["_eligible"] = False
+                result["_proxy_reason"] = (
+                    "nearest verified proxy PDF has no usable hash-bound chapter map or official scope; keep pending"
+                )
+                selected.append(result)
+                continue
             result = chosen.copy()
             result["_proxy"] = True
             result["_eligible"] = True

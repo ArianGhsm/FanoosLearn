@@ -7,7 +7,8 @@ const chapter = { book: 'Endodontics: Principles and Practice', edition: '6th ed
 test('a classified bank question names its exam, year, number and chapter', () => {
     const facts = questionFacts({
         topic: 'طول کارکرد', tags: ['اندودانتیکس'],
-        bank: { exam: 'دستیاری', exam_key: 'residency', year: 1404, round: 1, number: 12, subject: 'اندودانتیکس', chapter },
+        bank: { exam: 'دستیاری', exam_key: 'residency', year: 1404, round: 1, number: 12, subject: 'اندودانتیکس',
+            chapter: { ...chapter, reference_year: 1404, classification_basis: 'official_exam_year' } },
     });
     assert.equal(facts.exam, 'دستیاری ۱۴۰۴');
     assert.equal(facts.number, 'سؤال ۱۲ دفترچه');
@@ -17,6 +18,7 @@ test('a classified bank question names its exam, year, number and chapter', () =
     assert.equal(facts.chapterEn, 'Cleaning and Shaping');
     assert.equal(facts.book, 'Endodontics: Principles and Practice · 6th edition');
     assert.equal(facts.scopeNote, null);
+    assert.equal(facts.referenceNote, null);
 });
 
 test('an outside-scope citation keeps its chapter and shows the explicit warning', () => {
@@ -25,7 +27,20 @@ test('an outside-scope citation keeps its chapter and shows the explicit warning
         number: 44, subject: 'آسیب‌شناسی دهان', chapter: { ...chapter,
             official_scope_status: 'outside_scope_exam_question', official_scope_note: note } } });
     assert.equal(facts.chapter, 'فصل ۱۴ · پاک‌سازی و شکل‌دهی');
+    assert.equal(facts.referenceNote, null);
     assert.equal(facts.scopeNote, note);
+});
+
+test('proxy provenance note stays separate from official syllabus-scope note', () => {
+    const scopeNote = 'محل طراحی سؤال خارج از محدودهٔ رسمی آزمون بوده است.';
+    const referenceNote = 'این فصل‌بندی با نسخهٔ پروکسیِ سال ۱۳۹۷ انجام شده است؛ رسمی بودن آن برای آزمون ۱۳۹۶ تأیید نشده است.';
+    const facts = questionFacts({ bank: { exam: 'دستیاری', exam_key: 'residency', year: 1396, round: 1,
+        number: 204, subject: 'دندان‌پزشکی اجتماعی', chapter: { ...chapter,
+            reference_year: 1397, classification_basis: 'nearest_same_lineage_proxy',
+            classification_note: referenceNote, official_scope_status: 'outside_scope_exam_question',
+            official_scope_note: scopeNote } } });
+    assert.equal(facts.referenceNote, referenceNote);
+    assert.equal(facts.scopeNote, scopeNote);
 });
 
 test('an unverified partial-scope page shows a warning without claiming it is outside', () => {
@@ -44,7 +59,8 @@ test('a nearest same-lineage proxy citation is visibly labeled with its actual s
             reference_year: 1397, classification_basis: 'nearest_same_lineage_proxy',
             classification_note: note } } });
     assert.equal(facts.book, 'Endodontics: Principles and Practice · 6th edition');
-    assert.equal(facts.scopeNote, note);
+    assert.equal(facts.referenceNote, note);
+    assert.equal(facts.scopeNote, null);
 });
 
 test('a national round is its month', () => {

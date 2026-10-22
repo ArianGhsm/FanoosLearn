@@ -9,9 +9,16 @@ class SourceClassificationProvenanceTests(unittest.TestCase):
     def test_expand_only_columns_preserve_legacy_rows(self):
         migration = (ROOT / "database/migrations/0048_bank_source_reference_provenance.sql").read_text()
         self.assertIn("fanoos:rollback-compatible=expand", migration)
+        self.assertFalse((ROOT / "database/migrations/0048_bank_source_reference_basis.sql").exists())
         self.assertIn("ADD COLUMN reference_year SMALLINT UNSIGNED NULL", migration)
-        self.assertIn("ADD COLUMN classification_basis VARCHAR(40) NULL", migration)
+        self.assertIn("ADD COLUMN classification_basis VARCHAR(48) NULL", migration)
         self.assertIn("ADD COLUMN classification_note VARCHAR(300) NULL", migration)
+        self.assertIn("reference_year IS NULL", migration)
+        self.assertIn("classification_basis IS NOT NULL", migration)
+        self.assertIn("classification_note IS NOT NULL", migration)
+        self.assertIn("classification_note IS NULL", migration)
+        self.assertIn("classification_basis = 'official_exam_year' AND classification_note IS NULL", migration)
+        self.assertNotIn("nearest_verified_edition_proxy", migration)
         self.assertNotIn("UPDATE bank_question_sources", migration)
         for basis in ["official_exam_year", "retrospective_proxy_1397_plus",
                       "nearest_same_lineage_proxy", "updated_reference_proxy"]:
@@ -29,9 +36,14 @@ class SourceClassificationProvenanceTests(unittest.TestCase):
         facts = (ROOT / "apps/platform/src/Bank/BankQuestionFacts.php").read_text()
         api = (ROOT / "contracts/openapi/core-v1.yaml").read_text()
         ui = (ROOT / "apps/platform/public/assets/web/pages/question-facts.js").read_text()
+        runner = (ROOT / "apps/platform/public/assets/web/pages/runner-view.js").read_text()
         for field in ["reference_year", "classification_basis", "classification_note"]:
             self.assertIn(f"link.{field}", facts)
-            self.assertIn(field, ui)
+        self.assertIn("classification_basis", ui)
+        self.assertIn("classification_note", ui)
+        self.assertIn("referenceNote", ui)
+        self.assertIn("facts.referenceNote", runner)
+        self.assertIn("facts.scopeNote", runner)
         self.assertIn("                    reference_year:", api)
         self.assertIn("                    classification_basis:", api)
         self.assertIn("                    classification_note:", api)

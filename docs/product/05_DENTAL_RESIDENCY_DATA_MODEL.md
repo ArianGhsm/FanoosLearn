@@ -80,6 +80,15 @@ treatment planning, image-based, calculation; negative stem and
 multiple-statement are separate flags because they combine with any type.
 `cognitive_level` is recall, understanding, application or analysis.
 
+`reference_year` and `classification_basis` are either both NULL on
+historical rows whose provenance has not been audited or both populated by
+the guarded source-only publisher. `reference_year` names the actual
+official reference-list year for the cited edition, not necessarily the exam
+year. `classification_note` carries a visible explanation for
+retrospective, updated-reference, and same-lineage proxy citations.
+`official_scope_note` remains separate and describes exam-syllabus scope;
+the runner displays the two notes independently.
+
 Similarity is stored as pairs, which are the facts; clusters ("this concept
 came 13 times in 10 years, 4 of them near-identical") are derived from the
 pairs and the concept links, not stored by hand.

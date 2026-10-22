@@ -19,7 +19,8 @@ const text = (value) => (typeof value === 'string' ? value.trim() : '');
 
 /**
  * @returns {{exam: ?string, number: ?string, subject: ?string, topic: ?string,
- *   chapter: ?string, chapterEn: ?string, book: ?string, scopeNote: ?string}}
+ *   chapter: ?string, chapterEn: ?string, book: ?string, scopeNote: ?string,
+ *   referenceNote: ?string}}
  */
 export function questionFacts(question) {
     const bank = question && typeof question.bank === 'object' ? question.bank : null;
@@ -37,6 +38,7 @@ export function questionFacts(question) {
     let chapterEn = null;
     let book = null;
     let scopeNote = null;
+    let referenceNote = null;
     const c = bank?.chapter;
     if (c && typeof c === 'object' && text(c.title) !== '') {
         const label = text(c.number) !== '' ? `فصل ${faDigits(text(c.number))}` : 'فصل';
@@ -44,18 +46,15 @@ export function questionFacts(question) {
         chapter = `${label} · ${fa || text(c.title)}`;
         chapterEn = fa ? text(c.title) : null;
         book = [text(c.book), text(c.edition)].filter((part) => part !== '').join(' · ') || null;
-        const notes = [];
         if (c.scope_unverified === true) {
-            notes.push(text(c.official_scope_note) || 'انطباق صفحهٔ منبع با محدودهٔ رسمی آزمون هنوز تأیید نشده است.');
+            scopeNote = text(c.official_scope_note) || 'انطباق صفحهٔ منبع با محدودهٔ رسمی آزمون هنوز تأیید نشده است.';
         } else if (c.official_scope_status === 'outside_scope_exam_question') {
-            notes.push(text(c.official_scope_note) || 'محل طراحی این سؤال خارج از محدودهٔ رسمی آزمون بوده است.');
+            scopeNote = text(c.official_scope_note) || 'محل طراحی این سؤال خارج از محدودهٔ رسمی آزمون بوده است.';
         }
         const proxyBasis = ['retrospective_proxy_1397_plus', 'nearest_same_lineage_proxy', 'updated_reference_proxy'];
         if (proxyBasis.includes(text(c.classification_basis))) {
-            const proxyNote = text(c.classification_note) || `این ارجاع نسخهٔ پروکسیِ سال ${faDigits(c.reference_year ?? '')} است؛ رسمی بودن آن برای آزمون سال ${faDigits(bank.year)} تأیید نشده است.`;
-            if (!notes.includes(proxyNote)) notes.push(proxyNote);
+            referenceNote = text(c.classification_note);
         }
-        scopeNote = notes.length ? notes.join(' ') : null;
     }
 
     return {
@@ -67,5 +66,6 @@ export function questionFacts(question) {
         chapterEn,
         book,
         scopeNote,
+        referenceNote,
     };
 }
