@@ -5398,6 +5398,44 @@
     ]
    ]
   },
+  "white-pharoah-radiology@9e": {
+   "source": "verified server PDF table of contents, physical PDF page 11",
+   "chapters": [
+    ["1", "Physics"],
+    ["2", "Biologic Effects of Ionizing Radiation"],
+    ["3", "Safety and Protection"],
+    ["4", "Image Receptors"],
+    ["5", "Projection Geometry"],
+    ["6", "Intraoral Projections"],
+    ["7", "Cephalometric and Skull Imaging"],
+    ["8", "Panoramic Imaging"],
+    ["9", "Computed Tomography"],
+    ["10", "Magnetic Resonance Imaging"],
+    ["11", "Nuclear Medicine"],
+    ["12", "Ultrasound Imaging"],
+    ["13", "Radiographic Anatomy"],
+    ["14", "Quality Assurance and Infection Control"],
+    ["15", "Prescribing Diagnostic Imaging"],
+    ["16", "Principles of Radiographic Interpretation"],
+    ["17", "Dental Caries"],
+    ["18", "Periodontal Diseases"],
+    ["19", "Dental Anomalies"],
+    ["20", "Inflammatory Conditions of the Jaws"],
+    ["21", "Cysts"],
+    ["22", "Benign Tumors and Neoplasms"],
+    ["23", "Diseases Affecting the Structure of Bone"],
+    ["24", "Malignant Neoplasms"],
+    ["25", "Trauma"],
+    ["26", "Paranasal Sinus Abnormalities"],
+    ["27", "Craniofacial Anomalies"],
+    ["28", "Temporomandibular Joint Abnormalities"],
+    ["29", "Soft Tissue Calcifications and Ossifications"],
+    ["30", "Salivary Gland Diseases"],
+    ["31", "Dental Implants"],
+    ["32", "Beyond Three-Dimensional Imaging"],
+    ["33", "Forensics"]
+   ]
+  },
   "zarb-edentulous@13e": {
    "source": "https://shop.elsevier.com/books/prosthodontic-treatment-for-edentulous-patients/zarb/978-0-323-07844-3",
    "chapters": [

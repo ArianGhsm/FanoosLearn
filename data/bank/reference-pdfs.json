@@ -399,7 +399,43 @@
       "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
     },
     "white-pharoah-radiology@9e": {
-      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+      "pdf": "verified-server-pdf",
+      "chapter_pdf_starts": {
+        "1": 15,
+        "2": 31,
+        "3": 43,
+        "4": 59,
+        "5": 99,
+        "6": 107,
+        "7": 139,
+        "8": 151,
+        "9": 169,
+        "10": 199,
+        "11": 217,
+        "12": 231,
+        "13": 235,
+        "14": 271,
+        "15": 285,
+        "16": 293,
+        "17": 309,
+        "18": 323,
+        "19": 337,
+        "20": 369,
+        "21": 389,
+        "22": 411,
+        "23": 451,
+        "24": 481,
+        "25": 507,
+        "26": 533,
+        "27": 553,
+        "28": 565,
+        "29": 597,
+        "30": 611,
+        "31": 625,
+        "32": 651,
+        "33": 659
+      },
+      "backmatter_pdf_start": 664
     },
     "woo-oral-pathology@3e": {
       "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."

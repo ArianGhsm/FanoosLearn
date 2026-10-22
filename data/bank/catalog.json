@@ -206,8 +206,6 @@
     "promotion 1405 oral-pathology regezi-oral-pathology@7e: scope \"تمام فصول\" names no chapter list; kept as text only",
     "board 1405 oral-pathology ten-cate-histology@10e: scope \"تمام فصول به جز فصول 1، 2، 4، 10، 13، 14 و 15\" names no chapter list; kept as text only",
     "promotion 1405 oral-pathology ten-cate-histology@10e: scope \"تمام فصول به جز فصول 1، 2، 4، 10، 13، 14 و 15\" names no chapter list; kept as text only",
-    "board 1405 oral-radiology white-pharoah-radiology@9e: scope \"کلیه فصول کتاب\" names no chapter list; kept as text only",
-    "promotion 1405 oral-radiology white-pharoah-radiology@9e: scope \"کلیه فصول کتاب\" names no chapter list; kept as text only",
     "promotion 1405 orthodontics proffit-orthodontics@7e: scope \"All chapters, except for chapters 1-5\" names no chapter list; kept as text only",
     "board 1405 orthodontics graber-orthodontics@7e: scope \"All chapters, except for chapters 1, 11, 17-part A, 18, 21, 22, 27, and 40\" names no chapter list; kept as text only",
     "promotion 1405 orthodontics graber-orthodontics@7e: scope \"All chapters, except for chapters 1, 11, 17-part A, 18, 21, 22, 27, and 40\" names no chapter list; kept as text only",
@@ -47202,7 +47200,265 @@
         {
           "key": "9e",
           "label": "9th edition",
-          "year": 2026
+          "year": 2026,
+          "nodes": [
+            {
+              "key": "ch01",
+              "kind": "chapter",
+              "number": "1",
+              "title": "Physics",
+              "title_fa": "فیزیک",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch02",
+              "kind": "chapter",
+              "number": "2",
+              "title": "Biologic Effects of Ionizing Radiation"
+            },
+            {
+              "key": "ch03",
+              "kind": "chapter",
+              "number": "3",
+              "title": "Safety and Protection",
+              "title_fa": "ایمنی و حفاظت",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch04",
+              "kind": "chapter",
+              "number": "4",
+              "title": "Image Receptors",
+              "title_fa": "گیرنده‌های تصویر",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch05",
+              "kind": "chapter",
+              "number": "5",
+              "title": "Projection Geometry",
+              "title_fa": "هندسه‌ی تابش",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch06",
+              "kind": "chapter",
+              "number": "6",
+              "title": "Intraoral Projections",
+              "title_fa": "نماهای داخل‌دهانی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch07",
+              "kind": "chapter",
+              "number": "7",
+              "title": "Cephalometric and Skull Imaging",
+              "title_fa": "تصویربرداری سفالومتری و جمجمه",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch08",
+              "kind": "chapter",
+              "number": "8",
+              "title": "Panoramic Imaging",
+              "title_fa": "تصویربرداری پانورامیک",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch09",
+              "kind": "chapter",
+              "number": "9",
+              "title": "Computed Tomography",
+              "title_fa": "توموگرافی کامپیوتری",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch10",
+              "kind": "chapter",
+              "number": "10",
+              "title": "Magnetic Resonance Imaging",
+              "title_fa": "تصویربرداری تشدید مغناطیسی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch11",
+              "kind": "chapter",
+              "number": "11",
+              "title": "Nuclear Medicine",
+              "title_fa": "پزشکی هسته‌ای",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch12",
+              "kind": "chapter",
+              "number": "12",
+              "title": "Ultrasound Imaging"
+            },
+            {
+              "key": "ch13",
+              "kind": "chapter",
+              "number": "13",
+              "title": "Radiographic Anatomy"
+            },
+            {
+              "key": "ch14",
+              "kind": "chapter",
+              "number": "14",
+              "title": "Quality Assurance and Infection Control",
+              "title_fa": "تضمین کیفیت و کنترل عفونت",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch15",
+              "kind": "chapter",
+              "number": "15",
+              "title": "Prescribing Diagnostic Imaging",
+              "title_fa": "تجویز تصویربرداری تشخیصی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch16",
+              "kind": "chapter",
+              "number": "16",
+              "title": "Principles of Radiographic Interpretation",
+              "title_fa": "اصول تفسیر رادیوگرافی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch17",
+              "kind": "chapter",
+              "number": "17",
+              "title": "Dental Caries",
+              "title_fa": "پوسیدگی دندان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch18",
+              "kind": "chapter",
+              "number": "18",
+              "title": "Periodontal Diseases",
+              "title_fa": "بیماری‌های پریودنتال",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch19",
+              "kind": "chapter",
+              "number": "19",
+              "title": "Dental Anomalies",
+              "title_fa": "ناهنجاری‌های دندانی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch20",
+              "kind": "chapter",
+              "number": "20",
+              "title": "Inflammatory Conditions of the Jaws",
+              "title_fa": "بیماری‌های التهابی فک‌ها",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch21",
+              "kind": "chapter",
+              "number": "21",
+              "title": "Cysts",
+              "title_fa": "کیست‌ها",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch22",
+              "kind": "chapter",
+              "number": "22",
+              "title": "Benign Tumors and Neoplasms",
+              "title_fa": "تومورها و نئوپلاسم‌های خوش‌خیم",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch23",
+              "kind": "chapter",
+              "number": "23",
+              "title": "Diseases Affecting the Structure of Bone",
+              "title_fa": "بیماری‌های مؤثر بر ساختار استخوان",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch24",
+              "kind": "chapter",
+              "number": "24",
+              "title": "Malignant Neoplasms",
+              "title_fa": "نئوپلاسم‌های بدخیم",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch25",
+              "kind": "chapter",
+              "number": "25",
+              "title": "Trauma",
+              "title_fa": "تروما",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch26",
+              "kind": "chapter",
+              "number": "26",
+              "title": "Paranasal Sinus Abnormalities"
+            },
+            {
+              "key": "ch27",
+              "kind": "chapter",
+              "number": "27",
+              "title": "Craniofacial Anomalies",
+              "title_fa": "ناهنجاری‌های جمجمه‌ای-صورتی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch28",
+              "kind": "chapter",
+              "number": "28",
+              "title": "Temporomandibular Joint Abnormalities",
+              "title_fa": "ناهنجاری‌های مفصل گیجگاهی-فکی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch29",
+              "kind": "chapter",
+              "number": "29",
+              "title": "Soft Tissue Calcifications and Ossifications",
+              "title_fa": "کلسیفیکاسیون‌ها و استخوانی‌شدن‌های بافت نرم",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch30",
+              "kind": "chapter",
+              "number": "30",
+              "title": "Salivary Gland Diseases",
+              "title_fa": "بیماری‌های غدد بزاقی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch31",
+              "kind": "chapter",
+              "number": "31",
+              "title": "Dental Implants",
+              "title_fa": "ایمپلنت‌های دندانی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch32",
+              "kind": "chapter",
+              "number": "32",
+              "title": "Beyond Three-Dimensional Imaging",
+              "title_fa": "فراتر از تصویربرداری سه‌بعدی",
+              "title_fa_origin": "ai"
+            },
+            {
+              "key": "ch33",
+              "kind": "chapter",
+              "number": "33",
+              "title": "Forensics",
+              "title_fa": "دندانپزشکی قانونی",
+              "title_fa_origin": "ai"
+            }
+          ]
         }
       ]
     },
@@ -67898,7 +68154,108 @@
       "official": true,
       "scope": "کلیه فصول کتاب",
       "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
-      "source_document": "منابع آزمون های دانشنامه/گواهینامه و ارتقای رشته های تخصصی دندانپزشکی سال 1405 (zip)"
+      "source_document": "منابع آزمون های دانشنامه/گواهینامه و ارتقای رشته های تخصصی دندانپزشکی سال 1405 (zip)",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "23"
+        },
+        {
+          "number": "24"
+        },
+        {
+          "number": "25"
+        },
+        {
+          "number": "26"
+        },
+        {
+          "number": "27"
+        },
+        {
+          "number": "28"
+        },
+        {
+          "number": "29"
+        },
+        {
+          "number": "30"
+        },
+        {
+          "number": "31"
+        },
+        {
+          "number": "32"
+        },
+        {
+          "number": "33"
+        }
+      ]
     },
     {
       "exam_type": "board",
@@ -71610,7 +71967,108 @@
       "official": true,
       "scope": "کلیه فصول کتاب",
       "evidence": "PDF رسمی سایت سنجش پزشکی (sanjeshp.ir)",
-      "source_document": "منابع آزمون های دانشنامه/گواهینامه و ارتقای رشته های تخصصی دندانپزشکی سال 1405 (zip)"
+      "source_document": "منابع آزمون های دانشنامه/گواهینامه و ارتقای رشته های تخصصی دندانپزشکی سال 1405 (zip)",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "23"
+        },
+        {
+          "number": "24"
+        },
+        {
+          "number": "25"
+        },
+        {
+          "number": "26"
+        },
+        {
+          "number": "27"
+        },
+        {
+          "number": "28"
+        },
+        {
+          "number": "29"
+        },
+        {
+          "number": "30"
+        },
+        {
+          "number": "31"
+        },
+        {
+          "number": "32"
+        },
+        {
+          "number": "33"
+        }
+      ]
     },
     {
       "exam_type": "promotion",
