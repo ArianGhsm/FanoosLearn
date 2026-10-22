@@ -19,7 +19,7 @@ const text = (value) => (typeof value === 'string' ? value.trim() : '');
 
 /**
  * @returns {{exam: ?string, number: ?string, subject: ?string, topic: ?string,
- *   chapter: ?string, chapterEn: ?string, book: ?string, scopeNote: ?string}}
+ *   chapter: ?string, chapterEn: ?string, book: ?string, scopeNote: ?string, referenceNote: ?string}}
  */
 export function questionFacts(question) {
     const bank = question && typeof question.bank === 'object' ? question.bank : null;
@@ -37,6 +37,7 @@ export function questionFacts(question) {
     let chapterEn = null;
     let book = null;
     let scopeNote = null;
+    let referenceNote = null;
     const c = bank?.chapter;
     if (c && typeof c === 'object' && text(c.title) !== '') {
         const label = text(c.number) !== '' ? `فصل ${faDigits(text(c.number))}` : 'فصل';
@@ -44,6 +45,17 @@ export function questionFacts(question) {
         chapter = `${label} · ${fa || text(c.title)}`;
         chapterEn = fa ? text(c.title) : null;
         book = [text(c.book), text(c.edition)].filter((part) => part !== '').join(' · ') || null;
+        const referenceYear = Number.isInteger(c.reference_year) ? c.reference_year : null;
+        if (referenceYear !== null) {
+            const year = faDigits(referenceYear);
+            if (c.classification_basis === 'nearest_verified_edition_proxy') {
+                referenceNote = `نسخهٔ جایگزین از فهرست رسمی ${year} است؛ این ویرایش رسمیِ سال آزمون نیست.`;
+            } else if (c.classification_basis === 'retrospective_proxy_1397_plus') {
+                referenceNote = `استناد بازنگرانه از فهرست رسمی ${year} است؛ رسمیِ سال آزمون نیست.`;
+            } else if (c.classification_basis === 'updated_reference_proxy') {
+                referenceNote = `نسخهٔ به‌روزشده از فهرست رسمی ${year} است؛ رسمیِ سال آزمون نیست.`;
+            }
+        }
         if (c.scope_unverified === true) {
             scopeNote = text(c.official_scope_note) || 'انطباق صفحهٔ منبع با محدودهٔ رسمی آزمون هنوز تأیید نشده است.';
         } else if (c.official_scope_status === 'outside_scope_exam_question') {
@@ -60,5 +72,6 @@ export function questionFacts(question) {
         chapterEn,
         book,
         scopeNote,
+        referenceNote,
     };
 }

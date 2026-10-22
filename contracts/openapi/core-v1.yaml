@@ -698,6 +698,11 @@ components:
                     title: { type: string }
                     title_fa: { type: [string, 'null'] }
                     pdf_page: { type: [integer, 'null'] }
+                    reference_year: { type: [integer, 'null'], description: 'Actual official reference-list year for this cited edition; null for historical rows without audited basis.' }
+                    classification_basis:
+                      type: [string, 'null']
+                      enum: [official_exam_year, retrospective_proxy_1397_plus, updated_reference_proxy, nearest_verified_edition_proxy, null]
+                      description: 'Separates an exam-year official edition from a clearly labeled proxy edition.'
           additionalProperties: false
       additionalProperties: false
     AssessmentAttemptReviewSummary:

@@ -7,7 +7,8 @@ const chapter = { book: 'Endodontics: Principles and Practice', edition: '6th ed
 test('a classified bank question names its exam, year, number and chapter', () => {
     const facts = questionFacts({
         topic: 'طول کارکرد', tags: ['اندودانتیکس'],
-        bank: { exam: 'دستیاری', exam_key: 'residency', year: 1404, round: 1, number: 12, subject: 'اندودانتیکس', chapter },
+        bank: { exam: 'دستیاری', exam_key: 'residency', year: 1404, round: 1, number: 12, subject: 'اندودانتیکس',
+            chapter: { ...chapter, reference_year: 1404, classification_basis: 'official_exam_year' } },
     });
     assert.equal(facts.exam, 'دستیاری ۱۴۰۴');
     assert.equal(facts.number, 'سؤال ۱۲ دفترچه');
@@ -16,6 +17,17 @@ test('a classified bank question names its exam, year, number and chapter', () =
     assert.equal(facts.chapter, 'فصل ۱۴ · پاک‌سازی و شکل‌دهی');
     assert.equal(facts.chapterEn, 'Cleaning and Shaping');
     assert.equal(facts.book, 'Endodontics: Principles and Practice · 6th edition');
+    assert.equal(facts.scopeNote, null);
+    assert.equal(facts.referenceNote, null);
+});
+
+test('a proxy citation names its actual reference year and says it is not exam-year official', () => {
+    const facts = questionFacts({ bank: { exam: 'دستیاری', exam_key: 'residency', year: 1398, round: 1,
+        number: 12, subject: 'اندودانتیکس', chapter: { ...chapter,
+            reference_year: 1406, classification_basis: 'nearest_verified_edition_proxy' } } });
+    assert.match(facts.referenceNote, /نسخهٔ جایگزین/);
+    assert.match(facts.referenceNote, /۱۴۰۶/);
+    assert.match(facts.referenceNote, /رسمیِ سال آزمون نیست/);
     assert.equal(facts.scopeNote, null);
 });
 

@@ -38,6 +38,23 @@ class PublisherSafetyContracts(unittest.TestCase):
         ]:
             self.assertIn(marker, self.service)
 
+    def test_proxy_basis_is_expand_only_and_flows_through_api(self):
+        migration = (ROOT / "database/migrations/0048_bank_source_reference_basis.sql").read_text()
+        self.assertIn("ADD COLUMN reference_year SMALLINT UNSIGNED NULL", migration)
+        self.assertIn("ADD COLUMN classification_basis VARCHAR(48) NULL", migration)
+        self.assertNotIn("DROP COLUMN", migration.upper())
+
+        self.assertIn("official_scope_note,scope_unverified,reference_year,classification_basis,created_at", self.service)
+        self.assertIn("'reference_year' => $src['reference_year']", self.service)
+        self.assertIn("'classification_basis' => $src['classification_basis']", self.service)
+        facts = (ROOT / "apps/platform/src/Bank/BankQuestionFacts.php").read_text()
+        self.assertIn("link.reference_year, link.classification_basis", facts)
+        self.assertIn("'reference_year' => $source['reference_year']", facts)
+        contract = (ROOT / "contracts/openapi/core-v1.yaml").read_text()
+        self.assertIn("reference_year:", contract)
+        self.assertIn("classification_basis:", contract)
+        self.assertIn("facts.referenceNote", (ROOT / "apps/platform/public/assets/web/pages/runner-view.js").read_text())
+
     def test_question_and_answer_preflight(self):
         for marker in ["question !== $original", "realChoices !== $original",
                        "actual !== $original", "status'] !== 'published'"]:

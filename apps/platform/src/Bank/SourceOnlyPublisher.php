@@ -388,9 +388,9 @@ SQL);
 INSERT INTO bank_question_sources
 (id,workspace_id,question_id,edition_id,node_id,page,pdf_page,printed_page,pdf_sha256,anchor_text,
 is_primary,confidence_source,confidence_node,confidence_page,origin,official_scope_status,
-official_scope_note,scope_unverified,created_at)
+official_scope_note,scope_unverified,reference_year,classification_basis,created_at)
 VALUES (:id,:ws,:qid,:edition,:node,:page,:pdf_page,:printed_page,:pdf_sha256,:anchor,
-1,:cs,:cn,:cp,'ai',:scope_status,:scope_note,:scope_unverified,UTC_TIMESTAMP(6))
+1,:cs,:cn,:cp,'ai',:scope_status,:scope_note,:scope_unverified,:reference_year,:classification_basis,UTC_TIMESTAMP(6))
 SQL);
         $db->beginTransaction();
         $count = 0;
@@ -468,6 +468,15 @@ SQL);
                         throw new RuntimeException('Year-specific official syllabus scope is missing this chapter.');
                     }
                 }
+                if (!is_int($src['reference_year'] ?? null)
+                    || $src['reference_year'] < 1390 || $src['reference_year'] > 1500
+                    || !in_array($src['classification_basis'] ?? null, [
+                        'official_exam_year',
+                        'retrospective_proxy_1397_plus',
+                        'updated_reference_proxy',
+                    ], true)) {
+                    throw new RuntimeException('Every source row needs an explicit actual reference year and classification basis.');
+                }
                 $insert->execute([
                     'id' => Uuid::v7(), 'ws' => $workspace, 'qid' => $q['id'],
                     'edition' => $mappedNode['edition_id'], 'node' => $mappedNode['node_id'],
@@ -478,6 +487,8 @@ SQL);
                     'scope_status' => $src['official_scope_status'],
                     'scope_note' => $src['official_scope_note'],
                     'scope_unverified' => $src['scope_unverified'] ? 1 : 0,
+                    'reference_year' => $src['reference_year'],
+                    'classification_basis' => $src['classification_basis'],
                 ]);
                 ++$count;
             }

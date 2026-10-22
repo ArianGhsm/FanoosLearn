@@ -26,7 +26,8 @@ final class BankQuestionFacts
 
     /**
      * @return array{exam:string,exam_key:string,year:int,round:int,number:?int,subject:string,
-     *     chapter:?array{book:string,edition:string,number:?string,title:string,title_fa:?string,pdf_page:?int,official_scope_status:string,official_scope_note:?string,scope_unverified:bool}}|null
+     *     chapter:?array{book:string,edition:string,number:?string,title:string,title_fa:?string,pdf_page:?int,
+     *     reference_year:?int,classification_basis:?string,official_scope_status:string,official_scope_note:?string,scope_unverified:bool}}|null
      */
     public function forQuestion(string $workspaceId, string $questionKey): ?array
     {
@@ -57,12 +58,12 @@ SQL);
         ];
     }
 
-    /** @return array{book:string,edition:string,number:?string,title:string,title_fa:?string,pdf_page:?int,official_scope_status:string,official_scope_note:?string,scope_unverified:bool}|null */
+    /** @return array{book:string,edition:string,number:?string,title:string,title_fa:?string,pdf_page:?int,reference_year:?int,classification_basis:?string,official_scope_status:string,official_scope_note:?string,scope_unverified:bool}|null */
     private function chapter(string $workspaceId, string $questionId): ?array
     {
         $query = $this->database->prepare(<<<'SQL'
 SELECT link.node_id, link.pdf_page, link.official_scope_status, link.official_scope_note,
-       link.scope_unverified,
+       link.scope_unverified, link.reference_year, link.classification_basis,
        reference.title AS book, edition.edition_label
 FROM bank_question_sources link
 JOIN bank_reference_editions edition ON edition.id = link.edition_id
@@ -99,6 +100,8 @@ SQL);
             'title' => (string) $node['title'],
             'title_fa' => $node['title_fa'] === null || $node['title_fa'] === '' ? null : (string) $node['title_fa'],
             'pdf_page' => $source['pdf_page'] === null ? null : (int) $source['pdf_page'],
+            'reference_year' => $source['reference_year'] === null ? null : (int) $source['reference_year'],
+            'classification_basis' => $source['classification_basis'] === null ? null : (string) $source['classification_basis'],
             'official_scope_status' => (string) $source['official_scope_status'],
             'official_scope_note' => $source['official_scope_note'] === null ? null : (string) $source['official_scope_note'],
             'scope_unverified' => (bool) $source['scope_unverified'],

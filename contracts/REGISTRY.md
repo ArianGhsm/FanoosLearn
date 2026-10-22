@@ -4,7 +4,7 @@ This registry identifies shared contracts that must not change silently during p
 
 | Contract | Version / source | Owner | Consumers | Stability | Change responsibility |
 | --- | --- | --- | --- | --- | --- |
-| Public/core HTTP API | `contracts/openapi/core-v1.yaml` / v1 | Platform API integration owner | Web/human clients, tests | Stable v1; backward-compatible additions preferred | Integration/baseline stage |
+| Public/core HTTP API | `contracts/openapi/core-v1.yaml` / v1 | Platform API integration owner | Web/human clients, tests | Stable v1; backward-compatible additions preferred; bank chapter facts may include nullable reference-year and classification-basis fields | Integration/baseline stage |
 | Internal service HTTP API | `contracts/openapi/internal-v1.yaml` / v1.1 | Platform integration owner | Telegram, Bale, notification/protected-media workers, updater-facing adapters | Stage 7 frozen; compatible additions require integration review | Integration/baseline stage |
 | Service request authentication | `fanoos-service-v1` canonical string + SQL service identity/nonce ledger | Security/integration | All `/api/internal/v1/*` callers | Frozen signing semantics; key rotation is runtime metadata | Integration/security owner |
 | Messaging account linking | `07_PLATFORM_BACKEND_CONTRACTS.md` + messaging SQL/service | Identity/Messaging integration | Telegram, Bale, human linking UI | One-time challenge + canonical-user binding invariant | Integration/baseline stage |
