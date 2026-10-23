@@ -9,12 +9,25 @@ from unittest.mock import patch
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / 'scripts' / 'references'))
 import build_chapter_pages as chapter_pages  # noqa: E402
-from build_chapter_pages import bookmark_openings, documented_openings, locate, openings, words  # noqa: E402
+from build_chapter_pages import bookmark_openings, chapter_opening_matches, documented_openings, locate, openings, words  # noqa: E402
 from apply_classification import flat  # noqa: E402
 from find_in_books import page_score, quote_page, search_edition  # noqa: E402
 
 
 class ChapterPagesTest(unittest.TestCase):
+    def test_documented_numeric_chapter_opening_without_chapter_label(self):
+        self.assertTrue(chapter_opening_matches(
+            '4\nPatient assessment, examination, diagnosis, and treatment\n'
+            'planning\nAuthor Name',
+            '4',
+            'Patient assessment, examination, diagnosis, and treatment planning',
+        ))
+        self.assertFalse(chapter_opening_matches(
+            'References\n4. A citation mentions the title\nUnrelated body text',
+            '4',
+            'Patient assessment, examination, diagnosis, and treatment planning',
+        ))
+
     def test_persian_running_heads_anchor_every_chapter(self):
         pages = [
             (1, 'فهرست\n19........: فصل 1'),

@@ -1647,6 +1647,58 @@
     ]
    ]
   },
+  "dawson-functional-occlusion@1e": {
+   "source": "verified server PDF chapter-opening pages, physical PDF pages 11-603",
+   "chapters": [
+    ["1", "The Concept of Complete Dentistry"],
+    ["2", "Perspectives on Occlusion and “Everyday Dentistry”"],
+    ["3", "Occlusal Disease"],
+    ["4", "The Determinants of Occlusion"],
+    ["5", "The Temporomandibular Joint"],
+    ["6", "The Masticatory Musculature"],
+    ["7", "Centric Relation"],
+    ["8", "Adapted Centric Posture"],
+    ["9", "Determining Centric Relation"],
+    ["10", "Load Testing for Verification of Centric Relation"],
+    ["11", "Recording Centric Relation"],
+    ["12", "Classification of Occlusions"],
+    ["13", "Vertical Dimension"],
+    ["14", "The Neutral Zone"],
+    ["15", "The Envelope of Function"],
+    ["16", "Functional Smile Design"],
+    ["17", "Anterior Guidance and Its Relationship to Smile Design"],
+    ["18", "Restoring Lower Anterior Teeth"],
+    ["19", "Long Centric"],
+    ["20", "The Plane of Occlusion"],
+    ["21", "Posterior Occlusion"],
+    ["22", "Simplifying Instrumentation for Occlusal Analysis and Treatment"],
+    ["23", "Differential Diagnosis of Temporomandibular Disorders"],
+    ["24", "Occluso-Muscle Disorders"],
+    ["25", "Intracapsular Disorders of the TMJ"],
+    ["26", "Classification of Intracapsular Disorders"],
+    ["27", "Imaging the TMJs"],
+    ["28", "Bruxism"],
+    ["29", "Requirements for Occlusal Stability"],
+    ["30", "Solving Occlusal Problems Through Programmed Treatment Planning"],
+    ["31", "The Diagnostic Wax-up"],
+    ["32", "Occlusal Splints"],
+    ["33", "Occlusal Equilibration"],
+    ["34", "Neuromuscular Dentistry: Bioelectronic Instrumentation"],
+    ["35", "Solving Occlusal Wear Problems"],
+    ["36", "Solving Deep Overbite Problems"],
+    ["37", "Solving Anterior Overjet Problems"],
+    ["38", "Solving Anterior Open Bite Problems"],
+    ["39", "Treating End-to-End Occlusions"],
+    ["40", "Treating Splayed or Separated Anterior Teeth"],
+    ["41", "Treating the Crossbite Patient"],
+    ["42", "Treating Crowded, Irregular, or Interlocking Anterior Teeth"],
+    ["43", "Solving Severe Arch Malrelationship Problems"],
+    ["44", "Using Cephalometrics for Occlusal Analysis"],
+    ["45", "Postoperative Care of Occlusal Therapy Patients"],
+    ["46", "The Technological Future for Occlusal Restoration"],
+    ["47", "Criteria for Success of Occlusal Treatment"]
+   ]
+  },
   "goldstein-esthetics@3e": {
    "source": "https://www.wiley-vch.de/en/areas-interest/medicine-health-care/dentistry-14dn/restorative-dentistry-14dn1/esthetic-dentistry-14dn14/ronald-e-goldstein-39-s-esthetics-in-dentistry-978-1-119-27283-0",
    "chapters": [
@@ -4554,6 +4606,79 @@
     ]
    ]
   },
+  "sturdevant-operative@8e": {
+   "source": "verified server PDF table of contents, physical PDF pages 4-9",
+   "chapters": [
+    [
+     "1",
+     "Clinical significance of dental anatomy, histology, physiology, and occlusion"
+    ],
+    [
+     "2",
+     "Dental caries: Etiology, clinical characteristics, risk assessment, and management"
+    ],
+    [
+     "3",
+     "Preliminary considerations for operative dentistry"
+    ],
+    [
+     "4",
+     "Patient assessment, examination, diagnosis, and treatment planning"
+    ],
+    [
+     "5",
+     "Tooth preparation: Concepts, instrumentation, and stages"
+    ],
+    [
+     "6",
+     "Fundamental concepts of enamel and dentin adhesion"
+    ],
+    [
+     "7",
+     "Photo-activated polymerization of restorative materials"
+    ],
+    [
+     "8",
+     "Color and shade matching in operative dentistry"
+    ],
+    [
+     "9",
+     "Clinical technique for direct composite resin and glass ionomer restorations"
+    ],
+    [
+     "10",
+     "Conservative esthetic procedures"
+    ],
+    [
+     "11",
+     "Clinical technique for amalgam restorations"
+    ],
+    [
+     "12",
+     "Periodontology applied to restorative dentistry"
+    ],
+    [
+     "13",
+     "Endodontics applied to operative dentistry"
+    ],
+    [
+     "14",
+     "Digital dentistry in operative dentistry"
+    ],
+    [
+     "15",
+     "Dental biomaterials"
+    ],
+    [
+     "16",
+     "Direct gold restorations"
+    ],
+    [
+     "17",
+     "Class II cast-metal restorations"
+    ]
+   ]
+  },
   "summit-operative@4e": {
    "source": "https://www.quintessence-publishing.com/usa/en/product-info/814644/fundamentals-of-operative-dentistry (publisher info sheet PDF, Contents)",
    "chapters": [
@@ -5323,6 +5448,44 @@
      "33",
      "Forensics"
     ]
+   ]
+  },
+  "white-pharoah-radiology@9e": {
+   "source": "verified server PDF table of contents, physical PDF page 11",
+   "chapters": [
+    ["1", "Physics"],
+    ["2", "Biologic Effects of Ionizing Radiation"],
+    ["3", "Safety and Protection"],
+    ["4", "Image Receptors"],
+    ["5", "Projection Geometry"],
+    ["6", "Intraoral Projections"],
+    ["7", "Cephalometric and Skull Imaging"],
+    ["8", "Panoramic Imaging"],
+    ["9", "Computed Tomography"],
+    ["10", "Magnetic Resonance Imaging"],
+    ["11", "Nuclear Medicine"],
+    ["12", "Ultrasound Imaging"],
+    ["13", "Radiographic Anatomy"],
+    ["14", "Quality Assurance and Infection Control"],
+    ["15", "Prescribing Diagnostic Imaging"],
+    ["16", "Principles of Radiographic Interpretation"],
+    ["17", "Dental Caries"],
+    ["18", "Periodontal Diseases"],
+    ["19", "Dental Anomalies"],
+    ["20", "Inflammatory Conditions of the Jaws"],
+    ["21", "Cysts"],
+    ["22", "Benign Tumors and Neoplasms"],
+    ["23", "Diseases Affecting the Structure of Bone"],
+    ["24", "Malignant Neoplasms"],
+    ["25", "Trauma"],
+    ["26", "Paranasal Sinus Abnormalities"],
+    ["27", "Craniofacial Anomalies"],
+    ["28", "Temporomandibular Joint Abnormalities"],
+    ["29", "Soft Tissue Calcifications and Ossifications"],
+    ["30", "Salivary Gland Diseases"],
+    ["31", "Dental Implants"],
+    ["32", "Beyond Three-Dimensional Imaging"],
+    ["33", "Forensics"]
    ]
   },
   "zarb-edentulous@13e": {

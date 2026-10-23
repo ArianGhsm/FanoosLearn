@@ -277,7 +277,57 @@
       "backmatter_pdf_start": 258
     },
     "dawson-functional-occlusion@1e": {
-      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+      "pdf": "verified-server-pdf",
+      "chapter_pdf_starts": {
+        "1": 11,
+        "2": 19,
+        "3": 25,
+        "4": 35,
+        "5": 41,
+        "6": 53,
+        "7": 65,
+        "8": 77,
+        "9": 83,
+        "10": 93,
+        "11": 99,
+        "12": 111,
+        "13": 121,
+        "14": 139,
+        "15": 149,
+        "16": 157,
+        "17": 167,
+        "18": 185,
+        "19": 197,
+        "20": 207,
+        "21": 215,
+        "22": 241,
+        "23": 267,
+        "24": 273,
+        "25": 285,
+        "26": 315,
+        "27": 329,
+        "28": 341,
+        "29": 353,
+        "30": 357,
+        "31": 373,
+        "32": 387,
+        "33": 401,
+        "34": 427,
+        "35": 437,
+        "36": 461,
+        "37": 475,
+        "38": 487,
+        "39": 501,
+        "40": 509,
+        "41": 521,
+        "42": 533,
+        "43": 555,
+        "44": 573,
+        "45": 585,
+        "46": 589,
+        "47": 603
+      },
+      "backmatter_pdf_start": 611
     },
     "fonseca-oral-surgery@3e": {
       "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
@@ -367,7 +417,27 @@
       "pdf": "verified-server-pdf"
     },
     "sturdevant-operative@8e": {
-      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+      "pdf": "verified-server-pdf",
+      "chapter_pdf_starts": {
+        "1": 56,
+        "2": 105,
+        "3": 180,
+        "4": 214,
+        "5": 245,
+        "6": 280,
+        "7": 328,
+        "8": 375,
+        "9": 401,
+        "10": 458,
+        "11": 514,
+        "12": 577,
+        "13": 602,
+        "14": 653,
+        "15": 679,
+        "16": 749,
+        "17": 777
+      },
+      "backmatter_pdf_start": 843
     },
     "taylor-maxillofacial-prosthetics@1e": {
       "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
@@ -379,7 +449,43 @@
       "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
     },
     "white-pharoah-radiology@9e": {
-      "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
+      "pdf": "verified-server-pdf",
+      "chapter_pdf_starts": {
+        "1": 15,
+        "2": 31,
+        "3": 43,
+        "4": 59,
+        "5": 99,
+        "6": 107,
+        "7": 139,
+        "8": 151,
+        "9": 169,
+        "10": 199,
+        "11": 217,
+        "12": 231,
+        "13": 235,
+        "14": 271,
+        "15": 285,
+        "16": 293,
+        "17": 309,
+        "18": 323,
+        "19": 337,
+        "20": 369,
+        "21": 389,
+        "22": 411,
+        "23": 451,
+        "24": 481,
+        "25": 507,
+        "26": 533,
+        "27": 553,
+        "28": 565,
+        "29": 597,
+        "30": 611,
+        "31": 625,
+        "32": 651,
+        "33": 659
+      },
+      "backmatter_pdf_start": 664
     },
     "woo-oral-pathology@3e": {
       "missing": "No approved, verified private PDF for this exact edition was present in the 2026-10-10 live reference inventory; keep pending and do not substitute a nearest edition."
