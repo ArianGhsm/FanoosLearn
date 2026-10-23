@@ -24,7 +24,9 @@ final class SourceOnlyPublisher
     public static function run(
         PDO $db, string $workspace, int $year, string $subject,
         array $study, array $validated, array $decisions, bool $apply,
+        ?array &$readbackEvidence = null,
     ): int {
+        $readbackEvidence = [];
         $retrospective = $year >= 1300 && $year < 1396;
         $nearestSameLineageProxyYear = $year >= 1396 && $year <= 1398;
         $updated1397Subjects = ['community-dentistry', 'dental-materials', 'endodontics',
@@ -420,8 +422,7 @@ final class SourceOnlyPublisher
                 'classification_basis' => $classificationBasis,
                 'classification_note' => $classificationNote,
                 'reference_subject' => $referenceSubject,
-                'official_scope_status' => $updatedReferenceProxy
-                    ? 'outside_scope_exam_question' : 'in_scope',
+                'official_scope_status' => self::effectiveScopeStatus($updatedReferenceProxy),
                 'official_scope_note' => $updatedReferenceProxy
                     ? (string) $d['updated_reference_note'] : null,
                 'scope_unverified' => false];
@@ -431,7 +432,7 @@ final class SourceOnlyPublisher
             throw new RuntimeException('Study completeness or accepted count mismatch.');
         }
         $get = $db->prepare(<<<'SQL'
-SELECT q.id,q.stem,q.status FROM bank_questions q
+SELECT q.id,q.question_key,q.stem,q.stem_image,q.status FROM bank_questions q
 JOIN bank_exam_sittings si ON si.id=q.sitting_id AND si.workspace_id=q.workspace_id
 JOIN bank_exam_types et ON et.id=si.exam_type_id AND et.workspace_id=q.workspace_id
 JOIN bank_subjects sb ON sb.id=q.subject_id AND sb.workspace_id=q.workspace_id
@@ -502,6 +503,16 @@ SQL);
                 if ($actual !== $original[$n]['answer']) {
                     throw new RuntimeException('Published answer differs from reviewed study.');
                 }
+                $readbackEvidence[$n] = self::digest([
+                    'number' => $n,
+                    'question_key' => (string) $q['question_key'],
+                    'status' => (string) $q['status'],
+                    'stem' => (string) $q['stem'],
+                    'stem_image_sha256' => $q['stem_image'] === null
+                        ? null : hash('sha256', (string) $q['stem_image']),
+                    'choices' => $realChoices,
+                    'answer' => $actual,
+                ]);
                 if ($voidedDraftCandidate
                     && ($actual['choice'] !== null || $actual['status'] !== 'voided')) {
                     throw new RuntimeException('Voided Q97 must retain its null-choice voided official answer.');
@@ -583,7 +594,7 @@ SQL);
      */
     public static function readback(
         PDO $db, string $workspace, int $year, string $subject,
-        array $study, array $validated,
+        array $study, array $validated, array $readbackEvidence,
     ): array {
         if ($db->inTransaction()) {
             throw new RuntimeException('Post-commit readback requires a fresh connection outside a transaction.');
@@ -620,7 +631,7 @@ SQL);
         }
 
         $questionQuery = $db->prepare(<<<'SQL'
-SELECT q.id,q.question_key,q.number_in_sitting,q.stem,q.status
+SELECT q.id,q.question_key,q.number_in_sitting,q.stem,q.stem_image,q.status
 FROM bank_questions q
 JOIN bank_exam_sittings si ON si.id=q.sitting_id AND si.workspace_id=q.workspace_id
 JOIN bank_exam_types et ON et.id=si.exam_type_id AND et.workspace_id=q.workspace_id
@@ -664,6 +675,8 @@ SQL);
                 'stem' => $question['stem'] ?? null,
                 'choices' => $question['choices'] ?? null,
                 'answer' => $question['answer'] ?? null,
+                'live_fingerprint_sha256' => $hasExpectedSource
+                    ? ($readbackEvidence[$number] ?? null) : null,
             ];
 
             $questionQuery->execute(['ws' => $workspace, 'yr' => $year, 'sub' => $subject, 'num' => $number]);
@@ -689,6 +702,16 @@ SQL);
                     ? json_decode((string) $siteAnswer['also_correct_positions'], true, 32, JSON_THROW_ON_ERROR) : [],
                 'status' => (string) $siteAnswer['status'],
             ] : null;
+            $actualLiveFingerprint = self::digest([
+                'number' => $number,
+                'question_key' => (string) $siteQuestion['question_key'],
+                'status' => (string) $siteQuestion['status'],
+                'stem' => (string) $siteQuestion['stem'],
+                'stem_image_sha256' => $siteQuestion['stem_image'] === null
+                    ? null : hash('sha256', (string) $siteQuestion['stem_image']),
+                'choices' => $siteChoices,
+                'answer' => $actualAnswer,
+            ]);
             $actualQuestions[] = [
                 'number' => $number,
                 'question_key' => (string) $siteQuestion['question_key'],
@@ -696,6 +719,7 @@ SQL);
                 'stem' => (string) $siteQuestion['stem'],
                 'choices' => $siteChoices,
                 'answer' => $actualAnswer,
+                'live_fingerprint_sha256' => $hasExpectedSource ? $actualLiveFingerprint : null,
             ];
 
             $expectedForQuestion = $validatedByNumber[$number] ?? [];
@@ -759,6 +783,7 @@ SQL);
         );
         $expectedSourceHash = self::digest($withoutIds($expectedSources));
         $actualSourceHash = self::digest($withoutIds($actualSources));
+        $sourceFieldMismatches = self::sourceFieldMismatches($expectedSources, $actualSources);
         $checks = [
             'question_row_count' => count($expectedQuestions) === count($actualQuestions),
             'question_key_content_fingerprint' => hash_equals($expectedQuestionHash, $actualQuestionHash),
@@ -778,6 +803,7 @@ SQL);
             'source_rows' => count($actualSources),
             'expected_source_fields_sha256' => $expectedSourceHash,
             'source_fields_sha256' => $actualSourceHash,
+            'source_field_mismatches' => $sourceFieldMismatches,
             'checks' => $checks,
         ];
     }
@@ -804,15 +830,50 @@ SQL);
             'confidence_source' => isset($confidence['source']) ? number_format((float) $confidence['source'], 4, '.', '') : null,
             'confidence_node' => isset($confidence['node']) ? number_format((float) $confidence['node'], 4, '.', '') : null,
             'confidence_page' => isset($confidence['page']) ? number_format((float) $confidence['page'], 4, '.', '') : null,
-            'official_scope_status' => $source['official_scope_status'] ?? null,
+            'official_scope_status' => $source['official_scope_status']
+                ?? self::effectiveScopeStatus(($source['classification_basis'] ?? null) === 'updated_reference_proxy'),
             'official_scope_note_sha256' => isset($source['official_scope_note'])
                 ? hash('sha256', (string) $source['official_scope_note']) : null,
-            'scope_unverified' => (bool) ($source['scope_unverified'] ?? false),
+            'scope_unverified' => false,
         ];
+    }
+
+    /** @return list<array{number: int|null, fields: list<string>}> */
+    private static function sourceFieldMismatches(array $expected, array $actual): array
+    {
+        $out = [];
+        $length = max(count($expected), count($actual));
+        for ($index = 0; $index < $length; ++$index) {
+            if (!isset($expected[$index]) || !isset($actual[$index])) {
+                $row = $expected[$index] ?? $actual[$index] ?? [];
+                $out[] = ['number' => isset($row['number']) ? (int) $row['number'] : null, 'fields' => ['row_count']];
+                continue;
+            }
+            $expectedRow = $expected[$index];
+            $actualRow = $actual[$index];
+            unset($expectedRow['source_id'], $actualRow['source_id']);
+            $fields = [];
+            foreach (array_unique(array_merge(array_keys($expectedRow), array_keys($actualRow))) as $field) {
+                if (($expectedRow[$field] ?? null) !== ($actualRow[$field] ?? null)
+                    || array_key_exists($field, $expectedRow) !== array_key_exists($field, $actualRow)) {
+                    $fields[] = (string) $field;
+                }
+            }
+            if ($fields !== []) {
+                sort($fields, SORT_STRING);
+                $out[] = ['number' => (int) ($expectedRow['number'] ?? $actualRow['number'] ?? 0), 'fields' => $fields];
+            }
+        }
+        return $out;
     }
 
     private static function digest(array $value): string
     {
         return hash('sha256', json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+    }
+
+    private static function effectiveScopeStatus(bool $updatedReferenceProxy): string
+    {
+        return $updatedReferenceProxy ? 'outside_scope_exam_question' : 'in_scope';
     }
 }

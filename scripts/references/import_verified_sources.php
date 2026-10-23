@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Fanoos\Platform\Bank\SourceOnlyPublisher;
 use Fanoos\Platform\Operations\BackupManifest;
+use Fanoos\Platform\Operations\AtomicPrivateReceipt;
 use Fanoos\Platform\Support\DatabaseConnection;
 
 /**
@@ -259,9 +260,10 @@ try {
     if (!is_string($receiptAuditSha) || !is_string($receiptValidatedSha)) {
         throw new RuntimeException('Pinned receipt input digest could not be read before publication.');
     }
+    $readbackEvidence = null;
     $written = SourceOnlyPublisher::run(
         DatabaseConnection::fromEnvironment(), $ws, $year, $subject,
-        $study, $validated, $decisions, $apply,
+        $study, $validated, $decisions, $apply, $readbackEvidence,
     );
     $receiptData = [
         'format' => 'fanoos.source-only-receipt/1',
@@ -281,7 +283,8 @@ try {
         $receiptData['completed_at_utc'] = gmdate('Y-m-d\TH:i:s\Z');
         try {
             $readback = SourceOnlyPublisher::readback(
-                DatabaseConnection::fromEnvironment(), $ws, $year, $subject, $study, $validated,
+                DatabaseConnection::fromEnvironment(), $ws, $year, $subject,
+                $study, $validated, $readbackEvidence ?? [],
             );
             if ($written !== $expected) {
                 $readback['verified'] = false;
@@ -300,26 +303,7 @@ try {
         $receiptData['reconciliation_required'] = $receiptData['status'] !== 'applied_verified';
         $encodedReceipt = json_encode($receiptData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n";
         $file = (string) $args['receipt'];
-        $handle = @fopen($file, 'x');
-        if ($handle === false) {
-            throw new RuntimeException('Database commit returned but its unique receipt could not be created. Reconcile backup and database before any retry.');
-        }
-        chmod($file, 0600);
-        $offset = 0;
-        try {
-            while ($offset < strlen($encodedReceipt)) {
-                $size = fwrite($handle, substr($encodedReceipt, $offset));
-                if ($size === false || $size === 0) {
-                    throw new RuntimeException('Receipt write failed.');
-                }
-                $offset += $size;
-            }
-            if (!fflush($handle)) {
-                throw new RuntimeException('Receipt flush failed.');
-            }
-        } finally {
-            fclose($handle);
-        }
+        AtomicPrivateReceipt::publish($file, $encodedReceipt);
         if (($readback['verified'] ?? false) !== true) {
             throw new RuntimeException('Database commit returned but independent readback did not verify it. Manual reconciliation is required; do not retry or roll back blindly.');
         }

@@ -69,7 +69,7 @@ class SourceClassificationProvenanceTests(unittest.TestCase):
         run_at = operator.index("SourceOnlyPublisher::run(")
         readback_at = operator.index("SourceOnlyPublisher::readback(")
         verified_at = operator.index("'applied_verified'")
-        receipt_at = operator.index("fopen($file, 'x')")
+        receipt_at = operator.index("AtomicPrivateReceipt::publish(")
         self.assertLess(run_at, readback_at)
         self.assertLess(readback_at, verified_at)
         self.assertLess(verified_at, receipt_at)
@@ -77,10 +77,15 @@ class SourceClassificationProvenanceTests(unittest.TestCase):
         for marker in [
             "source_row_ids", "source_rows_sha256", "question_key_fingerprint_sha256",
             "classification_basis", "classification_note", "pdf_sha256",
-            "manual_reconciliation_required", "do not retry or roll back blindly",
+            "source_field_mismatches", "stem_image_sha256", "manual_reconciliation_required",
+            "do not retry or roll back blindly",
         ]:
             self.assertIn(marker, operator + publisher)
         self.assertIn("readback_error_code", operator)
+        receipt_writer = (ROOT / "apps/platform/src/Operations/AtomicPrivateReceipt.php").read_text()
+        self.assertIn("tempnam($directory, '.source-only-receipt-')", receipt_writer)
+        self.assertIn("link($from, $to)", receipt_writer)
+        self.assertIn("finally", receipt_writer)
 
     def test_generic_full_sitting_importer_refuses_unpersisted_provenance_payloads(self):
         importer = (ROOT / "apps/platform/src/Bank/BankImporter.php").read_text()

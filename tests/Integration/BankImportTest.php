@@ -23,6 +23,7 @@ use Fanoos\Platform\Content\StudyPlanService;
 use Fanoos\Platform\Core\ClassProvisioningService;
 use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Support\PlatformException;
+use Fanoos\Platform\Support\DatabaseConnection;
 use Fanoos\Platform\Support\Uuid;
 use PDO;
 use RuntimeException;
@@ -126,42 +127,65 @@ final class BankImportTest
         $this->assert($pages->fetch(PDO::FETCH_ASSOC) == ['pdf_page' => 271, 'printed_page' => '256', 'page' => '256'], 'The source page fields were not stored apart.');
         $this->assert($this->scalar('SELECT x.source_pdf_page FROM bank_explanations x JOIN bank_questions q ON q.id = x.question_id WHERE q.question_key = :key AND x.is_current = TRUE', ['key' => $key]) === 271, 'The explanation does not record the page it was written from.');
 
-        // The production operator uses this verifier after a committed source
-        // insert. Exercise its exact-batch SQL projection only on this
-        // isolated integration database; these generic-import fixture rows
-        // intentionally retain NULL classification provenance.
+        // Exercise the production commit + independent readback only on this
+        // isolated integration database. The source intentionally omits
+        // official_scope_status so the test covers the writer's in_scope default.
         $this->database->prepare("UPDATE bank_questions SET status='published' WHERE workspace_id=:ws AND question_key LIKE 'residency-1404-1-%'")
             ->execute(['ws' => $ws]);
-        $study = $sitting;
-        $validated = $sitting;
-        foreach ($study['questions'] as &$studyQuestion) {
-            unset($studyQuestion['sources']);
-            $answer = $studyQuestion['answer'];
-            $studyQuestion['answer'] = [
-                'choice' => $answer['choice'] ?? null,
-                'also_correct' => $answer['also_correct'] ?? [],
-                'status' => $answer['status'],
-            ];
-        }
-        unset($studyQuestion);
-        foreach ($validated['questions'] as &$validatedQuestion) {
-            $answer = $validatedQuestion['answer'];
-            $validatedQuestion['answer'] = [
-                'choice' => $answer['choice'] ?? null,
-                'also_correct' => $answer['also_correct'] ?? [],
-                'status' => $answer['status'],
-            ];
-            foreach ($validatedQuestion['sources'] as &$source) {
-                $source['official_scope_status'] = 'in_scope';
-                $source['official_scope_note'] = null;
-                $source['scope_unverified'] = false;
-            }
-            unset($source);
-        }
-        unset($validatedQuestion);
-        $readback = SourceOnlyPublisher::readback($this->database, $ws, 1404, 'endodontics', $study, $validated);
-        $this->assert($readback['verified'] === true && $readback['source_rows'] === 2
-            && count($readback['source_row_ids']) === 2
+        $q1Id = $this->database->prepare('SELECT id FROM bank_questions WHERE workspace_id=:ws AND question_key=:key');
+        $q1Id->execute(['ws' => $ws, 'key' => $key]);
+        $sourceQuestionId = (string) $q1Id->fetchColumn();
+        $this->database->prepare('DELETE FROM bank_question_sources WHERE workspace_id=:ws AND question_id=:qid')
+            ->execute(['ws' => $ws, 'qid' => $sourceQuestionId]);
+        $this->database->prepare("UPDATE bank_questions SET stem_image='test-fixture/stem-original.png' WHERE workspace_id=:ws AND id=:qid")
+            ->execute(['ws' => $ws, 'qid' => $sourceQuestionId]);
+        $this->database->prepare("UPDATE bank_question_choices SET image='test-fixture/choice-original.png' WHERE workspace_id=:ws AND question_id=:qid AND position=1")
+            ->execute(['ws' => $ws, 'qid' => $sourceQuestionId]);
+        $studyQuestion = $sitting['questions'][0];
+        $studyChoices = $studyQuestion['choices'];
+        $studyChoices[0] = ['text' => $studyChoices[0], 'image' => 'test-fixture/choice-original.png'];
+        $studyAnswer = $studyQuestion['answer'];
+        $studyQuestion = [
+            'number' => 1,
+            'subject' => 'endodontics',
+            'stem' => $studyQuestion['stem'],
+            'choices' => $studyChoices,
+            'answer' => [
+                'choice' => $studyAnswer['choice'] ?? null,
+                'also_correct' => $studyAnswer['also_correct'] ?? [],
+                'status' => $studyAnswer['status'],
+            ],
+        ];
+        $study = [
+            'format' => 'fanoos.classification.study-only/1',
+            'exam_type' => 'residency', 'year' => 1404, 'round' => 1,
+            'questions' => [$studyQuestion],
+        ];
+        $source = [
+            'ref' => 'torabinejad@6e#ch14',
+            'page' => 'pdf 271', 'pdf_page' => 271, 'printed_page' => '256',
+            'pdf_sha256' => str_repeat('a', 64), 'anchor' => 'Working Length Determination',
+            'primary' => true, 'origin' => 'ai',
+            'confidence' => ['source' => 0.9, 'node' => 0.9, 'page' => 0.9],
+            'reference_year' => 1404, 'classification_basis' => 'official_exam_year',
+            'classification_note' => null,
+        ];
+        $validated = $study;
+        $validated['questions'][0]['sources'] = [$source];
+        $decisions = [[
+            'number' => 1, 'edition' => 'torabinejad@6e', 'chapter' => '14',
+            'page' => 271, 'evidence' => $source['anchor'], 'confidence' => 0.9,
+        ]];
+        $readbackEvidence = null;
+        $written = SourceOnlyPublisher::run(
+            $this->database, $ws, 1404, 'endodontics', $study, $validated, $decisions, true, $readbackEvidence,
+        );
+        $readbackDatabase = DatabaseConnection::fromEnvironment();
+        $readback = SourceOnlyPublisher::readback(
+            $readbackDatabase, $ws, 1404, 'endodontics', $study, $validated, $readbackEvidence,
+        );
+        $this->assert($written === 1 && $readback['verified'] === true && $readback['source_rows'] === 1
+            && count($readback['source_row_ids']) === 1
             && preg_match('/^[a-f0-9]{64}$/D', $readback['source_rows_sha256']) === 1,
             'Independent source-row/question readback did not verify its committed test fixture: '
                 . json_encode($readback, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
@@ -169,17 +193,36 @@ final class BankImportTest
         $changedProvenance['questions'][0]['sources'][0]['reference_year'] = 1397;
         $changedProvenance['questions'][0]['sources'][0]['classification_basis'] = 'nearest_same_lineage_proxy';
         $changedProvenance['questions'][0]['sources'][0]['classification_note'] = 'test-only proxy metadata must be read back';
-        $badReadback = SourceOnlyPublisher::readback($this->database, $ws, 1404, 'endodontics', $study, $changedProvenance);
+        $badReadback = SourceOnlyPublisher::readback(
+            $readbackDatabase, $ws, 1404, 'endodontics', $study, $changedProvenance, $readbackEvidence,
+        );
         $this->assert($badReadback['verified'] === false
             && in_array('source_provenance_rows', $badReadback['mismatches'], true),
             'A reference-year/basis/note mismatch passed independent database readback.');
 
-        $this->database->prepare(<<<'SQL'
-UPDATE bank_question_sources s
-JOIN bank_questions q ON q.id=s.question_id AND q.workspace_id=s.workspace_id
-SET s.reference_year=1404,s.classification_basis='official_exam_year'
-WHERE q.workspace_id=:ws AND q.question_key=:key
-SQL)->execute(['ws' => $ws, 'key' => $key]);
+        $this->database->prepare("UPDATE bank_questions SET stem_image='test-fixture/stem-changed.png' WHERE workspace_id=:ws AND id=:qid")
+            ->execute(['ws' => $ws, 'qid' => $sourceQuestionId]);
+        $changedStemImage = SourceOnlyPublisher::readback(
+            $readbackDatabase, $ws, 1404, 'endodontics', $study, $validated, $readbackEvidence,
+        );
+        $this->assert($changedStemImage['verified'] === false
+            && in_array('question_key_content_fingerprint', $changedStemImage['mismatches'], true),
+            'A changed stem-image reference passed the immutable question fingerprint.');
+        $this->database->prepare("UPDATE bank_questions SET stem_image='test-fixture/stem-original.png' WHERE workspace_id=:ws AND id=:qid")
+            ->execute(['ws' => $ws, 'qid' => $sourceQuestionId]);
+        $this->database->prepare("UPDATE bank_question_choices SET image='test-fixture/choice-changed.png' WHERE workspace_id=:ws AND question_id=:qid AND position=1")
+            ->execute(['ws' => $ws, 'qid' => $sourceQuestionId]);
+        $changedChoiceImage = SourceOnlyPublisher::readback(
+            $readbackDatabase, $ws, 1404, 'endodontics', $study, $validated, $readbackEvidence,
+        );
+        $this->assert($changedChoiceImage['verified'] === false
+            && in_array('question_key_content_fingerprint', $changedChoiceImage['mismatches'], true),
+            'A changed choice-image reference passed the immutable question fingerprint.');
+        $this->database->prepare('UPDATE bank_question_choices SET image=NULL WHERE workspace_id=:ws AND question_id=:qid AND position=1')
+            ->execute(['ws' => $ws, 'qid' => $sourceQuestionId]);
+        $this->database->prepare('UPDATE bank_questions SET stem_image=NULL WHERE workspace_id=:ws AND id=:qid')
+            ->execute(['ws' => $ws, 'qid' => $sourceQuestionId]);
+
         try {
             $importer->import($ws, $sitting);
             $this->assert(false, 'A generic full-sitting re-import replaced an audited source row.');
@@ -194,8 +237,6 @@ SQL)->execute(['ws' => $ws, 'key' => $key]);
             'classification_basis' => 'official_exam_year',
             'classification_note' => null,
         ], 'A refused generic re-import did not preserve audited source provenance.');
-        $this->database->prepare('UPDATE bank_question_sources SET reference_year=NULL,classification_basis=NULL,classification_note=NULL WHERE workspace_id=:ws AND question_id=(SELECT id FROM bank_questions WHERE workspace_id=:ws2 AND question_key=:key)')
-            ->execute(['ws' => $ws, 'ws2' => $ws, 'key' => $key]);
 
         // The 1403-only writer's exact source-row compare-and-swap works on the
         // isolated integration DB. Roll back the fixture after verifying that

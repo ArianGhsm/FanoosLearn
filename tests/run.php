@@ -45,6 +45,7 @@ use Fanoos\Tests\Integration\BotPlatformHandoffTest;
 use Fanoos\Tests\Integration\ProtectedMediaForensicTest;
 use Fanoos\Tests\Integration\Stage8FinalClosureTest;
 use Fanoos\Tests\Operations\BackupContractTest;
+use Fanoos\Tests\Operations\AtomicPrivateReceiptTest;
 use Fanoos\Tests\Operations\EngagementCalendarTest;
 use Fanoos\Tests\Operations\FarazSmsGatewayTest;
 use Fanoos\Tests\Operations\ExamRankingTest;
@@ -108,6 +109,8 @@ try {
     echo "PASS exam-image temporary staging cleanup\n";
     $assertions += (new BackupContractTest())->run();
     echo "PASS backup integrity contracts\n";
+    $assertions += (new AtomicPrivateReceiptTest())->run();
+    echo "PASS atomic private source-only receipt publication\n";
     $assertions += (new QuestionBankRowTest())->run();
     echo "PASS question bank row mapping\n";
     $assertions += (new SourcePageBackfillTest())->run();

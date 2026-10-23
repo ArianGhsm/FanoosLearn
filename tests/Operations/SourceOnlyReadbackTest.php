@@ -18,6 +18,7 @@ final class SourceOnlyReadbackTest
             'stem' => 'Private test stem; only its fingerprint may escape.',
             'choices' => ['one', 'two'],
             'answer' => ['choice' => 2, 'also_correct' => [], 'status' => 'final'],
+            'live_fingerprint_sha256' => hash('sha256', 'stem-image-and-choice-image-fingerprint'),
         ]];
         $source = [
             'number' => 7,
@@ -68,7 +69,10 @@ final class SourceOnlyReadbackTest
             $this->check($result['verified'] === false
                 && in_array('source_provenance_rows', $result['mismatches'], true),
                 'Mismatched source provenance or same-row page metadata was accepted.');
-            ++$checks;
+            $changedField = array_key_first($change);
+            $this->check(in_array($changedField, $result['source_field_mismatches'][0]['fields'] ?? [], true),
+                'The sanitized source mismatch did not name the changed field.');
+            $checks += 2;
         }
 
         $badQuestion = $questions;
@@ -77,6 +81,14 @@ final class SourceOnlyReadbackTest
         $this->check($result['verified'] === false
             && in_array('question_key_content_fingerprint', $result['mismatches'], true),
             'Changed question key/content fingerprint was accepted.');
+        ++$checks;
+
+        $badQuestionImage = $questions;
+        $badQuestionImage[0]['live_fingerprint_sha256'] = hash('sha256', 'changed-image-reference');
+        $result = SourceOnlyPublisher::compareReadback($questions, $badQuestionImage, [$source], [$persistedSource]);
+        $this->check($result['verified'] === false
+            && in_array('question_key_content_fingerprint', $result['mismatches'], true),
+            'Changed stem/choice image reference fingerprint was accepted.');
         ++$checks;
 
         $result = SourceOnlyPublisher::compareReadback($questions, $questions, [$source], []);

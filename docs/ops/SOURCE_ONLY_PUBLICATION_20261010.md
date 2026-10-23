@@ -161,7 +161,9 @@ because the actual announced syllabus scope is missing. The other
    A successful transaction adds only the new source rows. After commit, the
    operator opens a fresh database connection and independently compares the
    exact source rows, provenance, same-row PDF pages and hashes, and immutable
-   question/key fingerprints before writing its private unique JSON receipt.
+   question/key fingerprints, including stem and choice image references,
+   before atomically publishing its private unique JSON receipt without
+   replacing an existing path.
    Only a receipt with `status=applied_verified` and
    `readback.verified=true` confirms that automated exact-batch readback.
    If the CLI exits nonzero with
