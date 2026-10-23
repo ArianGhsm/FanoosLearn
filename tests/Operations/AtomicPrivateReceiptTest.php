@@ -65,8 +65,53 @@ final class AtomicPrivateReceiptTest
 
             $shortSuccess = $directory . '/short-success.json';
             $targets[] = $shortSuccess;
-            AtomicPrivateReceipt::publish($shortSuccess, $payload, static fn($stream, string $chunk): int|false => fwrite($stream, substr($chunk, 0, 3)));
+            $syncStates = [];
+            AtomicPrivateReceipt::publish(
+                $shortSuccess,
+                $payload,
+                static fn($stream, string $chunk): int|false => fwrite($stream, substr($chunk, 0, 3)),
+                null,
+                null,
+                null,
+                static function (string $path) use (&$syncStates, $shortSuccess): bool {
+                    $syncStates[] = [
+                        'published' => file_exists($shortSuccess),
+                        'staging' => glob($path . '/.source-only-receipt-*') !== [],
+                    ];
+                    return true;
+                },
+            );
             $this->check(file_get_contents($shortSuccess) === $payload, 'Positive short writes were not retried to completion.');
+            $this->check($syncStates === [
+                ['published' => true, 'staging' => true],
+                ['published' => true, 'staging' => false],
+            ], 'Receipt directory was not synced after publish and after staging cleanup.');
+            $checks += 2;
+
+            $directorySyncFailure = $directory . '/directory-sync-failure.json';
+            $targets[] = $directorySyncFailure;
+            $syncAttempts = 0;
+            try {
+                AtomicPrivateReceipt::publish(
+                    $directorySyncFailure,
+                    $payload,
+                    null,
+                    null,
+                    null,
+                    null,
+                    static function (string $path) use (&$syncAttempts): bool {
+                        ++$syncAttempts;
+                        return false;
+                    },
+                );
+                throw new RuntimeException('Directory sync failure was accepted.');
+            } catch (RuntimeException $error) {
+                $this->check(str_contains($error->getMessage(), 'Committed source batch; manual reconciliation required')
+                    && str_contains($error->getMessage(), 'do not blindly retry'),
+                    'Directory sync failure did not return the required reconciliation guidance.');
+            }
+            $this->check($syncAttempts === 2 && file_get_contents($directorySyncFailure) === $payload,
+                'Directory-sync failure did not retain the complete final receipt for manual reconciliation.');
             $checks += 1;
 
             $this->check(glob($directory . '/.source-only-receipt-*') === [], 'A receipt failure path left a staging file.');
@@ -94,9 +139,10 @@ final class AtomicPrivateReceiptTest
         string $target, string $label,
         ?callable $write = null, ?callable $flush = null,
         ?callable $sync = null, ?callable $publish = null,
+        ?callable $syncDirectory = null,
     ): void {
         try {
-            AtomicPrivateReceipt::publish($target, 'partial contents', $write, $flush, $sync, $publish);
+            AtomicPrivateReceipt::publish($target, 'partial contents', $write, $flush, $sync, $publish, $syncDirectory);
             throw new RuntimeException("{$label} failure was accepted.");
         } catch (RuntimeException $error) {
             $this->check(str_contains($error->getMessage(), 'Committed source batch; manual reconciliation required')
