@@ -49,7 +49,7 @@ import sys
 import tempfile
 from pathlib import Path
 from verified_reference_pdf import chapter_coverage, open_verified_reference
-from retrospective_reference_policy import BASIS, is_retrospective, selected_reference_rows
+from retrospective_reference_policy import BASIS, is_retrospective, retrospective_note, selected_reference_rows
 from updated_reference_proxy_policy import (
     UPDATED_PROXY_BASIS,
     UPDATED_PROXY_EDITION,
@@ -457,10 +457,7 @@ def main() -> int:
                     reference_year = int(names[edition]['year'])
                     accepted[n]['classification_basis'] = BASIS
                     accepted[n]['reference_year'] = reference_year
-                    accepted[n]['classification_note'] = (
-                        f'این ارجاع پروکسی از فهرست رسمی {reference_year} برای آزمون {year} است؛ '
-                        'رسمی بودن آن برای سال آزمون ادعا نمی‌شود.'
-                    )
+                    accepted[n]['classification_note'] = retrospective_note(reference_year, year)
                 else:
                     accepted[n]['classification_basis'] = 'official_exam_year'
                     accepted[n]['reference_year'] = year

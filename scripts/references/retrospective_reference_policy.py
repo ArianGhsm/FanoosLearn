@@ -21,6 +21,18 @@ def is_retrospective(exam_year: int) -> bool:
     return 1300 <= int(exam_year) <= LAST_EARLY_EXAM_YEAR
 
 
+_PERSIAN_DIGITS = str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹")
+
+
+def retrospective_note(reference_year: int, exam_year: int) -> str:
+    """Visible proxy label; must equal SourceOnlyPublisher's retrospective note."""
+    return (
+        f"این ارجاع پروکسی از فهرست رسمی سال {str(int(reference_year)).translate(_PERSIAN_DIGITS)}"
+        f" برای آزمون سال {str(int(exam_year)).translate(_PERSIAN_DIGITS)}"
+        " است؛ رسمی بودن آن برای سال آزمون ادعا نمی‌شود."
+    )
+
+
 def _usable_pdf_and_map(edition: str, pdfs: dict, maps: dict) -> bool:
     record = pdfs.get(edition) or {}
     chapter_map = maps.get(edition) or {}

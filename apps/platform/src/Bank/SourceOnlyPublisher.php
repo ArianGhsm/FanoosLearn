@@ -374,12 +374,9 @@ final class SourceOnlyPublisher
             if ($retrospective
                 && (($s['classification_basis'] ?? null) !== 'retrospective_proxy_1397_plus'
                     || ($s['reference_year'] ?? null) !== ($d['reference_year'] ?? null)
-                    || ($s['classification_note'] ?? null) !== (
-                        'این ارجاع پروکسی از فهرست رسمی سال '
-                            . strtr((string) ($d['reference_year'] ?? ''), '0123456789', '۰۱۲۳۴۵۶۷۸۹')
-                            . ' برای آزمون سال ' . strtr((string) $year, '0123456789', '۰۱۲۳۴۵۶۷۸۹')
-                            . ' است؛ رسمی بودن آن برای سال آزمون ادعا نمی‌شود.'
-                    ))) {
+                    || !is_int($d['reference_year'] ?? null)
+                    || ($s['classification_note'] ?? null)
+                        !== self::retrospectiveNote($d['reference_year'], (int) $year))) {
                 throw new RuntimeException('Pre-1396 retrospective source must retain its actual proxy year and visible label.');
             }
             if (!$updatedReferenceProxy && !$sameLineageProxy && !$retrospective
@@ -406,10 +403,7 @@ final class SourceOnlyPublisher
                 ? (string) $d['updated_reference_note']
                 : ($sameLineageProxy ? (string) $d['proxy_note']
                     : ($retrospective
-                        ? 'این ارجاع پروکسی از فهرست رسمی سال '
-                            . strtr((string) $referenceYear, '0123456789', '۰۱۲۳۴۵۶۷۸۹')
-                            . ' برای آزمون سال ' . strtr((string) $year, '0123456789', '۰۱۲۳۴۵۶۷۸۹')
-                            . ' است؛ رسمی بودن آن برای سال آزمون ادعا نمی‌شود.'
+                        ? self::retrospectiveNote($referenceYear, (int) $year)
                         : null));
             $mapped[$n] = ['ref' => $m[1], 'edition' => $m[2],
                 'node' => $chapter, 'chapter' => (string) $d['chapter'],
@@ -809,6 +803,20 @@ SQL);
     }
 
     /** @return array<string, mixed> */
+    /**
+     * Visible pre-1396 proxy label. Persian digits are multibyte, so the
+     * array form of strtr is required (the three-string form is byte-wise).
+     * Must equal retrospective_reference_policy.retrospective_note().
+     */
+    public static function retrospectiveNote(int $referenceYear, int $examYear): string
+    {
+        $digits = ['0' => '۰', '1' => '۱', '2' => '۲', '3' => '۳', '4' => '۴',
+            '5' => '۵', '6' => '۶', '7' => '۷', '8' => '۸', '9' => '۹'];
+        return 'این ارجاع پروکسی از فهرست رسمی سال ' . strtr((string) $referenceYear, $digits)
+            . ' برای آزمون سال ' . strtr((string) $examYear, $digits)
+            . ' است؛ رسمی بودن آن برای سال آزمون ادعا نمی‌شود.';
+    }
+
     private static function readbackSource(int $number, array $source, ?string $id): array
     {
         $confidence = $source['confidence'] ?? [];

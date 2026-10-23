@@ -5,6 +5,8 @@ Only synthetic catalog/PDF metadata; no private question or book content.
 from __future__ import annotations
 
 import importlib.util
+import shutil
+import subprocess
 from pathlib import Path
 import unittest
 
@@ -100,6 +102,30 @@ class Pre1396ReferencePolicyTests(unittest.TestCase):
         self.assertIn("BackupManifest::verify", cli)
         self.assertIn("question_content_identical", cli)
         self.assertIn("$retrospective", cli)
+
+    def test_validator_note_equals_guarded_writer_note(self):
+        # The guarded writer rejects any retrospective row whose note differs
+        # from its own exact label, so both sides must build the same text.
+        self.assertEqual(
+            p.retrospective_note(1397, 1391),
+            "این ارجاع پروکسی از فهرست رسمی سال ۱۳۹۷ برای آزمون سال ۱۳۹۱ است؛ "
+            "رسمی بودن آن برای سال آزمون ادعا نمی‌شود.")
+        writer_path = (Path(__file__).resolve().parents[2]
+                       / "apps/platform/src/Bank/SourceOnlyPublisher.php")
+        writer = writer_path.read_text(encoding="utf-8")
+        # The three-string strtr form is byte-wise and corrupts Persian digits.
+        self.assertNotIn("'0123456789', '۰۱۲۳۴۵۶۷۸۹'", writer)
+        self.assertEqual(writer.count("self::retrospectiveNote("), 2)
+        php = shutil.which("php")
+        if php is None:
+            self.skipTest("php CLI unavailable")
+        out = subprocess.run(
+            [php, "-r", f"require {str(writer_path)!r}; echo \\Fanoos\\Platform\\Bank\\SourceOnlyPublisher::retrospectiveNote(1397, 1391);"],
+            check=True, capture_output=True).stdout
+        self.assertEqual(out.decode("utf-8"), p.retrospective_note(1397, 1391))
+        validator = (Path(__file__).resolve().parents[2]
+                     / "scripts/references/apply_classification.py").read_text(encoding="utf-8")
+        self.assertIn("retrospective_note(reference_year, year)", validator)
 
 
 if __name__ == "__main__":
