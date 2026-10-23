@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Fanoos\Platform\Bank\SourceOnlyPublisher;
 use Fanoos\Platform\Operations\BackupManifest;
+use Fanoos\Platform\Operations\AtomicPrivateReceipt;
 use Fanoos\Platform\Support\DatabaseConnection;
 
 /**
@@ -33,6 +34,8 @@ try {
     $expected = filter_var($args['expected'] ?? null, FILTER_VALIDATE_INT);
     $apply = isset($args['apply']);
     $retrospective = $year !== false && $year >= 1300 && $year < 1396;
+    $nearestSameLineageProxyBatch = $year !== false && $year >= 1396 && $year <= 1398
+        && preg_match('/^same-lineage-proxy-[a-z0-9-]{1,35}$/D', $stem) === 1;
     $updated1397ProxyCounts = [
         'community-dentistry' => 10, 'dental-materials' => 9,
         'endodontics' => 19, 'operative-dentistry' => 15,
@@ -52,11 +55,11 @@ try {
         && $stem === 'surgery-modern-hupp7' && $expected === 14;
     $updatedReferenceProxyBatch = $updated1397ProxyBatch || $updatedHuppBatch;
     if (preg_match('/^[0-9a-f-]{36}$/D', $ws) !== 1 || $year === false
-        || ($year < 1399 && !$retrospective && !$updated1397ProxyBatch && !$exact1397EndodonticsQ88Batch && !(($year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1', 'endodontics-location-final'], true)) || ($year === 1398 && $subject === 'periodontics' && in_array($stem, ['periodontics', 'periodontics-followup', 'periodontics-certified-20261012', 'periodontics-sourcefree'], true)) || ($year === 1398 && $subject === 'community-dentistry' && $stem === 'community') || ($year === 1398 && $subject === 'prosthodontics' && in_array($stem, ['prosthodontics', 'prostho-voided-q97'], true)) || ($year === 1398 && $subject === 'operative-dentistry' && in_array($stem, ['operative-q175-20261012', 'operative-q188-snowplow'], true)) || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-q164-q168-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-four-20261012') || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-q159-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-q219-q226-20261012') || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-q152-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-seven-20261012') || ($year === 1398 && $subject === 'periodontics' && $stem === 'periodontics-q134-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-q218-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-q222-20261012') || ($year === 1398 && $subject === 'oral-radiology' && in_array($stem, ['radiology-q213-q216-20261013', 'radiology-q220-20261013'], true)) || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-sourcefree') || ($year === 1398 && $subject === 'oral-surgery' && in_array($stem, ['surgery', 'surgery-modern-hupp7'], true))))
+        || ($year < 1399 && !$retrospective && !$nearestSameLineageProxyBatch && !$updated1397ProxyBatch && !$exact1397EndodonticsQ88Batch && !(($year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1', 'endodontics-location-final'], true)) || ($year === 1398 && $subject === 'periodontics' && in_array($stem, ['periodontics', 'periodontics-followup', 'periodontics-certified-20261012', 'periodontics-sourcefree'], true)) || ($year === 1398 && $subject === 'community-dentistry' && $stem === 'community') || ($year === 1398 && $subject === 'prosthodontics' && in_array($stem, ['prosthodontics', 'prostho-voided-q97'], true)) || ($year === 1398 && $subject === 'operative-dentistry' && in_array($stem, ['operative-q175-20261012', 'operative-q188-snowplow'], true)) || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-q164-q168-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-four-20261012') || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-q159-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-q219-q226-20261012') || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-q152-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-seven-20261012') || ($year === 1398 && $subject === 'periodontics' && $stem === 'periodontics-q134-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-q218-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-q222-20261012') || ($year === 1398 && $subject === 'oral-radiology' && in_array($stem, ['radiology-q213-q216-20261013', 'radiology-q220-20261013'], true)) || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-sourcefree') || ($year === 1398 && $subject === 'oral-surgery' && in_array($stem, ['surgery', 'surgery-modern-hupp7'], true))))
         || $year > 1500 || $expected === false || $expected < 1 || $expected > 250
         || preg_match('/^[a-z][a-z0-9-]{1,59}$/D', $subject) !== 1
         || preg_match('/^[a-z][a-z0-9-]{1,59}$/D', $stem) !== 1) {
-        throw new RuntimeException('Workspace, exact year/subject/stem and expected count required; 1397 updated references and pre-1396 retrospective sources remain explicitly whitelisted.');
+        throw new RuntimeException('Workspace, exact year/subject/stem and expected count required; supported paths are exact-year, pre-1396 retrospective, 1396–1398 same-lineage proxy, and the enumerated 1406 updated-reference cases.');
     }
     if ($apply !== isset($args['backup']) || $apply !== isset($args['receipt'])) {
         throw new RuntimeException('Apply requires both verified full backup and unique private receipt.');
@@ -73,9 +76,9 @@ try {
     if (isset($args['package-root']) && isset($args['case-root'])) {
         throw new RuntimeException('Specify only one protected package source.');
     }
-    if (($updatedReferenceProxyBatch || $exact1397EndodonticsQ88Batch)
+    if (($updatedReferenceProxyBatch || $exact1397EndodonticsQ88Batch || $nearestSameLineageProxyBatch)
         && (!isset($args['case-root']) || isset($args['package-root']))) {
-        throw new RuntimeException('A 1397 source batch requires its exact immutable recovery case.');
+        throw new RuntimeException('A proxy source batch requires its exact immutable recovery case.');
     }
     if (isset($args['package-root'])) {
         // A coordinator-created, immutable snapshot, never a research worker's
@@ -142,7 +145,7 @@ try {
         $exact1398UpdatedHuppCase = $year === 1398 && $subject === 'oral-surgery'
             && $stem === 'surgery-modern-hupp7' && $expected === 14
             && $case !== false && basename($case) === 'recovery-1398-surgery-modern-hupp7-20261021';
-        if ($year === false || ($year < 1399 && !$retrospective && !$exact1397UpdatedReferenceCase && !$exact1397Q88OfficialCase
+        if ($year === false || ($year < 1399 && !$retrospective && !$nearestSameLineageProxyBatch && !$exact1397UpdatedReferenceCase && !$exact1397Q88OfficialCase
                 && !$exact1398SurgeryCase && !$exact1398VoidedProsthoCase
                 && !$exact1398RadiologyQ225Case && !$exact1398OperativeQ188Case
                 && !$exact1398PediatricCase && !$exact1398PeriodonticsCase
@@ -199,6 +202,16 @@ try {
         throw new RuntimeException('Exactly one batch audit required.');
     }
     $b = $matches[0];
+    if ($nearestSameLineageProxyBatch
+        && (($b['classification_basis'] ?? '') !== 'same_lineage_proxy'
+            || !is_array($b['reference_years'] ?? null)
+            || $b['reference_years'] === [$year])) {
+        throw new RuntimeException('Same-lineage proxy case must attest its actual non-exam reference year(s).');
+    }
+    if (!$nearestSameLineageProxyBatch
+        && ($b['classification_basis'] ?? '') === 'same_lineage_proxy') {
+        throw new RuntimeException('Generic proxy audit requires a same-lineage proxy batch stem and immutable recovery case.');
+    }
     if ($retrospective && ($b['classification_basis'] ?? '') !== 'retrospective_proxy_1397_plus') {
         throw new RuntimeException('Pre-1396 source audit must attest a distinct retrospective proxy basis.');
     }
@@ -236,36 +249,66 @@ try {
             throw new RuntimeException('Receipt path must be new and private.');
         }
     }
+    // Keep the exact validated inputs in memory across commit so the
+    // independent readback checks the same pinned content, not a later file
+    // reread that could differ from the transaction inputs.
+    $study = $read($studyPath);
+    $validated = $read($validatedPath);
+    $decisions = $read($decisionsPath);
+    $receiptAuditSha = hash_file('sha256', $auditPath);
+    $receiptValidatedSha = hash_file('sha256', $validatedPath);
+    if (!is_string($receiptAuditSha) || !is_string($receiptValidatedSha)) {
+        throw new RuntimeException('Pinned receipt input digest could not be read before publication.');
+    }
+    $readbackEvidence = null;
     $written = SourceOnlyPublisher::run(
         DatabaseConnection::fromEnvironment(), $ws, $year, $subject,
-        $read($studyPath), $read($validatedPath), $read($decisionsPath), $apply,
+        $study, $validated, $decisions, $apply, $readbackEvidence,
     );
-    if ($written !== $expected) {
-        throw new RuntimeException('Unexpected atomic batch count.');
-    }
     $receiptData = [
         'format' => 'fanoos.source-only-receipt/1',
         'batch' => $key, 'applied' => $apply, 'source_rows' => $written,
         'questions_changed' => 0, 'choices_changed' => 0, 'answers_changed' => 0,
-        'audit_sha256' => hash_file('sha256', $auditPath),
+        'audit_sha256' => $receiptAuditSha,
         'classification_basis' => $retrospective ? 'retrospective_proxy_1397_plus'
-            : ($updatedReferenceProxyBatch ? 'updated_reference_proxy' : 'official_exam_year'),
+            : ($updatedReferenceProxyBatch ? 'updated_reference_proxy'
+                : ($nearestSameLineageProxyBatch ? 'same_lineage_proxy' : 'official_exam_year')),
         'reference_years' => $retrospective ? ($b['reference_years'] ?? [])
-            : ($updatedReferenceProxyBatch ? ($b['reference_years'] ?? []) : [$year]),
-        'validated_sha256' => hash_file('sha256', $validatedPath),
+            : (($updatedReferenceProxyBatch || $nearestSameLineageProxyBatch)
+                ? ($b['reference_years'] ?? []) : [$year]),
+        'validated_sha256' => $receiptValidatedSha,
     ];
     if ($apply) {
         $receiptData['backup_id'] = basename($backupPath);
         $receiptData['completed_at_utc'] = gmdate('Y-m-d\TH:i:s\Z');
-        $file = (string) $args['receipt'];
-        $handle = @fopen($file, 'x');
-        if ($handle === false) {
-            throw new RuntimeException('Database already committed; receipt creation failed. Check production DB before any retry.');
+        try {
+            $readback = SourceOnlyPublisher::readback(
+                DatabaseConnection::fromEnvironment(), $ws, $year, $subject,
+                $study, $validated, $readbackEvidence ?? [],
+            );
+            if ($written !== $expected) {
+                $readback['verified'] = false;
+                $readback['mismatches'][] = 'operator_expected_source_count';
+            }
+        } catch (Throwable) {
+            $readback = [
+                'verified' => false,
+                'mismatches' => ['post_commit_readback_unavailable'],
+                'readback_error_code' => 'post_commit_readback_failed',
+            ];
         }
-        chmod($file, 0600);
-        fwrite($handle, json_encode($receiptData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n");
-        fflush($handle);
-        fclose($handle);
+        $receiptData['status'] = ($readback['verified'] ?? false) === true
+            ? 'applied_verified' : 'manual_reconciliation_required';
+        $receiptData['readback'] = $readback;
+        $receiptData['reconciliation_required'] = $receiptData['status'] !== 'applied_verified';
+        $encodedReceipt = json_encode($receiptData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n";
+        $file = (string) $args['receipt'];
+        AtomicPrivateReceipt::publish($file, $encodedReceipt);
+        if (($readback['verified'] ?? false) !== true) {
+            throw new RuntimeException('Database commit returned but independent readback did not verify it. Manual reconciliation is required; do not retry or roll back blindly.');
+        }
+    } elseif ($written !== $expected) {
+        throw new RuntimeException('Unexpected atomic preview batch count.');
     }
     echo json_encode($receiptData, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . PHP_EOL;
 } catch (Throwable $error) {

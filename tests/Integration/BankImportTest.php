@@ -12,6 +12,7 @@ use Fanoos\Platform\Bank\BankImporter;
 use Fanoos\Platform\Bank\BankImportException;
 use Fanoos\Platform\Bank\BankPublisher;
 use Fanoos\Platform\Bank\BankSittingExporter;
+use Fanoos\Platform\Bank\SourceOnlyPublisher;
 use Fanoos\Platform\Bank\Residency1403AiSourceCitationCorrectionWriter;
 use Fanoos\Platform\Content\CustomPracticeService;
 use Fanoos\Platform\Content\ExamQuestionRateGuard;
@@ -22,6 +23,7 @@ use Fanoos\Platform\Content\StudyPlanService;
 use Fanoos\Platform\Core\ClassProvisioningService;
 use Fanoos\Platform\Entitlements\EntitlementService;
 use Fanoos\Platform\Support\PlatformException;
+use Fanoos\Platform\Support\DatabaseConnection;
 use Fanoos\Platform\Support\Uuid;
 use PDO;
 use RuntimeException;
@@ -75,6 +77,17 @@ final class BankImportTest
             'questions[0].sources[0].pdf_page', 'questions[1].sources[0].pdf_sha256', 'questions[0].explanation.from.ref'] as $path) {
             $this->assert($this->mentions($problems, $path), "No problem reported at {$path}: " . json_encode($problems));
         }
+        foreach ([
+            'reference_year' => 1406,
+            'classification_basis' => 'same_lineage_proxy',
+            'classification_note' => 'Proxy provenance is not discarded by the generic importer.',
+        ] as $field => $value) {
+            $unpersistableProvenance = $sitting;
+            $unpersistableProvenance['questions'][0]['sources'][0][$field] = $value;
+            $problems = $importer->validate($ws, $unpersistableProvenance);
+            $this->assert($this->mentions($problems, 'questions[0].sources[0].' . $field),
+                'The generic full-sitting importer accepted provenance it does not persist: ' . $field);
+        }
         try {
             $importer->import($ws, $broken);
             throw new RuntimeException('A broken file was imported.');
@@ -113,6 +126,123 @@ final class BankImportTest
         $pages->execute(['key' => $key]);
         $this->assert($pages->fetch(PDO::FETCH_ASSOC) == ['pdf_page' => 271, 'printed_page' => '256', 'page' => '256'], 'The source page fields were not stored apart.');
         $this->assert($this->scalar('SELECT x.source_pdf_page FROM bank_explanations x JOIN bank_questions q ON q.id = x.question_id WHERE q.question_key = :key AND x.is_current = TRUE', ['key' => $key]) === 271, 'The explanation does not record the page it was written from.');
+
+        // Exercise the production commit + independent readback only on this
+        // isolated integration database. The source intentionally omits
+        // official_scope_status so the test covers the writer's in_scope default.
+        $this->database->prepare("UPDATE bank_questions SET status='published' WHERE workspace_id=:ws AND question_key LIKE 'residency-1404-1-%'")
+            ->execute(['ws' => $ws]);
+        $sourceQuestionKey = BankImporter::questionKey('residency', 1404, 1, 2);
+        $sourceQuestionLookup = $this->database->prepare('SELECT id FROM bank_questions WHERE workspace_id=:ws AND question_key=:key');
+        $sourceQuestionLookup->execute(['ws' => $ws, 'key' => $sourceQuestionKey]);
+        $sourceQuestionId = (string) $sourceQuestionLookup->fetchColumn();
+        $this->database->prepare('DELETE FROM bank_question_sources WHERE workspace_id=:ws AND question_id=:qid')
+            ->execute(['ws' => $ws, 'qid' => $sourceQuestionId]);
+        $this->database->prepare("UPDATE bank_questions SET stem_image='test-fixture/stem-original.png' WHERE workspace_id=:ws AND id=:qid")
+            ->execute(['ws' => $ws, 'qid' => $sourceQuestionId]);
+        $this->database->prepare("UPDATE bank_question_choices SET image='test-fixture/choice-original.png' WHERE workspace_id=:ws AND question_id=:qid AND position=1")
+            ->execute(['ws' => $ws, 'qid' => $sourceQuestionId]);
+        $studyQuestion = $sitting['questions'][1];
+        $studyChoices = $studyQuestion['choices'];
+        $studyChoices[0] = ['text' => $studyChoices[0], 'image' => 'test-fixture/choice-original.png'];
+        $studyAnswer = $studyQuestion['answer'];
+        $studyQuestion = [
+            'number' => 2,
+            'subject' => 'endodontics',
+            'stem' => $studyQuestion['stem'],
+            'choices' => $studyChoices,
+            'answer' => [
+                'choice' => $studyAnswer['choice'] ?? null,
+                'also_correct' => $studyAnswer['also_correct'] ?? [],
+                'status' => $studyAnswer['status'],
+            ],
+        ];
+        $study = [
+            'format' => 'fanoos.classification.study-only/1',
+            'exam_type' => 'residency', 'year' => 1404, 'round' => 1,
+            'questions' => [$studyQuestion],
+        ];
+        $source = [
+            'ref' => 'torabinejad@6e#ch14',
+            'page' => 'pdf 272', 'pdf_page' => 272, 'printed_page' => null,
+            'pdf_sha256' => str_repeat('a', 64), 'anchor' => 'Readback integration exact page evidence',
+            'primary' => true, 'origin' => 'ai',
+            'confidence' => ['source' => 0.9, 'node' => 0.9, 'page' => 0.9],
+            'reference_year' => 1404, 'classification_basis' => 'official_exam_year',
+            'classification_note' => null,
+        ];
+        $validated = $study;
+        $validated['questions'][0]['sources'] = [$source];
+        $decisions = [[
+            'number' => 2, 'edition' => 'torabinejad@6e', 'chapter' => '14',
+            'page' => 272, 'evidence' => $source['anchor'], 'confidence' => 0.9,
+        ]];
+        $readbackEvidence = null;
+        $written = SourceOnlyPublisher::run(
+            $this->database, $ws, 1404, 'endodontics', $study, $validated, $decisions, true, $readbackEvidence,
+        );
+        $readbackDatabase = DatabaseConnection::fromEnvironment();
+        $readback = SourceOnlyPublisher::readback(
+            $readbackDatabase, $ws, 1404, 'endodontics', $study, $validated, $readbackEvidence,
+        );
+        $this->assert($written === 1 && $readback['verified'] === true && $readback['source_rows'] === 1
+            && count($readback['source_row_ids']) === 1
+            && preg_match('/^[a-f0-9]{64}$/D', $readback['source_rows_sha256']) === 1,
+            'Independent source-row/question readback did not verify its committed test fixture: '
+                . json_encode($readback, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+        $changedProvenance = $validated;
+        $changedProvenance['questions'][0]['sources'][0]['reference_year'] = 1397;
+        $changedProvenance['questions'][0]['sources'][0]['classification_basis'] = 'same_lineage_proxy';
+        $changedProvenance['questions'][0]['sources'][0]['classification_note'] = 'test-only proxy metadata must be read back';
+        $badReadback = SourceOnlyPublisher::readback(
+            $readbackDatabase, $ws, 1404, 'endodontics', $study, $changedProvenance, $readbackEvidence,
+        );
+        $this->assert($badReadback['verified'] === false
+            && in_array('source_provenance_rows', $badReadback['mismatches'], true),
+            'A reference-year/basis/note mismatch passed independent database readback.');
+
+        $this->database->prepare("UPDATE bank_questions SET stem_image='test-fixture/stem-changed.png' WHERE workspace_id=:ws AND id=:qid")
+            ->execute(['ws' => $ws, 'qid' => $sourceQuestionId]);
+        $changedStemImage = SourceOnlyPublisher::readback(
+            $readbackDatabase, $ws, 1404, 'endodontics', $study, $validated, $readbackEvidence,
+        );
+        $this->assert($changedStemImage['verified'] === false
+            && in_array('question_key_content_fingerprint', $changedStemImage['mismatches'], true),
+            'A changed stem-image reference passed the immutable question fingerprint.');
+        $this->database->prepare("UPDATE bank_questions SET stem_image='test-fixture/stem-original.png' WHERE workspace_id=:ws AND id=:qid")
+            ->execute(['ws' => $ws, 'qid' => $sourceQuestionId]);
+        $this->database->prepare("UPDATE bank_question_choices SET image='test-fixture/choice-changed.png' WHERE workspace_id=:ws AND question_id=:qid AND position=1")
+            ->execute(['ws' => $ws, 'qid' => $sourceQuestionId]);
+        $changedChoiceImage = SourceOnlyPublisher::readback(
+            $readbackDatabase, $ws, 1404, 'endodontics', $study, $validated, $readbackEvidence,
+        );
+        $this->assert($changedChoiceImage['verified'] === false
+            && in_array('question_key_content_fingerprint', $changedChoiceImage['mismatches'], true),
+            'A changed choice-image reference passed the immutable question fingerprint.');
+        $this->database->prepare('UPDATE bank_question_choices SET image=NULL WHERE workspace_id=:ws AND question_id=:qid AND position=1')
+            ->execute(['ws' => $ws, 'qid' => $sourceQuestionId]);
+        $this->database->prepare('UPDATE bank_questions SET stem_image=NULL WHERE workspace_id=:ws AND id=:qid')
+            ->execute(['ws' => $ws, 'qid' => $sourceQuestionId]);
+
+        try {
+            $importer->import($ws, $sitting);
+            $this->assert(false, 'A generic full-sitting re-import replaced an audited source row.');
+        } catch (BankImportException $error) {
+            $this->assert(str_contains($error->getMessage(), 'cannot replace audited source provenance'),
+                'A generic full-sitting re-import refused audited provenance for the wrong reason.');
+        }
+        $auditedProvenance = $this->database->prepare('SELECT reference_year,classification_basis,classification_note FROM bank_question_sources WHERE workspace_id=:ws AND question_id=(SELECT id FROM bank_questions WHERE workspace_id=:ws2 AND question_key=:key) ORDER BY id LIMIT 1');
+        $auditedProvenance->execute(['ws' => $ws, 'ws2' => $ws, 'key' => $sourceQuestionKey]);
+        $this->assert($auditedProvenance->fetch(PDO::FETCH_ASSOC) === [
+            'reference_year' => 1404,
+            'classification_basis' => 'official_exam_year',
+            'classification_note' => null,
+        ], 'A refused generic re-import did not preserve audited source provenance.');
+        // Remove the audited fixture so the remaining generic-importer scenarios
+        // (amended keys, export round trip) start from ordinary unreviewed sources.
+        $this->database->prepare('DELETE FROM bank_question_sources WHERE workspace_id=:ws AND question_id=:qid AND classification_basis IS NOT NULL')
+            ->execute(['ws' => $ws, 'qid' => $sourceQuestionId]);
+        $importer->import($ws, $sitting);
 
         // The 1403-only writer's exact source-row compare-and-swap works on the
         // isolated integration DB. Roll back the fixture after verifying that

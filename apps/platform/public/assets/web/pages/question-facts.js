@@ -19,7 +19,8 @@ const text = (value) => (typeof value === 'string' ? value.trim() : '');
 
 /**
  * @returns {{exam: ?string, number: ?string, subject: ?string, topic: ?string,
- *   chapter: ?string, chapterEn: ?string, book: ?string, scopeNote: ?string}}
+ *   chapter: ?string, chapterEn: ?string, book: ?string, scopeNote: ?string,
+ *   referenceNote: ?string}}
  */
 export function questionFacts(question) {
     const bank = question && typeof question.bank === 'object' ? question.bank : null;
@@ -37,6 +38,7 @@ export function questionFacts(question) {
     let chapterEn = null;
     let book = null;
     let scopeNote = null;
+    let referenceNote = null;
     const c = bank?.chapter;
     if (c && typeof c === 'object' && text(c.title) !== '') {
         const label = text(c.number) !== '' ? `فصل ${faDigits(text(c.number))}` : 'فصل';
@@ -49,6 +51,10 @@ export function questionFacts(question) {
         } else if (c.official_scope_status === 'outside_scope_exam_question') {
             scopeNote = text(c.official_scope_note) || 'محل طراحی این سؤال خارج از محدودهٔ رسمی آزمون بوده است.';
         }
+        const proxyBasis = ['retrospective_proxy_1397_plus', 'same_lineage_proxy', 'updated_reference_proxy'];
+        if (proxyBasis.includes(text(c.classification_basis))) {
+            referenceNote = text(c.classification_note);
+        }
     }
 
     return {
@@ -60,5 +66,6 @@ export function questionFacts(question) {
         chapterEn,
         book,
         scopeNote,
+        referenceNote,
     };
 }

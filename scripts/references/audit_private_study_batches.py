@@ -19,12 +19,22 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from apply_classification import chapter_nodes, flat, fragments
 from verified_reference_pdf import chapter_coverage, open_verified_reference
 from retrospective_reference_policy import BASIS, is_retrospective
+from retrospective_reference_policy import selected_reference_rows as selected_retrospective_rows
 from updated_reference_proxy_policy import (
     UPDATED_PROXY_BASIS,
     UPDATED_PROXY_1397_EXAM_YEAR,
     UPDATED_PROXY_REFERENCE_YEAR,
     is_updated_reference_proxy,
     valid_updated_reference_note,
+)
+from same_lineage_proxy_policy import (
+    BASIS as SAME_LINEAGE_PROXY_BASIS,
+    is_proxy_exam_year,
+    is_selected_proxy as is_selected_same_lineage_proxy,
+    selected_reference_rows as selected_same_lineage_rows,
+    valid_proxy_note,
+    fallback_error,
+    requires_newest_first,
 )
 
 BATCH = re.compile(r"^(13[0-9]{2}|14[0-9]{2}):([a-z][a-z0-9-]*):([a-z][a-z0-9-]*)$")
@@ -120,9 +130,19 @@ def audit_batch(root: Path, spec: str,
     wanted = {int(d["number"]): d for d in decisions if "edition" in d}
     if len(wanted) != len(decisions):
         raise ValueError(f"{spec}: duplicate or unsupported decisions")
+    chapter_maps = json.loads(CHAPTERS.read_text(encoding="utf-8"))["editions"]
+    catalog_path = CHAPTERS.parent / "catalog.json"
+    pdf_catalog_path = CHAPTERS.parent / "reference-pdfs.json"
+    catalog = json.loads(catalog_path.read_text(encoding="utf-8")) if catalog_path.is_file() else None
+    pdf_catalog = json.loads(pdf_catalog_path.read_text(encoding="utf-8"))["editions"] if pdf_catalog_path.is_file() else {}
     proxy_decisions = [d for d in wanted.values()
                        if d.get("classification_basis") == UPDATED_PROXY_BASIS]
     updated_proxy = bool(proxy_decisions)
+    same_lineage_decisions = [d for d in wanted.values()
+                              if d.get("classification_basis") == SAME_LINEAGE_PROXY_BASIS]
+    same_lineage_proxy = bool(same_lineage_decisions)
+    if updated_proxy and same_lineage_proxy:
+        raise ValueError(f"{spec}: updated-reference and same-lineage proxy bases cannot be mixed")
     if updated_proxy:
         if (year_n not in (UPDATED_PROXY_1397_EXAM_YEAR, 1398)
                 or len(proxy_decisions) != len(wanted)
@@ -136,6 +156,27 @@ def audit_batch(root: Path, spec: str,
                     for d in wanted.values())):
             raise ValueError(f"{spec}: updated-reference proxy is restricted to the owner-authorized 1397/1398 cases and must label every decision")
         reference_years = [UPDATED_PROXY_REFERENCE_YEAR]
+    elif same_lineage_proxy:
+        if (not is_proxy_exam_year(year_n) or len(same_lineage_decisions) != len(wanted)
+                or catalog is None
+                or any(not is_selected_same_lineage_proxy(
+                    catalog, "residency", year_n, subject, d.get("edition"),
+                    d.get("reference_year"), d.get("classification_basis"),
+                    pdf_catalog, chapter_maps)
+                    or not valid_proxy_note(d.get("proxy_note"), year_n, d.get("reference_year"))
+                    or str(d.get("chapter")) not in {
+                        str(item.get("number"))
+                        for row in selected_same_lineage_rows(
+                            catalog, "residency", year_n, subject, pdf_catalog, chapter_maps)
+                        if row.get("_proxy") is True
+                        and row.get("edition") == d.get("edition")
+                        and row.get("year") == d.get("reference_year")
+                        for item in row.get("scope_chapters", [])
+                        if isinstance(item, dict)
+                    }
+                    for d in wanted.values())):
+            raise ValueError(f"{spec}: every same-lineage proxy decision must match the selected verified edition/year and carry an explicit proxy note")
+        reference_years = sorted({d["reference_year"] for d in wanted.values()})
     else:
         if any("reference_year" in d or "classification_basis" in d
                for d in wanted.values()) and not is_retrospective(year_n):
@@ -148,13 +189,19 @@ def audit_batch(root: Path, spec: str,
                     or isinstance(d.get("reference_year"), bool)
                     or d["reference_year"] < 1397):
                 raise ValueError(f"{spec}: missing explicit 1397+ retrospective reference-year provenance")
+    if requires_newest_first(year_n) and not updated_proxy:
+        if catalog is None:
+            raise ValueError(f"{spec}: catalog is required to verify the newest-first edition order")
+        select = selected_retrospective_rows if is_retrospective(year_n) else selected_same_lineage_rows
+        candidates = select(catalog, "residency", year_n, subject, pdf_catalog, chapter_maps)
+        for d in wanted.values():
+            order_error = fallback_error(candidates, d.get("edition"), d.get("newer_editions_searched"))
+            if order_error:
+                raise ValueError(f"{spec}: Q{d['number']}: {order_error}")
     if not wanted.keys() <= original.keys():
         raise ValueError(f"{spec}: decision question not in exact sitting")
-    chapter_maps = json.loads(CHAPTERS.read_text(encoding="utf-8"))["editions"]
     source_pdf_provenance = {}
     verified_pdfs = {}
-    catalog_path = CHAPTERS.parent / "catalog.json"
-    catalog = json.loads(catalog_path.read_text(encoding="utf-8")) if catalog_path.is_file() else None
     if updated_proxy:
         if catalog is None:
             raise ValueError(f"{spec}: catalog is required to verify the updated proxy's official reference year")
@@ -251,9 +298,26 @@ def audit_batch(root: Path, spec: str,
                 or item.get("reference_subject", subject) != decision.get("reference_subject", subject)
                 or item.get("scope_unverified") is not False):
             raise ValueError(f"{spec}: updated proxy disposition or reference-year label differs for Q{n}")
+        if same_lineage_proxy and (
+                item.get("classification_basis") != SAME_LINEAGE_PROXY_BASIS
+                or item.get("reference_year") != decision.get("reference_year")
+                or item.get("classification_note") != decision.get("proxy_note")
+                or item.get("official_scope_status") != "in_scope"
+                or item.get("scope_unverified") is not False):
+            raise ValueError(f"{spec}: same-lineage proxy label/reference year differs for Q{n}")
+        if not updated_proxy and not same_lineage_proxy and is_retrospective(year_n):
+            if (item.get("classification_basis") != BASIS
+                    or item.get("reference_year") != decision.get("reference_year")):
+                raise ValueError(f"{spec}: retrospective proxy label/reference year differs for Q{n}")
+        if not updated_proxy and not same_lineage_proxy and not is_retrospective(year_n):
+            if (item.get("classification_basis") != "official_exam_year"
+                    or item.get("reference_year") != year_n):
+                raise ValueError(f"{spec}: exact-year source label/reference year differs for Q{n}")
         pages[str(n)] = {
             "ref": item["ref"],
             "reference_subject": decision.get("reference_subject", subject),
+            "reference_year": item.get("reference_year"),
+            "classification_basis": item.get("classification_basis"),
             "pdf_page": int(decision["page"]),
             "confidence_source": round(float(confidence["source"]), 3),
             "confidence_node": round(float(confidence["node"]), 3),
@@ -263,6 +327,7 @@ def audit_batch(root: Path, spec: str,
         "batch": spec,
         "classification_basis": (BASIS if is_retrospective(year_n)
                                   else UPDATED_PROXY_BASIS if updated_proxy
+                                  else SAME_LINEAGE_PROXY_BASIS if same_lineage_proxy
                                   else "official_exam_year"),
         "reference_years": reference_years,
         "exam_year": year_n,

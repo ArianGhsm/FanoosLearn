@@ -70,7 +70,7 @@ of it into migrations, with tests, in its own change.
 | `bank_questions` | the question itself | `sitting_id` (null for non-exam questions), `number_in_sitting`, `subject_id`, `stem`, `stem_images`, `question_type`, `is_negative_stem`, `is_multiple_statement`, `cognitive_level`, `expert_difficulty`, `status` (draft / reviewed / published), `version` |
 | `bank_question_choices` | ordered choices | `question_id`, `position`, `text`, `image` |
 | `bank_official_answers` | the official key, with its history | `question_id`, `choice_position` (null when voided), `also_correct_positions` (other accepted choices, JSON), `status` (final / amended / disputed / voided), `source`, `recorded_at` |
-| `bank_question_sources` | where in which edition the question comes from | `question_id`, `edition_id`, `node_id`, `page` (legacy text), `pdf_page`, `printed_page`, `pdf_sha256` (the exact PDF file), `table_ref`, `figure_ref`, `box_ref`, `anchor_text`, `is_primary`, confidences (`source`, `node`, `page`), `origin` (ai / human), `reviewed_by`, `reviewed_at` |
+| `bank_question_sources` | where in which edition the question comes from | `question_id`, `edition_id`, `reference_year` (the actual official list year for this edition), `classification_basis`, `classification_note`, `node_id`, `page` (legacy text), `pdf_page`, `printed_page`, `pdf_sha256` (the exact PDF file), `table_ref`, `figure_ref`, `box_ref`, `anchor_text`, `is_primary`, confidences (`source`, `node`, `page`), `origin` (ai / human), `reviewed_by`, `reviewed_at` |
 | `bank_question_concepts` | the concept(s) it tests | `question_id`, `concept_id`, `is_primary`, `confidence`, `origin` |
 | `bank_question_similarity` | how two questions relate | `question_a`, `question_b`, `relation` (exact_repeat / near_duplicate / same_concept), `confidence`, `origin` |
 | `bank_question_currency` | is the official answer still right under a given edition | `question_id`, `against_edition_id`, `status` (current / valid_old_edition / changed_in_newer / outdated / contradicted / removed_from_syllabus), `note`, `reviewed_by` |
@@ -79,6 +79,22 @@ of it into migrations, with tests, in its own change.
 treatment planning, image-based, calculation; negative stem and
 multiple-statement are separate flags because they combine with any type.
 `cognitive_level` is recall, understanding, application or analysis.
+
+`reference_year` and `classification_basis` are either both NULL on
+historical or otherwise unaudited rows whose provenance has not been
+established, or both populated when an audited decision is applied by the
+guarded source-only publisher. This includes older rows and rows created by
+the generic full-sitting importer without an audited classification decision;
+they remain NULL rather than receiving inferred provenance or a backfill.
+The full-sitting importer does not persist these fields, rejects payloads
+that supply them, and refuses to replace an existing unreviewed source row
+that already has audited provenance. Use the guarded source-only publisher
+for audited source decisions and proxy metadata. `reference_year` names the actual official
+reference-list year for the cited edition, not necessarily the exam year.
+`classification_note` carries a visible explanation for retrospective,
+updated-reference, and same-lineage proxy citations.
+`official_scope_note` remains separate and describes exam-syllabus scope;
+the runner displays the two notes independently.
 
 Similarity is stored as pairs, which are the facts; clusters ("this concept
 came 13 times in 10 years, 4 of them near-identical") are derived from the
