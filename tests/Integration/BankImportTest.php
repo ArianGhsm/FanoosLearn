@@ -163,7 +163,8 @@ final class BankImportTest
         $this->assert($readback['verified'] === true && $readback['source_rows'] === 2
             && count($readback['source_row_ids']) === 2
             && preg_match('/^[a-f0-9]{64}$/D', $readback['source_rows_sha256']) === 1,
-            'Independent source-row/question readback did not verify its committed test fixture.');
+            'Independent source-row/question readback did not verify its committed test fixture: '
+                . json_encode($readback, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
         $changedProvenance = $validated;
         $changedProvenance['questions'][0]['sources'][0]['reference_year'] = 1397;
         $changedProvenance['questions'][0]['sources'][0]['classification_basis'] = 'nearest_same_lineage_proxy';
