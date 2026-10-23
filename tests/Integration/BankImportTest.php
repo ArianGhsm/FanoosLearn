@@ -238,6 +238,11 @@ final class BankImportTest
             'classification_basis' => 'official_exam_year',
             'classification_note' => null,
         ], 'A refused generic re-import did not preserve audited source provenance.');
+        // Remove the audited fixture so the remaining generic-importer scenarios
+        // (amended keys, export round trip) start from ordinary unreviewed sources.
+        $this->database->prepare('DELETE FROM bank_question_sources WHERE workspace_id=:ws AND question_id=:qid AND classification_basis IS NOT NULL')
+            ->execute(['ws' => $ws, 'qid' => $sourceQuestionId]);
+        $importer->import($ws, $sitting);
 
         // The 1403-only writer's exact source-row compare-and-swap works on the
         // isolated integration DB. Roll back the fixture after verifying that
@@ -347,8 +352,8 @@ SQL);
         $importer->import($ws, $bare);
         $this->assert($this->count('bank_question_sources', $ws) === $sourcesBefore && $sourcesBefore > 0, 'Re-importing a sitting without sources erased its sources.');
 
-        $again = $importer->import($ws, $bare);
-        $this->assert($again['answers_recorded'] === 0 && $again['questions_changed'] === 0 && $again['explanations'] === 0, 'Re-importing an unchanged source-free sitting changed something: ' . json_encode($again));
+        $again = $importer->import($ws, $sitting);
+        $this->assert($again['answers_recorded'] === 0 && $again['questions_changed'] === 0 && $again['explanations'] === 0, 'Re-importing an unchanged sitting changed something: ' . json_encode($again));
 
         // A heading the catalog no longer lists is pruned; one a question cites is kept.
         $extra = $catalog;
