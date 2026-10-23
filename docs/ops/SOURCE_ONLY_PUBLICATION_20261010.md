@@ -158,14 +158,20 @@ because the actual announced syllabus scope is missing. The other
      --receipt=/srv/fanoos/shared/research/classification/reports/1403-community-source-publish-20261010.json
    ```
 
-   A successful transaction adds only the new source rows and writes a
-   private unique JSON receipt. **Never claim success before checking both
-   the receipt and production database.**
-7. Re-query the exact batch joined to `bank_question_sources` and
-   `bank_reference_nodes`, confirm count and page, `origin=ai`,
-   full published question count, remaining unsourced backlog, and site
-   `/health`. Confirm questions/options/answers were not changed via
-   comparison to original study re-export. Record exact backup ID,
+   A successful transaction adds only the new source rows. After commit, the
+   operator opens a fresh database connection and independently compares the
+   exact source rows, provenance, same-row PDF pages and hashes, and immutable
+   question/key fingerprints before writing its private unique JSON receipt.
+   Only a receipt with `status=applied_verified` and
+   `readback.verified=true` confirms that automated exact-batch readback.
+   If the CLI exits nonzero with
+   `status=manual_reconciliation_required`, the database transaction may
+   already have committed: inspect the receipt and reconcile the database and
+   verified backup before any retry. Do not blindly retry or roll back.
+7. After the automated exact-batch readback, confirm the whole-sitting
+   published question count, remaining unsourced backlog, and site `/health`.
+   Compare questions/options/answers to the original study re-export and
+   record exact backup ID,
    release SHA, batch receipt SHA and verified before/after counts.
 8. **Frozen-assessment preflight**: run
    `scripts/references/audit_published_assessment.php --workspace=UUID

@@ -81,11 +81,18 @@ multiple-statement are separate flags because they combine with any type.
 `cognitive_level` is recall, understanding, application or analysis.
 
 `reference_year` and `classification_basis` are either both NULL on
-historical rows whose provenance has not been audited or both populated by
-the guarded source-only publisher. `reference_year` names the actual
-official reference-list year for the cited edition, not necessarily the exam
-year. `classification_note` carries a visible explanation for
-retrospective, updated-reference, and same-lineage proxy citations.
+historical or otherwise unaudited rows whose provenance has not been
+established, or both populated when an audited decision is applied by the
+guarded source-only publisher. This includes older rows and rows created by
+the generic full-sitting importer without an audited classification decision;
+they remain NULL rather than receiving inferred provenance or a backfill.
+The full-sitting importer does not persist these fields, rejects payloads
+that supply them, and refuses to replace an existing unreviewed source row
+that already has audited provenance. Use the guarded source-only publisher
+for audited source decisions and proxy metadata. `reference_year` names the actual official
+reference-list year for the cited edition, not necessarily the exam year.
+`classification_note` carries a visible explanation for retrospective,
+updated-reference, and same-lineage proxy citations.
 `official_scope_note` remains separate and describes exam-syllabus scope;
 the runner displays the two notes independently.
 

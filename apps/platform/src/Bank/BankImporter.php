@@ -536,6 +536,15 @@ SQL);
 
             foreach ($this->arrayOf($question, 'sources', $here) as $s => $source) {
                 $at = "{$here}.sources[{$s}]";
+                if (!is_array($source)) {
+                    $this->fail($at, 'must be an object');
+                    continue;
+                }
+                foreach (['reference_year', 'classification_basis', 'classification_note'] as $provenanceField) {
+                    if (array_key_exists($provenanceField, $source)) {
+                        $this->fail("{$at}.{$provenanceField}", 'classification provenance requires the guarded source-only publisher; the full-sitting importer does not persist these fields');
+                    }
+                }
                 $ref = (string) ($source['ref'] ?? '');
                 $resolved = str_contains($ref, '#') ? $this->resolveNode($workspaceId, $ref) : $this->resolveEdition($workspaceId, $ref);
                 if ($resolved === null) {
@@ -784,6 +793,17 @@ SQL);
             // question's sources and concepts as they are, so re-importing a
             // sitting (a wording fix, a new answer key) never erases its classification.
             if (array_key_exists('sources', $question)) {
+                $auditedSource = $this->database->prepare(<<<'SQL'
+SELECT EXISTS (
+    SELECT 1 FROM bank_question_sources
+    WHERE workspace_id=:ws AND question_id=:qid AND reviewed_by_user_id IS NULL
+      AND (reference_year IS NOT NULL OR classification_basis IS NOT NULL OR classification_note IS NOT NULL)
+)
+SQL);
+                $auditedSource->execute(['ws' => $workspaceId, 'qid' => $questionId]);
+                if ((bool) $auditedSource->fetchColumn()) {
+                    throw new BankImportException(['a full-sitting re-import cannot replace audited source provenance; use the guarded source-only workflow']);
+                }
                 $this->database->prepare('DELETE FROM bank_question_sources WHERE question_id = :question AND reviewed_by_user_id IS NULL')->execute(['question' => $questionId]);
             }
             foreach ($question['sources'] ?? [] as $source) {

@@ -571,4 +571,248 @@ SQL);
             throw $error;
         }
     }
+
+    /**
+     * Independently read back a committed source-only batch on a fresh PDO
+     * connection. The returned evidence contains counts, row IDs and hashes
+     * only; question, answer, anchor and proxy-note text never leaves this
+     * method. Call only after run(..., true) has committed.
+     *
+     * @return array<string, mixed> Safe receipt fields; `verified` is false on
+     *                              any missing, extra or altered row/content.
+     */
+    public static function readback(
+        PDO $db, string $workspace, int $year, string $subject,
+        array $study, array $validated,
+    ): array {
+        if ($db->inTransaction()) {
+            throw new RuntimeException('Post-commit readback requires a fresh connection outside a transaction.');
+        }
+
+        $original = [];
+        foreach ($study['questions'] ?? [] as $question) {
+            $number = $question['number'] ?? null;
+            if (!is_int($number) || isset($original[$number])) {
+                throw new RuntimeException('Readback input has an invalid or duplicate question number.');
+            }
+            $original[$number] = $question;
+        }
+        ksort($original, SORT_NUMERIC);
+
+        $validatedByNumber = [];
+        foreach ($validated['questions'] ?? [] as $question) {
+            $number = $question['number'] ?? null;
+            if (!is_int($number) || isset($validatedByNumber[$number]) || !isset($original[$number])) {
+                throw new RuntimeException('Readback validated question set differs from the study.');
+            }
+            $sourceRows = $question['sources'] ?? [];
+            unset($question['sources']);
+            if ($question !== $original[$number]) {
+                throw new RuntimeException('Readback validated question content differs from the study.');
+            }
+            if (!is_array($sourceRows) || count($sourceRows) > 1) {
+                throw new RuntimeException('Readback expects at most one reviewed source per question.');
+            }
+            $validatedByNumber[$number] = $sourceRows;
+        }
+        if (count($validatedByNumber) !== count($original)) {
+            throw new RuntimeException('Readback validated question count differs from the study.');
+        }
+
+        $questionQuery = $db->prepare(<<<'SQL'
+SELECT q.id,q.question_key,q.number_in_sitting,q.stem,q.status
+FROM bank_questions q
+JOIN bank_exam_sittings si ON si.id=q.sitting_id AND si.workspace_id=q.workspace_id
+JOIN bank_exam_types et ON et.id=si.exam_type_id AND et.workspace_id=q.workspace_id
+JOIN bank_subjects sb ON sb.id=q.subject_id AND sb.workspace_id=q.workspace_id
+WHERE q.workspace_id=:ws AND et.type_key='residency' AND si.exam_year=:yr
+AND si.exam_round=1 AND sb.subject_key=:sub AND q.number_in_sitting=:num
+SQL);
+        $choicesQuery = $db->prepare('SELECT text,image FROM bank_question_choices WHERE workspace_id=:ws AND question_id=:qid ORDER BY position');
+        $answerQuery = $db->prepare('SELECT choice_position,also_correct_positions,status FROM bank_official_answers WHERE workspace_id=:ws AND question_id=:qid ORDER BY recorded_at DESC,id DESC LIMIT 1');
+        $sourcesQuery = $db->prepare(<<<'SQL'
+SELECT s.id,s.question_id,r.reference_key,e.edition_key,n.node_key,
+       s.page,s.printed_page,s.pdf_page,s.pdf_sha256,s.anchor_text,
+       s.reference_year,s.classification_basis,s.classification_note,
+       s.origin,s.is_primary,s.confidence_source,s.confidence_node,s.confidence_page,
+       s.official_scope_status,s.official_scope_note,s.scope_unverified
+FROM bank_question_sources s
+LEFT JOIN bank_reference_editions e
+  ON e.id=s.edition_id AND e.workspace_id=s.workspace_id
+LEFT JOIN bank_references r
+  ON r.id=e.reference_id AND r.workspace_id=e.workspace_id
+LEFT JOIN bank_reference_nodes n
+  ON n.id=s.node_id AND n.edition_id=s.edition_id AND n.workspace_id=s.workspace_id
+WHERE s.workspace_id=:ws AND s.question_id=:qid
+ORDER BY s.id
+SQL);
+
+        $expectedQuestions = [];
+        $actualQuestions = [];
+        $expectedSources = [];
+        $actualSources = [];
+        $sourceIds = [];
+        foreach ($original as $number => $question) {
+            $questionKey = BankImporter::questionKey('residency', $year, 1, $number);
+            $hasExpectedSource = ($validatedByNumber[$number] ?? []) !== [];
+            $expectedQuestions[] = [
+                'number' => $number,
+                'question_key' => $questionKey,
+                'status' => $hasExpectedSource
+                    ? (($year === 1398 && $subject === 'prosthodontics' && $number === 97)
+                        ? 'draft' : 'published') : null,
+                'stem' => $question['stem'] ?? null,
+                'choices' => $question['choices'] ?? null,
+                'answer' => $question['answer'] ?? null,
+            ];
+
+            $questionQuery->execute(['ws' => $workspace, 'yr' => $year, 'sub' => $subject, 'num' => $number]);
+            $siteQuestion = $questionQuery->fetch(PDO::FETCH_ASSOC);
+            if (!is_array($siteQuestion) || $questionQuery->fetch(PDO::FETCH_ASSOC) !== false) {
+                $actualQuestions[] = ['number' => $number, 'missing_or_duplicate' => true];
+                continue;
+            }
+
+            $params = ['ws' => $workspace, 'qid' => $siteQuestion['id']];
+            $choicesQuery->execute($params);
+            $siteChoices = array_map(
+                static fn(array $choice): mixed => $choice['image'] === null
+                    ? (string) $choice['text']
+                    : ['text' => (string) $choice['text'], 'image' => (string) $choice['image']],
+                $choicesQuery->fetchAll(PDO::FETCH_ASSOC),
+            );
+            $answerQuery->execute($params);
+            $siteAnswer = $answerQuery->fetch(PDO::FETCH_ASSOC);
+            $actualAnswer = is_array($siteAnswer) ? [
+                'choice' => $siteAnswer['choice_position'] === null ? null : (int) $siteAnswer['choice_position'],
+                'also_correct' => $siteAnswer['also_correct_positions']
+                    ? json_decode((string) $siteAnswer['also_correct_positions'], true, 32, JSON_THROW_ON_ERROR) : [],
+                'status' => (string) $siteAnswer['status'],
+            ] : null;
+            $actualQuestions[] = [
+                'number' => $number,
+                'question_key' => (string) $siteQuestion['question_key'],
+                'status' => $hasExpectedSource ? (string) $siteQuestion['status'] : null,
+                'stem' => (string) $siteQuestion['stem'],
+                'choices' => $siteChoices,
+                'answer' => $actualAnswer,
+            ];
+
+            $expectedForQuestion = $validatedByNumber[$number] ?? [];
+            foreach ($expectedForQuestion as $source) {
+                $expectedSources[] = self::readbackSource($number, $source, null);
+            }
+            $sourcesQuery->execute($params);
+            foreach ($sourcesQuery->fetchAll(PDO::FETCH_ASSOC) as $source) {
+                $sourceIds[] = (string) $source['id'];
+                $actualSources[] = self::readbackSource($number, [
+                    'ref' => ($source['reference_key'] === null || $source['edition_key'] === null || $source['node_key'] === null)
+                        ? null : $source['reference_key'] . '@' . $source['edition_key'] . '#' . $source['node_key'],
+                    'page' => $source['page'],
+                    'printed_page' => $source['printed_page'],
+                    'pdf_page' => $source['pdf_page'] === null ? null : (int) $source['pdf_page'],
+                    'pdf_sha256' => $source['pdf_sha256'],
+                    'anchor' => $source['anchor_text'],
+                    'reference_year' => $source['reference_year'] === null ? null : (int) $source['reference_year'],
+                    'classification_basis' => $source['classification_basis'],
+                    'classification_note' => $source['classification_note'],
+                    'origin' => $source['origin'],
+                    'primary' => (bool) $source['is_primary'],
+                    'confidence' => [
+                        'source' => $source['confidence_source'],
+                        'node' => $source['confidence_node'],
+                        'page' => $source['confidence_page'],
+                    ],
+                    'official_scope_status' => $source['official_scope_status'],
+                    'official_scope_note' => $source['official_scope_note'],
+                    'scope_unverified' => (bool) $source['scope_unverified'],
+                ], (string) $source['id']);
+            }
+        }
+
+        $comparison = self::compareReadback($expectedQuestions, $actualQuestions, $expectedSources, $actualSources);
+        sort($sourceIds, SORT_STRING);
+        return $comparison + [
+            'source_row_ids' => $sourceIds,
+            'source_rows_sha256' => self::digest($actualSources),
+        ];
+    }
+
+    /**
+     * Pure comparison function kept public for focused tests. Arrays passed
+     * here may contain private values; the result never returns them.
+     *
+     * @return array<string, mixed>
+     */
+    public static function compareReadback(
+        array $expectedQuestions, array $actualQuestions,
+        array $expectedSources, array $actualSources,
+    ): array {
+        $expectedQuestionHash = self::digest($expectedQuestions);
+        $actualQuestionHash = self::digest($actualQuestions);
+        $withoutIds = static fn(array $rows): array => array_map(
+            static function (array $row): array {
+                unset($row['source_id']);
+                return $row;
+            },
+            $rows,
+        );
+        $expectedSourceHash = self::digest($withoutIds($expectedSources));
+        $actualSourceHash = self::digest($withoutIds($actualSources));
+        $checks = [
+            'question_row_count' => count($expectedQuestions) === count($actualQuestions),
+            'question_key_content_fingerprint' => hash_equals($expectedQuestionHash, $actualQuestionHash),
+            'source_row_count' => count($expectedSources) === count($actualSources),
+            'source_provenance_rows' => hash_equals($expectedSourceHash, $actualSourceHash),
+        ];
+        $mismatches = array_keys(array_filter($checks, static fn(bool $passed): bool => !$passed));
+
+        return [
+            'verified' => $mismatches === [],
+            'mismatches' => $mismatches,
+            'expected_question_rows' => count($expectedQuestions),
+            'question_rows' => count($actualQuestions),
+            'question_key_fingerprint_sha256' => $actualQuestionHash,
+            'expected_question_key_fingerprint_sha256' => $expectedQuestionHash,
+            'expected_source_rows' => count($expectedSources),
+            'source_rows' => count($actualSources),
+            'expected_source_fields_sha256' => $expectedSourceHash,
+            'source_fields_sha256' => $actualSourceHash,
+            'checks' => $checks,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private static function readbackSource(int $number, array $source, ?string $id): array
+    {
+        $confidence = $source['confidence'] ?? [];
+        return [
+            'number' => $number,
+            'source_id' => $id,
+            'ref' => $source['ref'] ?? null,
+            'page' => isset($source['page']) ? (string) $source['page'] : null,
+            'printed_page' => isset($source['printed_page']) ? (string) $source['printed_page'] : null,
+            'pdf_page' => isset($source['pdf_page']) ? (int) $source['pdf_page'] : null,
+            'pdf_sha256' => isset($source['pdf_sha256']) ? strtolower((string) $source['pdf_sha256']) : null,
+            'anchor_sha256' => isset($source['anchor']) ? hash('sha256', (string) $source['anchor']) : null,
+            'reference_year' => isset($source['reference_year']) ? (int) $source['reference_year'] : null,
+            'classification_basis' => $source['classification_basis'] ?? null,
+            'classification_note_sha256' => isset($source['classification_note'])
+                ? hash('sha256', (string) $source['classification_note']) : null,
+            'origin' => $source['origin'] ?? null,
+            'is_primary' => (bool) ($source['primary'] ?? false),
+            'confidence_source' => isset($confidence['source']) ? number_format((float) $confidence['source'], 4, '.', '') : null,
+            'confidence_node' => isset($confidence['node']) ? number_format((float) $confidence['node'], 4, '.', '') : null,
+            'confidence_page' => isset($confidence['page']) ? number_format((float) $confidence['page'], 4, '.', '') : null,
+            'official_scope_status' => $source['official_scope_status'] ?? null,
+            'official_scope_note_sha256' => isset($source['official_scope_note'])
+                ? hash('sha256', (string) $source['official_scope_note']) : null,
+            'scope_unverified' => (bool) ($source['scope_unverified'] ?? false),
+        ];
+    }
+
+    private static function digest(array $value): string
+    {
+        return hash('sha256', json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+    }
 }

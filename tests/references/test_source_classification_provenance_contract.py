@@ -63,6 +63,35 @@ class SourceClassificationProvenanceTests(unittest.TestCase):
         self.assertIn("same-lineage-proxy-", operator)
         self.assertIn("BackupManifest::verify", operator)
 
+    def test_operator_receipt_requires_fresh_post_commit_row_readback(self):
+        operator = (ROOT / "scripts/references/import_verified_sources.php").read_text()
+        publisher = (ROOT / "apps/platform/src/Bank/SourceOnlyPublisher.php").read_text()
+        run_at = operator.index("SourceOnlyPublisher::run(")
+        readback_at = operator.index("SourceOnlyPublisher::readback(")
+        verified_at = operator.index("'applied_verified'")
+        receipt_at = operator.index("fopen($file, 'x')")
+        self.assertLess(run_at, readback_at)
+        self.assertLess(readback_at, verified_at)
+        self.assertLess(verified_at, receipt_at)
+        self.assertIn("DatabaseConnection::fromEnvironment()", operator[readback_at:])
+        for marker in [
+            "source_row_ids", "source_rows_sha256", "question_key_fingerprint_sha256",
+            "classification_basis", "classification_note", "pdf_sha256",
+            "manual_reconciliation_required", "do not retry or roll back blindly",
+        ]:
+            self.assertIn(marker, operator + publisher)
+        self.assertIn("readback_error_code", operator)
+
+    def test_generic_full_sitting_importer_refuses_unpersisted_provenance_payloads(self):
+        importer = (ROOT / "apps/platform/src/Bank/BankImporter.php").read_text()
+        model = (ROOT / "docs/product/05_DENTAL_RESIDENCY_DATA_MODEL.md").read_text()
+        for field in ["reference_year", "classification_basis", "classification_note"]:
+            self.assertIn(f"'{field}'", importer)
+        self.assertIn("full-sitting importer does not persist these fields", importer)
+        self.assertIn("cannot replace audited source provenance", importer)
+        self.assertIn("full-sitting importer", model)
+        self.assertIn("generic full-sitting importer without an audited classification decision", model)
+
 
 if __name__ == "__main__":
     unittest.main()

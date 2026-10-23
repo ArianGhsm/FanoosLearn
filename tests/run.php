@@ -51,6 +51,7 @@ use Fanoos\Tests\Operations\ExamRankingTest;
 use Fanoos\Tests\Operations\StudyPlanLayoutTest;
 use Fanoos\Tests\Operations\QuestionBankRowTest;
 use Fanoos\Tests\Operations\SourcePageBackfillTest;
+use Fanoos\Tests\Operations\SourceOnlyReadbackTest;
 use Fanoos\Tests\Operations\Residency1403AiSourceCitationCorrectionGuardTest;
 use Fanoos\Tests\Operations\Residency1403AiSourceCitationReplacementGuardTest;
 use Fanoos\Tests\Operations\ResidencyAiSourceCitationReplacementGuardTest;
@@ -111,6 +112,8 @@ try {
     echo "PASS question bank row mapping\n";
     $assertions += (new SourcePageBackfillTest())->run();
     echo "PASS legacy source page backfill rules\n";
+    $assertions += (new SourceOnlyReadbackTest())->run();
+    echo "PASS source-only post-commit readback fingerprints\n";
     $assertions += (new Residency1403AiSourceCitationCorrectionGuardTest())->run();
     echo "PASS 1403 AI source-citation audit, private-file and source-only correction guard\n";
     $assertions += (new Residency1403AiSourceCitationReplacementGuardTest())->run();

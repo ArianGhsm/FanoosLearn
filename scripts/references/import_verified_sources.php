@@ -248,38 +248,83 @@ try {
             throw new RuntimeException('Receipt path must be new and private.');
         }
     }
+    // Keep the exact validated inputs in memory across commit so the
+    // independent readback checks the same pinned content, not a later file
+    // reread that could differ from the transaction inputs.
+    $study = $read($studyPath);
+    $validated = $read($validatedPath);
+    $decisions = $read($decisionsPath);
+    $receiptAuditSha = hash_file('sha256', $auditPath);
+    $receiptValidatedSha = hash_file('sha256', $validatedPath);
+    if (!is_string($receiptAuditSha) || !is_string($receiptValidatedSha)) {
+        throw new RuntimeException('Pinned receipt input digest could not be read before publication.');
+    }
     $written = SourceOnlyPublisher::run(
         DatabaseConnection::fromEnvironment(), $ws, $year, $subject,
-        $read($studyPath), $read($validatedPath), $read($decisionsPath), $apply,
+        $study, $validated, $decisions, $apply,
     );
-    if ($written !== $expected) {
-        throw new RuntimeException('Unexpected atomic batch count.');
-    }
     $receiptData = [
         'format' => 'fanoos.source-only-receipt/1',
         'batch' => $key, 'applied' => $apply, 'source_rows' => $written,
         'questions_changed' => 0, 'choices_changed' => 0, 'answers_changed' => 0,
-        'audit_sha256' => hash_file('sha256', $auditPath),
+        'audit_sha256' => $receiptAuditSha,
         'classification_basis' => $retrospective ? 'retrospective_proxy_1397_plus'
             : ($updatedReferenceProxyBatch ? 'updated_reference_proxy'
                 : ($nearestSameLineageProxyBatch ? 'nearest_same_lineage_proxy' : 'official_exam_year')),
         'reference_years' => $retrospective ? ($b['reference_years'] ?? [])
             : (($updatedReferenceProxyBatch || $nearestSameLineageProxyBatch)
                 ? ($b['reference_years'] ?? []) : [$year]),
-        'validated_sha256' => hash_file('sha256', $validatedPath),
+        'validated_sha256' => $receiptValidatedSha,
     ];
     if ($apply) {
         $receiptData['backup_id'] = basename($backupPath);
         $receiptData['completed_at_utc'] = gmdate('Y-m-d\TH:i:s\Z');
+        try {
+            $readback = SourceOnlyPublisher::readback(
+                DatabaseConnection::fromEnvironment(), $ws, $year, $subject, $study, $validated,
+            );
+            if ($written !== $expected) {
+                $readback['verified'] = false;
+                $readback['mismatches'][] = 'operator_expected_source_count';
+            }
+        } catch (Throwable) {
+            $readback = [
+                'verified' => false,
+                'mismatches' => ['post_commit_readback_unavailable'],
+                'readback_error_code' => 'post_commit_readback_failed',
+            ];
+        }
+        $receiptData['status'] = ($readback['verified'] ?? false) === true
+            ? 'applied_verified' : 'manual_reconciliation_required';
+        $receiptData['readback'] = $readback;
+        $receiptData['reconciliation_required'] = $receiptData['status'] !== 'applied_verified';
+        $encodedReceipt = json_encode($receiptData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n";
         $file = (string) $args['receipt'];
         $handle = @fopen($file, 'x');
         if ($handle === false) {
-            throw new RuntimeException('Database already committed; receipt creation failed. Check production DB before any retry.');
+            throw new RuntimeException('Database commit returned but its unique receipt could not be created. Reconcile backup and database before any retry.');
         }
         chmod($file, 0600);
-        fwrite($handle, json_encode($receiptData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n");
-        fflush($handle);
-        fclose($handle);
+        $offset = 0;
+        try {
+            while ($offset < strlen($encodedReceipt)) {
+                $size = fwrite($handle, substr($encodedReceipt, $offset));
+                if ($size === false || $size === 0) {
+                    throw new RuntimeException('Receipt write failed.');
+                }
+                $offset += $size;
+            }
+            if (!fflush($handle)) {
+                throw new RuntimeException('Receipt flush failed.');
+            }
+        } finally {
+            fclose($handle);
+        }
+        if (($readback['verified'] ?? false) !== true) {
+            throw new RuntimeException('Database commit returned but independent readback did not verify it. Manual reconciliation is required; do not retry or roll back blindly.');
+        }
+    } elseif ($written !== $expected) {
+        throw new RuntimeException('Unexpected atomic preview batch count.');
     }
     echo json_encode($receiptData, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . PHP_EOL;
 } catch (Throwable $error) {
