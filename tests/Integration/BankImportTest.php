@@ -132,21 +132,22 @@ final class BankImportTest
         // official_scope_status so the test covers the writer's in_scope default.
         $this->database->prepare("UPDATE bank_questions SET status='published' WHERE workspace_id=:ws AND question_key LIKE 'residency-1404-1-%'")
             ->execute(['ws' => $ws]);
-        $q1Id = $this->database->prepare('SELECT id FROM bank_questions WHERE workspace_id=:ws AND question_key=:key');
-        $q1Id->execute(['ws' => $ws, 'key' => $key]);
-        $sourceQuestionId = (string) $q1Id->fetchColumn();
+        $sourceQuestionKey = BankImporter::questionKey('residency', 1404, 1, 2);
+        $sourceQuestionLookup = $this->database->prepare('SELECT id FROM bank_questions WHERE workspace_id=:ws AND question_key=:key');
+        $sourceQuestionLookup->execute(['ws' => $ws, 'key' => $sourceQuestionKey]);
+        $sourceQuestionId = (string) $sourceQuestionLookup->fetchColumn();
         $this->database->prepare('DELETE FROM bank_question_sources WHERE workspace_id=:ws AND question_id=:qid')
             ->execute(['ws' => $ws, 'qid' => $sourceQuestionId]);
         $this->database->prepare("UPDATE bank_questions SET stem_image='test-fixture/stem-original.png' WHERE workspace_id=:ws AND id=:qid")
             ->execute(['ws' => $ws, 'qid' => $sourceQuestionId]);
         $this->database->prepare("UPDATE bank_question_choices SET image='test-fixture/choice-original.png' WHERE workspace_id=:ws AND question_id=:qid AND position=1")
             ->execute(['ws' => $ws, 'qid' => $sourceQuestionId]);
-        $studyQuestion = $sitting['questions'][0];
+        $studyQuestion = $sitting['questions'][1];
         $studyChoices = $studyQuestion['choices'];
         $studyChoices[0] = ['text' => $studyChoices[0], 'image' => 'test-fixture/choice-original.png'];
         $studyAnswer = $studyQuestion['answer'];
         $studyQuestion = [
-            'number' => 1,
+            'number' => 2,
             'subject' => 'endodontics',
             'stem' => $studyQuestion['stem'],
             'choices' => $studyChoices,
@@ -163,8 +164,8 @@ final class BankImportTest
         ];
         $source = [
             'ref' => 'torabinejad@6e#ch14',
-            'page' => 'pdf 271', 'pdf_page' => 271, 'printed_page' => '256',
-            'pdf_sha256' => str_repeat('a', 64), 'anchor' => 'Working Length Determination',
+            'page' => 'pdf 272', 'pdf_page' => 272, 'printed_page' => null,
+            'pdf_sha256' => str_repeat('a', 64), 'anchor' => 'Readback integration exact page evidence',
             'primary' => true, 'origin' => 'ai',
             'confidence' => ['source' => 0.9, 'node' => 0.9, 'page' => 0.9],
             'reference_year' => 1404, 'classification_basis' => 'official_exam_year',
@@ -173,8 +174,8 @@ final class BankImportTest
         $validated = $study;
         $validated['questions'][0]['sources'] = [$source];
         $decisions = [[
-            'number' => 1, 'edition' => 'torabinejad@6e', 'chapter' => '14',
-            'page' => 271, 'evidence' => $source['anchor'], 'confidence' => 0.9,
+            'number' => 2, 'edition' => 'torabinejad@6e', 'chapter' => '14',
+            'page' => 272, 'evidence' => $source['anchor'], 'confidence' => 0.9,
         ]];
         $readbackEvidence = null;
         $written = SourceOnlyPublisher::run(
@@ -231,7 +232,7 @@ final class BankImportTest
                 'A generic full-sitting re-import refused audited provenance for the wrong reason.');
         }
         $auditedProvenance = $this->database->prepare('SELECT reference_year,classification_basis,classification_note FROM bank_question_sources WHERE workspace_id=:ws AND question_id=(SELECT id FROM bank_questions WHERE workspace_id=:ws2 AND question_key=:key) ORDER BY id LIMIT 1');
-        $auditedProvenance->execute(['ws' => $ws, 'ws2' => $ws, 'key' => $key]);
+        $auditedProvenance->execute(['ws' => $ws, 'ws2' => $ws, 'key' => $sourceQuestionKey]);
         $this->assert($auditedProvenance->fetch(PDO::FETCH_ASSOC) === [
             'reference_year' => 1404,
             'classification_basis' => 'official_exam_year',
