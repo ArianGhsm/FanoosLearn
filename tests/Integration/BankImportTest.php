@@ -346,8 +346,8 @@ SQL);
         $importer->import($ws, $bare);
         $this->assert($this->count('bank_question_sources', $ws) === $sourcesBefore && $sourcesBefore > 0, 'Re-importing a sitting without sources erased its sources.');
 
-        $again = $importer->import($ws, $sitting);
-        $this->assert($again['answers_recorded'] === 0 && $again['questions_changed'] === 0 && $again['explanations'] === 0, 'Re-importing an unchanged sitting changed something: ' . json_encode($again));
+        $again = $importer->import($ws, $bare);
+        $this->assert($again['answers_recorded'] === 0 && $again['questions_changed'] === 0 && $again['explanations'] === 0, 'Re-importing an unchanged source-free sitting changed something: ' . json_encode($again));
 
         // A heading the catalog no longer lists is pruned; one a question cites is kept.
         $extra = $catalog;
