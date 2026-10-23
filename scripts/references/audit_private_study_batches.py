@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from apply_classification import chapter_nodes, flat, fragments
 from verified_reference_pdf import chapter_coverage, open_verified_reference
 from retrospective_reference_policy import BASIS, is_retrospective
+from retrospective_reference_policy import selected_reference_rows as selected_retrospective_rows
 from updated_reference_proxy_policy import (
     UPDATED_PROXY_BASIS,
     UPDATED_PROXY_1397_EXAM_YEAR,
@@ -26,12 +27,14 @@ from updated_reference_proxy_policy import (
     is_updated_reference_proxy,
     valid_updated_reference_note,
 )
-from nearest_same_lineage_proxy_policy import (
+from same_lineage_proxy_policy import (
     BASIS as SAME_LINEAGE_PROXY_BASIS,
     is_proxy_exam_year,
     is_selected_proxy as is_selected_same_lineage_proxy,
     selected_reference_rows as selected_same_lineage_rows,
     valid_proxy_note,
+    fallback_error,
+    requires_newest_first,
 )
 
 BATCH = re.compile(r"^(13[0-9]{2}|14[0-9]{2}):([a-z][a-z0-9-]*):([a-z][a-z0-9-]*)$")
@@ -139,7 +142,7 @@ def audit_batch(root: Path, spec: str,
                               if d.get("classification_basis") == SAME_LINEAGE_PROXY_BASIS]
     same_lineage_proxy = bool(same_lineage_decisions)
     if updated_proxy and same_lineage_proxy:
-        raise ValueError(f"{spec}: updated-reference and nearest same-lineage proxy bases cannot be mixed")
+        raise ValueError(f"{spec}: updated-reference and same-lineage proxy bases cannot be mixed")
     if updated_proxy:
         if (year_n not in (UPDATED_PROXY_1397_EXAM_YEAR, 1398)
                 or len(proxy_decisions) != len(wanted)
@@ -186,6 +189,15 @@ def audit_batch(root: Path, spec: str,
                     or isinstance(d.get("reference_year"), bool)
                     or d["reference_year"] < 1397):
                 raise ValueError(f"{spec}: missing explicit 1397+ retrospective reference-year provenance")
+    if requires_newest_first(year_n) and not updated_proxy:
+        if catalog is None:
+            raise ValueError(f"{spec}: catalog is required to verify the newest-first edition order")
+        select = selected_retrospective_rows if is_retrospective(year_n) else selected_same_lineage_rows
+        candidates = select(catalog, "residency", year_n, subject, pdf_catalog, chapter_maps)
+        for d in wanted.values():
+            order_error = fallback_error(candidates, d.get("edition"), d.get("newer_editions_searched"))
+            if order_error:
+                raise ValueError(f"{spec}: Q{d['number']}: {order_error}")
     if not wanted.keys() <= original.keys():
         raise ValueError(f"{spec}: decision question not in exact sitting")
     source_pdf_provenance = {}

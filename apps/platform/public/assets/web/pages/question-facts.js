@@ -51,7 +51,7 @@ export function questionFacts(question) {
         } else if (c.official_scope_status === 'outside_scope_exam_question') {
             scopeNote = text(c.official_scope_note) || 'محل طراحی این سؤال خارج از محدودهٔ رسمی آزمون بوده است.';
         }
-        const proxyBasis = ['retrospective_proxy_1397_plus', 'nearest_same_lineage_proxy', 'updated_reference_proxy'];
+        const proxyBasis = ['retrospective_proxy_1397_plus', 'same_lineage_proxy', 'updated_reference_proxy'];
         if (proxyBasis.includes(text(c.classification_basis))) {
             referenceNote = text(c.classification_note);
         }

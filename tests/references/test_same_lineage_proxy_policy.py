@@ -9,8 +9,8 @@ import unittest
 from unittest.mock import patch
 
 FILE = (Path(__file__).resolve().parents[2] / "scripts" / "references" /
-        "nearest_same_lineage_proxy_policy.py")
-spec = importlib.util.spec_from_file_location("nearest_same_lineage_proxy_policy", FILE)
+        "same_lineage_proxy_policy.py")
+spec = importlib.util.spec_from_file_location("same_lineage_proxy_policy", FILE)
 p = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(p)
 
@@ -51,146 +51,61 @@ class NearestSameLineageProxyTests(unittest.TestCase):
         self.assertFalse(p.is_proxy_exam_year(1399))
         self.assertEqual(self.select(1395), [])
 
-    def test_nearest_verified_same_family_is_selected_and_actual_year_kept(self):
-        selected = self.select(1396)
-        self.assertEqual([(r["year"], r["edition"], r["_proxy"]) for r in selected],
-                         [(1397, "daly@2e", True), (1397, "other-book@1e", True)])
-        self.assertTrue(all(r["_eligible"] for r in selected))
+    def eligible(self, selected, family="daly"):
+        return [(r["year"], r["edition"], r["_proxy"], r["_rank"])
+                for r in selected if r["_family"] == family and r["_eligible"]]
 
-    def test_legacy_map_without_page_count_still_needs_a_real_chapter(self):
-        self.maps["daly@2e"] = {
-            "runs": [[None, 1, 20]],
-            "source_pdf_sha256": HASH,
-        }
+    def test_newest_family_edition_ranks_first_and_actual_year_kept(self):
         selected = self.select(1396)
-        daly = next(r for r in selected if r["edition"].startswith("daly@"))
-        self.assertEqual((daly["year"], daly["edition"], daly["_eligible"]),
-                         (1397, "daly@2e", False))
+        self.assertEqual(self.eligible(selected),
+                         [(1398, "daly@3e", True, 0), (1397, "daly@2e", True, 1)])
+        self.assertEqual(self.eligible(selected, "other-book"),
+                         [(1397, "other-book@1e", True, 0)])
 
-    def test_all_front_matter_map_is_not_exact_edition_eligible(self):
-        exact = row(1396, "daly@1e")
-        self.catalog["validity"].append(exact)
+    def test_exact_exam_year_edition_is_an_older_non_proxy_candidate(self):
+        self.catalog["validity"].append(row(1396, "daly@1e"))
         self.pdfs["daly@1e"] = {"pdf": "verified-server-pdf"}
-        self.maps["daly@1e"] = {
-            "runs": [[None, 1, 20]], "pdf_pages": 20, "source_pdf_sha256": HASH,
-        }
-        selected = self.select(1396)
-        daly = next(r for r in selected if r["edition"].startswith("daly@"))
-        self.assertEqual((daly["year"], daly["edition"], daly["_proxy"], daly["_eligible"]),
-                         (1396, "daly@1e", False, False))
+        self.maps["daly@1e"] = MAP
+        self.assertEqual(self.eligible(self.select(1396)),
+                         [(1398, "daly@3e", True, 0), (1397, "daly@2e", True, 1),
+                          (1396, "daly@1e", False, 2)])
 
-    def test_empty_or_unstructured_catalog_scope_is_pending(self):
+    def test_edition_listed_in_several_years_appears_once(self):
+        self.catalog["validity"].append(row(1405, "daly@3e"))
+        self.catalog["validity"].append(row(1396, "daly@3e"))
+        self.assertEqual(self.eligible(self.select(1396)),
+                         [(1396, "daly@3e", False, 0), (1397, "daly@2e", True, 1)])
+        self.catalog["validity"].remove(row(1396, "daly@3e"))
+        self.assertEqual(self.eligible(self.select(1396))[0], (1405, "daly@3e", True, 0))
+
+    def test_unusable_newer_edition_is_pending_and_older_moves_up(self):
+        for bad in ({"missing": "not in verified library"}, None):
+            with self.subTest(bad=bad):
+                if bad is None:
+                    self.pdfs["daly@3e"] = {"pdf": "verified-server-pdf"}
+                    self.maps["daly@3e"] = {"runs": [[None, 1, 20]], "pdf_pages": 20,
+                                            "source_pdf_sha256": HASH}
+                else:
+                    self.pdfs["daly@3e"] = bad
+                selected = self.select(1396)
+                newest = next(r for r in selected if r["edition"] == "daly@3e")
+                self.assertEqual((newest["_eligible"], newest["_rank"]), (False, None))
+                self.assertEqual(self.eligible(selected), [(1397, "daly@2e", True, 0)])
+
+    def test_bad_scope_or_map_is_pending(self):
+        self.maps["daly@2e"] = {"runs": [[None, 1, 20]], "source_pdf_sha256": HASH}
         for bad_scope in ([], [{}], ["1"], [{"number": ""}]):
             with self.subTest(scope=bad_scope):
-                exact = row(1396, "daly@1e")
-                exact["scope_chapters"] = bad_scope
-                self.catalog["validity"].append(exact)
-                self.pdfs["daly@1e"] = {"pdf": "verified-server-pdf"}
-                self.maps["daly@1e"] = MAP
-                selected = self.select(1396)
-                daly = next(r for r in selected if r["edition"].startswith("daly@"))
-                self.assertEqual((daly["year"], daly["edition"], daly["_proxy"], daly["_eligible"]),
-                                 (1396, "daly@1e", False, False))
-                self.catalog["validity"].remove(exact)
-
-    def test_exact_available_edition_always_wins(self):
-        self.catalog["validity"].append(row(1396, "daly@1e"))
-        self.pdfs["daly@1e"] = {"pdf": "verified-server-pdf"}
-        self.maps["daly@1e"] = MAP
-        selected = self.select(1396)
-        self.assertEqual([(r["year"], r["edition"], r["_proxy"]) for r in selected],
-                         [(1396, "daly@1e", False)])
-
-    def test_missing_exact_edition_uses_nearest_available_same_family(self):
-        self.catalog["validity"].append(row(1396, "daly@1e"))
-        self.pdfs["daly@1e"] = {"missing": "not in verified library"}
-        self.maps["daly@1e"] = MAP
-        selected = self.select(1396)
-        self.assertEqual([(r["year"], r["edition"], r["_proxy"]) for r in selected],
-                         [(1397, "daly@2e", True)])
-        self.assertNotIn("other-book@1e", [r["edition"] for r in selected])
-
-    def test_verified_exact_pdf_with_unstructured_scope_stays_pending(self):
-        exact = row(1396, "daly@1e")
-        exact["scope_chapters"] = []
-        self.catalog["validity"].append(exact)
-        self.pdfs["daly@1e"] = {"pdf": "verified-server-pdf"}
-        self.maps["daly@1e"] = MAP
-        selected = self.select(1396)
-        self.assertEqual([(r["year"], r["edition"], r["_proxy"], r["_eligible"])
-                          for r in selected], [(1396, "daly@1e", False, False)])
-
-    def test_verified_exact_pdf_with_missing_map_does_not_enable_proxy(self):
-        self.catalog["validity"].append(row(1396, "daly@1e"))
-        self.pdfs["daly@1e"] = {"pdf": "verified-server-pdf"}
-        self.maps.pop("daly@1e", None)
-        selected = self.select(1396)
-        daly = next(r for r in selected if r["edition"].startswith("daly@"))
-        self.assertEqual((daly["year"], daly["edition"], daly["_proxy"], daly["_eligible"]),
-                         (1396, "daly@1e", False, False))
-        self.assertFalse(p.is_selected_proxy(
-            self.catalog, "residency", 1396, "community-dentistry",
-            "daly@2e", 1397, p.BASIS, self.pdfs, self.maps))
-
-    def test_verified_exact_pdf_with_invalid_map_does_not_enable_proxy(self):
-        self.catalog["validity"].append(row(1396, "daly@1e"))
-        self.pdfs["daly@1e"] = {"pdf": "verified-server-pdf"}
-        self.maps["daly@1e"] = {"runs": [["1", 1, 20]]}
-        selected = self.select(1396)
-        daly = next(r for r in selected if r["edition"].startswith("daly@"))
-        self.assertEqual((daly["year"], daly["edition"], daly["_proxy"], daly["_eligible"]),
-                         (1396, "daly@1e", False, False))
+                self.catalog["validity"][1]["scope_chapters"] = bad_scope
+                self.assertEqual(self.eligible(self.select(1396)), [])
 
     def test_no_exam_year_list_uses_nearest_subject_list_lineages(self):
         selected = self.select(1396)
-        self.assertEqual({r["edition"] for r in selected}, {"daly@2e", "other-book@1e"})
+        self.assertEqual({r["_family"] for r in selected}, {"daly", "other-book"})
         self.assertNotIn("board-only@1e", {r["edition"] for r in selected})
         self.assertNotIn("not-official@1e", {r["edition"] for r in selected})
 
-    def test_hash_bound_map_is_required_and_ties_prefer_earlier_reference_year(self):
-        self.catalog["validity"].append(row(1395, "daly@1e"))
-        self.pdfs["daly@1e"] = {"pdf": "verified-server-pdf"}
-        self.maps["daly@1e"] = MAP
-        selected = self.select(1396)
-        daly = next(r for r in selected if r["edition"].startswith("daly@"))
-        self.assertEqual(daly["edition"], "daly@1e")
-        self.assertEqual(daly["year"], 1395)
-
-    def test_unbound_map_is_not_proxy_eligible(self):
-        self.catalog["validity"].append(row(1395, "daly@1e"))
-        self.pdfs["daly@1e"] = {"pdf": "verified-server-pdf"}
-        self.maps["daly@1e"] = {"runs": [["1", 1, 20]]}
-        selected = self.select(1396)
-        daly = next(r for r in selected if r["edition"].startswith("daly@"))
-        self.assertEqual((daly["year"], daly["edition"], daly["_eligible"]),
-                         (1395, "daly@1e", False))
-
-    def test_verified_proxy_with_invalid_map_stays_pending_instead_of_skipping_farther(self):
-        self.catalog["validity"].append(row(1396, "daly@1e"))
-        self.pdfs["daly@1e"] = {"missing": "not in verified library"}
-        self.maps["daly@1e"] = MAP
-        self.maps["daly@2e"] = {
-            "runs": [[None, 1, 20]], "pdf_pages": 20, "source_pdf_sha256": HASH,
-        }
-        selected = self.select(1396)
-        daly = next(r for r in selected if r["edition"].startswith("daly@"))
-        self.assertEqual((daly["year"], daly["edition"], daly["_proxy"], daly["_eligible"]),
-                         (1397, "daly@2e", True, False))
-
-    def test_unverified_nearer_pdf_may_be_skipped_for_verified_same_family_pdf(self):
-        self.catalog["validity"].append(row(1396, "daly@1e"))
-        self.pdfs["daly@1e"] = {"missing": "not in verified library"}
-        self.maps["daly@1e"] = MAP
-        self.pdfs["daly@2e"] = {"missing": "not in verified library"}
-        self.maps["daly@2e"] = MAP
-        self.pdfs["daly@3e"] = {"pdf": "verified-server-pdf"}
-        self.maps["daly@3e"] = MAP
-        selected = self.select(1396)
-        daly = next(r for r in selected if r["edition"].startswith("daly@"))
-        self.assertEqual((daly["year"], daly["edition"], daly["_proxy"], daly["_eligible"]),
-                         (1398, "daly@3e", True, True))
-
-    def test_unusable_fallback_remains_pending_and_not_proxy_selectable(self):
+    def test_unusable_maps_are_not_proxy_selectable(self):
         self.maps = {edition: {"runs": MAP["runs"]} for edition in self.pdfs}
         selected = self.select(1396)
         self.assertTrue(selected)
@@ -199,6 +114,23 @@ class NearestSameLineageProxyTests(unittest.TestCase):
             self.catalog, "residency", 1396, "community-dentistry",
             selected[0]["edition"], selected[0]["year"], p.BASIS,
             self.pdfs, self.maps))
+
+    def test_older_edition_needs_exact_newer_search_attestation(self):
+        selected = self.select(1396)
+        self.assertIsNone(p.fallback_error(selected, "daly@3e", None))
+        self.assertIsNone(p.fallback_error(selected, "daly@3e", []))
+        self.assertIn("must not list", p.fallback_error(selected, "daly@3e", ["daly@2e"]))
+        self.assertIn("newer_editions_searched", p.fallback_error(selected, "daly@2e", None))
+        self.assertIn("newer_editions_searched", p.fallback_error(selected, "daly@2e", ["daly@1e"]))
+        self.assertIsNone(p.fallback_error(selected, "daly@2e", ["daly@3e"]))
+        self.assertIsNone(p.fallback_error(selected, "other-book@1e", None))
+        self.assertIn("not an eligible", p.fallback_error(selected, "board-only@1e", None))
+
+    def test_newest_first_order_is_enforced_for_unfinished_older_years(self):
+        self.assertTrue(p.requires_newest_first(1391))
+        self.assertTrue(p.requires_newest_first(1396))
+        self.assertFalse(p.requires_newest_first(1397))
+        self.assertFalse(p.requires_newest_first(1398))
 
     def test_proxy_metadata_requires_explicit_non_official_note(self):
         note = "این آزمون ۱۳۹۶ از نسخهٔ پروکسیِ سال ۱۳۹۷ استفاده می‌کند؛ رسمی بودن آن برای سال آزمون تأیید نشده است."
@@ -268,12 +200,12 @@ class SameLineageProxyBatchTests(unittest.TestCase):
                 {"key": "222", "editions": [], "terms": []},
             ])
             self.assertIn(
-                "PENDING, nearest verified proxy PDF has no usable hash-bound chapter map",
+                "PENDING, verified PDF has no usable hash-bound chapter map",
                 stdout.getvalue(),
             )
             self.assertNotIn("legacy nearest", stdout.getvalue())
 
-    def test_exact_verified_pdf_map_failure_blocks_proxy_in_batch_output(self):
+    def test_exact_pdf_map_failure_is_pending_while_newer_edition_is_searched(self):
         references = str(Path(__file__).resolve().parents[2] / "scripts" / "references")
         if references not in sys.path:
             sys.path.insert(0, references)
@@ -323,10 +255,11 @@ class SameLineageProxyBatchTests(unittest.TestCase):
                     patch.object(sys, "stdout", stdout):
                 self.assertEqual(classification_batch.main(), 0)
             self.assertEqual(json.loads(output.read_text()), [
-                {"key": "222", "editions": [], "terms": []},
+                {"key": "222", "editions": ["daly@2e"], "terms": []},
             ])
-            self.assertIn("PENDING, exact-year PDF is verified", stdout.getvalue())
-            self.assertNotIn("daly@2e", stdout.getvalue())
+            self.assertIn("daly@1e [PENDING, verified PDF has no usable", stdout.getvalue())
+            self.assertIn("daly@2e RANK 0 in daly [PDF source listed]", stdout.getvalue())
+            self.assertIn("ORDER: search RANK 0 (newest) first", stdout.getvalue())
 
 
 if __name__ == "__main__":

@@ -701,7 +701,7 @@ components:
                     reference_year: { type: [integer, 'null'], description: 'Actual year of the official reference edition; distinct from the exam year for a proxy.' }
                     classification_basis:
                       type: [string, 'null']
-                      enum: [official_exam_year, retrospective_proxy_1397_plus, nearest_same_lineage_proxy, updated_reference_proxy, null]
+                      enum: [official_exam_year, retrospective_proxy_1397_plus, same_lineage_proxy, updated_reference_proxy, null]
                     classification_note: { type: [string, 'null'], description: 'Visible explanation when the source edition is a proxy.' }
                     official_scope_status: { type: string, enum: [in_scope, outside_scope_exam_question] }
                     official_scope_note: { type: [string, 'null'] }

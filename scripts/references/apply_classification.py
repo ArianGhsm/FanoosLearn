@@ -60,12 +60,14 @@ from updated_reference_proxy_policy import (
     is_updated_reference_proxy,
     valid_updated_reference_note,
 )
-from nearest_same_lineage_proxy_policy import (
+from same_lineage_proxy_policy import (
     BASIS as SAME_LINEAGE_PROXY_BASIS,
     is_proxy_exam_year,
     is_selected_proxy as is_selected_same_lineage_proxy,
     selected_reference_rows as selected_same_lineage_rows,
     valid_proxy_note,
+    fallback_error,
+    requires_newest_first,
 )
 
 REPO = Path(__file__).resolve().parents[2]
@@ -338,9 +340,9 @@ def main() -> int:
                         names[edition] = matches[0]
             elif same_lineage_proxy:
                 if not valid_proxy_note(same_lineage_note, year, int(proxy_reference_year)):
-                    why = 'nearest same-lineage proxy requires a note naming both years and disclosing that it is not confirmed official for the exam year'
+                    why = 'same-lineage proxy requires a note naming both years and disclosing that it is not confirmed official for the exam year'
                 elif edition not in names or int(names[edition].get('year', 0)) != proxy_reference_year:
-                    why = 'proxy edition and actual official reference year do not match the selected nearest same-lineage candidate'
+                    why = 'proxy edition and actual official reference year do not match a selected same-lineage candidate'
             elif is_proxy_exam_year(year) and edition in names and names[edition].get('_proxy') is True:
                 why = 'selected same-lineage proxy requires actual reference_year, proxy basis and an explicit proxy note'
             if is_retrospective(year) and edition in names:
@@ -348,6 +350,8 @@ def main() -> int:
                 if d.get('reference_year') != expected_year or d.get('classification_basis') != BASIS:
                     why = (f'retrospective decision must explicitly name reference_year '
                            f'{expected_year} and classification_basis {BASIS}')
+            if why is None and requires_newest_first(year) and not updated_proxy and edition in names:
+                why = fallback_error(list(names.values()), edition, d.get('newer_editions_searched'))
             cite, cite_chapter = edition, chapter
             if edition not in names and not same_lineage_proxy and not args.allow_nearest:
                 why = 'nearest-edition substitutions are paused; use exact official edition or keep pending'
@@ -509,7 +513,7 @@ def main() -> int:
             isinstance(source, dict)
             and source.get('classification_basis') == SAME_LINEAGE_PROXY_BASIS
             for source in accepted.values()):
-        sitting['notes'] += (' nearest_same_lineage_proxy: each citation retains its actual '
+        sitting['notes'] += (' same_lineage_proxy: each citation retains its actual '
                              'official reference year and is not asserted official for the exam year.')
     save_sitting(Path(args.out), sitting)
     print(f'wrote {args.out}')

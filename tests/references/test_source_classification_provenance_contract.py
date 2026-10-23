@@ -21,7 +21,7 @@ class SourceClassificationProvenanceTests(unittest.TestCase):
         self.assertNotIn("nearest_verified_edition_proxy", migration)
         self.assertNotIn("UPDATE bank_question_sources", migration)
         for basis in ["official_exam_year", "retrospective_proxy_1397_plus",
-                      "nearest_same_lineage_proxy", "updated_reference_proxy"]:
+                      "same_lineage_proxy", "updated_reference_proxy"]:
             self.assertIn(basis, migration)
 
     def test_guarded_writer_persists_actual_year_basis_and_note(self):
@@ -30,7 +30,7 @@ class SourceClassificationProvenanceTests(unittest.TestCase):
         self.assertIn("'reference_year' => $src['reference_year']", writer)
         self.assertIn("'classification_basis' => $src['classification_basis']", writer)
         self.assertIn("'classification_note' => $src['classification_note']", writer)
-        self.assertIn("Nearest same-lineage proxy must name the actual reference year", writer)
+        self.assertIn("Same-lineage proxy must name the actual reference year", writer)
         self.assertIn("mb_strlen(trim($proxyNote)) > 300", writer)
 
     def test_runner_projection_and_contract_expose_proxy_label(self):
@@ -48,14 +48,14 @@ class SourceClassificationProvenanceTests(unittest.TestCase):
         self.assertIn("                    reference_year:", api)
         self.assertIn("                    classification_basis:", api)
         self.assertIn("                    classification_note:", api)
-        self.assertIn("nearest_same_lineage_proxy", ui)
+        self.assertIn("same_lineage_proxy", ui)
 
     def test_same_lineage_proxy_is_a_separate_fail_closed_validator_path(self):
         validator = (ROOT / "scripts/references/apply_classification.py").read_text()
         auditor = (ROOT / "scripts/references/audit_private_study_batches.py").read_text()
         operator = (ROOT / "scripts/references/import_verified_sources.php").read_text()
         for text in [validator, auditor, operator]:
-            self.assertIn("nearest_same_lineage_proxy", text)
+            self.assertIn("same_lineage_proxy", text)
         self.assertIn("is_selected_same_lineage_proxy", validator)
         self.assertIn("valid_proxy_note", validator)
         self.assertIn("--allow-nearest", validator)

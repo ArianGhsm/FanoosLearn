@@ -79,7 +79,7 @@ final class BankImportTest
         }
         foreach ([
             'reference_year' => 1406,
-            'classification_basis' => 'nearest_same_lineage_proxy',
+            'classification_basis' => 'same_lineage_proxy',
             'classification_note' => 'Proxy provenance is not discarded by the generic importer.',
         ] as $field => $value) {
             $unpersistableProvenance = $sitting;
@@ -192,7 +192,7 @@ final class BankImportTest
                 . json_encode($readback, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
         $changedProvenance = $validated;
         $changedProvenance['questions'][0]['sources'][0]['reference_year'] = 1397;
-        $changedProvenance['questions'][0]['sources'][0]['classification_basis'] = 'nearest_same_lineage_proxy';
+        $changedProvenance['questions'][0]['sources'][0]['classification_basis'] = 'same_lineage_proxy';
         $changedProvenance['questions'][0]['sources'][0]['classification_note'] = 'test-only proxy metadata must be read back';
         $badReadback = SourceOnlyPublisher::readback(
             $readbackDatabase, $ws, 1404, 'endodontics', $study, $changedProvenance, $readbackEvidence,

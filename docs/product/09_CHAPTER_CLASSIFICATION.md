@@ -103,33 +103,34 @@ an audited versioned publisher implementation; do not bypass it through
 raw SQL or full-sitting imports. See
 `docs/ops/PRE_1396_RETROSPECTIVE_CLASSIFICATION_20261011.md`.
 
-### Nearest same-lineage proxy for 1396–1398
+### Newest-first same-lineage editions for older sittings (owner, 2026-10-23)
 
-For exam years **1396–1398**, use the exact official exam-year edition when
-its current approved private PDF is verified and its hash-bound chapter map
-and structured official scope are usable. A different-year proxy is allowed
-only when no exact-year edition in that reference family has a verified PDF.
-If an exact-year PDF is verified but its map or structured scope is missing,
-incomplete, or invalid, leave the question pending; that map/scope failure
-does not enable fallback. If the exam-year list is absent, use the nearest
-official list for that exam type and subject to identify reference families.
-Within each family, skip editions whose PDF is not verified; the first
-nearest official edition with a verified PDF must also have a valid
-hash-bound map and usable scope. If that map or scope fails, keep the
-question pending rather than skipping to a farther edition. A tie between
-reference years prefers the earlier year.
+For unfinished residency sittings **1391–1396**, search the **newest
+available official edition** of each reference family first, even when the
+exam-year edition is also available. Cite an older edition of the same
+family only when the answer-bearing page is not found in the newer ones,
+stepping back one edition at a time. Editions without a verified PDF, or with
+an unusable hash-bound map or structured scope, are pending and skipped.
+`classification_batch.py` prints each eligible edition with its `RANK`
+(0 = newest). A decision citing a rank above 0 must carry
+`newer_editions_searched`, listing exactly the newer eligible editions of
+that family, newest first; `apply_classification.py` and the independent
+audit reject it otherwise. For 1396 the families come from the exam-year list
+(or the nearest official list when it is absent); a citation that uses the
+exam-year edition keeps `official_exam_year` and is batched separately.
+Sittings 1395 and earlier draw candidates from 1397+ lists under
+`retrospective_proxy_1397_plus`, in the same newest-first order.
 
-Every such citation uses `classification_basis=nearest_same_lineage_proxy`
+Every such citation uses `classification_basis=same_lineage_proxy`
 and separately records the exam year, actual reference year, edition,
 chapter, physical PDF page, PDF SHA-256, short exact-page evidence and
 confidence. Its visible note must state that it is a proxy and that official
 status for the exam year is unverified. Never add a synthetic exam-year
-validity row. If the exact edition is available but the question is not
-supported on its direct page, leave it pending; a proxy cannot be used to
-work around absent evidence. The deployed classifier and source-only writer
+validity row. If no eligible edition of the family supports the question on
+its direct page, leave it pending. The deployed classifier and source-only writer
 must validate this basis; `--allow-nearest` remains historical-audit-only.
 Use the workflow in
-`docs/ops/NEAREST_SAME_LINEAGE_PROXY_CLASSIFICATION_20261022.md`.
+`docs/ops/SAME_LINEAGE_PROXY_CLASSIFICATION_20261022.md`.
 
 ### Owner-approved updated-reference proxy for residency 1397 (2026-10-21)
 
@@ -523,7 +524,7 @@ PDF cannot be securely read, or whose direct-PDF chapter map is not verified
 
 **Do not use historical nearest-edition chapter carry-over for new
 classification by default under the 2026-10-09 owner decision.** The separate
-2026-10-22 `nearest_same_lineage_proxy` exception for exam years 1396–1398 is
+2026-10-23 newest-first `same_lineage_proxy` rule for older sittings is
 documented above and never carries a chapter across editions. The following
 preserves the rules needed to audit *existing* older substitutions and does
 not authorize new ones.

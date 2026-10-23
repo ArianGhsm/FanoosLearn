@@ -30,7 +30,7 @@ final class SourceOnlyReadbackTest
             'pdf_sha256' => str_repeat('a', 64),
             'anchor_sha256' => hash('sha256', 'private page evidence'),
             'reference_year' => 1397,
-            'classification_basis' => 'nearest_same_lineage_proxy',
+            'classification_basis' => 'same_lineage_proxy',
             'classification_note_sha256' => hash('sha256', 'private proxy explanation'),
             'origin' => 'ai',
             'is_primary' => true,

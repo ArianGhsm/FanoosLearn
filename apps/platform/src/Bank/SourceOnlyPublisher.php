@@ -15,7 +15,7 @@ use Throwable;
  * exception. No UPDATE, DELETE or publication writes. Updated-reference
  * proxies are limited to separately authorized 1397/1406 and
  * 1398/Hupp7/1406 cases, visibly labelled outside exam-year scope. The
- * nearest same-lineage proxy basis is limited to 1396–1398 and stores its
+ * same-lineage proxy basis is limited to 1396–1398 and stores its
  * actual reference year and explicit proxy note on the source row.
  * An entire batch commits together or rolls back together.
  */
@@ -71,7 +71,7 @@ final class SourceOnlyPublisher
                 }
             }
             $sameLineageProxy = $nearestSameLineageProxyYear
-                && ($decision['classification_basis'] ?? null) === 'nearest_same_lineage_proxy';
+                && ($decision['classification_basis'] ?? null) === 'same_lineage_proxy';
             if ($sameLineageProxy) {
                 $proxyYear = $decision['reference_year'] ?? null;
                 $proxyNote = $decision['proxy_note'] ?? null;
@@ -89,7 +89,7 @@ final class SourceOnlyPublisher
                         || str_contains($proxyNote, 'رسمی نیست')
                         || str_contains($proxyNote, 'رسمی نبوده')
                         || str_contains($proxyNote, 'رسمی اعلام نشده'))) {
-                    throw new RuntimeException('Nearest same-lineage proxy must name the actual reference year, exam year and unverified official status.');
+                    throw new RuntimeException('Same-lineage proxy must name the actual reference year, exam year and unverified official status.');
                 }
             }
             $referenceSubject = (string) ($decision['reference_subject'] ?? $subject);
@@ -118,7 +118,7 @@ final class SourceOnlyPublisher
                 && ($decision['classification_basis'] ?? null) === 'updated_reference_proxy';
             $updatedReferenceProxy = $updated1397Proxy || $updated1398HuppProxy;
             $decisionBasis = $updatedReferenceProxy ? 'updated_reference_proxy'
-                : ($sameLineageProxy ? 'nearest_same_lineage_proxy'
+                : ($sameLineageProxy ? 'same_lineage_proxy'
                     : ($retrospective ? 'retrospective_proxy_1397_plus' : 'official_exam_year'));
             if ($batchClassificationBasis !== null && $batchClassificationBasis !== $decisionBasis) {
                 throw new RuntimeException('A source-only batch cannot mix exact-year and proxy classification bases; split it into separately audited batches.');
@@ -363,13 +363,13 @@ final class SourceOnlyPublisher
                 throw new RuntimeException('Updated-reference proxy citation must preserve the explicit outside-exam-year label and exact 1406 provenance.');
             }
             if ($sameLineageProxy
-                && (($s['classification_basis'] ?? null) !== 'nearest_same_lineage_proxy'
+                && (($s['classification_basis'] ?? null) !== 'same_lineage_proxy'
                     || ($s['reference_year'] ?? null) !== ($d['reference_year'] ?? null)
                     || ($s['classification_note'] ?? null) !== ($d['proxy_note'] ?? null)
                     || ($s['official_scope_status'] ?? null) !== 'in_scope'
                     || ($s['official_scope_note'] ?? null) !== null
                     || ($s['scope_unverified'] ?? null) !== false)) {
-                throw new RuntimeException('Nearest same-lineage proxy must retain its actual reference year and visible proxy note.');
+                throw new RuntimeException('Same-lineage proxy must retain its actual reference year and visible proxy note.');
             }
             if ($retrospective
                 && (($s['classification_basis'] ?? null) !== 'retrospective_proxy_1397_plus'
@@ -400,7 +400,7 @@ final class SourceOnlyPublisher
             $referenceYear = ($retrospective || $updatedReferenceProxy || $sameLineageProxy)
                 ? (int) $d['reference_year'] : $year;
             $classificationBasis = $updatedReferenceProxy ? 'updated_reference_proxy'
-                : ($sameLineageProxy ? 'nearest_same_lineage_proxy'
+                : ($sameLineageProxy ? 'same_lineage_proxy'
                     : ($retrospective ? 'retrospective_proxy_1397_plus' : 'official_exam_year'));
             $classificationNote = $updatedReferenceProxy
                 ? (string) $d['updated_reference_note']

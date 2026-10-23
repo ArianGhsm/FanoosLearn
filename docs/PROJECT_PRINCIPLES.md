@@ -314,35 +314,36 @@ booklets, secondary summaries, web searches, or an unavailable edition.
 
 Older classifications made via an explicitly documented nearest-edition
 substitution are preserved and identified as legacy/provisional where
-applicable. The owner has now authorized one additional, bounded fallback
-for exam years **1396–1398**: use the exact exam-year edition when its
-current approved private PDF is verified and its hash-bound chapter map and
-official scope are usable. A different-year proxy may be considered only
-when no exact-year edition in that reference family has a verified private
-PDF. If an exact-year PDF is verified but its chapter map or structured
-scope is absent, incomplete, or invalid, keep the question pending; that map
-or scope failure does not enable fallback. When the exam-year reference list
-itself is absent, use the nearest official list for that exam type and
-subject to identify book families. Within each family, skip editions whose
-PDF is not verified; the first nearest official edition with a verified PDF
-must also have a valid hash-bound map and usable scope or the question stays
-pending. Do not skip a verified PDF with a bad map to try a farther edition.
-An equal-distance tie prefers the earlier reference year. The chosen row
-must remain an authentic official row for its actual `reference_year`.
+applicable.
 
-This basis is `nearest_same_lineage_proxy`. Record the exam year, actual
-reference year, edition, chapter, positive physical PDF page, exact PDF SHA,
-short direct-page evidence and confidence on every decision. Store and show
-a note that names both years and labels the edition as a proxy whose official
-status for the exam year is unverified. Never create synthetic historical
-`official=true` validity rows or present the proxy as the exam-year edition.
-The fallback is allowed only because the exact verified PDF is unavailable;
-an exact verified PDF with an unsupported direct page, missing/invalid map,
-or unusable scope leaves the question pending rather than trying another
-edition.
+**Owner rule 2026-10-23 — newest edition first for unfinished older
+residency sittings (1391–1396).** The current residency exam is set from the
+new references, so an older sitting is classified against the **newest
+available official edition** of each reference-book family, even when the
+older exam-year edition is also available. Only when the answer-bearing page
+is not found in that edition may an older edition of the same family be
+cited, stepping back one edition at a time. A newer edition whose PDF is not
+verified, or whose hash-bound chapter map or structured scope is unusable, is
+pending and is skipped in that order. Each cited row keeps its own edition,
+chapter, positive physical PDF page, PDF SHA, direct-page evidence, confidence
+≥ 0.85 and actual official `reference_year`. A decision that cites an older
+edition must list, newest first, every newer eligible edition of that family
+in `newer_editions_searched`; the validator and the independent audit reject
+it otherwise. Never carry a page or chapter from one edition to another.
 
-The existing `retrospective_proxy_1397_plus` rule remains the specific basis
-for exam years **1395 and earlier**. The two rules use separate labels and
+For exam year 1396 the families come from the exam-year list (or the nearest
+official list when it is absent) and the basis is `same_lineage_proxy`; a
+citation that happens to use the exam-year edition stays
+`official_exam_year`, and the two bases are published in separate batches.
+Store and show a note that names both years and labels the edition as a proxy
+whose official status for the exam year is unverified. Never create synthetic
+historical `official=true` validity rows or present the proxy as the exam-year
+edition. Exam years 1397 and 1398 are complete under their named
+updated-reference exceptions below; their completed rows are not reopened.
+
+For exam years **1395 and earlier** the basis remains
+`retrospective_proxy_1397_plus` (candidates come from 1397+ official lists),
+now with the same newest-first order. The two rules use separate labels and
 guards. No proxy fallback is authorized for exam years after 1398 by this
 decision. Any exam type without a compatible guarded source-only publisher
 must remain pending for publication until its normal versioned workflow is
@@ -592,17 +593,15 @@ a separately audited, evidence-backed source-only correction that records
 the old and new citation and leaves question, answer and frozen attempts
 unchanged. No human sign-off is a classification prerequisite.
 
-**2026-10-22 — bounded older-exam reference proxy:** for exam years
-1396–1398 only, use the exact exam-year edition when its approved PDF, hash-
-bound chapter map, and scope are usable. The owner authorizes the nearest
-verified official edition in the same reference family and exam-type/subject
-lineage only when no exact-year edition in that family has a verified PDF.
-A missing or invalid map on a verified exact-year PDF is pending and cannot
-trigger a proxy. Keep the actual reference year, edition and visible proxy
-note; do not claim exam-year official status or create validity rows. The pre-1396
-`retrospective_proxy_1397_plus` basis remains separate. No new proxy rule is
-authorized after 1398. Implementation and operation are specified in
-`docs/ops/NEAREST_SAME_LINEAGE_PROXY_CLASSIFICATION_20261022.md`.
+**2026-10-23 — newest-first older-exam reference proxy:** for unfinished
+residency sittings 1391–1396, cite the newest available official edition of
+each reference family first and step back to an older edition only when the
+answer-bearing page is not found, recording the newer editions searched. Keep
+the actual reference year, edition and visible proxy note; do not claim
+exam-year official status or create validity rows. 1397/1398 keep their named
+exceptions. No new proxy rule is authorized after 1398. Implementation and
+operation are specified in
+`docs/ops/SAME_LINEAGE_PROXY_CLASSIFICATION_20261022.md`.
 
 ## 7. Open implementation items (do not assume completed)
 

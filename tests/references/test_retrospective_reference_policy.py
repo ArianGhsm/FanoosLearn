@@ -47,10 +47,11 @@ class Pre1396ReferencePolicyTests(unittest.TestCase):
         return p.selected_reference_rows(self.catalog, "residency", year,
                                          "endodontics", self.pdfs, self.maps)
 
-    def test_pre1396_select_earliest_ready_1397_plus_per_book_family(self):
+    def test_pre1396_ranks_ready_1397_plus_editions_newest_first_per_family(self):
         selected = self.select(1391)
-        self.assertEqual([(x["year"], x["edition"]) for x in selected],
-                         [(1397, "other@1e"), (1398, "book@2e")])
+        self.assertEqual([(x["year"], x["edition"], x["_family"], x["_rank"]) for x in selected],
+                         [(1399, "book@3e", "book", 0), (1398, "other@2e", "other", 0),
+                          (1398, "book@2e", "book", 1), (1397, "other@1e", "other", 1)])
         self.assertTrue(all(x["year"] > 1396 for x in selected))
         self.assertTrue(all(x["official"] for x in selected))
 
@@ -82,7 +83,8 @@ class Pre1396ReferencePolicyTests(unittest.TestCase):
 
     def test_reference_year_must_not_be_relabelled_exam_year(self):
         selected = self.select(1391)
-        self.assertEqual(p.reference_year_for_decision(selected[0], 1391), 1397)
+        self.assertEqual(p.reference_year_for_decision(selected[0], 1391), 1399)
+        self.assertEqual(p.reference_year_for_decision(selected[-1], 1391), 1397)
         with self.assertRaises(ValueError):
             p.reference_year_for_decision(row(1395, "wrong@1e"), 1391)
         self.assertEqual(p.reference_year_for_decision(row(1396, "normal@1e"), 1396), 1396)

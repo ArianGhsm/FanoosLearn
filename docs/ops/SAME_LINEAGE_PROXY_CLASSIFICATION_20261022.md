@@ -1,36 +1,38 @@
-# Nearest same-lineage reference proxies for exam years 1396–1398
+# Newest-first same-lineage reference editions for older residency sittings
 
-**Owner authorization: 2026-10-22.** This runbook covers older exam sittings
-dated 1396, 1397 and 1398 when no exact-year edition in the same reference
-family has a verified private PDF. It complements, and does not replace, the separate
-`retrospective_proxy_1397_plus` rule for 1395 and earlier. It does not
-authorize proxies after 1398.
+**Owner authorization: 2026-10-22, revised 2026-10-23.** The current
+residency exam is set from the new references, so older sittings are
+classified against the newest available edition of each reference family.
+The newest-first order is enforced for the unfinished sittings **1391–1396**.
+Exam years 1397 and 1398 are complete under their named updated-reference
+exceptions and are not reopened. Sittings 1395 and earlier keep the separate
+`retrospective_proxy_1397_plus` basis (candidates from 1397+ lists) with the
+same order. No proxy is authorized after 1398.
 
 ## Selection
 
-1. Read the exact exam-year/type/subject reference rows first. If an exact
-   edition's PDF is verified and its hash-bound chapter map and structured
-   official scope are usable, use that edition.
-2. Consider a different-year proxy only when no exact-year edition in that
-   reference family has a verified private PDF. If an exact-year PDF is
-   verified but its map or structured scope is absent, incomplete, or
-   invalid, leave the question pending; that failure does not enable a proxy.
-3. Keep the same reference family and exam-type/subject. Select the nearest
-   different official reference year whose PDF is verified. Its matching
-   complete chapter map and scope must also be usable; if its map or scope
-   fails, keep the question pending rather than trying a farther edition.
-   An equal-distance tie selects the earlier year.
-4. If no exam-year validity list exists, take the nearest official reference
-   list for that exam type and subject as the set of candidate book families;
-   resolve each family to its nearest verified-PDF official edition, subject
-   to the map/scope pending rule above.
+1. Identify the reference families: the exam-year/type/subject list, or the
+   nearest official list for that exam type and subject when the exam-year
+   list is absent (1395 and earlier: the 1397+ lists).
+2. Within each family, rank every official edition newest first (by the
+   newest year it was listed). One row per edition: the exam-year row when
+   that edition was official in the exam year (then it is not a proxy),
+   otherwise its newest official year, which is the recorded
+   `reference_year`.
+3. An edition is eligible only when its approved private PDF is verified and
+   its hash-bound chapter map and structured scope are usable. Ineligible
+   editions are reported as pending and skipped in the order.
+4. Search the rank-0 edition first. Cite an older eligible edition only when
+   the answer-bearing page is not found in every newer eligible edition of
+   that family; the decision then lists those newer editions, newest first,
+   in `newer_editions_searched`. If no eligible edition supports the
+   question, it stays pending.
 5. The selected catalog row remains the source of its actual reference year
    and official scope. Never alter `catalog.validity` to make it look
-   official for the exam year. If the exact edition exists and its page does
-   not support the question, leave the question pending rather than trying a
-   proxy.
+   official for the exam year, and never carry a page or chapter from one
+   edition to another.
 
-The versioned selector is `scripts/references/nearest_same_lineage_proxy_policy.py`.
+The versioned selector is `scripts/references/same_lineage_proxy_policy.py`.
 It only selects candidates; `verified_reference_pdf.py`,
 `apply_classification.py` and `audit_private_study_batches.py` still check the
 current approved object, exact PDF SHA, matching chapter map, original page,
@@ -41,12 +43,14 @@ and discarded; no book text, OCR or index is saved.
 
 Every proxy decision records:
 
-- `classification_basis=nearest_same_lineage_proxy`;
+- `classification_basis=same_lineage_proxy`;
 - the actual `reference_year` and edition key, separately from `exam_year`;
 - chapter, positive 1-based physical `pdf_page`, the same PDF's SHA-256,
   short evidence from that original page and confidence of at least 0.85;
 - a Persian `proxy_note` naming both years and stating that the reference is
-  a proxy whose official status for the exam year is unverified.
+  a proxy whose official status for the exam year is unverified;
+- `newer_editions_searched` when the cited edition is not rank 0 in its
+  family (exactly the newer eligible editions, newest first).
 
 Migration `0048_bank_source_reference_provenance.sql` adds nullable source
 columns for `reference_year`, `classification_basis` and
@@ -70,9 +74,6 @@ residency batches; other exam types remain pending until their compatible
 guarded writer is available.
 
 `--allow-nearest` and `--include-nearest` remain historical-audit options and
-are not a route to authorize a new proxy. A missing exact-year PDF can permit
-the bounded proxy lookup; a missing or invalid chapter map on a verified
-exact-year or nearest proxy PDF leaves the question pending and never
-activates another fallback. Unsupported answer, unreadable page, ambiguous
+are not a route to authorize a new proxy. Unsupported answer, unreadable page, ambiguous
 lineage or confidence below 0.85 also leaves the question pending while
 eligible questions continue.

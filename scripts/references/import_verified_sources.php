@@ -203,13 +203,13 @@ try {
     }
     $b = $matches[0];
     if ($nearestSameLineageProxyBatch
-        && (($b['classification_basis'] ?? '') !== 'nearest_same_lineage_proxy'
+        && (($b['classification_basis'] ?? '') !== 'same_lineage_proxy'
             || !is_array($b['reference_years'] ?? null)
             || $b['reference_years'] === [$year])) {
-        throw new RuntimeException('Nearest same-lineage proxy case must attest its actual non-exam reference year(s).');
+        throw new RuntimeException('Same-lineage proxy case must attest its actual non-exam reference year(s).');
     }
     if (!$nearestSameLineageProxyBatch
-        && ($b['classification_basis'] ?? '') === 'nearest_same_lineage_proxy') {
+        && ($b['classification_basis'] ?? '') === 'same_lineage_proxy') {
         throw new RuntimeException('Generic proxy audit requires a same-lineage proxy batch stem and immutable recovery case.');
     }
     if ($retrospective && ($b['classification_basis'] ?? '') !== 'retrospective_proxy_1397_plus') {
@@ -272,7 +272,7 @@ try {
         'audit_sha256' => $receiptAuditSha,
         'classification_basis' => $retrospective ? 'retrospective_proxy_1397_plus'
             : ($updatedReferenceProxyBatch ? 'updated_reference_proxy'
-                : ($nearestSameLineageProxyBatch ? 'nearest_same_lineage_proxy' : 'official_exam_year')),
+                : ($nearestSameLineageProxyBatch ? 'same_lineage_proxy' : 'official_exam_year')),
         'reference_years' => $retrospective ? ($b['reference_years'] ?? [])
             : (($updatedReferenceProxyBatch || $nearestSameLineageProxyBatch)
                 ? ($b['reference_years'] ?? []) : [$year]),

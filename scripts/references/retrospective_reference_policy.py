@@ -1,7 +1,8 @@
 """Deterministic, explicitly non-historical reference selection for pre-1396 exams.
 
 The owner's 2026-10-11 retrospective exception uses subject references officially
-announced for 1397 onward. It never asserts those references were official in
+announced for 1397 onward; since 2026-10-23 the newest usable edition of each
+book family is tried first. It never asserts those references were official in
 the earlier exam year, or writes invented historical catalog validity rows.
 This only selects candidates; the original server PDF, hash-bound chapter
 coverage and quoted answer evidence MUST still pass the downstream validator.
@@ -37,10 +38,14 @@ def selected_reference_rows(
     catalog: dict, exam_type: str, exam_year: int, subject: str,
     pdfs: dict, chapter_maps: dict,
 ) -> list[dict]:
-    """Select earliest *usable* 1397+ edition per book family for early exams.
+    """Select every usable 1397+ edition per book family, newest first.
 
-    The returned dict copies retain actual validity 'year' as reference year;
-    no caller may misreport it as the original exam's official reference.
+    Owner rule (2026-10-23): cite the newest usable edition of a family; an
+    older one only after the answer-bearing page was not found in the newer
+    ones (`same_lineage_proxy_policy.fallback_error`). One row per edition,
+    carrying its newest official year as the reference year. The returned
+    copies retain actual validity 'year' as reference year; no caller may
+    misreport it as the original exam's official reference.
     For non-retrospective sittings, leave all current official year-specific
     rows unchanged (including unavailable editions for pending reporting).
     """
@@ -50,15 +55,25 @@ def selected_reference_rows(
     if not is_retrospective(exam_year):
         return [v.copy() for v in source if int(v["year"]) == int(exam_year)]
 
-    by_family: dict[str, dict] = {}
-    for v in sorted(source, key=lambda v: (int(v["year"]), str(v["edition"]))):
-        if int(v["year"]) < FIRST_REFERENCE_YEAR:
-            continue
+    by_edition: dict[str, dict] = {}
+    for v in sorted(source, key=lambda v: (int(v["year"]), str(v["edition"])), reverse=True):
         edition = str(v["edition"])
-        family = edition.partition("@")[0]
-        if (family not in by_family and v.get('scope_chapters') and _usable_pdf_and_map(edition, pdfs, chapter_maps)):
-            by_family[family] = v.copy()
-    return list(by_family.values())
+        if (int(v["year"]) < FIRST_REFERENCE_YEAR or edition in by_edition
+                or not v.get('scope_chapters')
+                or not _usable_pdf_and_map(edition, pdfs, chapter_maps)):
+            continue
+        by_edition[edition] = v.copy()
+    ranks: dict[str, int] = {}
+    selected = []
+    for row in by_edition.values():
+        family = str(row["edition"]).partition("@")[0]
+        row["_family"] = family
+        row["_rank"] = ranks.get(family, 0)
+        row["_eligible"] = True
+        row["_proxy"] = True
+        ranks[family] = row["_rank"] + 1
+        selected.append(row)
+    return selected
 
 
 def reference_year_for_decision(row: dict, exam_year: int) -> int:

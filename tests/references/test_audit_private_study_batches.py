@@ -177,13 +177,13 @@ class NearestProxyAuditTests(unittest.TestCase):
                 "exam_type": "residency", "round": 1, "questions": [question],
             }))
             decision = {"number": 222, "edition": edition, "reference_year": 1397,
-                        "classification_basis": "nearest_same_lineage_proxy", "proxy_note": proxy_note,
+                        "classification_basis": "same_lineage_proxy", "proxy_note": proxy_note,
                         "chapter": "1", "page": 17, "confidence": .97, "evidence": evidence}
             (root / "classification/decisions/1396-community-dentistry.json").write_text(json.dumps([decision]))
             source = {"ref": edition + "#ch01", "page": "pdf 17", "pdf_page": 17,
                       "pdf_sha256": digest, "anchor": evidence, "origin": "ai", "primary": True,
                       "confidence": {"source": .97, "node": .97, "page": .97},
-                      "reference_year": 1397, "classification_basis": "nearest_same_lineage_proxy",
+                      "reference_year": 1397, "classification_basis": "same_lineage_proxy",
                       "classification_note": proxy_note, "official_scope_status": "in_scope",
                       "scope_unverified": False}
             (root / "classification/sittings/1396-community-validated.json").write_text(json.dumps({
@@ -218,7 +218,7 @@ class NearestProxyAuditTests(unittest.TestCase):
             with patch.object(audit, "CHAPTERS", chapter_map), \
                     patch.object(audit, "open_verified_reference", return_value=FakePdf()):
                 result = audit.audit_batch(root, "1396:community-dentistry:community")
-            self.assertEqual(result["classification_basis"], "nearest_same_lineage_proxy")
+            self.assertEqual(result["classification_basis"], "same_lineage_proxy")
             self.assertEqual(result["reference_years"], [1397])
             self.assertEqual(result["mapped"]["222"]["reference_year"], 1397)
 

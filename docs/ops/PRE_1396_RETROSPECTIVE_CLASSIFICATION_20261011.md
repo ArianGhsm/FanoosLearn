@@ -8,12 +8,16 @@ an official reference when a 1391–1395 question originally appeared.
 
 - Eligible exam sitting: year **<= 1395** (strictly *before* 1396).
   The implementation must retain exam-type and subject identity.
-- Start with the applicable subject's verified **1397** announced references,
-  then examine **1398, 1399, ...** in order. For a particular reference-book
-  family use the earliest eligible year whose **exact** edition has an
-  accessible approved private PDF, a hash-bound chapter-to-PDF-page map and
-  usable evidence. If a book family is unavailable, investigate the later
-  listed references for the subject; do not stop all subjects.
+- Candidates are the subject's official references announced for **1397
+  and later**. **Owner rule 2026-10-23:** within each reference-book family,
+  search the **newest** edition that has an accessible approved private PDF
+  and a hash-bound chapter-to-PDF-page map first; cite an older edition only
+  when the answer-bearing page is not found in the newer ones, and record
+  those newer editions in `newer_editions_searched` (the validator and audit
+  enforce this). If a book family is unavailable, investigate the other
+  listed references for the subject; do not stop all subjects. (Before
+  2026-10-23 the earliest eligible 1397+ year was used; rows applied under
+  that order are not reopened.)
 - Each accepted evidence record notes separately the exam year, **reference
   year**, book/edition, chapter, positive original **PDF page**,
   **SHA-256 of that PDF**, verbatim source-page evidence, confidence and

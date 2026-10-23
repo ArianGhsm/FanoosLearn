@@ -24,9 +24,10 @@ import sys
 import tempfile
 from pathlib import Path
 from retrospective_reference_policy import is_retrospective, selected_reference_rows
-from nearest_same_lineage_proxy_policy import (
+from same_lineage_proxy_policy import (
     BASIS as SAME_LINEAGE_PROXY_BASIS,
     is_proxy_exam_year,
+    requires_newest_first,
     selected_reference_rows as selected_same_lineage_rows,
 )
 
@@ -90,6 +91,8 @@ def main() -> int:
         rows = selected_same_lineage_rows(catalog, exam_type, year, args.subject, pdfs, maps)
     if is_retrospective(year):
         print(f'RETROSPECTIVE {exam_type} {year}: using verified 1397+ proxy reference years; NOT official for exam year')
+    if requires_newest_first(year):
+        print('ORDER: search RANK 0 (newest) first; cite an older edition only after the newer ones lack the answer-bearing page, listing them in newer_editions_searched')
     search = []
     for row in rows:
         found = pdf_available(
@@ -111,15 +114,17 @@ def main() -> int:
         proxy = is_retrospective(year) or (is_proxy_exam_year(year) and row.get('_proxy') is True)
         label = f"PROXY_REFERENCE_YEAR_{row['year']}" if proxy else 'OFFICIAL'
         if is_proxy_exam_year(year) and row.get('_proxy') is True:
-            print(f"  BASIS {SAME_LINEAGE_PROXY_BASIS}: exact exam-year edition unavailable; same reference family")
-        print(f"{label} {row['edition']} [{note}] scope: {row.get('scope', '')}")
+            print(f"  BASIS {SAME_LINEAGE_PROXY_BASIS}: same reference family, actual reference year kept")
+        rank = (f" RANK {row['_rank']} in {row['_family']}"
+                if isinstance(row.get('_rank'), int) else '')
+        print(f"{label} {row['edition']}{rank} [{note}] scope: {row.get('scope', '')}")
         if found and found not in search:
             search.append(found)
     if not rows:
         if is_retrospective(year):
             print(f'PENDING: no verified 1397+ proxy reference for {exam_type} {year} {args.subject}; do not assign chapter or page')
         elif is_proxy_exam_year(year):
-            print(f'PENDING: no eligible exact or nearest same-lineage verified reference for {exam_type} {year} {args.subject}; do not assign chapter or page')
+            print(f'PENDING: no eligible same-lineage verified reference for {exam_type} {year} {args.subject}; do not assign chapter or page')
         else:
             print(f'no official reference for {exam_type} {year} {args.subject}: these questions get no source')
 

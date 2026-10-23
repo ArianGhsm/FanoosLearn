@@ -20,7 +20,7 @@ ALTER TABLE bank_question_sources
             AND classification_basis IN (
             'official_exam_year',
             'retrospective_proxy_1397_plus',
-            'nearest_same_lineage_proxy',
+            'same_lineage_proxy',
             'updated_reference_proxy'
             )
             AND (
