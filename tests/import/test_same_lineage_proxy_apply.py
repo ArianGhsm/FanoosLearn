@@ -77,6 +77,8 @@ class SameLineageApplyTests(unittest.TestCase):
             self.assertEqual(source["classification_note"], NOTE)
             self.assertEqual(source["pdf_page"], 17)
             self.assertEqual(source["pdf_sha256"], HASH)
+            self.assertEqual(source["official_scope_status"], "in_scope")
+            self.assertIs(source["scope_unverified"], False)
 
     def test_wrong_or_unlabeled_reference_year_is_rejected(self):
         with TemporaryDirectory() as tmp:
