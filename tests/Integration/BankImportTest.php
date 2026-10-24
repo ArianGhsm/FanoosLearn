@@ -436,6 +436,25 @@ final class BankImportTest
                     $this->assert(str_contains($error->getMessage(), 'exact exam-year official list exists'),
                         'The live exact-year list check rejected a proxy for the wrong reason.');
                 }
+                // Owner-approved scope gap (national 1402/1403 pediatric): only the
+                // named reference year of the same edition, only while the exact
+                // list has no structured chapters.
+                $gap = new \ReflectionMethod(SourceOnlyPublisher::class, 'ownerApprovedScopeGap');
+                $gapRows = [['scope_chapters' => null, 'reference_key' => 'mcdonald-avery-pediatric', 'edition_key' => '11e']];
+                $gapSource = [7 => ['ref' => 'mcdonald-avery-pediatric', 'edition' => '11e', 'reference_year' => 1404]];
+                $this->assert($gap->invoke(null, $gapRows, 'national', 1402, 'pediatric-dentistry', $gapSource) === true
+                    && $gap->invoke(null, $gapRows, 'national', 1403, 'pediatric-dentistry', $gapSource) === true,
+                    'The owner-approved 1402/1403 pediatric scope gap was rejected.');
+                $wrongYear = [7 => ['reference_year' => 1405] + $gapSource[7]];
+                $otherEdition = [7 => ['edition' => '10e'] + $gapSource[7]];
+                $structured = [['scope_chapters' => '[{"number":"1"}]'] + $gapRows[0]];
+                $this->assert($gap->invoke(null, $gapRows, 'national', 1402, 'pediatric-dentistry', $wrongYear) === false
+                    && $gap->invoke(null, $gapRows, 'national', 1402, 'pediatric-dentistry', $otherEdition) === false
+                    && $gap->invoke(null, $structured, 'national', 1402, 'pediatric-dentistry', $gapSource) === false
+                    && $gap->invoke(null, $gapRows, 'national', 1401, 'pediatric-dentistry', $gapSource) === false
+                    && $gap->invoke(null, $gapRows, 'board', 1402, 'pediatric-dentistry', $gapSource) === false
+                    && $gap->invoke(null, $gapRows, 'national', 1402, 'pediatric-dentistry', []) === false,
+                    'A scope-gap proxy passed outside the owner-approved pair, year, edition or unstructured list.');
             }
             ++$this->assertions;
         }
