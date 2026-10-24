@@ -605,7 +605,6 @@ SQL);
                 $nonResidencyOutsideScope = $nonResidencyProxyType
                     && ($src['official_scope_status'] ?? null) === 'outside_scope_exam_question'
                     && is_string($src['official_scope_note'] ?? null)
-                    && ($d['outside_scope_note'] ?? null) === $src['official_scope_note']
                     && self::validNonResidencyOutsideScopeNote(
                         $src['official_scope_note'], (string) $examType, $year)
                     && $structuredScope
