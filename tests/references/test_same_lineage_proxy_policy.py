@@ -264,3 +264,21 @@ class SameLineageProxyBatchTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PublisherProxyNoteDigitsTests(unittest.TestCase):
+    def test_publisher_reads_persian_note_digits_multibyte_safely(self):
+        import shutil
+        import subprocess
+        writer = Path(__file__).resolve().parents[2] / "apps/platform/src/Bank/SourceOnlyPublisher.php"
+        self.assertNotIn("strtr($proxyNote, '", writer.read_text())
+        php = shutil.which("php")
+        if php is None:
+            self.skipTest("php CLI unavailable")
+        note = "این آزمون ۱۳۹۶ از نسخهٔ پروکسیِ سال 1406 استفاده می‌کند؛ رسمی بودن آن برای سال آزمون تأیید نشده است."
+        out = subprocess.run(
+            [php, "-r", f"require {str(writer)!r}; echo \\Fanoos\\Platform\\Bank\\SourceOnlyPublisher::asciiDigits(stream_get_contents(STDIN));"],
+            input=note, capture_output=True, text=True, check=True).stdout
+        self.assertIn("1396", out)
+        self.assertIn("1406", out)
+        self.assertEqual(out, note.replace("۱۳۹۶", "1396"))
