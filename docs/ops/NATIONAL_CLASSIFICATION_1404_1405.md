@@ -24,9 +24,56 @@ import, publish). Owner request 2026-10-11.
   undecided.
 - English (scope statement, no book) and the basic-science block (no
   official reference) get no source.
-- The private post-validator audit script is residency-only; for national
-  sittings the evidence check is `apply_classification.py` (every quote
+- The private post-validator audit script supports type-prefixed national,
+  board, and promotion batches and reads `exam_type` and `round` from both
+  study-only files. For national sittings the evidence check remains
+  `apply_classification.py` plus the independent audit (every quote is
   re-read from the cited PDF page).
+
+## Guarded source-only workflow for an individual national sitting
+
+The source-only exporter defaults to residency round 1. For a national
+sitting, pass its type and round explicitly; the private study-only JSON
+records both fields. Use a type-prefixed audit batch so the round and subject
+are unambiguous. Decision files follow the sitting-specific directory
+`classification/decisions/national-<year>-<round>/<year>-<subject>.json`.
+The source-only importer requires matching `--type` and `--round` flags and
+checks them against both study and validated files before its rollback-only
+preview or backed-up apply.
+
+Example for a national round-2 research batch (placeholders only; no question
+text or answer data is part of this public example):
+
+```sh
+php scripts/references/export_server_candidates.php \
+  --workspace="<approved dentistry workspace UUID>" \
+  --type=national --year=1404 --round=2 \
+  --subject=community-dentistry \
+  --out="<protected research root>/bank-sittings/1404/national-r2-study.json"
+
+python3 -B scripts/references/apply_classification.py \
+  --sitting="<protected research root>/bank-sittings/1404/national-r2-study.json" \
+  --decisions="<protected research root>/classification/decisions/national-1404-2/1404-community-dentistry.json" \
+  --out="<protected research root>/classification/sittings/1404-national-r2-validated.json" \
+  --pdf-pages
+
+python3 -B scripts/references/audit_private_study_batches.py \
+  --local="<protected research root>" \
+  --batch=national:1404:2:community-dentistry:national-r2 \
+  --out="<protected research root>/classification/reports/national-r2-audit.json"
+
+php scripts/references/import_verified_sources.php \
+  --workspace="<approved dentistry workspace UUID>" \
+  --type=national --year=1404 --round=2 \
+  --subject=community-dentistry --stem=national-r2 --expected=1 \
+  --audit="<protected research root>/classification/reports/national-r2-audit.json"
+```
+
+The importer uses the type-specific official validity row and expects the
+validated sitting at `classification/sittings/1404-national-r2-validated.json`.
+The command above is a rollback-only preview; apply still requires a fresh
+verified full backup and a unique private receipt. Residency imports continue
+to use their existing CLI form and round-1 scope.
 
 ## National 1405 (مرداد) — done 2026-10-11
 

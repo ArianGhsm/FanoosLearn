@@ -13,6 +13,7 @@ use Fanoos\Platform\Support\DatabaseConnection;
  *
  * Preview: --workspace=UUID --year=1403 --subject=community-dentistry
  *          --stem=community --expected=9 --audit=<protected-audit-json>
+ * Non-residency: add matching --type=national --round=2 flags.
  * Apply:   same options plus --apply --backup=<verified-backup-directory>
  *          --receipt=<new-private-report-json>
  */
@@ -21,7 +22,7 @@ require dirname(__DIR__, 2) . '/apps/platform/bootstrap.php';
 try {
     $args = [];
     foreach (array_slice($argv, 1) as $arg) {
-        if (!preg_match('/^--(workspace|year|subject|stem|expected|audit|audit-sha|apply|backup|receipt|package-root|case-root)(?:=(.*))?$/D', $arg, $m)
+        if (!preg_match('/^--(workspace|type|year|round|subject|stem|expected|audit|audit-sha|apply|backup|receipt|package-root|case-root)(?:=(.*))?$/D', $arg, $m)
             || isset($args[$m[1]])) {
             throw new RuntimeException('Unexpected/repeated option.');
         }
@@ -29,12 +30,17 @@ try {
     }
     $ws = (string) ($args['workspace'] ?? '');
     $year = filter_var($args['year'] ?? null, FILTER_VALIDATE_INT);
+    $requestedType = (string) ($args['type'] ?? 'residency');
+    $round = filter_var($args['round'] ?? '1', FILTER_VALIDATE_INT);
     $subject = (string) ($args['subject'] ?? '');
     $stem = (string) ($args['stem'] ?? '');
     $expected = filter_var($args['expected'] ?? null, FILTER_VALIDATE_INT);
     $apply = isset($args['apply']);
-    $retrospective = $year !== false && $year >= 1300 && $year < 1396;
-    $nearestSameLineageProxyBatch = $year !== false && $year >= 1396 && $year <= 1398
+    $supportedTypes = ['residency', 'national', 'board', 'promotion'];
+    $maxRound = in_array($requestedType, ['board', 'promotion'], true) ? 99 : 9;
+    $isResidency = $requestedType === 'residency';
+    $retrospective = $isResidency && $year !== false && $year >= 1300 && $year < 1396;
+    $nearestSameLineageProxyBatch = $isResidency && $year !== false && $year >= 1396 && $year <= 1398
         && preg_match('/^same-lineage-proxy-[a-z0-9-]{1,35}$/D', $stem) === 1;
     $updated1397ProxyCounts = [
         'community-dentistry' => 10, 'dental-materials' => 9,
@@ -44,22 +50,25 @@ try {
         'orthodontics' => 4, 'pediatric-dentistry' => 19,
         'periodontics' => 10, 'prosthodontics' => 16,
     ];
-    $updated1397ProxyBatch = $year === 1397
+    $updated1397ProxyBatch = $isResidency && $year === 1397
         && isset($updated1397ProxyCounts[$subject])
         && $stem === 'proxy-' . $subject
         && $expected === $updated1397ProxyCounts[$subject];
-    $exact1397EndodonticsQ88Batch = $year === 1397
+    $exact1397EndodonticsQ88Batch = $isResidency && $year === 1397
         && $subject === 'endodontics' && $stem === 'official-endo-q88'
         && $expected === 1;
-    $updatedHuppBatch = $year === 1398 && $subject === 'oral-surgery'
+    $updatedHuppBatch = $isResidency && $year === 1398 && $subject === 'oral-surgery'
         && $stem === 'surgery-modern-hupp7' && $expected === 14;
     $updatedReferenceProxyBatch = $updated1397ProxyBatch || $updatedHuppBatch;
     if (preg_match('/^[0-9a-f-]{36}$/D', $ws) !== 1 || $year === false
-        || ($year < 1399 && !$retrospective && !$nearestSameLineageProxyBatch && !$updated1397ProxyBatch && !$exact1397EndodonticsQ88Batch && !(($year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1', 'endodontics-location-final'], true)) || ($year === 1398 && $subject === 'periodontics' && in_array($stem, ['periodontics', 'periodontics-followup', 'periodontics-certified-20261012', 'periodontics-sourcefree'], true)) || ($year === 1398 && $subject === 'community-dentistry' && $stem === 'community') || ($year === 1398 && $subject === 'prosthodontics' && in_array($stem, ['prosthodontics', 'prostho-voided-q97'], true)) || ($year === 1398 && $subject === 'operative-dentistry' && in_array($stem, ['operative-q175-20261012', 'operative-q188-snowplow'], true)) || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-q164-q168-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-four-20261012') || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-q159-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-q219-q226-20261012') || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-q152-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-seven-20261012') || ($year === 1398 && $subject === 'periodontics' && $stem === 'periodontics-q134-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-q218-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-q222-20261012') || ($year === 1398 && $subject === 'oral-radiology' && in_array($stem, ['radiology-q213-q216-20261013', 'radiology-q220-20261013'], true)) || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-sourcefree') || ($year === 1398 && $subject === 'oral-surgery' && in_array($stem, ['surgery', 'surgery-modern-hupp7'], true))))
-        || $year > 1500 || $expected === false || $expected < 1 || $expected > 250
+        || !in_array($requestedType, $supportedTypes, true)
+        || $round === false || $round < 1 || $round > $maxRound
+        || ($isResidency && $round !== 1)
+        || ($isResidency && $year < 1399 && !$retrospective && !$nearestSameLineageProxyBatch && !$updated1397ProxyBatch && !$exact1397EndodonticsQ88Batch && !(($year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1', 'endodontics-location-final'], true)) || ($year === 1398 && $subject === 'periodontics' && in_array($stem, ['periodontics', 'periodontics-followup', 'periodontics-certified-20261012', 'periodontics-sourcefree'], true)) || ($year === 1398 && $subject === 'community-dentistry' && $stem === 'community') || ($year === 1398 && $subject === 'prosthodontics' && in_array($stem, ['prosthodontics', 'prostho-voided-q97'], true)) || ($year === 1398 && $subject === 'operative-dentistry' && in_array($stem, ['operative-q175-20261012', 'operative-q188-snowplow'], true)) || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-q164-q168-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-four-20261012') || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-q159-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-q219-q226-20261012') || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-q152-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-seven-20261012') || ($year === 1398 && $subject === 'periodontics' && $stem === 'periodontics-q134-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-q218-20261012') || ($year === 1398 && $subject === 'oral-radiology' && $stem === 'radiology-q222-20261012') || ($year === 1398 && $subject === 'oral-radiology' && in_array($stem, ['radiology-q213-q216-20261013', 'radiology-q220-20261013'], true)) || ($year === 1398 && $subject === 'pediatric-dentistry' && $stem === 'pediatric-sourcefree') || ($year === 1398 && $subject === 'oral-surgery' && in_array($stem, ['surgery', 'surgery-modern-hupp7'], true))))
+        || $year < ($isResidency ? 1300 : 1350) || $year > 1500 || $expected === false || $expected < 1 || $expected > 250
         || preg_match('/^[a-z][a-z0-9-]{1,59}$/D', $subject) !== 1
         || preg_match('/^[a-z][a-z0-9-]{1,59}$/D', $stem) !== 1) {
-        throw new RuntimeException('Workspace, exact year/subject/stem and expected count required; supported paths are exact-year, pre-1396 retrospective, 1396–1398 same-lineage proxy, and the enumerated 1406 updated-reference cases.');
+        throw new RuntimeException('Workspace, supported exam type/round, year/subject/stem and expected count are required; residency proxy batches remain limited to their audited paths.');
     }
     if ($apply !== isset($args['backup']) || $apply !== isset($args['receipt'])) {
         throw new RuntimeException('Apply requires both verified full backup and unique private receipt.');
@@ -175,7 +184,9 @@ try {
     }
     $studyPath = "{$inputRoot}/bank-sittings/{$year}/{$stem}-study.json";
     $validatedPath = "{$inputRoot}/classification/sittings/{$year}-{$stem}-validated.json";
-    $decisionsPath = "{$inputRoot}/classification/decisions/{$year}-{$subject}.json";
+    $decisionsPath = $isResidency
+        ? "{$inputRoot}/classification/decisions/{$year}-{$subject}.json"
+        : "{$inputRoot}/classification/decisions/{$requestedType}-{$year}-{$round}/{$year}-{$subject}.json";
     if ($year === 1398 && $subject === 'periodontics' && in_array($stem, ['periodontics-followup', 'periodontics-certified-20261012', 'periodontics-q134-20261012'], true)) {
         $decisionsPath = "{$inputRoot}/classification/decisions/1398-{$stem}.json";
     }
@@ -196,12 +207,20 @@ try {
         || ($audit['research_only'] ?? false) !== true) {
         throw new RuntimeException('Required no-question-change provenance audit absent.');
     }
-    $key = "{$year}:{$subject}:{$stem}";
-    $matches = array_values(array_filter($audit['batches'] ?? [], static fn($b) => ($b['batch'] ?? '') === $key));
+    $legacyKey = "{$year}:{$subject}:{$stem}";
+    $typedKey = "{$requestedType}:{$year}:{$round}:{$subject}:{$stem}";
+    $batchKeys = $isResidency ? [$legacyKey, $typedKey] : [$typedKey];
+    $matches = array_values(array_filter($audit['batches'] ?? [], static fn($b) => in_array(($b['batch'] ?? ''), $batchKeys, true)));
     if (count($matches) !== 1) {
         throw new RuntimeException('Exactly one batch audit required.');
     }
     $b = $matches[0];
+    $key = (string) $b['batch'];
+    if ((!$isResidency && (($b['exam_type'] ?? null) !== $requestedType || ($b['round'] ?? null) !== $round))
+        || (isset($b['exam_type']) && $b['exam_type'] !== $requestedType)
+        || (isset($b['round']) && $b['round'] !== $round)) {
+        throw new RuntimeException('Private audit exam type or round does not match the requested sitting.');
+    }
     if ($nearestSameLineageProxyBatch
         && (($b['classification_basis'] ?? '') !== 'same_lineage_proxy'
             || !is_array($b['reference_years'] ?? null)
@@ -255,6 +274,15 @@ try {
     $study = $read($studyPath);
     $validated = $read($validatedPath);
     $decisions = $read($decisionsPath);
+    if (($study['exam_type'] ?? 'residency') !== $requestedType
+        || ($validated['exam_type'] ?? 'residency') !== $requestedType
+        || ($study['round'] ?? 1) !== $round || ($validated['round'] ?? 1) !== $round
+        || ($study['year'] ?? null) !== $year || ($validated['year'] ?? null) !== $year) {
+        throw new RuntimeException('Study and validated sitting type, year or round do not match the importer arguments.');
+    }
+    if (!$isResidency && (!isset($args['type']) || !isset($args['round']))) {
+        throw new RuntimeException('National, board and promotion imports require explicit matching --type and --round flags.');
+    }
     $receiptAuditSha = hash_file('sha256', $auditPath);
     $receiptValidatedSha = hash_file('sha256', $validatedPath);
     if (!is_string($receiptAuditSha) || !is_string($receiptValidatedSha)) {
@@ -278,6 +306,10 @@ try {
                 ? ($b['reference_years'] ?? []) : [$year]),
         'validated_sha256' => $receiptValidatedSha,
     ];
+    if (!$isResidency || $round !== 1) {
+        $receiptData['exam_type'] = $requestedType;
+        $receiptData['round'] = $round;
+    }
     if ($apply) {
         $receiptData['backup_id'] = basename($backupPath);
         $receiptData['completed_at_utc'] = gmdate('Y-m-d\TH:i:s\Z');

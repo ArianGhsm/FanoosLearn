@@ -6,6 +6,8 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 SERVICE = ROOT / "apps/platform/src/Bank/SourceOnlyPublisher.php"
 CLI = ROOT / "scripts/references/import_verified_sources.php"
+EXPORT = ROOT / "scripts/references/export_server_candidates.php"
+OUTSIDE_SCOPE = ROOT / "scripts/references/mark_verified_outside_scope_sources.php"
 
 
 class PublisherSafetyContracts(unittest.TestCase):
@@ -89,17 +91,17 @@ class PublisherSafetyContracts(unittest.TestCase):
     def test_1398_exception_list_is_explicit_and_year_scoped(self):
         """1398 additions remain constrained to exact, independently audited batches."""
         self.assertIn("$year === 1398 && $subject === 'endodontics' && in_array($stem, ['endodontics', 'endodontics-q9', 'endodontics-q1', 'endodontics-location-final'], true)", self.cli)
-        self.assertIn("$year === 1398 && !$sameLineageProxy && $subject === 'endodontics'", self.service)
+        self.assertIn("$policyYear === 1398 && !$sameLineageProxy && $subject === 'endodontics'", self.service)
         self.assertIn("$decision['edition'] !== 'torabinejad-endodontics@5e'", self.service)
         self.assertIn("1398 endodontics requires exact announced Torabinejad 5e", self.service)
         self.assertIn("$subject === 'periodontics' && in_array($stem, ['periodontics', 'periodontics-followup', 'periodontics-certified-20261012', 'periodontics-sourcefree'], true)", self.cli)
         self.assertIn("classification/decisions/1398-{$stem}.json", self.cli)
         self.assertIn("periodontics-certified-20261012", self.cli)
-        self.assertIn("$year === 1398 && !$sameLineageProxy && $subject === 'periodontics'", self.service)
+        self.assertIn("$policyYear === 1398 && !$sameLineageProxy && $subject === 'periodontics'", self.service)
         self.assertIn("$decision['edition'] !== 'carranza-periodontology@12e'", self.service)
         self.assertIn("1398 periodontics requires exact announced Carranza 12e", self.service)
         self.assertIn("$subject === 'community-dentistry' && $stem === 'community'", self.cli)
-        self.assertIn("$year === 1398 && !$sameLineageProxy && $subject === 'community-dentistry'", self.service)
+        self.assertIn("$policyYear === 1398 && !$sameLineageProxy && $subject === 'community-dentistry'", self.service)
         self.assertIn("$decision['edition'] !== 'national-oral-health@1394'", self.service)
         self.assertIn("1398 community dentistry requires the exact national oral-health 1394 edition", self.service)
         self.assertIn("W02-community-final-audit-stage", self.cli)
@@ -122,6 +124,22 @@ class PublisherSafetyContracts(unittest.TestCase):
                        "posix_geteuid", "research", "receipt",
                        "hash_file('sha256'", "year < 1399"]:
             self.assertIn(marker, self.cli)
+
+    def test_national_round_two_scope_flows_through_export_import_and_live_queries(self):
+        export = EXPORT.read_text()
+        outside_scope = OUTSIDE_SCOPE.read_text()
+        for marker in ["'residency', 'national', 'board', 'promotion'", "et.type_key=:type",
+                       "'exam_type' => $examType", "'round' => $round"]:
+            self.assertIn(marker, export)
+        for marker in ["|type|year|round|", "$requestedType", "$study['exam_type']", "$study['round']",
+                       "type_key=:type", "exam_round=:round", "BankImporter::questionKey($examType, $year, $round, $number)"]:
+            self.assertIn(marker, self.service + self.cli)
+        self.assertIn('"{$requestedType}:{$year}:{$round}:{$subject}:{$stem}"', self.cli)
+        self.assertIn("$b['exam_type']", self.cli)
+        self.assertIn("$b['round']", self.cli)
+        for marker in ["$plan['exam_type']", "$plan['round']", "et.type_key=:type",
+                       "si.exam_round=:round", "workspace|plan|type|round|apply"]:
+            self.assertIn(marker, outside_scope)
 
     def test_1397_exact_q88_and_single_cross_subject_q95_are_narrow(self):
         for marker in [

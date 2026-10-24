@@ -73,6 +73,17 @@ checkpoints below preserve their original (broader) definitions.
 - If one source is rejected, **none** of that batch's source rows commit.
   Re-running an already imported batch fails instead of overwriting AI or
   human-reviewed sources. Never suppress these failures.
+- The same guarded source-only workflow accepts `national`, `board`, and
+  `promotion` study-only sittings with their recorded round. The exporter
+  defaults to `--type=residency --round=1`; existing residency importer calls
+  remain valid without new flags and residency source-only imports remain
+  round 1. Non-residency imports pass both `--type` and `--round`, which must
+  equal the values in the study and validated files. Board/promotion rounds
+  follow the bank's 1–99 slot range; national rounds follow 1–9.
+- Official edition validity is resolved using the sitting's same exam type
+  and the citation's reference year. The existing retrospective,
+  same-lineage, and updated-reference proxy policies remain residency rules;
+  national/board/promotion source rows use `official_exam_year` citations.
 - Source-only inserts become available in the **bank** immediately; however,
   already-published assessments use immutable **version snapshots**. Students
   will not see new source explanations in the existing version until the
@@ -126,12 +137,31 @@ because the actual announced syllabus scope is missing. The other
 
    ```sh
    FANOOS_CONFIG_FILE=/etc/fanoos/updater-config.php php \
-     scripts/references/import_verified_sources.php \
+   scripts/references/import_verified_sources.php \
      --workspace="<approved dentistry workspace UUID>" \
      --year=1403 --subject=community-dentistry --stem=community \
      --expected=9 \
      --audit=/srv/fanoos/shared/research/classification/reports/residency-audit-20261010.json
    ```
+
+   For a national round-2 study, export with `--type=national --round=2`,
+   audit it with `--batch=national:1404:2:community-dentistry:national-r2`,
+   and pass those same flags to the importer. The non-residency decision file
+   is under `classification/decisions/national-1404-2/1404-community-dentistry.json`.
+   For example, the preview command keeps the same source-only guards:
+
+   ```sh
+   FANOOS_CONFIG_FILE=/etc/fanoos/updater-config.php php \
+     scripts/references/import_verified_sources.php \
+     --workspace="<approved dentistry workspace UUID>" \
+     --type=national --year=1404 --round=2 \
+     --subject=community-dentistry --stem=national-r2 --expected=1 \
+     --audit=/srv/fanoos/shared/research/classification/reports/national-1404-round2-audit.json
+   ```
+
+   The private study, validated output, decisions, audit, verified backup and
+   receipt remain under the protected research workspace. The question and
+   answer data are not copied into this public runbook.
 
    Expect `applied=false`, `source_rows=9`,
    `questions_changed=choices_changed=answers_changed=0`.

@@ -24,7 +24,7 @@ class Residency1398PediatricRadiologySourceSafety(unittest.TestCase):
                      "164 =>", "168 =>", "211 =>", "212 =>", "214 =>", "217 =>",
                      "$decision['page'] !== $expectedSource[2]",
                      "$decision['edition'] !== $expectedSource[0]",
-                     "$year === 1398"):
+                     "$policyYear === 1398", "$policyYear = $isResidency ? $year : 0;"):
             self.assertIn(item, PUBLISHER)
         self.assertIn("original PDF-page source gate refused", PUBLISHER)
         self.assertIn("v.is_official=1", PUBLISHER)

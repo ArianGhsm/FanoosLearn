@@ -238,6 +238,73 @@ final class BankImportTest
             'classification_basis' => 'official_exam_year',
             'classification_note' => null,
         ], 'A refused generic re-import did not preserve audited source provenance.');
+
+        // The same guarded source-only transaction resolves national round 2
+        // through the national question key and national official validity row.
+        $nationalCatalog = $catalog;
+        $nationalCatalog['exam_types'][] = ['key' => 'national', 'name' => 'National fixture', 'active' => true];
+        $nationalValidity = $catalog['validity'][0];
+        $nationalValidity['exam_type'] = 'national';
+        $nationalCatalog['validity'][] = $nationalValidity;
+        $importer->import($ws, $nationalCatalog);
+        $nationalSitting = $sitting;
+        $nationalSitting['exam_type'] = 'national';
+        $nationalSitting['round'] = 2;
+        $nationalSitting['questions'] = [$sitting['questions'][1]];
+        unset($nationalSitting['questions'][0]['sources']);
+        $importer->import($ws, $nationalSitting);
+        $nationalQuestionKey = BankImporter::questionKey('national', 1404, 2, 2);
+        $this->database->prepare("UPDATE bank_questions SET status='published' WHERE workspace_id=:ws AND question_key=:key")
+            ->execute(['ws' => $ws, 'key' => $nationalQuestionKey]);
+        $nationalStudyQuestion = $nationalSitting['questions'][0];
+        $nationalAnswer = $nationalStudyQuestion['answer'];
+        $nationalStudyQuestion = [
+            'number' => 2,
+            'subject' => 'endodontics',
+            'stem' => $nationalStudyQuestion['stem'],
+            'choices' => $nationalStudyQuestion['choices'],
+            'answer' => [
+                'choice' => $nationalAnswer['choice'] ?? null,
+                'also_correct' => $nationalAnswer['also_correct'] ?? [],
+                'status' => $nationalAnswer['status'],
+            ],
+        ];
+        $nationalStudy = [
+            'format' => 'fanoos.classification.study-only/1',
+            'exam_type' => 'national', 'year' => 1404, 'round' => 2,
+            'questions' => [$nationalStudyQuestion],
+        ];
+        $nationalSource = [
+            'ref' => 'torabinejad@6e#ch14', 'page' => 'pdf 272', 'pdf_page' => 272,
+            'printed_page' => null, 'pdf_sha256' => str_repeat('a', 64),
+            'anchor' => 'National round two exact page evidence fixture',
+            'primary' => true, 'origin' => 'ai',
+            'confidence' => ['source' => 0.9, 'node' => 0.9, 'page' => 0.9],
+            'reference_year' => 1404, 'classification_basis' => 'official_exam_year',
+            'classification_note' => null,
+        ];
+        $nationalValidated = $nationalStudy;
+        $nationalValidated['questions'][0]['sources'] = [$nationalSource];
+        $nationalDecisions = [[
+            'number' => 2, 'edition' => 'torabinejad@6e', 'chapter' => '14',
+            'page' => 272, 'evidence' => $nationalSource['anchor'], 'confidence' => 0.9,
+        ]];
+        $nationalEvidence = null;
+        $nationalWritten = SourceOnlyPublisher::run(
+            $this->database, $ws, 1404, 'endodontics', $nationalStudy,
+            $nationalValidated, $nationalDecisions, true, $nationalEvidence,
+        );
+        $nationalReadback = SourceOnlyPublisher::readback(
+            DatabaseConnection::fromEnvironment(), $ws, 1404, 'endodontics',
+            $nationalStudy, $nationalValidated, $nationalEvidence ?? [],
+        );
+        $this->assert($nationalWritten === 1 && $nationalReadback['verified'] === true
+            && $nationalQuestionKey === 'national-1404-2-002',
+            'National round-2 source-only write/readback did not use the exact type, round and key: '
+                . json_encode($nationalReadback, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+        $this->database->prepare('DELETE source FROM bank_question_sources source JOIN bank_questions q ON q.id=source.question_id AND q.workspace_id=source.workspace_id WHERE source.workspace_id=:ws AND q.question_key=:key')
+            ->execute(['ws' => $ws, 'key' => $nationalQuestionKey]);
+
         // Remove the audited fixture so the remaining generic-importer scenarios
         // (amended keys, export round trip) start from ordinary unreviewed sources.
         $this->database->prepare('DELETE FROM bank_question_sources WHERE workspace_id=:ws AND question_id=:qid AND classification_basis IS NOT NULL')

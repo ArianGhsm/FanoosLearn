@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only provenance and source-map audit of private residency study batches.
+"""Read-only provenance and source-map audit of private study batches.
 
 This is NOT a production importer. Audit works only on previously validated
 study-only sittings; never export question stems or copyrighted page text.
@@ -37,7 +37,8 @@ from same_lineage_proxy_policy import (
     requires_newest_first,
 )
 
-BATCH = re.compile(r"^(13[0-9]{2}|14[0-9]{2}):([a-z][a-z0-9-]*):([a-z][a-z0-9-]*)$")
+LEGACY_BATCH = re.compile(r"^(13[0-9]{2}|14[0-9]{2}):([a-z][a-z0-9-]*):([a-z][a-z0-9-]*)$")
+TYPED_BATCH = re.compile(r"^(residency|national|board|promotion):(13[0-9]{2}|14[0-9]{2}):([1-9][0-9]{0,1}):([a-z][a-z0-9-]*):([a-z][a-z0-9-]*)$")
 CHAPTERS = Path(__file__).resolve().parents[2] / "data/bank/reference-chapter-pages.json"
 
 
@@ -93,14 +94,29 @@ def audit_batch(root: Path, spec: str,
                 storage_root: Path = Path("/srv/fanoos/shared/storage"),
                 mysql_defaults: Path = Path("/etc/fanoos/mysql-migrator.cnf"),
                 database: str = "fanoos_prod") -> dict:
-    m = BATCH.fullmatch(spec)
-    if not m:
-        raise ValueError(f"Invalid batch spec {spec!r}: expected YEAR:subject:stem")
-    year, subject, stem = m.groups()
+    typed = TYPED_BATCH.fullmatch(spec)
+    legacy = LEGACY_BATCH.fullmatch(spec)
+    if typed:
+        exam_type, year, round_s, subject, stem = typed.groups()
+        round_n = int(round_s)
+        max_round = 99 if exam_type in {"board", "promotion"} else 9
+        if round_n > max_round:
+            raise ValueError(f"{spec}: round exceeds the supported limit for {exam_type}")
+        if exam_type == "residency" and round_n != 1:
+            raise ValueError(f"{spec}: residency batches currently support round 1 only")
+    elif legacy:
+        year, subject, stem = legacy.groups()
+        exam_type, round_n = "residency", 1
+    else:
+        raise ValueError(f"Invalid batch spec {spec!r}: expected YEAR:subject:stem or TYPE:YEAR:ROUND:subject:stem")
     year_n = int(year)
+    if year_n < (1300 if exam_type == "residency" else 1350) or year_n > 1500:
+        raise ValueError(f"{spec}: year is outside the supported exam-type range")
     path_input = root / "bank-sittings" / year / f"{stem}-study.json"
     path_output = root / "classification" / "sittings" / f"{year}-{stem}-validated.json"
-    path_decisions = root / "classification" / "decisions" / f"{year}-{subject}.json"
+    path_decisions = (root / "classification" / "decisions" / f"{year}-{subject}.json"
+                      if exam_type == "residency" else
+                      root / "classification" / "decisions" / f"{exam_type}-{year}-{round_n}" / f"{year}-{subject}.json")
     if year_n == 1398 and subject == "periodontics" and stem in {"periodontics-followup", "periodontics-certified-20261012", "periodontics-q134-20261012"}:
         path_decisions = root / "classification" / "decisions" / f"1398-{stem}.json"
     if (year_n, subject, stem) == (1398, "operative-dentistry", "operative-q175-20261012"):
@@ -112,11 +128,20 @@ def audit_batch(root: Path, spec: str,
     decisions = load(path_decisions)
     if source.get("format") != "fanoos.classification.study-only/1" or result.get("format") != source["format"]:
         raise ValueError(f"{spec}: only private study-only sittings permitted")
+    source_type = source.get("exam_type", "residency")
+    source_round = source.get("round", 1)
+    result_type = result.get("exam_type", "residency")
+    result_round = result.get("round", 1)
     if (source.get("year") != year_n or result.get("year") != year_n
-            or source.get("exam_type") != "residency"
-            or result.get("exam_type") != source["exam_type"]
-            or result.get("round") != source.get("round")):
+            or source_type != exam_type or source_round != round_n
+            or result_type != source_type or result_round != source_round):
         raise ValueError(f"{spec}: year or exam type mismatch")
+    if (not isinstance(source_round, int) or isinstance(source_round, bool)
+            or not isinstance(result_round, int) or isinstance(result_round, bool)):
+        raise ValueError(f"{spec}: study and validated round must be integers")
+    if exam_type != "residency" and ("exam_type" not in source or "round" not in source
+                                     or "exam_type" not in result or "round" not in result):
+        raise ValueError(f"{spec}: non-residency study and validated files must record exam_type and round")
     original = {int(q["number"]): q for q in source["questions"]}
     mapped = {int(q["number"]): q for q in result["questions"]}
     if len(original) != len(source["questions"]) or original.keys() != mapped.keys():
@@ -135,16 +160,22 @@ def audit_batch(root: Path, spec: str,
     pdf_catalog_path = CHAPTERS.parent / "reference-pdfs.json"
     catalog = json.loads(catalog_path.read_text(encoding="utf-8")) if catalog_path.is_file() else None
     pdf_catalog = json.loads(pdf_catalog_path.read_text(encoding="utf-8"))["editions"] if pdf_catalog_path.is_file() else {}
+    is_residency = exam_type == "residency"
+    retrospective = is_residency and is_retrospective(year_n)
     proxy_decisions = [d for d in wanted.values()
                        if d.get("classification_basis") == UPDATED_PROXY_BASIS]
     updated_proxy = bool(proxy_decisions)
     same_lineage_decisions = [d for d in wanted.values()
                               if d.get("classification_basis") == SAME_LINEAGE_PROXY_BASIS]
     same_lineage_proxy = bool(same_lineage_decisions)
+    if not is_residency and (updated_proxy or same_lineage_proxy
+                             or any("reference_year" in d or "classification_basis" in d
+                                    for d in wanted.values())):
+        raise ValueError(f"{spec}: non-residency source batches require exact official exam-year citations")
     if updated_proxy and same_lineage_proxy:
         raise ValueError(f"{spec}: updated-reference and same-lineage proxy bases cannot be mixed")
     if updated_proxy:
-        if (year_n not in (UPDATED_PROXY_1397_EXAM_YEAR, 1398)
+        if (not is_residency or year_n not in (UPDATED_PROXY_1397_EXAM_YEAR, 1398)
                 or len(proxy_decisions) != len(wanted)
                 or any(not is_updated_reference_proxy(
                     year_n, subject, d.get("edition"), d.get("reference_year"),
@@ -160,14 +191,14 @@ def audit_batch(root: Path, spec: str,
         if (not is_proxy_exam_year(year_n) or len(same_lineage_decisions) != len(wanted)
                 or catalog is None
                 or any(not is_selected_same_lineage_proxy(
-                    catalog, "residency", year_n, subject, d.get("edition"),
+                    catalog, exam_type, year_n, subject, d.get("edition"),
                     d.get("reference_year"), d.get("classification_basis"),
                     pdf_catalog, chapter_maps)
                     or not valid_proxy_note(d.get("proxy_note"), year_n, d.get("reference_year"))
                     or str(d.get("chapter")) not in {
                         str(item.get("number"))
                         for row in selected_same_lineage_rows(
-                            catalog, "residency", year_n, subject, pdf_catalog, chapter_maps)
+                            catalog, exam_type, year_n, subject, pdf_catalog, chapter_maps)
                         if row.get("_proxy") is True
                         and row.get("edition") == d.get("edition")
                         and row.get("year") == d.get("reference_year")
@@ -179,21 +210,21 @@ def audit_batch(root: Path, spec: str,
         reference_years = sorted({d["reference_year"] for d in wanted.values()})
     else:
         if any("reference_year" in d or "classification_basis" in d
-               for d in wanted.values()) and not is_retrospective(year_n):
+               for d in wanted.values()) and not retrospective:
             raise ValueError(f"{spec}: cross-year reference metadata is not allowed")
-        reference_years = sorted({d.get("reference_year") for d in wanted.values()}) if is_retrospective(year_n) else [year_n]
-    if is_retrospective(year_n):
+        reference_years = sorted({d.get("reference_year") for d in wanted.values()}) if retrospective else [year_n]
+    if retrospective:
         for d in wanted.values():
             if (d.get("classification_basis") != BASIS
                     or not isinstance(d.get("reference_year"), int)
                     or isinstance(d.get("reference_year"), bool)
                     or d["reference_year"] < 1397):
                 raise ValueError(f"{spec}: missing explicit 1397+ retrospective reference-year provenance")
-    if requires_newest_first(year_n) and not updated_proxy:
+    if is_residency and requires_newest_first(year_n) and not updated_proxy:
         if catalog is None:
             raise ValueError(f"{spec}: catalog is required to verify the newest-first edition order")
-        select = selected_retrospective_rows if is_retrospective(year_n) else selected_same_lineage_rows
-        candidates = select(catalog, "residency", year_n, subject, pdf_catalog, chapter_maps)
+        select = selected_retrospective_rows if retrospective else selected_same_lineage_rows
+        candidates = select(catalog, exam_type, year_n, subject, pdf_catalog, chapter_maps)
         for d in wanted.values():
             order_error = fallback_error(candidates, d.get("edition"), d.get("newer_editions_searched"))
             if order_error:
@@ -210,7 +241,7 @@ def audit_batch(root: Path, spec: str,
             chapter = str(decision["chapter"])
             reference_subject = str(decision.get("reference_subject", subject))
             validity = [row for row in catalog.get("validity", [])
-                        if row.get("exam_type") == "residency"
+                        if row.get("exam_type") == exam_type
                         and row.get("year") == UPDATED_PROXY_REFERENCE_YEAR
                         and row.get("subject") == reference_subject
                         and row.get("edition") == edition
@@ -305,11 +336,11 @@ def audit_batch(root: Path, spec: str,
                 or item.get("official_scope_status") != "in_scope"
                 or item.get("scope_unverified") is not False):
             raise ValueError(f"{spec}: same-lineage proxy label/reference year differs for Q{n}")
-        if not updated_proxy and not same_lineage_proxy and is_retrospective(year_n):
+        if not updated_proxy and not same_lineage_proxy and retrospective:
             if (item.get("classification_basis") != BASIS
                     or item.get("reference_year") != decision.get("reference_year")):
                 raise ValueError(f"{spec}: retrospective proxy label/reference year differs for Q{n}")
-        if not updated_proxy and not same_lineage_proxy and not is_retrospective(year_n):
+        if not updated_proxy and not same_lineage_proxy and not retrospective:
             if (item.get("classification_basis") != "official_exam_year"
                     or item.get("reference_year") != year_n):
                 raise ValueError(f"{spec}: exact-year source label/reference year differs for Q{n}")
@@ -323,9 +354,9 @@ def audit_batch(root: Path, spec: str,
             "confidence_node": round(float(confidence["node"]), 3),
             "confidence_page": round(float(confidence["page"]), 3),
         }
-    return {
+    result = {
         "batch": spec,
-        "classification_basis": (BASIS if is_retrospective(year_n)
+        "classification_basis": (BASIS if retrospective
                                   else UPDATED_PROXY_BASIS if updated_proxy
                                   else SAME_LINEAGE_PROXY_BASIS if same_lineage_proxy
                                   else "official_exam_year"),
@@ -342,6 +373,10 @@ def audit_batch(root: Path, spec: str,
         "source_pdf_provenance": source_pdf_provenance,
         "mapped": pages,
     }
+    if not is_residency:
+        result["exam_type"] = exam_type
+        result["round"] = round_n
+    return result
 
 
 def save_private(root: Path, out: Path, data: dict) -> None:
@@ -374,7 +409,7 @@ def main():
     parser.add_argument("--mysql-defaults", type=Path, default=Path("/etc/fanoos/mysql-migrator.cnf"))
     parser.add_argument("--database", default="fanoos_prod")
     parser.add_argument("--batch", action="append", required=True,
-                        help="YEAR:subject:stem; may repeat, e.g. 1405:oral-radiology:radiology")
+                        help="YEAR:subject:stem for residency round 1, or TYPE:YEAR:ROUND:subject:stem; may repeat")
     parser.add_argument("--out", type=Path, help="Private report path under classification/reports")
     args = parser.parse_args()
     if len(set(args.batch)) != len(args.batch):

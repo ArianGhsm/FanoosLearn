@@ -32,7 +32,7 @@ class Prosthodontics1398SourceGateTest(unittest.TestCase):
 
     def test_three_and_only_three_official_1398_prosthodontic_editions(self):
         scope = re.search(
-            r"if \(\$year === 1398 && !\$sameLineageProxy && \$subject === 'prosthodontics'\s*"
+            r"if \(\$policyYear === 1398 && !\$sameLineageProxy && \$subject === 'prosthodontics'\s*"
             r"&& !in_array\(\(string\) \$decision\['edition'\], \[(.*?)\], true\)\)",
             self.publisher,
             re.DOTALL,

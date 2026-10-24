@@ -18,7 +18,7 @@ require $root . '/apps/platform/bootstrap.php';
 try {
     $args = [];
     foreach (array_slice($argv, 1) as $arg) {
-        if (preg_match('/^--(workspace|plan|apply|backup|receipt)(?:=(.*))?$/D', $arg, $m) !== 1 || isset($args[$m[1]])) {
+        if (preg_match('/^--(workspace|plan|type|round|apply|backup|receipt)(?:=(.*))?$/D', $arg, $m) !== 1 || isset($args[$m[1]])) {
             throw new RuntimeException('Unknown or duplicate protected argument.');
         }
         $args[$m[1]] = $m[2] ?? '1';
@@ -38,7 +38,16 @@ try {
     }
     $raw = (string) file_get_contents($planPath);
     $plan = json_decode($raw, true, 32, JSON_THROW_ON_ERROR);
-    if (($plan['format'] ?? null) !== 'fanoos.outside-scope-source-repair/1' || ($plan['exam_type'] ?? null) !== 'residency'
+    $examType = $plan['exam_type'] ?? 'residency';
+    $round = $plan['round'] ?? 1;
+    $maxRound = in_array($examType, ['board', 'promotion'], true) ? 99 : 9;
+    $requestedRound = isset($args['round']) ? filter_var($args['round'], FILTER_VALIDATE_INT) : null;
+    if (($plan['format'] ?? null) !== 'fanoos.outside-scope-source-repair/1'
+        || !in_array($examType, ['residency', 'national', 'board', 'promotion'], true)
+        || !is_int($round) || $round < 1 || $round > $maxRound
+        || ($examType === 'residency' && $round !== 1)
+        || (isset($args['type']) && $args['type'] !== $examType)
+        || (isset($args['round']) && ($requestedRound === false || $requestedRound !== $round))
         || !is_int($plan['year'] ?? null) || !is_array($plan['entries'] ?? null) || !array_is_list($plan['entries'])
         || count($plan['entries']) < 1 || count($plan['entries']) > 12) {
         throw new RuntimeException('Invalid protected plan.');
@@ -71,7 +80,7 @@ JOIN bank_reference_editions e ON e.id=s.edition_id AND e.workspace_id=s.workspa
 JOIN bank_references r ON r.id=e.reference_id AND r.workspace_id=e.workspace_id
 JOIN bank_reference_nodes n ON n.id=s.node_id AND n.workspace_id=s.workspace_id
 JOIN bank_reference_validity v ON v.edition_id=e.id AND v.workspace_id=e.workspace_id AND v.exam_type_id=et.id AND v.subject_id=sb.id AND v.exam_year=si.exam_year AND v.is_official=1
-WHERE s.workspace_id=:ws AND s.id=:sid AND q.number_in_sitting=:number AND si.exam_year=:year AND si.exam_round=1 AND et.type_key='residency'
+WHERE s.workspace_id=:ws AND s.id=:sid AND q.number_in_sitting=:number AND si.exam_year=:year AND si.exam_round=:round AND et.type_key=:type
 FOR UPDATE
 SQL);
     $choices = $db->prepare('SELECT position,text,image FROM bank_question_choices WHERE workspace_id=:ws AND question_id=:qid ORDER BY position');
@@ -101,7 +110,7 @@ SQL);
         if (!$printedLabelAvailable && !$printedLabelUnavailable) {
             throw new RuntimeException('Printed page must be exact or explicitly unavailable on this PDF page.');
         }
-        $read->execute(['ws'=>$workspace,'sid'=>$item['source_id'],'number'=>$number,'year'=>$plan['year']]);
+        $read->execute(['ws'=>$workspace,'sid'=>$item['source_id'],'number'=>$number,'year'=>$plan['year'],'type'=>$examType,'round'=>$round]);
         $rows = $read->fetchAll(PDO::FETCH_ASSOC);
         if (count($rows) !== 1) throw new RuntimeException("Q{$number}: source identity is not unique.");
         $s = $rows[0];
@@ -146,6 +155,10 @@ SQL);
     $result = ['format'=>'fanoos.outside-scope-source-repair-receipt/1','mode'=>$apply?'applied':'rollback-preview','year'=>$plan['year'],
         'count'=>count($out),'plan_sha256'=>hash('sha256',$raw),'only_fields_changed'=>['page','printed_page','pdf_page','pdf_sha256','official_scope_status','official_scope_note'],
         'questions_changed'=>0,'choices_changed'=>0,'official_answers_changed'=>0,'sources'=>$out];
+    if ($examType !== 'residency' || $round !== 1) {
+        $result['exam_type'] = $examType;
+        $result['round'] = $round;
+    }
     if ($apply) {
         $result['backup_id'] = basename($backup); $result['at_utc'] = gmdate('Y-m-d\\TH:i:s\\Z');
         $fp = fopen($receipt, 'x'); if ($fp === false) throw new RuntimeException('Committed but receipt creation failed; read back and do not retry.');
