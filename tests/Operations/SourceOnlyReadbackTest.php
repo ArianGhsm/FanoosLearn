@@ -56,6 +56,25 @@ final class SourceOnlyReadbackTest
             'Readback summary leaked question or proxy-note text.');
         $checks = 4;
 
+        $nationalQuestion = array_replace($questions[0], [
+            'question_key' => 'national-1404-2-007',
+        ]);
+        $nationalSource = array_replace($source, [
+            'reference_year' => 1404,
+            'classification_basis' => 'official_exam_year',
+            'classification_note_sha256' => null,
+        ]);
+        $nationalPersistedSource = array_replace($nationalSource, [
+            'source_id' => '0199dd00-1234-7000-8000-000000000002',
+        ]);
+        $nationalReadback = SourceOnlyPublisher::compareReadback(
+            [$nationalQuestion], [$nationalQuestion], [$nationalSource], [$nationalPersistedSource],
+        );
+        $this->check($nationalReadback['verified'] === true
+            && $nationalReadback['question_key_fingerprint_sha256'] !== $valid['question_key_fingerprint_sha256'],
+            'National round-2 readback did not preserve the type-specific key fingerprint.');
+        ++$checks;
+
         foreach ([
             ['reference_year' => 1398],
             ['classification_basis' => 'official_exam_year'],

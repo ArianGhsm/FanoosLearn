@@ -15,6 +15,8 @@ declare(strict_types=1);
  *     --workspace=<authorized-dentistry-workspace-uuid> \
  *     --year=1405 --subject=community-dentistry \
  *     --out=/srv/fanoos/shared/research/bank-sittings/1405/community-study.json
+ *   National/board/promotion may also select an explicit round:
+ *     --type=national --year=1404 --round=2 --subject=community-dentistry
  */
 use Fanoos\Platform\Support\DatabaseConnection;
 
@@ -24,18 +26,24 @@ require $root . '/apps/platform/bootstrap.php';
 try {
     $args = [];
     foreach (array_slice($argv, 1) as $argument) {
-        if (preg_match('/^--(workspace|year|round|subject|out)=(.*)$/D', $argument, $m) !== 1) {
+        if (preg_match('/^--(workspace|type|year|round|subject|out)=(.*)$/D', $argument, $m) !== 1
+            || isset($args[$m[1]])) {
             throw new RuntimeException('Unknown argument');
         }
         $args[$m[1]] = $m[2];
     }
     $workspace = (string) ($args['workspace'] ?? '');
+    $examType = (string) ($args['type'] ?? 'residency');
     $year = filter_var($args['year'] ?? '', FILTER_VALIDATE_INT);
     $round = filter_var($args['round'] ?? '1', FILTER_VALIDATE_INT);
     $subject = (string) ($args['subject'] ?? '');
     $output = (string) ($args['out'] ?? '');
+    $supportedTypes = ['residency', 'national', 'board', 'promotion'];
+    $maxRound = in_array($examType, ['board', 'promotion'], true) ? 99 : 9;
+    $minimumYear = $examType === 'residency' ? 1390 : 1350;
     if (!preg_match('/^[0-9a-f-]{36}$/', $workspace)
-        || $year === false || $year < 1390 || $year > 1500 || $round === false || $round < 1 || $round > 9
+        || !in_array($examType, $supportedTypes, true)
+        || $year === false || $year < $minimumYear || $year > 1500 || $round === false || $round < 1 || $round > $maxRound
         || !preg_match('/^[a-z][a-z0-9-]{0,59}$/', $subject)) {
         throw new RuntimeException('Invalid year, round, or subject');
     }
@@ -53,12 +61,12 @@ FROM bank_questions q
 JOIN bank_exam_sittings si ON si.id=q.sitting_id AND si.workspace_id=q.workspace_id
 JOIN bank_exam_types et ON et.id=si.exam_type_id AND et.workspace_id=q.workspace_id
 JOIN bank_subjects bs ON bs.id=q.subject_id AND bs.workspace_id=q.workspace_id
-WHERE q.workspace_id=:workspace AND et.type_key='residency' AND si.exam_year=:year AND si.exam_round=:round
+WHERE q.workspace_id=:workspace AND et.type_key=:type AND si.exam_year=:year AND si.exam_round=:round
   AND bs.subject_key=:subject
   AND NOT EXISTS (SELECT 1 FROM bank_question_sources x WHERE x.question_id=q.id AND x.workspace_id=q.workspace_id)
 ORDER BY q.number_in_sitting ASC
 SQL);
-    $query->execute(['workspace' => $workspace, 'year' => $year, 'round' => $round, 'subject' => $subject]);
+    $query->execute(['workspace' => $workspace, 'type' => $examType, 'year' => $year, 'round' => $round, 'subject' => $subject]);
     $candidates = $query->fetchAll();
     $choices = $database->prepare('SELECT position,text,image FROM bank_question_choices WHERE question_id=:id AND workspace_id=:workspace ORDER BY position');
     $answers = $database->prepare('SELECT choice_position,also_correct_positions,status FROM bank_official_answers WHERE question_id=:id AND workspace_id=:workspace ORDER BY recorded_at DESC,id DESC LIMIT 1');
@@ -92,7 +100,7 @@ SQL);
     }
     $sitting = [
         'format' => 'fanoos.classification.study-only/1',
-        'exam_type' => 'residency', 'year' => $year, 'round' => $round,
+        'exam_type' => $examType, 'year' => $year, 'round' => $round,
         'notes' => 'Read-only DB export for reference research. NEVER send to bank importer.',
         'questions' => $questions,
     ];

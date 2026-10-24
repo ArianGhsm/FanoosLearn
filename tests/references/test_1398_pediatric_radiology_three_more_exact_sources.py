@@ -10,7 +10,8 @@ class More1398ExactSources(unittest.TestCase):
         self.assertIn("159 => ['mcdonald-avery-pediatric@10e', '19', 360]",PUBLISHER)
         self.assertIn("219 => ['white-pharoah-radiology@7e', '14', 260]",PUBLISHER)
         self.assertIn("226 => ['white-pharoah-radiology@7e', '21', 355]",PUBLISHER)
-        self.assertIn("$year === 1398",PUBLISHER)
+        self.assertIn("$policyYear === 1398",PUBLISHER)
+        self.assertIn("$policyYear = $isResidency ? $year : 0;",PUBLISHER)
         self.assertIn("$decision['page'] !== $expectedSource[2]",PUBLISHER)
         self.assertIn("scope_chapters",PUBLISHER)
     def test_fixed_stages_preserve_original_provenance_and_backup(self):

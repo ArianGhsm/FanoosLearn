@@ -158,6 +158,32 @@ class AuditTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "protected"):
             audit.save_private(self.root, self.root / "public-report.json", {"safe": True})
 
+    def test_national_round_two_uses_type_prefixed_batch_and_study_scope(self):
+        (self.root / "bank-sittings/1404").mkdir(parents=True, exist_ok=True)
+        national_decisions = self.root / "classification/decisions/national-1404-2"
+        national_decisions.mkdir(parents=True, exist_ok=True)
+        self.src = self.root / "bank-sittings/1404/national-round-two-study.json"
+        self.out = self.root / "classification/sittings/1404-national-round-two-validated.json"
+        self.dec = national_decisions / "1404-community-dentistry.json"
+        self.body.update({"year": 1404, "exam_type": "national", "round": 2})
+        self.source.update({"reference_year": 1404, "classification_basis": "official_exam_year"})
+        self.decision.pop("reference_year", None)
+        self.decision.pop("classification_basis", None)
+        self.save()
+
+        result = audit.audit_batch(
+            self.root, "national:1404:2:community-dentistry:national-round-two",
+        )
+        self.assertEqual(result["exam_type"], "national")
+        self.assertEqual(result["round"], 2)
+        self.assertEqual(result["classification_basis"], "official_exam_year")
+        self.body["round"] = 1
+        self.src.write_text(json.dumps(self.body))
+        with self.assertRaisesRegex(ValueError, "year or exam type mismatch"):
+            audit.audit_batch(
+                self.root, "national:1404:2:community-dentistry:national-round-two",
+            )
+
 
 class NearestProxyAuditTests(unittest.TestCase):
     def test_same_lineage_proxy_records_actual_year_and_checks_scope(self):

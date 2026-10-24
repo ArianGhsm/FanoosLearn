@@ -27,21 +27,30 @@ final class SourceOnlyPublisher
         ?array &$readbackEvidence = null,
     ): int {
         $readbackEvidence = [];
-        $retrospective = $year >= 1300 && $year < 1396;
-        $nearestSameLineageProxyYear = $year >= 1396 && $year <= 1398;
+        $examType = $study['exam_type'] ?? null;
+        $round = $study['round'] ?? null;
+        $supportedExamTypes = ['residency', 'national', 'board', 'promotion'];
+        $isResidency = $examType === 'residency';
+        $policyYear = $isResidency ? $year : 0;
+        $maxRound = in_array($examType, ['board', 'promotion'], true) ? 99 : 9;
+        $retrospective = $isResidency && $year >= 1300 && $year < 1396;
+        $nearestSameLineageProxyYear = $isResidency && $year >= 1396 && $year <= 1398;
         $updated1397Subjects = ['community-dentistry', 'dental-materials', 'endodontics',
             'operative-dentistry', 'oral-medicine', 'oral-pathology', 'oral-radiology',
             'oral-surgery', 'orthodontics', 'pediatric-dentistry', 'periodontics',
             'prosthodontics'];
-        if (($year < 1399 && !$retrospective && !$nearestSameLineageProxyYear
-                && !(($year === 1397 && in_array($subject, $updated1397Subjects, true))
-                    || ($year === 1398 && in_array($subject, ['endodontics', 'periodontics', 'community-dentistry', 'prosthodontics', 'operative-dentistry', 'pediatric-dentistry', 'oral-radiology', 'oral-surgery'], true)))) || $year > 1500
+        if (!in_array($examType, $supportedExamTypes, true)
+            || !is_int($round) || $round < 1 || $round > $maxRound
+            || ($isResidency && $round !== 1)
+            || $year < ($isResidency ? 1300 : 1350)
+            || (($isResidency && $year < 1399) && !$retrospective && !$nearestSameLineageProxyYear
+                && !(($policyYear === 1397 && in_array($subject, $updated1397Subjects, true))
+                    || ($policyYear === 1398 && in_array($subject, ['endodontics', 'periodontics', 'community-dentistry', 'prosthodontics', 'operative-dentistry', 'pediatric-dentistry', 'oral-radiology', 'oral-surgery'], true)))) || $year > 1500
             || ($study['format'] ?? '') !== 'fanoos.classification.study-only/1'
             || ($validated['format'] ?? '') !== ($study['format'] ?? '')
-            || ($study['exam_type'] ?? '') !== 'residency'
-            || ($validated['exam_type'] ?? '') !== 'residency'
+            || ($validated['exam_type'] ?? null) !== $examType
             || ($study['year'] ?? 0) !== $year || ($validated['year'] ?? 0) !== $year
-            || ($study['round'] ?? 0) !== 1 || ($validated['round'] ?? 0) !== 1) {
+            || ($validated['round'] ?? null) !== $round) {
             throw new RuntimeException('Scope, year or study-only format is not eligible.');
         }
         $original = [];
@@ -93,7 +102,7 @@ final class SourceOnlyPublisher
                 }
             }
             $referenceSubject = (string) ($decision['reference_subject'] ?? $subject);
-            $updated1397Proxy = $year === 1397
+            $updated1397Proxy = $policyYear === 1397
                 && in_array($subject, $updated1397Subjects, true)
                 && ($decision['reference_year'] ?? null) === 1406
                 && ($decision['classification_basis'] ?? null) === 'updated_reference_proxy';
@@ -101,7 +110,7 @@ final class SourceOnlyPublisher
                 && $subject === 'endodontics' && $n === 95
                 && $referenceSubject === 'oral-surgery'
                 && ($decision['edition'] ?? null) === 'hupp-oral-surgery@7e';
-            $exact1397EndodonticsQ88 = $year === 1397 && $subject === 'endodontics'
+            $exact1397EndodonticsQ88 = $policyYear === 1397 && $subject === 'endodontics'
                 && $n === 88 && $referenceSubject === $subject
                 && ($decision['edition'] ?? null) === 'torabinejad-endodontics@5e'
                 && (string) ($decision['chapter'] ?? '') === '13'
@@ -112,7 +121,7 @@ final class SourceOnlyPublisher
             if ($referenceSubject !== $subject && !$crossSubject1397HuppQ95) {
                 throw new RuntimeException('Cross-subject reference is permitted only for the exact 1397 endodontics Q95 oral-surgery proxy.');
             }
-            $updated1398HuppProxy = $year === 1398 && $subject === 'oral-surgery'
+            $updated1398HuppProxy = $policyYear === 1398 && $subject === 'oral-surgery'
                 && ($decision['edition'] ?? null) === 'hupp-oral-surgery@7e'
                 && ($decision['reference_year'] ?? null) === 1406
                 && ($decision['classification_basis'] ?? null) === 'updated_reference_proxy';
@@ -130,17 +139,17 @@ final class SourceOnlyPublisher
                     || mb_strlen(trim($proxyNote)) > 300
                     || !str_contains($proxyNote, 'خارج از محدوده')
                     || !str_contains($proxyNote, 'فهرست رسمی')
-                    || !str_contains($proxyNote, $year === 1397 ? '۱۳۹۷' : '۱۳۹۸')
+                    || !str_contains($proxyNote, $policyYear === 1397 ? '۱۳۹۷' : '۱۳۹۸')
                     || !str_contains($proxyNote, '۱۴۰۶')) {
                     throw new RuntimeException('Updated-reference proxy must name both years and disclose that it is outside the exam-year official reference list.');
                 }
-                if ($year === 1397 && !$updated1397Proxy) {
+                if ($policyYear === 1397 && !$updated1397Proxy) {
                     throw new RuntimeException('1397 sources require the owner-approved 1406 updated-reference basis.');
                 }
                 if ($crossSubject1397HuppQ95 && !str_contains($proxyNote, 'جراحی دهان')) {
                     throw new RuntimeException('1397 Q95 must disclose its 1406 oral-surgery cross-subject reference in the source note.');
                 }
-            } elseif ($year === 1397 && !$exact1397EndodonticsQ88 && !$sameLineageProxy) {
+            } elseif ($policyYear === 1397 && !$exact1397EndodonticsQ88 && !$sameLineageProxy) {
                 throw new RuntimeException('1397 source batches require the explicit 1406 updated-reference proxy metadata.');
             } elseif (!$retrospective && !$sameLineageProxy && (isset($decision['reference_year'])
                     || isset($decision['classification_basis'])
@@ -156,19 +165,19 @@ final class SourceOnlyPublisher
             // Their specific chapter exclusions are enforced below by the
             // year-specific official reference-validity scope lookup.
             // Every other 1398 subject remains blocked by the year gate.
-            if ($year === 1398 && !$sameLineageProxy && $subject === 'endodontics'
+            if ($policyYear === 1398 && !$sameLineageProxy && $subject === 'endodontics'
                 && $decision['edition'] !== 'torabinejad-endodontics@5e') {
                 throw new RuntimeException('1398 endodontics requires exact announced Torabinejad 5e.');
             }
-            if ($year === 1398 && !$sameLineageProxy && $subject === 'periodontics'
+            if ($policyYear === 1398 && !$sameLineageProxy && $subject === 'periodontics'
                 && $decision['edition'] !== 'carranza-periodontology@12e') {
                 throw new RuntimeException('1398 periodontics requires exact announced Carranza 12e.');
             }
-            if ($year === 1398 && !$sameLineageProxy && $subject === 'community-dentistry'
+            if ($policyYear === 1398 && !$sameLineageProxy && $subject === 'community-dentistry'
                 && $decision['edition'] !== 'national-oral-health@1394') {
                 throw new RuntimeException('1398 community dentistry requires the exact national oral-health 1394 edition.');
             }
-            if ($year === 1398 && !$sameLineageProxy && $subject === 'prosthodontics'
+            if ($policyYear === 1398 && !$sameLineageProxy && $subject === 'prosthodontics'
                 && !in_array((string) $decision['edition'], [
                     'shillingburg-fixed@4e',
                     'mccracken-rpd@12e',
@@ -176,26 +185,26 @@ final class SourceOnlyPublisher
                 ], true)) {
                 throw new RuntimeException('1398 prosthodontics requires an exact officially announced edition.');
             }
-            if ($year === 1398 && $subject === 'prosthodontics' && $n === 97
+            if ($policyYear === 1398 && $subject === 'prosthodontics' && $n === 97
                 && ($decision['edition'] !== 'shillingburg-fixed@4e'
                     || (string) $decision['chapter'] !== '22'
                     || $decision['page'] !== 430)) {
                 throw new RuntimeException('1398 voided prosthodontic Q97 permits only the audited Shillingburg 4e chapter22 PDF430 source.');
             }
-            if ($year === 1398 && !$sameLineageProxy && $subject === 'operative-dentistry' && $n !== 188
+            if ($policyYear === 1398 && !$sameLineageProxy && $subject === 'operative-dentistry' && $n !== 188
                 && ($n !== 175
                     || $decision['edition'] !== 'summit-operative@4e'
                     || (string) $decision['chapter'] !== '6'
                     || $decision['page'] !== 294)) {
                 throw new RuntimeException('1398 operative source gate permits only audited Summit 4e Q175 chapter 6 exact PDF page 294.');
             }
-            if ($year === 1398 && !$sameLineageProxy && $subject === 'operative-dentistry' && $n === 188
+            if ($policyYear === 1398 && !$sameLineageProxy && $subject === 'operative-dentistry' && $n === 188
                 && ($decision['edition'] !== 'summit-operative@4e'
                     || (string) $decision['chapter'] !== '11'
                     || $decision['page'] !== 610)) {
                 throw new RuntimeException('1398 operative Q188 permits only the audited Summit 4e chapter11 PDF610 source.');
             }
-            if ($year === 1398 && !$sameLineageProxy && $subject === 'oral-surgery') {
+            if ($policyYear === 1398 && !$sameLineageProxy && $subject === 'oral-surgery') {
                 $expectedSurgerySource = $updatedReferenceProxy
                     ? match ($n) {
                         110 => ['hupp-oral-surgery@7e', '11', 203],
@@ -226,7 +235,7 @@ final class SourceOnlyPublisher
                     throw new RuntimeException('1398 oral-surgery source gate rejected the exact official Malamed or owner-authorized 1406 Hupp proxy page.');
                 }
             }
-            if ($year === 1398 && !$sameLineageProxy && in_array($subject, ['pediatric-dentistry', 'oral-radiology'], true)) {
+            if ($policyYear === 1398 && !$sameLineageProxy && in_array($subject, ['pediatric-dentistry', 'oral-radiology'], true)) {
                 $specific = $subject === 'pediatric-dentistry'
                     ? [
                         152 => ['mcdonald-avery-pediatric@10e', '13', 246],
@@ -279,7 +288,7 @@ final class SourceOnlyPublisher
                     throw new RuntimeException('1398 pediatric/radiology exact approved original PDF-page source gate refused.');
                 }
             }
-            if ($year === 1398 && !$sameLineageProxy && $subject === 'periodontics' && $n === 134
+            if ($policyYear === 1398 && !$sameLineageProxy && $subject === 'periodontics' && $n === 134
                 && ($decision['edition'] !== 'carranza-periodontology@12e'
                     || (string) $decision['chapter'] !== '20'
                     || $decision['page'] !== 664)) {
@@ -308,11 +317,11 @@ final class SourceOnlyPublisher
             }
             $d = $wanted[$n];
             $referenceSubject = (string) ($d['reference_subject'] ?? $subject);
-            $updatedReferenceProxy = $year === 1397
+            $updatedReferenceProxy = $policyYear === 1397
                 && in_array($subject, $updated1397Subjects, true)
                 && ($d['reference_year'] ?? null) === 1406
                 && ($d['classification_basis'] ?? null) === 'updated_reference_proxy';
-            $updatedReferenceProxy = $updatedReferenceProxy || ($year === 1398
+            $updatedReferenceProxy = $updatedReferenceProxy || ($policyYear === 1398
                 && $subject === 'oral-surgery'
                 && ($d['edition'] ?? null) === 'hupp-oral-surgery@7e'
                 && ($d['reference_year'] ?? null) === 1406
@@ -430,8 +439,8 @@ SELECT q.id,q.question_key,q.stem,q.stem_image,q.status FROM bank_questions q
 JOIN bank_exam_sittings si ON si.id=q.sitting_id AND si.workspace_id=q.workspace_id
 JOIN bank_exam_types et ON et.id=si.exam_type_id AND et.workspace_id=q.workspace_id
 JOIN bank_subjects sb ON sb.id=q.subject_id AND sb.workspace_id=q.workspace_id
-WHERE q.workspace_id=:ws AND et.type_key='residency' AND si.exam_year=:yr
-AND si.exam_round=1 AND sb.subject_key=:sub AND q.number_in_sitting=:num FOR UPDATE
+WHERE q.workspace_id=:ws AND et.type_key=:type AND si.exam_year=:yr
+AND si.exam_round=:round AND sb.subject_key=:sub AND q.number_in_sitting=:num FOR UPDATE
 SQL);
         $choices = $db->prepare('SELECT text,image FROM bank_question_choices WHERE workspace_id=:ws AND question_id=:qid ORDER BY position');
         $answer = $db->prepare('SELECT choice_position,also_correct_positions,status FROM bank_official_answers WHERE workspace_id=:ws AND question_id=:qid ORDER BY recorded_at DESC,id DESC LIMIT 1');
@@ -446,7 +455,7 @@ JOIN bank_subjects sb ON sb.id=v.subject_id AND sb.workspace_id=v.workspace_id
 JOIN bank_exam_types et ON et.id=v.exam_type_id AND et.workspace_id=v.workspace_id
 WHERE r.workspace_id=:ws AND r.reference_key=:ref AND e.edition_key=:edition
 AND n.node_key=:node AND v.exam_year=:yr AND sb.subject_key=:sub
-AND et.type_key='residency' AND v.is_official=1
+AND et.type_key=:type AND v.is_official=1
 SQL);
         $insert = $db->prepare(<<<'SQL'
 INSERT INTO bank_question_sources
@@ -462,13 +471,13 @@ SQL);
         $count = 0;
         try {
             foreach ($mapped as $n => $src) {
-                $get->execute(['ws' => $workspace, 'yr' => $year, 'sub' => $subject, 'num' => $n]);
+                $get->execute(['ws' => $workspace, 'type' => $examType, 'yr' => $year, 'round' => $round, 'sub' => $subject, 'num' => $n]);
                 $q = $get->fetch(PDO::FETCH_ASSOC);
                 if (!is_array($q) || $get->fetch(PDO::FETCH_ASSOC) !== false
                     || $q['stem'] !== $original[$n]['stem']) {
                     throw new RuntimeException('Site question differs from reviewed study.');
                 }
-                $voidedDraftCandidate = $year === 1398 && $subject === 'prosthodontics'
+                $voidedDraftCandidate = $policyYear === 1398 && $subject === 'prosthodontics'
                     && $n === 97 && $q['status'] === 'draft';
                 if ($q['status'] !== 'published' && !$voidedDraftCandidate) {
                     throw new RuntimeException('Only published questions and the exact voided 1398 prosthodontics Q97 draft may receive a source.');
@@ -522,6 +531,7 @@ SQL);
             $nodes->execute([
                 'ws' => $workspace, 'ref' => $src['ref'], 'edition' => $src['edition'],
                 'node' => $src['node'], 'yr' => $src['reference_year'], 'sub' => $src['reference_subject'],
+                'type' => $examType,
             ]);
                 $mappedNode = $nodes->fetch(PDO::FETCH_ASSOC);
                 if (!is_array($mappedNode) || $nodes->fetch(PDO::FETCH_ASSOC) !== false
@@ -531,7 +541,7 @@ SQL);
                 $scope = json_decode((string) $mappedNode['scope_chapters'], true);
                 $numbers = is_array($scope)
                     ? array_map(static fn(array $a): string => (string) ($a['number'] ?? ''), $scope) : [];
-                $explicitlyOutside1406Syllabus = $year === 1397
+                $explicitlyOutside1406Syllabus = $policyYear === 1397
                     && $updatedReferenceProxy
                     && ($src['official_scope_status'] ?? null) === 'outside_scope_exam_question'
                     && is_string($src['official_scope_note'] ?? null)
@@ -594,6 +604,19 @@ SQL);
             throw new RuntimeException('Post-commit readback requires a fresh connection outside a transaction.');
         }
 
+        $examType = $study['exam_type'] ?? null;
+        $round = $study['round'] ?? null;
+        $maxRound = in_array($examType, ['board', 'promotion'], true) ? 99 : 9;
+        if (!in_array($examType, ['residency', 'national', 'board', 'promotion'], true)
+            || !is_int($round) || $round < 1 || $round > $maxRound
+            || ($examType === 'residency' && $round !== 1)
+            || ($validated['exam_type'] ?? null) !== $examType
+            || ($validated['round'] ?? null) !== $round
+            || ($study['year'] ?? null) !== $year || ($validated['year'] ?? null) !== $year) {
+            throw new RuntimeException('Readback study type, year or round does not match the validated sitting.');
+        }
+        $policyYear = $examType === 'residency' ? $year : 0;
+
         $original = [];
         foreach ($study['questions'] ?? [] as $question) {
             $number = $question['number'] ?? null;
@@ -630,8 +653,8 @@ FROM bank_questions q
 JOIN bank_exam_sittings si ON si.id=q.sitting_id AND si.workspace_id=q.workspace_id
 JOIN bank_exam_types et ON et.id=si.exam_type_id AND et.workspace_id=q.workspace_id
 JOIN bank_subjects sb ON sb.id=q.subject_id AND sb.workspace_id=q.workspace_id
-WHERE q.workspace_id=:ws AND et.type_key='residency' AND si.exam_year=:yr
-AND si.exam_round=1 AND sb.subject_key=:sub AND q.number_in_sitting=:num
+WHERE q.workspace_id=:ws AND et.type_key=:type AND si.exam_year=:yr
+AND si.exam_round=:round AND sb.subject_key=:sub AND q.number_in_sitting=:num
 SQL);
         $choicesQuery = $db->prepare('SELECT text,image FROM bank_question_choices WHERE workspace_id=:ws AND question_id=:qid ORDER BY position');
         $answerQuery = $db->prepare('SELECT choice_position,also_correct_positions,status FROM bank_official_answers WHERE workspace_id=:ws AND question_id=:qid ORDER BY recorded_at DESC,id DESC LIMIT 1');
@@ -658,13 +681,13 @@ SQL);
         $actualSources = [];
         $sourceIds = [];
         foreach ($original as $number => $question) {
-            $questionKey = BankImporter::questionKey('residency', $year, 1, $number);
+            $questionKey = BankImporter::questionKey($examType, $year, $round, $number);
             $hasExpectedSource = ($validatedByNumber[$number] ?? []) !== [];
             $expectedQuestions[] = [
                 'number' => $number,
                 'question_key' => $questionKey,
                 'status' => $hasExpectedSource
-                    ? (($year === 1398 && $subject === 'prosthodontics' && $number === 97)
+                    ? (($policyYear === 1398 && $subject === 'prosthodontics' && $number === 97)
                         ? 'draft' : 'published') : null,
                 'stem' => $question['stem'] ?? null,
                 'choices' => $question['choices'] ?? null,
@@ -673,7 +696,7 @@ SQL);
                     ? ($readbackEvidence[$number] ?? null) : null,
             ];
 
-            $questionQuery->execute(['ws' => $workspace, 'yr' => $year, 'sub' => $subject, 'num' => $number]);
+            $questionQuery->execute(['ws' => $workspace, 'type' => $examType, 'yr' => $year, 'round' => $round, 'sub' => $subject, 'num' => $number]);
             $siteQuestion = $questionQuery->fetch(PDO::FETCH_ASSOC);
             if (!is_array($siteQuestion) || $questionQuery->fetch(PDO::FETCH_ASSOC) !== false) {
                 $actualQuestions[] = ['number' => $number, 'missing_or_duplicate' => true];
