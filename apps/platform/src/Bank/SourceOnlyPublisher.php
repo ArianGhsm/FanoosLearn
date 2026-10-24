@@ -76,7 +76,7 @@ final class SourceOnlyPublisher
                 $proxyYear = $decision['reference_year'] ?? null;
                 $proxyNote = $decision['proxy_note'] ?? null;
                 $asciiProxyNote = is_string($proxyNote)
-                    ? strtr($proxyNote, '۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', '01234567890123456789') : '';
+                    ? self::asciiDigits($proxyNote) : '';
                 if (!is_int($proxyYear) || $proxyYear < 1390 || $proxyYear > 1500
                     || $proxyYear === $year
                     || !is_string($proxyNote) || mb_strlen(trim($proxyNote)) < 45
@@ -815,6 +815,20 @@ SQL);
         return 'این ارجاع پروکسی از فهرست رسمی سال ' . strtr((string) $referenceYear, $digits)
             . ' برای آزمون سال ' . strtr((string) $examYear, $digits)
             . ' است؛ رسمی بودن آن برای سال آزمون ادعا نمی‌شود.';
+    }
+
+    /**
+     * Persian/Arabic-Indic digits to ASCII. They are multibyte, so the array
+     * form of strtr is required (the three-string form is byte-wise).
+     */
+    public static function asciiDigits(string $text): string
+    {
+        return strtr($text, [
+            '۰' => '0', '۱' => '1', '۲' => '2', '۳' => '3', '۴' => '4',
+            '۵' => '5', '۶' => '6', '۷' => '7', '۸' => '8', '۹' => '9',
+            '٠' => '0', '١' => '1', '٢' => '2', '٣' => '3', '٤' => '4',
+            '٥' => '5', '٦' => '6', '٧' => '7', '٨' => '8', '٩' => '9',
+        ]);
     }
 
     private static function readbackSource(int $number, array $source, ?string $id): array
