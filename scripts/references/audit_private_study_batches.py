@@ -16,7 +16,10 @@ import sys
 import tempfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from apply_classification import chapter_nodes, flat, fragments
+from apply_classification import (
+    chapter_nodes, flat, fragments, whole_chapter_is_unlisted,
+    valid_non_residency_outside_scope_note,
+)
 from verified_reference_pdf import chapter_coverage, open_verified_reference
 from retrospective_reference_policy import BASIS, is_retrospective
 from retrospective_reference_policy import selected_reference_rows as selected_retrospective_rows
@@ -31,6 +34,7 @@ from same_lineage_proxy_policy import (
     BASIS as SAME_LINEAGE_PROXY_BASIS,
     is_proxy_exam_year,
     is_selected_proxy as is_selected_same_lineage_proxy,
+    selected_non_residency_proxy_rows,
     selected_reference_rows as selected_same_lineage_rows,
     valid_proxy_note,
     fallback_error,
@@ -168,10 +172,13 @@ def audit_batch(root: Path, spec: str,
     same_lineage_decisions = [d for d in wanted.values()
                               if d.get("classification_basis") == SAME_LINEAGE_PROXY_BASIS]
     same_lineage_proxy = bool(same_lineage_decisions)
-    if not is_residency and (updated_proxy or same_lineage_proxy
-                             or any("reference_year" in d or "classification_basis" in d
-                                    for d in wanted.values())):
-        raise ValueError(f"{spec}: non-residency source batches require exact official exam-year citations")
+    if not is_residency and (updated_proxy or any(
+            "updated_reference_note" in d
+            or d.get("classification_basis") not in (None, SAME_LINEAGE_PROXY_BASIS)
+            or ("reference_year" in d
+                and d.get("classification_basis") != SAME_LINEAGE_PROXY_BASIS)
+            for d in wanted.values())):
+        raise ValueError(f"{spec}: non-residency cross-year metadata requires the selected same-lineage proxy basis")
     if updated_proxy and same_lineage_proxy:
         raise ValueError(f"{spec}: updated-reference and same-lineage proxy bases cannot be mixed")
     if updated_proxy:
@@ -188,23 +195,18 @@ def audit_batch(root: Path, spec: str,
             raise ValueError(f"{spec}: updated-reference proxy is restricted to the owner-authorized 1397/1398 cases and must label every decision")
         reference_years = [UPDATED_PROXY_REFERENCE_YEAR]
     elif same_lineage_proxy:
-        if (not is_proxy_exam_year(year_n) or len(same_lineage_decisions) != len(wanted)
+        if ((is_residency and not is_proxy_exam_year(year_n))
+                or (not is_residency and exam_type not in ("national", "board", "promotion"))
+                or len(same_lineage_decisions) != len(wanted)
                 or catalog is None
                 or any(not is_selected_same_lineage_proxy(
                     catalog, exam_type, year_n, subject, d.get("edition"),
                     d.get("reference_year"), d.get("classification_basis"),
                     pdf_catalog, chapter_maps)
                     or not valid_proxy_note(d.get("proxy_note"), year_n, d.get("reference_year"))
-                    or str(d.get("chapter")) not in {
-                        str(item.get("number"))
-                        for row in selected_same_lineage_rows(
-                            catalog, exam_type, year_n, subject, pdf_catalog, chapter_maps)
-                        if row.get("_proxy") is True
-                        and row.get("edition") == d.get("edition")
-                        and row.get("year") == d.get("reference_year")
-                        for item in row.get("scope_chapters", [])
-                        if isinstance(item, dict)
-                    }
+                    or not _same_lineage_proxy_scope_valid(
+                        d, exam_type, year_n, subject, catalog, pdf_catalog,
+                        chapter_maps, is_residency)
                     for d in wanted.values())):
             raise ValueError(f"{spec}: every same-lineage proxy decision must match the selected verified edition/year and carry an explicit proxy note")
         reference_years = sorted({d["reference_year"] for d in wanted.values()})
@@ -220,10 +222,13 @@ def audit_batch(root: Path, spec: str,
                     or isinstance(d.get("reference_year"), bool)
                     or d["reference_year"] < 1397):
                 raise ValueError(f"{spec}: missing explicit 1397+ retrospective reference-year provenance")
-    if is_residency and requires_newest_first(year_n) and not updated_proxy:
+    if ((is_residency and requires_newest_first(year_n))
+            or (same_lineage_proxy and not is_residency)) and not updated_proxy:
         if catalog is None:
             raise ValueError(f"{spec}: catalog is required to verify the newest-first edition order")
-        select = selected_retrospective_rows if retrospective else selected_same_lineage_rows
+        select = (selected_retrospective_rows if retrospective else
+                  selected_non_residency_proxy_rows if not is_residency else
+                  selected_same_lineage_rows)
         candidates = select(catalog, exam_type, year_n, subject, pdf_catalog, chapter_maps)
         for d in wanted.values():
             order_error = fallback_error(candidates, d.get("edition"), d.get("newer_editions_searched"))
@@ -258,6 +263,25 @@ def audit_batch(root: Path, spec: str,
             )
             if chapter not in allowed and not explicitly_outside_scope:
                 raise ValueError(f"{spec}: updated proxy chapter is outside the chosen reference-year syllabus")
+    if (not is_residency and not same_lineage_proxy and catalog is None
+            and any("outside_scope_note" in decision for decision in wanted.values())):
+        raise ValueError(f"{spec}: catalog is required to independently verify outside-scope claims")
+    if not is_residency and not same_lineage_proxy and catalog is not None:
+        for decision in wanted.values():
+            edition = str(decision["edition"])
+            rows = [row for row in catalog.get("validity", [])
+                    if row.get("exam_type") == exam_type
+                    and row.get("year") == year_n
+                    and row.get("subject") == subject
+                    and row.get("edition") == edition
+                    and row.get("official") is True]
+            if len(rows) != 1:
+                raise ValueError(f"{spec}: exact non-residency citation lacks one official exam-year validity row")
+            if "outside_scope_note" in decision:
+                if (not whole_chapter_is_unlisted(rows[0], str(decision.get("chapter")))
+                        or not valid_non_residency_outside_scope_note(
+                            decision.get("outside_scope_note"), exam_type, year_n)):
+                    raise ValueError(f"{spec}: exact outside-scope decision lacks a structured unlisted chapter and valid Persian note")
     for edition in sorted({str(decision["edition"]) for decision in wanted.values()}):
         pdf = open_verified_reference(edition, storage_root, mysql_defaults, database)
         map_entry = chapter_maps.get(edition, {})
@@ -333,9 +357,20 @@ def audit_batch(root: Path, spec: str,
                 item.get("classification_basis") != SAME_LINEAGE_PROXY_BASIS
                 or item.get("reference_year") != decision.get("reference_year")
                 or item.get("classification_note") != decision.get("proxy_note")
-                or item.get("official_scope_status") != "in_scope"
+                or item.get("official_scope_status") != (
+                    "outside_scope_exam_question" if "outside_scope_note" in decision else "in_scope")
+                or item.get("official_scope_note") != decision.get("outside_scope_note")
                 or item.get("scope_unverified") is not False):
             raise ValueError(f"{spec}: same-lineage proxy label/reference year differs for Q{n}")
+        if not is_residency:
+            if "outside_scope_note" in decision:
+                if (item.get("official_scope_status") != "outside_scope_exam_question"
+                        or item.get("official_scope_note") != decision.get("outside_scope_note")
+                        or not valid_non_residency_outside_scope_note(
+                            decision.get("outside_scope_note"), exam_type, year_n)):
+                    raise ValueError(f"{spec}: outside-scope status/note differs for Q{n}")
+            elif item.get("official_scope_status", "in_scope") != "in_scope":
+                raise ValueError(f"{spec}: unexplained outside-scope status for Q{n}")
         if not updated_proxy and not same_lineage_proxy and retrospective:
             if (item.get("classification_basis") != BASIS
                     or item.get("reference_year") != decision.get("reference_year")):
@@ -377,6 +412,34 @@ def audit_batch(root: Path, spec: str,
         result["exam_type"] = exam_type
         result["round"] = round_n
     return result
+
+
+def _same_lineage_proxy_scope_valid(
+    decision: dict, exam_type: str, year: int, subject: str,
+    catalog: dict, pdf_catalog: dict, chapter_maps: dict, is_residency: bool,
+) -> bool:
+    """Check the cited proxy chapter against its selected official scope row."""
+    rows = (selected_same_lineage_rows(catalog, exam_type, year, subject, pdf_catalog, chapter_maps)
+            if is_residency else selected_non_residency_proxy_rows(
+                catalog, exam_type, year, subject, pdf_catalog, chapter_maps))
+    match = next((row for row in rows
+                  if row.get("_proxy") is True
+                  and row.get("edition") == decision.get("edition")
+                  and row.get("year") == decision.get("reference_year")), None)
+    if match is None:
+        return False
+    chapter = str(decision.get("chapter"))
+    if chapter in {str(item.get("number")) for item in match.get("scope_chapters", [])
+                   if isinstance(item, dict)}:
+        return "outside_scope_note" not in decision
+    if is_residency:
+        return False
+    return (
+        "outside_scope_note" in decision
+        and whole_chapter_is_unlisted(match, chapter)
+        and valid_non_residency_outside_scope_note(
+            decision.get("outside_scope_note"), exam_type, year)
+    )
 
 
 def save_private(root: Path, out: Path, data: dict) -> None:

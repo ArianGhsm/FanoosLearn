@@ -76,6 +76,53 @@ final class SourceOnlyReadbackTest
         ++$checks;
 
         foreach ([
+            ['type' => 'national', 'key' => 'national-1399-2-007'],
+            ['type' => 'board', 'key' => 'board-1399-2-007'],
+        ] as $proxyFixture) {
+            $proxyQuestion = array_replace($questions[0], ['question_key' => $proxyFixture['key']]);
+            $proxySource = array_replace($source, [
+                'reference_year' => 1401,
+                'classification_basis' => 'same_lineage_proxy',
+                'classification_note_sha256' => hash('sha256', 'synthetic non-residency proxy note'),
+                'official_scope_status' => 'outside_scope_exam_question',
+                'official_scope_note_sha256' => hash('sha256', 'synthetic outside-scope note'),
+            ]);
+            $persistedProxySource = array_replace($proxySource, [
+                'source_id' => '0199dd00-1234-7000-8000-00000000000' . ($proxyFixture['type'] === 'national' ? '3' : '4'),
+            ]);
+            $proxyReadback = SourceOnlyPublisher::compareReadback(
+                [$proxyQuestion], [$proxyQuestion], [$proxySource], [$persistedProxySource],
+            );
+            $this->check($proxyReadback['verified'] === true
+                && $proxySource['classification_basis'] === 'same_lineage_proxy'
+                && $proxySource['reference_year'] === 1401
+                && $proxySource['official_scope_status'] === 'outside_scope_exam_question',
+                ucfirst($proxyFixture['type']) . ' proxy/outside-scope provenance did not survive source-only readback.');
+            ++$checks;
+        }
+        $nationalOutsideQuestion = array_replace($questions[0], [
+            'question_key' => 'national-1404-2-007',
+        ]);
+        $nationalOutsideSource = array_replace($nationalSource, [
+            'reference_year' => 1404,
+            'classification_basis' => 'official_exam_year',
+            'classification_note_sha256' => null,
+            'official_scope_status' => 'outside_scope_exam_question',
+            'official_scope_note_sha256' => hash('sha256', 'synthetic national 1404 scope note'),
+        ]);
+        $nationalOutsidePersisted = array_replace($nationalOutsideSource, [
+            'source_id' => '0199dd00-1234-7000-8000-000000000005',
+        ]);
+        $nationalOutsideReadback = SourceOnlyPublisher::compareReadback(
+            [$nationalOutsideQuestion], [$nationalOutsideQuestion],
+            [$nationalOutsideSource], [$nationalOutsidePersisted],
+        );
+        $this->check($nationalOutsideReadback['verified'] === true
+            && $nationalOutsideSource['official_scope_status'] === 'outside_scope_exam_question',
+            'National 1404 exact outside-scope status did not survive source-only readback.');
+        ++$checks;
+
+        foreach ([
             ['reference_year' => 1398],
             ['classification_basis' => 'official_exam_year'],
             ['classification_note_sha256' => hash('sha256', 'different note')],

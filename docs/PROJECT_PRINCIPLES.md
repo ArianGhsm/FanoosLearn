@@ -288,9 +288,10 @@ historical claim about the exam-year official syllabus. Keep the
 audits, handoffs and site labels when presented. The source's book and
 edition are real; the historical official status remains unverified.
 Do not manufacture `official=true` validity rows for pre-1396 years
-merely to bypass guards. For exams dated 1396 or later, exact-year editions
-remain the default; the bounded 1396–1398 exception below applies only when
-the exact edition/PDF is unavailable.
+merely to bypass guards. For residency exams dated 1396 or later, exact-year
+editions remain the default except for the explicit unfinished-sitting rules
+below. The separate non-residency rule applies to national, board and
+promotion type/subject/year combinations that have no exact official list.
 
 **The chapter+PDF-page atomic criterion is unchanged.** Each accepted
 question must name a verified source edition and chapter plus a positive
@@ -338,14 +339,24 @@ citation that happens to use the exam-year edition stays
 Store and show a note that names both years and labels the edition as a proxy
 whose official status for the exam year is unverified. Never create synthetic
 historical `official=true` validity rows or present the proxy as the exam-year
-edition. Exam years 1397 and 1398 are complete under their named
-updated-reference exceptions below; their completed rows are not reopened.
+edition. Owner rule 2026-10-24 extends this same newest-first selection to
+national, board and promotion sittings whenever the exact type/year/subject
+list is absent. Families come from the nearest official list year for the
+same type and subject; prefer the later year on a tie. An exact exam-year
+list suppresses the proxy path. Never cross exam types. Every such decision
+keeps the selected catalog row's actual `reference_year` and a Persian note
+that names both years and says official status for the exam year is
+unverified; a rank above zero also requires the exact newer eligible editions
+searched. Exam years 1397 and 1398 in residency remain under their named
+updated-reference exceptions below; completed rows are not reopened.
 
 For exam years **1395 and earlier** the basis remains
 `retrospective_proxy_1397_plus` (candidates come from 1397+ official lists),
 now with the same newest-first order. The two rules use separate labels and
-guards. No proxy fallback is authorized for exam years after 1398 by this
-decision. Any exam type without a compatible guarded source-only publisher
+guards. The unfinished residency same-lineage rule remains bounded to
+1391–1396, with the separate residency exceptions for 1397/1398; the
+2026-10-24 non-residency missing-list rule applies independently in any
+exam year. Any exam type without a compatible guarded source-only publisher
 must remain pending for publication until its normal versioned workflow is
 extended; do not bypass it with a full-sitting import or raw SQL.
 
@@ -542,8 +553,8 @@ and verified backups. See `docs/product/09_CHAPTER_CLASSIFICATION.md`.
 3. New chapter decisions use an exact available official edition and
    page-level evidence; nearest substitutes are paused by default while
    existing reviewed decisions are preserved. This 2026-10-09 default is
-   superseded only by the explicitly bounded 1396–1398 proxy decision dated
-   2026-10-22 and the separate 2026-10-21 updated-reference exceptions.
+   superseded by the same-lineage proxy decisions dated 2026-10-22 through
+   2026-10-24 and the separate 2026-10-21 updated-reference exceptions.
 4. Durable server-side private workspaces, verified backups and public
    runbooks—not chat history—carry ongoing processing across sessions.
 5. Release deployments remain controlled GitHub `main` → updater; direct
@@ -593,14 +604,16 @@ a separately audited, evidence-backed source-only correction that records
 the old and new citation and leaves question, answer and frozen attempts
 unchanged. No human sign-off is a classification prerequisite.
 
-**2026-10-23 — newest-first older-exam reference proxy:** for unfinished
-residency sittings 1391–1396, cite the newest available official edition of
-each reference family first and step back to an older edition only when the
-answer-bearing page is not found, recording the newer editions searched. Keep
-the actual reference year, edition and visible proxy note; do not claim
-exam-year official status or create validity rows. 1397/1398 keep their named
-exceptions. No new proxy rule is authorized after 1398. Implementation and
-operation are specified in
+**2026-10-23, extended 2026-10-24 — newest-first same-lineage proxy:** for
+unfinished residency sittings 1391–1396 and for national, board and promotion
+type/subject/year combinations with no exact official list, cite the newest
+available official edition of each selected reference family first and step
+back only when the answer-bearing page is not found, recording newer
+editions searched. Non-residency families come from the nearest official
+same-type list year, preferring the later year on a tie. Keep the actual
+reference year, edition and visible proxy note; do not claim exam-year
+official status, cross exam types or create validity rows. Residency
+1397/1398 keep their named exceptions. Implementation and operation are specified in
 `docs/ops/SAME_LINEAGE_PROXY_CLASSIFICATION_20261022.md`.
 
 ## 7. Open implementation items (do not assume completed)

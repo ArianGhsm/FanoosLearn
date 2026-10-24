@@ -108,8 +108,10 @@ chapter scopes, not reference-book content.
 
 Retain explicit uncertainty for missing years, missing specialties and
 unresolved edition/scope identities.
-Never fill an older year's list from a newer list. Separate national written
-reference lists from English-language eligibility and clinical-exam protocols.
+Never fill an older year's official validity list from a newer list. The
+2026-10-24 same-lineage proxy is a separately labelled classification basis;
+it does not create or imply an older-year official list. Separate national
+written reference lists from English-language eligibility and clinical-exam protocols.
 Check whether same-year national periods have different scope before merging
 them into the year-only validity model.
 

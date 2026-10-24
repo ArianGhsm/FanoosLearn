@@ -42,6 +42,10 @@ try {
     $retrospective = $isResidency && $year !== false && $year >= 1300 && $year < 1396;
     $nearestSameLineageProxyBatch = $isResidency && $year !== false && $year >= 1396 && $year <= 1398
         && preg_match('/^same-lineage-proxy-[a-z0-9-]{1,35}$/D', $stem) === 1;
+    $nonResidencySameLineageProxyBatch = !$isResidency
+        && in_array($requestedType, ['national', 'board', 'promotion'], true)
+        && preg_match('/^same-lineage-proxy-[a-z0-9-]{1,35}$/D', $stem) === 1;
+    $sameLineageProxyBatch = $nearestSameLineageProxyBatch || $nonResidencySameLineageProxyBatch;
     $updated1397ProxyCounts = [
         'community-dentistry' => 10, 'dental-materials' => 9,
         'endodontics' => 19, 'operative-dentistry' => 15,
@@ -85,7 +89,7 @@ try {
     if (isset($args['package-root']) && isset($args['case-root'])) {
         throw new RuntimeException('Specify only one protected package source.');
     }
-    if (($updatedReferenceProxyBatch || $exact1397EndodonticsQ88Batch || $nearestSameLineageProxyBatch)
+    if (($updatedReferenceProxyBatch || $exact1397EndodonticsQ88Batch || $sameLineageProxyBatch)
         && (!isset($args['case-root']) || isset($args['package-root']))) {
         throw new RuntimeException('A proxy source batch requires its exact immutable recovery case.');
     }
@@ -154,7 +158,7 @@ try {
         $exact1398UpdatedHuppCase = $year === 1398 && $subject === 'oral-surgery'
             && $stem === 'surgery-modern-hupp7' && $expected === 14
             && $case !== false && basename($case) === 'recovery-1398-surgery-modern-hupp7-20261021';
-        if ($year === false || ($year < 1399 && !$retrospective && !$nearestSameLineageProxyBatch && !$exact1397UpdatedReferenceCase && !$exact1397Q88OfficialCase
+        if ($year === false || ($year < 1399 && !$retrospective && !$sameLineageProxyBatch && !$exact1397UpdatedReferenceCase && !$exact1397Q88OfficialCase
                 && !$exact1398SurgeryCase && !$exact1398VoidedProsthoCase
                 && !$exact1398RadiologyQ225Case && !$exact1398OperativeQ188Case
                 && !$exact1398PediatricCase && !$exact1398PeriodonticsCase
@@ -221,13 +225,13 @@ try {
         || (isset($b['round']) && $b['round'] !== $round)) {
         throw new RuntimeException('Private audit exam type or round does not match the requested sitting.');
     }
-    if ($nearestSameLineageProxyBatch
+    if ($sameLineageProxyBatch
         && (($b['classification_basis'] ?? '') !== 'same_lineage_proxy'
             || !is_array($b['reference_years'] ?? null)
             || $b['reference_years'] === [$year])) {
         throw new RuntimeException('Same-lineage proxy case must attest its actual non-exam reference year(s).');
     }
-    if (!$nearestSameLineageProxyBatch
+    if (!$sameLineageProxyBatch
         && ($b['classification_basis'] ?? '') === 'same_lineage_proxy') {
         throw new RuntimeException('Generic proxy audit requires a same-lineage proxy batch stem and immutable recovery case.');
     }
@@ -300,9 +304,9 @@ try {
         'audit_sha256' => $receiptAuditSha,
         'classification_basis' => $retrospective ? 'retrospective_proxy_1397_plus'
             : ($updatedReferenceProxyBatch ? 'updated_reference_proxy'
-                : ($nearestSameLineageProxyBatch ? 'same_lineage_proxy' : 'official_exam_year')),
+                : ($sameLineageProxyBatch ? 'same_lineage_proxy' : 'official_exam_year')),
         'reference_years' => $retrospective ? ($b['reference_years'] ?? [])
-            : (($updatedReferenceProxyBatch || $nearestSameLineageProxyBatch)
+            : (($updatedReferenceProxyBatch || $sameLineageProxyBatch)
                 ? ($b['reference_years'] ?? []) : [$year]),
         'validated_sha256' => $receiptValidatedSha,
     ];

@@ -15,8 +15,9 @@ use Throwable;
  * exception. No UPDATE, DELETE or publication writes. Updated-reference
  * proxies are limited to separately authorized 1397/1406 and
  * 1398/Hupp7/1406 cases, visibly labelled outside exam-year scope. The
- * same-lineage proxy basis is limited to 1396–1398 and stores its
- * actual reference year and explicit proxy note on the source row.
+ * same-lineage proxies are limited to residency 1396–1398 and to
+ * national/board/promotion subjects with no exact-year official list; each
+ * stores its actual reference year and explicit proxy note on the source row.
  * An entire batch commits together or rolls back together.
  */
 final class SourceOnlyPublisher
@@ -35,6 +36,8 @@ final class SourceOnlyPublisher
         $maxRound = in_array($examType, ['board', 'promotion'], true) ? 99 : 9;
         $retrospective = $isResidency && $year >= 1300 && $year < 1396;
         $nearestSameLineageProxyYear = $isResidency && $year >= 1396 && $year <= 1398;
+        $nonResidencyProxyType = !$isResidency
+            && in_array($examType, ['national', 'board', 'promotion'], true);
         $updated1397Subjects = ['community-dentistry', 'dental-materials', 'endodontics',
             'operative-dentistry', 'oral-medicine', 'oral-pathology', 'oral-radiology',
             'oral-surgery', 'orthodontics', 'pediatric-dentistry', 'periodontics',
@@ -79,14 +82,14 @@ final class SourceOnlyPublisher
                     throw new RuntimeException('Pre-1396 source must declare an actual 1397+ official proxy reference year and retrospective basis.');
                 }
             }
-            $sameLineageProxy = $nearestSameLineageProxyYear
+            $sameLineageProxy = ($nearestSameLineageProxyYear || $nonResidencyProxyType)
                 && ($decision['classification_basis'] ?? null) === 'same_lineage_proxy';
             if ($sameLineageProxy) {
                 $proxyYear = $decision['reference_year'] ?? null;
                 $proxyNote = $decision['proxy_note'] ?? null;
                 $asciiProxyNote = is_string($proxyNote)
                     ? self::asciiDigits($proxyNote) : '';
-                if (!is_int($proxyYear) || $proxyYear < 1390 || $proxyYear > 1500
+                if (!is_int($proxyYear) || $proxyYear < ($isResidency ? 1390 : 1350) || $proxyYear > 1500
                     || $proxyYear === $year
                     || !is_string($proxyNote) || mb_strlen(trim($proxyNote)) < 45
                     || mb_strlen(trim($proxyNote)) > 300
@@ -371,12 +374,18 @@ final class SourceOnlyPublisher
                     || ($s['scope_unverified'] ?? null) !== false)) {
                 throw new RuntimeException('Updated-reference proxy citation must preserve the explicit outside-exam-year label and exact 1406 provenance.');
             }
+            $outsideScopeDecision = $nonResidencyProxyType
+                && isset($d['outside_scope_note']);
             if ($sameLineageProxy
                 && (($s['classification_basis'] ?? null) !== 'same_lineage_proxy'
                     || ($s['reference_year'] ?? null) !== ($d['reference_year'] ?? null)
                     || ($s['classification_note'] ?? null) !== ($d['proxy_note'] ?? null)
-                    || ($s['official_scope_status'] ?? null) !== 'in_scope'
-                    || ($s['official_scope_note'] ?? null) !== null
+                    || ($s['official_scope_status'] ?? null) !== ($outsideScopeDecision
+                        ? 'outside_scope_exam_question' : 'in_scope')
+                    || ($s['official_scope_note'] ?? null) !== ($outsideScopeDecision
+                        ? ($d['outside_scope_note'] ?? null) : null)
+                    || ($outsideScopeDecision && !self::validNonResidencyOutsideScopeNote(
+                        $d['outside_scope_note'], (string) $examType, $year))
                     || ($s['scope_unverified'] ?? null) !== false)) {
                 throw new RuntimeException('Same-lineage proxy must retain its actual reference year and visible proxy note.');
             }
@@ -393,6 +402,17 @@ final class SourceOnlyPublisher
                     || ($s['reference_year'] ?? null) !== $year
                     || ($s['classification_note'] ?? null) !== null)) {
                 throw new RuntimeException('Exact-year source must state its actual exam-year reference basis.');
+            }
+            if ($nonResidencyProxyType && !$sameLineageProxy) {
+                $outsideScopeDecision = isset($d['outside_scope_note']);
+                if (($s['official_scope_status'] ?? 'in_scope') !== ($outsideScopeDecision
+                        ? 'outside_scope_exam_question' : 'in_scope')
+                    || ($s['official_scope_note'] ?? null) !== ($outsideScopeDecision
+                        ? ($d['outside_scope_note'] ?? null) : null)
+                    || ($outsideScopeDecision && !self::validNonResidencyOutsideScopeNote(
+                        $d['outside_scope_note'], (string) $examType, $year))) {
+                    throw new RuntimeException('Non-residency outside-scope status requires its exact Persian year-specific note.');
+                }
             }
             $conf = (float) $d['confidence'];
             if ($conf < .85 || $conf > 1.0) {
@@ -425,9 +445,13 @@ final class SourceOnlyPublisher
                 'classification_basis' => $classificationBasis,
                 'classification_note' => $classificationNote,
                 'reference_subject' => $referenceSubject,
-                'official_scope_status' => self::effectiveScopeStatus($updatedReferenceProxy),
+                'official_scope_status' => $updatedReferenceProxy
+                    ? 'outside_scope_exam_question'
+                    : ($nonResidencyProxyType
+                        ? (string) ($s['official_scope_status'] ?? 'in_scope') : 'in_scope'),
                 'official_scope_note' => $updatedReferenceProxy
-                    ? (string) $d['updated_reference_note'] : null,
+                    ? (string) $d['updated_reference_note']
+                    : ($nonResidencyProxyType ? ($s['official_scope_note'] ?? null) : null),
                 'scope_unverified' => false];
         }
         if (count($seen) !== count($original) || count($mapped) !== count($wanted)
@@ -457,6 +481,15 @@ WHERE r.workspace_id=:ws AND r.reference_key=:ref AND e.edition_key=:edition
 AND n.node_key=:node AND v.exam_year=:yr AND sb.subject_key=:sub
 AND et.type_key=:type AND v.is_official=1
 SQL);
+        $examYearOfficialValidity = $nonResidencyProxyType ? $db->prepare(<<<'SQL'
+SELECT v.id
+FROM bank_reference_validity v
+JOIN bank_subjects sb ON sb.id=v.subject_id AND sb.workspace_id=v.workspace_id
+JOIN bank_exam_types et ON et.id=v.exam_type_id AND et.workspace_id=v.workspace_id
+WHERE v.workspace_id=:ws AND v.exam_year=:yr AND sb.subject_key=:sub
+AND et.type_key=:type AND v.is_official=1
+LIMIT 1 FOR UPDATE
+SQL) : null;
         $insert = $db->prepare(<<<'SQL'
 INSERT INTO bank_question_sources
 (id,workspace_id,question_id,edition_id,reference_year,classification_basis,classification_note,
@@ -470,6 +503,14 @@ SQL);
         $db->beginTransaction();
         $count = 0;
         try {
+            if ($nonResidencyProxyType && $batchClassificationBasis === 'same_lineage_proxy') {
+                $examYearOfficialValidity->execute([
+                    'ws' => $workspace, 'yr' => $year, 'sub' => $subject, 'type' => $examType,
+                ]);
+                if ($examYearOfficialValidity->fetch(PDO::FETCH_ASSOC) !== false) {
+                    throw new RuntimeException('A non-residency same-lineage proxy is forbidden when the exact exam-year official list exists.');
+                }
+            }
             foreach ($mapped as $n => $src) {
                 $get->execute(['ws' => $workspace, 'type' => $examType, 'yr' => $year, 'round' => $round, 'sub' => $subject, 'num' => $n]);
                 $q = $get->fetch(PDO::FETCH_ASSOC);
@@ -541,6 +582,18 @@ SQL);
                 $scope = json_decode((string) $mappedNode['scope_chapters'], true);
                 $numbers = is_array($scope)
                     ? array_map(static fn(array $a): string => (string) ($a['number'] ?? ''), $scope) : [];
+                $structuredScope = is_array($scope) && $scope !== [];
+                if ($structuredScope) {
+                    foreach ($scope as $scopeItem) {
+                        if (!is_array($scopeItem)
+                            || !is_string($scopeItem['number'] ?? null)
+                                && !is_int($scopeItem['number'] ?? null)
+                            || trim((string) ($scopeItem['number'] ?? '')) === '') {
+                            $structuredScope = false;
+                            break;
+                        }
+                    }
+                }
                 $explicitlyOutside1406Syllabus = $policyYear === 1397
                     && $updatedReferenceProxy
                     && ($src['official_scope_status'] ?? null) === 'outside_scope_exam_question'
@@ -549,10 +602,20 @@ SQL);
                     && str_contains($src['official_scope_note'], 'خارج از محدوده')
                     && str_contains($src['official_scope_note'], '۱۳۹۷')
                     && str_contains($src['official_scope_note'], '۱۴۰۶');
+                $nonResidencyOutsideScope = $nonResidencyProxyType
+                    && ($src['official_scope_status'] ?? null) === 'outside_scope_exam_question'
+                    && is_string($src['official_scope_note'] ?? null)
+                    && ($d['outside_scope_note'] ?? null) === $src['official_scope_note']
+                    && self::validNonResidencyOutsideScopeNote(
+                        $src['official_scope_note'], (string) $examType, $year)
+                    && $structuredScope
+                    && count($numbers) === count($scope);
                 if (!in_array($src['chapter'], $numbers, true)) {
-                    if (!$explicitlyOutside1406Syllabus) {
+                    if (!$explicitlyOutside1406Syllabus && !$nonResidencyOutsideScope) {
                         throw new RuntimeException('Year-specific official syllabus scope is missing this chapter.');
                     }
+                } elseif ($nonResidencyOutsideScope) {
+                    throw new RuntimeException('An in-scope chapter cannot carry an outside-scope disposition.');
                 }
                 $insert->execute([
                     'id' => Uuid::v7(), 'ws' => $workspace, 'qid' => $q['id'],
@@ -852,6 +915,25 @@ SQL);
             '٠' => '0', '١' => '1', '٢' => '2', '٣' => '3', '٤' => '4',
             '٥' => '5', '٦' => '6', '٧' => '7', '٨' => '8', '٩' => '9',
         ]);
+    }
+
+    private static function validNonResidencyOutsideScopeNote(
+        mixed $note, string $examType, int $year,
+    ): bool {
+        if (!is_string($note) || mb_strlen(trim($note)) < 24
+            || !str_contains($note, 'خارج از محدوده')
+            || !preg_match('/[\x{0600}-\x{06FF}]/u', $note)) {
+            return false;
+        }
+        $persianDigits = ['0' => '۰', '1' => '۱', '2' => '۲', '3' => '۳', '4' => '۴',
+            '5' => '۵', '6' => '۶', '7' => '۷', '8' => '۸', '9' => '۹'];
+        if ($examType === 'national') {
+            return trim($note) === 'محل طراحی این سؤال در فصلی خارج از محدوده سرفصل رسمی آزمون ملی '
+                . strtr((string) $year, $persianDigits) . ' است.';
+        }
+        return in_array($examType, ['board', 'promotion'], true)
+            && str_contains($note, 'سرفصل رسمی')
+            && str_contains(self::asciiDigits($note), (string) $year);
     }
 
     private static function readbackSource(int $number, array $source, ?string $id): array
