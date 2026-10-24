@@ -482,13 +482,15 @@ AND n.node_key=:node AND v.exam_year=:yr AND sb.subject_key=:sub
 AND et.type_key=:type AND v.is_official=1
 SQL);
         $examYearOfficialValidity = $nonResidencyProxyType ? $db->prepare(<<<'SQL'
-SELECT v.id
+SELECT v.id,v.scope_chapters,r.reference_key,e.edition_key
 FROM bank_reference_validity v
 JOIN bank_subjects sb ON sb.id=v.subject_id AND sb.workspace_id=v.workspace_id
 JOIN bank_exam_types et ON et.id=v.exam_type_id AND et.workspace_id=v.workspace_id
+JOIN bank_reference_editions e ON e.id=v.edition_id AND e.workspace_id=v.workspace_id
+JOIN bank_references r ON r.id=e.reference_id AND r.workspace_id=e.workspace_id
 WHERE v.workspace_id=:ws AND v.exam_year=:yr AND sb.subject_key=:sub
 AND et.type_key=:type AND v.is_official=1
-LIMIT 1 FOR UPDATE
+FOR UPDATE
 SQL) : null;
         $insert = $db->prepare(<<<'SQL'
 INSERT INTO bank_question_sources
@@ -507,7 +509,9 @@ SQL);
                 $examYearOfficialValidity->execute([
                     'ws' => $workspace, 'yr' => $year, 'sub' => $subject, 'type' => $examType,
                 ]);
-                if ($examYearOfficialValidity->fetch(PDO::FETCH_ASSOC) !== false) {
+                $examYearRows = $examYearOfficialValidity->fetchAll(PDO::FETCH_ASSOC);
+                if ($examYearRows !== []
+                    && !self::ownerApprovedScopeGap($examYearRows, (string) $examType, $year, $subject, $mapped)) {
                     throw new RuntimeException('A non-residency same-lineage proxy is forbidden when the exact exam-year official list exists.');
                 }
             }
@@ -914,6 +918,46 @@ SQL);
             '٠' => '0', '١' => '1', '٢' => '2', '٣' => '3', '٤' => '4',
             '٥' => '5', '٦' => '6', '٧' => '7', '٨' => '8', '٩' => '9',
         ]);
+    }
+
+    /**
+     * Owner decision 2026-10-24: these exact exam-year lists name the book but
+     * their recovered syllabus row names no chapters («فصول منتخب»). Their
+     * sources may borrow the chapter scope of the named later official list of
+     * the same edition as a visible same-lineage proxy. Mirrors
+     * same_lineage_proxy_policy.SCOPE_GAP_REFERENCE_YEARS.
+     */
+    private const SCOPE_GAP_REFERENCE_YEARS = [
+        'national:1402:pediatric-dentistry' => 1404,
+        'national:1403:pediatric-dentistry' => 1404,
+    ];
+
+    /**
+     * @param list<array<string, mixed>> $examYearRows
+     * @param array<int, array<string, mixed>> $mapped
+     */
+    private static function ownerApprovedScopeGap(
+        array $examYearRows, string $examType, int $year, string $subject, array $mapped,
+    ): bool {
+        $referenceYear = self::SCOPE_GAP_REFERENCE_YEARS["{$examType}:{$year}:{$subject}"] ?? null;
+        if ($referenceYear === null || $mapped === []) {
+            return false;
+        }
+        $editions = [];
+        foreach ($examYearRows as $row) {
+            $scope = json_decode((string) ($row['scope_chapters'] ?? ''), true);
+            if (is_array($scope) && $scope !== []) {
+                return false;
+            }
+            $editions[$row['reference_key'] . '@' . $row['edition_key']] = true;
+        }
+        foreach ($mapped as $src) {
+            if (($src['reference_year'] ?? null) !== $referenceYear
+                || !isset($editions[$src['ref'] . '@' . $src['edition']])) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static function validNonResidencyOutsideScopeNote(
