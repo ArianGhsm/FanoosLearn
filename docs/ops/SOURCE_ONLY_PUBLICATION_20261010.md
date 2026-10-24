@@ -81,9 +81,12 @@ checkpoints below preserve their original (broader) definitions.
   equal the values in the study and validated files. Board/promotion rounds
   follow the bank's 1–99 slot range; national rounds follow 1–9.
 - Official edition validity is resolved using the sitting's same exam type
-  and the citation's reference year. The existing retrospective,
-  same-lineage, and updated-reference proxy policies remain residency rules;
-  national/board/promotion source rows use `official_exam_year` citations.
+  and the citation's reference year. Retrospective and updated-reference
+  proxies remain residency-only. The 2026-10-24 same-lineage rule also allows
+  national/board/promotion proxies only when the exact type/year/subject
+  official list is absent; the source-only transaction rechecks that absence
+  and the cited same-type official reference-year row. Exact-list citations
+  retain `official_exam_year`.
 - Source-only inserts become available in the **bank** immediately; however,
   already-published assessments use immutable **version snapshots**. Students
   will not see new source explanations in the existing version until the

@@ -1,19 +1,27 @@
-# Newest-first same-lineage reference editions for older residency sittings
+# Newest-first same-lineage proxy classification
 
-**Owner authorization: 2026-10-22, revised 2026-10-23.** The current
-residency exam is set from the new references, so older sittings are
-classified against the newest available edition of each reference family.
-The newest-first order is enforced for the unfinished sittings **1391–1396**.
-Exam years 1397 and 1398 are complete under their named updated-reference
-exceptions and are not reopened. Sittings 1395 and earlier keep the separate
-`retrospective_proxy_1397_plus` basis (candidates from 1397+ lists) with the
-same order. No proxy is authorized after 1398.
+**Owner authorization: 2026-10-22, revised 2026-10-23 and extended
+2026-10-24.** The original residency rule remains: unfinished residency
+sittings **1391–1396** use newest-first editions, 1397/1398 retain their
+separate named exceptions, and pre-1396 sittings retain
+`retrospective_proxy_1397_plus`.
+
+The 2026-10-24 owner rule also applies this same-lineage proxy to **national,
+board and promotion** sittings whenever the catalog has no official list for
+that exact exam type, year and subject. It does not depend on a lower year
+bound. National 1397–1400 subjects with no list may use the nearest official
+national list of that subject (for example, national 1399 may select the
+1401 list). Board and promotion subjects follow their own nearest same-type
+list. An exact-year/type/subject list suppresses proxy selection completely.
+Never cross exam types or add a synthetic validity row.
 
 ## Selection
 
-1. Identify the reference families: the exam-year/type/subject list, or the
-   nearest official list for that exam type and subject when the exam-year
-   list is absent (1395 and earlier: the 1397+ lists).
+1. Identify reference families: the exam-year/type/subject list for exact
+   citations; for a non-residency proxy, use the families in the nearest
+   official list year of the same type and subject. Prefer the later year
+   when two list years are equally near. Pre-1396 residency sittings continue
+   to use the 1397+ retrospective selector.
 2. Within each family, rank every official edition newest first (by the
    newest year it was listed). One row per edition: the exam-year row when
    that edition was official in the exam year (then it is not a proxy),
@@ -33,7 +41,11 @@ same order. No proxy is authorized after 1398.
    edition to another.
 
 The versioned selector is `scripts/references/same_lineage_proxy_policy.py`.
-It only selects candidates; `verified_reference_pdf.py`,
+Residency callers and CLI behavior are unchanged. For national, board and
+promotion, the selector returns only exact official rows when the requested
+year has a list; otherwise it selects same-type/same-subject proxy families
+from the nearest list year, with later-year tie-breaking. It only selects
+candidates; `verified_reference_pdf.py`,
 `apply_classification.py` and `audit_private_study_batches.py` still check the
 current approved object, exact PDF SHA, matching chapter map, original page,
 chapter scope, direct evidence and confidence. Pages are read one at a time
@@ -64,14 +76,17 @@ Research proposals remain pending until they pass both the exact-page
 validator and the independent provenance audit. Use the protected,
 immutable same-year recovery case with
 `scripts/references/import_verified_sources.php`; generic proxy case stems
-start with `same-lineage-proxy-`. Keep exact-year and proxy decisions in
+start with `same-lineage-proxy-`. This applies to non-residency batches too;
+the importer rechecks in the same transaction that their exact-year official
+list is absent and resolves the cited official row for the same type,
+subject and `reference_year`. Keep exact-year and proxy decisions in
 separate audited batches. Preview the source-only transaction first.
 Apply requires a fresh verified full backup, a unique private receipt and
 independent source-row readback. The operator inserts only new source rows;
 it does not edit questions, choices, answers, statuses, attempts or scores.
-Keep the whole-year publication gate. This operator currently accepts
-residency batches; other exam types remain pending until their compatible
-guarded writer is available.
+Keep the applicable whole-year publication gate. Exact non-residency
+citations retain `official_exam_year`; same-lineage proxy citations retain
+their actual `reference_year`, Persian proxy note and same-type validity row.
 
 `--allow-nearest` and `--include-nearest` remain historical-audit options and
 are not a route to authorize a new proxy. Unsupported answer, unreadable page, ambiguous

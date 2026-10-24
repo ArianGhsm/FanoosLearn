@@ -1,13 +1,11 @@
 """Owner-authorized newest-first same-lineage editions for older exams.
 
-This policy covers residency exam years 1396–1398 (pre-1396 sittings use
-`retrospective_reference_policy`, which applies the same newest-first order
-to 1397+ lists). Owner rule 2026-10-23: classify against the newest available
-official edition of each reference family; fall back to an older edition
-only when the answer-bearing page is not found in the newer ones. Every
-returned row retains its actual official reference year. The downstream page
-reader must still verify the current approved PDF, its matching chapter map,
-page and direct evidence.
+Residency years 1396–1398 and non-residency years with no official
+exam-year/type/subject list may use this policy. Pre-1396 residency sittings
+remain governed by `retrospective_reference_policy`. Candidate editions are
+ranked newest first within each family; every row retains its actual official
+reference year. The downstream page reader still verifies the current
+approved PDF, matching chapter map, page and direct evidence.
 """
 from __future__ import annotations
 
@@ -28,6 +26,7 @@ LAST_PROXY_EXAM_YEAR = 1398
 # 1397 and 1398 are complete (named updated-reference exceptions); the
 # newest-first fallback order is enforced for the unfinished older sittings.
 LAST_NEWEST_FIRST_EXAM_YEAR = 1396
+NON_RESIDENCY_EXAM_TYPES = frozenset({"national", "board", "promotion"})
 
 
 def is_proxy_exam_year(exam_year: object) -> bool:
@@ -105,6 +104,50 @@ def _official_rows(catalog: dict, exam_type: str, subject: str) -> list[dict]:
             and row.get("official") is True
             and isinstance(row.get("year"), int)
             and isinstance(row.get("edition"), str)]
+
+
+def selected_non_residency_proxy_rows(
+    catalog: dict, exam_type: str, exam_year: int, subject: str,
+    pdfs: dict, chapter_maps: dict,
+) -> list[dict]:
+    """Select same-type/same-subject candidates only when the exact list is absent.
+
+    Families are taken from the nearest official list year. A later year wins
+    an equal-distance tie. Edition ranking then follows the residency rule:
+    all official editions of those families are ordered newest first and
+    each returned row carries that edition's latest official reference year.
+    An exact exam-year list always suppresses this proxy path.
+    """
+    if (exam_type not in NON_RESIDENCY_EXAM_TYPES
+            or not isinstance(exam_year, int) or isinstance(exam_year, bool)):
+        return []
+    rows = _official_rows(catalog, exam_type, subject)
+    if not rows or any(row["year"] == exam_year for row in rows):
+        return []
+    nearest_year = min(
+        {row["year"] for row in rows},
+        key=lambda year: (abs(year - exam_year), -year),
+    )
+    families = {_family(row["edition"]) for row in rows if row["year"] == nearest_year}
+    selected: list[dict] = []
+    for family in sorted(families):
+        selected.extend(ordered_family_candidates(rows, family, exam_year, pdfs, chapter_maps))
+    return selected
+
+
+def selected_proxy_rows(
+    catalog: dict, exam_type: str, exam_year: int, subject: str,
+    pdfs: dict, chapter_maps: dict,
+) -> list[dict]:
+    """Return candidates for the already-authorized proxy path of this type."""
+    if exam_type == "residency":
+        return (selected_reference_rows(
+            catalog, exam_type, exam_year, subject, pdfs, chapter_maps)
+            if is_proxy_exam_year(exam_year) else [])
+    if exam_type in NON_RESIDENCY_EXAM_TYPES:
+        return selected_non_residency_proxy_rows(
+            catalog, exam_type, exam_year, subject, pdfs, chapter_maps)
+    return []
 
 
 def _candidate(row: dict, exam_year: int, rank, eligible: bool, reason) -> dict:
@@ -228,18 +271,24 @@ def is_selected_proxy(
     edition: object, reference_year: object, basis: object,
     pdfs: dict, chapter_maps: dict,
 ) -> bool:
-    if (not is_proxy_exam_year(exam_year) or basis != BASIS
+    if (basis != BASIS
             or not isinstance(reference_year, int) or isinstance(reference_year, bool)
             or not isinstance(edition, str)):
         return False
+    if exam_type == "residency":
+        if not is_proxy_exam_year(exam_year):
+            return False
+    elif exam_type not in NON_RESIDENCY_EXAM_TYPES:
+        return False
+    candidates = selected_proxy_rows(
+        catalog, exam_type, exam_year, subject, pdfs, chapter_maps)
     return any(row.get("_proxy") is True
                and row.get("_eligible") is True
                and row.get("edition") == edition
                and row.get("year") == reference_year
                and _usable_scope(row)
                and _usable(str(row.get("edition")), pdfs, chapter_maps)
-               for row in selected_reference_rows(
-                   catalog, exam_type, exam_year, subject, pdfs, chapter_maps))
+               for row in candidates)
 
 
 def valid_proxy_note(note: object, exam_year: int, reference_year: int) -> bool:

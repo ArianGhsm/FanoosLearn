@@ -14,9 +14,8 @@ or that it has none:
 Nothing is taken on trust. A decision is accepted only when
 - the question exists in the sitting;
 - the edition is one the official list names for this exam type, year and
-  subject, or, only for exam years 1396–1398, the owner-authorized nearest
-  verified edition in the same reference family when the exact edition/PDF
-  is unavailable;
+  subject, or an explicitly labelled same-lineage proxy when an authorized
+  rule applies and the exam-year list is absent;
 - the chapter is a chapter of that edition in the catalog;
 - the chapter is inside the official year-specific syllabus when its chapter
   list is recorded; an unstructured selected/excluded scope stays pending;
@@ -64,6 +63,7 @@ from same_lineage_proxy_policy import (
     BASIS as SAME_LINEAGE_PROXY_BASIS,
     is_proxy_exam_year,
     is_selected_proxy as is_selected_same_lineage_proxy,
+    selected_non_residency_proxy_rows,
     selected_reference_rows as selected_same_lineage_rows,
     valid_proxy_note,
     fallback_error,
@@ -189,6 +189,26 @@ def valid_outside_scope_note(note: object) -> bool:
     return isinstance(note, str) and len(note.strip()) >= 24 and 'خارج از محدوده' in note
 
 
+def national_outside_scope_note(year: int) -> str:
+    persian_year = str(year).translate(str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹'))
+    return f'محل طراحی این سؤال در فصلی خارج از محدوده سرفصل رسمی آزمون ملی {persian_year} است.'
+
+
+def valid_non_residency_outside_scope_note(note: object, exam_type: str, year: int) -> bool:
+    if not valid_outside_scope_note(note) or not isinstance(note, str):
+        return False
+    if exam_type == 'national':
+        return note.strip() == national_outside_scope_note(year)
+    normalized = note.translate(str.maketrans(
+        '۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', '01234567890123456789'))
+    return (
+        exam_type in ('board', 'promotion')
+        and any('\u0600' <= char <= '\u06ff' for char in note)
+        and 'سرفصل رسمی' in note
+        and str(year) in normalized
+    )
+
+
 def words(title: str) -> set[str]:
     return {w for w in re.findall(r'[a-z0-9]+', title.lower()) if len(w) > 2}
 
@@ -260,10 +280,22 @@ def main() -> int:
         for subject in sorted({q['subject'] for q in sitting['questions']}):
             for row in selected_reference_rows(catalog, exam_type, year, subject, pdfs, runs):
                 official.setdefault(subject, {})[row['edition']] = row
-    elif is_proxy_exam_year(year):
+    elif exam_type == 'residency' and is_proxy_exam_year(year):
         for subject in sorted({q['subject'] for q in sitting['questions']}):
             for row in selected_same_lineage_rows(catalog, exam_type, year, subject, pdfs, runs):
                 official.setdefault(subject, {})[row['edition']] = row
+    elif exam_type in ('national', 'board', 'promotion'):
+        for subject in sorted({q['subject'] for q in sitting['questions']}):
+            proxy_rows = selected_non_residency_proxy_rows(
+                catalog, exam_type, year, subject, pdfs, runs)
+            if proxy_rows:
+                for row in proxy_rows:
+                    official.setdefault(subject, {})[row['edition']] = row
+            else:
+                for row in catalog['validity']:
+                    if (row.get('exam_type') == exam_type and int(row['year']) == year
+                            and row.get('subject') == subject and row.get('official') is True):
+                        official.setdefault(subject, {})[row['edition']] = row
     else:
         for v in catalog['validity']:
             if v.get('exam_type') == exam_type and int(v['year']) == year:
@@ -288,12 +320,16 @@ def main() -> int:
         elif n in seen:
             why = 'decided twice'
         seen.add(n)
-        if why is None and (is_retrospective(year) or is_proxy_exam_year(year)) and (
+        subject_candidates = official.get(q['subject'], {}) if q is not None else {}
+        same_lineage_context = ((exam_type == 'residency' and is_proxy_exam_year(year))
+                                or any(row.get('_proxy') is True
+                                       for row in subject_candidates.values()))
+        if why is None and (is_retrospective(year) or same_lineage_context) and (
                 q['answer'].get('status') not in ('final', 'amended')
                 or q['answer'].get('choice') is None):
             why = 'voided/disputed or missing official answer cannot support older-exam chapter/page'
         if why is None and 'none' in d:
-            if is_retrospective(year) or is_proxy_exam_year(year):
+            if is_retrospective(year) or same_lineage_context:
                 why = 'older-exam missing reference remains pending; none is not a chapter+page decision'
             elif official.get(q['subject']) and not str(d['none']).strip():
                 why = 'a question with official references needs a reason to have none'
@@ -343,14 +379,16 @@ def main() -> int:
                     why = 'same-lineage proxy requires a note naming both years and disclosing that it is not confirmed official for the exam year'
                 elif edition not in names or int(names[edition].get('year', 0)) != proxy_reference_year:
                     why = 'proxy edition and actual official reference year do not match a selected same-lineage candidate'
-            elif is_proxy_exam_year(year) and edition in names and names[edition].get('_proxy') is True:
+            elif edition in names and names[edition].get('_proxy') is True:
                 why = 'selected same-lineage proxy requires actual reference_year, proxy basis and an explicit proxy note'
             if is_retrospective(year) and edition in names:
                 expected_year = int(names[edition]['year'])
                 if d.get('reference_year') != expected_year or d.get('classification_basis') != BASIS:
                     why = (f'retrospective decision must explicitly name reference_year '
                            f'{expected_year} and classification_basis {BASIS}')
-            if why is None and requires_newest_first(year) and not updated_proxy and edition in names:
+            if (why is None and not updated_proxy and edition in names
+                    and (requires_newest_first(year)
+                         or (same_lineage_proxy and exam_type != 'residency'))):
                 why = fallback_error(list(names.values()), edition, d.get('newer_editions_searched'))
             cite, cite_chapter = edition, chapter
             if edition not in names and not same_lineage_proxy and not args.allow_nearest:
@@ -400,7 +438,10 @@ def main() -> int:
                         why = 'an unlisted 1406 proxy chapter requires the same explicit note in both proxy fields'
                     elif (args.allow_outside_scope and cite == edition
                         and whole_chapter_is_unlisted(names[cite], cite_chapter)
-                        and valid_outside_scope_note(outside_note)):
+                        and (valid_outside_scope_note(outside_note)
+                             if exam_type == 'residency'
+                             else valid_non_residency_outside_scope_note(
+                                 outside_note, exam_type, year))):
                         outside_scope = True
                     else:
                         why = scope_error
@@ -430,6 +471,9 @@ def main() -> int:
             confidence = d.get('confidence')
             if why is None and not (isinstance(confidence, (int, float)) and 0 <= confidence <= 1):
                 why = 'confidence must be a number from 0 to 1'
+            if (why is None and same_lineage_proxy and exam_type != 'residency'
+                    and confidence < 0.85):
+                why = 'same-lineage proxy confidence must be at least 0.85'
             if why is None:
                 cite_node = chapter_nodes(catalog, cite)[cite_chapter]
                 accepted[n] = {
@@ -511,7 +555,7 @@ def main() -> int:
     if is_retrospective(year):
         sitting['notes'] += (f' {BASIS}: 1397+ exact PDF citations refer to later official '
                              'reference-year lists, not original exam-year official books.')
-    if is_proxy_exam_year(year) and any(
+    if any(
             isinstance(source, dict)
             and source.get('classification_basis') == SAME_LINEAGE_PROXY_BASIS
             for source in accepted.values()):

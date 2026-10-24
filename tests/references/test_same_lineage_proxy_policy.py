@@ -148,7 +148,7 @@ class NearestSameLineageProxyTests(unittest.TestCase):
     def test_legacy_nearest_flag_cannot_extend_proxy_eligibility(self):
         batch = (Path(__file__).resolve().parents[2] / "scripts/references" /
                  "classification_batch.py").read_text()
-        self.assertIn("args.include_nearest and not is_proxy_exam_year(year)", batch)
+        self.assertIn("args.include_nearest and not same_lineage_selection", batch)
         self.assertIn("row.get('_eligible') is not True", batch)
 
 

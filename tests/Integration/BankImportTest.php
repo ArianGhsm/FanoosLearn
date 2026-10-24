@@ -305,6 +305,141 @@ final class BankImportTest
         $this->database->prepare('DELETE source FROM bank_question_sources source JOIN bank_questions q ON q.id=source.question_id AND q.workspace_id=source.workspace_id WHERE source.workspace_id=:ws AND q.question_key=:key')
             ->execute(['ws' => $ws, 'key' => $nationalQuestionKey]);
 
+        // National 1404 exact-year chapters absent from a structured scope
+        // retain their true location with the national outside-scope note.
+        $nationalOutsideCatalog = $nationalCatalog;
+        $nationalOutsideCatalog['validity'][1]['scope_chapters'] = [['number' => '13']];
+        $importer->import($ws, $nationalOutsideCatalog);
+        $nationalOutsideNote = 'محل طراحی این سؤال در فصلی خارج از محدوده سرفصل رسمی آزمون ملی ۱۴۰۴ است.';
+        $nationalOutsideSource = $nationalSource;
+        $nationalOutsideSource['official_scope_status'] = 'outside_scope_exam_question';
+        $nationalOutsideSource['official_scope_note'] = $nationalOutsideNote;
+        $nationalOutsideValidated = $nationalStudy;
+        $nationalOutsideValidated['questions'][0]['sources'] = [$nationalOutsideSource];
+        $nationalOutsideDecision = $nationalDecisions[0];
+        $nationalOutsideDecision['outside_scope_note'] = $nationalOutsideNote;
+        $nationalOutsideEvidence = null;
+        $nationalOutsideWritten = SourceOnlyPublisher::run(
+            $this->database, $ws, 1404, 'endodontics', $nationalStudy,
+            $nationalOutsideValidated, [$nationalOutsideDecision], true, $nationalOutsideEvidence,
+        );
+        $nationalOutsideReadback = SourceOnlyPublisher::readback(
+            DatabaseConnection::fromEnvironment(), $ws, 1404, 'endodontics',
+            $nationalStudy, $nationalOutsideValidated, $nationalOutsideEvidence ?? [],
+        );
+        $this->assert($nationalOutsideWritten === 1 && $nationalOutsideReadback['verified'] === true,
+            'National 1404 exact outside-scope source-only transaction/readback failed: '
+                . json_encode($nationalOutsideReadback, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+        $this->database->prepare('DELETE source FROM bank_question_sources source JOIN bank_questions q ON q.id=source.question_id AND q.workspace_id=source.workspace_id WHERE source.workspace_id=:ws AND q.question_key=:key')
+            ->execute(['ws' => $ws, 'key' => $nationalQuestionKey]);
+        $importer->import($ws, $nationalCatalog);
+        ++$this->assertions;
+
+        // A national subject with no 1399 official row may cite its nearest
+        // later same-type row. A board proxy uses the same guarded transaction
+        // and carries an explicit outside-scope disposition when its 1401
+        // scope excludes the cited chapter.
+        $proxyCatalog = $nationalCatalog;
+        $nationalProxyValidity = $nationalValidity;
+        $nationalProxyValidity['year'] = 1401;
+        $boardProxyValidity = $nationalValidity;
+        $boardProxyValidity['exam_type'] = 'board';
+        $boardProxyValidity['year'] = 1401;
+        $boardProxyValidity['scope_chapters'] = [['number' => '13']];
+        $proxyCatalog['validity'][] = $nationalProxyValidity;
+        $proxyCatalog['validity'][] = $boardProxyValidity;
+        $importer->import($ws, $proxyCatalog);
+        foreach ([
+            ['type' => 'national', 'outside' => false],
+            ['type' => 'board', 'outside' => true],
+        ] as $proxyCase) {
+            $proxyType = $proxyCase['type'];
+            $proxySitting = $nationalSitting;
+            $proxySitting['exam_type'] = $proxyType;
+            $proxySitting['year'] = 1399;
+            $proxySitting['round'] = 2;
+            $importer->import($ws, $proxySitting);
+            $proxyQuestionKey = BankImporter::questionKey($proxyType, 1399, 2, 2);
+            $this->database->prepare("UPDATE bank_questions SET status='published' WHERE workspace_id=:ws AND question_key=:key")
+                ->execute(['ws' => $ws, 'key' => $proxyQuestionKey]);
+            $proxyQuestion = $proxySitting['questions'][0];
+            $proxyAnswer = $proxyQuestion['answer'];
+            $proxyStudyQuestion = [
+                'number' => 2, 'subject' => 'endodontics', 'stem' => $proxyQuestion['stem'],
+                'choices' => $proxyQuestion['choices'],
+                'answer' => [
+                    'choice' => $proxyAnswer['choice'] ?? null,
+                    'also_correct' => $proxyAnswer['also_correct'] ?? [],
+                    'status' => $proxyAnswer['status'],
+                ],
+            ];
+            $proxyStudy = [
+                'format' => 'fanoos.classification.study-only/1',
+                'exam_type' => $proxyType, 'year' => 1399, 'round' => 2,
+                'questions' => [$proxyStudyQuestion],
+            ];
+            $proxyNote = 'این آزمون ۱۳۹۹ از نسخهٔ پروکسیِ سال ۱۴۰۱ استفاده می‌کند؛ رسمی بودن آن برای سال آزمون تأیید نشده است.';
+            $outsideNote = 'محل طراحی این سؤال در فصلی خارج از محدوده سرفصل رسمی آزمون بورد سال ۱۳۹۹ است.';
+            $proxySource = [
+                'ref' => 'torabinejad@6e#ch14', 'page' => 'pdf 272', 'pdf_page' => 272,
+                'printed_page' => null, 'pdf_sha256' => str_repeat('a', 64),
+                'anchor' => 'Synthetic non-residency proxy page evidence',
+                'primary' => true, 'origin' => 'ai',
+                'confidence' => ['source' => 0.9, 'node' => 0.9, 'page' => 0.9],
+                'reference_year' => 1401, 'classification_basis' => 'same_lineage_proxy',
+                'classification_note' => $proxyNote,
+                'official_scope_status' => $proxyCase['outside']
+                    ? 'outside_scope_exam_question' : 'in_scope',
+                'scope_unverified' => false,
+            ];
+            if ($proxyCase['outside']) {
+                $proxySource['official_scope_note'] = $outsideNote;
+            }
+            $proxyValidated = $proxyStudy;
+            $proxyValidated['questions'][0]['sources'] = [$proxySource];
+            $proxyDecision = [
+                'number' => 2, 'edition' => 'torabinejad@6e', 'chapter' => '14',
+                'page' => 272, 'evidence' => $proxySource['anchor'], 'confidence' => 0.9,
+                'reference_year' => 1401, 'classification_basis' => 'same_lineage_proxy',
+                'proxy_note' => $proxyNote,
+            ];
+            if ($proxyCase['outside']) {
+                $proxyDecision['outside_scope_note'] = $outsideNote;
+            }
+            $proxyEvidence = null;
+            $proxyWritten = SourceOnlyPublisher::run(
+                $this->database, $ws, 1399, 'endodontics', $proxyStudy,
+                $proxyValidated, [$proxyDecision], true, $proxyEvidence,
+            );
+            $proxyReadback = SourceOnlyPublisher::readback(
+                DatabaseConnection::fromEnvironment(), $ws, 1399, 'endodontics',
+                $proxyStudy, $proxyValidated, $proxyEvidence ?? [],
+            );
+            $this->assert($proxyWritten === 1 && $proxyReadback['verified'] === true,
+                ucfirst($proxyType) . ' same-lineage proxy source-only transaction/readback failed: '
+                    . json_encode($proxyReadback, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+            $this->database->prepare('DELETE source FROM bank_question_sources source JOIN bank_questions q ON q.id=source.question_id AND q.workspace_id=source.workspace_id WHERE source.workspace_id=:ws AND q.question_key=:key')
+                ->execute(['ws' => $ws, 'key' => $proxyQuestionKey]);
+            if ($proxyType === 'national') {
+                $exactListCatalog = $proxyCatalog;
+                $exactListValidity = $nationalValidity;
+                $exactListValidity['year'] = 1399;
+                $exactListCatalog['validity'][] = $exactListValidity;
+                $importer->import($ws, $exactListCatalog);
+                try {
+                    SourceOnlyPublisher::run(
+                        $this->database, $ws, 1399, 'endodontics', $proxyStudy,
+                        $proxyValidated, [$proxyDecision], false,
+                    );
+                    $this->assert(false, 'A non-residency proxy passed after an exact-year official row was added.');
+                } catch (RuntimeException $error) {
+                    $this->assert(str_contains($error->getMessage(), 'exact exam-year official list exists'),
+                        'The live exact-year list check rejected a proxy for the wrong reason.');
+                }
+            }
+            ++$this->assertions;
+        }
+
         // Remove the audited fixture so the remaining generic-importer scenarios
         // (amended keys, export round trip) start from ordinary unreviewed sources.
         $this->database->prepare('DELETE FROM bank_question_sources WHERE workspace_id=:ws AND question_id=:qid AND classification_basis IS NOT NULL')

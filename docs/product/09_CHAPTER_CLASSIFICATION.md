@@ -103,7 +103,7 @@ an audited versioned publisher implementation; do not bypass it through
 raw SQL or full-sitting imports. See
 `docs/ops/PRE_1396_RETROSPECTIVE_CLASSIFICATION_20261011.md`.
 
-### Newest-first same-lineage editions for older sittings (owner, 2026-10-23)
+### Newest-first same-lineage editions (owner, 2026-10-23; extended 2026-10-24)
 
 For unfinished residency sittings **1391–1396**, search the **newest
 available official edition** of each reference family first, even when the
@@ -131,6 +131,18 @@ its direct page, leave it pending. The deployed classifier and source-only write
 must validate this basis; `--allow-nearest` remains historical-audit-only.
 Use the workflow in
 `docs/ops/SAME_LINEAGE_PROXY_CLASSIFICATION_20261022.md`.
+
+**Owner extension, 2026-10-24:** The same selector also applies to national,
+board and promotion exam type/subject/year combinations with no exact
+official catalog list. Select families from the nearest official list year
+of the same exam type and subject; prefer the later year on an equal-distance
+tie. An exact exam-year list permits exact official citations only. Never
+cross exam types or write a synthetic validity row. Every proxy keeps the
+selected row's actual `reference_year`, a Persian note naming both years and
+stating that official status for the exam year is unverified, and
+`newer_editions_searched` whenever its eligible rank is above zero. Confidence
+must be at least 0.85. The source-only publisher rechecks missing exact-year
+validity and the cited type/subject/reference-year row inside its transaction.
 
 ### Owner-approved updated-reference proxy for residency 1397 (2026-10-21)
 
@@ -337,11 +349,14 @@ sudo -u fanoosupd python3 -B scripts/references/classification_batch.py --sittin
 ```
 
 It prints official editions, announced scope and questions with official
-answers. **Default queries exclude missing exact editions.** The optional
-`--include-nearest` switch exists for auditing historical mappings, not
-for this new completion pass. No decision may be made against an absent
-exact official edition by default. "No official reference for … these questions get no source" means
-exactly that: do not classify that subject for that year (§5).
+answers. **Default queries exclude missing exact editions** except when the
+owner-authorized same-lineage selector applies: residency 1396–1398 or a
+national/board/promotion subject with no exact official list. The optional
+`--include-nearest` switch remains historical-audit-only and does not enable
+this policy. For a non-residency missing list, use only candidates shown by
+the same-lineage selector; if none are eligible, keep the subject pending.
+"No official reference for … these questions get no source" still applies
+when no same-type official list supplies a usable proxy (§5).
 
 **Step 2 — write the search terms.** For each question, write into `terms`
 the English words the book would use for the fact the question tests:

@@ -30,6 +30,51 @@ import, publish). Owner request 2026-10-11.
   `apply_classification.py` plus the independent audit (every quote is
   re-read from the cited PDF page).
 
+## Missing official lists and outside-scope flags — owner rule 2026-10-24
+
+For a national subject with no exact year row in the catalog, use the
+same-lineage selector's nearest official **national** list year for that
+subject; an equal-distance tie goes to the later year. National 1397–1400
+subjects with no catalog list therefore use the nearest later national list
+where one exists (for example, a 1399 round-2 batch may select the 1401
+list). The selector ranks editions newest first within the selected families.
+An exact year+subject list suppresses all proxy rows. The same rule applies
+to board and promotion only within their own exam type. Never add a synthetic
+validity row.
+
+A proxy decision records `classification_basis=same_lineage_proxy`, the
+selected row's actual `reference_year`, a Persian `proxy_note` naming both
+years and saying official status for the exam year is unverified, and
+`newer_editions_searched` when the citation is not rank zero. Confidence is
+at least 0.85. Example metadata (placeholders only; no question or book text):
+
+```json
+{
+  "edition": "<selected-official-edition-key>",
+  "reference_year": 1401,
+  "classification_basis": "same_lineage_proxy",
+  "proxy_note": "این آزمون ۱۳۹۹ از نسخهٔ پروکسیِ سال ۱۴۰۱ استفاده می‌کند؛ رسمی بودن آن برای سال آزمون تأیید نشده است.",
+  "newer_editions_searched": ["<newer-eligible-edition-key>"]
+}
+```
+
+An out-of-scope design location keeps its true chapter and page and records
+`official_scope_status=outside_scope_exam_question` plus a Persian
+`outside_scope_note`. The research validator uses `--allow-outside-scope`;
+the source-only transaction checks that the chapter is wholly absent from a
+structured official scope. The national note template is:
+
+```text
+محل طراحی این سؤال در فصلی خارج از محدوده سرفصل رسمی آزمون ملی <YEAR> است.
+```
+
+Use it for an exact official row or a same-lineage proxy row. For a proxy,
+retain both `proxy_note` and `outside_scope_note`; the first records year/list
+provenance and the second records the scope disposition. If scope is missing,
+unstructured, or includes the cited chapter, leave the decision pending or
+in-scope as appropriate; do not use the outside-scope flag to bypass another
+guard.
+
 ## Guarded source-only workflow for an individual national sitting
 
 The source-only exporter defaults to residency round 1. For a national
