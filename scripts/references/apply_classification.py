@@ -385,7 +385,10 @@ def main() -> int:
                     why = 'same-lineage proxy requires a note naming both years and disclosing that it is not confirmed official for the exam year'
                 elif edition not in names or int(names[edition].get('year', 0)) != proxy_reference_year:
                     why = 'proxy edition and actual official reference year do not match a selected same-lineage candidate'
-            elif edition in names and names[edition].get('_proxy') is True:
+            elif (not is_retrospective(year) and edition in names
+                  and names[edition].get('_proxy') is True):
+                # Pre-1396 residency rows are proxies by definition and are
+                # checked by the retrospective branch below.
                 why = 'selected same-lineage proxy requires actual reference_year, proxy basis and an explicit proxy note'
             if is_retrospective(year) and edition in names:
                 expected_year = int(names[edition]['year'])
