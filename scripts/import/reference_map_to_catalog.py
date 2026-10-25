@@ -296,6 +296,8 @@ SPLIT_NOTICES = {
 # (exam year, reference@edition) -> (the chapters, from the publisher's contents).
 SCOPE_PARTS = {
     (1403, 'phillips-materials@13e'): ('فصول 5–8', 'Part II (Direct Restorative Materials) is chapters 5–8 in the publisher\'s contents'),
+    (1397, 'mccabe-walls-materials@9e'): ('فصول 1–30', 'the selected-chapter list is only in the original notice, which is not on file; '
+                                         'owner decision 2026-10-25: treat the whole book (chapters 1–30) as in scope'),
 }
 
 # Rows the workbook carries that are not part of the medical education assessment
