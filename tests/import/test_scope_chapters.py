@@ -32,6 +32,16 @@ class ScopeChaptersTest(unittest.TestCase):
         self.assertEqual(numbers(resolve('All chapters, except for chapters 1-5', TWENTY)), TWENTY[5:])
         self.assertEqual(numbers(resolve('Chapters: 4, 6, 7', TWENTY)), ['4', '6', '7'])
 
+    def test_hamza_spelling_is_a_whole_book_exclusion(self):
+        # The board 1404 notice writes «همهٔ فصول به جز …»; it must not be read
+        # as an allow-list of the excluded chapters.
+        self.assertEqual(numbers(resolve('همهٔ فصول به جز فصول 2 و 4 و 18 و 19', TWENTY)),
+                         [n for n in TWENTY if n not in {'2', '4', '18', '19'}])
+
+    def test_page_or_part_exclusions_are_unreadable(self):
+        self.assertIsNone(resolve('همهٔ فصول به جز فصل 20 و صفحات 46 تا 59', TWENTY))
+        self.assertIsNone(resolve('همهٔ فصول به جز فصول 1 و 11 و قسمت A فصل 17', TWENTY))
+
     def test_whole_book_without_a_chapter_list_is_unknown(self):
         self.assertIsNone(resolve('تمام فصول', []))
 

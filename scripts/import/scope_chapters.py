@@ -61,8 +61,8 @@ def resolve(scope: str | None, chapters: list[str]) -> list[dict] | None:
     text = re.sub(rf'{NUMBER}(?:\s*-\s*{NUMBER}){{2,}}', lambda m: '، '.join(re.findall(NUMBER, m.group(0))), text)
     text = re.sub(rf'({NUMBER})\s*تا\s*({NUMBER})', lambda m: f'{m.group(1)}–{m.group(2)}', text)
     # The specialty lists' wordings of the same: «همه‌ی فصول»، «همه کتاب بجز فصول»،
-    # «کلیه فصول غیر از»، «All chapters, except for chapters 1-5», «Chapters: 4, 6».
-    text = re.sub(r'^(?:کلیه|همه‌ی|همه)\s*(?:فصول|کتاب)(?:\s*کتاب)?', 'تمام فصول', text)
+    # «کلیه فصول غیر از»، «همهٔ فصول به جز» (with hamza), «All chapters, except for chapters 1-5», «Chapters: 4, 6».
+    text = re.sub(r'^(?:کلیه|همه(?:\u200cی|ی|\u0654)?)\s*(?:فصول|کتاب)(?:\s*کتاب)?', 'تمام فصول', text)
     text = re.sub(r'^all chapters,?', 'تمام فصول', text, flags=re.I)
     text = re.sub(r'^تمام فصول\s*(?:کتاب\s*)?(?:بجز|به‌جز|به غیر از|غیر از|except for|except)(?:\s*(?:فصل‌های|فصلهای|فصول|فصل|chapters?))?\s*',
                   'تمام فصول به جز ', text, flags=re.I)
@@ -87,7 +87,12 @@ def resolve(scope: str | None, chapters: list[str]) -> list[dict] | None:
 
     if lower.startswith('تمام فصول'):
         head, _, rest = text.partition('؛')
-        excluded = set(_expand(head.split('به جز', 1)[1], known)) if 'به جز' in head else set()
+        tail = head.split('به جز', 1)[1] if 'به جز' in head else ''
+        # An exclusion of pages or of part of a chapter («صفحات 46 تا 59»,
+        # «قسمت A فصل 17») cannot be expressed as whole chapters.
+        if re.search(r'صفحات|صفحه|صص|ص\s*\d|قسمت|بخش', tail):
+            return None
+        excluded = set(_expand(tail, known)) if tail else set()
         if not known:
             return None if not excluded else None
         result = [{'number': n} for n in known if n not in excluded]

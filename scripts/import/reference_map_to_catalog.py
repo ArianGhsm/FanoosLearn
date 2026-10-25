@@ -294,6 +294,9 @@ SPLIT_NOTICES = {
 
 # Scopes that name a part of the book rather than chapters:
 # (exam year, reference@edition) -> (the chapters, from the publisher's contents).
+# National pediatric 1402/1403: owner decision 2026-10-24 borrows the 1404
+# McDonald list instead (scripts/references/same_lineage_proxy_policy.py).
+SCOPE_GAP_PAIRS = {('national', 1402, 'pediatric-dentistry'), ('national', 1403, 'pediatric-dentistry')}
 SCOPE_PARTS = {
     (1403, 'phillips-materials@13e'): ('فصول 5–8', 'Part II (Direct Restorative Materials) is chapters 5–8 in the publisher\'s contents'),
     (1397, 'mccabe-walls-materials@9e'): ('فصول 1–30', 'the selected-chapter list is only in the original notice, which is not on file; '
@@ -518,6 +521,16 @@ def build() -> dict:
             numbers, why = SCOPE_PARTS[(record['year'], record['edition'])]
             chapters = resolve_scope(numbers, known)
             decisions.append(f'{where}: scope "{record["scope"]}" read as chapters {numbers} — {why}')
+        if (chapters is None and known and record['scope'] and 'منتخب' in record['scope']
+                and 'تعارض' not in record['scope']
+                and (record['exam_type'], record['year'], record['subject']) not in SCOPE_GAP_PAIRS
+                and not re.search(r'[0-9۰-۹]', record['scope'].split('؛')[0])):
+            # Owner rule 2026-10-25: «فصول منتخب» with no chapter list means the
+            # whole book is in scope; the classifier finds the chapter itself.
+            # Conflicting notices and the owner's earlier scope-gap pairs keep
+            # their own handling.
+            chapters = resolve_scope('تمام فصول', known)
+            decisions.append(f'{where}: scope "{record["scope"]}" names no chapter list — owner rule 2026-10-25: whole book (all {len(known)} chapters) in scope')
         if chapters is None:
             if record['scope']:
                 decisions.append(f'{where}: scope "{record["scope"]}" names no chapter list; kept as text only')
