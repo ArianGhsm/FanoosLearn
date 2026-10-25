@@ -265,6 +265,34 @@ class NonResidencyProxyPolicyTests(unittest.TestCase):
             self.assertEqual(source["official_scope_note"], note)
             self.assertIs(source["scope_unverified"], False)
 
+    def test_evidence_over_500_characters_is_rejected_not_truncated(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bank = root / "data/bank"
+            bank.mkdir(parents=True)
+            catalog = fixture_catalog()
+            catalog["validity"] = [validity("national", 1404, FAMILY_OLD)]
+            (bank / "catalog.json").write_text(json.dumps(catalog))
+            (bank / "reference-pdfs.json").write_text(json.dumps({"editions": pdf_catalog()}))
+            (bank / "reference-chapter-pages.json").write_text(json.dumps({"editions": chapter_maps()}))
+            sitting = root / "study.json"
+            sitting.write_text(json.dumps({
+                "format": "fanoos.classification.study-only/1", "exam_type": "national",
+                "year": 1404, "round": 1, "questions": [{
+                    "number": 222, "subject": "endodontics", "stem": "Synthetic question?",
+                    "choices": ["a", "b"], "answer": {"choice": 2, "status": "final"}}],
+            }))
+            decisions = root / "decisions.json"
+            decisions.write_text(json.dumps([{
+                "number": 222, "edition": FAMILY_OLD, "chapter": "2", "page": 17,
+                "confidence": .97, "evidence": " ... ".join([EVIDENCE] * 40)}]))
+            output = root / "validated.json"
+            with patch.object(apply_classification, "BANK", bank), \
+                    patch.object(apply_classification, "open_verified_reference", return_value=FakePdf()), \
+                    patch.object(sys, "argv", ["apply_classification.py", "--sitting", str(sitting),
+                        "--decisions", str(decisions), "--out", str(output), "--pdf-pages"]):
+                self.assertNotEqual(apply_classification.main(), 0)
+
     def test_residency_1395_retrospective_decision_still_validates(self):
         # Regression: the same-lineage "_proxy" guard must not reject a
         # pre-1396 retrospective citation (it is a proxy by definition).

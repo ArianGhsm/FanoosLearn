@@ -470,6 +470,11 @@ def main() -> int:
                 if not pieces or any(len(p.split()) < 4 for p in pieces):
                     why = 'evidence must be quoted fragments of at least four words each, joined by "..."'
                     del text
+                elif len(str(d.get('evidence', ''))) > 500:
+                    # The anchor is stored as the evidence itself and the publisher
+                    # requires anchor == evidence, so it cannot be cut silently.
+                    why = 'evidence is longer than 500 characters; quote fewer or shorter fragments'
+                    del text
                 else:
                     page_text = flat(text)
                     del text
