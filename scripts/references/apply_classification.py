@@ -63,6 +63,7 @@ from same_lineage_proxy_policy import (
     BASIS as SAME_LINEAGE_PROXY_BASIS,
     is_proxy_exam_year,
     is_selected_proxy as is_selected_same_lineage_proxy,
+    SCOPE_GAP_REFERENCE_YEARS,
     selected_non_residency_proxy_rows,
     selected_reference_rows as selected_same_lineage_rows,
     valid_proxy_note,
@@ -324,8 +325,13 @@ def main() -> int:
         same_lineage_context = ((exam_type == 'residency' and is_proxy_exam_year(year))
                                 or any(row.get('_proxy') is True
                                        for row in subject_candidates.values()))
+        # A scope-gap exam is a current exam (only its chapter scope is borrowed),
+        # so its published preliminary key is accepted like an exact batch's.
+        key_statuses = (('final', 'amended', 'preliminary')
+                        if q is not None and (exam_type, year, q['subject']) in SCOPE_GAP_REFERENCE_YEARS
+                        else ('final', 'amended'))
         if why is None and (is_retrospective(year) or same_lineage_context) and (
-                q['answer'].get('status') not in ('final', 'amended')
+                q['answer'].get('status') not in key_statuses
                 or q['answer'].get('choice') is None):
             why = 'voided/disputed or missing official answer cannot support older-exam chapter/page'
         if why is None and 'none' in d:

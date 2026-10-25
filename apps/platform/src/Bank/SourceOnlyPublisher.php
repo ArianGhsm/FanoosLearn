@@ -565,8 +565,13 @@ SQL);
                     && ($actual['choice'] !== null || $actual['status'] !== 'voided')) {
                     throw new RuntimeException('Voided Q97 must retain its null-choice voided official answer.');
                 }
+                // A scope-gap exam is current (only its chapter scope is borrowed), so its
+                // published preliminary key is accepted as for an exact batch.
+                $keyStatuses = !$retrospective
+                    && isset(self::SCOPE_GAP_REFERENCE_YEARS["{$examType}:{$year}:{$subject}"])
+                    ? ['final', 'amended', 'preliminary'] : ['final', 'amended'];
                 if (($retrospective || $sameLineageProxy) && ($actual['choice'] === null
-                    || !in_array($actual['status'], ['final', 'amended'], true))) {
+                    || !in_array($actual['status'], $keyStatuses, true))) {
                     throw new RuntimeException('Voided, disputed or keyless older-exam question cannot receive a proxy source.');
                 }
                 $existing->execute($params);
