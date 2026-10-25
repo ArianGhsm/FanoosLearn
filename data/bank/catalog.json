@@ -124,7 +124,7 @@
     "row 585 (board 1403, ارتودانتیکس): explicit second edition 2022 resolved against Quintessence ISBN 9780867159493; the first edition is 2015, ISBN 9780867156515",
     "row 704 (promotion 1405, ارتودانتیکس): edition not stated; recorded as 7th edition from the year 2026 — the promotion-exam notice moves Proffit from 2019 to 2026, the year of the 7th edition",
     "1403 dental-materials phillips-materials@13e: scope \"Part II: Direct Restorative Materials\" read as chapters فصول 5–8 — Part II (Direct Restorative Materials) is chapters 5–8 in the publisher's contents",
-    "1397 dental-materials mccabe-walls-materials@9e: scope \"فصول منتخب؛ فهرست کامل در PDF اصلی (نسخهٔ متن استخراجیِ قدیمی در بعضی اعداد RTL وارونگی دارد).\" names no chapter list; kept as text only",
+    "1397 dental-materials mccabe-walls-materials@9e: scope \"فصول منتخب؛ فهرست کامل در PDF اصلی\" names no chapter list and the original notice is not on file; owner decision 2026-10-25: treat the whole book (chapters 1–30) as in scope, recorded as scope_chapters 1–30",
     "1397 periodontics carranza-periodontology@12e: scope \"فهرست فصل‌های منتخب و بخش‌های Online در PDF؛ متن فصل‌ها به علت کیفیت فونت قدیمی با استخراج خودکار قطعی نیست.\" names no chapter list; kept as text only",
     "national 1401 oral-surgery hupp-oral-surgery@7e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه مشخص نشده است\" names no chapter list; kept as text only",
     "national 1401 oral-surgery malamed-local-anesthesia@7e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه مشخص نشده است\" names no chapter list; kept as text only",
@@ -98401,7 +98401,99 @@
       "official": true,
       "scope": "فصول منتخب؛ فهرست کامل در PDF اصلی (نسخهٔ متن استخراجیِ قدیمی در بعضی اعداد RTL وارونگی دارد).",
       "evidence": "PDF رسمی‌نما؛ فایل بازنشرشده در تلگرام · https://t.me/dparseh86/1230",
-      "source_document": "1397_منابع دستیاری 97_اصلاح شده_3.pdf"
+      "source_document": "1397_منابع دستیاری 97_اصلاح شده_3.pdf",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "23"
+        },
+        {
+          "number": "24"
+        },
+        {
+          "number": "25"
+        },
+        {
+          "number": "26"
+        },
+        {
+          "number": "27"
+        },
+        {
+          "number": "28"
+        },
+        {
+          "number": "29"
+        },
+        {
+          "number": "30"
+        }
+      ]
     },
     {
       "exam_type": "residency",
