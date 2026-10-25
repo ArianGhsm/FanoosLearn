@@ -27,6 +27,14 @@ LAST_PROXY_EXAM_YEAR = 1398
 # newest-first fallback order is enforced for the unfinished older sittings.
 LAST_NEWEST_FIRST_EXAM_YEAR = 1396
 NON_RESIDENCY_EXAM_TYPES = frozenset({"national", "board", "promotion"})
+# Owner decision 2026-10-24: these exam-year lists name the book, but their
+# recovered syllabus row names no chapters («فصول منتخب»). They borrow the
+# chapter scope of the named later official list of the SAME edition as a
+# visible same-lineage proxy that keeps the actual reference year.
+SCOPE_GAP_REFERENCE_YEARS = {
+    ("national", 1402, "pediatric-dentistry"): 1404,
+    ("national", 1403, "pediatric-dentistry"): 1404,
+}
 
 
 def is_proxy_exam_year(exam_year: object) -> bool:
@@ -116,14 +124,18 @@ def selected_non_residency_proxy_rows(
     an equal-distance tie. Edition ranking then follows the residency rule:
     all official editions of those families are ordered newest first and
     each returned row carries that edition's latest official reference year.
-    An exact exam-year list always suppresses this proxy path.
+    An exact exam-year list suppresses this proxy path, except the
+    owner-approved scope gaps (see `_scope_gap_rows`).
     """
     if (exam_type not in NON_RESIDENCY_EXAM_TYPES
             or not isinstance(exam_year, int) or isinstance(exam_year, bool)):
         return []
     rows = _official_rows(catalog, exam_type, subject)
-    if not rows or any(row["year"] == exam_year for row in rows):
+    if not rows:
         return []
+    exact = [row for row in rows if row["year"] == exam_year]
+    if exact:
+        return _scope_gap_rows(rows, exact, exam_type, exam_year, subject, pdfs, chapter_maps)
     nearest_year = min(
         {row["year"] for row in rows},
         key=lambda year: (abs(year - exam_year), -year),
@@ -132,6 +144,28 @@ def selected_non_residency_proxy_rows(
     selected: list[dict] = []
     for family in sorted(families):
         selected.extend(ordered_family_candidates(rows, family, exam_year, pdfs, chapter_maps))
+    return selected
+
+
+def _scope_gap_rows(
+    rows: list[dict], exact: list[dict], exam_type: str, exam_year: int,
+    subject: str, pdfs: dict, chapter_maps: dict,
+) -> list[dict]:
+    """Owner-approved scope borrowing for an exact list without chapters.
+
+    Only the pairs in SCOPE_GAP_REFERENCE_YEARS qualify, only while no
+    exam-year row has a usable scope, and only the same editions' rows of the
+    named reference year are returned (as proxies keeping that year).
+    """
+    reference_year = SCOPE_GAP_REFERENCE_YEARS.get((exam_type, exam_year, subject))
+    if reference_year is None or any(_usable_scope(row) for row in exact):
+        return []
+    editions = {row["edition"] for row in exact}
+    borrowed = [row for row in rows
+                if row["year"] == reference_year and row["edition"] in editions]
+    selected: list[dict] = []
+    for family in sorted({_family(row["edition"]) for row in borrowed}):
+        selected.extend(ordered_family_candidates(borrowed, family, exam_year, pdfs, chapter_maps))
     return selected
 
 

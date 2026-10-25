@@ -12,8 +12,19 @@ that exact exam type, year and subject. It does not depend on a lower year
 bound. National 1397–1400 subjects with no list may use the nearest official
 national list of that subject (for example, national 1399 may select the
 1401 list). Board and promotion subjects follow their own nearest same-type
-list. An exact-year/type/subject list suppresses proxy selection completely.
-Never cross exam types or add a synthetic validity row.
+list. An exact-year/type/subject list suppresses proxy selection completely,
+with one owner-approved exception below. Never cross exam types or add a
+synthetic validity row.
+
+**Scope-gap exception (owner decision 2026-10-24).** National 1402 and 1403
+pediatric dentistry list McDonald & Avery 11e, but the recovered syllabus row
+names no chapters («فصول منتخب»), so no page can be checked against scope.
+Only these two pairs (`SCOPE_GAP_REFERENCE_YEARS` in
+`same_lineage_proxy_policy.py`, mirrored in `SourceOnlyPublisher`) may cite the
+same edition under its national **1404** list and chapter scope, as a visible
+`same_lineage_proxy` with `reference_year=1404` and the usual Persian proxy
+note. The exception lapses automatically if a structured exam-year scope is
+ever recorded, and it never selects another edition, family or year.
 
 ## Selection
 

@@ -112,6 +112,54 @@ class NonResidencyProxyPolicyTests(unittest.TestCase):
             catalog, "national", 1399, "endodontics", FAMILY_OLD, 1401,
             policy.BASIS, pdf_catalog(), chapter_maps()))
 
+    def test_owner_approved_scope_gap_borrows_the_named_year_of_the_same_edition(self):
+        def ped(year, edition, scope):
+            row = validity("national", year, edition, scope)
+            row["subject"] = "pediatric-dentistry"
+            if scope == ():
+                row.pop("scope_chapters")
+                row["scope"] = "فصول منتخب"
+            return row
+        catalog = fixture_catalog()
+        catalog["validity"] += [
+            ped(1401, OTHER, ("2",)),           # nearer list of another family: never used
+            ped(1402, FAMILY_NEW, ()),
+            ped(1403, FAMILY_NEW, ()),
+            ped(1404, FAMILY_NEW, ("2",)),
+            ped(1405, FAMILY_NEW, ("2",)),      # newer year of the same edition: not the named one
+        ]
+        for year in (1402, 1403):
+            selected = policy.selected_non_residency_proxy_rows(
+                catalog, "national", year, "pediatric-dentistry", pdf_catalog(), chapter_maps())
+            self.assertEqual(
+                [(row["year"], row["edition"], row["_rank"], row["_proxy"]) for row in selected],
+                [(1404, FAMILY_NEW, 0, True)])
+            self.assertTrue(policy.is_selected_proxy(
+                catalog, "national", year, "pediatric-dentistry", FAMILY_NEW, 1404,
+                policy.BASIS, pdf_catalog(), chapter_maps()))
+            self.assertFalse(policy.is_selected_proxy(
+                catalog, "national", year, "pediatric-dentistry", FAMILY_NEW, 1405,
+                policy.BASIS, pdf_catalog(), chapter_maps()))
+
+    def test_scope_gap_needs_the_owner_pair_and_an_unstructured_exact_list(self):
+        def ped(year, edition, scope, exam_type="national"):
+            row = validity(exam_type, year, edition, scope)
+            row["subject"] = "pediatric-dentistry"
+            if scope == ():
+                row.pop("scope_chapters")
+            return row
+        structured = fixture_catalog()
+        structured["validity"] += [ped(1402, FAMILY_NEW, ("2",)), ped(1404, FAMILY_NEW, ("2",))]
+        self.assertEqual(policy.selected_non_residency_proxy_rows(
+            structured, "national", 1402, "pediatric-dentistry", pdf_catalog(), chapter_maps()), [])
+        other_pair = fixture_catalog()
+        other_pair["validity"] += [ped(1401, FAMILY_NEW, ()), ped(1404, FAMILY_NEW, ("2",)),
+                                   ped(1402, FAMILY_NEW, (), "board"), ped(1404, FAMILY_NEW, ("2",), "board")]
+        self.assertEqual(policy.selected_non_residency_proxy_rows(
+            other_pair, "national", 1401, "pediatric-dentistry", pdf_catalog(), chapter_maps()), [])
+        self.assertEqual(policy.selected_non_residency_proxy_rows(
+            other_pair, "board", 1402, "pediatric-dentistry", pdf_catalog(), chapter_maps()), [])
+
     def test_batch_prints_selected_national_proxy_candidates(self):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
