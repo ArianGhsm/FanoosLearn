@@ -514,11 +514,13 @@ def main() -> int:
                 else:
                     accepted[n]['classification_basis'] = 'official_exam_year'
                     accepted[n]['reference_year'] = year
-                if same_lineage_proxy and not outside_scope:
+                if same_lineage_proxy:
                     # The publisher and provenance audit require an explicit
-                    # in-scope label on every same-lineage proxy citation.
-                    accepted[n]['official_scope_status'] = 'in_scope'
+                    # scope label on every same-lineage proxy citation; an
+                    # outside-scope row gets its status from the block below.
                     accepted[n]['scope_unverified'] = False
+                    if not outside_scope:
+                        accepted[n]['official_scope_status'] = 'in_scope'
                 if outside_scope:
                     accepted[n]['official_scope_status'] = 'outside_scope_exam_question'
                     accepted[n]['official_scope_note'] = str(d['outside_scope_note']).strip()

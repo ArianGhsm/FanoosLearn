@@ -226,6 +226,45 @@ class NonResidencyProxyPolicyTests(unittest.TestCase):
             self.assertEqual(source["official_scope_status"], "in_scope")
             self.assertGreaterEqual(source["confidence"]["page"], .85)
 
+    def test_national_proxy_outside_scope_row_keeps_explicit_scope_label(self):
+        # Regression: an outside-scope same-lineage proxy citation must carry
+        # scope_unverified=False like an in-scope one, or audit/publish reject it.
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bank = root / "data/bank"
+            bank.mkdir(parents=True)
+            catalog = fixture_catalog()
+            catalog["validity"] = [validity("national", 1401, FAMILY_OLD, scope=("1",))]
+            (bank / "catalog.json").write_text(json.dumps(catalog))
+            (bank / "reference-pdfs.json").write_text(json.dumps({"editions": pdf_catalog()}))
+            (bank / "reference-chapter-pages.json").write_text(json.dumps({"editions": chapter_maps()}))
+            sitting = root / "study.json"
+            sitting.write_text(json.dumps({
+                "format": "fanoos.classification.study-only/1", "exam_type": "national",
+                "year": 1399, "round": 2, "questions": [{
+                    "number": 222, "subject": "endodontics", "stem": "Synthetic question?",
+                    "choices": ["a", "b"], "answer": {"choice": 2, "status": "final"}}],
+            }))
+            note = apply_classification.national_outside_scope_note(1399)
+            decisions = root / "decisions.json"
+            decisions.write_text(json.dumps([{
+                "number": 222, "edition": FAMILY_OLD, "reference_year": 1401,
+                "classification_basis": "same_lineage_proxy", "proxy_note": PROXY_NOTE,
+                "chapter": "2", "page": 17, "confidence": .97, "evidence": EVIDENCE,
+                "outside_scope_note": note}], ensure_ascii=False))
+            output = root / "validated.json"
+            with patch.object(apply_classification, "BANK", bank), \
+                    patch.object(apply_classification, "open_verified_reference", return_value=FakePdf()), \
+                    patch.object(sys, "argv", ["apply_classification.py", "--sitting", str(sitting),
+                        "--decisions", str(decisions), "--out", str(output), "--pdf-pages",
+                        "--allow-outside-scope"]):
+                self.assertEqual(apply_classification.main(), 0)
+            source = json.loads(output.read_text())["questions"][0]["sources"][0]
+            self.assertEqual(source["classification_basis"], "same_lineage_proxy")
+            self.assertEqual(source["official_scope_status"], "outside_scope_exam_question")
+            self.assertEqual(source["official_scope_note"], note)
+            self.assertIs(source["scope_unverified"], False)
+
     def test_residency_1395_retrospective_decision_still_validates(self):
         # Regression: the same-lineage "_proxy" guard must not reject a
         # pre-1396 retrospective citation (it is a proxy by definition).
