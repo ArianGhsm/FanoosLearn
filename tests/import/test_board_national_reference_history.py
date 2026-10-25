@@ -87,5 +87,12 @@ class BoardNationalReferenceHistoryTest(unittest.TestCase):
         self.assertIn('تعارض', row['scope'])
 
 
+    def test_selected_chapters_without_a_list_mean_the_whole_book(self):
+        # Owner rule 2026-10-25: «فصول منتخب» with no chapter list → whole book.
+        row = self.row('board', 1404, 'periodontics', 'carranza-periodontology@14e')
+        self.assertIn('فصول منتخب', row['scope'])
+        self.assertGreater(len(row.get('scope_chapters') or []), 50)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -125,10 +125,10 @@
     "row 704 (promotion 1405, ارتودانتیکس): edition not stated; recorded as 7th edition from the year 2026 — the promotion-exam notice moves Proffit from 2019 to 2026, the year of the 7th edition",
     "1403 dental-materials phillips-materials@13e: scope \"Part II: Direct Restorative Materials\" read as chapters فصول 5–8 — Part II (Direct Restorative Materials) is chapters 5–8 in the publisher's contents",
     "1397 dental-materials mccabe-walls-materials@9e: scope \"فصول منتخب؛ فهرست کامل در PDF اصلی (نسخهٔ متن استخراجیِ قدیمی در بعضی اعداد RTL وارونگی دارد).\" read as chapters فصول 1–30 — the selected-chapter list is only in the original notice, which is not on file; owner decision 2026-10-25: treat the whole book (chapters 1–30) as in scope",
-    "1397 periodontics carranza-periodontology@12e: scope \"فهرست فصل‌های منتخب و بخش‌های Online در PDF؛ متن فصل‌ها به علت کیفیت فونت قدیمی با استخراج خودکار قطعی نیست.\" names no chapter list; kept as text only",
+    "1397 periodontics carranza-periodontology@12e: scope \"فهرست فصل‌های منتخب و بخش‌های Online در PDF؛ متن فصل‌ها به علت کیفیت فونت قدیمی با استخراج خودکار قطعی نیست.\" names no chapter list — owner rule 2026-10-25: whole book (all 89 chapters) in scope",
     "national 1401 endodontics torabinejad-endodontics@6e: scope \"تمام فصول به غیر از فصل 5 و صفحات 444 تا 452\" names no chapter list; kept as text only",
-    "national 1401 oral-surgery hupp-oral-surgery@7e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه مشخص نشده است\" names no chapter list; kept as text only",
-    "national 1401 oral-surgery malamed-local-anesthesia@7e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه مشخص نشده است\" names no chapter list; kept as text only",
+    "national 1401 oral-surgery hupp-oral-surgery@7e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه مشخص نشده است\" names no chapter list — owner rule 2026-10-25: whole book (all 31 chapters) in scope",
+    "national 1401 oral-surgery malamed-local-anesthesia@7e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه مشخص نشده است\" names no chapter list — owner rule 2026-10-25: whole book (all 23 chapters) in scope",
     "national 1402 endodontics torabinejad-endodontics@6e: scope \"تمام فصول به غیر از فصول 20 و 21 و صفحات 83 تا 89 از فصل 5\" names no chapter list; kept as text only",
     "national 1402 pediatric-dentistry mcdonald-avery-pediatric@11e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ردیف نسخهٔ بازیابی‌شده درج نشده است\" names no chapter list; kept as text only",
     "national 1403 endodontics torabinejad-endodontics@6e: scope \"تمام فصول به غیر از فصول 20 و 21 و صفحات 83 تا 89 از فصل 5\" names no chapter list; kept as text only",
@@ -157,7 +157,7 @@
     "board 1401 endodontics ingle-endodontics@7e: scope \"کلیه فصول کتاب\" names no chapter list; kept as text only",
     "board 1401 endodontics cohen-pathways@12e: scope \"کلیه فصول کتاب\" names no chapter list; kept as text only",
     "board 1401 pediatric-dentistry andreasen-traumatic-injuries@5e: scope \"همهٔ فصول به جز فصول 1 و 2 و 4 و 7 و 9 و 10 و 29 و 30 و 31 و 36 و 38 و 41 و 42 و 44\" names no chapter list; kept as text only",
-    "board 1401 periodontics carranza-periodontology@13e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است\" names no chapter list; kept as text only",
+    "board 1401 periodontics carranza-periodontology@13e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است\" names no chapter list — owner rule 2026-10-25: whole book (all 88 chapters) in scope",
     "board 1401 periodontics lindhe-clinical-periodontology@6e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است\" names no chapter list; kept as text only",
     "board 1401 periodontics lotfazar-barrier-membranes-fa@2: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است\" names no chapter list; kept as text only",
     "board 1401 prosthodontics dawson-functional-occlusion@1e: scope \"همهٔ کتاب به جز فصول 23 و 24 و 25 و 26 و 27 و 28 و 32 و 45 و 46 و 47\" names no chapter list; kept as text only",
@@ -172,7 +172,7 @@
     "board 1402 oral-surgery fonseca-trauma@4e: scope \"کلیه فصول کتاب؛ شرط انتشار چاپ جدید تا شش ماه پیش از آزمون در ابلاغیه آمده است؛ نسخهٔ جایگزین بدون سند ثبت نمی‌شود\" names no chapter list; kept as text only",
     "board 1402 endodontics torabinejad-surgical-endodontics@1e: scope \"کلیه فصول کتاب\" names no chapter list; kept as text only",
     "board 1402 pediatric-dentistry andreasen-traumatic-injuries@5e: scope \"همهٔ فصول به جز فصول 1 و 2 و 4 و 7 و 9 و 10 و 29 و 30 و 31 و 36 و 38 و 41 و 42 و 44\" names no chapter list; kept as text only",
-    "board 1402 periodontics carranza-periodontology@13e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است\" names no chapter list; kept as text only",
+    "board 1402 periodontics carranza-periodontology@13e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است\" names no chapter list — owner rule 2026-10-25: whole book (all 88 chapters) in scope",
     "board 1402 periodontics lindhe-clinical-periodontology@7e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است\" names no chapter list; kept as text only",
     "board 1402 periodontics lotfazar-barrier-membranes-fa@2: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است\" names no chapter list; kept as text only",
     "board 1402 prosthodontics dawson-functional-occlusion@1e: scope \"همهٔ کتاب به جز فصول 23 و 24 و 25 و 26 و 27 و 28 و 32 و 45 و 46 و 47\" names no chapter list; kept as text only",
@@ -186,7 +186,7 @@
     "board 1403 oral-surgery peterson-principles@4e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها به علت تعارض فهرست فارسی و انگلیسی ابلاغیه تأیید نشده است\" names no chapter list; kept as text only",
     "board 1403 oral-surgery fonseca-trauma@4e: scope \"کلیه فصول کتاب؛ شرط انتشار چاپ جدید تا شش ماه پیش از آزمون در ابلاغیه آمده است؛ نسخهٔ جایگزین بدون سند ثبت نمی‌شود\" names no chapter list; kept as text only",
     "board 1403 endodontics torabinejad-surgical-endodontics@1e: scope \"کلیه فصول کتاب\" names no chapter list; kept as text only",
-    "board 1403 periodontics carranza-periodontology@13e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است\" names no chapter list; kept as text only",
+    "board 1403 periodontics carranza-periodontology@13e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است\" names no chapter list — owner rule 2026-10-25: whole book (all 88 chapters) in scope",
     "board 1403 periodontics lindhe-clinical-periodontology@7e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است\" names no chapter list; kept as text only",
     "board 1403 periodontics lotfazar-barrier-membranes-fa@2: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است\" names no chapter list; kept as text only",
     "board 1403 prosthodontics dawson-functional-occlusion@1e: scope \"همهٔ کتاب به جز فصول 23 و 24 و 25 و 26 و 27 و 28 و 32 و 45 و 46 و 47\" names no chapter list; kept as text only",
@@ -196,10 +196,10 @@
     "board 1403 prosthodontics misch-implant-prosthetics@2e: scope \"همهٔ کتاب به جز فصول 1 و 3 و 4 و 6 و 32 و 33 و 34\" names no chapter list; kept as text only",
     "board 1403 oral-pathology regezi-oral-pathology@7e: scope \"کلیه فصول کتاب\" names no chapter list; kept as text only",
     "board 1403 oral-pathology ten-cate-histology@9e: scope \"همهٔ فصول به جز فصول 1 و 2 و 4 و 10 و 13 و 14 و 15\" names no chapter list; kept as text only",
-    "board 1403 orthodontics proffit-orthodontics@6e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است\" names no chapter list; kept as text only",
+    "board 1403 orthodontics proffit-orthodontics@6e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است\" names no chapter list — owner rule 2026-10-25: whole book (all 20 chapters) in scope",
     "board 1403 orthodontics graber-orthodontics@7e: scope \"همهٔ فصول به جز فصول 1 و 6 و 11 و 12 و 16 و قسمت A فصل 17 و 18 و 21 و 36 و 40\" names no chapter list; kept as text only",
     "board 1404 oral-surgery fonseca-trauma@4e: scope \"کلیه فصول کتاب؛ شرط انتشار چاپ جدید تا شش ماه پیش از آزمون در ابلاغیه آمده است؛ نسخهٔ جایگزین بدون سند ثبت نمی‌شود\" names no chapter list; kept as text only",
-    "board 1404 periodontics carranza-periodontology@14e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است\" names no chapter list; kept as text only",
+    "board 1404 periodontics carranza-periodontology@14e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است\" names no chapter list — owner rule 2026-10-25: whole book (all 88 chapters) in scope",
     "board 1404 periodontics lindhe-clinical-periodontology@7e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است\" names no chapter list; kept as text only",
     "board 1404 periodontics lotfazar-barrier-membranes-fa@2: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است\" names no chapter list; kept as text only",
     "board 1404 prosthodontics dawson-functional-occlusion@1e: scope \"همهٔ کتاب به جز فصول 23 و 24 و 25 و 26 و 27 و 28 و 32 و 45 و 46 و 47\" names no chapter list; kept as text only",
@@ -209,7 +209,7 @@
     "board 1404 prosthodontics misch-implant-prosthetics@2e: scope \"همهٔ کتاب به جز فصول 1 و 3 و 4 و 6 و 32 و 33 و 34\" names no chapter list; kept as text only",
     "board 1404 oral-pathology regezi-oral-pathology@7e: scope \"کلیه فصول کتاب\" names no chapter list; kept as text only",
     "board 1404 oral-pathology ten-cate-histology@9e: scope \"همهٔ فصول به جز فصول 1 و 2 و 4 و 10 و 13 و 14 و 15\" names no chapter list; kept as text only",
-    "board 1404 orthodontics proffit-orthodontics@6e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است\" names no chapter list; kept as text only",
+    "board 1404 orthodontics proffit-orthodontics@6e: scope \"فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است\" names no chapter list — owner rule 2026-10-25: whole book (all 20 chapters) in scope",
     "board 1404 orthodontics graber-orthodontics@7e: scope \"همهٔ فصول به جز فصول 1 و 11 و قسمت A فصل 17 و 18 و 21 و 22 و 27 و 35 و 36 و 40\" names no chapter list; kept as text only",
     "board 1404 orthodontics nanda-aligners@1e: scope \"همهٔ فصول به جز فصول 1 و 15 و 16 و 17 و 18 و 19\" names no chapter list; kept as text only",
     "board 1405 endodontics ingle-endodontics@7e: scope \"تمام فصول کتاب\" names no chapter list; kept as text only",
@@ -75880,7 +75880,69 @@
       "official": true,
       "scope": "فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است",
       "evidence": "Official board dentistry 1404 notice; exact original PDF page 14; SHA-256 9e38102b0a136d63855d56447b603ceb412daf7d8485c1b68fada81532c72804",
-      "source_document": "https://dl.konkur.in/2024/11/Reference1404-Board-Dental-%5Bkonkur.in%5D.pdf"
+      "source_document": "https://dl.konkur.in/2024/11/Reference1404-Board-Dental-%5Bkonkur.in%5D.pdf",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        }
+      ]
     },
     {
       "exam_type": "board",
@@ -76295,7 +76357,273 @@
       "official": true,
       "scope": "فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است",
       "evidence": "Official board dentistry 1404 notice; exact original PDF page 8; SHA-256 9e38102b0a136d63855d56447b603ceb412daf7d8485c1b68fada81532c72804",
-      "source_document": "https://dl.konkur.in/2024/11/Reference1404-Board-Dental-%5Bkonkur.in%5D.pdf"
+      "source_document": "https://dl.konkur.in/2024/11/Reference1404-Board-Dental-%5Bkonkur.in%5D.pdf",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "23"
+        },
+        {
+          "number": "24"
+        },
+        {
+          "number": "25"
+        },
+        {
+          "number": "26"
+        },
+        {
+          "number": "27"
+        },
+        {
+          "number": "28"
+        },
+        {
+          "number": "29"
+        },
+        {
+          "number": "30"
+        },
+        {
+          "number": "31"
+        },
+        {
+          "number": "32"
+        },
+        {
+          "number": "33"
+        },
+        {
+          "number": "34"
+        },
+        {
+          "number": "35"
+        },
+        {
+          "number": "36"
+        },
+        {
+          "number": "37"
+        },
+        {
+          "number": "38"
+        },
+        {
+          "number": "39"
+        },
+        {
+          "number": "40"
+        },
+        {
+          "number": "41"
+        },
+        {
+          "number": "42"
+        },
+        {
+          "number": "43"
+        },
+        {
+          "number": "44"
+        },
+        {
+          "number": "45"
+        },
+        {
+          "number": "46"
+        },
+        {
+          "number": "47"
+        },
+        {
+          "number": "48"
+        },
+        {
+          "number": "49"
+        },
+        {
+          "number": "50"
+        },
+        {
+          "number": "51"
+        },
+        {
+          "number": "52"
+        },
+        {
+          "number": "53"
+        },
+        {
+          "number": "54"
+        },
+        {
+          "number": "55"
+        },
+        {
+          "number": "56"
+        },
+        {
+          "number": "57"
+        },
+        {
+          "number": "58"
+        },
+        {
+          "number": "59"
+        },
+        {
+          "number": "60"
+        },
+        {
+          "number": "61"
+        },
+        {
+          "number": "62"
+        },
+        {
+          "number": "63"
+        },
+        {
+          "number": "64"
+        },
+        {
+          "number": "65"
+        },
+        {
+          "number": "66"
+        },
+        {
+          "number": "67"
+        },
+        {
+          "number": "68"
+        },
+        {
+          "number": "69"
+        },
+        {
+          "number": "70"
+        },
+        {
+          "number": "71"
+        },
+        {
+          "number": "72"
+        },
+        {
+          "number": "73"
+        },
+        {
+          "number": "74"
+        },
+        {
+          "number": "75"
+        },
+        {
+          "number": "76"
+        },
+        {
+          "number": "77"
+        },
+        {
+          "number": "78"
+        },
+        {
+          "number": "79"
+        },
+        {
+          "number": "80"
+        },
+        {
+          "number": "81"
+        },
+        {
+          "number": "82"
+        },
+        {
+          "number": "83"
+        },
+        {
+          "number": "84"
+        },
+        {
+          "number": "85"
+        },
+        {
+          "number": "86"
+        },
+        {
+          "number": "87"
+        },
+        {
+          "number": "88"
+        }
+      ]
     },
     {
       "exam_type": "board",
@@ -80533,7 +80861,69 @@
       "official": true,
       "scope": "فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است",
       "evidence": "Official board dentistry 1403 notice; original member منابع ارتقا و بورد ارتودانتیکس 1403.pdf, page 1; PDF SHA-256 a7985bda646741eb40eae66bda773e752ee744e9262f625973ba928f4808e8ef",
-      "source_document": "https://dl.konkur.in/2024/04/Reference1403-Board-Dental-%5Bkonkur.in%5D.zip"
+      "source_document": "https://dl.konkur.in/2024/04/Reference1403-Board-Dental-%5Bkonkur.in%5D.zip",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        }
+      ]
     },
     {
       "exam_type": "board",
@@ -80990,7 +81380,273 @@
       "official": true,
       "scope": "فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است",
       "evidence": "Official board dentistry 1403 notice; original member منابع ارتقا و بورد پریودانتیکس 1403.pdf, page 1; PDF SHA-256 f65d10180ff340b74587f4b39bb43c2866d204812afd35e7a656f6f0acd6e72a",
-      "source_document": "https://dl.konkur.in/2024/04/Reference1403-Board-Dental-%5Bkonkur.in%5D.zip"
+      "source_document": "https://dl.konkur.in/2024/04/Reference1403-Board-Dental-%5Bkonkur.in%5D.zip",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "23"
+        },
+        {
+          "number": "24"
+        },
+        {
+          "number": "25"
+        },
+        {
+          "number": "26"
+        },
+        {
+          "number": "27"
+        },
+        {
+          "number": "28"
+        },
+        {
+          "number": "29"
+        },
+        {
+          "number": "30"
+        },
+        {
+          "number": "31"
+        },
+        {
+          "number": "32"
+        },
+        {
+          "number": "33"
+        },
+        {
+          "number": "34"
+        },
+        {
+          "number": "35"
+        },
+        {
+          "number": "36"
+        },
+        {
+          "number": "37"
+        },
+        {
+          "number": "38"
+        },
+        {
+          "number": "39"
+        },
+        {
+          "number": "40"
+        },
+        {
+          "number": "41"
+        },
+        {
+          "number": "42"
+        },
+        {
+          "number": "43"
+        },
+        {
+          "number": "44"
+        },
+        {
+          "number": "45"
+        },
+        {
+          "number": "46"
+        },
+        {
+          "number": "47"
+        },
+        {
+          "number": "48"
+        },
+        {
+          "number": "49"
+        },
+        {
+          "number": "50"
+        },
+        {
+          "number": "51"
+        },
+        {
+          "number": "52"
+        },
+        {
+          "number": "53"
+        },
+        {
+          "number": "54"
+        },
+        {
+          "number": "55"
+        },
+        {
+          "number": "56"
+        },
+        {
+          "number": "57"
+        },
+        {
+          "number": "58"
+        },
+        {
+          "number": "59"
+        },
+        {
+          "number": "60"
+        },
+        {
+          "number": "61"
+        },
+        {
+          "number": "62"
+        },
+        {
+          "number": "63"
+        },
+        {
+          "number": "64"
+        },
+        {
+          "number": "65"
+        },
+        {
+          "number": "66"
+        },
+        {
+          "number": "67"
+        },
+        {
+          "number": "68"
+        },
+        {
+          "number": "69"
+        },
+        {
+          "number": "70"
+        },
+        {
+          "number": "71"
+        },
+        {
+          "number": "72"
+        },
+        {
+          "number": "73"
+        },
+        {
+          "number": "74"
+        },
+        {
+          "number": "75"
+        },
+        {
+          "number": "76"
+        },
+        {
+          "number": "77"
+        },
+        {
+          "number": "78"
+        },
+        {
+          "number": "79"
+        },
+        {
+          "number": "80"
+        },
+        {
+          "number": "81"
+        },
+        {
+          "number": "82"
+        },
+        {
+          "number": "83"
+        },
+        {
+          "number": "84"
+        },
+        {
+          "number": "85"
+        },
+        {
+          "number": "86"
+        },
+        {
+          "number": "87"
+        },
+        {
+          "number": "88"
+        }
+      ]
     },
     {
       "exam_type": "board",
@@ -85416,7 +86072,273 @@
       "official": true,
       "scope": "فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است",
       "evidence": "Official board dentistry 1402 notice; original member Manabe-Daneshname-Govahiname-Dandanpezeshki-1402-[konkur.in]/منابع دانشنامه گواهینامه و ارتقاء 1402 پریو.pdf, page 1; PDF SHA-256 9901c5c15b69024d96e0076bda09a0c09c4f2b5af97263a203b60d79302ecc99",
-      "source_document": "https://dl.konkur.in/2023/01/Manabe-Daneshname-Govahiname-Dandanpezeshki-1402-%5Bkonkur.in%5D.rar"
+      "source_document": "https://dl.konkur.in/2023/01/Manabe-Daneshname-Govahiname-Dandanpezeshki-1402-%5Bkonkur.in%5D.rar",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "23"
+        },
+        {
+          "number": "24"
+        },
+        {
+          "number": "25"
+        },
+        {
+          "number": "26"
+        },
+        {
+          "number": "27"
+        },
+        {
+          "number": "28"
+        },
+        {
+          "number": "29"
+        },
+        {
+          "number": "30"
+        },
+        {
+          "number": "31"
+        },
+        {
+          "number": "32"
+        },
+        {
+          "number": "33"
+        },
+        {
+          "number": "34"
+        },
+        {
+          "number": "35"
+        },
+        {
+          "number": "36"
+        },
+        {
+          "number": "37"
+        },
+        {
+          "number": "38"
+        },
+        {
+          "number": "39"
+        },
+        {
+          "number": "40"
+        },
+        {
+          "number": "41"
+        },
+        {
+          "number": "42"
+        },
+        {
+          "number": "43"
+        },
+        {
+          "number": "44"
+        },
+        {
+          "number": "45"
+        },
+        {
+          "number": "46"
+        },
+        {
+          "number": "47"
+        },
+        {
+          "number": "48"
+        },
+        {
+          "number": "49"
+        },
+        {
+          "number": "50"
+        },
+        {
+          "number": "51"
+        },
+        {
+          "number": "52"
+        },
+        {
+          "number": "53"
+        },
+        {
+          "number": "54"
+        },
+        {
+          "number": "55"
+        },
+        {
+          "number": "56"
+        },
+        {
+          "number": "57"
+        },
+        {
+          "number": "58"
+        },
+        {
+          "number": "59"
+        },
+        {
+          "number": "60"
+        },
+        {
+          "number": "61"
+        },
+        {
+          "number": "62"
+        },
+        {
+          "number": "63"
+        },
+        {
+          "number": "64"
+        },
+        {
+          "number": "65"
+        },
+        {
+          "number": "66"
+        },
+        {
+          "number": "67"
+        },
+        {
+          "number": "68"
+        },
+        {
+          "number": "69"
+        },
+        {
+          "number": "70"
+        },
+        {
+          "number": "71"
+        },
+        {
+          "number": "72"
+        },
+        {
+          "number": "73"
+        },
+        {
+          "number": "74"
+        },
+        {
+          "number": "75"
+        },
+        {
+          "number": "76"
+        },
+        {
+          "number": "77"
+        },
+        {
+          "number": "78"
+        },
+        {
+          "number": "79"
+        },
+        {
+          "number": "80"
+        },
+        {
+          "number": "81"
+        },
+        {
+          "number": "82"
+        },
+        {
+          "number": "83"
+        },
+        {
+          "number": "84"
+        },
+        {
+          "number": "85"
+        },
+        {
+          "number": "86"
+        },
+        {
+          "number": "87"
+        },
+        {
+          "number": "88"
+        }
+      ]
     },
     {
       "exam_type": "board",
@@ -89734,7 +90656,273 @@
       "official": true,
       "scope": "فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه تصریح نشده است",
       "evidence": "Official board dentistry 1401 notice; original member Manabe-Azmoon-Daneshname-Govahiname-Dandanpezesi-1401-[konkur.in]/Manabe-Azmoon-Daneshname-Dandanpezeshki-Priodantix-1401-[konkur.in].pdf, page 1; PDF SHA-256 10560762ce5c0d3c62d5acf0335266304b17e5c8e97a744dc13505b8375f49e2",
-      "source_document": "https://dl.konkur.in/2022/06/Manabe-Azmoon-Daneshname-Govahiname-Dandanpezesi-1401-%5Bkonkur.in%5D.rar"
+      "source_document": "https://dl.konkur.in/2022/06/Manabe-Azmoon-Daneshname-Govahiname-Dandanpezesi-1401-%5Bkonkur.in%5D.rar",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "23"
+        },
+        {
+          "number": "24"
+        },
+        {
+          "number": "25"
+        },
+        {
+          "number": "26"
+        },
+        {
+          "number": "27"
+        },
+        {
+          "number": "28"
+        },
+        {
+          "number": "29"
+        },
+        {
+          "number": "30"
+        },
+        {
+          "number": "31"
+        },
+        {
+          "number": "32"
+        },
+        {
+          "number": "33"
+        },
+        {
+          "number": "34"
+        },
+        {
+          "number": "35"
+        },
+        {
+          "number": "36"
+        },
+        {
+          "number": "37"
+        },
+        {
+          "number": "38"
+        },
+        {
+          "number": "39"
+        },
+        {
+          "number": "40"
+        },
+        {
+          "number": "41"
+        },
+        {
+          "number": "42"
+        },
+        {
+          "number": "43"
+        },
+        {
+          "number": "44"
+        },
+        {
+          "number": "45"
+        },
+        {
+          "number": "46"
+        },
+        {
+          "number": "47"
+        },
+        {
+          "number": "48"
+        },
+        {
+          "number": "49"
+        },
+        {
+          "number": "50"
+        },
+        {
+          "number": "51"
+        },
+        {
+          "number": "52"
+        },
+        {
+          "number": "53"
+        },
+        {
+          "number": "54"
+        },
+        {
+          "number": "55"
+        },
+        {
+          "number": "56"
+        },
+        {
+          "number": "57"
+        },
+        {
+          "number": "58"
+        },
+        {
+          "number": "59"
+        },
+        {
+          "number": "60"
+        },
+        {
+          "number": "61"
+        },
+        {
+          "number": "62"
+        },
+        {
+          "number": "63"
+        },
+        {
+          "number": "64"
+        },
+        {
+          "number": "65"
+        },
+        {
+          "number": "66"
+        },
+        {
+          "number": "67"
+        },
+        {
+          "number": "68"
+        },
+        {
+          "number": "69"
+        },
+        {
+          "number": "70"
+        },
+        {
+          "number": "71"
+        },
+        {
+          "number": "72"
+        },
+        {
+          "number": "73"
+        },
+        {
+          "number": "74"
+        },
+        {
+          "number": "75"
+        },
+        {
+          "number": "76"
+        },
+        {
+          "number": "77"
+        },
+        {
+          "number": "78"
+        },
+        {
+          "number": "79"
+        },
+        {
+          "number": "80"
+        },
+        {
+          "number": "81"
+        },
+        {
+          "number": "82"
+        },
+        {
+          "number": "83"
+        },
+        {
+          "number": "84"
+        },
+        {
+          "number": "85"
+        },
+        {
+          "number": "86"
+        },
+        {
+          "number": "87"
+        },
+        {
+          "number": "88"
+        }
+      ]
     },
     {
       "exam_type": "board",
@@ -90421,7 +91609,102 @@
       "official": true,
       "scope": "فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه مشخص نشده است",
       "evidence": "Official national dentistry 1401 notice, all three original pages read visually; PDF SHA-256 a0dce5a9430cdbf5fc4ebb5d522184dbae90fc15e32d0ac5bfcd1cf31c337868; the separate English-level entrance notice is not a book-source exemption; original notice page 2",
-      "source_document": "https://dl.konkur.in/2022/06/Manabe-Azmoon-Meli-Dandanpezeshki-Kharej-Az-Keshvar-1401-%5Bkonkur.in%5D.pdf"
+      "source_document": "https://dl.konkur.in/2022/06/Manabe-Azmoon-Meli-Dandanpezeshki-Kharej-Az-Keshvar-1401-%5Bkonkur.in%5D.pdf",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "23"
+        },
+        {
+          "number": "24"
+        },
+        {
+          "number": "25"
+        },
+        {
+          "number": "26"
+        },
+        {
+          "number": "27"
+        },
+        {
+          "number": "28"
+        },
+        {
+          "number": "29"
+        },
+        {
+          "number": "30"
+        },
+        {
+          "number": "31"
+        }
+      ]
     },
     {
       "exam_type": "national",
@@ -90431,7 +91714,78 @@
       "official": true,
       "scope": "فصول منتخب؛ محدودهٔ فصل‌ها در ابلاغیه مشخص نشده است",
       "evidence": "Official national dentistry 1401 notice, all three original pages read visually; PDF SHA-256 a0dce5a9430cdbf5fc4ebb5d522184dbae90fc15e32d0ac5bfcd1cf31c337868; the separate English-level entrance notice is not a book-source exemption; original notice page 2",
-      "source_document": "https://dl.konkur.in/2022/06/Manabe-Azmoon-Meli-Dandanpezeshki-Kharej-Az-Keshvar-1401-%5Bkonkur.in%5D.pdf"
+      "source_document": "https://dl.konkur.in/2022/06/Manabe-Azmoon-Meli-Dandanpezeshki-Kharej-Az-Keshvar-1401-%5Bkonkur.in%5D.pdf",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "23"
+        }
+      ]
     },
     {
       "exam_type": "national",
@@ -99189,7 +100543,276 @@
       "official": true,
       "scope": "فهرست فصل‌های منتخب و بخش‌های Online در PDF؛ متن فصل‌ها به علت کیفیت فونت قدیمی با استخراج خودکار قطعی نیست.",
       "evidence": "PDF رسمی‌نما؛ فایل بازنشرشده در تلگرام · https://t.me/dparseh86/1230",
-      "source_document": "1397_منابع دستیاری 97_اصلاح شده_3.pdf"
+      "source_document": "1397_منابع دستیاری 97_اصلاح شده_3.pdf",
+      "scope_chapters": [
+        {
+          "number": "1"
+        },
+        {
+          "number": "2"
+        },
+        {
+          "number": "3"
+        },
+        {
+          "number": "4"
+        },
+        {
+          "number": "5"
+        },
+        {
+          "number": "6"
+        },
+        {
+          "number": "7"
+        },
+        {
+          "number": "8"
+        },
+        {
+          "number": "9"
+        },
+        {
+          "number": "10"
+        },
+        {
+          "number": "11"
+        },
+        {
+          "number": "12"
+        },
+        {
+          "number": "13"
+        },
+        {
+          "number": "14"
+        },
+        {
+          "number": "15"
+        },
+        {
+          "number": "16"
+        },
+        {
+          "number": "17"
+        },
+        {
+          "number": "18"
+        },
+        {
+          "number": "19"
+        },
+        {
+          "number": "20"
+        },
+        {
+          "number": "21"
+        },
+        {
+          "number": "22"
+        },
+        {
+          "number": "23"
+        },
+        {
+          "number": "24"
+        },
+        {
+          "number": "25"
+        },
+        {
+          "number": "26"
+        },
+        {
+          "number": "28"
+        },
+        {
+          "number": "29"
+        },
+        {
+          "number": "30"
+        },
+        {
+          "number": "31"
+        },
+        {
+          "number": "32"
+        },
+        {
+          "number": "33"
+        },
+        {
+          "number": "34"
+        },
+        {
+          "number": "35"
+        },
+        {
+          "number": "36"
+        },
+        {
+          "number": "37"
+        },
+        {
+          "number": "38"
+        },
+        {
+          "number": "39"
+        },
+        {
+          "number": "40"
+        },
+        {
+          "number": "41"
+        },
+        {
+          "number": "42"
+        },
+        {
+          "number": "43"
+        },
+        {
+          "number": "44"
+        },
+        {
+          "number": "45"
+        },
+        {
+          "number": "46"
+        },
+        {
+          "number": "47"
+        },
+        {
+          "number": "48"
+        },
+        {
+          "number": "49"
+        },
+        {
+          "number": "50"
+        },
+        {
+          "number": "51"
+        },
+        {
+          "number": "52"
+        },
+        {
+          "number": "53"
+        },
+        {
+          "number": "54"
+        },
+        {
+          "number": "55"
+        },
+        {
+          "number": "56"
+        },
+        {
+          "number": "57"
+        },
+        {
+          "number": "58"
+        },
+        {
+          "number": "59"
+        },
+        {
+          "number": "60"
+        },
+        {
+          "number": "61"
+        },
+        {
+          "number": "62"
+        },
+        {
+          "number": "63"
+        },
+        {
+          "number": "64"
+        },
+        {
+          "number": "65"
+        },
+        {
+          "number": "66"
+        },
+        {
+          "number": "67"
+        },
+        {
+          "number": "68"
+        },
+        {
+          "number": "69"
+        },
+        {
+          "number": "70"
+        },
+        {
+          "number": "71"
+        },
+        {
+          "number": "72"
+        },
+        {
+          "number": "73"
+        },
+        {
+          "number": "74"
+        },
+        {
+          "number": "75"
+        },
+        {
+          "number": "76"
+        },
+        {
+          "number": "77"
+        },
+        {
+          "number": "78"
+        },
+        {
+          "number": "79"
+        },
+        {
+          "number": "80"
+        },
+        {
+          "number": "81"
+        },
+        {
+          "number": "82"
+        },
+        {
+          "number": "83"
+        },
+        {
+          "number": "84"
+        },
+        {
+          "number": "85"
+        },
+        {
+          "number": "86"
+        },
+        {
+          "number": "87"
+        },
+        {
+          "number": "88"
+        },
+        {
+          "number": "89"
+        },
+        {
+          "number": "90"
+        }
+      ]
     },
     {
       "exam_type": "residency",
