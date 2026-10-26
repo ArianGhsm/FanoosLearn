@@ -293,6 +293,42 @@ class NonResidencyProxyPolicyTests(unittest.TestCase):
                         "--decisions", str(decisions), "--out", str(output), "--pdf-pages"]):
                 self.assertNotEqual(apply_classification.main(), 0)
 
+    def _validate_preliminary_proxy(self, year):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bank = root / "data/bank"
+            bank.mkdir(parents=True)
+            (bank / "catalog.json").write_text(json.dumps(fixture_catalog()))
+            (bank / "reference-pdfs.json").write_text(json.dumps({"editions": pdf_catalog()}))
+            (bank / "reference-chapter-pages.json").write_text(json.dumps({"editions": chapter_maps()}))
+            sitting = root / "study.json"
+            sitting.write_text(json.dumps({
+                "format": "fanoos.classification.study-only/1", "exam_type": "national",
+                "year": year, "round": 2, "questions": [{
+                    "number": 222, "subject": "endodontics", "stem": "Synthetic question?",
+                    "choices": ["a", "b"], "answer": {"choice": 2, "status": "preliminary"}}],
+            }))
+            note = PROXY_NOTE.replace("۱۳۹۹", "".join("۰۱۲۳۴۵۶۷۸۹"[int(c)] for c in str(year)))
+            decisions = root / "decisions.json"
+            decisions.write_text(json.dumps([{
+                "number": 222, "edition": FAMILY_OLD, "reference_year": 1401,
+                "classification_basis": "same_lineage_proxy", "proxy_note": note,
+                "newer_editions_searched": [FAMILY_NEW], "chapter": "2", "page": 17,
+                "confidence": .97, "evidence": EVIDENCE}], ensure_ascii=False))
+            output = root / "validated.json"
+            with patch.object(apply_classification, "BANK", bank), \
+                    patch.object(apply_classification, "open_verified_reference", return_value=FakePdf()), \
+                    patch.object(sys, "argv", ["apply_classification.py", "--sitting", str(sitting),
+                        "--decisions", str(decisions), "--out", str(output), "--pdf-pages"]):
+                return apply_classification.main()
+
+    def test_owner_preliminary_key_exam_is_accepted_only_where_approved(self):
+        # Owner decision 2026-10-26: national 1399 (and board 1400) accept their
+        # preliminary key; other proxy years still require a final key.
+        self.assertEqual(self._validate_preliminary_proxy(1399), 0)
+        with patch.object(apply_classification, "OWNER_PRELIMINARY_KEY_EXAMS", set()):
+            self.assertNotEqual(self._validate_preliminary_proxy(1399), 0)
+
     def test_residency_1395_retrospective_decision_still_validates(self):
         # Regression: the same-lineage "_proxy" guard must not reject a
         # pre-1396 retrospective citation (it is a proxy by definition).

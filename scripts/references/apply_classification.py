@@ -64,6 +64,7 @@ from same_lineage_proxy_policy import (
     is_proxy_exam_year,
     is_selected_proxy as is_selected_same_lineage_proxy,
     SCOPE_GAP_REFERENCE_YEARS,
+    OWNER_PRELIMINARY_KEY_EXAMS,
     selected_non_residency_proxy_rows,
     selected_reference_rows as selected_same_lineage_rows,
     valid_proxy_note,
@@ -327,8 +328,10 @@ def main() -> int:
                                        for row in subject_candidates.values()))
         # A scope-gap exam is a current exam (only its chapter scope is borrowed),
         # so its published preliminary key is accepted like an exact batch's.
+        # Owner-approved exams whose only published key is preliminary likewise.
         key_statuses = (('final', 'amended', 'preliminary')
-                        if q is not None and (exam_type, year, q['subject']) in SCOPE_GAP_REFERENCE_YEARS
+                        if q is not None and ((exam_type, year, q['subject']) in SCOPE_GAP_REFERENCE_YEARS
+                                              or (exam_type, year) in OWNER_PRELIMINARY_KEY_EXAMS)
                         else ('final', 'amended'))
         if why is None and (is_retrospective(year) or same_lineage_context) and (
                 q['answer'].get('status') not in key_statuses
