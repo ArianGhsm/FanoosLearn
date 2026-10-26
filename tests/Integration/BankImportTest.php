@@ -439,6 +439,15 @@ final class BankImportTest
                 // Owner-approved scope gap (national 1402/1403 pediatric): only the
                 // named reference year of the same edition, only while the exact
                 // list has no structured chapters.
+                // Residency proxy-year outside-scope note (owner decision 2026-10-26):
+                // exact text with the exam year in Persian digits, mirrored in Python.
+                $resNote = new \ReflectionMethod(SourceOnlyPublisher::class, 'validResidencyOutsideScopeNote');
+                $exactNote = 'محل طراحی این سؤال در فصلی خارج از محدوده سرفصل رسمی سال مرجع است؛ ارجاع پروکسی برای آزمون دستیاری ۱۳۹۲.';
+                $this->assert($resNote->invoke(null, $exactNote, 1392) === true
+                    && $resNote->invoke(null, $exactNote, 1393) === false
+                    && $resNote->invoke(null, str_replace('۱۳۹۲', '1392', $exactNote), 1392) === false
+                    && $resNote->invoke(null, null, 1392) === false,
+                    'The residency outside-scope note check accepted a wrong note or rejected the exact one.');
                 $gap = new \ReflectionMethod(SourceOnlyPublisher::class, 'ownerApprovedScopeGap');
                 $gapRows = [['scope_chapters' => null, 'reference_key' => 'mcdonald-avery-pediatric', 'edition_key' => '11e']];
                 $gapSource = [7 => ['ref' => 'mcdonald-avery-pediatric', 'edition' => '11e', 'reference_year' => 1404]];

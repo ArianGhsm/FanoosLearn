@@ -329,6 +329,49 @@ class NonResidencyProxyPolicyTests(unittest.TestCase):
         with patch.object(apply_classification, "OWNER_PRELIMINARY_KEY_EXAMS", set()):
             self.assertNotEqual(self._validate_preliminary_proxy(1399), 0)
 
+    def _validate_residency_outside(self, note):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bank = root / "data/bank"
+            bank.mkdir(parents=True)
+            catalog = fixture_catalog()
+            catalog["validity"].append(dict(validity("residency", 1403, FAMILY_NEW, scope=("1",))))
+            (bank / "catalog.json").write_text(json.dumps(catalog))
+            (bank / "reference-pdfs.json").write_text(json.dumps({"editions": pdf_catalog()}))
+            (bank / "reference-chapter-pages.json").write_text(json.dumps({"editions": chapter_maps()}))
+            sitting = root / "study.json"
+            sitting.write_text(json.dumps({
+                "format": "fanoos.classification.study-only/1", "exam_type": "residency",
+                "year": 1392, "round": 1, "questions": [{
+                    "number": 211, "subject": "endodontics", "stem": "Synthetic question?",
+                    "choices": ["a", "b"], "answer": {"choice": 2, "status": "final"}}],
+            }))
+            decisions = root / "decisions.json"
+            decisions.write_text(json.dumps([{
+                "number": 211, "edition": FAMILY_NEW, "reference_year": 1403,
+                "classification_basis": "retrospective_proxy_1397_plus", "chapter": "2",
+                "page": 17, "confidence": .95, "evidence": EVIDENCE,
+                "outside_scope_note": note}], ensure_ascii=False))
+            output = root / "validated.json"
+            with patch.object(apply_classification, "BANK", bank), \
+                    patch.object(apply_classification, "open_verified_reference", return_value=FakePdf()), \
+                    patch.object(sys, "argv", ["apply_classification.py", "--sitting", str(sitting),
+                        "--decisions", str(decisions), "--out", str(output), "--pdf-pages",
+                        "--allow-outside-scope"]):
+                rc = apply_classification.main()
+            return rc, (json.loads(output.read_text())["questions"][0].get("sources") or [None])[0] if rc == 0 else None
+
+    def test_residency_proxy_year_outside_scope_needs_the_exact_note(self):
+        # Owner decision 2026-10-26: proxy-year residency rows may be outside the
+        # reference-year syllabus, with the exact residency note.
+        note = apply_classification.residency_outside_scope_note(1392)
+        rc, source = self._validate_residency_outside(note)
+        self.assertEqual(rc, 0)
+        self.assertEqual(source["official_scope_status"], "outside_scope_exam_question")
+        self.assertEqual(source["official_scope_note"], note)
+        rc, _ = self._validate_residency_outside("محل طراحی این سؤال در فصلی خارج از محدوده سرفصل رسمی است.")
+        self.assertNotEqual(rc, 0)
+
     def test_residency_1395_retrospective_decision_still_validates(self):
         # Regression: the same-lineage "_proxy" guard must not reject a
         # pre-1396 retrospective citation (it is a proxy by definition).

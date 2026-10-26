@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from apply_classification import (
     chapter_nodes, flat, fragments, whole_chapter_is_unlisted,
     valid_non_residency_outside_scope_note,
+    valid_residency_outside_scope_note,
 )
 from verified_reference_pdf import chapter_coverage, open_verified_reference
 from retrospective_reference_policy import BASIS, is_retrospective
@@ -362,6 +363,14 @@ def audit_batch(root: Path, spec: str,
                 or item.get("official_scope_note") != decision.get("outside_scope_note")
                 or item.get("scope_unverified") is not False):
             raise ValueError(f"{spec}: same-lineage proxy label/reference year differs for Q{n}")
+        if is_residency and (retrospective or same_lineage_proxy):
+            if "outside_scope_note" in decision:
+                if (item.get("official_scope_status") != "outside_scope_exam_question"
+                        or item.get("official_scope_note") != decision.get("outside_scope_note")
+                        or not valid_residency_outside_scope_note(decision.get("outside_scope_note"), year_n)):
+                    raise ValueError(f"{spec}: residency outside-scope status/note differs for Q{n}")
+            elif item.get("official_scope_status", "in_scope") != "in_scope":
+                raise ValueError(f"{spec}: unexplained outside-scope status for Q{n}")
         if not is_residency:
             if "outside_scope_note" in decision:
                 if (item.get("official_scope_status") != "outside_scope_exam_question"
@@ -433,7 +442,11 @@ def _same_lineage_proxy_scope_valid(
                    if isinstance(item, dict)}:
         return "outside_scope_note" not in decision
     if is_residency:
-        return False
+        return (
+            "outside_scope_note" in decision
+            and whole_chapter_is_unlisted(match, chapter)
+            and valid_residency_outside_scope_note(decision.get("outside_scope_note"), year)
+        )
     return (
         "outside_scope_note" in decision
         and whole_chapter_is_unlisted(match, chapter)
