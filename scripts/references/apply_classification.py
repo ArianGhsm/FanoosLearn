@@ -196,6 +196,18 @@ def national_outside_scope_note(year: int) -> str:
     return f'محل طراحی این سؤال در فصلی خارج از محدوده سرفصل رسمی آزمون ملی {persian_year} است.'
 
 
+def residency_outside_scope_note(year: int) -> str:
+    # Owner decision 2026-10-26: a proxy-year residency source whose page lies in
+    # a chapter the chosen reference-year syllabus does not list is shown, with
+    # this exact note, like the national/board outside-scope rows.
+    persian_year = str(year).translate(str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹'))
+    return f'محل طراحی این سؤال در فصلی خارج از محدوده سرفصل رسمی سال مرجع است؛ ارجاع پروکسی برای آزمون دستیاری {persian_year}.'
+
+
+def valid_residency_outside_scope_note(note: object, year: int) -> bool:
+    return isinstance(note, str) and note.strip() == residency_outside_scope_note(year)
+
+
 def valid_non_residency_outside_scope_note(note: object, exam_type: str, year: int) -> bool:
     if not valid_outside_scope_note(note) or not isinstance(note, str):
         return False
@@ -450,7 +462,9 @@ def main() -> int:
                         why = 'an unlisted 1406 proxy chapter requires the same explicit note in both proxy fields'
                     elif (args.allow_outside_scope and cite == edition
                         and whole_chapter_is_unlisted(names[cite], cite_chapter)
-                        and (valid_outside_scope_note(outside_note)
+                        and ((valid_residency_outside_scope_note(outside_note, year)
+                              if (is_retrospective(year) or is_proxy_exam_year(year))
+                              else valid_outside_scope_note(outside_note))
                              if exam_type == 'residency'
                              else valid_non_residency_outside_scope_note(
                                  outside_note, exam_type, year))):
