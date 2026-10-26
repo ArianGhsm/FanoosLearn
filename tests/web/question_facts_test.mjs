@@ -86,3 +86,12 @@ test('an authored question has only its topic and tags', () => {
     const facts = questionFacts({ topic: 'قلب', tags: ['داخلی'] });
     assert.deepEqual([facts.exam, facts.number, facts.chapter, facts.subject, facts.topic], [null, null, null, 'داخلی', 'قلب']);
 });
+
+test('a key-conflict citation keeps the official key and shows the book answer as a note', () => {
+    const note = 'کلید رسمی: گزینهٔ ۳. طبق متن کتاب پاسخ گزینهٔ ۱ است.';
+    const facts = questionFacts({ bank: { exam_type: 'national', year: 1397, round: 2, number: 162,
+        chapter: { book: 'Summit', edition: '4e', number: '7', title: 'Classification', title_fa: 'طبقه‌بندی',
+            official_scope_status: 'in_scope', official_scope_note: null, key_conflict_note: note } } });
+    assert.equal(facts.keyConflictNote, note);
+    assert.equal(facts.scopeNote, null);
+});

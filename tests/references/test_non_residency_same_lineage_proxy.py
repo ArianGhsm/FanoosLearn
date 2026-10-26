@@ -372,6 +372,51 @@ class NonResidencyProxyPolicyTests(unittest.TestCase):
         rc, _ = self._validate_residency_outside("محل طراحی این سؤال در فصلی خارج از محدوده سرفصل رسمی است.")
         self.assertNotEqual(rc, 0)
 
+    def _validate_key_conflict(self, **extra):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bank = root / "data/bank"
+            bank.mkdir(parents=True)
+            catalog = fixture_catalog()
+            catalog["validity"] = [validity("national", 1404, FAMILY_OLD)]
+            (bank / "catalog.json").write_text(json.dumps(catalog))
+            (bank / "reference-pdfs.json").write_text(json.dumps({"editions": pdf_catalog()}))
+            (bank / "reference-chapter-pages.json").write_text(json.dumps({"editions": chapter_maps()}))
+            sitting = root / "study.json"
+            sitting.write_text(json.dumps({
+                "format": "fanoos.classification.study-only/1", "exam_type": "national",
+                "year": 1404, "round": 1, "questions": [{
+                    "number": 222, "subject": "endodontics", "stem": "Synthetic question?",
+                    "choices": ["a", "b", "c", "d"], "answer": {"choice": 2, "status": "final"}}],
+            }))
+            decision = {"number": 222, "edition": FAMILY_OLD, "chapter": "2", "page": 17,
+                        "confidence": .97, "evidence": EVIDENCE}
+            decision.update(extra)
+            decisions = root / "decisions.json"
+            decisions.write_text(json.dumps([decision], ensure_ascii=False))
+            output = root / "validated.json"
+            with patch.object(apply_classification, "BANK", bank), \
+                    patch.object(apply_classification, "open_verified_reference", return_value=FakePdf()), \
+                    patch.object(sys, "argv", ["apply_classification.py", "--sitting", str(sitting),
+                        "--decisions", str(decisions), "--out", str(output), "--pdf-pages"]):
+                rc = apply_classification.main()
+            return rc, (json.loads(output.read_text())["questions"][0]["sources"][0] if rc == 0 else None)
+
+    def test_key_conflict_keeps_official_key_and_notes_the_book_answer(self):
+        # Owner rule: the official key is never changed; a clearly different
+        # book answer is recorded only as a note naming both.
+        rc, source = self._validate_key_conflict(official_key=2, book_answer=4)
+        self.assertEqual(rc, 0)
+        self.assertEqual(source["key_conflict_note"], apply_classification.key_conflict_note(2, 4))
+        self.assertIn("۲", source["key_conflict_note"])
+        self.assertIn("۴", source["key_conflict_note"])
+        self.assertNotEqual(self._validate_key_conflict(book_answer=2)[0], 0)
+        self.assertNotEqual(self._validate_key_conflict(official_key=3, book_answer=4)[0], 0)
+        self.assertNotEqual(self._validate_key_conflict(book_answer=4, confidence=.88)[0], 0)
+        rc, source = self._validate_key_conflict()
+        self.assertEqual(rc, 0)
+        self.assertNotIn("key_conflict_note", source)
+
     def test_residency_1395_retrospective_decision_still_validates(self):
         # Regression: the same-lineage "_proxy" guard must not reject a
         # pre-1396 retrospective citation (it is a proxy by definition).

@@ -39,6 +39,7 @@ export function questionFacts(question) {
     let book = null;
     let scopeNote = null;
     let referenceNote = null;
+    let keyConflictNote = null;
     const c = bank?.chapter;
     if (c && typeof c === 'object' && text(c.title) !== '') {
         const label = text(c.number) !== '' ? `فصل ${faDigits(text(c.number))}` : 'فصل';
@@ -55,6 +56,8 @@ export function questionFacts(question) {
         if (proxyBasis.includes(text(c.classification_basis))) {
             referenceNote = text(c.classification_note);
         }
+        // The official key is kept; the book's different answer is only noted.
+        keyConflictNote = text(c.key_conflict_note) || null;
     }
 
     return {
@@ -67,5 +70,6 @@ export function questionFacts(question) {
         book,
         scopeNote,
         referenceNote,
+        keyConflictNote,
     };
 }
