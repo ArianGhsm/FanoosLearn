@@ -196,6 +196,13 @@ def national_outside_scope_note(year: int) -> str:
     return f'محل طراحی این سؤال در فصلی خارج از محدوده سرفصل رسمی آزمون ملی {persian_year} است.'
 
 
+def key_conflict_note(official_choice: int, book_choice: int) -> str:
+    # Owner rule: the official key is kept; the note names both answers.
+    fa = str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹')
+    return (f'کلید رسمی: گزینهٔ {str(official_choice).translate(fa)}. '
+            f'طبق متن کتاب پاسخ گزینهٔ {str(book_choice).translate(fa)} است.')
+
+
 def residency_outside_scope_note(year: int) -> str:
     # Owner decision 2026-10-26: a proxy-year residency source whose page lies in
     # a chapter the chosen reference-year syllabus does not list is shown, with
@@ -553,7 +560,20 @@ def main() -> int:
                     reference_subject = d.get('reference_subject', q['subject'])
                     if reference_subject != q['subject']:
                         accepted[n]['reference_subject'] = reference_subject
-                if cite != edition:
+                if d.get('book_answer') is not None:
+                    book_answer = d.get('book_answer')
+                    official_choice = q['answer'].get('choice')
+                    if (not isinstance(book_answer, int) or isinstance(book_answer, bool)
+                            or not 1 <= book_answer <= len(q.get('choices') or [])
+                            or not isinstance(official_choice, int)
+                            or book_answer == official_choice
+                            or d.get('official_key', official_choice) != official_choice
+                            or float(d.get('confidence', 0)) < 0.90):
+                        accepted.pop(n, None)
+                        why = 'key-conflict needs book_answer differing from the official key and confidence >= 0.90'
+                    else:
+                        accepted[n]['key_conflict_note'] = key_conflict_note(official_choice, book_answer)
+                if n in accepted and cite != edition:
                     accepted[n]['found_in'] = f'{edition}#ch{chapter} (nearest edition; the official one was not available)'
         if why is None and n in accepted:
             why, keep = human_guard(q, None if accepted[n] is None else accepted[n]['ref'], d)

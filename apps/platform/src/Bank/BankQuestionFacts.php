@@ -26,7 +26,7 @@ final class BankQuestionFacts
 
     /**
      * @return array{exam:string,exam_key:string,year:int,round:int,number:?int,subject:string,
-     *     chapter:?array{book:string,edition:string,number:?string,title:string,title_fa:?string,pdf_page:?int,reference_year:?int,classification_basis:?string,classification_note:?string,official_scope_status:string,official_scope_note:?string,scope_unverified:bool}}|null
+     *     chapter:?array{book:string,edition:string,number:?string,title:string,title_fa:?string,pdf_page:?int,reference_year:?int,classification_basis:?string,classification_note:?string,official_scope_status:string,official_scope_note:?string,key_conflict_note:?string,scope_unverified:bool}}|null
      */
     public function forQuestion(string $workspaceId, string $questionKey): ?array
     {
@@ -57,12 +57,12 @@ SQL);
         ];
     }
 
-    /** @return array{book:string,edition:string,number:?string,title:string,title_fa:?string,pdf_page:?int,reference_year:?int,classification_basis:?string,classification_note:?string,official_scope_status:string,official_scope_note:?string,scope_unverified:bool}|null */
+    /** @return array{book:string,edition:string,number:?string,title:string,title_fa:?string,pdf_page:?int,reference_year:?int,classification_basis:?string,classification_note:?string,official_scope_status:string,official_scope_note:?string,key_conflict_note:?string,scope_unverified:bool}|null */
     private function chapter(string $workspaceId, string $questionId): ?array
     {
         $query = $this->database->prepare(<<<'SQL'
 SELECT link.node_id, link.pdf_page, link.reference_year, link.classification_basis,
-       link.classification_note, link.official_scope_status, link.official_scope_note,
+       link.classification_note, link.official_scope_status, link.official_scope_note, link.key_conflict_note,
        link.scope_unverified,
        reference.title AS book, edition.edition_label
 FROM bank_question_sources link
@@ -105,6 +105,7 @@ SQL);
             'classification_note' => $source['classification_note'] === null ? null : (string) $source['classification_note'],
             'official_scope_status' => (string) $source['official_scope_status'],
             'official_scope_note' => $source['official_scope_note'] === null ? null : (string) $source['official_scope_note'],
+            'key_conflict_note' => ($source['key_conflict_note'] ?? null) === null ? null : (string) $source['key_conflict_note'],
             'scope_unverified' => (bool) $source['scope_unverified'],
         ];
     }

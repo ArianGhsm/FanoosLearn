@@ -441,6 +441,10 @@ final class BankImportTest
                 // list has no structured chapters.
                 // Residency proxy-year outside-scope note (owner decision 2026-10-26):
                 // exact text with the exam year in Persian digits, mirrored in Python.
+                // Key-conflict note (owner rule): official key kept, book answer named; mirrors Python.
+                $this->assert(SourceOnlyPublisher::keyConflictNote(3, 1)
+                    === 'کلید رسمی: گزینهٔ ۳. طبق متن کتاب پاسخ گزینهٔ ۱ است.',
+                    'The key-conflict note text differs from the Python validator.');
                 $resNote = new \ReflectionMethod(SourceOnlyPublisher::class, 'validResidencyOutsideScopeNote');
                 $exactNote = 'محل طراحی این سؤال در فصلی خارج از محدوده سرفصل رسمی سال مرجع است؛ ارجاع پروکسی برای آزمون دستیاری ۱۳۹۲.';
                 $this->assert($resNote->invoke(null, $exactNote, 1392) === true

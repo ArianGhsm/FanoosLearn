@@ -435,6 +435,23 @@ final class SourceOnlyPublisher
                     throw new RuntimeException('Source confidence mismatch.');
                 }
             }
+            // Owner rule: the official key is never changed; a clearly different
+            // book answer is shown only as a note naming both.
+            $keyConflictNote = null;
+            if (array_key_exists('book_answer', $d)) {
+                $officialChoice = $original[$n]['answer']['choice'] ?? null;
+                $bookAnswer = $d['book_answer'];
+                if (!is_int($officialChoice) || !is_int($bookAnswer) || $bookAnswer === $officialChoice
+                    || $bookAnswer < 1 || $bookAnswer > count($original[$n]['choices'] ?? [])
+                    || (array_key_exists('official_key', $d) && $d['official_key'] !== $officialChoice)
+                    || (float) $d['confidence'] < .90) {
+                    throw new RuntimeException('A key-conflict source needs a differing book answer, the unchanged official key and confidence >= 0.90.');
+                }
+                $keyConflictNote = self::keyConflictNote($officialChoice, $bookAnswer);
+            }
+            if (($s['key_conflict_note'] ?? null) !== $keyConflictNote) {
+                throw new RuntimeException('Key-conflict note must name the unchanged official key and the book answer.');
+            }
             $referenceYear = ($retrospective || $updatedReferenceProxy || $sameLineageProxy)
                 ? (int) $d['reference_year'] : $year;
             $classificationBasis = $updatedReferenceProxy ? 'updated_reference_proxy'
@@ -465,6 +482,7 @@ final class SourceOnlyPublisher
                     ? (string) $d['updated_reference_note']
                     : ($nonResidencyProxyType || $retrospective || $nearestSameLineageProxyYear
                         ? ($s['official_scope_note'] ?? null) : null),
+                'key_conflict_note' => $keyConflictNote,
                 'scope_unverified' => false];
         }
         if (count($seen) !== count($original) || count($mapped) !== count($wanted)
@@ -510,10 +528,10 @@ INSERT INTO bank_question_sources
 (id,workspace_id,question_id,edition_id,reference_year,classification_basis,classification_note,
 node_id,page,pdf_page,printed_page,pdf_sha256,anchor_text,
 is_primary,confidence_source,confidence_node,confidence_page,origin,official_scope_status,
-official_scope_note,scope_unverified,created_at)
+official_scope_note,key_conflict_note,scope_unverified,created_at)
 VALUES (:id,:ws,:qid,:edition,:reference_year,:classification_basis,:classification_note,
 :node,:page,:pdf_page,:printed_page,:pdf_sha256,:anchor,
-1,:cs,:cn,:cp,'ai',:scope_status,:scope_note,:scope_unverified,UTC_TIMESTAMP(6))
+1,:cs,:cn,:cp,'ai',:scope_status,:scope_note,:key_conflict_note,:scope_unverified,UTC_TIMESTAMP(6))
 SQL);
         $db->beginTransaction();
         $count = 0;
@@ -657,6 +675,7 @@ SQL);
                     'cs' => $src['conf'], 'cn' => $src['conf'], 'cp' => $src['conf'],
                     'scope_status' => $src['official_scope_status'],
                     'scope_note' => $src['official_scope_note'],
+                    'key_conflict_note' => $src['key_conflict_note'],
                     'scope_unverified' => $src['scope_unverified'] ? 1 : 0,
                 ]);
                 ++$count;
@@ -754,7 +773,7 @@ SELECT s.id,s.question_id,r.reference_key,e.edition_key,n.node_key,
        s.page,s.printed_page,s.pdf_page,s.pdf_sha256,s.anchor_text,
        s.reference_year,s.classification_basis,s.classification_note,
        s.origin,s.is_primary,s.confidence_source,s.confidence_node,s.confidence_page,
-       s.official_scope_status,s.official_scope_note,s.scope_unverified
+       s.official_scope_status,s.official_scope_note,s.key_conflict_note,s.scope_unverified
 FROM bank_question_sources s
 LEFT JOIN bank_reference_editions e
   ON e.id=s.edition_id AND e.workspace_id=s.workspace_id
@@ -857,6 +876,7 @@ SQL);
                     ],
                     'official_scope_status' => $source['official_scope_status'],
                     'official_scope_note' => $source['official_scope_note'],
+                    'key_conflict_note' => $source['key_conflict_note'],
                     'scope_unverified' => (bool) $source['scope_unverified'],
                 ], (string) $source['id']);
             }
@@ -995,6 +1015,15 @@ SQL);
         return true;
     }
 
+    /** Mirrors apply_classification.key_conflict_note (owner rule 2026-10-24). */
+    public static function keyConflictNote(int $officialChoice, int $bookChoice): string
+    {
+        $fa = ['0' => '۰', '1' => '۱', '2' => '۲', '3' => '۳', '4' => '۴',
+            '5' => '۵', '6' => '۶', '7' => '۷', '8' => '۸', '9' => '۹'];
+        return 'کلید رسمی: گزینهٔ ' . strtr((string) $officialChoice, $fa)
+            . '. طبق متن کتاب پاسخ گزینهٔ ' . strtr((string) $bookChoice, $fa) . ' است.';
+    }
+
     /** Mirrors apply_classification.residency_outside_scope_note (owner decision 2026-10-26). */
     private static function validResidencyOutsideScopeNote(mixed $note, int $year): bool
     {
@@ -1049,6 +1078,8 @@ SQL);
                 ?? self::effectiveScopeStatus(($source['classification_basis'] ?? null) === 'updated_reference_proxy'),
             'official_scope_note_sha256' => isset($source['official_scope_note'])
                 ? hash('sha256', (string) $source['official_scope_note']) : null,
+            'key_conflict_note_sha256' => isset($source['key_conflict_note'])
+                ? hash('sha256', (string) $source['key_conflict_note']) : null,
             'scope_unverified' => false,
         ];
     }

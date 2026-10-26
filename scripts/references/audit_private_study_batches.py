@@ -20,6 +20,7 @@ from apply_classification import (
     chapter_nodes, flat, fragments, whole_chapter_is_unlisted,
     valid_non_residency_outside_scope_note,
     valid_residency_outside_scope_note,
+    key_conflict_note,
 )
 from verified_reference_pdf import chapter_coverage, open_verified_reference
 from retrospective_reference_policy import BASIS, is_retrospective
@@ -347,6 +348,14 @@ def audit_batch(root: Path, spec: str,
                 or any(abs(float(confidence.get(k, 0)) - float(decision["confidence"])) > .0005
                        for k in ("source", "node", "page"))):
             raise ValueError(f"{spec}: unsupported confidence for Q{n}")
+        official_choice = (original[n].get("answer") or {}).get("choice")
+        expected_conflict = (key_conflict_note(official_choice, decision["book_answer"])
+                             if decision.get("book_answer") is not None else None)
+        if (item.get("key_conflict_note") != expected_conflict
+                or (expected_conflict is not None
+                    and (decision["book_answer"] == official_choice
+                         or decision.get("official_key", official_choice) != official_choice))):
+            raise ValueError(f"{spec}: key-conflict note must name the unchanged official key and the book answer for Q{n}")
         if updated_proxy and (item.get("official_scope_status") != "outside_scope_exam_question"
                 or item.get("official_scope_note") != decision.get("updated_reference_note")
                 or item.get("reference_year") != UPDATED_PROXY_REFERENCE_YEAR
