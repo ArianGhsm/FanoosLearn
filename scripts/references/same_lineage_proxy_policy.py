@@ -36,6 +36,11 @@ SCOPE_GAP_REFERENCE_YEARS = {
     ("national", 1403, "pediatric-dentistry"): 1404,
 }
 
+# Owner decision 2026-10-26: these exams have only a published PRELIMINARY key
+# in the bank. It is accepted as the official key for chapter/page sources; a
+# later final key that differs is corrected on that row.
+OWNER_PRELIMINARY_KEY_EXAMS = {("board", 1400), ("national", 1399)}
+
 
 def is_proxy_exam_year(exam_year: object) -> bool:
     return (isinstance(exam_year, int) and not isinstance(exam_year, bool)

@@ -567,8 +567,10 @@ SQL);
                 }
                 // A scope-gap exam is current (only its chapter scope is borrowed), so its
                 // published preliminary key is accepted as for an exact batch.
+                // Owner-approved exams whose only published key is preliminary likewise.
                 $keyStatuses = !$retrospective
-                    && isset(self::SCOPE_GAP_REFERENCE_YEARS["{$examType}:{$year}:{$subject}"])
+                    && (isset(self::SCOPE_GAP_REFERENCE_YEARS["{$examType}:{$year}:{$subject}"])
+                        || isset(self::OWNER_PRELIMINARY_KEY_EXAMS["{$examType}:{$year}"]))
                     ? ['final', 'amended', 'preliminary'] : ['final', 'amended'];
                 if (($retrospective || $sameLineageProxy) && ($actual['choice'] === null
                     || !in_array($actual['status'], $keyStatuses, true))) {
@@ -932,6 +934,16 @@ SQL);
      * the same edition as a visible same-lineage proxy. Mirrors
      * same_lineage_proxy_policy.SCOPE_GAP_REFERENCE_YEARS.
      */
+    /**
+     * Owner decision 2026-10-26: exams whose only published key is preliminary;
+     * it is accepted as the official key. Mirrors
+     * same_lineage_proxy_policy.OWNER_PRELIMINARY_KEY_EXAMS.
+     */
+    private const OWNER_PRELIMINARY_KEY_EXAMS = [
+        'board:1400' => true,
+        'national:1399' => true,
+    ];
+
     private const SCOPE_GAP_REFERENCE_YEARS = [
         'national:1402:pediatric-dentistry' => 1404,
         'national:1403:pediatric-dentistry' => 1404,
