@@ -6,8 +6,8 @@
  */
 import { api, describeError } from '../foundation/api.js';
 import { faDigits } from './question-stats.js';
-import { chapterCoverage, droppedReferences, groupSittings, matches, previousYear, referenceChange, scopeText, share, sittingLabel, specialtiesByType, specialtyFirst, yearSpan } from './bank-rules.js';
-import { goalPicker, readGoal } from './exam-goal.js';
+import { chapterCoverage, droppedReferences, groupSittings, matches, orderTypes, pick, previousYear, referenceChange, scopeText, share, sittingLabel, specialtyFirst, yearSpan, yearsOfType } from './bank-rules.js';
+import { readGoal, saveGoal } from './exam-goal.js';
 import { CARD_HUES, paperGroup } from './bank-papers.js';
 
 const workspaceId = document.querySelector('meta[name="fanoos-workspace"]')?.content ?? '';
@@ -65,127 +65,231 @@ function studyButton(text, body, tone = 'ghost') {
 /* ------------------------------------------------------------ overview */
 
 /*
- * The bank's front page: «آزمون من» narrows it to one exam (and, for a
- * specialty exam, puts the specialty first), and three views -- by book and
- * chapter (the default: the official references, chapter by chapter, with
- * how many questions each gave), by subject and topic, and by exam paper,
- * grouped by exam and year with a specialty exam's ten papers together.
+ * The bank's front page, in the order a student narrows it: first the exam
+ * (residency, national, promotion, board -- EXAM_ORDER), then one of three
+ * views of that exam -- its papers year by year (one year at a time, chosen
+ * on a strip), its subjects, or its books and chapters (one subject at a
+ * time, chosen on a row of chips). The choices live in the address
+ * (?type=&view=&year=&subject=) so a link or the back button returns to them;
+ * the exam also becomes the student's «آزمون من» for the other pages.
  */
+const VIEWS = ['years', 'subjects', 'books'];
+
 async function overview() {
     const search = document.getElementById('bank-search');
+    const typeBar = document.getElementById('bank-types');
+    const subnav = document.getElementById('bank-subnav');
     const tabs = [...document.querySelectorAll('[data-view]')];
-    const slot = document.getElementById('goal-slot');
-    let view = 'books';
+    const params = new URLSearchParams(window.location.search);
     let all;
-    let data;
-    let goal;
-    const books = new Map(); // exam type ('' for every exam) -> GET /bank/books
     try {
         all = await api.get(`${base}/bank`);
-        goal = readGoal(all.types.map((t) => t.key));
-        data = goal.type ? await api.get(`${base}/bank?type=${encodeURIComponent(goal.type)}`) : all;
     } catch (error) {
         done();
         fail(error);
         return;
     }
-    const typeQuery = () => (goal.type ? `?type=${encodeURIComponent(goal.type)}` : '');
+    const types = orderTypes(all.types);
+    const keys = types.map((t) => t.key);
+    const goal = readGoal(keys);
+    const firstLive = types.find((t) => t.questions > 0)?.key ?? keys[0] ?? '';
+    let type = pick(params.get('type'), keys, goal.type || firstLive);
+    let view = pick(params.get('view'), VIEWS, 'years');
+    let year = Number(params.get('year')) || null;
+    let subjectKey = params.get('subject') ?? '';
+    const overviews = new Map([['', all]]); // exam type -> GET /bank?type=
+    const books = new Map(); // exam type -> GET /bank/books?type=
+    const typeQuery = () => (type ? `?type=${encodeURIComponent(type)}` : '');
+    const typeName = () => types.find((t) => t.key === type)?.name ?? '';
 
-    slot.replaceChildren(goalPicker({
-        types: all.types,
-        specialties: specialtiesByType(all.sittings),
-        goal,
-        onChange: async (next) => {
-            goal = next;
+    const remember = () => {
+        const url = new URL(window.location.href);
+        for (const [key, value] of [['type', type], ['view', view], ['year', view === 'years' && year ? String(year) : ''], ['subject', view === 'books' ? subjectKey : '']]) {
+            if (value) url.searchParams.set(key, value); else url.searchParams.delete(key);
+        }
+        window.history.replaceState(null, '', url);
+    };
+
+    const load = async (cache, path) => {
+        if (!cache.has(type)) {
             root.setAttribute('aria-busy', 'true');
-            try {
-                data = goal.type ? await api.get(`${base}/bank${typeQuery()}`) : all;
-                errorBox.hidden = true;
+            cache.set(type, await api.get(`${base}${path}${typeQuery()}`));
+        }
+        return cache.get(type);
+    };
+
+    // Step one: the exam, as four cards in the order students look for them.
+    const typeButtons = types.map((t) => {
+        const years = yearsOfType(all.sittings, t.key);
+        const button = el('button', 'b-exam');
+        button.type = 'button';
+        button.setAttribute('role', 'tab');
+        button.append(el('strong', 'b-exam__name', t.name));
+        button.append(el('span', 'b-exam__count', t.questions > 0 ? `${faDigits(t.questions)} سؤال` : 'به‌زودی'));
+        const span = years.length > 0 ? yearSpan(years[years.length - 1].year, years[0].year, faDigits) : null;
+        if (span) button.append(el('span', 'b-exam__years', span));
+        button.addEventListener('click', () => {
+            if (t.key === type) return;
+            type = t.key;
+            year = null;
+            subjectKey = '';
+            saveGoal({ type, specialty: goal.type === type ? goal.specialty : '' });
+            draw();
+        });
+        return { key: t.key, button };
+    });
+    typeBar.replaceChildren(...typeButtons.map((b) => b.button));
+
+    for (const tab of tabs) {
+        tab.addEventListener('click', () => {
+            view = tab.dataset.view;
+            draw();
+        });
+    }
+    search.addEventListener('input', () => draw());
+
+    // The year strip of the «سال به سال» view.
+    const yearStrip = (years) => {
+        const strip = el('nav', 'r-years b-subnav__years');
+        strip.setAttribute('role', 'tablist');
+        strip.setAttribute('aria-label', `سال ${typeName()}`);
+        for (const row of years) {
+            const tab = el('button', `r-year${row.year === year ? ' is-active' : ''}`);
+            tab.type = 'button';
+            tab.setAttribute('role', 'tab');
+            tab.setAttribute('aria-selected', String(row.year === year));
+            tab.append(el('span', 'r-year__number', faDigits(row.year)));
+            if (row.papers > 1) tab.append(el('span', 'r-year__meta', `${faDigits(row.papers)} دفترچه`));
+            tab.addEventListener('click', () => {
+                year = row.year;
                 draw();
-            } catch (error) {
-                done();
-                fail(error);
-            }
-        },
-    }));
+            });
+            strip.append(tab);
+        }
+        return strip;
+    };
+
+    // The subject chips of the «کتاب و فصل» view.
+    const subjectChips = (subjects) => {
+        const row = el('div', 'b-subnav__chips');
+        row.setAttribute('role', 'tablist');
+        row.setAttribute('aria-label', 'درس');
+        for (const subject of subjects) {
+            const chip = el('button', `x-chip${subject.key === subjectKey ? ' is-active' : ''}`, subject.name);
+            chip.type = 'button';
+            chip.setAttribute('role', 'tab');
+            chip.setAttribute('aria-selected', String(subject.key === subjectKey));
+            chip.addEventListener('click', () => {
+                subjectKey = subject.key;
+                draw();
+            });
+            row.append(chip);
+        }
+        return row;
+    };
 
     const draw = async () => {
         const q = search.value;
-        const typeName = all.types.find((t) => t.key === goal.type)?.name;
-        if (view === 'books') {
-            if (!books.has(goal.type)) {
-                root.setAttribute('aria-busy', 'true');
-                try {
-                    books.set(goal.type, await api.get(`${base}/bank/books${typeQuery()}`));
-                } catch (error) {
-                    done();
-                    fail(error);
-                    return;
-                }
+        for (const { key, button } of typeButtons) {
+            button.classList.toggle('is-active', key === type);
+            button.setAttribute('aria-selected', String(key === type));
+        }
+        for (const tab of tabs) {
+            tab.classList.toggle('is-active', tab.dataset.view === view);
+            tab.setAttribute('aria-selected', String(tab.dataset.view === view));
+        }
+        const asked = { type, view };
+        const stale = () => asked.type !== type || asked.view !== view; // the reader moved on while it loaded
+        subnav.replaceChildren();
+        const specialty = goal.type === type ? goal.specialty : '';
+
+        if (view === 'years') {
+            const years = yearsOfType(all.sittings, type);
+            if (years.length === 0) {
+                remember();
+                done(empty(`دفترچه‌ای از ${typeName()} هنوز منتشر نشده`, 'سؤال‌های هر سال که وارد بانک شود، این‌جا سال به سال می‌آید.'));
+                return;
             }
-            if (view !== 'books') return; // the reader moved on while it loaded
-            done(...bookView(books.get(goal.type), q, goal));
+            year = years.some((row) => row.year === year) ? year : years[0].year;
+            remember();
+            subnav.append(yearStrip(years));
+            const [group] = groupSittings(all.sittings, { type, specialty: '' }).filter((g) => g.year === year);
+            const sittings = specialtyFirst(group.sittings, specialty, (s) => s.subject_key)
+                .filter((s) => matches(q, s.subject_name, sittingLabel(s, faDigits)));
+            if (sittings.length === 0) {
+                done(empty('دفترچه‌ای پیدا نشد', 'درس دیگری را جست‌وجو کن.'));
+                return;
+            }
+            done(paperGroup({ ...group, sittings }));
             return;
         }
+
         if (view === 'subjects') {
-            if (goal.type && data.total === 0) {
-                const box = empty(`سؤال‌های ${typeName} هنوز وارد بانک نشده`, 'منابع اعلام‌شده‌اش آماده است؛ یا «آزمون من» را روی همه‌ی آزمون‌ها بگذار.');
-                const link = el('a', 'f-btn f-btn--ghost', `منابع ${typeName}`);
-                link.href = `/app/references?type=${encodeURIComponent(goal.type)}`;
+            remember();
+            let data;
+            try {
+                data = await load(overviews, '/bank');
+            } catch (error) {
+                done();
+                fail(error);
+                return;
+            }
+            if (stale()) return;
+            if (data.total === 0) {
+                const box = empty(`سؤال‌های ${typeName()} هنوز وارد بانک نشده`, 'منابع اعلام‌شده‌اش آماده است.');
+                const link = el('a', 'f-btn f-btn--ghost', `منابع ${typeName()}`);
+                link.href = `/app/references?type=${encodeURIComponent(type)}`;
                 box.append(link);
                 done(box);
                 return;
             }
             const list = el('div', 'b-cards');
-            // A specialty exam's subjects are its specialties: show only those with questions, the goal's first.
-            const rows = specialtyFirst(data.subjects.filter((s) => matches(q, s.name, s.name_en) && (!goal.type || s.total > 0)), goal.specialty);
+            // A specialty exam's subjects are its specialties: only those with questions, the goal's first.
+            const rows = specialtyFirst(data.subjects.filter((s) => matches(q, s.name, s.name_en) && s.total > 0), specialty);
             rows.forEach((subject, index) => {
-                const live = subject.total > 0;
-                const card = el(live ? 'a' : 'div', `b-card${live ? '' : ' is-empty'}${subject.key === goal.specialty ? ' is-goal' : ''}`);
-                if (live) card.href = `/app/bank/${encodeURIComponent(subject.key)}${typeQuery()}`;
+                const card = el('a', `b-card${subject.key === specialty ? ' is-goal' : ''}`);
+                card.href = `/app/bank/${encodeURIComponent(subject.key)}${typeQuery()}`;
                 // Each course its own colour, cycling, so the grid is told apart at a glance.
                 card.dataset.hue = CARD_HUES[index % CARD_HUES.length];
                 card.append(el('span', 'b-card__mark', String(subject.name || '؟').trim().charAt(0)));
                 card.append(el('strong', 'b-card__title', subject.name));
-                if (live) {
-                    card.append(el('span', 'b-card__count', `${faDigits(subject.total)} سؤال`));
-                    const meta = el('div', 'b-card__meta');
-                    const span = yearSpan(subject.first_year, subject.last_year, faDigits);
-                    if (span) meta.append(el('span', '', span));
-                    if (subject.topics > 0) meta.append(el('span', '', `${faDigits(subject.topics)} مبحث`));
-                    if (subject.per_exam) meta.append(el('span', '', `~${faDigits(subject.per_exam)} در هر آزمون`));
-                    if (subject.old_reference > 0) meta.append(el('span', 'b-old', `${faDigits(subject.old_reference)} رفرنس قدیم`));
-                    if (meta.firstChild) card.append(meta);
-                } else {
-                    card.append(el('span', 'b-card__count', 'به‌زودی'));
-                }
+                card.append(el('span', 'b-card__count', `${faDigits(subject.total)} سؤال`));
+                const meta = el('div', 'b-card__meta');
+                const span = yearSpan(subject.first_year, subject.last_year, faDigits);
+                if (span) meta.append(el('span', '', span));
+                if (subject.topics > 0) meta.append(el('span', '', `${faDigits(subject.topics)} مبحث`));
+                if (subject.per_exam) meta.append(el('span', '', `~${faDigits(subject.per_exam)} در هر آزمون`));
+                if (subject.old_reference > 0) meta.append(el('span', 'b-old', `${faDigits(subject.old_reference)} رفرنس قدیم`));
+                if (meta.firstChild) card.append(meta);
                 list.append(card);
             });
             if (!list.firstChild) list.append(el('p', 'f-muted b-pad', 'درسی با این نام نیست.'));
             done(list);
             return;
         }
-        const groups = groupSittings(all.sittings, goal)
-            .map((group) => ({ ...group, sittings: group.sittings.filter((s) => matches(q, s.type, s.year, s.subject_name, sittingLabel(s, faDigits))) }))
-            .filter((group) => group.sittings.length > 0);
-        if (groups.length === 0) {
-            done(empty('آزمونی پیدا نشد', goal.type ? 'برای این آزمون هنوز سؤالی منتشر نشده، یا جست‌وجو چیزی پیدا نکرد.' : 'سؤال‌های هر سال که وارد بانک شود، این‌جا فهرست می‌شود.'));
+
+        let data;
+        try {
+            data = await load(books, '/bank/books');
+        } catch (error) {
+            done();
+            fail(error);
             return;
         }
-        done(...groups.map(paperGroup));
+        if (stale()) return;
+        const subjects = specialtyFirst(data.subjects.filter((s) => s.books.length > 0), specialty);
+        if (subjects.length === 0) {
+            remember();
+            done(empty('هنوز سؤالی به فصل کتاب وصل نشده', 'فصل‌بندی سؤال‌ها که پیش برود، این‌جا کتاب به کتاب دیده می‌شود.'));
+            return;
+        }
+        subjectKey = pick(subjectKey, subjects.map((s) => s.key), subjects[0].key);
+        remember();
+        // A search looks through every subject's books; otherwise one subject at a time.
+        if (q.trim() === '') subnav.append(subjectChips(subjects));
+        done(...bookView({ ...data, subjects: q.trim() === '' ? subjects.filter((s) => s.key === subjectKey) : subjects }, q, { type, specialty }));
     };
 
-    for (const tab of tabs) {
-        tab.addEventListener('click', () => {
-            view = tab.dataset.view;
-            for (const t of tabs) {
-                t.classList.toggle('is-active', t === tab);
-                t.setAttribute('aria-selected', String(t === tab));
-            }
-            draw();
-        });
-    }
-    search.addEventListener('input', draw);
     draw();
 }
 
