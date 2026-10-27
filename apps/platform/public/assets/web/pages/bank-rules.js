@@ -165,3 +165,38 @@ export function specialtyFirst(rows, specialty, keyOf = (row) => row.key) {
     if (!specialty) return rows;
     return [...rows.filter((row) => keyOf(row) === specialty), ...rows.filter((row) => keyOf(row) !== specialty)];
 }
+
+/*
+ * The order a student looks for an exam in: residency first, then the
+ * national exam, promotion and board; a type the bank adds later follows.
+ */
+export const EXAM_ORDER = Object.freeze(['residency', 'national', 'promotion', 'board']);
+
+/** Exam types in EXAM_ORDER, the unknown ones after in their own order. */
+export function orderTypes(types, keyOf = (type) => type.key) {
+    const rank = (type) => {
+        const index = EXAM_ORDER.indexOf(keyOf(type));
+        return index < 0 ? EXAM_ORDER.length : index;
+    };
+    return types.map((type, index) => ({ type, index }))
+        .sort((a, b) => rank(a.type) - rank(b.type) || a.index - b.index)
+        .map(({ type }) => type);
+}
+
+/** One exam type's years with published papers, newest first, each with its papers and questions. */
+export function yearsOfType(sittings, typeKey) {
+    const byYear = new Map();
+    for (const sitting of sittings) {
+        if (sitting.type_key !== typeKey) continue;
+        const row = byYear.get(sitting.year) ?? { year: sitting.year, papers: 0, questions: 0 };
+        row.papers += 1;
+        row.questions += Number(sitting.questions) || 0;
+        byYear.set(sitting.year, row);
+    }
+    return [...byYear.values()].sort((a, b) => b.year - a.year);
+}
+
+/** A choice from the address kept only if it is one of the offered keys; else the fallback. */
+export function pick(asked, offered, fallback) {
+    return offered.includes(asked) ? asked : fallback;
+}

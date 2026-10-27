@@ -119,3 +119,28 @@ test('specialty exams list their specialties; a goal specialty comes first', () 
     assert.deepEqual(specialtyFirst([{ key: 'a' }, { key: 'b' }], 'b').map((r) => r.key), ['b', 'a']);
     assert.deepEqual(specialtyFirst([{ key: 'a' }], '').map((r) => r.key), ['a']);
 });
+
+import { EXAM_ORDER, orderTypes, pick, yearsOfType } from '../../apps/platform/public/assets/web/pages/bank-rules.js';
+
+test('exam types read residency, national, promotion, board; a new type comes last', () => {
+    const types = [{ key: 'board' }, { key: 'other' }, { key: 'promotion' }, { key: 'residency' }, { key: 'national' }];
+    assert.deepEqual(orderTypes(types).map((t) => t.key), ['residency', 'national', 'promotion', 'board', 'other']);
+    assert.deepEqual(EXAM_ORDER, ['residency', 'national', 'promotion', 'board']);
+});
+
+test('a type\'s years are newest first with their papers and questions', () => {
+    const sittings = [
+        { type_key: 'board', year: 1401, questions: 100 },
+        { type_key: 'board', year: 1404, questions: 99 },
+        { type_key: 'board', year: 1404, questions: 100 },
+        { type_key: 'residency', year: 1405, questions: 226 },
+    ];
+    assert.deepEqual(yearsOfType(sittings, 'board'), [{ year: 1404, papers: 2, questions: 199 }, { year: 1401, papers: 1, questions: 100 }]);
+    assert.deepEqual(yearsOfType(sittings, 'national'), []);
+});
+
+test('an address choice is kept only when it is offered', () => {
+    assert.equal(pick('board', ['residency', 'board'], 'residency'), 'board');
+    assert.equal(pick('nope', ['residency', 'board'], 'residency'), 'residency');
+    assert.equal(pick(null, [], ''), '');
+});

@@ -21,23 +21,33 @@ final class BankPage
         $main = <<<'HTML'
 <header class="b-head">
     <h1>بانک سؤال</h1>
-    <p class="f-muted">سؤال‌های آزمون‌های گذشته، درس به درس و سال به سال، هر کدام با پاسخ تشریحی و جای پاسخ در رفرنس.</p>
-    <div id="goal-slot"></div>
-    <div class="b-head__tools">
-        <input class="f-input b-search" id="bank-search" type="search" placeholder="جست‌وجوی درس، مبحث یا سال…" autocomplete="off" aria-label="جست‌وجو در بانک">
-        <a class="f-btn f-btn--ghost" href="/app/references">منابع آزمون</a>
-    </div>
+    <p class="f-muted">سؤال‌های آزمون‌های گذشته با پاسخ تشریحی و جای پاسخ در رفرنس. اول آزمون را انتخاب کن، بعد سال، درس یا کتاب.</p>
 </header>
 
 <div class="f-notice f-notice--error" id="bank-error" hidden>
     <div class="f-notice__body"><p id="bank-error-text"></p></div>
 </div>
 
-<div class="b-tabs" role="tablist" aria-label="نمای بانک">
-    <button class="x-chip is-active" type="button" role="tab" aria-selected="true" data-view="books">به تفکیک کتاب و فصل</button>
-    <button class="x-chip" type="button" role="tab" aria-selected="false" data-view="subjects">به تفکیک درس و مبحث</button>
-    <button class="x-chip" type="button" role="tab" aria-selected="false" data-view="years">به تفکیک آزمون و سال</button>
-</div>
+<section class="b-step" aria-labelledby="bank-step-exam">
+    <h2 class="b-step__label" id="bank-step-exam">آزمون</h2>
+    <div class="b-exams" id="bank-types" role="tablist" aria-label="آزمون"></div>
+</section>
+
+<section class="b-step" aria-labelledby="bank-step-view">
+    <h2 class="b-step__label" id="bank-step-view">نمایش</h2>
+    <div class="b-step__row">
+        <div class="b-tabs" role="tablist" aria-label="نمای بانک">
+            <button class="x-chip is-active" type="button" role="tab" aria-selected="true" data-view="years">سال به سال</button>
+            <button class="x-chip" type="button" role="tab" aria-selected="false" data-view="subjects">درس‌ها</button>
+            <button class="x-chip" type="button" role="tab" aria-selected="false" data-view="books">کتاب و فصل</button>
+        </div>
+        <div class="b-head__tools">
+            <input class="f-input b-search" id="bank-search" type="search" placeholder="جست‌وجوی درس، کتاب یا فصل…" autocomplete="off" aria-label="جست‌وجو در بانک">
+            <a class="f-btn f-btn--ghost" href="/app/references">منابع آزمون</a>
+        </div>
+    </div>
+    <div class="b-subnav" id="bank-subnav"></div>
+</section>
 
 <div id="bank" data-page="overview" aria-busy="true" aria-live="polite">
     <div class="x-skeleton" aria-hidden="true"></div>
