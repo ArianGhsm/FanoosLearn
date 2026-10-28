@@ -932,6 +932,13 @@ SQL)->execute(['ws' => $ws]);
         }
         $this->assert($set['question_count'] === 2, 'The study set does not hold the topic: ' . json_encode($set, JSON_UNESCAPED_UNICODE));
         $studyAttempt = $exams->startAttempt($f['student'], $ws, $set['assessment_id']);
+        // A set opened by topic or chapter may show its topic and chapter before an answer; a set
+        // opened by year or by a whole subject must not (owner 2026-10-28: it gives the answer away).
+        $this->assert($studyAttempt['source_visible'] === true, 'A topic study set hides its topic before an answer.');
+        $this->assert($exams->startAttempt($f['student'], $ws, $chapterSet['assessment_id'])['source_visible'] === true, 'A chapter study set hides its chapter before an answer.');
+        $subjectSet = $browse->study($f['student'], $ws, ['subject' => 'endodontics']);
+        $this->assert($exams->startAttempt($f['student'], $ws, $subjectSet['assessment_id'])['source_visible'] === false, 'A whole-subject study set shows the chapter before an answer.');
+        $this->assert($exams->startAttempt($f['student'], $ws, $set['assessment_id'])['source_visible'] === true, 'Resuming a topic study set lost source_visible.');
         $first = (string) $exams->readQuestion($f['student'], $ws, $studyAttempt['attempt_id'], 1)['question']['id'];
         $this->assert($first === $key, 'A study set is not shown in paper order.');
 

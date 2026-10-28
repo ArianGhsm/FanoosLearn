@@ -145,7 +145,7 @@ final class CustomPracticeService
      * @param list<string> $questionIds
      * @return array{assessment_id:string,title:string,question_count:int}
      */
-    public function createFromQuestions(string $userId, string $workspaceId, array $questionIds, string $title, string $variant, bool $ordered = true): array
+    public function createFromQuestions(string $userId, string $workspaceId, array $questionIds, string $title, string $variant, bool $ordered = true, array $definitionFlags = []): array
     {
         $this->access->requireWorkspace($userId, $workspaceId, 'exam.take');
         $pool = [];
@@ -167,6 +167,11 @@ final class CustomPracticeService
         $definition = ['questions' => $questions];
         if ($ordered) {
             $definition['ordered'] = true;
+        }
+        // Only known flags are kept: source_visible lets the runner show a question's topic and
+        // reference chapter before it is answered (the set was opened by chapter or topic).
+        if (($definitionFlags['source_visible'] ?? false) === true) {
+            $definition['source_visible'] = true;
         }
 
         return $this->store($userId, $workspaceId, $title . ' · ' . self::faDigits((string) count($questions)) . ' سؤال', $definition, $variant, null, [
