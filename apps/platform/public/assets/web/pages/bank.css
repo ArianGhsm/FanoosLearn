@@ -1381,3 +1381,9 @@ a.b-card:focus-visible {
     white-space: nowrap;
     text-decoration: none;
 }
+
+.b-head, .r-hero {
+    padding-bottom: var(--space-5);
+    border-bottom: 1px solid var(--border-strong);
+}
+.b-exam { border-color: var(--border-strong); }

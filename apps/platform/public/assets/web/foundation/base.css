@@ -441,7 +441,7 @@ body {
 
 .f-card {
     border-color: var(--border-strong);
-    box-shadow: 0 8px 28px -24px rgba(16, 26, 41, .24);
+    box-shadow: var(--shadow-soft);
 }
 
 .f-btn {
