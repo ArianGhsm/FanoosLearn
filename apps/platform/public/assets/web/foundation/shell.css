@@ -24,7 +24,7 @@
     display: flex;
     align-items: stretch;
     gap: var(--space-4);
-    width: min(100% - 2 * var(--space-4), var(--content-width));
+    width: min(100% - 2 * var(--space-4), 1280px);
     min-height: var(--header-height);
     margin-inline: auto;
 }
@@ -180,10 +180,29 @@
     text-overflow: ellipsis;
 }
 
-@media (max-width: 960px) {
-    .f-nav__link > span:not(.f-nav__icon),
+@media (max-width: 1440px) {
     .f-account__name {
-        display: none;
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+}
+
+@media (min-width: 1281px) and (max-width: 1440px) {
+    .f-account { padding-inline-end: var(--space-1); }
+}
+
+@media (max-width: 1280px) {
+    .f-nav__link > span:not(.f-nav__icon) {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
     }
 
     .f-account {
@@ -260,7 +279,12 @@
     }
 
     .f-nav__link > span:not(.f-nav__icon) {
-        display: inline;
+        position: static;
+        width: auto;
+        height: auto;
+        overflow: visible;
+        clip-path: none;
+        white-space: normal;
     }
 
     .f-nav__link[aria-current="page"] {
