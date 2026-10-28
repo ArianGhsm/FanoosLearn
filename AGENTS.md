@@ -11,6 +11,7 @@ where these or any old runbook differ, the principles prevail.
 2. `docs/product/05_DENTAL_RESIDENCY_DATA_MODEL.md` — model.
 3. `docs/WORKFLOW.md` — GitHub PR, CI, updater deployment.
 4. `docs/ops/SERVER.md` — production layout, protected data and operators.
+   Testing the live site: the permanent QA account, `docs/ops/QA_ACCOUNT.md`.
 5. `docs/product/09_CHAPTER_CLASSIFICATION.md` — mandatory before
    assigning a source, chapter or page.
 6. `docs/ops/PDF_REFERENCE_SOURCE_POLICY_20261010.md` — PDF source-of-truth
