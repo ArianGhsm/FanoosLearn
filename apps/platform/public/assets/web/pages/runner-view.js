@@ -537,7 +537,7 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
         },
     },
         el('header', { className: 'x-question__head' },
-            renderQuestionMeta(question),
+            renderQuestionMeta(question, state.sourceVisible === true || selected !== undefined || reveal !== null),
             el('div', { className: 'x-question__tools' },
                 !study ? null : el('button', {
                     className: `x-tool x-bookmark${study.bookmarked ? ' is-on' : ''}`, type: 'button',
@@ -813,7 +813,10 @@ function renderReportForm(question, report, actions) {
  * known (question-facts.js): the chapter only once the question is
  * classified, the difficulty once enough people answered or an author set it.
  */
-function renderQuestionMeta(question) {
+function renderQuestionMeta(question, showSource = true) {
+    // The topic and the reference chapter give the answer away, so they wait until the question
+    // is answered or revealed -- unless the student opened this set by chapter or topic and so
+    // already knows them (owner 2026-10-28; state.sourceVisible, from the attempt).
     const facts = questionFacts(question);
     const chip = (kind, iconName, label, title = null) => el('span', {
         className: `x-chip x-chip--${kind}`,
@@ -823,7 +826,7 @@ function renderQuestionMeta(question) {
     const chips = [];
     if (facts.exam) chips.push(chip('exam', 'calendar', facts.number ? `${facts.exam} · ${facts.number}` : facts.exam));
     if (facts.subject) chips.push(chip('subject', 'book', facts.subject));
-    if (facts.topic) chips.push(chip('tag', 'tag', facts.topic));
+    if (facts.topic && showSource) chips.push(chip('tag', 'tag', facts.topic));
 
     // Measured from everyone's answers once enough are in; otherwise the
     // question's own authored difficulty. Shown only when known.
@@ -834,7 +837,7 @@ function renderQuestionMeta(question) {
     // The chapter in Persian; under it, in the book's own language, the
     // chapter's English title and the book and edition it is from.
     const original = [facts.chapterEn, facts.book].filter(Boolean).join(' — ');
-    const source = facts.chapter === null ? null : el('p', { className: 'x-source' },
+    const source = facts.chapter === null || !showSource ? null : el('p', { className: 'x-source' },
         el('span', { className: 'x-source__icon' }, icon('book')),
         el('span', { className: 'x-source__body' },
             el('span', { className: 'x-source__chapter' }, ...bidiNodes(faText(facts.chapter))),

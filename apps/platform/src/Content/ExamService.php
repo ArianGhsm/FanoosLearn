@@ -536,6 +536,7 @@ SQL);
                 // attempt first started, and resuming never extends it.
                 'mode' => (string) $existingAttempt['mode'],
                 'deadline_at' => $this->isoTimestamp($existingAttempt['deadline_at']),
+                'source_visible' => ($definition['source_visible'] ?? false) === true,
             ];
         }
         $attempts = $this->database->prepare("SELECT COUNT(*) FROM exam_attempts WHERE workspace_id = :workspace AND assessment_id = :assessment AND user_id = :user AND status IN ('submitted', 'scored')");
@@ -573,6 +574,9 @@ SQL, [
             'answers' => [], 'resumed' => false, 'mode' => $mode,
             'question_count' => count($definition['questions']),
             'deadline_at' => $this->isoTimestamp($deadline->fetchColumn()),
+            // A question's topic and reference chapter are shown before it is answered only when the
+            // set itself was chosen by chapter or topic; otherwise they would give the answer away.
+            'source_visible' => ($definition['source_visible'] ?? false) === true,
         ];
 
         // Bonus: collapse the client's start-then-read round trip into this

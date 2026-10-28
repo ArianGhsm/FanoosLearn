@@ -656,6 +656,7 @@ components:
         question_count: { type: integer, minimum: 1 }
         mode: { type: string, enum: [assessment, learning, practice], description: 'Fixed for the life of the attempt; resuming never changes it.' }
         deadline_at: { type: [string, 'null'], format: date-time, description: 'Fixed once, when the attempt first started; resuming never extends it. Null for an untimed assessment. A client timer only mirrors this -- the server enforces it independently on save/submit.' }
+        source_visible: { type: boolean, description: 'True only for a practice set the student opened by book/chapter or topic: the runner may then show each question''s topic and reference chapter before it is answered. Otherwise they stay hidden until the question is answered or revealed, because they give the answer away.' }
       additionalProperties: false
     AssessmentQuestion:
       type: object

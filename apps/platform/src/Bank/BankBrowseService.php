@@ -211,7 +211,12 @@ final class BankBrowseService
             throw new PlatformException('bank_study_empty', 'No question matches.', 422);
         }
 
-        return $this->practice->createFromQuestions($userId, $workspaceId, array_column($questions, 'key'), $title, 'bank');
+        // Opened by book/chapter or by topic, the student already chose the chapter, so the runner may
+        // show it before an answer. Opened by year or a whole subject, it stays hidden until answered
+        // (owner 2026-10-28): knowing the chapter gives the answer away.
+        $sourceVisible = $edition !== null || $topic !== null;
+
+        return $this->practice->createFromQuestions($userId, $workspaceId, array_column($questions, 'key'), $title, 'bank', true, $sourceVisible ? ['source_visible' => true] : []);
     }
 
     /**

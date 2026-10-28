@@ -282,6 +282,8 @@ async function start(mode) {
             revision: serverRevision,
             answers: reconciled.answers,
             mode: attempt.mode || 'assessment',
+            // Topic and reference chapter before an answer: only for a set opened by chapter or topic.
+            sourceVisible: attempt.source_visible === true,
             deadlineAt: attempt.deadline_at ?? null,
         });
         // createAttemptState seeded savedAnswers from the (merged) answers it
