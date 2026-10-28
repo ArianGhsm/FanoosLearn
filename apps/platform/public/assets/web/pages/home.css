@@ -417,3 +417,23 @@
         font-size: var(--text-sm);
     }
 }
+
+.f-hello {
+    align-items: center;
+    padding: var(--space-6);
+    border: 0;
+    border-radius: var(--radius-lg);
+    background: var(--accent-soft);
+}
+
+.f-hello__title { line-height: 1.5; }
+.f-today__item, .f-menu .f-tile, .f-courses-grid {
+    border: 1px solid var(--border-strong);
+    box-shadow: none;
+}
+.f-menu .f-tile:hover, .f-menu .f-tile:focus-visible {
+    box-shadow: var(--shadow-soft);
+}
+@media (max-width: 720px) {
+    .f-hello { align-items: flex-start; padding: var(--space-5); }
+}

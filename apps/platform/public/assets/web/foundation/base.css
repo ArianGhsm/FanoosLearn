@@ -429,3 +429,32 @@ img {
         gap: var(--space-5) var(--space-4);
     }
 }
+
+/* A quieter paper surface keeps long study sessions readable. */
+body {
+    background: var(--bg-body);
+}
+
+.f-page {
+    padding-block: clamp(24px, 4vw, 48px) 64px;
+}
+
+.f-card {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-soft);
+}
+
+.f-btn {
+    min-height: 46px;
+    font-weight: 700;
+}
+
+.f-input {
+    background: var(--surface);
+    border-color: var(--border-strong);
+}
+
+.f-footer {
+    margin-top: 64px;
+    background: var(--surface-muted);
+}

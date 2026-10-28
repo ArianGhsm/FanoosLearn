@@ -316,3 +316,12 @@
 .x-papers__more {
     margin-bottom: var(--space-3);
 }
+
+.x-catalog__head {
+    padding-bottom: var(--space-5);
+    border-bottom: 1px solid var(--border-strong);
+}
+.x-card {
+    border-color: var(--border-strong);
+    box-shadow: none;
+}

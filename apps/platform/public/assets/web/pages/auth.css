@@ -606,3 +606,17 @@
     background: var(--accent-soft);
     border-color: transparent;
 }
+
+.f-auth {
+    border-color: var(--border-strong);
+    box-shadow: none;
+}
+.f-auth__panel {
+    padding-block: var(--space-7);
+    background: var(--accent-soft);
+}
+.f-auth__body { padding-block: var(--space-7); }
+@media (max-width: 760px) {
+    .f-auth__panel { padding: var(--space-4) var(--space-5); }
+    .f-auth__body { padding: var(--space-5) var(--space-4); }
+}
