@@ -15,6 +15,11 @@ queued deployment request and carries it through these gates, in order:
 8. Health (and the smoke check, if present) passes; otherwise the updater
    rolls back.
 
+The visitor-facing smoke check connects directly to the hostname in
+`FANOOS_PUBLIC_ORIGIN`, bypassing HTTP proxy settings for that host only.
+The production origin points back to this server; its release check must not
+depend on the outbound proxy used for other destinations.
+
 `fanoos-update-status.timer` refreshes the "is there an update" status the
 bot shows the owner.
 

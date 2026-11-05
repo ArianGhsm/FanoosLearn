@@ -23,7 +23,8 @@ require $root . '/apps/platform/bootstrap.php';
 
 try {
     $origin = rtrim((string) RuntimeConfig::load()->optionalString('FANOOS_PUBLIC_ORIGIN', ''), '/');
-    if (!str_starts_with($origin, 'https://')) {
+    $originHost = parse_url($origin, PHP_URL_HOST);
+    if (!str_starts_with($origin, 'https://') || !is_string($originHost) || $originHost === '') {
         throw new RuntimeException('FANOOS_PUBLIC_ORIGIN is required for the smoke check.');
     }
 
@@ -38,7 +39,12 @@ try {
         $status = 0;
         for ($attempt = 1; $attempt <= 5 && !$ok; $attempt++) {
             $handle = curl_init($origin . $path);
-            curl_setopt_array($handle, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15, CURLOPT_FOLLOWLOCATION => false]);
+            curl_setopt_array($handle, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => 15,
+                CURLOPT_FOLLOWLOCATION => false,
+                CURLOPT_NOPROXY => $originHost,
+            ]);
             $body = (string) curl_exec($handle);
             $status = (int) curl_getinfo($handle, CURLINFO_HTTP_CODE);
             curl_close($handle);

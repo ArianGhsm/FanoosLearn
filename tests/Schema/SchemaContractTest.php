@@ -225,6 +225,11 @@ final class SchemaContractTest
 
         $runner = file_get_contents($this->root . '/scripts/ops/update-runner.php');
         $this->assert(is_string($runner) && str_contains($runner, '$argc !== 1'), 'Privileged updater runner accepts user-controlled positional arguments.');
+        $smoke = file_get_contents($this->root . '/scripts/ops/update-smoke.php');
+        $this->assert(is_string($smoke)
+            && str_contains($smoke, '$originHost = parse_url($origin, PHP_URL_HOST)')
+            && str_contains($smoke, 'CURLOPT_NOPROXY => $originHost'),
+            'Public-origin smoke checks must reach the configured FANOOS host directly, without depending on the outbound proxy.');
         $refresher = file_get_contents($this->root . '/scripts/ops/refresh-update-status.php');
         $this->assert(is_string($refresher) && str_contains($refresher, '$argc !== 1') && str_contains($refresher, 'CanonicalMainUpdateExecutor'), 'Updater-side owner status refresher can accept arbitrary candidate input or bypass canonical preflight.');
         $executor = file_get_contents($this->root . '/apps/platform/src/Operations/CanonicalMainUpdateExecutor.php');
