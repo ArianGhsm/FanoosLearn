@@ -157,10 +157,26 @@ final class BankImportTest
                 'status' => $studyAnswer['status'],
             ],
         ];
+        $previouslySourcedQuestion = $sitting['questions'][0];
+        $previouslySourcedAnswer = $previouslySourcedQuestion['answer'];
+        $previouslySourcedQuestion = [
+            'number' => 1,
+            'subject' => 'endodontics',
+            'stem' => $previouslySourcedQuestion['stem'],
+            'choices' => $previouslySourcedQuestion['choices'],
+            'answer' => [
+                'choice' => $previouslySourcedAnswer['choice'] ?? null,
+                'also_correct' => $previouslySourcedAnswer['also_correct'] ?? [],
+                'status' => $previouslySourcedAnswer['status'],
+            ],
+        ];
         $study = [
             'format' => 'fanoos.classification.study-only/1',
             'exam_type' => 'residency', 'year' => 1404, 'round' => 1,
-            'questions' => [$studyQuestion],
+            // Question 1 keeps its source from the prior sitting import. It is
+            // in the study snapshot, but question 2 is the only source target
+            // in this batch.
+            'questions' => [$studyQuestion, $previouslySourcedQuestion],
         ];
         $source = [
             'ref' => 'torabinejad@6e#ch14',
