@@ -64,6 +64,11 @@ checkpoints below preserve their original (broader) definitions.
 - Live lock (`FOR UPDATE`) and exact-match checks guarantee published
   `bank_questions.stem`, all `bank_question_choices`, and the latest
   `bank_official_answers` remain identical to the study input.
+- Post-commit source readback is limited to questions with an accepted source
+  in that batch. It still fingerprints questions, choices and answers across
+  the whole study. Existing source rows on unrelated questions in an
+  overlapping study snapshot are left untouched and do not count as new batch
+  output; duplicate or mismatched rows on a targeted question still fail.
 - Every accepted mapping must be `ai`/primary, match the independently
   verified decision's exact reference edition/chapter/page and evidence
   text, have confidence at least 0.85, have **no existing source row**,

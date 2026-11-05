@@ -853,41 +853,72 @@ SQL);
             foreach ($expectedForQuestion as $source) {
                 $expectedSources[] = self::readbackSource($number, $source, null);
             }
-            $sourcesQuery->execute($params);
-            foreach ($sourcesQuery->fetchAll(PDO::FETCH_ASSOC) as $source) {
-                $sourceIds[] = (string) $source['id'];
-                $actualSources[] = self::readbackSource($number, [
-                    'ref' => ($source['reference_key'] === null || $source['edition_key'] === null || $source['node_key'] === null)
-                        ? null : $source['reference_key'] . '@' . $source['edition_key'] . '#' . $source['node_key'],
-                    'page' => $source['page'],
-                    'printed_page' => $source['printed_page'],
-                    'pdf_page' => $source['pdf_page'] === null ? null : (int) $source['pdf_page'],
-                    'pdf_sha256' => $source['pdf_sha256'],
-                    'anchor' => $source['anchor_text'],
-                    'reference_year' => $source['reference_year'] === null ? null : (int) $source['reference_year'],
-                    'classification_basis' => $source['classification_basis'],
-                    'classification_note' => $source['classification_note'],
-                    'origin' => $source['origin'],
-                    'primary' => (bool) $source['is_primary'],
-                    'confidence' => [
-                        'source' => $source['confidence_source'],
-                        'node' => $source['confidence_node'],
-                        'page' => $source['confidence_page'],
-                    ],
-                    'official_scope_status' => $source['official_scope_status'],
-                    'official_scope_note' => $source['official_scope_note'],
-                    'key_conflict_note' => $source['key_conflict_note'],
-                    'scope_unverified' => (bool) $source['scope_unverified'],
-                ], (string) $source['id']);
+            if ($expectedForQuestion !== []) {
+                $sourcesQuery->execute($params);
+                foreach ($sourcesQuery->fetchAll(PDO::FETCH_ASSOC) as $source) {
+                    $actualSources[] = self::readbackSource($number, [
+                        'ref' => ($source['reference_key'] === null || $source['edition_key'] === null || $source['node_key'] === null)
+                            ? null : $source['reference_key'] . '@' . $source['edition_key'] . '#' . $source['node_key'],
+                        'page' => $source['page'],
+                        'printed_page' => $source['printed_page'],
+                        'pdf_page' => $source['pdf_page'] === null ? null : (int) $source['pdf_page'],
+                        'pdf_sha256' => $source['pdf_sha256'],
+                        'anchor' => $source['anchor_text'],
+                        'reference_year' => $source['reference_year'] === null ? null : (int) $source['reference_year'],
+                        'classification_basis' => $source['classification_basis'],
+                        'classification_note' => $source['classification_note'],
+                        'origin' => $source['origin'],
+                        'primary' => (bool) $source['is_primary'],
+                        'confidence' => [
+                            'source' => $source['confidence_source'],
+                            'node' => $source['confidence_node'],
+                            'page' => $source['confidence_page'],
+                        ],
+                        'official_scope_status' => $source['official_scope_status'],
+                        'official_scope_note' => $source['official_scope_note'],
+                        'key_conflict_note' => $source['key_conflict_note'],
+                        'scope_unverified' => (bool) $source['scope_unverified'],
+                    ], (string) $source['id']);
+                }
             }
         }
 
+        $actualSources = self::retainTargetReadbackSources($expectedSources, $actualSources);
+        $sourceIds = array_values(array_map(
+            static fn(array $source): string => (string) $source['source_id'],
+            $actualSources,
+        ));
         $comparison = self::compareReadback($expectedQuestions, $actualQuestions, $expectedSources, $actualSources);
         sort($sourceIds, SORT_STRING);
         return $comparison + [
             'source_row_ids' => $sourceIds,
             'source_rows_sha256' => self::digest($actualSources),
         ];
+    }
+
+    /**
+     * Source-only readback checks only rows targeted by this batch. Study snapshots
+     * can overlap earlier batches whose source rows are intentionally left untouched.
+     *
+     * @param list<array<string, mixed>> $expectedSources
+     * @param list<array<string, mixed>> $actualSources
+     * @return list<array<string, mixed>>
+     */
+    public static function retainTargetReadbackSources(array $expectedSources, array $actualSources): array
+    {
+        $targetNumbers = [];
+        foreach ($expectedSources as $source) {
+            $number = $source['number'] ?? null;
+            if (is_int($number)) {
+                $targetNumbers[$number] = true;
+            }
+        }
+
+        return array_values(array_filter(
+            $actualSources,
+            static fn(array $source): bool => is_int($source['number'] ?? null)
+                && isset($targetNumbers[$source['number']]),
+        ));
     }
 
     /**
