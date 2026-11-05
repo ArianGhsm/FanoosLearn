@@ -55,6 +55,58 @@ final class SourceOnlyReadbackTest
             && !str_contains(json_encode($valid, JSON_THROW_ON_ERROR), 'private proxy explanation'),
             'Readback summary leaked question or proxy-note text.');
         $checks = 4;
+        $overlapQuestion = array_replace($questions[0], [
+            'number' => 8,
+            'question_key' => 'residency-1398-1-008',
+        ]);
+        $overlapQuestions = [$questions[0], $overlapQuestion];
+        $previousBatchSource = array_replace($persistedSource, [
+            'number' => 8,
+            'source_id' => '0199dd00-1234-7000-8000-000000000006',
+        ]);
+        $unfilteredOverlapReadback = SourceOnlyPublisher::compareReadback(
+            $overlapQuestions, $overlapQuestions, [$source], [$previousBatchSource, $persistedSource],
+        );
+        $this->check($unfilteredOverlapReadback['verified'] === false
+            && in_array('source_row_count', $unfilteredOverlapReadback['mismatches'], true),
+            'The overlap fixture did not reproduce the previous false readback failure.');
+        $targetSources = SourceOnlyPublisher::retainTargetReadbackSources(
+            [$source],
+            [$previousBatchSource, $persistedSource],
+        );
+        $this->check(count($targetSources) === 1
+            && $targetSources[0]['number'] === 7
+            && $targetSources[0]['source_id'] === $persistedSource['source_id'],
+            'A source already present on an unrelated study question was counted in this batch.');
+        $overlapReadback = SourceOnlyPublisher::compareReadback(
+            $overlapQuestions, $overlapQuestions, [$source], $targetSources,
+        );
+        $this->check($overlapReadback['verified'] === true
+            && $overlapReadback['source_rows'] === 1,
+            'A previous batch source caused a false source-only readback failure.');
+        $duplicateTarget = array_replace($persistedSource, [
+            'source_id' => '0199dd00-1234-7000-8000-000000000007',
+        ]);
+        $duplicateRows = SourceOnlyPublisher::retainTargetReadbackSources(
+            [$source],
+            [$persistedSource, $duplicateTarget],
+        );
+        $duplicateReadback = SourceOnlyPublisher::compareReadback(
+            [$questions[0]], [$questions[0]], [$source], $duplicateRows,
+        );
+        $this->check($duplicateReadback['verified'] === false
+            && in_array('source_row_count', $duplicateReadback['mismatches'], true),
+            'Duplicate source rows on a targeted question were hidden by readback filtering.');
+        $readbackMethod = new \ReflectionMethod(SourceOnlyPublisher::class, 'readback');
+        $readbackLines = file($readbackMethod->getFileName());
+        $readbackBody = implode('', array_slice(
+            $readbackLines,
+            $readbackMethod->getStartLine() - 1,
+            $readbackMethod->getEndLine() - $readbackMethod->getStartLine() + 1,
+        ));
+        $this->check(str_contains($readbackBody, 'retainTargetReadbackSources($expectedSources, $actualSources)'),
+            'The database readback did not apply the targeted-source filter.');
+        $checks += 5;
 
         $nationalQuestion = array_replace($questions[0], [
             'question_key' => 'national-1404-2-007',
