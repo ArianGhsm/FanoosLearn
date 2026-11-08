@@ -83,7 +83,7 @@ class PrintedBookPageEvidenceTests(unittest.TestCase):
         self.assertFalse(self.verified(pages, printed="102x"))
         self.assertFalse(self.verified(pages, printed="-1"))
 
-    def test_quote_normalization_ignores_only_directional_format_controls(self):
+    def test_quote_normalization_preserves_zwnj_and_ignores_bidi_controls(self):
         text = "س\u200c\u202bلام\u202c, x-ray"
         code = (
             "require $argv[1];"
@@ -94,7 +94,7 @@ class PrintedBookPageEvidenceTests(unittest.TestCase):
             ["php", "-r", code, str(VERIFIER), text],
             text=True, capture_output=True, check=True
         )
-        self.assertEqual(run.stdout, "سلام, x-ray")
+        self.assertEqual(run.stdout, "س\u200cلام, x-ray")
 
     def test_accepts_unlabelled_figure_page_only_with_exact_adjacent_sequence(self):
         self.assertTrue(self.verified({119: [101], 120: [], 121: [103]}, printed="102"))

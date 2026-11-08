@@ -14,10 +14,11 @@ from pathlib import Path
 import re
 import sys
 import tempfile
+import unicodedata
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from apply_classification import (
-    chapter_nodes, flat, fragments, whole_chapter_is_unlisted,
+    chapter_nodes, fragments, whole_chapter_is_unlisted,
     valid_non_residency_outside_scope_note,
     valid_residency_outside_scope_note,
     key_conflict_note,
@@ -46,6 +47,334 @@ from same_lineage_proxy_policy import (
 LEGACY_BATCH = re.compile(r"^(13[0-9]{2}|14[0-9]{2}):([a-z][a-z0-9-]*):([a-z][a-z0-9-]*)$")
 TYPED_BATCH = re.compile(r"^(residency|national|board|promotion):(13[0-9]{2}|14[0-9]{2}):([1-9][0-9]{0,1}):([a-z][a-z0-9-]*):([a-z][a-z0-9-]*)$")
 CHAPTERS = Path(__file__).resolve().parents[2] / "data/bank/reference-chapter-pages.json"
+_AUDIT_BIDI_CONTROLS = frozenset({
+    0x061C, 0x200E, 0x200F,
+    *range(0x202A, 0x202F),
+    *range(0x2066, 0x206A),
+})
+_AUDIT_ASCII_SPACE = frozenset(" \t\n\v\f\r")
+_AUDIT_NUMERIC_SEPARATORS = frozenset(".,/:\u066b\u066c'’·،⁄∕\u00b1\u2213\u207b\u208b")
+_AUDIT_DECIMAL_START = frozenset(".,\u066b\u066c،")
+_AUDIT_SIGNS = frozenset("+-\u2212\u00b1\u2213\u207b\u208b")
+_AUDIT_SUFFIXES = frozenset("%\u2030\u2031\u066a\uff05\ufe6a")
+_AUDIT_NUMERIC_QUALIFIERS = frozenset("<>≤≥~≈≲≳≦≧∼～⩾⩽≃≅")
+_AUDIT_NUMERIC_MULTIPLIERS = frozenset("×xX")
+_AUDIT_MEASUREMENT_UNITS = frozenset({
+    "mm", "cm", "m", "km", "um", "µm", "μm", "nm", "pm", "in", "inch", "inches", "ft",
+    "mg", "mcg", "µg", "μg", "ng", "g", "kg", "ml", "milliliter", "millilitre", "l", "dl",
+    "meq", "mmol", "mol", "mm", "μm", "µm", "n", "kn", "pa", "kpa", "mpa", "gpa", "psi",
+    "mmhg", "cmh2o", "s", "sec", "min", "h", "hr", "rpm", "hz", "khz", "mhz", "v", "mv",
+    "w", "kw", "j", "kj", "kcal", "°c", "°f", "angstrom", "å",
+    "متر", "میلی‌متر", "میلیمتر", "سانتی‌متر", "سانتیمتر", "میکرومتر", "میکرون", "نانومتر",
+    "گرم", "میلی‌گرم", "کیلوگرم", "میلی‌لیتر", "میلیلتر", "لیتر", "درصد", "درجه", "ثانیه",
+    "دقیقه", "ساعت", "روز", "سال", "مول", "نیوتن", "پاسکال", "ميلي‌گرم", "كيلوگرم",
+    "cent", "percent", "day", "days", "week", "weeks", "month", "months", "hour", "hours",
+    "minute", "minutes", "second", "seconds", "year", "years", "cent", "cigarette", "cigarettes",
+    "time", "times", "site", "sites", "tooth", "teeth", "implant", "implants", "unit", "units",
+    "drop", "drops", "capsule", "capsules", "tablet", "tablets", "dose", "doses", "pack", "packs",
+    "ppm", "cc", "iu", "درصد", "دندان", "دندان‌ها", "دندانه", "بار", "هفته", "ماه", "قطره", "قرص", "دوز", "واحد",
+})
+_AUDIT_EDGE_CONNECTORS = frozenset({
+    "per", "to", "of", "in", "on", "by", "for", "at", "over", "under", "about", "up", "down",
+    "the", "a", "an", "from", "between", "every", "than", "and", "or", "nor", "with", "versus", "vs",
+    "در", "تا", "از", "به", "برای", "حدود", "کمتر", "بیشتر", "بین", "و", "هر", "یا", "با",
+})
+_AUDIT_RIGHT_SCAN_ABBREVIATIONS = frozenset({
+    "vs", "approx", "ca", "cf", "i", "e", "g", "etc", "al", "dr", "mr", "mrs", "ms",
+    "fig", "eq", "no", "ref", "vol", "ed", "min", "sec", "pp", "ch",
+})
+_AUDIT_EDGE_OPEN_ENDED = frozenset({
+    "more", "less", "greater", "higher", "lower", "older", "younger", "longer", "shorter",
+    "above", "below", "over", "under", "atleast", "upto", "بیشتر", "کمتر", "بالاتر", "پایین‌تر",
+    "حداقل", "حداکثر", "بیش‌از", "کمتر‌از",
+})
+
+
+def _audit_layout_space(char: str) -> bool:
+    return char in _AUDIT_ASCII_SPACE or unicodedata.category(char) in {"Zs", "Zl", "Zp"}
+
+
+def _audit_unreadable(text: str) -> bool:
+    for char in text:
+        code = ord(char)
+        category = unicodedata.category(char)
+        if code in _AUDIT_BIDI_CONTROLS or _audit_layout_space(char) or char in {"\u200c", "\u200d"}:
+            continue
+        if code in {0x00AD, 0x200B, 0x2060, 0xFEFF, 0xFFFC, 0xFFFD} or category in {"Cc", "Cs", "Cn", "Co", "Cf"}:
+            return True
+    return False
+
+
+def _audit_key_with_line_breaks(text: str) -> tuple[str, set[int]]:
+    output: list[str] = []
+    line_breaks: set[int] = set()
+    pending = False
+    pending_line_break = False
+    for char in text:
+        if ord(char) in _AUDIT_BIDI_CONTROLS:
+            continue
+        if _audit_layout_space(char):
+            if output:
+                pending = True
+                pending_line_break = pending_line_break or char in {"\n", "\r", "\u2028", "\u2029"}
+            continue
+        if pending:
+            if pending_line_break:
+                line_breaks.add(len(output))
+            output.append(" ")
+            pending = False
+            pending_line_break = False
+        output.append(char)
+    return "".join(output), line_breaks
+
+
+def _audit_key(text: str) -> str:
+    return _audit_key_with_line_breaks(text)[0]
+
+
+def _audit_word(char: str) -> bool:
+    if not char:
+        return False
+    category = unicodedata.category(char)
+    return char == "_" or ord(char) in {0xFFFC, 0xFFFD} or char in {"\u200c", "\u200d"} or category[0] in {"L", "N", "M", "C"}
+
+
+def _audit_number(char: str) -> bool:
+    return bool(char) and unicodedata.category(char)[0] == "N"
+
+
+def _audit_word_count(text: str) -> int:
+    count = 0
+    inside = False
+    for char in text:
+        category = unicodedata.category(char)
+        if category[0] in {"L", "N"}:
+            if not inside:
+                count += 1
+            inside = True
+        elif category[0] == "M" or char in {"\u200c", "\u200d"}:
+            continue
+        else:
+            inside = False
+    return count
+
+
+def _audit_prev_nonspace(text: str, index: int) -> int:
+    while index >= 0 and _audit_layout_space(text[index]):
+        index -= 1
+    return index
+
+
+def _audit_next_nonspace(text: str, index: int) -> int:
+    while index < len(text) and _audit_layout_space(text[index]):
+        index += 1
+    return index
+
+
+def _audit_dash(char: str) -> bool:
+    return bool(char) and (unicodedata.category(char) == "Pd" or char in {"\u2212", "\u00ad"})
+
+
+def _audit_math_operator(char: str) -> bool:
+    return bool(char) and unicodedata.category(char) == "Sm"
+
+
+def _audit_words(text: str) -> list[str]:
+    words: list[str] = []
+    current: list[str] = []
+    for char in _audit_key(text):
+        category = unicodedata.category(char)
+        if category[0] in {"L", "N"}:
+            current.append(char)
+        elif (category[0] == "M" or char in {"\u200c", "\u200d"}) and current:
+            current.append(char)
+        elif current:
+            words.append("".join(current))
+            current = []
+    if current:
+        words.append("".join(current))
+    return words
+
+
+def _audit_unit_key(word: str) -> str:
+    return word.casefold().translate(str.maketrans({"ي": "ی", "ى": "ی", "ك": "ک"}))
+
+
+def _audit_left_boundary_follows_number(
+    page: str, start: int, line_breaks: set[int], ignored_page_labels: set[str],
+) -> bool:
+    previous = _audit_prev_nonspace(page, start - 1)
+    if previous < 0 or not _audit_number(page[previous]):
+        return False
+    boundary = next((index for index in line_breaks if previous < index < start), None)
+    if boundary is None:
+        return True
+    line_start = max((index + 1 for index in line_breaks if index < previous), default=0)
+    previous_line = page[line_start:boundary].strip(" ")
+    line_number = sum(index < line_start for index in line_breaks)
+    total_lines = len(line_breaks) + 1
+    # Reject numeric values in body text unless the margin label was corroborated.
+    is_page_label = (previous_line in ignored_page_labels
+                     and (line_number < 3 or line_number >= total_lines - 3))
+    return not is_page_label
+
+
+def _audit_numeric_edge_word(text: str) -> bool:
+    words = _audit_words(text)
+    if not words:
+        return True
+    edges = words[:2] + words[-2:]
+    return any(any(_audit_number(char) for char in word) for word in edges)
+
+
+def _audit_quote_ends_with_abbreviation(text: str) -> bool:
+    if not text.endswith("."):
+        return False
+    words = _audit_words(text[:-1])
+    return bool(words) and _audit_unit_key(words[-1]) in _AUDIT_RIGHT_SCAN_ABBREVIATIONS
+
+
+def _audit_first_sentence_boundary(text: str) -> int | None:
+    for match in re.finditer(r"[.!?;؛؟](?=\s|$)", text):
+        if match.group(0) == ".":
+            words = _audit_words(text[:match.start()])
+            if words and _audit_unit_key(words[-1]) in _AUDIT_RIGHT_SCAN_ABBREVIATIONS:
+                continue
+        return match.start()
+    return None
+
+
+def _audit_right_unit_run_continues_to_number(page: str, end: int, fragment: str) -> bool:
+    words = _audit_words(fragment)
+    if not words or not any(_audit_number(char) for word in words for char in word):
+        return False
+    quote_key = _audit_key(fragment)
+    if quote_key and quote_key[-1] in ".;!?؛؟":
+        if quote_key[-1] != "." or not _audit_quote_ends_with_abbreviation(quote_key):
+            return False
+    suffix = page[end:]
+    sentence_boundary = _audit_first_sentence_boundary(suffix)
+    if sentence_boundary is not None:
+        suffix = suffix[:sentence_boundary]
+    following = _audit_words(suffix)
+    if not following:
+        return False
+    tail = _audit_unit_key(words[-1])
+    saw_connector = tail in _AUDIT_EDGE_CONNECTORS
+    per_denominator = False
+    for word in following:
+        key = _audit_unit_key(word)
+        if saw_connector and key in _AUDIT_EDGE_OPEN_ENDED:
+            return True
+        if key in _AUDIT_EDGE_CONNECTORS:
+            saw_connector = True
+            per_denominator = key == "per"
+            continue
+        if key in _AUDIT_MEASUREMENT_UNITS:
+            if per_denominator:
+                return True
+            per_denominator = False
+            continue
+        return saw_connector and any(_audit_number(char) for char in word)
+    return False
+
+
+def _audit_attached(page: str, boundary: int, left: bool) -> bool:
+    if left:
+        sep = _audit_prev_nonspace(page, boundary - 1)
+        if (boundary > 0 and sep >= 0 and sep < boundary - 1
+                and _audit_number(page[sep]) and _audit_number(page[boundary])):
+            return True
+        if sep < 0:
+            return False
+        symbol = page[sep]
+        before_adjacent = page[sep - 1] if sep else ""
+        before_pos = _audit_prev_nonspace(page, sep - 1)
+        before = page[before_pos] if before_pos >= 0 else ""
+        after = page[boundary]
+        if _audit_dash(symbol) and _audit_word(before_adjacent) and _audit_word(after):
+            return True
+        if _audit_dash(symbol) and _audit_number(before) and _audit_number(after):
+            return True
+        if symbol in _AUDIT_NUMERIC_MULTIPLIERS and _audit_number(before) and _audit_number(after):
+            return True
+        if (symbol in _AUDIT_NUMERIC_QUALIFIERS or _audit_math_operator(symbol)) and _audit_number(after):
+            return True
+        if symbol in _AUDIT_NUMERIC_SEPARATORS and _audit_number(before) and _audit_number(after):
+            return True
+        if symbol in _AUDIT_DECIMAL_START and _audit_number(after) and (not before or not _audit_word(before)):
+            return True
+        if symbol in _AUDIT_SIGNS:
+            return _audit_number(before) and _audit_number(after) or (
+                _audit_number(after) and (not before or not _audit_word(before)))
+        return False
+
+    if boundary >= len(page):
+        return False
+    before = page[boundary - 1] if boundary else ""
+    if (_audit_dash(before) and boundary < len(page) and _audit_layout_space(page[boundary])
+            and boundary > 1 and _audit_word(page[boundary - 2])):
+        continuation = _audit_next_nonspace(page, boundary)
+        if continuation < len(page) and _audit_word(page[continuation]):
+            return True
+    if _audit_number(before):
+        suffix = _audit_next_nonspace(page, boundary)
+        if suffix < len(page) and page[suffix] in _AUDIT_SUFFIXES:
+            return True
+        if (boundary < len(page) and _audit_layout_space(page[boundary])
+                and suffix < len(page) and _audit_number(page[suffix])):
+            return True
+        if suffix < len(page) and page[suffix] in _AUDIT_NUMERIC_MULTIPLIERS:
+            operand = _audit_next_nonspace(page, suffix + 1)
+            if operand < len(page) and _audit_number(page[operand]):
+                return True
+    if _audit_dash(page[boundary]):
+        after = _audit_next_nonspace(page, boundary + 1)
+        return _audit_word(before) and after < len(page) and _audit_word(page[after])
+    sep = _audit_next_nonspace(page, boundary)
+    if sep >= len(page):
+        return False
+    symbol = page[sep]
+    before_pos = _audit_prev_nonspace(page, boundary - 1)
+    number_before = page[before_pos] if before_pos >= 0 else ""
+    after_pos = _audit_next_nonspace(page, sep + 1)
+    number_after = page[after_pos] if after_pos < len(page) else ""
+    if (_audit_dash(symbol) or symbol in _AUDIT_NUMERIC_MULTIPLIERS or symbol in _AUDIT_NUMERIC_QUALIFIERS
+            or _audit_math_operator(symbol)) and _audit_number(number_before) and _audit_number(number_after):
+        return True
+    if symbol in _AUDIT_NUMERIC_SEPARATORS and _audit_number(number_before) and _audit_number(number_after):
+        return True
+    if symbol in _AUDIT_DECIMAL_START and _audit_number(number_after) and (not number_before or not _audit_word(number_before)):
+        return True
+    return symbol in _AUDIT_SIGNS and _audit_number(number_before) and _audit_number(number_after)
+
+
+def _audit_evidence_matches(
+    page_text: str, fragment: str, ignored_page_labels: set[str] | None = None,
+) -> bool:
+    """Independent exact quote check with its own normalization and boundary rules."""
+    if _audit_unreadable(fragment):
+        return False
+    page, line_breaks = _audit_key_with_line_breaks(page_text)
+    quote = _audit_key(fragment)
+    ignored_page_labels = ignored_page_labels or set()
+    if not quote or _audit_numeric_edge_word(quote):
+        return False
+    offset = 0
+    while True:
+        position = page.find(quote, offset)
+        if position < 0:
+            return False
+        end = position + len(quote)
+        left_word = position > 0 and _audit_word(page[position - 1])
+        right_word = end < len(page) and _audit_word(page[end])
+        if (not left_word and not right_word
+                and not _audit_left_boundary_follows_number(page, position, line_breaks, ignored_page_labels)
+                and not _audit_attached(page, position, True)
+                and not _audit_attached(page, end, False)
+                and not _audit_right_unit_run_continues_to_number(page, end, quote)):
+            return True
+        offset = position + 1
 
 
 def digest(path: Path) -> str:
@@ -68,7 +397,7 @@ def _printed_labels(text: str) -> set[int]:
     for line in lines[:3] + lines[-3:]:
         if len(line) >= 90:
             continue
-        match = re.match(r"^(\d{1,4})(?:\s|$)", line) or re.search(r"(?:^|\s)(\d{1,4})$", line)
+        match = re.match(r"^([1-9][0-9]{0,3})(?:\s|$)", line) or re.search(r"(?:^|\s)([1-9][0-9]{0,3})$", line)
         if match:
             numbers.add(int(match.group(1)))
     return numbers
@@ -81,6 +410,8 @@ def _verify_pdf_printed_page(pdf, pdf_page: int, value: str) -> bool:
     number on one page may be mistaken for its printed page number. Require
     at least two independently adjacent page labels with matching offsets.
     """
+    if not isinstance(value, str) or not re.fullmatch(r"[1-9][0-9]{0,3}", value):
+        return False
     try:
         printed = int(value)
     except (TypeError, ValueError):
@@ -331,16 +662,39 @@ def audit_batch(root: Path, spec: str,
             raise ValueError(f"{spec}: PDF page is outside the exact mapped chapter or section for Q{n}")
         if item.get("origin") != "ai":
             raise ValueError(f"{spec}: wrong page or origin for Q{n}")
-        label = str(item.get("page"))
+        raw_label = item.get("page")
+        if not isinstance(raw_label, str):
+            raise ValueError(f"{spec}: validated printed/PDF page label is not text for Q{n}")
+        label = raw_label
         pdf_number = int(decision["page"])
         pdf = verified_pdfs[str(decision["edition"])]
+        source_pdf_page = item.get("pdf_page")
+        source_pdf_sha256 = item.get("pdf_sha256")
+        if (not isinstance(source_pdf_page, int) or isinstance(source_pdf_page, bool)
+                or source_pdf_page != pdf_number
+                or not isinstance(source_pdf_sha256, str)
+                or not re.fullmatch(r"[a-f0-9]{64}", source_pdf_sha256)
+                or source_pdf_sha256 != pdf.source_sha256):
+            raise ValueError(f"{spec}: validated source PDF page/SHA differs from its decision for Q{n}")
+        if item.get("anchor") != decision.get("evidence"):
+            raise ValueError(f"{spec}: validated source anchor differs from exact decision evidence for Q{n}")
         page_text = pdf.page_text(pdf_number)
+        verified_page_labels = set()
+        for candidate in _printed_labels(page_text):
+            candidate_text = str(candidate)
+            if _verify_pdf_printed_page(pdf, pdf_number, candidate_text):
+                verified_page_labels.add(candidate_text)
         evidence_parts = fragments(str(decision.get("evidence", "")))
-        if (not evidence_parts or any(len(part.split()) < 4 or flat(part) not in flat(page_text)
+        if (not evidence_parts or any(_audit_word_count(part) < 4
+                                      or not _audit_evidence_matches(page_text, part, verified_page_labels)
                                       for part in evidence_parts)):
             raise ValueError(f"{spec}: evidence quote is not printed on PDF page {pdf_number}")
         del page_text
-        if label not in {str(pdf_number), f"pdf {pdf_number}"} and not _verify_pdf_printed_page(
+        printed_page = item.get("printed_page")
+        if printed_page is not None and (
+                not isinstance(printed_page, str) or printed_page != label or label == f"pdf {pdf_number}"):
+            raise ValueError(f"{spec}: validated printed_page differs from its page label for Q{n}")
+        if label != f"pdf {pdf_number}" and not _verify_pdf_printed_page(
                 pdf, pdf_number, label):
             raise ValueError(f"{spec}: wrong page or origin for Q{n}")
         confidence = item.get("confidence", {})
@@ -402,7 +756,8 @@ def audit_batch(root: Path, spec: str,
             "reference_subject": decision.get("reference_subject", subject),
             "reference_year": item.get("reference_year"),
             "classification_basis": item.get("classification_basis"),
-            "pdf_page": int(decision["page"]),
+            "pdf_page": int(item["pdf_page"]),
+            "pdf_sha256": item["pdf_sha256"],
             "confidence_source": round(float(confidence["source"]), 3),
             "confidence_node": round(float(confidence["node"]), 3),
             "confidence_page": round(float(confidence["page"]), 3),

@@ -13,6 +13,16 @@ A selected short quote may be stored in a decision because the validator and
 reviewer need evidence for that page. It is a citation, not a textual version
 of the PDF. Full pages and books are never serialized.
 
+Evidence matching preserves case, visible letters, punctuation, digits, ZWNJ
+and line-end hyphens. Only layout whitespace and Unicode bidi display controls
+are normalized. Never lowercase, change punctuation, rejoin a line-end hyphen,
+or fold ligatures/lookalike letters to make a quote pass; unreadable glyphs or
+non-exact quotes stay pending for original-page review. Every evidence fragment
+must contain at least four words and preserve full number-unit phrases,
+percentages, ranges, limits and measurements. Do not cut a fragment at a
+unit/connector run beside a number. Numeric printed-page labels must use
+canonical ASCII decimal digits and be corroborated against neighboring pages.
+
 ## Direct-PDF workflow implemented on the working branch
 
 1. `scripts/ops/reference-library-inventory.php` identifies current approved
@@ -24,7 +34,7 @@ of the PDF. Full pages and books are never serialized.
 3. A tool requests a single numbered page from that PDF. Poppler writes only
    that page to stdout; the caller checks it in memory and discards it. No
    output file, whole-book text stream, `.txt` index, OCR file or search cache
-   is created. Search keeps only selected page numbers and short snippets;
+   is created. Search keeps only selected page numbers and short original-case quote candidates;
    chapter mapping keeps votes and page runs; audit receipts keep PDF hash,
    page count and decisions.
 4. `scripts/references/apply_classification.py` and
