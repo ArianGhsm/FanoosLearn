@@ -432,11 +432,17 @@ files are read for a sitting, by the `<year>-` prefix):
   proved but the printed label cannot be corroborated.
 - `evidence` is copied **word for word from the original PDF page**, using
   the search output's `quote:` line only as a candidate. Several fragments are
-  joined with `...`; every fragment has at least four words. Never a
-  paraphrase, a translation or a summary.
-  Words broken by the PDF (`efective`, `he` for "The", `dierent`, `àap`) are
-  copied as printed; avoid fragments with symbols (`≤`, `•`, `‐`, `#`,
-  superscript reference numbers) when a plain run of words is available.
+  joined with `...`; every fragment has at least four words. Keep complete
+  number-unit phrases and preserve ranges, percentages, inequalities and
+  measurements in context. The validator rejects cuts that detach a number
+  from its unit or range. Never paraphrase, translate or summarize.
+  Matching preserves case, visible letters, punctuation, digits, ZWNJ and
+  line-end hyphens and mathematical operators; only layout whitespace and Unicode bidi display controls
+  may be ignored. Do not lowercase, fold punctuation/ligatures/lookalike
+  letters, or reconstruct a broken word. Copy a broken word as printed; if a
+  readable exact span is unavailable, keep it pending or review the original
+  page visually. Avoid fragments with symbols (`≤`, `•`, `‐`, `#`, superscript
+  reference numbers) when a plain run of words is available.
 - `confidence`: 0.95+ when the quote states the answer outright; 0.85–0.94
   when it states it but the wording differs or two chapters teach it.
   Below 0.85, keep the decision pending and search again; there is no
@@ -675,7 +681,7 @@ the corrected questions as changed, the answers and option order stay, and
 |---|---|
 | Chapters chosen from titles, not text | evidence + page checked by `apply_classification.py` |
 | Paraphrased or too-short quotes rejected after a long batch | `find_in_books.py` prints a ready, pre-checked `quote:` for every hit; fragments of ≥ 4 words |
-| A quote containing ligature glyphs or a soft hyphen failed | normalised on both sides (`flat()`); prefer plain runs of words |
+| Changed case, punctuation or a reconstructed word was accepted as evidence | `evidence_match.py`, `apply_classification.py`, and the independent audit preserve visible text; only layout whitespace and bidi display controls are normalized |
 | Decisions of one year read into another | only `<year>-*.json` is read for a sitting |
 | A reference that is not official that year (Craig for 1399–1401 materials) | the edition must be in that year's `validity` |
 | A carried-over chapter landed on the wrong chapter after a reorganisation | carry-over only by identical title; otherwise `official_chapter` |

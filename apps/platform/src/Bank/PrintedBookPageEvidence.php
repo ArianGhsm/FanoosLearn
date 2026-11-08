@@ -12,6 +12,35 @@ namespace Fanoos\Platform\Bank;
 final class PrintedBookPageEvidence
 {
     private const MAX_PAGE_TEXT_BYTES = 2_000_000;
+    private const EDGE_MEASUREMENT_UNITS = [
+        'mm', 'cm', 'm', 'km', 'um', 'µm', 'μm', 'nm', 'pm', 'in', 'inch', 'inches', 'ft',
+        'mg', 'mcg', 'µg', 'μg', 'ng', 'g', 'kg', 'ml', 'milliliter', 'millilitre', 'l', 'dl',
+        'meq', 'mmol', 'mol', 'mm', 'μm', 'µm', 'n', 'kn', 'pa', 'kpa', 'mpa', 'gpa', 'psi',
+        'mmhg', 'cmh2o', 's', 'sec', 'min', 'h', 'hr', 'rpm', 'hz', 'khz', 'mhz', 'v', 'mv',
+        'w', 'kw', 'j', 'kj', 'kcal', '°c', '°f', 'angstrom', 'å',
+        'متر', 'میلی‌متر', 'میلیمتر', 'سانتی‌متر', 'سانتیمتر', 'میکرومتر', 'میکرون', 'نانومتر',
+        'گرم', 'میلی‌گرم', 'کیلوگرم', 'میلی‌لیتر', 'میلیلتر', 'لیتر', 'درصد', 'درجه', 'ثانیه',
+        'دقیقه', 'ساعت', 'روز', 'سال', 'مول', 'نیوتن', 'پاسکال', 'ميلي‌گرم', 'كيلوگرم',
+        'cent', 'percent', 'day', 'days', 'week', 'weeks', 'month', 'months', 'hour', 'hours',
+        'minute', 'minutes', 'second', 'seconds', 'year', 'years', 'cent', 'cigarette', 'cigarettes',
+        'time', 'times', 'site', 'sites', 'tooth', 'teeth', 'implant', 'implants', 'unit', 'units',
+        'drop', 'drops', 'capsule', 'capsules', 'tablet', 'tablets', 'dose', 'doses', 'pack', 'packs',
+        'ppm', 'cc', 'iu', 'درصد', 'دندان', 'دندان‌ها', 'دندانه', 'بار', 'هفته', 'ماه', 'قطره', 'قرص', 'دوز', 'واحد',
+    ];
+    private const RIGHT_SCAN_ABBREVIATIONS = [
+        'vs', 'approx', 'ca', 'cf', 'i', 'e', 'g', 'etc', 'al', 'dr', 'mr', 'mrs', 'ms',
+        'fig', 'eq', 'no', 'ref', 'vol', 'ed', 'min', 'sec', 'pp', 'ch',
+    ];
+    private const EDGE_OPEN_ENDED = [
+        'more', 'less', 'greater', 'higher', 'lower', 'older', 'younger', 'longer', 'shorter',
+        'above', 'below', 'over', 'under', 'atleast', 'upto', 'بیشتر', 'کمتر', 'بالاتر', 'پایین‌تر',
+        'حداقل', 'حداکثر', 'بیش‌از', 'کمتر‌از',
+    ];
+    private const EDGE_CONNECTORS = [
+        'per', 'to', 'of', 'in', 'on', 'by', 'for', 'at', 'over', 'under', 'about', 'up', 'down',
+        'the', 'a', 'an', 'from', 'between', 'every', 'than', 'and', 'or', 'nor', 'with', 'versus', 'vs',
+        'در', 'تا', 'از', 'به', 'برای', 'حدود', 'کمتر', 'بیشتر', 'بین', 'و', 'هر', 'یا', 'با',
+    ];
 
     public static function corroborates(
         string $edition, int $pdfPage, string $printedPage, ?string $expectedPdfSha256 = null,
@@ -96,27 +125,38 @@ final class PrintedBookPageEvidence
         string $edition, int $pdfPage, array $evidence, ?string $expectedPdfSha256 = null
     ): bool
     {
-        if (!preg_match('/^[a-z0-9][a-z0-9-]*@[a-z0-9]+$/D', $edition)
-            || $pdfPage < 1 || $evidence === []) {
+        if (!preg_match('/^[a-z0-9][a-z0-9-]*@[a-z0-9]+$/D', $edition) || $pdfPage < 1) {
             return false;
         }
-        if ($expectedPdfSha256 !== null && !preg_match('/^[a-f0-9]{64}$/D', $expectedPdfSha256)) {
+        // Evidence must always refer to the exact hash in the validated source row.
+        if (!is_string($expectedPdfSha256) || !preg_match('/^[a-f0-9]{64}$/D', $expectedPdfSha256)) {
+            return false;
+        }
+        $fragments = self::exactEvidenceFragments($evidence);
+        if ($fragments === null) {
             return false;
         }
         $text = self::readPage($edition, $pdfPage, $expectedPdfSha256);
         if ($text === null) {
             return false;
         }
-        $normalized = self::normalize($text);
-        unset($text);
-        foreach ($evidence as $quote) {
-            if (!is_string($quote) || mb_strlen(trim($quote)) < 6
-                || !str_contains($normalized, self::normalize($quote))) {
-                unset($normalized);
+        // Printed page labels need neighbouring PDF proof; an arbitrary margin number
+        // must never remove part of a measurement or study sample size.
+        $verifiedLabels = [];
+        foreach (self::pageLabelsFromText($text, false) as $candidate) {
+            if (is_int($candidate)
+                && self::corroborates($edition, $pdfPage, (string) $candidate, $expectedPdfSha256)) {
+                $verifiedLabels[] = (string) $candidate;
+            }
+        }
+        foreach ($fragments as $quote) {
+            if (self::hasUnreadableEvidenceGlyph($quote)
+                || !self::containsExactFragment($text, $quote, $verifiedLabels)) {
+                unset($text);
                 return false;
             }
         }
-        unset($normalized);
+        unset($text);
         return true;
     }
 
@@ -392,21 +432,436 @@ final class PrintedBookPageEvidence
         return $text;
     }
 
+    /** @return list<string>|null */
+    private static function exactEvidenceFragments(array $evidence): ?array
+    {
+        $fragments = [];
+        foreach ($evidence as $quote) {
+            if (!is_string($quote)) {
+                return null;
+            }
+            $parts = preg_split('/\.{3}|…/u', $quote);
+            if (!is_array($parts)) {
+                return null;
+            }
+            foreach ($parts as $part) {
+                $part = preg_replace('/^[\x{0009}-\x{000D}\p{Z}]+|[\x{0009}-\x{000D}\p{Z}]+$/u', '', $part);
+                if ($part === null) {
+                    return null;
+                }
+                if ($part === '') {
+                    continue;
+                }
+                $wordCount = preg_match_all('/[\p{L}\p{N}][\p{L}\p{N}\p{M}\x{200C}\x{200D}]*/u', $part);
+                if ($wordCount === false || $wordCount < 4) {
+                    return null;
+                }
+                $fragments[] = $part;
+            }
+        }
+        return $fragments === [] ? null : $fragments;
+    }
+
+    private static function hasUnreadableEvidenceGlyph(string $text): bool
+    {
+        $visibleControls = preg_replace(
+            '/[\x{061C}\x{200C}\x{200D}\x{200E}\x{200F}\x{202A}-\x{202E}\x{2066}-\x{2069}]/u',
+            '',
+            $text,
+        );
+        if ($visibleControls === null) {
+            return true;
+        }
+        return preg_match('/[\x{0000}-\x{0008}\x{000E}-\x{001F}\x{007F}-\x{009F}\p{Cf}\p{Cs}\p{Cn}\p{Co}\x{FFFC}\x{FFFD}]/u', $visibleControls) === 1;
+    }
+
+    private static function isLayoutWhitespace(string $char): bool
+    {
+        return preg_match('/^[\x{0009}-\x{000D}\p{Z}]$/u', $char) === 1;
+    }
+
+    private static function isEvidenceWordChar(string $char): bool
+    {
+        return $char !== '' && ($char === '_'
+            || preg_match('/^[\p{L}\p{N}\p{M}\p{C}_]$/u', $char) === 1
+            || in_array(mb_ord($char, 'UTF-8'), [0xFFFC, 0xFFFD], true));
+    }
+
+    private static function isEvidenceNumberChar(string $char): bool
+    {
+        return $char !== '' && preg_match('/^\p{N}$/u', $char) === 1;
+    }
+
+    private static function isEvidenceDash(string $char): bool
+    {
+        return $char !== '' && (preg_match('/^\p{Pd}$/u', $char) === 1
+            || in_array($char, ["−", "\u{00AD}"], true));
+    }
+
+    private static function isEvidenceMathOperator(string $char): bool
+    {
+        return $char !== '' && preg_match('/^\p{Sm}$/u', $char) === 1;
+    }
+
+    private static function hasNumericEdgeWord(string $text): bool
+    {
+        $count = preg_match_all('/[\p{L}\p{N}][\p{L}\p{N}\p{M}\x{200C}\x{200D}]*/u', $text, $words);
+        if ($count === false || $count === 0) {
+            return true;
+        }
+        $tokens = $words[0];
+        foreach (array_merge(array_slice($tokens, 0, 2), array_slice($tokens, -2)) as $word) {
+            if (preg_match('/\p{N}/u', $word) === 1) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static function quoteEndsWithAbbreviation(string $text): bool
+    {
+        if (!str_ends_with($text, '.')) {
+            return false;
+        }
+        $prefix = mb_substr($text, 0, -1, 'UTF-8');
+        preg_match_all('/[\p{L}\p{N}][\p{L}\p{N}\p{M}\x{200C}\x{200D}]*/u', $prefix, $words);
+        return $words[0] !== []
+            && in_array(self::unitKey($words[0][count($words[0]) - 1]), self::RIGHT_SCAN_ABBREVIATIONS, true);
+    }
+
+    private static function firstSentenceBoundary(string $text): ?int
+    {
+        $count = preg_match_all('/[.!?;؛؟](?=\s|$)/u', $text, $matches, PREG_OFFSET_CAPTURE);
+        if ($count === false || $count === 0) {
+            return null;
+        }
+        foreach ($matches[0] as [$punctuation, $offset]) {
+            if ($punctuation === '.') {
+                $before = substr($text, 0, $offset);
+                preg_match_all('/[\p{L}\p{N}][\p{L}\p{N}\p{M}\x{200C}\x{200D}]*/u', $before, $words);
+                if ($words[0] !== []
+                    && in_array(self::unitKey($words[0][count($words[0]) - 1]), self::RIGHT_SCAN_ABBREVIATIONS, true)) {
+                    continue;
+                }
+            }
+            return $offset;
+        }
+        return null;
+    }
+
+    private static function rightUnitRunContinuesToNumber(string $page, int $end, string $fragment): bool
+    {
+        $count = preg_match_all('/[\p{L}\p{N}][\p{L}\p{N}\p{M}\x{200C}\x{200D}]*/u', $fragment, $words);
+        if ($count === false || $count === 0) {
+            return false;
+        }
+        $containsNumber = false;
+        foreach ($words[0] as $word) {
+            if (preg_match('/\p{N}/u', $word) === 1) {
+                $containsNumber = true;
+                break;
+            }
+        }
+        if (!$containsNumber) {
+            return false;
+        }
+        $quoteKey = self::normalize($fragment);
+        $lastQuoteChar = $quoteKey === '' ? '' : mb_substr($quoteKey, -1, 1, 'UTF-8');
+        if (in_array($lastQuoteChar, ['.', ';', '!', '?', '؛', '؟'], true)
+            && ($lastQuoteChar !== '.' || !self::quoteEndsWithAbbreviation($quoteKey))) {
+            return false;
+        }
+        $remaining = mb_substr($page, $end, null, 'UTF-8');
+        $sentenceBoundary = self::firstSentenceBoundary($remaining);
+        if ($sentenceBoundary !== null) {
+            $remaining = substr($remaining, 0, $sentenceBoundary);
+        }
+        preg_match_all('/[\p{L}\p{N}][\p{L}\p{N}\p{M}\x{200C}\x{200D}]*/u', $remaining, $following);
+        if ($following[0] === []) {
+            return false;
+        }
+        $tail = self::unitKey($words[0][$count - 1]);
+        $sawConnector = in_array($tail, self::EDGE_CONNECTORS, true);
+        $perDenominator = false;
+        foreach ($following[0] as $word) {
+            $key = self::unitKey($word);
+            if ($sawConnector && in_array($key, self::EDGE_OPEN_ENDED, true)) {
+                return true;
+            }
+            if (in_array($key, self::EDGE_CONNECTORS, true)) {
+                $sawConnector = true;
+                $perDenominator = $key === 'per';
+                continue;
+            }
+            if (in_array($key, self::EDGE_MEASUREMENT_UNITS, true)) {
+                if ($perDenominator) {
+                    return true;
+                }
+                $perDenominator = false;
+                continue;
+            }
+            return $sawConnector && preg_match('/\p{N}/u', $word) === 1;
+        }
+        return false;
+    }
+
+    /** @param array<int, true> $lineBreaks */
+    private static function leftBoundaryFollowsNumber(
+        string $page, int $position, array $lineBreaks, array $verifiedPageLabels
+    ): bool
+    {
+        $previous = $position - 1;
+        while ($previous >= 0 && self::isLayoutWhitespace(mb_substr($page, $previous, 1, 'UTF-8'))) {
+            --$previous;
+        }
+        if ($previous < 0 || !self::isEvidenceNumberChar(mb_substr($page, $previous, 1, 'UTF-8'))) {
+            return false;
+        }
+        $boundary = null;
+        foreach ($lineBreaks as $index => $_) {
+            if ($previous < $index && $index < $position) {
+                $boundary = $index;
+                break;
+            }
+        }
+        if ($boundary === null) {
+            return true;
+        }
+        $lineStart = 0;
+        $lineNumber = 0;
+        foreach ($lineBreaks as $index => $_) {
+            if ($index < $previous) {
+                $lineStart = $index + 1;
+                ++$lineNumber;
+            }
+        }
+        $line = trim(mb_substr($page, $lineStart, $boundary - $lineStart, 'UTF-8'), ' ');
+        $totalLines = count($lineBreaks) + 1;
+        $pageLabel = in_array($line, $verifiedPageLabels, true);
+        return !($pageLabel && ($lineNumber < 3 || $lineNumber >= $totalLines - 3));
+    }
+
+    private static function unitKey(string $word): string
+    {
+        return strtr(mb_strtolower($word, 'UTF-8'), ['ي' => 'ی', 'ى' => 'ی', 'ك' => 'ک']);
+    }
+
+    private static function attachedSeparator(string $page, int $boundary, bool $leftSide): bool
+    {
+        $length = mb_strlen($page, 'UTF-8');
+        if ($leftSide) {
+            $separator = $boundary - 1;
+            $hasLayoutWhitespace = false;
+            while ($separator >= 0 && self::isLayoutWhitespace(mb_substr($page, $separator, 1, 'UTF-8'))) {
+                $hasLayoutWhitespace = true;
+                --$separator;
+            }
+            $current = $boundary < $length ? mb_substr($page, $boundary, 1, 'UTF-8') : '';
+            $previous = $separator >= 0 ? mb_substr($page, $separator, 1, 'UTF-8') : '';
+            if ($hasLayoutWhitespace && self::isEvidenceNumberChar($previous)
+                && self::isEvidenceNumberChar($current)) {
+                return true;
+            }
+            if ($separator < 0) {
+                return false;
+            }
+            $symbol = mb_substr($page, $separator, 1, 'UTF-8');
+            $beforeAdjacent = $separator > 0 ? mb_substr($page, $separator - 1, 1, 'UTF-8') : '';
+            $beforePosition = $separator - 1;
+            while ($beforePosition >= 0 && self::isLayoutWhitespace(mb_substr($page, $beforePosition, 1, 'UTF-8'))) {
+                --$beforePosition;
+            }
+            $before = $beforePosition >= 0 ? mb_substr($page, $beforePosition, 1, 'UTF-8') : '';
+            $after = $boundary < $length ? mb_substr($page, $boundary, 1, 'UTF-8') : '';
+            if (self::isEvidenceDash($symbol)
+                && self::isEvidenceWordChar($beforeAdjacent) && self::isEvidenceWordChar($after)) {
+                return true;
+            }
+            if (self::isEvidenceDash($symbol)
+                && self::isEvidenceNumberChar($before) && self::isEvidenceNumberChar($after)) {
+                return true;
+            }
+            if ((in_array($symbol, ["×", "x", "X"], true) || self::isEvidenceMathOperator($symbol))
+                && self::isEvidenceNumberChar($before) && self::isEvidenceNumberChar($after)) {
+                return true;
+            }
+            if ((in_array($symbol, ["<", ">", "≤", "≥", "~", "≈", "≲", "≳", "≦", "≧", "∼", "～", "⩾", "⩽", "≃", "≅"], true)
+                    || self::isEvidenceMathOperator($symbol))
+                && self::isEvidenceNumberChar($after)) {
+                return true;
+            }
+            if (str_contains(".,/:٫٬'’·،⁄∕±∓⁻₋", $symbol)
+                && self::isEvidenceNumberChar($before) && self::isEvidenceNumberChar($after)) {
+                return true;
+            }
+            if (str_contains(".,٫٬،", $symbol)
+                && self::isEvidenceNumberChar($after)
+                && ($before === '' || !self::isEvidenceWordChar($before))) {
+                return true;
+            }
+            return str_contains("+-−±∓⁻₋", $symbol) && self::isEvidenceNumberChar($after)
+                && (($before === '' || !self::isEvidenceWordChar($before))
+                    || self::isEvidenceNumberChar($before));
+        }
+
+        if ($boundary >= $length) {
+            return false;
+        }
+        $before = $boundary > 0 ? mb_substr($page, $boundary - 1, 1, 'UTF-8') : '';
+        $firstAfter = mb_substr($page, $boundary, 1, 'UTF-8');
+        if (self::isEvidenceDash($before) && self::isLayoutWhitespace($firstAfter) && $boundary > 1
+            && self::isEvidenceWordChar(mb_substr($page, $boundary - 2, 1, 'UTF-8'))) {
+            $continuation = $boundary;
+            while ($continuation < $length && self::isLayoutWhitespace(mb_substr($page, $continuation, 1, 'UTF-8'))) {
+                ++$continuation;
+            }
+            if ($continuation < $length && self::isEvidenceWordChar(mb_substr($page, $continuation, 1, 'UTF-8'))) {
+                return true;
+            }
+        }
+        if (self::isEvidenceNumberChar($before)) {
+            $suffixPosition = $boundary;
+            $hasLayoutWhitespace = false;
+            while ($suffixPosition < $length
+                && self::isLayoutWhitespace(mb_substr($page, $suffixPosition, 1, 'UTF-8'))) {
+                $hasLayoutWhitespace = true;
+                ++$suffixPosition;
+            }
+            $suffix = $suffixPosition < $length ? mb_substr($page, $suffixPosition, 1, 'UTF-8') : '';
+            if ($hasLayoutWhitespace && self::isEvidenceNumberChar($suffix)) {
+                return true;
+            }
+            if (str_contains("%‰‱٪％﹪", $suffix)) {
+                return true;
+            }
+            if (in_array($suffix, ["×", "x", "X"], true)) {
+                $operand = $suffixPosition + 1;
+                while ($operand < $length
+                    && self::isLayoutWhitespace(mb_substr($page, $operand, 1, 'UTF-8'))) {
+                    ++$operand;
+                }
+                if ($operand < $length && self::isEvidenceNumberChar(mb_substr($page, $operand, 1, 'UTF-8'))) {
+                    return true;
+                }
+            }
+        }
+        if (self::isEvidenceDash($firstAfter)) {
+            $afterPosition = $boundary + 1;
+            while ($afterPosition < $length && self::isLayoutWhitespace(mb_substr($page, $afterPosition, 1, 'UTF-8'))) {
+                ++$afterPosition;
+            }
+            $after = $afterPosition < $length ? mb_substr($page, $afterPosition, 1, 'UTF-8') : '';
+            return self::isEvidenceWordChar($before) && self::isEvidenceWordChar($after);
+        }
+        $separator = $boundary;
+        while ($separator < $length && self::isLayoutWhitespace(mb_substr($page, $separator, 1, 'UTF-8'))) {
+            ++$separator;
+        }
+        if ($separator >= $length) {
+            return false;
+        }
+        $symbol = mb_substr($page, $separator, 1, 'UTF-8');
+        $beforePosition = $boundary - 1;
+        while ($beforePosition >= 0 && self::isLayoutWhitespace(mb_substr($page, $beforePosition, 1, 'UTF-8'))) {
+            --$beforePosition;
+        }
+        $numberBefore = $beforePosition >= 0 ? mb_substr($page, $beforePosition, 1, 'UTF-8') : '';
+        $afterPosition = $separator + 1;
+        while ($afterPosition < $length && self::isLayoutWhitespace(mb_substr($page, $afterPosition, 1, 'UTF-8'))) {
+            ++$afterPosition;
+        }
+        $numberAfter = $afterPosition < $length ? mb_substr($page, $afterPosition, 1, 'UTF-8') : '';
+        if ((self::isEvidenceDash($symbol) || in_array($symbol, ["×", "x", "X"], true)
+                || in_array($symbol, ["<", ">", "≤", "≥", "~", "≈", "≲", "≳", "≦", "≧", "∼", "～", "⩾", "⩽", "≃", "≅"], true)
+                || self::isEvidenceMathOperator($symbol))
+            && self::isEvidenceNumberChar($numberBefore) && self::isEvidenceNumberChar($numberAfter)) {
+            return true;
+        }
+        if (str_contains(".,/:٫٬'’·،⁄∕±∓⁻₋", $symbol)
+            && self::isEvidenceNumberChar($numberBefore) && self::isEvidenceNumberChar($numberAfter)) {
+            return true;
+        }
+        if (str_contains(".,٫٬،", $symbol) && self::isEvidenceNumberChar($numberAfter)
+            && ($numberBefore === '' || !self::isEvidenceWordChar($numberBefore))) {
+            return true;
+        }
+        return str_contains("+-−±∓⁻₋", $symbol)
+            && self::isEvidenceNumberChar($numberBefore) && self::isEvidenceNumberChar($numberAfter);
+    }
+
+    private static function containsExactFragment(
+        string $page, string $fragment, array $verifiedPageLabels = []
+    ): bool
+    {
+        [$pageKey, $lineBreaks] = self::normalizeWithLineBreaks($page);
+        $quoteKey = self::normalize($fragment);
+        if ($quoteKey === '' || self::hasNumericEdgeWord($quoteKey)) {
+            return false;
+        }
+        $pageLength = mb_strlen($pageKey, 'UTF-8');
+        $offset = 0;
+        while (($position = mb_strpos($pageKey, $quoteKey, $offset, 'UTF-8')) !== false) {
+            $end = $position + mb_strlen($quoteKey, 'UTF-8');
+            $left = $position > 0 ? mb_substr($pageKey, $position - 1, 1, 'UTF-8') : '';
+            $right = $end < $pageLength ? mb_substr($pageKey, $end, 1, 'UTF-8') : '';
+            $leftIsWord = $left !== '' && self::isEvidenceWordChar($left);
+            $rightIsWord = $right !== '' && self::isEvidenceWordChar($right);
+            if (!$leftIsWord && !$rightIsWord
+                && !self::leftBoundaryFollowsNumber($pageKey, $position, $lineBreaks, $verifiedPageLabels)
+                && !self::attachedSeparator($pageKey, $position, true)
+                && !self::attachedSeparator($pageKey, $end, false)
+                && !self::rightUnitRunContinuesToNumber($pageKey, $end, $quoteKey)) {
+                return true;
+            }
+            $offset = $position + 1;
+        }
+        return false;
+    }
+
     private static function normalize(string $text): string
     {
-        // Poppler may hard-wrap a word with a discretionary hyphen at the
-        // physical end of a line. Rejoin only that pattern; keep in-line
-        // hyphens and all other punctuation to preserve strict quote matching.
-        // Persian PDFs may contain Unicode bidi formatting controls between
-        // visible characters. They affect display direction, not the quote.
-        $directionless = preg_replace('/[\x{061C}\x{200C}-\x{200F}\x{202A}-\x{202E}\x{2066}-\x{2069}]/u', '', $text);
+        return self::normalizeWithLineBreaks($text)[0];
+    }
+
+    /** @return array{string, array<int, true>} */
+    private static function normalizeWithLineBreaks(string $text): array
+    {
+        // Bidi display controls affect layout; line breaks are tracked for context checks.
+        $directionless = preg_replace('/[\x{061C}\x{200E}\x{200F}\x{202A}-\x{202E}\x{2066}-\x{2069}]/u', '', $text);
         if ($directionless === null) {
-            return '';
+            return ['', []];
         }
-        $joined = preg_replace('/-\h*\R\h*/u', '', $directionless);
-        if ($joined === null) {
-            return '';
+        $parts = preg_split('/([\x{0009}-\x{000D}\p{Z}]+)/u', $directionless, -1, PREG_SPLIT_DELIM_CAPTURE);
+        if (!is_array($parts)) {
+            return ['', []];
         }
-        return trim((string) preg_replace('/\s+/u', ' ', mb_strtolower($joined)));
+        $normalized = '';
+        $lineBreaks = [];
+        $pendingSpace = false;
+        $pendingLineBreak = false;
+        foreach ($parts as $part) {
+            if ($part === '') {
+                continue;
+            }
+            if (preg_match('/^[\x{0009}-\x{000D}\p{Z}]+$/u', $part) === 1) {
+                if ($normalized !== '') {
+                    $pendingSpace = true;
+                    $pendingLineBreak = $pendingLineBreak
+                        || preg_match('/[\r\n\x{2028}\x{2029}]/u', $part) === 1;
+                }
+                continue;
+            }
+            if ($pendingSpace) {
+                $index = mb_strlen($normalized, 'UTF-8');
+                $normalized .= ' ';
+                if ($pendingLineBreak) {
+                    $lineBreaks[$index] = true;
+                }
+                $pendingSpace = false;
+                $pendingLineBreak = false;
+            }
+            $normalized .= $part;
+        }
+        return [$normalized, $lineBreaks];
     }
 }

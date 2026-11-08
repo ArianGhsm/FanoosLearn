@@ -3,9 +3,9 @@
 
 Each query names an exam question, exact reference editions and search terms.
 For each edition this script opens the current approved private PDF, asks
-Poppler for one page at a time, and keeps only the best page numbers, short
-snippets and quotes in memory. It writes no PDF text or search-index file and
-does not decide a chapter assignment.
+Poppler or PyMuPDF for one page at a time, and keeps only the best page numbers
+and short original-case quote candidates in memory. It writes no PDF text,
+page excerpt or search-index file and does not decide a chapter assignment.
 
     python scripts/references/find_in_books.py queries.json [--top 3]
 """
@@ -23,7 +23,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from apply_classification import flat as evidence_flat  # noqa: E402
+from evidence_match import contains_exact_fragment, evidence_key, has_unreadable_glyph  # noqa: E402
 from verified_reference_pdf import chapter_coverage, open_verified_reference  # noqa: E402
 
 CHAPTERS = REPO / "data/bank/reference-chapter-pages.json"
@@ -85,32 +85,32 @@ def page_score(text: str, terms: list[str], document_frequency: collections.Coun
     return score * (0.6 + 0.4 * covered / max(1, len(groups)))
 
 
-def snippet(text: str, terms: list[str], width: int = 230) -> str:
-    flat = re.sub(r"\s+", " ", norm(text)).strip()
-    words = [word for term in terms for word in TOKEN.findall(norm(term)) if len(word) > 2]
-    best_start, best_hits = 0, -1
-    for start in range(0, max(1, len(flat) - width + 1), 60):
-        window = flat[start:start + width]
-        hits = sum(word in window for word in words)
-        if hits > best_hits:
-            best_start, best_hits = start, hits
-    return flat[best_start:best_start + width]
-
-
 def quote_page(text: str, terms: list[str], size: int = 10) -> str | None:
-    """Return only a short candidate quote that is verifiably on this PDF page."""
-    words = snippet(text, terms, 400).split()[1:-1]
-    if len(words) < 4:
+    """Return a short original-case candidate slice from this exact PDF page."""
+    word_spans = list(TOKEN.finditer(text))
+    if len(word_spans) < 4:
         return None
     wanted = [word for term in terms for word in TOKEN.findall(norm(term)) if len(word) > 2]
+    if not wanted:
+        return None
+    window_size = min(max(size, 4), len(word_spans))
     best_start, best_hits = 0, -1
-    for start in range(0, max(1, len(words) - size + 1)):
-        window = " ".join(words[start:start + size])
+    for start in range(len(word_spans) - window_size + 1):
+        end = start + window_size
+        window = norm(text[word_spans[start].start():word_spans[end - 1].end()])
         hits = sum(word in window for word in wanted)
         if hits > best_hits:
             best_start, best_hits = start, hits
-    quote = " ".join(words[best_start:best_start + size])
-    return quote if len(quote.split()) >= 4 and evidence_flat(quote) in evidence_flat(text) else None
+    if best_hits <= 0:
+        return None
+    start = word_spans[best_start].start()
+    end = word_spans[best_start + window_size - 1].end()
+    quote = evidence_key(text[start:end])
+    if (len(TOKEN.findall(quote)) < 4 or len(quote) > 300
+            or has_unreadable_glyph(quote)
+            or not contains_exact_fragment(text, quote)):
+        return None
+    return quote
 
 
 def chapter_at(runs: list, page: int) -> str | None:
@@ -124,26 +124,6 @@ def iter_original_pdf_pages(pdf, engine="pdftotext"):
     """Yield original PDF pages without writing any PDF-text derivative."""
     if engine == "pdftotext":
         yield from pdf.iter_page_texts()
-        return
-    if engine == "chunked":
-        # A bounded 12-page Poppler block, never a saved book text index.
-        # Yield individual original pages; independent one-page book evidence
-        # and neighboring printed-page labels are still required for citations.
-        for start in range(1, pdf.page_count + 1, 12):
-            end = min(start + 11, pdf.page_count)
-            result = subprocess.run(
-                ["pdftotext", "-enc", "UTF-8", "-layout", "-f", str(start),
-                 "-l", str(end), str(pdf.source), "-"],
-                check=True, capture_output=True, timeout=60,
-            )
-            text = result.stdout.decode("utf-8", "replace").rstrip("\r\n")
-            if text.endswith("\f"):
-                text = text[:-1]
-            pages = text.split("\f")
-            if len(pages) != end - start + 1:
-                raise ValueError("Poppler original PDF page boundaries mismatch")
-            for n, page_text in enumerate(pages, start):
-                yield n, page_text.strip("\r\n")
         return
     if engine != "pymupdf":
         raise ValueError("Unknown page search engine")
@@ -188,7 +168,7 @@ def search_edition(pdf, query_rows: list[dict], runs: list, top: int, engine='pd
                 if not score:
                     continue
                 item = (score, -page_number, page_number,
-                        chapter_at(runs, page_number), snippet(page_text, terms), quote_page(page_text, terms))
+                        chapter_at(runs, page_number), quote_page(page_text, terms))
                 heap = heaps[key]
                 if len(heap) < top:
                     heapq.heappush(heap, item)
@@ -202,7 +182,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("queries", help="temporary or durable JSON list of question keys, editions and search terms")
     parser.add_argument("--top", type=int, default=3)
-    parser.add_argument("--engine", choices=("pdftotext", "pymupdf", "chunked"), default="pdftotext")
+    parser.add_argument("--engine", choices=("pdftotext", "pymupdf"), default="pdftotext")
     parser.add_argument("--storage-root", type=Path, default=Path("/srv/fanoos/shared/storage"))
     parser.add_argument("--mysql-defaults", type=Path, default=Path("/etc/fanoos/mysql-migrator.cnf"))
     parser.add_argument("--database", default="fanoos_prod")
@@ -244,13 +224,13 @@ def main() -> int:
     for query in queries:
         key = str(query["key"])
         terms = [str(term) for term in query.get("terms", [])]
-        print(f"## {key}  {' | '.join(terms)}")
+        print(f"## {key}")
         for edition in query.get("editions", []):
             matches = output.get(str(edition), {}).get(key, [])
             if not matches:
                 print(f"   {edition}: no matching page from the current verified PDF")
-            for score, _, page, chapter, excerpt, quote in matches:
-                print(f"   {edition} p{page} ch{chapter} {score:5.1f} | {excerpt}")
+            for score, _, page, chapter, quote in matches:
+                print(f"   {edition} p{page} ch{chapter} {score:5.1f}")
                 if quote:
                     print(f"      quote: {quote}")
     return 0

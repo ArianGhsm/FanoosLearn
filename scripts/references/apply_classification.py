@@ -48,6 +48,7 @@ import sys
 import tempfile
 from pathlib import Path
 from verified_reference_pdf import chapter_coverage, open_verified_reference
+from evidence_match import contains_exact_fragment, evidence_word_count, has_unreadable_glyph
 from retrospective_reference_policy import BASIS, is_retrospective, retrospective_note, selected_reference_rows
 from updated_reference_proxy_policy import (
     UPDATED_PROXY_BASIS,
@@ -87,8 +88,20 @@ def flat(text: str) -> str:
     return re.sub(r'[^\w%.,;:()/+\-–]+', ' ', text, flags=re.UNICODE).strip()
 
 
+
 def fragments(evidence: str) -> list[str]:
     return [f.strip() for f in re.split(r'\.\.\.|…', evidence) if f.strip()]
+
+
+def evidence_page_issue(
+    page_text: str, pieces: list[str], verified_page_labels: set[str] | None = None,
+) -> str | None:
+    """Verify original-page quotations; only adjacent-page-confirmed labels may be skipped."""
+    if any(has_unreadable_glyph(piece) for piece in pieces):
+        return 'unreadable'
+    if any(not contains_exact_fragment(page_text, piece, verified_page_labels or set()) for piece in pieces):
+        return 'mismatch'
+    return None
 
 
 def save_sitting(path: Path, sitting: dict) -> None:
@@ -141,11 +154,52 @@ class Books:
             self.unavailable[edition] = 'current approved PDF page could not be read'
             return None
 
+    def verified_printed_labels(self, edition: str, number: int, text: str) -> set[str]:
+        """Only trust printed labels corroborated by two neighbouring original PDF pages."""
+        pdf = self.pdfs.get(edition)
+        if pdf is None:
+            return set()
+        candidates = page_label_candidates(text)
+        if not candidates:
+            return set()
+        neighbor_labels: dict[int, set[int]] = {}
+        for step in (-2, -1, 1, 2):
+            adjacent = number + step
+            if adjacent < 1 or adjacent > pdf.page_count:
+                continue
+            try:
+                neighbor_text = pdf.page_text(adjacent)
+                neighbor_labels[step] = page_label_candidates(neighbor_text)
+                del neighbor_text
+            except (OSError, RuntimeError, ValueError):
+                # Missing/unreadable neighbor cannot count as supporting evidence.
+                continue
+        return {
+            str(candidate) for candidate in candidates
+            if sum(candidate + offset in labels
+                   for offset, labels in neighbor_labels.items()
+                   if candidate + offset > 0) >= 2
+        }
+
+
+def page_label_candidates(text: str) -> set[int]:
+    """Page-margin number candidates, never trusted until neighbours corroborate."""
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    candidates: set[int] = set()
+    for line in lines[:3] + lines[-3:]:
+        if len(line) >= 90:
+            continue
+        match = (re.match(r'^([1-9][0-9]{0,3})(?:\s|$)', line)
+                 or re.search(r'(?:^|\s)([1-9][0-9]{0,3})$', line))
+        if match:
+            candidates.add(int(match.group(1)))
+    return candidates
+
 
 def printed_page(text: str) -> str | None:
     lines = [l.strip() for l in text.splitlines() if l.strip()]
     for line in lines[:3] + lines[-3:]:
-        m = re.match(r'^(\d{1,4})(\s|$)', line) or re.search(r'(?:^|\s)(\d{1,4})$', line)
+        m = re.match(r'^([1-9][0-9]{0,3})(\s|$)', line) or re.search(r'(?:^|\s)([1-9][0-9]{0,3})$', line)
         if m and len(line) < 90:
             return m.group(1)
     return None
@@ -485,13 +539,13 @@ def main() -> int:
                 if not in_chapter:
                     why = f'page {page} is not in chapter {chapter} of {edition}'
             text = books.page(edition, int(page), runs.get(edition, {})) if why is None else None
-            # The printed label is read now: the page text is discarded below once checked.
-            printed = None if (text is None or args.pdf_pages) else printed_page(text)
+            # A numeric margin candidate is not a verified printed page.
+            printed = None
             if why is None and text is None:
                 why = f'{edition} has no readable page {page} in its current approved PDF'
             if why is None:
                 pieces = fragments(str(d.get('evidence', '')))
-                if not pieces or any(len(p.split()) < 4 for p in pieces):
+                if not pieces or any(evidence_word_count(p) < 4 for p in pieces):
                     why = 'evidence must be quoted fragments of at least four words each, joined by "..."'
                     del text
                 elif len(str(d.get('evidence', ''))) > 500:
@@ -500,12 +554,18 @@ def main() -> int:
                     why = 'evidence is longer than 500 characters; quote fewer or shorter fragments'
                     del text
                 else:
-                    page_text = flat(text)
+                    page_text = text
                     del text
-                    missing = [p for p in pieces if flat(p) not in page_text]
+                    confirmed_labels = books.verified_printed_labels(edition, int(page), page_text)
+                    # Never publish the first unverified margin number as a printed page.
+                    if not args.pdf_pages and len(confirmed_labels) == 1:
+                        printed = next(iter(confirmed_labels))
+                    evidence_issue = evidence_page_issue(page_text, pieces, confirmed_labels)
                     del page_text
-                    if missing:
-                        why = f'evidence not on page {page}: "{missing[0][:80]}"'
+                    if evidence_issue == 'unreadable':
+                        why = 'evidence contains an unreadable private-use or replacement glyph; keep pending or inspect the original page visually'
+                    elif evidence_issue == 'mismatch':
+                        why = f'evidence is not an exact case/punctuation match on page {page}'
             confidence = d.get('confidence')
             if why is None and not (isinstance(confidence, (int, float)) and 0 <= confidence <= 1):
                 why = 'confidence must be a number from 0 to 1'
