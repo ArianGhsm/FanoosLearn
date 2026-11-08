@@ -77,6 +77,18 @@ REPO = Path(__file__).resolve().parents[2]
 BANK = REPO / 'data' / 'bank'
 
 
+def flat(text: str) -> str:
+    # Some PDFs set ligatures (ff, fi, fl) as private-use glyphs; they print
+    # as nothing, so a quote copied from the page has them missing too.
+    text = ''.join(c for c in text if not 0xE000 <= ord(c) <= 0xF8FF)
+    text = text.lower().replace('’', "'").replace('‘', "'").replace('“', '"').replace('”', '"')
+    text = text.replace('ﬁ', 'fi').replace('ﬂ', 'fl').replace('¿', 'fi').replace('À', 'fl').replace('­', '')
+    text = text.replace('ي', 'ی').replace('ى', 'ی').replace('ك', 'ک')
+    text = re.sub(r'-\s*\n\s*', '', text)
+    return re.sub(r'[^\w%.,;:()/+\-–]+', ' ', text, flags=re.UNICODE).strip()
+
+
+
 def fragments(evidence: str) -> list[str]:
     return [f.strip() for f in re.split(r'\.\.\.|…', evidence) if f.strip()]
 

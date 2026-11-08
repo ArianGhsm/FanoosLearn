@@ -122,7 +122,8 @@ class ChapterPagesTest(unittest.TestCase):
         hits = search_edition(FakePdf(), [{'key': 'q1', 'terms': ['غربالگری', 'شاخص سلامت']}],
                               [['1', 1, 2]], 2)['q1']
         self.assertEqual(hits[0][2], 2)
-        quote = hits[0][5]
+        self.assertEqual(len(hits[0]), 5)  # No retained page-text excerpt in search results.
+        quote = hits[0][4]
         self.assertIsNotNone(quote)
         self.assertIn(flat(quote), flat(page_two))
         self.assertGreater(page_score(page_two, ['غربالگری', 'شاخص سلامت']), 0)
