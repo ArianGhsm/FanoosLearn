@@ -1,0 +1,65 @@
+{
+ "edition": "carranza-periodontology@13e",
+ "pdf_sha256": "f0e411898ae010688ca5c0d21afe312cef6f5dae86d0e2e45648bc51ca8e2adf",
+ "page_count": 1991,
+ "scan": {
+  "pages_scanned": 1991,
+  "noise_pages": 282,
+  "scan_seconds": 214.67,
+  "terms": 179
+ },
+ "wall_seconds": 215.4,
+ "cpu_seconds": 6.84,
+ "pages_per_sec": 9.27,
+ "max_rss_mib": 21.5,
+ "questions_in_group": 25,
+ "per_type": {
+  "board": {
+   "gold": 5,
+   "top1": 1,
+   "top3": 2,
+   "top5": 3,
+   "fp_top5": 12,
+   "missing": 5,
+   "missing_with_candidates": 4,
+   "no_key": 0,
+   "zero_lexical_pending": 3
+  },
+  "national": {
+   "gold": 5,
+   "top1": 3,
+   "top3": 4,
+   "top5": 4,
+   "fp_top5": 21,
+   "missing": 5,
+   "missing_with_candidates": 4,
+   "no_key": 0,
+   "zero_lexical_pending": 1
+  },
+  "residency": {
+   "gold": 5,
+   "top1": 0,
+   "top3": 1,
+   "top5": 1,
+   "fp_top5": 19,
+   "missing": 0,
+   "missing_with_candidates": 0,
+   "no_key": 0,
+   "zero_lexical_pending": 1
+  }
+ },
+ "total": {
+  "gold": 15,
+  "top1": 4,
+  "top3": 7,
+  "top5": 8,
+  "fp_top5": 52,
+  "missing": 10,
+  "missing_with_candidates": 8,
+  "no_key": 0,
+  "zero_lexical_pending": 5
+ },
+ "verified_committed": 0,
+ "missing_sample_scope": "exact-year official bank_reference_validity only; no inferred proxies",
+ "note": "candidate pages only; not accepted classifications"
+}

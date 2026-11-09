@@ -20,7 +20,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "scripts/references"))
 
-TOKEN = re.compile(r"[a-z0-9]+(?:\.[0-9]+)?")
+TOKEN = re.compile(r"[a-z0-9]+(?:\.[0-9]+)?|%")
 STOP = set("the a an of and or in on to for with by is are be as at from that this which".split())
 
 
@@ -32,10 +32,16 @@ def norm(text: str) -> str:
 
 def stem(word: str) -> str:
     """Tiny conservative English stemmer so plural/adjectival forms match."""
-    for suf in ("ations", "ation", "ings", "ing", "ies", "es", "s"):
+    if word.isdigit() or len(word) <= 3:
+        return word
+    if word.endswith(("sis", "ss", "us")):
+        return word                                  # diagnosis, abscess, pemphigus
+    for suf in ("izations", "ization", "ations", "ation", "ically", "ings", "ing", "ally", "ies",
+                "ied", "ed", "ly", "s"):
         if len(word) > len(suf) + 3 and word.endswith(suf):
-            return word[: -len(suf)] + ("y" if suf == "ies" else "")
-    return word
+            word = word[: -len(suf)] + ("y" if suf in ("ies", "ied") else "")
+            break
+    return word[:-1] if len(word) >= 4 and word.endswith("e") else word   # case/cases, involve(d)
 
 
 def tokens(text: str) -> list[str]:
@@ -84,10 +90,19 @@ def count_page(text: str, phrases: dict[tuple, int]) -> tuple[dict[int, int], in
     return counts, len(toks), noise
 
 
+NOISE_PENALTY = 0.35   # soft: index/reference pages are demoted, never silently dropped
+NO_CANDIDATE = "pending:no_lexical_candidate"
+
+
+def pending_reason(ranked: list) -> str | None:
+    """Explicit pending state when retrieval found nothing; never a guessed page."""
+    return NO_CANDIDATE if not ranked else None
+
+
 def rank(queries: list[Query], page_counts: dict[int, dict[int, int]], page_len: dict[int, int],
          noise: set[int], phrases: dict[tuple, int], top: int = 5) -> dict[str, list[tuple[float, int]]]:
     """BM25 over the retained numeric counts, with phrase/coverage bonuses."""
-    pages = [p for p in page_counts if p not in noise]
+    pages = [p for p in page_counts if page_len.get(p, 0) >= 40]
     n = max(1, len(pages))
     avg = sum(page_len[p] for p in pages) / n if pages else 1.0
     df = collections.Counter(pid for p in pages for pid in page_counts[p])
@@ -110,6 +125,8 @@ def rank(queries: list[Query], page_counts: dict[int, dict[int, int]], page_len:
             if not s:
                 continue
             s *= (0.4 + 0.6 * covered / total_w)       # reward covering many concepts
+            if p in noise:
+                s *= NOISE_PENALTY
             for neg in q.negative:
                 if pc.get(phrases[tuple(neg)], 0):
                     s *= 0.85

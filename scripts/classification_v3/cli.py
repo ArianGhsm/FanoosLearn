@@ -14,7 +14,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path[:0] = [str(HERE), str(HERE.parent / "references")]
 import pipeline as P  # noqa: E402
-from scanner import Query, scan_edition  # noqa: E402
+from scanner import pending_reason, Query, scan_edition  # noqa: E402
 from terms import deterministic_terms  # noqa: E402
 
 MAP = HERE.parents[1] / "data/bank/reference-chapter-pages.json"
@@ -45,7 +45,8 @@ def main(argv=None) -> int:
         ranking, stats = scan_edition(pdf, queries)
         res = {"edition": a.edition, "pdf_sha256": pdf.source_sha256, "stats": stats,
                "candidates": {k: [{"page": pg, "score": sc, "chapter": P.chapter_for(runs, pg)} for sc, pg in r]
-                              for k, r in ranking.items()}}
+                              for k, r in ranking.items()},
+               "pending": {k: pending_reason(r) for k, r in ranking.items() if pending_reason(r)}}
     elif a.cmd == "verify":
         # PRECHECK only (self-check). Rows become audit_pending, never approved.
         from verified_reference_pdf import open_verified_reference

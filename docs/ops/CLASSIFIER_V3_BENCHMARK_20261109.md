@@ -53,3 +53,20 @@ Scanned 983 physical PDF pages in 106.09 s, 9.27 pages/s; wall 107.27 s; parent 
 Candidate present means a matching-ranked page exists, not that it correctly answers the question. Six missing questions had no matching candidate. Gold Top5 remains 22/32. Independent audit acceptance and production source-only import/readback are still ZERO from this run. Therefore NO-GO; required fully committed throughput not established.
 
 Corrected aggregate: docs/ops/CLASSIFIER_V3_BENCHMARK_20261109_CORRECTED.json. Added two regression tests for missing-source selection; now 16/16 pass.
+
+## V3b accuracy fixes and re-benchmark (2026-11-09, Opus 5.5)
+
+Changes: Latin spans split into content unigrams + adjacent bigrams (no greedy whole-span phrases); Persian/Arabic letter, digit and ZWNJ normalisation; expanded glossary, dubious `الکی→alcoholic` removed (`الکل→alcohol`); number+unit terms; strongest weight kept per concept; consistent English stemmer (plural/-ed/-e, guards for -sis/-us/-ss); index/reference pages demoted ×0.35 instead of excluded; no lexical overlap → explicit `pending:no_lexical_candidate` (never a guessed page). 21 unit tests pass.
+
+Same frozen sample (SHA2 order, gold read only after ranking):
+
+| neville-oral-pathology@5e, 32 gold | top1 | top3 | top5 |
+|---|---|---|---|
+| baseline | 14 (44%) | 21 (66%) | 22 (69%) |
+| v3b | 15 (47%) | 24 (75%) | 25 (78%) |
+
+Missing official-eligible sample (21: 10 board, 10 promotion, 1 national): candidates 17/21 (baseline 15/21); zero-lexical pending 7 of 53 total rows (incl. 2 gold). Scan 983 pages, 111.9 s wall (8.9 pages/s, run concurrently with second family), max RSS 21.5 MiB.
+
+Second held-out family, carranza-periodontology@13e (never tuned on), 15 gold (5 board/5 national/5 residency; no promotion gold): top1 4/15 (27%), top3 7/15 (47%), top5 8/15 (53%); missing 8/10 have candidates; 5 zero-lexical pending; 1991 pages, 215 s, 9.3 pages/s. Residency gold top5 only 1/5 — Carranza generalisation is weak and is NOT GO.
+
+Non-gold top-5 pages are not proven false positives. Candidates are not validated answers. Independently audited + committed + DB readback: **0**. Aggregates: `CLASSIFIER_V3_BENCHMARK_20261109_V3B_*.json`.

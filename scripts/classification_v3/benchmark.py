@@ -139,8 +139,10 @@ def main(argv=None) -> int:
     per: dict[str, dict] = {}
     for q in rows:
         m = per.setdefault(q["kind"], {"gold": 0, "top1": 0, "top3": 0, "top5": 0, "fp_top5": 0,
-                                       "missing": 0, "missing_with_candidates": 0, "no_key": 0})
+                                       "missing": 0, "missing_with_candidates": 0, "no_key": 0,
+                                       "zero_lexical_pending": 0})
         cands = [pg for _, pg in ranking.get(q["id"], [])]
+        m["zero_lexical_pending"] += not cands
         if q["key"] is None:
             m["no_key"] += 1
         if q in gold_rows:
