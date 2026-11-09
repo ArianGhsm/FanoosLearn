@@ -66,5 +66,6 @@
   "no_key": 0
  },
  "verified_committed": 0,
- "note": "candidate pages only; not accepted classifications"
+ "note": "candidate pages only; not accepted classifications",
+ "warning": "Initial zero-missing result was a sampling SQL bug; see CLASSIFIER_V3_BENCHMARK_20261109_CORRECTED.json."
 }
