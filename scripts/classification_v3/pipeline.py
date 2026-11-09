@@ -147,9 +147,16 @@ def precheck(primary_fail: list) -> str:
 AUDIT_TOOLS = {"audit_private_study_batches.py", "independent_page_reopen"}
 
 
-def check_independent_audit(d: "Decision", audit: dict, receipt_root: Path) -> list[str]:
+def check_independent_audit(d: "Decision", audit: dict, receipt_root: Path,
+                            producer_uid: int | None = None) -> list[str]:
     """An audit must come from a different auditor, a separate page reopen/tool run,
-    and a private receipt file whose SHA-256 matches; fields must match the row."""
+    and a private receipt file whose SHA-256 matches; fields must match the row.
+
+    The declared `auditor`/`tool` strings are NOT trusted on their own: the
+    receipt must be a real `provenance-audit/1` report in a protected
+    classification/reports dir, not owned by the producing uid, whose mapped
+    row equals this decision (audit_adapter). A self-written JSON fails."""
+    import audit_adapter
     fail = []
     if not audit:
         return ["audit_missing"]
@@ -169,6 +176,11 @@ def check_independent_audit(d: "Decision", audit: dict, receipt_root: Path) -> l
         fail.append("audit_receipt_missing")
     elif hashlib.sha256(rp.read_bytes()).hexdigest() != audit.get("receipt_sha256"):
         fail.append("audit_receipt_hash_mismatch")
+    else:
+        real = audit_adapter.verify(rp, str(audit.get("batch", "")), int(audit.get("number") or 0),
+                                    f"{d.edition}#{d.node_id}", d.pdf_page, d.pdf_sha256,
+                                    root=Path(receipt_root), producer_uid=producer_uid)
+        fail += ["real_" + f for f in real["failures"]]
     return fail
 
 
@@ -219,14 +231,14 @@ class Checkpoint:
 
 
 def handoff_package(rows: list[tuple["Decision", dict]], study_sha256: str, batch_id: str,
-                    receipt_root: Path) -> dict:
+                    receipt_root: Path, producer_uid: int | None = None) -> dict:
     """Source-only package for the fanoosupd operator. Refuses any row without a
     valid independent audit receipt. Never touches text/keys/attempts."""
     if len(rows) > 40:
         raise ValueError("batch exceeds 40 questions")
     out = []
     for d, audit in rows:
-        fail = check_independent_audit(d, audit, Path(receipt_root))
+        fail = check_independent_audit(d, audit, Path(receipt_root), producer_uid)
         if fail:
             raise ValueError(f"unaudited row {d.question_id}: {','.join(fail)}")
         out.append(audit_packet(d) | {"note_fa": d.note_fa, "audit_receipt_sha256": audit["receipt_sha256"]})

@@ -111,3 +111,127 @@ def deterministic_terms(stem: str, choices: dict, key: str) -> tuple[list, list]
         if k not in best or w > best[k][1]:
             best[k] = (best[k][0] if k in best else t, w)
     return list(best.values()), []
+
+
+# ---- Cycle-1 trial (2026-11-09): Persian->English bridge grounded in dev-set
+# failure causes (zero-term queries, 1-2 term queries). Domain-general dental /
+# histopathology vocabulary only; never derived from a gold page. Generic
+# clinical words carry a reduced weight so BM25 IDF, not volume, decides.
+GLOSSARY_C1 = {
+    "میکروسکوپی": "microscopic", "هیستوپاتولوژیک": "histopathologic", "هیستوپاتولوژی": "histopathologic",
+    "هیستولوژیک": "histologic", "کارسینوم": "carcinoma", "سارکوم": "sarcoma", "آدنوکارسینوم": "adenocarcinoma",
+    "اپی‌تلیوم": "epithelium", "اپی‌تلیال": "epithelial", "اپیتلیال": "epithelial", "اپیتلیوم": "epithelium",
+    "کراتین": "keratin", "کراتینیزه": "keratinized", "پاراکراتین": "parakeratin", "ارتوکراتین": "orthokeratin",
+    "دیسپلازی": "dysplasia", "متاپلازی": "metaplasia", "هیپرپلازی": "hyperplasia", "آتروفی": "atrophy",
+    "نکروز": "necrosis", "التهاب": "inflammation", "التهابی": "inflammatory", "گرانولوم": "granuloma",
+    "گرانولوماتوز": "granulomatous", "فیبروز": "fibrosis", "فیبروبلاست": "fibroblast", "کلاژن": "collagen",
+    "کالژن": "collagen", "آمیلوئید": "amyloid", "کنگو": "congo red", "سولفات": "sulfate", "درماتان": "dermatan",
+    "هپاران": "heparan", "موکوپلی‌ساکارید": "mucopolysaccharide", "لیزوزوم": "lysosomal", "لیزوزومی": "lysosomal",
+    "تیروئید": "thyroid", "پاراتیروئید": "parathyroid", "سونوگرافی": "ultrasound", "اسکن": "scan",
+    "واسکولاریتی": "vascularity", "عروقی": "vascular", "همانژیوم": "hemangioma", "ترابکول": "trabecula",
+    "ترابکولار": "trabecular", "سینوزوئیدال": "sinusoidal", "استخوانی": "bone", "استخوان": "bone",
+    "استئوبلاست": "osteoblast", "استئوکلاست": "osteoclast", "استئوئید": "osteoid", "ژنتیکی": "genetic",
+    "ارثی": "hereditary", "اتوزومال": "autosomal", "غالب": "dominant", "مغلوب": "recessive", "جهش": "mutation",
+    "ژن": "gene", "کروموزوم": "chromosome", "هیپرکروم": "hyperchromatic", "هیپرکروماتیک": "hyperchromatic",
+    "پلئومورفیسم": "pleomorphism", "پلی‌مورف": "pleomorphic", "میتوز": "mitoses", "ترشحی": "secretory",
+    "مجاری": "duct", "مجرا": "duct", "غدد": "gland", "غده": "gland", "بزاق": "saliva", "بزاقی": "salivary",
+    "ساب‌مندیبولار": "submandibular", "زیرفکی": "submandibular", "زیرزبانی": "sublingual", "موکوسل": "mucocele",
+    "رانولا": "ranula", "سیالادنیت": "sialadenitis", "سیالولیت": "sialolith", "پلئومورفیک": "pleomorphic",
+    "آدنوما": "adenoma", "موکواپیدرموئید": "mucoepidermoid", "آدنوئید": "adenoid", "سیستیک": "cystic",
+    "شفاف": "clear cell", "ژانت": "giant cell", "سلول ژانت": "giant cell", "سلول غول": "giant cell",
+    "لنفوسیت": "lymphocyte", "نوتروفیل": "neutrophil", "ائوزینوفیل": "eosinophil", "ماکروفاژ": "macrophage",
+    "پلاسماسل": "plasma cell", "ماست": "mast cell", "ایمونوهیستوشیمی": "immunohistochemical",
+    "ایمونوفلورسانس": "immunofluorescence", "اتوایمیون": "autoimmune", "خودایمنی": "autoimmune",
+    "آنتی‌بادی": "antibody", "ویروس": "virus", "ویروسی": "viral", "باکتری": "bacteria", "باکتریایی": "bacterial",
+    "قارچی": "fungal", "سیفلیس": "syphilis", "سل": "tuberculosis", "توبرکلوزیس": "tuberculosis",
+    "اکتینومایکوزیس": "actinomycosis", "هیستوپلاسموز": "histoplasmosis", "موکورمایکوزیس": "mucormycosis",
+    "آسپرژیلوزیس": "aspergillosis", "واریسلا": "varicella", "زوستر": "zoster", "سیتومگالوویروس": "cytomegalovirus",
+    "اپشتین": "epstein-barr", "پاپیلوماویروس": "papillomavirus", "سرخک": "measles", "اوریون": "mumps",
+    "ایدز": "hiv", "کاپوسی": "kaposi", "فیبروما": "fibroma", "لیپوما": "lipoma", "نوروما": "neuroma",
+    "شوانوما": "schwannoma", "نوروفیبروم": "neurofibroma", "رابدومیوسارکوم": "rhabdomyosarcoma",
+    "پیوژنیک": "pyogenic", "گرانولوم پیوژنیک": "pyogenic granuloma", "اپولیس": "epulis",
+    "فیبرودیسپلازی": "fibrous dysplasia", "دیسپلازی فیبرو": "fibrous dysplasia", "سمنتوبلاستوما": "cementoblastoma",
+    "ادنتوما": "odontoma", "میکزوما": "myxoma", "فولیکولار": "follicular", "دنتی‌ژروس": "dentigerous",
+    "دنتیژروس": "dentigerous", "رادیکولار": "radicular", "پری‌آپیکال": "periapical", "پریاپیکال": "periapical",
+    "گلوبولوماگزیلاری": "globulomaxillary", "نازوپالاتین": "nasopalatine", "تیروگلوسال": "thyroglossal",
+    "درموئید": "dermoid", "اپیدرموئید": "epidermoid", "برانکیال": "branchial", "استئومیلیت": "osteomyelitis",
+    "استئونکروز": "osteonecrosis", "بیس‌فسفونات": "bisphosphonate", "پاژه": "paget", "هیپرپاراتیروئیدی": "hyperparathyroidism",
+    "کروبیسم": "cherubism", "مولتیپل میلوما": "multiple myeloma", "میلوما": "myeloma", "لوسمی": "leukemia",
+    "لوکمی": "leukemia", "آنمی": "anemia", "کم‌خونی": "anemia", "هموفیلی": "hemophilia", "ترومبوسیتوپنی": "thrombocytopenia",
+    "پتشی": "petechiae", "پیگمانتاسیون": "pigmentation", "ملانین": "melanin", "خال": "nevus", "نووس": "nevus",
+    "آمالگام": "amalgam", "تاتو": "tattoo", "آدیسون": "addison", "پوتز": "peutz-jeghers",
+    "زخم": "ulcer", "اولسر": "ulcer", "وزیکول": "vesicle", "بولا": "bulla", "تاول": "bulla", "پاپول": "papule",
+    "پلاک سفید": "white lesion", "اریتروپلاکی": "erythroplakia", "آکانتولیز": "acantholysis",
+    "نیکولسکی": "nikolsky", "آکانتوز": "acanthosis", "اسپونژیوز": "spongiosis", "لوپوس": "lupus",
+    "اسکلرودرمی": "scleroderma", "بهجت": "behcet", "کرون": "crohn", "سارکوئیدوز": "sarcoidosis",
+    "آمیلوئیدوز": "amyloidosis", "زبان جغرافیایی": "geographic tongue", "زبان مویی": "hairy tongue",
+    "زبان": "tongue", "لب": "lip", "کام": "palate", "لثه": "gingiva", "لثه‌ای": "gingival", "مخاط": "mucosa",
+    "مخاطی": "mucosal", "گونه": "buccal", "کف دهان": "floor of mouth", "حلق": "pharynx", "لوزه": "tonsil",
+    "فک": "jaw", "فک پایین": "mandible", "فک بالا": "maxilla", "سینوس": "sinus", "دندان": "tooth",
+    "دندانی": "dental", "ریشه": "root", "تاج": "crown", "رویش": "eruption", "نهفته": "impacted",
+    "آملوژنز": "amelogenesis", "دنتینوژنز": "dentinogenesis", "ایمپرفکتا": "imperfecta", "تارودونتیسم": "taurodontism",
+    "هیپودونشیا": "hypodontia", "آنودونشیا": "anodontia", "دندان اضافه": "supernumerary", "مزیودنس": "mesiodens",
+    "فلوئوروزیس": "fluorosis", "تتراسایکلین": "tetracycline", "سایش": "attrition", "اروژن": "erosion",
+    "تحلیل ریشه": "root resorption", "تحلیل": "resorption", "آنکیلوز": "ankylosis", "هایپرسمنتوز": "hypercementosis",
+    "پالپیت": "pulpitis", "آبسه": "abscess", "سلولیت": "cellulitis", "لودویگ": "ludwig",
+    "پاکت": "pocket", "پاکت پریودنتال": "periodontal pocket", "چسبندگی": "attachment", "از دست رفتن چسبندگی": "attachment loss",
+    "لیگامان پریودنتال": "periodontal ligament", "رباط پریودنتال": "periodontal ligament", "استخوان آلوئول": "alveolar bone",
+    "فورکا": "furcation", "فورکیشن": "furcation", "تحرک": "mobility", "لقی": "mobility", "پروب": "probe",
+    "پروبینگ": "probing", "خونریزی": "bleeding", "بیوفیلم": "biofilm", "میکروبی": "microbial",
+    "اسکیلینگ": "scaling", "روت پلنینگ": "root planing", "جراحی": "surgery", "فلپ": "flap", "پیوند": "graft",
+    "بازسازی": "regeneration", "هدایت‌شده": "guided tissue", "ایمپلنت": "implant", "پری‌ایمپلنتیت": "peri-implantitis",
+    "اوسئواینتگریشن": "osseointegration", "کلرهگزیدین": "chlorhexidine", "آنتی‌بیوتیک": "antibiotic",
+    "داکسی‌سایکلین": "doxycycline", "مترونیدازول": "metronidazole", "آموکسی‌سیلین": "amoxicillin",
+    "سیکلوسپورین": "cyclosporine", "فنی‌توئین": "phenytoin", "نیفدیپین": "nifedipine", "بزرگی لثه": "gingival enlargement",
+    "نوتروپنی": "neutropenia", "پاپیلون": "papillon-lefevre", "ژنژیویت نکروزان": "necrotizing gingivitis",
+    "نکروزان": "necrotizing", "تهاجمی": "aggressive", "مزمن": "chronic", "حاد": "acute", "موضعی": "localized",
+    "منتشر": "generalized", "سیگار": "smoking", "استعمال دخانیات": "smoking", "اکلوزال": "occlusal",
+    "تروما": "trauma", "ترومای اکلوزالی": "occlusal trauma", "سایتوکاین": "cytokine", "اینترلوکین": "interleukin",
+    "پروستاگلاندین": "prostaglandin", "ماتریکس متالوپروتئیناز": "matrix metalloproteinase", "کمپلمان": "complement",
+    "ایمنی": "immune", "میزبان": "host", "پاتوژن": "pathogen", "پورفیروموناس": "porphyromonas",
+    "اگریگاتیباکتر": "aggregatibacter", "اکتینومایستم‌کومیتانس": "actinomycetemcomitans", "ترپونما": "treponema",
+    "تانرلا": "tannerella", "فوزوباکتریوم": "fusobacterium", "پروتلا": "prevotella", "اسپیروکت": "spirochete",
+    "کراتر": "crater", "دبریدمان": "debridement", "ژنژیوکتومی": "gingivectomy", "ژنژیوپلاستی": "gingivoplasty",
+    "مخاطی‌لثه‌ای": "mucogingival", "فرنکتومی": "frenectomy", "فرنوم": "frenum", "کانتور": "contour",
+    "استئوپلاستی": "osteoplasty", "استئوکتومی": "ostectomy", "سمان": "cement", "رادیوگرافیک": "radiographic",
+    "یائسگی": "menopause", "بلوغ": "puberty", "استرس": "stress", "اچ‌آی‌وی": "hiv", "قلبی": "cardiovascular",
+    "پیوند عضو": "transplant", "شیمی‌درمانی": "chemotherapy", "رادیوتراپی": "radiation therapy", "پرتودرمانی": "radiation therapy",
+}
+# Generic clinical words: bridged but down-weighted.
+GENERIC_C1 = {"microscopic", "histopathologic", "histologic", "bone", "tooth", "dental", "gland", "duct",
+              "chronic", "acute", "inflammation", "inflammatory", "immune", "host", "surgery", "scan",
+              "genetic", "localized", "generalized", "mucosa", "jaw", "root", "crown", "tongue", "lip"}
+
+
+def _yi(text: str) -> str:
+    """Collapse PDF-import letter doubling (e.g. 'یی' artefacts) for glossary matching only."""
+    return re.sub(r"ی{2,}", "ی", text.replace("‌", ""))
+
+
+def _has_fa(key: str, text: str) -> bool:
+    """Short keys (<=4 letters, e.g. 'سل', 'کام', 'ژن') must be whole words, not substrings."""
+    if len(key) > 4:
+        return key in text
+    return re.search(r"(?<![\u0600-\u06FF])" + re.escape(key) + r"(?![\u0600-\u06FF])", text) is not None
+
+
+def c1_terms(stem: str, choices: dict, key: str) -> tuple[list, list]:
+    """v3b terms + broader Persian bridge (generic words down-weighted)."""
+    terms, neg = deterministic_terms(stem, choices, key)
+    have = {t.lower() for t, _ in terms}
+    negative_stem = bool(NEGATIVE_STEM.search(stem))
+    stem_n = _yi(normalize_fa(stem))
+    ch = {k: _yi(normalize_fa(v)) for k, v in (choices or {}).items()}
+    parts = [(stem_n, 1.0)] + [(v, (1.0 if negative_stem else 1.6) if k == key else
+                                   (0.6 if negative_stem else 0.25)) for k, v in ch.items()]
+    glossary = {_yi(normalize_fa(fa)): en for fa, en in GLOSSARY_C1.items()}
+    for text, w in parts:
+        for fa, en in glossary.items():
+            if fa and _has_fa(fa, text):
+                ww = w * (0.5 if en in GENERIC_C1 else (1.3 if " " in en else 1.0))
+                if en.lower() not in have:
+                    terms.append((en, ww)); have.add(en.lower())
+    return terms, neg
+
+
+TRIAL_VARIANTS = {"c1_bridge": c1_terms}

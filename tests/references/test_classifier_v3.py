@@ -1,4 +1,6 @@
-import hashlib, sys, tempfile, unittest
+import hashlib
+import json
+import os, sys, tempfile, unittest
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts/classification_v3"))
 import pipeline as P  # noqa: E402
@@ -80,12 +82,20 @@ class V3(unittest.TestCase):
     def test_precheck_never_approves(self):  # regression B
         self.assertEqual(P.precheck([]), "audit_pending")
 
-    def _audit(self, d, root, **kw):
-        rec = Path(root) / "r.json"; rec.write_text("{}")
+    def _audit(self, d, root, page=None, **kw):
+        """Format-correct provenance-audit/1 report in <root>/classification/reports."""
+        reports = Path(root) / "classification" / "reports"; reports.mkdir(parents=True, exist_ok=True)
+        body = {"format": "fanoos.classification.provenance-audit/1", "research_only": True,
+                "batches": [{"batch": "b1", "questions": 1, "accepted": 1, "pending": 0,
+                             "study_sha256": "1" * 64, "validated_sha256": "2" * 64, "decisions_sha256": "3" * 64,
+                             "mapped": {"7": {"ref": f"{d.edition}#{d.node_id}", "pdf_page": page or d.pdf_page}},
+                             "source_pdf_provenance": {d.edition: {"sha256": d.pdf_sha256}}}]}
+        raw = json.dumps(body).encode(); (reports / "r.json").write_bytes(raw)
         a = dict(tool="independent_page_reopen", auditor="opus-auditor", question_id=d.question_id,
                  pdf_sha256=d.pdf_sha256, pdf_page=d.pdf_page, node_id=d.node_id, verdict="accepted",
-                 quote_sha256=hashlib.sha256(d.quote.encode()).hexdigest(), receipt="r.json",
-                 receipt_sha256=hashlib.sha256(b"{}").hexdigest())
+                 quote_sha256=hashlib.sha256(d.quote.encode()).hexdigest(),
+                 receipt="classification/reports/r.json", receipt_sha256=hashlib.sha256(raw).hexdigest(),
+                 batch="b1", number=7)
         return a | kw
 
     def test_package_rejects_unaudited_and_self_certified(self):  # regression B
@@ -99,10 +109,18 @@ class V3(unittest.TestCase):
                 P.handoff_package([(d, self._audit(d, root, receipt_sha256="0" * 64))], SHA, "b1", Path(root))
             with self.assertRaises(ValueError):
                 P.handoff_package([(d, self._audit(d, root, pdf_page=6))], SHA, "b1", Path(root))
-            pkg = P.handoff_package([(d, self._audit(d, root))], SHA, "b1", Path(root))
+            # Cycle 3 regression: a format-perfect, self-written audit JSON claiming a
+            # different "auditor" is still self-certified (owned by the producing uid).
+            with self.assertRaisesRegex(ValueError, "owned_by_producer"):
+                P.handoff_package([(d, self._audit(d, root))], SHA, "b1", Path(root))
+            other = os.geteuid() + 1   # simulates an operator-owned protected report
+            with self.assertRaisesRegex(ValueError, "audit_pdf_page_mismatch"):
+                P.handoff_package([(d, self._audit(d, root, page=d.pdf_page + 1))], SHA, "b1", Path(root), other)
+            pkg = P.handoff_package([(d, self._audit(d, root))], SHA, "b1", Path(root), other)
             self.assertIn("answer_key", pkg["never_mutates"]); self.assertEqual(len(pkg["package_sha256"]), 64)
+            self.assertIn("operator_fanoosupd", pkg["requires"])
             with self.assertRaises(ValueError):
-                P.handoff_package([(d, self._audit(d, root))] * 41, SHA, "b1", Path(root))
+                P.handoff_package([(d, self._audit(d, root))] * 41, SHA, "b1", Path(root), other)
 
     def test_checkpoint_leases(self):
         with tempfile.TemporaryDirectory() as d:

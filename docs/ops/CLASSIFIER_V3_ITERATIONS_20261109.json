@@ -1,0 +1,392 @@
+{
+ "format": "fanoos.classifier-v3.iterations/1",
+ "date": "2026-11-09",
+ "model": "claude-opus-5-5 (single session, no subagents, no other model calls)",
+ "privacy": "metadata only: counts, ranks, approved PDF object hashes; no question/page text or question IDs",
+ "protocol": "Neville 5e = development set (numeric diagnosis allowed). Carranza 13e = frozen held-out (scored only; not diagnosed before the cycle-1 change). Gold pdf_page fetched after ranking; rank<=5 fixed. All variants in a run share one RAM-only page pass. Max 2 concurrent scanners.",
+ "cycles": [
+  {
+   "cycle": 0,
+   "name": "baseline reproduction (v3b)",
+   "executed": true,
+   "decision": "baseline",
+   "rows": [
+    {
+     "variant": "v3b",
+     "edition": "neville-oral-pathology@5e",
+     "pdf_sha256": "4d35199b9cda526997717802e174144071d38f0179e725e7ed6a90b2f98565ac",
+     "pages_scanned": 983,
+     "questions": 53,
+     "gold": 32,
+     "top1": 15,
+     "top3": 24,
+     "top5": 25,
+     "fp_top5_non_gold": 116,
+     "missing": 21,
+     "missing_with_candidate": 17,
+     "zero_lexical_pending": 7,
+     "near1_top1_info_only": null,
+     "per_type": {
+      "board": {
+       "gold": 8,
+       "top1": 2,
+       "top3": 7,
+       "top5": 7,
+       "missing": 10,
+       "missing_with_candidates": 8
+      },
+      "promotion": {
+       "gold": 8,
+       "top1": 4,
+       "top3": 5,
+       "top5": 6,
+       "missing": 10,
+       "missing_with_candidates": 8
+      },
+      "national": {
+       "gold": 8,
+       "top1": 4,
+       "top3": 6,
+       "top5": 6,
+       "missing": 1,
+       "missing_with_candidates": 1
+      },
+      "residency": {
+       "gold": 8,
+       "top1": 5,
+       "top3": 6,
+       "top5": 6,
+       "missing": 0,
+       "missing_with_candidates": 0
+      }
+     },
+     "wall_seconds_shared_scan": 109.97,
+     "process": {
+      "user_cpu_s": 89.51,
+      "sys_cpu_s": 19.76,
+      "elapsed": "1:51.01",
+      "max_rss_kib": 23064
+     }
+    },
+    {
+     "variant": "v3b",
+     "edition": "carranza-periodontology@13e",
+     "pdf_sha256": "f0e411898ae010688ca5c0d21afe312cef6f5dae86d0e2e45648bc51ca8e2adf",
+     "pages_scanned": 1991,
+     "questions": 25,
+     "gold": 15,
+     "top1": 4,
+     "top3": 7,
+     "top5": 8,
+     "fp_top5_non_gold": 52,
+     "missing": 10,
+     "missing_with_candidate": 8,
+     "zero_lexical_pending": 5,
+     "near1_top1_info_only": 5,
+     "per_type": {
+      "board": {
+       "gold": 5,
+       "top1": 1,
+       "top3": 2,
+       "top5": 3,
+       "missing": 5,
+       "missing_with_candidates": 4
+      },
+      "national": {
+       "gold": 5,
+       "top1": 3,
+       "top3": 4,
+       "top5": 4,
+       "missing": 5,
+       "missing_with_candidates": 4
+      },
+      "residency": {
+       "gold": 5,
+       "top1": 0,
+       "top3": 1,
+       "top5": 1,
+       "missing": 0,
+       "missing_with_candidates": 0
+      }
+     },
+     "wall_seconds_shared_scan": 217.42,
+     "process": {
+      "user_cpu_s": 158.83,
+      "sys_cpu_s": 49.78,
+      "elapsed": "3:38.25",
+      "max_rss_kib": 26084
+     }
+    }
+   ]
+  },
+  {
+   "cycle": 1,
+   "name": "c1_bridge: Persian->English bridge (~300 general oral-pathology/periodontology/histology terms, generic terms x0.5, whole-word guard for <=4-letter keys, import letter-doubling collapse)",
+   "diagnosis_dev_only": "Neville v3b non-top1=17: 3 zero-term Persian-only queries; 1 zero gold coverage; 3 with 1-2 terms (ambiguous); 6 with top1 within +-7 pages of gold (adjacent pages; symmetric window smoothing cannot flip such pairs)",
+   "executed": true,
+   "decision": "accepted (held-out Carranza improved; CLI default switched to c1_terms)",
+   "caveat": "glossary authored from general domain vocabulary incl. periodontology while knowing Carranza is the held-out family (its questions/pages were not inspected); per-type regressions: Carranza national top3/top5 4->3, Neville residency top1 5->4",
+   "rows": [
+    {
+     "variant": "c1_bridge",
+     "edition": "neville-oral-pathology@5e",
+     "pdf_sha256": "4d35199b9cda526997717802e174144071d38f0179e725e7ed6a90b2f98565ac",
+     "pages_scanned": 983,
+     "questions": 53,
+     "gold": 32,
+     "top1": 18,
+     "top3": 26,
+     "top5": 28,
+     "fp_top5_non_gold": 132,
+     "missing": 21,
+     "missing_with_candidate": 21,
+     "zero_lexical_pending": 0,
+     "near1_top1_info_only": 24,
+     "per_type": {
+      "board": {
+       "gold": 8,
+       "top1": 6,
+       "top3": 8,
+       "top5": 8,
+       "missing": 10,
+       "missing_with_candidates": 10
+      },
+      "promotion": {
+       "gold": 8,
+       "top1": 4,
+       "top3": 6,
+       "top5": 7,
+       "missing": 10,
+       "missing_with_candidates": 10
+      },
+      "national": {
+       "gold": 8,
+       "top1": 4,
+       "top3": 6,
+       "top5": 7,
+       "missing": 1,
+       "missing_with_candidates": 1
+      },
+      "residency": {
+       "gold": 8,
+       "top1": 4,
+       "top3": 6,
+       "top5": 6,
+       "missing": 0,
+       "missing_with_candidates": 0
+      }
+     },
+     "wall_seconds_shared_scan": 115.11,
+     "process": {
+      "user_cpu_s": 89.05,
+      "sys_cpu_s": 19.36,
+      "elapsed": "1:56.49",
+      "max_rss_kib": 26000
+     }
+    },
+    {
+     "variant": "c1_bridge",
+     "edition": "carranza-periodontology@13e",
+     "pdf_sha256": "f0e411898ae010688ca5c0d21afe312cef6f5dae86d0e2e45648bc51ca8e2adf",
+     "pages_scanned": 1991,
+     "questions": 25,
+     "gold": 15,
+     "top1": 7,
+     "top3": 9,
+     "top5": 10,
+     "fp_top5_non_gold": 65,
+     "missing": 10,
+     "missing_with_candidate": 9,
+     "zero_lexical_pending": 1,
+     "near1_top1_info_only": 8,
+     "per_type": {
+      "board": {
+       "gold": 5,
+       "top1": 1,
+       "top3": 2,
+       "top5": 3,
+       "missing": 5,
+       "missing_with_candidates": 4
+      },
+      "national": {
+       "gold": 5,
+       "top1": 3,
+       "top3": 3,
+       "top5": 3,
+       "missing": 5,
+       "missing_with_candidates": 5
+      },
+      "residency": {
+       "gold": 5,
+       "top1": 3,
+       "top3": 4,
+       "top5": 4,
+       "missing": 0,
+       "missing_with_candidates": 0
+      }
+     },
+     "wall_seconds_shared_scan": 217.42,
+     "process": {
+      "user_cpu_s": 158.83,
+      "sys_cpu_s": 49.78,
+      "elapsed": "3:38.25",
+      "max_rss_kib": 26084
+     }
+    }
+   ]
+  },
+  {
+   "cycle": 2,
+   "name": "c2_prox: re-weight score by best 50-token window concept coverage (proximity)",
+   "diagnosis": "remaining Carranza misses: top1 covers more query terms but scattered, often hundreds of pages away; sparse 1-3 term queries rank gold 27-115",
+   "executed": true,
+   "decision": "reverted (Carranza identical to cycle 1: no demonstrated held-out gain; Neville +1 top1 only)",
+   "rows": [
+    {
+     "variant": "c2_prox",
+     "edition": "neville-oral-pathology@5e",
+     "pdf_sha256": "4d35199b9cda526997717802e174144071d38f0179e725e7ed6a90b2f98565ac",
+     "pages_scanned": 983,
+     "questions": 53,
+     "gold": 32,
+     "top1": 19,
+     "top3": 26,
+     "top5": 28,
+     "fp_top5_non_gold": 132,
+     "missing": 21,
+     "missing_with_candidate": 21,
+     "zero_lexical_pending": 0,
+     "near1_top1_info_only": 23,
+     "per_type": {
+      "board": {
+       "gold": 8,
+       "top1": 6,
+       "top3": 8,
+       "top5": 8,
+       "missing": 10,
+       "missing_with_candidates": 10
+      },
+      "promotion": {
+       "gold": 8,
+       "top1": 4,
+       "top3": 6,
+       "top5": 7,
+       "missing": 10,
+       "missing_with_candidates": 10
+      },
+      "national": {
+       "gold": 8,
+       "top1": 5,
+       "top3": 6,
+       "top5": 7,
+       "missing": 1,
+       "missing_with_candidates": 1
+      },
+      "residency": {
+       "gold": 8,
+       "top1": 4,
+       "top3": 6,
+       "top5": 6,
+       "missing": 0,
+       "missing_with_candidates": 0
+      }
+     },
+     "wall_seconds_shared_scan": 114.87,
+     "process": {
+      "user_cpu_s": 91.69,
+      "sys_cpu_s": 19.3,
+      "elapsed": "1:56.72",
+      "max_rss_kib": 30804
+     }
+    },
+    {
+     "variant": "c2_prox",
+     "edition": "carranza-periodontology@13e",
+     "pdf_sha256": "f0e411898ae010688ca5c0d21afe312cef6f5dae86d0e2e45648bc51ca8e2adf",
+     "pages_scanned": 1991,
+     "questions": 25,
+     "gold": 15,
+     "top1": 7,
+     "top3": 9,
+     "top5": 10,
+     "fp_top5_non_gold": 65,
+     "missing": 10,
+     "missing_with_candidate": 9,
+     "zero_lexical_pending": 1,
+     "near1_top1_info_only": 8,
+     "per_type": {
+      "board": {
+       "gold": 5,
+       "top1": 1,
+       "top3": 2,
+       "top5": 3,
+       "missing": 5,
+       "missing_with_candidates": 4
+      },
+      "national": {
+       "gold": 5,
+       "top1": 3,
+       "top3": 3,
+       "top5": 3,
+       "missing": 5,
+       "missing_with_candidates": 5
+      },
+      "residency": {
+       "gold": 5,
+       "top1": 3,
+       "top3": 4,
+       "top5": 4,
+       "missing": 0,
+       "missing_with_candidates": 0
+      }
+     },
+     "wall_seconds_shared_scan": 219.78,
+     "process": {
+      "user_cpu_s": 162.62,
+      "sys_cpu_s": 50.03,
+      "elapsed": "3:40.95",
+      "max_rss_kib": 30272
+     }
+    }
+   ],
+   "control": {
+    "note": "c1_bridge re-run in the same pass reproduced cycle-1 numbers exactly",
+    "neville_top135": [
+     18,
+     26,
+     28
+    ],
+    "carranza_top135": [
+     7,
+     9,
+     10
+    ]
+   }
+  },
+  {
+   "cycle": 3,
+   "name": "engineering: real provenance-audit adapter + anti-forgery package gate",
+   "executed": true,
+   "decision": "accepted (code+tests; read-only)",
+   "findings": [
+    "real fanoos.classification.provenance-audit/1 has no auditor/quote fields: mapped[number]={ref:'<edition>#<chapter>',pdf_page}, per-edition sha256, pinned study/validated/decisions SHA",
+    "old v3 gate accepted a self-written JSON declaring a different auditor string (forgery possible)",
+    "new gate: protected classification/reports location, non-symlink, owner uid != producer uid, exact mapped row/page/SHA, optional applied receipt bound by audit_sha256 with zero content changes and not manual_reconciliation_required",
+    "positive real fixture: existing operator-owned independent audit + its applied receipt verifies; same row with pdf_page+1 is rejected"
+   ],
+   "tests": {
+    "new": [
+     "test_classifier_v3_audit_adapter.py (5)",
+     "test_classifier_v3_cycles.py (6)"
+    ],
+    "updated": "test_classifier_v3.py forged-receipt regression",
+    "reference_suite": "285/285 OK"
+   }
+  }
+ ],
+ "audited_new": 0,
+ "db_committed": 0,
+ "db_readback": 0,
+ "why_zero": "retrieval candidates only; no quote/confidence adjudication, no independent audit run, and this worker cannot act as fanoosupd, take/verify backups through the updater, or run import_verified_sources.php --apply",
+ "outstanding_rows_reported_by_owner": 3732
+}

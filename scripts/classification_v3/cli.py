@@ -15,7 +15,7 @@ HERE = Path(__file__).resolve().parent
 sys.path[:0] = [str(HERE), str(HERE.parent / "references")]
 import pipeline as P  # noqa: E402
 from scanner import pending_reason, Query, scan_edition  # noqa: E402
-from terms import deterministic_terms  # noqa: E402
+from terms import c1_terms  # noqa: E402  (cycle-1 accepted bridge, 2026-11-09)
 
 MAP = HERE.parents[1] / "data/bank/reference-chapter-pages.json"
 
@@ -40,7 +40,7 @@ def main(argv=None) -> int:
     elif a.cmd == "scan":
         from verified_reference_pdf import open_verified_reference
         rows = [q for q in json.load(open(a.study))]
-        queries = [Query.build(str(q["id"]), *deterministic_terms(q["stem"], q["choices"], q.get("key"))) for q in rows]
+        queries = [Query.build(str(q["id"]), *c1_terms(q["stem"], q["choices"], q.get("key"))) for q in rows]
         pdf = open_verified_reference(a.edition); runs = runs_for(a.edition)
         ranking, stats = scan_edition(pdf, queries)
         res = {"edition": a.edition, "pdf_sha256": pdf.source_sha256, "stats": stats,

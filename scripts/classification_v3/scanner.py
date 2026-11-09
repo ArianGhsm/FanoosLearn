@@ -156,8 +156,8 @@ def chapter_at(runs: list, page: int):
     return None
 
 
-def scan_edition(pdf, queries: list[Query], pages: range | None = None, top: int = 5):
-    """One pass over `pages` (default whole PDF). Returns ranking and stats."""
+def scan_counts(pdf, queries: list[Query], pages: range | None = None):
+    """One RAM-only pass; returns numeric per-page phrase counts (no text)."""
     import time
     phrases: dict[tuple, int] = {}
     for q in queries:
@@ -173,10 +173,15 @@ def scan_edition(pdf, queries: list[Query], pages: range | None = None, top: int
         del text
         if is_noise:
             noise.add(p)
-    elapsed = time.time() - t0
-    ranking = rank(queries, page_counts, page_len, noise, phrases, top)
-    return ranking, {"pages_scanned": len(page_counts), "noise_pages": len(noise),
-                     "scan_seconds": round(elapsed, 2), "terms": len(phrases)}
+    stats = {"pages_scanned": len(page_counts), "noise_pages": len(noise),
+             "scan_seconds": round(time.time() - t0, 2), "terms": len(phrases)}
+    return page_counts, page_len, noise, phrases, stats
+
+
+def scan_edition(pdf, queries: list[Query], pages: range | None = None, top: int = 5):
+    """One pass over `pages` (default whole PDF). Returns ranking and stats."""
+    page_counts, page_len, noise, phrases, stats = scan_counts(pdf, queries, pages)
+    return rank(queries, page_counts, page_len, noise, phrases, top), stats
 
 
 def regex_windows(text: str, pattern: str, width: int = 160, limit: int = 3) -> list[str]:
