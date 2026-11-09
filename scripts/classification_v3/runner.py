@@ -118,6 +118,11 @@ def plan_batches(items: list[dict], exclude: set[str] = frozenset()) -> tuple[li
         if lane in NEVER_RUN or lane not in RESIDENCY_LANES + NATIONAL_LANES:
             blocked[f"lane:{lane}"] += 1
             continue
+        # The official source-free exporter omits questions that already have
+        # a partial source row. They need a guarded *repair* pathway instead.
+        if int(it.get("existing_source_rows") or 0) > 0:
+            blocked["existing_source_requires_repair"] += 1
+            continue
         qid = str(it["question_id"])
         if not ID_RE.match(qid) or not SUBJECT_RE.match(str(it.get("subject", ""))):
             blocked["invalid_id_or_subject"] += 1
@@ -144,6 +149,18 @@ def plan_batches(items: list[dict], exclude: set[str] = frozenset()) -> tuple[li
                             "selected_editions": list(eds), "proxy_basis": None if basis == "-" else basis,
                             "key_class": kcls, "years": sorted({m["year"] for m in chunk}),
                             "question_ids": ids, "undersized": len(ids) < BATCH_MIN})
+    # Prefer high-yield batches over alphabetically first 1-Q / 5-book
+    # batches. Keep residency ahead of national and final-key cohorts ahead
+    # of voided/provisional cohorts; never change the scientific acceptance bar.
+    batches.sort(key=lambda b: (
+        b["type"] != "residency",
+        b["key_class"] != "final",
+        -len(b["question_ids"]) / max(1, len(b["selected_editions"])),
+        -len(b["question_ids"]),
+        len(b["selected_editions"]),
+        b["subject"],
+        b["batch_id"],
+    ))
     residency = [b for b in batches if b["type"] == "residency"]
     return (residency or [b for b in batches if b["type"] == "national"]), dict(blocked)
 
@@ -431,7 +448,12 @@ def parse(argv=None):
     p.add_argument("--default-backoff", type=int, default=1800)
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--session-cmd", nargs="+",
-                   default=["claude", "-p", "--model", "claude-opus-5-5", "--output-format", "json"])
+                   default=["/mnt/workspace/home/bin/claude", "--print", "--model", "opus",
+                            "--effort", "medium", "--permission-mode", "auto",
+                            "--tools", "Bash,Read,Write,Edit,Glob,Grep",
+                            "--add-dir", "/srv/fanoos/shared/research",
+                            "/srv/fanoos/current",
+                            "--output-format", "json"])
     a = p.parse_args(argv)
     if not 1 <= a.max_batches <= 6 or not 1 <= a.max_unverified <= 3 or a.limit < 0:
         p.error("bounds: max-batches 1..6, max-unverified 1..3")

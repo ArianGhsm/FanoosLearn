@@ -1,10 +1,12 @@
-# PROPOSAL ONLY - do not enable until a manual pilot run + host review pass.
+# Research-only cadence: one Opus attempt every ~25min, pauses when 2 batches
+# await trusted independent QA / operator receipts or provider quota backoff.
 [Unit]
-Description=FANOOS Classifier V3 research runner cadence
+Description=FanoosLearn V3 research-only cadence
 
 [Timer]
 OnBootSec=15min
-OnUnitInactiveSec=20min
+OnUnitInactiveSec=25min
+RandomizedDelaySec=3min
 Persistent=false
 
 [Install]

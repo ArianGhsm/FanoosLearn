@@ -60,6 +60,33 @@ class Planning(unittest.TestCase):
         self.assertEqual([b["type"] for b in runner.plan_batches([nat, eng])[0]], ["national"])
         self.assertEqual(runner.plan_batches([nat, res], {U(1)})[0][0]["type"], "national")
 
+    def test_high_yield_one_book_outranks_single_question_five_books(self):
+        one = item(1, 1391, eds=["a@1", "b@1", "c@1", "d@1", "e@1"])
+        many = [item(i, 1392, lane="residency_dental_proxy_policy",
+                     subject="endodontics", proxy=["torabinejad@6e"])
+                for i in range(10, 24)]
+        batches, _ = runner.plan_batches([one] + many)
+        self.assertEqual(batches[0]["subject"], "endodontics")
+        self.assertEqual(len(batches[0]["question_ids"]), 14)
+
+    def test_existing_partial_source_requires_repair(self):
+        partial = item(1, 1400, eds=["sturdevant-operative@7e"])
+        partial["existing_source_rows"] = 1
+        fresh = item(2, 1396, lane="residency_dental_proxy_policy",
+                     proxy=["mccracken-rpd@13e"])
+        batches, blocked = runner.plan_batches([partial, fresh])
+        self.assertEqual(blocked.get("existing_source_requires_repair"), 1)
+        self.assertEqual(len(batches), 1)
+        self.assertEqual(batches[0]["question_ids"], [U(2)])
+
+    def test_default_model_is_opus_with_noninteractive_permissions(self):
+        a = runner.parse(["--manifest", "/tmp/m.json", "--state-dir", "/tmp/st",
+                          "--case-root", "/tmp/cases", "--queue", "/tmp/q",
+                          "--receipts", "/tmp/r", "--dry-run"])
+        self.assertIn("opus", a.session_cmd)
+        self.assertIn("--permission-mode", a.session_cmd)
+        self.assertIn("auto", a.session_cmd)
+
     def test_injection_ids_and_editions_refused(self):
         bad = [item("1;rm -rf /", 1400, eds=["a@1"]), item(2, 1400, eds=["a@1 $(id)"])]
         batches, blocked = runner.plan_batches(bad)
