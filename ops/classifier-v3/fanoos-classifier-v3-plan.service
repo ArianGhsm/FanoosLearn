@@ -1,0 +1,13 @@
+# PROPOSAL for supervisor review — NOT installed, NOT enabled, no timer.
+# One-shot dry-run planner only; executes no model session and no DB write.
+[Unit]
+Description=FANOOS classifier V3 backlog planner (dry-run)
+
+[Service]
+Type=oneshot
+User=fanoosworker
+WorkingDirectory=/srv/fanoos/current
+ExecStart=/usr/bin/python3 -B scripts/classification_v3/orchestrator.py --dry-run --manifest %I
+NoNewPrivileges=yes
+MemoryMax=1G
+CPUQuota=50%
