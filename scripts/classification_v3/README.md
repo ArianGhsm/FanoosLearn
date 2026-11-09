@@ -37,3 +37,15 @@ until v3 is proven on a live pilot.
   (AGENTS.md §3A) is separate.
 
 Tests: `python3 -B -m unittest tests/references/test_classifier_v3.py`.
+
+## First read-only integration smoke (2026-11-09)
+The v3 CLI was exercised directly against the **live** residency 1395
+oral-medicine questions and the approved Burket 13e PDF (no DB updates).
+For 13 questions (10 previously verified sources + 3 missing): 1,139
+physical PDF pages scanned in 96.29 s; total runtime 98.77 s; exact
+page recall was 7/10 at rank 1, 8/10 at rank 3 and **9/10 at rank 5**.
+Terms were the deterministic baseline; no fresh Claude calls were used.
+All temporary raw question JSON and candidate files were deleted by the
+smoke runner. This validates retrieval mechanics ONLY, not a valid
+independent audit or any source-only import. There is still **zero**
+additional database source row from v3.

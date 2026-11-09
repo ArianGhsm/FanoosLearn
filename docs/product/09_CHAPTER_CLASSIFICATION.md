@@ -647,7 +647,17 @@ exam publication.
 `scripts/references/import_verified_sources.php` inserts **only**
 `bank_question_sources`, with exact-edition/scope, current live
 question+choice+answer matching, all-or-nothing rollback-only preview,
-verified full backup, and private post-commit receipt. Stage verified 30–40-question research batches privately. After ALL year subjects are scientifically complete, use guarded source-only transactions with independent receipts and whole-year readback, then publish the frozen exam ONCE for the completed year. A study-only JSON file must **never** be passed to the full
+verified full backup, and private post-commit receipt. Stage bounded,
+same-edition research batches privately. Each independently audited batch MAY
+receive a guarded **source-only** import immediately, even while other subjects
+or questions in that year remain pending, provided the live study is
+re-exported and revalidated, the verified full backup is fresh (at most
+four hours old), the approved `fanoosupd` operator completes a clean
+source-only dry run, and independent post-commit readback matches the
+receipt. A batch source import does NOT authorize publication of an incomplete
+exam/year. Public frozen-year publication remains gated on scientific
+completion of the full sitting/year and all applicable exemptions. A
+study-only JSON file must **never** be passed to the full
 `import-bank.php` sitting importer. No `publish` action is needed when
 an already published question acquires a source-only row. The historic
 complete-sitting procedure below is only for true full-sitting updates,
