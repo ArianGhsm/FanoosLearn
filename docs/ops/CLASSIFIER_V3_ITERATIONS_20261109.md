@@ -83,3 +83,26 @@ need page adjudication, so 50 audited and committed rows per hour, or 3,732 rows
 has **not** been shown. **NO-GO for scaling.** The next prerequisite is an end-to-end
 pilot of one 30–40-question batch through adjudication, independent audit and the `fanoosupd`
 importer, with measured wall time.
+
+## End-to-end pilot — 2026-11-09 (Claude Opus 5.5, no subagents)
+
+Aggregate only; per-question records, packets and operator runbook are private on the
+server (`classification/agent-queue/pilot-20261110/`).
+
+- Live blocker recount: 3732 source-incomplete; 1741 have an exact-year official
+  validity row; only 1141 have an eligible edition with both an approved PDF and a
+  chapter map (residency: 1 — the rest need the named proxy routes).
+- Selected 40 source-free, final-key, non-voided questions from one edition bundle
+  (Neville 5e; board 1404 r7 + promotion 1405 r7 oral pathology). One RAM-only scan:
+  983 pages in 111.8 s; 40/40 had lexical candidates.
+- Direct adjudication by the lead: **4/40 answer-bearing** (conf 0.87–0.95). 36 pending:
+  29 answer not in Neville (Regezi/Woo/Robbins/Ten Cate/announced articles — none has an
+  approved chapter map), 6 Neville page insufficient or confidence < 0.85 (mostly
+  negative-form items spread over pages), 1 in an officially excluded chapter.
+- Gates: validator 4/0 rejected (2 quotes fixed for exact-match hyphen/numeric
+  boundaries), worker audit precheck 4, importer preview 4 rows with 0 question/choice/
+  answer changes. Independent audit 0, imported 0, readback 0 — needs the fanoosupd operator.
+- Verdict: retrieval is not the bottleneck. Leftover questions in mapped editions mostly come
+  from books with no approved chapter map, so the hit rate was 10%. No imports were
+  measured, so the 4–5 day target for 3732 cannot be backed by evidence. At most 1141
+  questions are reachable until chapter maps and proxy policies are added.
