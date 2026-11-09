@@ -1,0 +1,459 @@
+"""Fail-closed, bounded, research-only Classifier V3 batch runner.
+
+One invocation = at most --max-batches research sessions, each one bounded
+`claude -p` session for one planned batch. The runner:
+
+* holds an exclusive flock (no concurrent runners, no duplicate processing);
+* leases question ids in a private state file (atomic writes, resumable);
+* re-reads live source absence (SELECT-only anti-join) before dispatch;
+* groups by ONE selected edition set (newest edition per reference family),
+  same subject/lane/proxy basis/key class, across years, 30-40 ids per batch;
+* takes national dental only when no residency dental batch is runnable;
+* never touches English/basic lanes; voided keys are batched separately;
+* stages only private draft proposals and an operator request; it never writes
+  the DB, a backup or an audit receipt, and never runs as fanoosupd;
+* counts progress ONLY from trusted operator status receipts (owned by a
+  configured trusted uid, not writable by the runner). Its own decision count
+  is recorded as `drafted`, never `accepted`.
+
+Stops (fail-closed): disk < 3 GiB, provider retry-after backoff, 2 consecutive
+operator-confirmed zero-accepted batches, or --max-unverified staged batches
+without a trusted receipt.
+"""
+from __future__ import annotations
+
+import argparse
+import fcntl
+import hashlib
+import json
+import os
+import re
+import shutil
+import signal
+import stat
+import subprocess
+import sys
+import tempfile
+import time
+from collections import defaultdict
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[1]
+PROMPT = HERE / "prompts" / "researcher.md"
+RESEARCH_TMP = Path("/srv/fanoos/shared/research/tmp")
+
+RESIDENCY_LANES = ["residency_dental_ready", "residency_dental_proxy_policy"]
+NATIONAL_LANES = ["national_dental_same_edition_ready", "national_dental_other_ready"]
+NEVER_RUN = {"residency_english_blocked_policy", "national_english_separate",
+             "national_basic_sciences_excluded"}
+MIN_FREE_BYTES = 3 * 1024 ** 3
+MAX_ZERO_ACCEPTED = 2
+DEFAULT_MAX_UNVERIFIED = 2
+BATCH_MIN, BATCH_MAX = 30, 40
+LEASE_S = 3 * 3600
+SESSION_TIMEOUT_S = 90 * 60
+ID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")  # UUID only
+EDITION_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,80}@[a-z0-9][a-z0-9._-]{0,40}$")
+SUBJECT_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,60}$")
+RECEIPT_FORMAT = "fanoos.classifier-v3.operator-status.v1"
+REQUEST_FORMAT = "fanoos.classifier-v3.operator-request.v1"
+ENV_KEEP = ("PATH", "HOME", "LANG", "LC_ALL", "TZ", "USER", "LOGNAME")
+RETRY_RE = re.compile(r"retry[-_ ]after[\"':= ]+([0-9]{1,6})", re.I)
+RATE_RE = re.compile(r"rate[_ ]limit|usage limit|overloaded|\b429\b", re.I)
+
+
+class Blocked(RuntimeError):
+    pass
+
+
+# ---------------------------------------------------------------- planning
+def family(edition: str) -> str:
+    return edition.split("@", 1)[0]
+
+
+def newest_per_family(editions: list[str]) -> list[str]:
+    """Input must be newest-first; keep the first (newest) edition of each family."""
+    seen, out = set(), []
+    for e in editions:
+        if family(e) not in seen:
+            seen.add(family(e))
+            out.append(e)
+    return out
+
+
+def proxy_basis(item: dict) -> str | None:
+    if item["lane"] != "residency_dental_proxy_policy":
+        return None
+    return "same_lineage_proxy" if item["year"] == 1396 else "retrospective_proxy_1397_plus"
+
+
+def key_class(item: dict) -> str:
+    s = item.get("official_key_status", "none")
+    return "voided" if s == "voided" else "final" if s in ("final", "amended") else "provisional"
+
+
+def select_editions(item: dict) -> tuple[list[str], str | None]:
+    """Return (selected newest-first edition set, block reason)."""
+    if item["lane"] == "residency_dental_proxy_policy":
+        if not item.get("proxy_candidates_ordered"):
+            return [], "proxy_order_unverified_regenerate_manifest"
+        eds = item.get("proxy_candidate_editions") or []
+    else:
+        eds = item.get("ready_editions") or []  # official list, SQL newest-first
+    eds = newest_per_family(eds)
+    if not eds:
+        return [], "no_ready_edition"
+    if any(not EDITION_RE.match(e) for e in eds):
+        return [], "edition_key_invalid"
+    return eds, None
+
+
+def plan_batches(items: list[dict], exclude: set[str] = frozenset()) -> tuple[list[dict], dict]:
+    """Group runnable items; residency first, national only if residency has none."""
+    groups: dict[tuple, list[dict]] = defaultdict(list)
+    blocked: dict[str, int] = defaultdict(int)
+    for it in items:
+        lane = it.get("lane")
+        if lane in NEVER_RUN or lane not in RESIDENCY_LANES + NATIONAL_LANES:
+            blocked[f"lane:{lane}"] += 1
+            continue
+        qid = str(it["question_id"])
+        if not ID_RE.match(qid) or not SUBJECT_RE.match(str(it.get("subject", ""))):
+            blocked["invalid_id_or_subject"] += 1
+            continue
+        if qid in exclude:
+            continue
+        eds, why = select_editions(it)
+        if why:
+            blocked[why] += 1
+            continue
+        key = ((RESIDENCY_LANES + NATIONAL_LANES).index(lane), lane, it["type"], it["subject"],
+               tuple(eds), proxy_basis(it) or "-", key_class(it))
+        groups[key].append(it)
+    batches = []
+    for key in sorted(groups):
+        _, lane, kind, subject, eds, basis, kcls = key
+        members = sorted(groups[key], key=lambda i: (i["year"], str(i["question_id"])))
+        for i in range(0, len(members), BATCH_MAX):
+            chunk = members[i:i + BATCH_MAX]
+            ids = [str(m["question_id"]) for m in chunk]
+            bid = hashlib.sha256(json.dumps([lane, subject, list(eds), basis, kcls, ids])
+                                 .encode()).hexdigest()[:16]
+            batches.append({"batch_id": bid, "lane": lane, "type": kind, "subject": subject,
+                            "selected_editions": list(eds), "proxy_basis": None if basis == "-" else basis,
+                            "key_class": kcls, "years": sorted({m["year"] for m in chunk}),
+                            "question_ids": ids, "undersized": len(ids) < BATCH_MIN})
+    residency = [b for b in batches if b["type"] == "residency"]
+    return (residency or [b for b in batches if b["type"] == "national"]), dict(blocked)
+
+
+# ---------------------------------------------------------------- state / receipts
+def load_json(path: Path, default):
+    return json.loads(path.read_text("utf-8")) if path.exists() else default
+
+
+def atomic_write(path: Path, obj) -> None:
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump(obj, fh, ensure_ascii=False, indent=1, sort_keys=True)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.chmod(tmp, 0o640)
+        os.replace(tmp, path)
+    finally:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+
+
+def trusted_receipts(receipt_dir: Path, trusted_uids: set[int]) -> dict[str, dict]:
+    """Operator status receipts; runner-owned or writable-by-others files are ignored."""
+    out = {}
+    if not receipt_dir.is_dir():
+        return out
+    me = os.getuid()
+    for p in sorted(receipt_dir.glob("*.json")):
+        st = p.lstat()
+        if (not stat.S_ISREG(st.st_mode) or st.st_uid == me or st.st_uid not in trusted_uids
+                or st.st_mode & (stat.S_IWGRP | stat.S_IWOTH)):
+            continue
+        try:
+            r = json.loads(p.read_text("utf-8"))
+        except (OSError, ValueError):
+            continue
+        if (r.get("format") == RECEIPT_FORMAT and isinstance(r.get("batch_id"), str)
+                and isinstance(r.get("accepted_source_rows"), int)
+                and r.get("independent_qa") == "approved_or_rejected"
+                and r.get("readback_verified") is True):
+            out[r["batch_id"]] = r
+    return out
+
+
+def reconcile(state: dict, receipts: dict[str, dict], now: float) -> dict:
+    """Fold trusted receipts into state; expire stale research leases."""
+    state = dict(state)
+    batches = state.setdefault("batches", {})
+    for bid, b in batches.items():
+        if b["status"] == "staged" and bid in receipts:
+            b["status"] = "operator_confirmed"
+            b["accepted"] = receipts[bid]["accepted_source_rows"]
+        if b["status"] == "leased" and b.get("lease_expires", 0) < now:
+            b["status"] = "lease_expired"
+    confirmed = sorted((b for b in batches.values() if b["status"] == "operator_confirmed"),
+                       key=lambda b: b["started"])
+    streak = 0
+    for b in confirmed:
+        streak = 0 if b["accepted"] > 0 else streak + 1
+    state["zero_accepted_streak"] = streak
+    state["accepted_total"] = sum(b["accepted"] for b in confirmed)
+    state["unverified_staged"] = sum(1 for b in batches.values() if b["status"] == "staged")
+    return state
+
+
+def excluded_ids(state: dict) -> set[str]:
+    """Ids already leased/staged/confirmed are never re-dispatched by the runner."""
+    return {q for b in state.get("batches", {}).values()
+            if b["status"] in ("leased", "staged", "operator_confirmed", "failed")
+            for q in b["question_ids"]}
+
+
+def guard(state: dict, now: float, free_bytes: int, max_unverified: int) -> list[str]:
+    reasons = []
+    if free_bytes < MIN_FREE_BYTES:
+        reasons.append("disk_below_3GiB")
+    if state.get("quota_backoff_until", 0) > now:
+        reasons.append("provider_retry_after_backoff")
+    if state.get("zero_accepted_streak", 0) >= MAX_ZERO_ACCEPTED:
+        reasons.append("hard_stop_two_zero_accepted_batches")
+    if state.get("unverified_staged", 0) >= max_unverified:
+        reasons.append("awaiting_trusted_operator_receipt")
+    return reasons
+
+
+# ---------------------------------------------------------------- live absence
+LIVE_ABSENT = """SELECT q.id FROM bank_questions q WHERE q.id IN ({ids})
+ AND NOT EXISTS(SELECT 1 FROM bank_question_sources s WHERE s.question_id=q.id
+ AND s.workspace_id=q.workspace_id AND s.node_id IS NOT NULL AND s.pdf_page>0
+ AND s.pdf_sha256 IS NOT NULL)"""
+
+
+def live_absent(ids: list[str]) -> set[str]:
+    from classification_v3 import manifest  # SELECT-only helper
+    if not all(ID_RE.match(i) for i in ids):
+        raise Blocked("invalid_question_id")
+    return {r[0] for r in manifest.sql(LIVE_ABSENT.format(ids=",".join(f"'{i}'" for i in ids)))}
+
+
+# ---------------------------------------------------------------- session
+def render_prompt(batch: dict, case_dir: Path, template: str) -> str:
+    for e in batch["selected_editions"]:
+        if not EDITION_RE.match(e):
+            raise Blocked("edition_key_invalid")
+    if not SUBJECT_RE.match(batch["subject"]):
+        raise Blocked("subject_invalid")
+    return (template.replace("{{BATCH_ID}}", batch["batch_id"])
+            .replace("{{CASE_DIR}}", str(case_dir))
+            .replace("{{SUBJECT}}", batch["subject"])
+            .replace("{{EXAM_TYPE}}", batch["type"])
+            .replace("{{EDITIONS}}", ", ".join(batch["selected_editions"]))
+            .replace("{{PROXY_BASIS}}", batch["proxy_basis"] or "none (official exam-year list)")
+            .replace("{{KEY_CLASS}}", batch["key_class"])
+            .replace("{{YEARS}}", ", ".join(str(y) for y in batch["years"])))
+
+
+def scan_quota(text: str) -> tuple[bool, int | None]:
+    m = RETRY_RE.search(text)
+    return bool(m or RATE_RE.search(text)), (int(m.group(1)) if m else None)
+
+
+def run_session(cmd: list[str], prompt: str, cwd: Path, out_path: Path,
+                timeout: int) -> dict:
+    """Run one bounded session; raw output goes only to a private 0600 file."""
+    env = {k: os.environ[k] for k in ENV_KEEP if k in os.environ}
+    fd = os.open(out_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    t0 = time.time()
+    with os.fdopen(fd, "wb") as out:
+        proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=out, stderr=subprocess.STDOUT,
+                                cwd=cwd, env=env, start_new_session=True,
+                                preexec_fn=lambda: os.nice(10))
+        try:
+            proc.communicate(prompt.encode(), timeout=timeout)
+            rc, killed = proc.returncode, False
+        except subprocess.TimeoutExpired:
+            os.killpg(proc.pid, signal.SIGTERM)
+            try:
+                proc.wait(30)
+            except subprocess.TimeoutExpired:
+                os.killpg(proc.pid, signal.SIGKILL)
+                proc.wait()
+            rc, killed = -9, True
+    tail = out_path.read_bytes()[-8192:].decode("utf-8", "replace")
+    quota, retry = scan_quota(tail)
+    return {"rc": rc, "killed": killed, "seconds": round(time.time() - t0),
+            "output_bytes": out_path.stat().st_size, "quota_signal": quota, "retry_after": retry}
+
+
+def staged_counts(case_dir: Path) -> dict:
+    """Counts drafted (NOT accepted) proposals the session staged privately."""
+    p = case_dir / "decisions.draft.json"
+    try:
+        d = json.loads(p.read_text("utf-8"))
+        rows = d.get("decisions", []) if isinstance(d, dict) else []
+        return {"drafted": sum(1 for r in rows if r.get("decision") == "proposed"),
+                "pending": sum(1 for r in rows if r.get("decision") != "proposed"),
+                "precheck_present": (case_dir / "precheck.json").exists()}
+    except (OSError, ValueError):
+        return {"drafted": 0, "pending": 0, "precheck_present": False, "draft_missing": True}
+
+
+def write_request(queue: Path, batch: dict, case_dir: Path, counts: dict, now: float) -> Path:
+    req = {"format": REQUEST_FORMAT, "batch_id": batch["batch_id"], "created": int(now),
+           "case_dir": str(case_dir), "status": "awaiting_independent_qa",
+           "drafted_not_accepted": counts.get("drafted", 0),
+           "selected_editions": batch["selected_editions"], "proxy_basis": batch["proxy_basis"],
+           "key_class": batch["key_class"], "question_count": len(batch["question_ids"]),
+           "required_steps": [
+               "independent_opus_qa_review(prompts/qa_review.md) -> qa.json approved",
+               "fanoosupd: trusted provenance audit of case_dir",
+               "fanoosupd: re-export study from live DB and compare with pinned package",
+               "fanoosupd: verified full backup <= 4h",
+               "fanoosupd: safe preview (dry run)",
+               "fanoosupd: guarded source-only import + independent readback",
+               f"fanoosupd: write {RECEIPT_FORMAT} receipt (accepted_source_rows from readback)"]}
+    queue.mkdir(parents=True, exist_ok=True)
+    path = queue / f"{batch['batch_id']}.json"
+    atomic_write(path, req)
+    return path
+
+
+# ---------------------------------------------------------------- main loop
+def log(event: str, **kw) -> None:
+    """Filtered log: ids/counts/codes only, never stems, PDF text or model output."""
+    safe = {k: v for k, v in kw.items() if isinstance(v, (int, float, bool, type(None)))
+            or (isinstance(v, str) and len(v) <= 120 and "\n" not in v)}
+    print(json.dumps({"t": int(time.time()), "event": event, **safe}, sort_keys=True), flush=True)
+
+
+def run(a) -> int:
+    if os.geteuid() == 0 or a.forbidden_user_check():
+        log("refused", reason="privileged_or_operator_identity")
+        return 2
+    a.state_dir.mkdir(parents=True, exist_ok=True, mode=0o750)
+    lock_fh = open(a.state_dir / "runner.lock", "w")
+    try:
+        fcntl.flock(lock_fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        log("refused", reason="another_runner_holds_lock")
+        return 3
+    state_path = a.state_dir / "state.json"
+    items = json.loads(a.manifest.read_text("utf-8"))["items"]
+    template = PROMPT.read_text("utf-8")
+    executed = 0
+    for _ in range(a.max_batches):
+        now = time.time()
+        state = reconcile(load_json(state_path, {}), trusted_receipts(a.receipts, a.trusted_uids), now)
+        atomic_write(state_path, state)
+        free = shutil.disk_usage(a.case_root).free
+        blockers = guard(state, now, free, a.max_unverified)
+        batches, blocked = plan_batches(items, excluded_ids(state))
+        log("plan", batches=len(batches), questions=sum(len(b["question_ids"]) for b in batches),
+            lane=batches[0]["lane"] if batches else None, blocked=json.dumps(blocked)[:120],
+            free_gib=round(free / 1024 ** 3, 2), blockers=",".join(blockers) or None,
+            accepted_total=state.get("accepted_total", 0), unverified=state.get("unverified_staged", 0))
+        if a.dry_run:
+            if batches:
+                b = batches[0]
+                log("dry_run_first_batch", batch_id=b["batch_id"], lane=b["lane"], subject=b["subject"],
+                    editions=",".join(b["selected_editions"])[:120], basis=b["proxy_basis"],
+                    key_class=b["key_class"], n=len(b["question_ids"]))
+            return 0
+        if blockers or not batches:
+            log("stop", reason=",".join(blockers) or "no_runnable_batch")
+            return 0 if not blockers else 4
+        batch = batches[0]
+        if a.limit:
+            batch = {**batch, "question_ids": batch["question_ids"][:a.limit]}
+        planned = set(batch["question_ids"])
+        absent = live_absent(batch["question_ids"])
+        batch["question_ids"] = [q for q in batch["question_ids"] if q in absent]
+        if not batch["question_ids"]:
+            log("skip", batch_id=batch["batch_id"], reason="already_sourced_live")
+            items = [i for i in items if str(i["question_id"]) not in planned]
+            continue
+        bid = batch["batch_id"]
+        case_dir = a.case_root / f"v3-{bid}"
+        case_dir.mkdir(parents=True, exist_ok=True, mode=0o750)
+        atomic_write(case_dir / "batch.json", batch)
+        state["batches"][bid] = {"status": "leased", "started": int(now), "lease_expires": now + LEASE_S,
+                                 "question_ids": batch["question_ids"], "accepted": 0}
+        atomic_write(state_path, state)
+        tmp = Path(tempfile.mkdtemp(prefix=f"v3-run-{bid}-", dir=a.tmp_root))
+        try:
+            res = run_session(a.session_cmd, render_prompt(batch, case_dir, template),
+                              a.workdir, case_dir / "session.out", a.timeout)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+        counts = staged_counts(case_dir)
+        rec = state["batches"][bid]
+        if res["quota_signal"]:
+            state["quota_backoff_until"] = now + (res["retry_after"] or a.default_backoff)
+            rec["status"] = "lease_expired"  # requeue after backoff; nothing staged as accepted
+        elif res["rc"] != 0 or res["killed"] or counts.get("draft_missing"):
+            rec["status"] = "failed"  # held for operator inspection, never retried blindly
+        else:
+            rec["status"] = "staged"
+            rec["drafted"] = counts["drafted"]
+            write_request(a.queue, batch, case_dir, counts, now)
+        rec.update({k: res[k] for k in ("rc", "killed", "seconds")})
+        atomic_write(state_path, state)
+        executed += 1
+        log("batch_done", batch_id=bid, status=rec["status"], drafted_not_accepted=counts.get("drafted", 0),
+            rc=res["rc"], killed=res["killed"], seconds=res["seconds"], quota=res["quota_signal"])
+    log("max_batches_reached", executed=executed)
+    return 0
+
+
+def parse(argv=None):
+    p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    p.add_argument("--manifest", type=Path, required=True)
+    p.add_argument("--state-dir", type=Path, required=True)
+    p.add_argument("--case-root", type=Path, required=True, help="private research case root")
+    p.add_argument("--queue", type=Path, required=True, help="operator request queue dir")
+    p.add_argument("--receipts", type=Path, required=True, help="trusted operator receipt dir")
+    p.add_argument("--trusted-uid", type=int, action="append", default=[])
+    p.add_argument("--tmp-root", type=Path, default=RESEARCH_TMP)
+    p.add_argument("--workdir", type=Path, default=ROOT)
+    p.add_argument("--max-batches", type=int, default=1)
+    p.add_argument("--max-unverified", type=int, default=DEFAULT_MAX_UNVERIFIED)
+    p.add_argument("--limit", type=int, default=0, help="pilot: cap ids in the first batch")
+    p.add_argument("--timeout", type=int, default=SESSION_TIMEOUT_S)
+    p.add_argument("--default-backoff", type=int, default=1800)
+    p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--session-cmd", nargs="+",
+                   default=["claude", "-p", "--model", "claude-opus-5-5", "--output-format", "json"])
+    a = p.parse_args(argv)
+    if not 1 <= a.max_batches <= 6 or not 1 <= a.max_unverified <= 3 or a.limit < 0:
+        p.error("bounds: max-batches 1..6, max-unverified 1..3")
+    a.trusted_uids = set(a.trusted_uid)
+    if not a.dry_run and not a.trusted_uids:
+        p.error("--trusted-uid (operator receipt owner) is required for execution")
+    a.forbidden_user_check = lambda: _username() == "fanoosupd"
+    return a
+
+
+def _username() -> str:
+    try:
+        import pwd
+        return pwd.getpwuid(os.getuid()).pw_name
+    except KeyError:
+        return ""
+
+
+def main(argv=None) -> int:
+    sys.path.insert(0, str(HERE.parent))
+    return run(parse(argv))
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

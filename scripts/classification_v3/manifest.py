@@ -64,13 +64,14 @@ WHERE t.type_key IN ('residency','national') GROUP BY t.type_key
 """
 
 RESIDENCY_EDITIONS = """
-SELECT DISTINCT s.subject_key, CONCAT(r.reference_key,'@',e.edition_key)
+SELECT DISTINCT s.subject_key, CONCAT(r.reference_key,'@',e.edition_key), e.published_year
 FROM bank_reference_validity rv
 JOIN bank_exam_types t ON t.id=rv.exam_type_id AND t.workspace_id=rv.workspace_id
 JOIN bank_subjects s ON s.id=rv.subject_id AND s.workspace_id=rv.workspace_id
 JOIN bank_reference_editions e ON e.id=rv.edition_id AND e.workspace_id=rv.workspace_id
 JOIN bank_references r ON r.id=e.reference_id AND r.workspace_id=e.workspace_id
 WHERE t.type_key='residency' AND rv.is_official=1
+ORDER BY e.published_year DESC
 """
 
 APPROVED_PDFS = """
@@ -131,7 +132,7 @@ PRIORITY = ["residency_dental_ready", "residency_dental_proxy_policy",
 
 
 def build(rows: list[list[str]], pdfs: dict[str, str], maps: dict,
-          residency_eds: set[tuple[str, str]]) -> dict:
+          residency_eds: set[tuple[str, str]], edition_years: dict[str, int] | None = None) -> dict:
     items = []
     for qid, kind, year, rnd, subject, key_status, eds, nsrc in rows:
         row = {"question_id": qid, "type": kind, "year": int(year), "round": int(rnd),
@@ -144,9 +145,13 @@ def build(rows: list[list[str]], pdfs: dict[str, str], maps: dict,
                                            for e in row["official_editions"])
         # Candidate-only: the reviewed proxy policy modules still choose the
         # newest eligible family edition and record newer_editions_searched.
-        row["proxy_candidate_editions"] = (ready_editions(sorted(
-            e for s, e in residency_eds if s == row["subject"]), pdfs, maps)
+        # Newest-first when published years are known (runner fails closed otherwise).
+        cands = sorted({e for s, e in residency_eds if s == row["subject"]},
+                       key=lambda e: (-(edition_years or {}).get(e, 0), e))
+        row["proxy_candidate_editions"] = (ready_editions(cands, pdfs, maps)
             if row["lane"] == "residency_dental_proxy_policy" else [])
+        row["proxy_candidates_ordered"] = bool(edition_years) and all(
+            e in edition_years for e in row["proxy_candidate_editions"])
         items.append(row)
     items.sort(key=lambda r: (PRIORITY.index(r["lane"]) if r["lane"] in PRIORITY else 99,
                               r["year"], r["subject"], r["question_id"]))
@@ -180,8 +185,10 @@ def main(argv: list[str] | None = None) -> int:
     pdf_rows = sql(APPROVED_PDFS)
     seen = Counter(t for t, _ in pdf_rows)
     pdfs = {t: h for t, h in pdf_rows if seen[t] == 1}
-    residency_eds = {(s, e) for s, e in sql(RESIDENCY_EDITIONS)}
-    built = build(sql(QUERY), pdfs, maps, residency_eds)
+    ed_rows = sql(RESIDENCY_EDITIONS)
+    residency_eds = {(s, e) for s, e, _ in ed_rows}
+    years = {e: int(y) for _, e, y in ed_rows if y.isdigit()}
+    built = build(sql(QUERY), pdfs, maps, residency_eds, years)
     totals = {k: int(v) for k, v in sql(TOTALS)}
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     summary = {"format": "fanoos.classifier-v3.backlog-manifest.v1", "generated_at": now,

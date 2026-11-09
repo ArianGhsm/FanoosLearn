@@ -40,10 +40,13 @@ def plan_batches(items: list[dict], completed: set[str] = frozenset(),
             continue
         if it["question_id"] in completed or it["question_id"] in leased:
             continue
-        editions = it.get("ready_editions") or it.get("proxy_candidate_editions") or []
-        if not editions:
+        # Fixed: never bundle every candidate edition; one selected (newest per
+        # family) set, proxy order verified (see runner.select_editions).
+        from classification_v3.runner import select_editions
+        editions, why = select_editions(it)
+        if why:
             continue
-        family = ",".join(sorted(editions))
+        family = ",".join(editions)
         groups[(RUNNABLE.index(it["lane"]), it["lane"], it["type"], it["year"],
                 it["subject"], family)].append(it["question_id"])
     batches = []

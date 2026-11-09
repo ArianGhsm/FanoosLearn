@@ -1,0 +1,11 @@
+# PROPOSAL ONLY - do not enable until a manual pilot run + host review pass.
+[Unit]
+Description=FANOOS Classifier V3 research runner cadence
+
+[Timer]
+OnBootSec=15min
+OnUnitInactiveSec=20min
+Persistent=false
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,23 @@
+# PROPOSAL ONLY - not installed. Host operator must review and test one manual
+# run first. Runs as fanoosworker (never fanoosupd); research-only.
+[Unit]
+Description=FANOOS Classifier V3 research runner (one bounded batch)
+ConditionPathExists=!/srv/fanoos/shared/research/classification/v3-runner/STOP
+
+[Service]
+Type=oneshot
+User=fanoosworker
+Nice=10
+CPUQuota=150%
+MemoryHigh=2G
+MemoryMax=3G
+TimeoutStartSec=100min
+NoNewPrivileges=yes
+PrivateTmp=yes
+ExecStart=/usr/bin/python3 -B /srv/fanoos/current/scripts/classification_v3/runner.py \
+  --manifest /srv/fanoos/shared/research/classification/agent-queue/current-manifest.json \
+  --state-dir /srv/fanoos/shared/research/classification/v3-runner/state \
+  --case-root /srv/fanoos/shared/research/classification/v3-runner/cases \
+  --queue /srv/fanoos/shared/research/classification/v3-runner/operator-requests \
+  --receipts /srv/fanoos/shared/research/classification/v3-runner/operator-receipts \
+  --trusted-uid 982 --max-batches 1 --max-unverified 2
