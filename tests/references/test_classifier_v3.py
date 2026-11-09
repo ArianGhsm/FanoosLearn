@@ -1,4 +1,4 @@
-import sys, tempfile, unittest
+import hashlib, sys, tempfile, unittest
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts/classification_v3"))
 import pipeline as P  # noqa: E402
@@ -10,7 +10,7 @@ PAGE = "Pemphigus vulgaris shows intraepithelial acantholysis with a positive Ni
 
 
 def dec(**kw):
-    base = dict(question_id=1, edition="b@13e", pdf_sha256=SHA, pdf_page=5, node_id="ch1",
+    base = dict(question_id="0b7f3c2e-uuid", producer="v3-precheck", edition="b@13e", pdf_sha256=SHA, pdf_page=5, node_id="ch1",
                 quote="intraepithelial acantholysis with a positive Nikolsky sign", confidence=0.9,
                 scope="in_scope", basis="official_exam_year")
     return P.Decision(**(base | kw))
@@ -21,7 +21,7 @@ class V3(unittest.TestCase):
         self.assertEqual(P.verify_decision(dec(), PAGE, RUNS, SHA, 20), [])
 
     def test_rejects_wrong_sha_chapter_quote_conf(self):
-        f = P.verify_decision(dec(pdf_sha256="b" * 64, node_id="ch2", quote="not on page", confidence=0.8),
+        f = P.verify_decision(dec(pdf_sha256="b" * 64, node_id="ch2", quote="this sentence is not on page", confidence=0.8),
                               PAGE, RUNS, SHA, 20)
         for r in ("sha_not_current_approved_edition", "chapter_not_from_same_edition_map",
                   "quote_not_verbatim_on_page", "low_confidence"):
@@ -47,12 +47,21 @@ class V3(unittest.TestCase):
         self.assertEqual(P.classify_need({"source": {"node_id": "c", "pdf_page": 3, "pdf_sha256": SHA}}), "complete")
         self.assertEqual(P.classify_need({"source": {"node_id": "c", "pdf_page": 0, "pdf_sha256": SHA}}), "needs_source")
 
-    def test_grouping_pending_and_duplicates(self):
-        qs = [dict(id=i, exam_type="board", year=1400, subject="om", stem="s%d" % (i % 2), choices={}, key="1")
-              for i in range(3)] + [dict(id=9, exam_type="national", year=1399, subject="xx", stem="z", choices={}, key="1")]
-        g, pend = P.group_by_edition(qs, {"board/1400/om": {"editions": ["b@13e"]}})
-        self.assertEqual([q["id"] for q in g["b@13e"]], [0, 1])
-        self.assertEqual({p["reason"] for p in pend}, {"duplicate_in_batch", "no_official_or_rule_based_edition"})
+    def test_identical_content_across_exam_types_kept(self):  # regression A
+        pol = {k: {"editions": ["b@13e"], "provenance": "official-list:x"} for k in
+               ("board/1400/om", "promotion/1400/om", "residency/1400/om")}
+        qs = [dict(id="u-%s" % t, workspace_id="w", exam_type=t, year=1400, subject="om", stem="same",
+                   choices={"1": "a"}, key="1") for t in ("board", "promotion", "residency")]
+        qs.append(dict(qs[0]))  # exact repeated row only
+        g, pend = P.group_by_edition(qs, pol)
+        self.assertEqual([q["id"] for q in g["b@13e"]], ["u-board", "u-promotion", "u-residency"])
+        self.assertEqual(pend, [{"id": "u-board", "reason": "repeated_row_in_export"}])
+
+    def test_policy_needs_provenance_no_fabrication(self):  # regression E
+        q = dict(id="u1", exam_type="national", year=1399, subject="xx", stem="z", choices={}, key="1")
+        self.assertEqual(P.resolve_edition(q, {})["reason"], "no_official_or_rule_based_edition")
+        self.assertEqual(P.resolve_edition(q, {"national/1399/xx": {"editions": ["b@13e"]}})["reason"],
+                         "edition_policy_without_provenance")
 
     def test_ranking_prefers_answer_page(self):
         q = Query.build("q", [("nikolsky sign", 1.6), ("acantholysis", 1.0)])
@@ -64,18 +73,57 @@ class V3(unittest.TestCase):
             pc[p], pl[p], n = count_page(t, phrases)
         self.assertEqual(rank([q], pc, pl, noise, phrases)["q"][0][1], 1)
 
+    def test_short_quote_rejected(self):  # regression D
+        self.assertIn("quote_length", P.verify_decision(dec(quote="Nikolsky sign"), PAGE, RUNS, SHA, 20))
+        self.assertIn("quote_length", P.verify_decision(dec(quote="positive Nikolsky sign"), PAGE, RUNS, SHA, 20))
+
+    def test_precheck_never_approves(self):  # regression B
+        self.assertEqual(P.precheck([]), "audit_pending")
+
+    def _audit(self, d, root, **kw):
+        rec = Path(root) / "r.json"; rec.write_text("{}")
+        a = dict(tool="independent_page_reopen", auditor="opus-auditor", question_id=d.question_id,
+                 pdf_sha256=d.pdf_sha256, pdf_page=d.pdf_page, node_id=d.node_id, verdict="accepted",
+                 quote_sha256=hashlib.sha256(d.quote.encode()).hexdigest(), receipt="r.json",
+                 receipt_sha256=hashlib.sha256(b"{}").hexdigest())
+        return a | kw
+
+    def test_package_rejects_unaudited_and_self_certified(self):  # regression B
+        d = dec()
+        with tempfile.TemporaryDirectory() as root:
+            with self.assertRaises(ValueError):
+                P.handoff_package([(d, {})], SHA, "b1", Path(root))
+            with self.assertRaises(ValueError):
+                P.handoff_package([(d, self._audit(d, root, auditor="v3-precheck"))], SHA, "b1", Path(root))
+            with self.assertRaises(ValueError):
+                P.handoff_package([(d, self._audit(d, root, receipt_sha256="0" * 64))], SHA, "b1", Path(root))
+            with self.assertRaises(ValueError):
+                P.handoff_package([(d, self._audit(d, root, pdf_page=6))], SHA, "b1", Path(root))
+            pkg = P.handoff_package([(d, self._audit(d, root))], SHA, "b1", Path(root))
+            self.assertIn("answer_key", pkg["never_mutates"]); self.assertEqual(len(pkg["package_sha256"]), 64)
+            with self.assertRaises(ValueError):
+                P.handoff_package([(d, self._audit(d, root))] * 41, SHA, "b1", Path(root))
+
     def test_checkpoint_leases(self):
         with tempfile.TemporaryDirectory() as d:
             c = P.Checkpoint(Path(d) / "cp.json", lease_seconds=10)
             self.assertTrue(c.claim("g1", "a", now=0)); self.assertFalse(c.claim("g1", "b", now=5))
-            self.assertTrue(c.claim("g1", "b", now=11)); c.complete("g1", {"n": 1})
+            self.assertTrue(c.claim("g1", "b", now=11))
+            self.assertFalse(c.complete("g1", "a", {"n": 1}))  # expired lease cannot complete
+            self.assertTrue(c.complete("g1", "b", {"n": 1}))
             self.assertFalse(P.Checkpoint(Path(d) / "cp.json").claim("g1", "a"))
 
-    def test_package_source_only_and_bounded(self):
-        pkg = P.handoff_package([dec()], SHA, "b1")
-        self.assertIn("answer_key", pkg["never_mutates"]); self.assertEqual(len(pkg["package_sha256"]), 64)
-        with self.assertRaises(ValueError):
-            P.handoff_package([dec()] * 41, SHA, "b1")
+    def test_checkpoint_concurrent_single_winner(self):  # regression C
+        import multiprocessing as mp
+        with tempfile.TemporaryDirectory() as d:
+            path = str(Path(d) / "cp.json")
+            with mp.get_context("fork").Pool(8) as pool:
+                wins = pool.starmap(_claim, [(path, "w%d" % i) for i in range(16)])
+            self.assertEqual(sum(wins), 1)
+
+
+def _claim(path, owner):
+    return P.Checkpoint(Path(path)).claim("g", owner)
 
 
 if __name__ == "__main__":

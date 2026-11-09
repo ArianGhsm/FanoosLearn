@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 MIN_CONFIDENCE = 0.85
+MIN_QUOTE_WORDS = 4
 MAX_QUOTE_WORDS = 40
 SHA = re.compile(r"^[a-f0-9]{64}$")
 SCOPE = {"in_scope", "outside_scope_exam_question", "scope_unverified"}
@@ -44,22 +45,27 @@ def resolve_edition(q: dict, policy: dict) -> dict:
     entry = policy.get(key)
     if not entry or not entry.get("editions"):
         return {"status": "pending", "reason": "no_official_or_rule_based_edition", "key": key}
+    if not entry.get("provenance"):            # official list id / owner-rule citation
+        return {"status": "pending", "reason": "edition_policy_without_provenance", "key": key}
     return {"status": "ok", "editions": list(entry["editions"]), "basis": entry.get("basis", "official_exam_year"),
             "key": key}
 
 
 def group_by_edition(questions: list[dict], policy: dict) -> tuple[dict, list]:
+    """Group rows by edition. Only an exact repeated (workspace_id, id) is dropped;
+    identical content in different rows/exam types is KEPT (it may share retrieval
+    via question_fingerprint, but every bank row gets its own decision)."""
     groups, pending, seen = {}, [], set()
     for q in questions:
-        fp = question_fingerprint(q)
-        if fp in seen:                        # duplicate suppression across sittings
-            pending.append({"id": q["id"], "reason": "duplicate_in_batch"}); continue
-        seen.add(fp)
+        rid = (str(q.get("workspace_id", "")), str(q["id"]))
+        if rid in seen:
+            pending.append({"id": rid[1], "reason": "repeated_row_in_export"}); continue
+        seen.add(rid)
         if classify_need(q) != "needs_source":
             continue
         r = resolve_edition(q, policy)
         if r["status"] != "ok":
-            pending.append({"id": q["id"], "reason": r["reason"]}); continue
+            pending.append({"id": rid[1], "reason": r["reason"]}); continue
         groups.setdefault(r["editions"][0], []).append(q)
     return groups, pending
 
@@ -78,7 +84,7 @@ def chapter_for(runs: list, page: int):
 
 @dataclass
 class Decision:
-    question_id: int
+    question_id: str  # live DB ids are UUID-like strings
     edition: str
     pdf_sha256: str
     pdf_page: int
@@ -89,10 +95,12 @@ class Decision:
     basis: str
     note_fa: str = ""
     reasons: list = field(default_factory=list)
+    printed_page: str = ""   # corroborated via edition bridge when one exists
+    producer: str = ""
 
 
 def verify_decision(d: Decision, page_text: str, runs: list, approved_sha: str, page_count: int) -> list[str]:
-    """Independent gate. Returns failure reasons; empty list == acceptable."""
+    """PRECHECK (self-check, not an audit). Returns failure reasons."""
     fail = []
     if not SHA.match(d.pdf_sha256) or d.pdf_sha256 != approved_sha:
         fail.append("sha_not_current_approved_edition")
@@ -104,7 +112,7 @@ def verify_decision(d: Decision, page_text: str, runs: list, approved_sha: str, 
     elif mapped is None or str(mapped) != str(d.node_id):
         fail.append("chapter_not_from_same_edition_map")
     words = d.quote.split()
-    if not words or len(words) > MAX_QUOTE_WORDS:
+    if not MIN_QUOTE_WORDS <= len(words) <= MAX_QUOTE_WORDS:
         fail.append("quote_length")
     elif _norm(d.quote) not in _norm(page_text):
         fail.append("quote_not_verbatim_on_page")
@@ -131,50 +139,101 @@ def audit_packet(d: Decision) -> dict:
             "basis": d.basis, "confidence": d.confidence}
 
 
-def accept(d: Decision, primary_fail: list, audit_fail: list) -> str:
-    if primary_fail:
-        return "pending:" + ",".join(primary_fail)
-    if audit_fail:
-        return "pending:audit:" + ",".join(audit_fail)
-    return "accepted"
+def precheck(primary_fail: list) -> str:
+    """Self-check only. NEVER approval: passing rows become audit_pending."""
+    return "pending:" + ",".join(primary_fail) if primary_fail else "audit_pending"
+
+
+AUDIT_TOOLS = {"audit_private_study_batches.py", "independent_page_reopen"}
+
+
+def check_independent_audit(d: "Decision", audit: dict, receipt_root: Path) -> list[str]:
+    """An audit must come from a different auditor, a separate page reopen/tool run,
+    and a private receipt file whose SHA-256 matches; fields must match the row."""
+    fail = []
+    if not audit:
+        return ["audit_missing"]
+    if audit.get("tool") not in AUDIT_TOOLS:
+        fail.append("audit_tool_not_independent")
+    if not audit.get("auditor") or audit.get("auditor") == d.producer:
+        fail.append("self_certification")
+    for k in ("question_id", "pdf_sha256", "pdf_page", "node_id"):
+        if str(audit.get(k)) != str(getattr(d, k)):
+            fail.append("audit_mismatch_" + k)
+    if audit.get("quote_sha256") != hashlib.sha256(d.quote.encode()).hexdigest():
+        fail.append("audit_mismatch_quote")
+    if audit.get("verdict") != "accepted":
+        fail.append("audit_not_accepted")
+    rp = receipt_root / str(audit.get("receipt", ""))
+    if not audit.get("receipt") or ".." in str(audit.get("receipt")) or not rp.is_file():
+        fail.append("audit_receipt_missing")
+    elif hashlib.sha256(rp.read_bytes()).hexdigest() != audit.get("receipt_sha256"):
+        fail.append("audit_receipt_hash_mismatch")
+    return fail
 
 
 class Checkpoint:
-    """Atomic JSON checkpoint with per-group leases (crash-safe resume, no double work)."""
+    """Cross-process checkpoint: flock-serialized re-read/modify/fsync/atomic replace."""
 
     def __init__(self, path: Path, lease_seconds: int = 1800):
         self.path, self.lease = Path(path), lease_seconds
-        self.state = json.loads(self.path.read_text()) if self.path.exists() else {"done": {}, "leases": {}}
+        self.lock = self.path.with_suffix(".lock")
+
+    def _locked(self, fn):
+        import fcntl
+        with open(self.lock, "a") as lk:
+            fcntl.flock(lk, fcntl.LOCK_EX)
+            try:
+                state = json.loads(self.path.read_text()) if self.path.exists() else {"done": {}, "leases": {}}
+                result, changed = fn(state)
+                if changed:
+                    tmp = self.path.with_suffix(".tmp")
+                    with open(tmp, "w") as f:
+                        f.write(json.dumps(state, ensure_ascii=False, sort_keys=True)); f.flush(); os.fsync(f.fileno())
+                    os.replace(tmp, self.path)
+                    dfd = os.open(self.path.parent, os.O_RDONLY); os.fsync(dfd); os.close(dfd)
+                return result
+            finally:
+                fcntl.flock(lk, fcntl.LOCK_UN)
 
     def claim(self, group: str, owner: str, now: float | None = None) -> bool:
         now = time.time() if now is None else now
-        if group in self.state["done"]:
-            return False
-        lease = self.state["leases"].get(group)
-        if lease and lease["owner"] != owner and lease["until"] > now:
-            return False
-        self.state["leases"][group] = {"owner": owner, "until": now + self.lease}
-        self._save(); return True
 
-    def complete(self, group: str, result: dict):
-        self.state["done"][group] = result
-        self.state["leases"].pop(group, None); self._save()
+        def fn(s):
+            if group in s["done"]:
+                return False, False
+            lease = s["leases"].get(group)
+            if lease and lease["owner"] != owner and lease["until"] > now:
+                return False, False
+            s["leases"][group] = {"owner": owner, "until": now + self.lease}
+            return True, True
+        return self._locked(fn)
 
-    def _save(self):
-        tmp = self.path.with_suffix(".tmp")
-        tmp.write_text(json.dumps(self.state, ensure_ascii=False, sort_keys=True))
-        os.replace(tmp, self.path)
+    def complete(self, group: str, owner: str, result: dict) -> bool:
+        def fn(s):
+            if s["leases"].get(group, {}).get("owner") != owner:
+                return False, False          # lease lost/expired: do not record
+            s["done"][group] = result; s["leases"].pop(group, None)
+            return True, True
+        return self._locked(fn)
 
 
-def handoff_package(accepted: list[Decision], study_sha256: str, batch_id: str) -> dict:
-    """Source-only package for the fanoosupd operator. Never touches text/keys/attempts."""
-    if len(accepted) > 40:
+def handoff_package(rows: list[tuple["Decision", dict]], study_sha256: str, batch_id: str,
+                    receipt_root: Path) -> dict:
+    """Source-only package for the fanoosupd operator. Refuses any row without a
+    valid independent audit receipt. Never touches text/keys/attempts."""
+    if len(rows) > 40:
         raise ValueError("batch exceeds 40 questions")
-    rows = [audit_packet(d) | {"note_fa": d.note_fa} for d in accepted]
-    body = {"format": "fanoos-classifier-v3-source-only/1", "batch_id": batch_id,
+    out = []
+    for d, audit in rows:
+        fail = check_independent_audit(d, audit, Path(receipt_root))
+        if fail:
+            raise ValueError(f"unaudited row {d.question_id}: {','.join(fail)}")
+        out.append(audit_packet(d) | {"note_fa": d.note_fa, "audit_receipt_sha256": audit["receipt_sha256"]})
+    body = {"format": "fanoos-classifier-v3-source-only/2", "batch_id": batch_id,
             "study_export_sha256": study_sha256, "mutates": ["question_sources"],
             "never_mutates": ["stem", "choices", "answer_key", "attempts", "frozen_versions"],
             "requires": ["fresh_study_reexport_matches", "verified_full_backup_le_4h", "operator_fanoosupd",
-                         "independent_readback"], "rows": rows}
+                         "independent_readback"], "publication": "never; whole-year gate is separate", "rows": out}
     body["package_sha256"] = hashlib.sha256(json.dumps(body, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
     return body

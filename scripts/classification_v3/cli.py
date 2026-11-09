@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Classifier v3 CLI (read-only). Subcommands: plan, scan, verify, package.
+"""Classifier v3 CLI (read-only). Subcommands: plan, scan, verify (precheck only), package (audited rows only).
 
 Outputs go only to a private /srv/fanoos/shared/research/tmp/<op>/ path given
 by --out. No page text is persisted; verify keeps only short quotes.
@@ -30,7 +30,7 @@ def main(argv=None) -> int:
     s = sub.add_parser("scan"); s.add_argument("study"); s.add_argument("--edition", required=True); s.add_argument("--out", required=True)
     v = sub.add_parser("verify"); v.add_argument("decisions"); v.add_argument("--out", required=True)
     k = sub.add_parser("package"); k.add_argument("verified"); k.add_argument("--study-sha", required=True)
-    k.add_argument("--batch", required=True); k.add_argument("--out", required=True)
+    k.add_argument("--batch", required=True); k.add_argument("--receipt-root", required=True); k.add_argument("--out", required=True)
     a = ap.parse_args(argv)
     out = Path(a.out)
     if a.cmd == "plan":
@@ -47,24 +47,22 @@ def main(argv=None) -> int:
                "candidates": {k: [{"page": pg, "score": sc, "chapter": P.chapter_for(runs, pg)} for sc, pg in r]
                               for k, r in ranking.items()}}
     elif a.cmd == "verify":
+        # PRECHECK only (self-check). Rows become audit_pending, never approved.
         from verified_reference_pdf import open_verified_reference
-        res, cache = {"accepted": [], "pending": []}, {}
+        res, cache = {"audit_pending": [], "pending": []}, {}
         for raw in json.load(open(a.decisions)):
             d = P.Decision(**raw)
             pdf = cache.get(d.edition) or cache.setdefault(d.edition, open_verified_reference(d.edition))
-            runs = runs_for(d.edition)
             text = pdf.page_text(d.pdf_page) if 1 <= d.pdf_page <= pdf.page_count else ""
-            primary = P.verify_decision(d, text, runs, pdf.source_sha256, pdf.page_count)
-            audit = P.verify_decision(P.Decision(**P.audit_packet(d) | {"note_fa": d.note_fa}), text, runs,
-                                      pdf.source_sha256, pdf.page_count)   # independent re-read path
+            fail = P.verify_decision(d, text, runs_for(d.edition), pdf.source_sha256, pdf.page_count)
             del text
-            verdict = P.accept(d, primary, audit)
-            (res["accepted"] if verdict == "accepted" else res["pending"]).append(
-                P.audit_packet(d) | {"note_fa": d.note_fa, "verdict": verdict})
+            verdict = P.precheck(fail)
+            (res["audit_pending"] if verdict == "audit_pending" else res["pending"]).append(
+                P.audit_packet(d) | {"note_fa": d.note_fa, "producer": d.producer, "verdict": verdict})
     else:
-        acc = [P.Decision(**{k: r[k] for k in P.Decision.__dataclass_fields__ if k in r})
-               for r in json.load(open(a.verified))["accepted"]]
-        res = P.handoff_package(acc, a.study_sha, a.batch)
+        # input: [{"decision": {...}, "audit": {...}}]; raises on any unaudited row
+        rows = [(P.Decision(**r["decision"]), r.get("audit") or {}) for r in json.load(open(a.verified))]
+        res = P.handoff_package(rows, a.study_sha, a.batch, Path(a.receipt_root))
     tmp = out.with_suffix(".tmp"); tmp.write_text(json.dumps(res, ensure_ascii=False, indent=1)); tmp.replace(out)
     print(json.dumps({k: (len(v) if isinstance(v, (list, dict)) else v) for k, v in res.items()}, ensure_ascii=False))
     return 0
