@@ -36,6 +36,7 @@ import sys
 import tempfile
 import time
 from collections import defaultdict
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -60,7 +61,8 @@ RECEIPT_FORMAT = "fanoos.classifier-v3.operator-status.v1"
 REQUEST_FORMAT = "fanoos.classifier-v3.operator-request.v1"
 ENV_KEEP = ("PATH", "HOME", "LANG", "LC_ALL", "TZ", "USER", "LOGNAME")
 RETRY_RE = re.compile(r"retry[-_ ]after[\"':= ]+([0-9]{1,6})", re.I)
-RATE_RE = re.compile(r"rate[_ ]limit|usage limit|overloaded|\b429\b", re.I)
+RATE_RE = re.compile(r"rate[_ -]?limit|usage[_ -]?limit(?:[_ -]?reached)?|session[_ -]?limit|overloaded|\b429\b", re.I)
+RESET_UTC_RE = re.compile(r"resets?\s+(\d{1,2}):(\d{2})\s*(am|pm)\s*\(UTC\)", re.I)
 
 
 class Blocked(RuntimeError):
@@ -190,9 +192,23 @@ def trusted_receipts(receipt_dir: Path, trusted_uids: set[int]) -> dict[str, dic
     if not receipt_dir.is_dir():
         return out
     me = os.getuid()
+    root_stat = receipt_dir.lstat()
+    fixed_operator_dir = Path("/srv/fanoos/shared/research/classification/v3-runner/operator-receipts")
+    # Bubblewrap --unshare-user maps non-worker host UIDs to overflow UID 65534.
+    # Trust this overflow UID ONLY under the exact protected, non-worker-writable
+    # operator receipt directory, installed on the host as fanoosupd:worker 0750.
+    protected_userns = (
+        receipt_dir == fixed_operator_dir
+        and not stat.S_ISLNK(root_stat.st_mode)
+        and root_stat.st_uid == 65534
+        and root_stat.st_uid != me
+        and not root_stat.st_mode & (stat.S_IWGRP | stat.S_IWOTH)
+        and 982 in trusted_uids
+    )
     for p in sorted(receipt_dir.glob("*.json")):
         st = p.lstat()
-        if (not stat.S_ISREG(st.st_mode) or st.st_uid == me or st.st_uid not in trusted_uids
+        owner_ok = st.st_uid in trusted_uids or (protected_userns and st.st_uid == 65534)
+        if (not stat.S_ISREG(st.st_mode) or st.st_uid == me or not owner_ok
                 or st.st_mode & (stat.S_IWGRP | stat.S_IWOTH)):
             continue
         try:
@@ -280,8 +296,23 @@ def render_prompt(batch: dict, case_dir: Path, template: str) -> str:
 
 
 def scan_quota(text: str) -> tuple[bool, int | None]:
+    """Detect actual provider limits including API JSON usage_limit_reached and reset clock."""
     m = RETRY_RE.search(text)
-    return bool(m or RATE_RE.search(text)), (int(m.group(1)) if m else None)
+    if m:
+        return True, max(60, min(int(m.group(1)), 48 * 3600))
+    limited = bool(RATE_RE.search(text))
+    reset = RESET_UTC_RE.search(text)
+    if limited and reset:
+        hr, minute = int(reset.group(1)), int(reset.group(2))
+        if not (1 <= hr <= 12 and 0 <= minute <= 59):
+            return True, None
+        hour = hr % 12 + (12 if reset.group(3).lower() == "pm" else 0)
+        now = datetime.now(timezone.utc)
+        target = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+        if target <= now:
+            target += timedelta(days=1)
+        return True, min(48 * 3600, max(60, int((target-now).total_seconds()) + 120))
+    return limited, None
 
 
 def run_session(cmd: list[str], prompt: str, cwd: Path, out_path: Path,
@@ -373,6 +404,10 @@ def run(a) -> int:
         atomic_write(state_path, state)
         free = shutil.disk_usage(a.case_root).free
         blockers = guard(state, now, free, a.max_unverified)
+        if a.not_before_utc and now < a.not_before_utc.timestamp():
+            blockers.append("before_provider_reset")
+        if a.deadline_utc and now >= a.deadline_utc.timestamp():
+            blockers.append("48h_deadline_reached")
         batches, blocked = plan_batches(items, excluded_ids(state))
         log("plan", batches=len(batches), questions=sum(len(b["question_ids"]) for b in batches),
             lane=batches[0]["lane"] if batches else None, blocked=json.dumps(blocked)[:120],
@@ -387,6 +422,8 @@ def run(a) -> int:
             return 0
         if blockers or not batches:
             log("stop", reason=",".join(blockers) or "no_runnable_batch")
+            if set(blockers).issubset({"before_provider_reset", "48h_deadline_reached"}):
+                return 0
             return 0 if not blockers else 4
         batch = batches[0]
         if a.limit:
@@ -407,8 +444,11 @@ def run(a) -> int:
         atomic_write(state_path, state)
         tmp = Path(tempfile.mkdtemp(prefix=f"v3-run-{bid}-", dir=a.tmp_root))
         try:
+            remaining = int(a.deadline_utc.timestamp() - time.time()) if a.deadline_utc else a.timeout
+            if remaining < 10:
+                raise Blocked("48h_deadline_reached_before_model")
             res = run_session(a.session_cmd, render_prompt(batch, case_dir, template),
-                              a.workdir, case_dir / "session.out", a.timeout)
+                              a.workdir, case_dir / "session.out", min(a.timeout, remaining))
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
         counts = staged_counts(case_dir)
@@ -446,6 +486,8 @@ def parse(argv=None):
     p.add_argument("--limit", type=int, default=0, help="pilot: cap ids in the first batch")
     p.add_argument("--timeout", type=int, default=SESSION_TIMEOUT_S)
     p.add_argument("--default-backoff", type=int, default=1800)
+    p.add_argument("--not-before-utc", type=lambda s: datetime.fromisoformat(s.replace("Z", "+00:00")))
+    p.add_argument("--deadline-utc", type=lambda s: datetime.fromisoformat(s.replace("Z", "+00:00")))
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--session-cmd", nargs="+",
                    default=["/mnt/workspace/home/bin/claude", "--print", "--model", "opus",
