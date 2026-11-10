@@ -45,6 +45,7 @@ PINNED_TRUSTED_SCRIPTS={
  'scripts/references/apply_classification.py':'7295dae2bb27079d2072aff26492c291528e7b98c73c90827092299eb8a85f7e',
  'scripts/references/export_server_candidates.php':'6d2dd257da9dcc6c3328ece43387570518bbba33be326faecf76392d31424799',
  'scripts/ops/backup.php':'3fc989aa74da8f7da6c401dd10e8e40b2c41a736ae8826b8b74f09bdb9a7f6cf',
+ 'scripts/ops/verify-backup.php':'db36730dbe23f5658ccba9432207d60751bf7c1536ff6f17f8643de2452dce14',
 }
 FORBIDDEN_QS={(1391,'endodontics',178)} # main official key contradictory to cited excerpt
 
