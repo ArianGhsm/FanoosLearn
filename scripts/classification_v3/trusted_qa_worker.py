@@ -107,7 +107,7 @@ def safe_input(batch):
  draft_path=case/'decisions.draft.json'
  d=load(draft_path)
  proposed=[q for q in d.get('decisions',[]) if q.get('decision')=='proposed']
- if not isinstance(proposed,list) or len(proposed)>40 or len(proposed)!={q.get('question_id') for q in proposed}.__len__():
+ if len(proposed)>40 or len(proposed)!=len({q.get('question_id') for q in proposed}):
   raise Unsafe('research proposal count invalid')
  for q in proposed:
   if not UUID_RE.fullmatch(str(q.get('question_id',''))):
@@ -267,6 +267,8 @@ def process(batch,a,state):
  # Host writes the worker-visible packet, but the authoritative matching
  # SHA attestation lives in root-only state and cannot be altered by worker.
  fd=os.open(qa_file,os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o640)
+ os.fchown(fd,0,WORKER.pw_gid)
+ os.fchmod(fd,0o640)
  with os.fdopen(fd,'w',encoding='utf-8') as f:
   json.dump(qa_data,f,ensure_ascii=False,indent=2);f.write('\n')
   f.flush();os.fsync(f.fileno())
