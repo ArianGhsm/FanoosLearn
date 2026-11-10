@@ -26,7 +26,7 @@ class Planning(unittest.TestCase):
     def test_groups_across_years_by_selected_edition_set(self):
         items = [item(i, 1399 + i % 3, eds=["neville@5e"]) for i in range(1, 61)]
         batches, _ = runner.plan_batches(items)
-        self.assertEqual([len(b["question_ids"]) for b in batches], [40, 20])
+        self.assertEqual([len(b["question_ids"]) for b in batches], [10] * 6)
         self.assertEqual(batches[0]["selected_editions"], ["neville@5e"])
         self.assertEqual(sorted({y for b in batches for y in b["years"]}), [1399, 1400, 1401])
 
@@ -67,7 +67,7 @@ class Planning(unittest.TestCase):
                 for i in range(10, 24)]
         batches, _ = runner.plan_batches([one] + many)
         self.assertEqual(batches[0]["subject"], "endodontics")
-        self.assertEqual(len(batches[0]["question_ids"]), 14)
+        self.assertEqual(len(batches[0]["question_ids"]), runner.BATCH_MAX)
 
     def test_existing_partial_source_requires_repair(self):
         partial = item(1, 1400, eds=["sturdevant-operative@7e"])

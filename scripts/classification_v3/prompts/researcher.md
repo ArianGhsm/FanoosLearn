@@ -26,7 +26,10 @@ Rules:
 6. Voided keys: still need chapter+page; never treat voided as a final key.
 7. Write {{CASE_DIR}}/decisions.draft.json as {"decisions":[{"question_id","decision":
    "proposed"|"pending", ...evidence fields}]} and run ONLY the read-only precheck/validator,
-   saving {{CASE_DIR}}/precheck.json.
+   saving {{CASE_DIR}}/precheck.json. Rewrite the draft (write a temp file, then rename)
+   after EVERY question, so a session killed at its time limit keeps finished work.
+   Budget about 40 seconds per question; when time runs short, mark the rest pending with
+   reason "not_reached_in_session".
 8. FORBIDDEN: DB writes, apply/import operators, backups, audit receipts, sudo/fanoosupd,
    git push, editing other case dirs. Your output is a DRAFT; it is not accepted until an
    independent QA review and the operator's guarded import + readback.

@@ -7,7 +7,7 @@ One invocation = at most --max-batches research sessions, each one bounded
 * leases question ids in a private state file (atomic writes, resumable);
 * re-reads live source absence (SELECT-only anti-join) before dispatch;
 * groups by ONE selected edition set (newest edition per reference family),
-  same subject/lane/proxy basis/key class, across years, 30-40 ids per batch;
+  same subject/lane/proxy basis/key class, across years, 8-10 ids per batch;
 * takes national dental only when no residency dental batch is runnable;
 * never touches English/basic lanes; voided keys are batched separately;
 * stages only private draft proposals and an operator request; it never writes
@@ -51,9 +51,11 @@ NEVER_RUN = {"residency_english_blocked_policy", "national_english_separate",
 MIN_FREE_BYTES = 3 * 1024 ** 3
 MAX_ZERO_ACCEPTED = 2
 DEFAULT_MAX_UNVERIFIED = 2
-BATCH_MIN, BATCH_MAX = 30, 40
+# Owner charter 2026-11-10: 8-20 questions per bounded (<=8 min) Opus session;
+# a 14-id session was killed at 691s with no output, so keep batches small.
+BATCH_MIN, BATCH_MAX = 8, 10
 LEASE_S = 3 * 3600
-SESSION_TIMEOUT_S = 90 * 60
+SESSION_TIMEOUT_S = 480
 ID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")  # UUID only
 EDITION_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,80}@[a-z0-9][a-z0-9._-]{0,40}$")
 SUBJECT_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,60}$")
