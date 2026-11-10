@@ -22,6 +22,18 @@ def item(qid, year, lane="residency_dental_ready", subject="oral-pathology", eds
             "proxy_candidate_editions": proxy or [], "proxy_candidates_ordered": ordered}
 
 
+_ORIG_PREVALIDATE = runner._prevalidate
+
+
+def setUpModule():
+    # Session tests never reach the production validator; revalidation has its own tests.
+    runner._prevalidate = lambda case, write_if_clean: {"demoted_by_validator": 0}
+
+
+def tearDownModule():
+    runner._prevalidate = _ORIG_PREVALIDATE
+
+
 class PromptKillTime(unittest.TestCase):
     def test_researcher_prompt_carries_absolute_kill_time(self):
         batch = {"batch_id": "b1", "subject": "orthodontics", "type": "residency",
@@ -179,6 +191,92 @@ class StateAndReceipts(unittest.TestCase):
             self.assertEqual([n for o, n in runner.resubmit_stale(st, queue, cases, now)
                               if o == "aaaaaaaaaaaaaaaa"], [])
             self.assertEqual(st["batches"]["aaaaaaaaaaaaaaaa"]["status"], "staged")
+
+    def _staged(self, d, rows, with_request=True):
+        queue, cases = Path(d, "q"), Path(d, "c")
+        case = cases / "v3-aaaaaaaaaaaaaaaa"
+        case.mkdir(parents=True)
+        queue.mkdir()
+        (case / "batch.json").write_text(json.dumps({"batch_id": "aaaaaaaaaaaaaaaa", "question_ids": ["1", "2"],
+                                                     "selected_editions": ["e@1"], "proxy_basis": None,
+                                                     "key_class": "final"}))
+        (case / "session.out").write_text(json.dumps({"session_id": "s"}))
+        (case / "decisions.draft.json").write_text(json.dumps({"batch_id": "aaaaaaaaaaaaaaaa", "decisions": rows}))
+        if with_request:
+            (queue / "aaaaaaaaaaaaaaaa.json").write_text(json.dumps({"created": 1}))
+        st = {"batches": {"aaaaaaaaaaaaaaaa": {"status": "staged", "started": 1, "question_ids": ["1", "2"],
+                                               "accepted": 0, "drafted": len(rows), "resubmitted_from": "x"}}}
+        return queue, cases, case, st
+
+    @staticmethod
+    def _fake_validator(reject):
+        def run(case, write_if_clean):
+            p = case / "decisions.draft.json"
+            d = json.loads(p.read_text())
+            if not reject and not write_if_clean:
+                return {"demoted_by_validator": 0}
+            for r in d["decisions"]:
+                if r["question_id"] in reject:
+                    r["decision"] = "pending"
+            d["prevalidated_by"] = "t"
+            p.write_text(json.dumps(d))
+            return {"demoted_by_validator": len(reject)}
+        return run
+
+    def test_validator_rejects_resubmit_valid_subset_once(self):
+        rows = [{"question_id": "1", "decision": "proposed"}, {"question_id": "2", "decision": "proposed"}]
+        with tempfile.TemporaryDirectory() as d:
+            queue, cases, case, st = self._staged(d, rows)
+            before = (case / "decisions.draft.json").read_bytes()
+            done = runner.revalidate_staged(st, queue, cases, 100.0, self._fake_validator({"2"}))
+            ((old, new),) = done
+            self.assertEqual(old, "aaaaaaaaaaaaaaaa")
+            self.assertEqual((case / "decisions.draft.json").read_bytes(), before)  # old case untouched
+            self.assertEqual(st["batches"][old]["status"], "resubmitted")
+            self.assertEqual((st["batches"][new]["status"], st["batches"][new]["drafted"]), ("staged", 1))
+            self.assertEqual(sorted(p.name for p in queue.glob("*.json")), [f"{new}.json"])
+            self.assertTrue((queue / f"{old}.json.withdrawn-validator-{new}").exists())
+            self.assertEqual(st["unverified_staged"], 1)
+            # bounded: the validated successor is never revalidated or stale-resubmitted
+            self.assertEqual(runner.revalidate_staged(st, queue, cases, 200.0, self._fake_validator({"1"})), [])
+            self.assertEqual([x for x in runner.resubmit_stale(st, queue, cases, 10 ** 9) if x[0] == new], [])
+
+    def test_validator_clean_keeps_reviewed_request_byte_identical(self):
+        rows = [{"question_id": "1", "decision": "proposed"}]
+        with tempfile.TemporaryDirectory() as d:
+            queue, cases, case, st = self._staged(d, rows)
+            before = (case / "decisions.draft.json").read_bytes()
+            self.assertEqual(runner.revalidate_staged(st, queue, cases, 100.0, self._fake_validator(set())),
+                             [("aaaaaaaaaaaaaaaa", "clean")])
+            self.assertEqual((case / "decisions.draft.json").read_bytes(), before)
+            self.assertEqual([p.name for p in queue.iterdir()], ["aaaaaaaaaaaaaaaa.json"])
+            self.assertEqual([p.name for p in cases.iterdir()], ["v3-aaaaaaaaaaaaaaaa"])
+            self.assertTrue(st["batches"]["aaaaaaaaaaaaaaaa"]["prevalidated"])
+
+    def test_validator_emptied_request_withdrawn(self):
+        rows = [{"question_id": "1", "decision": "proposed"}]
+        with tempfile.TemporaryDirectory() as d:
+            queue, cases, case, st = self._staged(d, rows)
+            ((_, out),) = runner.revalidate_staged(st, queue, cases, 100.0, self._fake_validator({"1"}))
+            self.assertTrue(out.endswith(":emptied"))
+            self.assertEqual(list(queue.glob("*.json")), [])
+            self.assertEqual(st["unverified_staged"], 0)
+            self.assertIn("1", runner.excluded_ids(st))
+
+    def test_new_batch_request_only_after_validator_and_error_holds_it(self):
+        rows = [{"question_id": "1", "decision": "proposed"}, {"question_id": "2", "decision": "proposed"}]
+        with tempfile.TemporaryDirectory() as d:
+            queue, cases, case, st = self._staged(d, rows, with_request=False)
+
+            def boom(case, write_if_clean):
+                raise RuntimeError("db down")
+            self.assertEqual(runner.revalidate_staged(st, queue, cases, 100.0, boom),
+                             [("aaaaaaaaaaaaaaaa", "prevalidate_error:RuntimeError")])
+            self.assertEqual(list(queue.iterdir()), [])
+            done = runner.revalidate_staged(st, queue, cases, 100.0, self._fake_validator({"2"}))
+            self.assertEqual(done, [("aaaaaaaaaaaaaaaa", "requested:1_demoted")])
+            req = json.loads((queue / "aaaaaaaaaaaaaaaa.json").read_text())
+            self.assertEqual(req["drafted_not_accepted"], 1)
 
     def test_disk_and_backoff_guards(self):
         now = time.time()

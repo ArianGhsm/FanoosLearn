@@ -281,6 +281,98 @@ def unreached_ids(case_dir: Path) -> list[str]:
 RESUBMIT_AFTER_S = 3600
 
 
+def copy_case(case_root: Path, case: Path, new: str) -> tuple[Path, dict]:
+    """Copy a research case to a fresh batch id (session.out kept for QA independence)."""
+    new_case = case_root / f"v3-{new}"
+    tmp_case = case_root / f".v3-{new}.tmp"
+    shutil.rmtree(tmp_case, ignore_errors=True)
+    tmp_case.mkdir(mode=0o750)
+    try:
+        for f in sorted(case.iterdir()):
+            if f.is_file() and not f.is_symlink():
+                shutil.copy2(f, tmp_case / f.name)
+        batch = json.loads((tmp_case / "batch.json").read_text("utf-8"))
+        batch["batch_id"] = new
+        atomic_write(tmp_case / "batch.json", batch)
+        d = json.loads((tmp_case / "decisions.draft.json").read_text("utf-8"))
+        d["batch_id"] = new
+        atomic_write(tmp_case / "decisions.draft.json", d)
+        tmp_case.rename(new_case)
+    finally:
+        shutil.rmtree(tmp_case, ignore_errors=True)
+    return new_case, batch
+
+
+def revalidate_staged(state: dict, queue: Path, case_root: Path, now: float, prevalidate) -> list[tuple[str, str]]:
+    """Run the publisher's own exact-PDF validator over staged drafts not yet checked.
+
+    The publisher defers a whole group when any decision fails that validator,
+    and its operator case is immutable, so such a batch can never import.
+    A clean draft is left byte-identical (QA SHA pins stay valid). A draft with
+    rejects is copied ONCE to a fresh id carrying only validator-accepted
+    proposals (old request renamed, never deleted); an emptied draft is withdrawn.
+    prevalidate(case_dir, write_if_clean) -> counts; raises leave the batch for a later run.
+    """
+    done = []
+    batches = state.get("batches", {})
+    for bid, b in list(batches.items()):
+        if b["status"] != "staged" or b.get("prevalidated"):
+            continue
+        case = case_root / f"v3-{bid}"
+        req = queue / f"{bid}.json"
+        has_req = req.is_file() and not req.is_symlink()
+        if not has_req:
+            # Newly researched batch whose request was held back: validate in place.
+            try:
+                counts = prevalidate(case, True)
+            except Exception as exc:
+                done.append((bid, f"prevalidate_error:{type(exc).__name__}"))
+                continue
+            b["prevalidated"] = True
+            sc = staged_counts(case)
+            if sc["drafted"] == 0:
+                b["status"], b["drafted"] = "no_proposals", 0
+                done.append((bid, "validator_emptied"))
+            else:
+                b["drafted"] = sc["drafted"]
+                write_request(queue, json.loads((case / "batch.json").read_text("utf-8")), case, sc, now)
+                done.append((bid, f"requested:{counts.get('demoted_by_validator', 0)}_demoted"))
+            continue
+        new = hashlib.sha256(f"{bid}:validated".encode()).hexdigest()[:16]
+        if new in batches or (case_root / f"v3-{new}").exists():
+            continue
+        new_case, batch = copy_case(case_root, case, new)
+        try:
+            counts = prevalidate(new_case, False)
+        except Exception as exc:
+            shutil.rmtree(new_case, ignore_errors=True)
+            done.append((bid, f"prevalidate_error:{type(exc).__name__}"))
+            continue
+        if not counts.get("demoted_by_validator"):
+            shutil.rmtree(new_case, ignore_errors=True)  # clean: keep the reviewed request as is
+            b["prevalidated"] = True
+            done.append((bid, "clean"))
+            continue
+        sc = staged_counts(new_case)
+        b["status"] = "resubmitted"
+        b["resubmitted_as"] = new
+        if sc["drafted"] == 0:
+            req.rename(queue / f"{bid}.json.withdrawn-validator-empty")
+            batches[new] = {**b, "status": "no_proposals", "started": int(now), "drafted": 0,
+                            "accepted": 0, "resubmitted_from": bid, "prevalidated": True}
+            batches[new].pop("resubmitted_as", None)
+            done.append((bid, f"{new}:emptied"))
+            continue
+        write_request(queue, batch, new_case, sc, now)
+        req.rename(queue / f"{bid}.json.withdrawn-validator-{new}")
+        batches[new] = {**b, "status": "staged", "started": int(now), "drafted": sc["drafted"],
+                        "accepted": 0, "resubmitted_from": bid, "prevalidated": True}
+        batches[new].pop("resubmitted_as", None)
+        done.append((bid, new))
+    state["unverified_staged"] = sum(1 for b in batches.values() if b["status"] == "staged")
+    return done
+
+
 def resubmit_stale(state: dict, queue: Path, case_root: Path, now: float) -> list[tuple[str, str]]:
     """One-time resubmission of staged batches the host QA can no longer reach.
 
@@ -317,23 +409,7 @@ def resubmit_stale(state: dict, queue: Path, case_root: Path, now: float) -> lis
         new = hashlib.sha256(f"{bid}:resubmit".encode()).hexdigest()[:16]
         if new in batches or (case_root / f"v3-{new}").exists():
             continue
-        new_case = case_root / f"v3-{new}"
-        tmp_case = case_root / f".v3-{new}.tmp"
-        shutil.rmtree(tmp_case, ignore_errors=True)
-        tmp_case.mkdir(mode=0o750)
-        try:
-            for f in sorted(case.iterdir()):
-                if f.is_file() and not f.is_symlink():
-                    shutil.copy2(f, tmp_case / f.name)
-            batch = json.loads((tmp_case / "batch.json").read_text("utf-8"))
-            batch["batch_id"] = new
-            atomic_write(tmp_case / "batch.json", batch)
-            d = json.loads((tmp_case / "decisions.draft.json").read_text("utf-8"))
-            d["batch_id"] = new
-            atomic_write(tmp_case / "decisions.draft.json", d)
-            tmp_case.rename(new_case)
-        finally:
-            shutil.rmtree(tmp_case, ignore_errors=True)
+        new_case, batch = copy_case(case_root, case, new)
         counts = staged_counts(new_case)
         write_request(queue, batch, new_case, counts, now)
         req.rename(queue / f"{bid}.json.withdrawn-resubmitted-{new}")
@@ -498,6 +574,8 @@ def run(a) -> int:
         now = time.time()
         state = reconcile(load_json(state_path, {}), trusted_receipts(a.receipts, a.trusted_uids), now)
         if not a.dry_run:
+            for old_id, outcome in revalidate_staged(state, a.queue, a.case_root, now, a.prevalidate):
+                log("revalidate", batch_id=old_id, outcome=outcome)
             for old_id, outcome in resubmit_stale(state, a.queue, a.case_root, now):
                 log("resubmit", batch_id=old_id, outcome=outcome)
         atomic_write(state_path, state)
@@ -594,7 +672,9 @@ def run(a) -> int:
             else:
                 rec["status"] = "staged"
                 rec["drafted"] = counts["drafted"]
-                write_request(a.queue, batch, case_dir, counts, now)
+                # Request is written only after the publisher's validator passes.
+                for _, outcome in revalidate_staged({"batches": {bid: rec}}, a.queue, a.case_root, now, a.prevalidate):
+                    log("revalidate", batch_id=bid, outcome=outcome)
         rec["unreached"] = [q for q in unreached_ids(case_dir) if q in set(batch["question_ids"])]
         rec.update({k: res[k] for k in ("rc", "killed", "seconds")})
         atomic_write(state_path, state)
@@ -639,6 +719,7 @@ def parse(argv=None):
     a.forbidden_user_check = lambda: _username() == "fanoosupd"
     a.prepare = lambda case, batch: _prepare(case, batch)  # late-bound for tests
     a.normalize = lambda case, batch: _normalize(case, batch)
+    a.prevalidate = lambda case, write_if_clean: _prevalidate(case, write_if_clean)
     return a
 
 
@@ -650,6 +731,11 @@ def _prepare(case_dir: Path, batch: dict) -> dict:
 def _normalize(case_dir: Path, batch: dict) -> dict:
     from classification_v3 import normalize
     return normalize.normalize_case(case_dir, batch)
+
+
+def _prevalidate(case_dir: Path, write_if_clean: bool) -> dict:
+    from classification_v3 import normalize
+    return normalize.prevalidate_case(case_dir, write_if_clean=write_if_clean)
 
 
 def _username() -> str:

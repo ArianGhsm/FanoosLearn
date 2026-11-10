@@ -87,6 +87,62 @@ class Normalize(unittest.TestCase):
             self.assertEqual(normalize.normalize_case(case, BATCH, lambda *a: "2", lambda *a: 1406), {"already": True})
 
 
+class Prevalidate(unittest.TestCase):
+    ROW = {"decision": "proposed", "question_id": "q", "year": 1392, "number": 7, "edition": "e@1",
+           "node_id": "3", "pdf_page": 40, "confidence": 0.9, "quote": "four words of evidence",
+           "reference_year": 1406, "basis": "retrospective_proxy_1397_plus", "note_fa": "n"}
+
+    def _case(self, d, rows):
+        case = Path(d)
+        (case / "decisions.draft.json").write_text(json.dumps({"decisions": rows}))
+        return case
+
+    def test_publisher_shape_and_demotion(self):
+        rows = [dict(self.ROW), dict(self.ROW, number=8, question_id="r"), {"decision": "pending", "question_id": "s"}]
+        seen = []
+
+        def validator(study, decisions, tmp):
+            seen.append((study.name, decisions))
+            return {7}, {8: "evidence is not an exact case/punctuation match on page 40"}
+        with tempfile.TemporaryDirectory() as d, tempfile.TemporaryDirectory() as t:
+            import os
+            os.environ["V3_TMP_ROOT"] = t
+            try:
+                case = self._case(d, rows)
+                self.assertEqual(normalize.prevalidate_case(case, validator),
+                                 {"validated": 1, "demoted_by_validator": 1})
+                self.assertEqual(normalize.prevalidate_case(case, validator), {"already": True})
+            finally:
+                del os.environ["V3_TMP_ROOT"]
+            self.assertEqual(list(Path(t).iterdir()), [])  # scratch removed
+            out = json.loads((case / "decisions.draft.json").read_text())
+            self.assertEqual([r["decision"] for r in out["decisions"]], ["proposed", "pending", "pending"])
+            self.assertTrue(out["decisions"][1]["pending_reason"].startswith("trusted_validator_rejected: evidence"))
+        (name, decs), = seen
+        self.assertEqual(name, "study-1392.json")
+        self.assertEqual(decs[0], {"number": 7, "edition": "e@1", "chapter": "3", "page": 40, "confidence": 0.9,
+                                   "evidence": "four words of evidence", "reference_year": 1406,
+                                   "classification_basis": "retrospective_proxy_1397_plus", "proxy_note": "n"})
+
+    def test_clean_without_write_and_error_leave_bytes(self):
+        with tempfile.TemporaryDirectory() as d, tempfile.TemporaryDirectory() as t:
+            import os
+            os.environ["V3_TMP_ROOT"] = t
+            try:
+                case = self._case(d, [dict(self.ROW)])
+                before = (case / "decisions.draft.json").read_bytes()
+                normalize.prevalidate_case(case, lambda s, dd, tmp: ({7}, {}), write_if_clean=False)
+                self.assertEqual((case / "decisions.draft.json").read_bytes(), before)
+
+                def boom(s, dd, tmp):
+                    raise RuntimeError("validator_exit_2")
+                with self.assertRaises(RuntimeError):
+                    normalize.prevalidate_case(case, boom)
+                self.assertEqual((case / "decisions.draft.json").read_bytes(), before)
+            finally:
+                del os.environ["V3_TMP_ROOT"]
+
+
 class PrepImages(unittest.TestCase):
     def test_choice_image_hex_becomes_exporter_dict(self):
         hx = lambda s: s.encode().hex().upper()  # noqa: E731

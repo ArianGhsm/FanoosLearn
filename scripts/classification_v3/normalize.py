@@ -154,6 +154,76 @@ def normalize_case(case_dir: Path, batch: dict, chapter_of=chapter_from_map, ref
     return counts
 
 
+PROD = Path("/srv/fanoos/current")
+REJECTED_RE = __import__("re").compile(r"^REJECTED Q(\d+): (.{1,160})", __import__("re").M)
+
+
+def publisher_decision(row: dict) -> dict:
+    """Exactly the decision shape operator_publisher.process_group hands the validator."""
+    val = {"number": row["number"], "edition": row["edition"], "chapter": str(row["node_id"]),
+           "page": row["pdf_page"], "confidence": float(row["confidence"]), "evidence": row["quote"],
+           "reference_year": row["reference_year"], "classification_basis": row["basis"],
+           "proxy_note": row.get("note_fa") or ""}
+    if row.get("newer_editions_searched"):
+        val["newer_editions_searched"] = row["newer_editions_searched"]
+    return val
+
+
+def trusted_validator(study: Path, decisions: list[dict], tmp: Path) -> tuple[set[int], dict[int, str]]:
+    """Run the pinned production apply_classification.py (read-only, exact PDF page)."""
+    import subprocess
+    dec, out = tmp / "decisions.json", tmp / "validated.json"
+    dec.write_text(json.dumps(decisions, ensure_ascii=False), "utf-8")
+    proc = subprocess.run(["python3", "-B", str(PROD / "scripts/references/apply_classification.py"),
+                           f"--sitting={study}", f"--decisions={dec}", f"--out={out}",
+                           "--partial", "--pdf-pages"], cwd=str(PROD), capture_output=True, text=True,
+                          timeout=200, env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
+    if proc.returncode:
+        raise RuntimeError(f"validator_exit_{proc.returncode}")
+    good = {q["number"] for q in json.loads(out.read_text("utf-8"))["questions"] if q.get("sources")}
+    return good, {int(n): why for n, why in REJECTED_RE.findall(proc.stdout)}
+
+
+def prevalidate_case(case_dir: Path, validator=trusted_validator, write_if_clean: bool = True) -> dict:
+    """Demote proposals the publisher's own validator would reject, before QA.
+
+    The publisher imports a group only if EVERY decision passes the pinned
+    exact-PDF validator; one inexact quote or out-of-scope chapter defers the
+    whole batch forever (its operator case is immutable). Running the same
+    read-only validator here keeps QA effort and the import to rows that can
+    actually land. A validator error leaves the draft untouched (fail closed).
+    """
+    import shutil
+    import tempfile
+    draft_p = case_dir / "decisions.draft.json"
+    draft = json.loads(draft_p.read_text("utf-8"))
+    if draft.get("prevalidated_by"):
+        return {"already": True}
+    rows = draft.get("decisions", [])
+    by_year: dict[int, list[dict]] = {}
+    for r in rows:
+        if r.get("decision") == "proposed":
+            by_year.setdefault(r["year"], []).append(r)
+    rejected: dict[tuple[int, int], str] = {}
+    tmp_root = Path(tempfile.mkdtemp(prefix="v3-prevalidate-", dir=os.environ.get("V3_TMP_ROOT", "/srv/fanoos/shared/research/tmp")))
+    try:
+        for year, group in sorted(by_year.items()):
+            tmp = tmp_root / str(year)
+            tmp.mkdir()
+            good, why = validator(case_dir / f"study-{year}.json", [publisher_decision(r) for r in group], tmp)
+            for r in group:
+                if r["number"] not in good:
+                    rejected[(year, r["number"])] = why.get(r["number"], "not_accepted_by_validator")
+    finally:
+        shutil.rmtree(tmp_root, ignore_errors=True)
+    if not rejected and not write_if_clean:
+        return {"validated": sum(len(g) for g in by_year.values()), "demoted_by_validator": 0}
+    out = [(_demote(r, "trusted_validator_rejected: " + rejected[(r["year"], r["number"])])
+            if r.get("decision") == "proposed" and (r["year"], r["number"]) in rejected else r) for r in rows]
+    _write(draft_p, {**draft, "decisions": out, "prevalidated_by": "classification_v3.normalize.prevalidate_case"})
+    return {"validated": sum(len(g) for g in by_year.values()) - len(rejected), "demoted_by_validator": len(rejected)}
+
+
 if __name__ == "__main__":
     case = Path(sys.argv[1])
     print(json.dumps(normalize_case(case, json.loads((case / "batch.json").read_text("utf-8")))))
