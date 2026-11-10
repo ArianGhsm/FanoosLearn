@@ -97,6 +97,59 @@ class Planning(unittest.TestCase):
         self.assertEqual(batches[0]["subject"], "endodontics")
         self.assertEqual(len(batches[0]["question_ids"]), runner.BATCH_MAX)
 
+    def test_measured_low_yield_subject_yields_to_untried_subject(self):
+        pedo = [item(i, 1392, lane="residency_dental_proxy_policy", subject="pediatric-dentistry",
+                     proxy=["mcdonald@11e"]) for i in range(1, 11)]
+        pros = [item(i, 1392, lane="residency_dental_proxy_policy", subject="prosthodontics",
+                     proxy=["rosenstiel@6e"]) for i in range(20, 25)]
+        self.assertEqual(runner.plan_batches(pedo + pros)[0][0]["subject"], "pediatric-dentistry")
+        yields = {"pediatric-dentistry": (1 + 1) / (47 + 10)}
+        self.assertEqual(runner.plan_batches(pedo + pros, yields=yields)[0][0]["subject"], "prosthodontics")
+        # A proven subject still outranks an untried one.
+        self.assertEqual(runner.plan_batches(pedo + pros, yields={"pediatric-dentistry": 0.2})[0][0]["subject"],
+                         "pediatric-dentistry")
+
+    def test_yield_never_reorders_residency_after_national(self):
+        nat = item(1, 1400, kind="national", lane="national_dental_same_edition_ready", eds=["a@1"])
+        res = item(2, 1392, lane="residency_dental_proxy_policy", subject="endodontics", proxy=["t@6e"])
+        batches, _ = runner.plan_batches([nat, res], yields={"endodontics": 0.0})
+        self.assertEqual([b["type"] for b in batches], ["residency"])
+
+    def test_subject_yield_counts_only_terminal_batches_and_trusted_accepts(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            for bid, subject in (("a", "pediatric-dentistry"), ("b", "pediatric-dentistry"),
+                                 ("c", "orthodontics"), ("d", "periodontics")):
+                (root / f"v3-{bid}").mkdir()
+                (root / f"v3-{bid}" / "batch.json").write_text(json.dumps({"subject": subject}))
+            state = {"batches": {
+                "a": {"status": "operator_confirmed", "question_ids": [U(i) for i in range(10)], "accepted": 1},
+                "b": {"status": "no_proposals", "question_ids": [U(i) for i in range(10, 20)], "accepted": 0},
+                "c": {"status": "operator_confirmed", "question_ids": [U(i) for i in range(30, 35)], "accepted": 2},
+                "d": {"status": "failed", "question_ids": [U(i) for i in range(40, 54)], "accepted": 0},
+                "e": {"status": "no_proposals", "question_ids": [U(60)], "accepted": 0}}}  # no case: ignored
+            y = runner.subject_yield(state, root)
+            self.assertAlmostEqual(y["pediatric-dentistry"], 2 / 30)
+            self.assertAlmostEqual(y["orthodontics"], 3 / 15)
+            self.assertNotIn("periodontics", y)
+
+    def test_zero_streak_ack_clears_only_examined_batches(self):
+        state = {"batches": {
+            "a": {"status": "operator_confirmed", "started": 1, "accepted": 0, "question_ids": []},
+            "b": {"status": "operator_confirmed", "started": 2, "accepted": 0, "question_ids": []}}}
+        state = runner.reconcile(state, {}, 10)
+        self.assertEqual(state["zero_accepted_streak"], 2)
+        with self.assertRaises(ValueError):
+            runner.ack_zero_streak(state, "ok", 10)
+        state = runner.reconcile(runner.ack_zero_streak(state, "structural reference gap, see handoff", 10), {}, 10)
+        self.assertEqual(state["zero_accepted_streak"], 0)
+        self.assertEqual(state["zero_streak_ack"]["streak_before"], 2)
+        self.assertEqual(state["accepted_total"], 0)
+        for bid, started in (("c", 3), ("d", 4)):
+            state["batches"][bid] = {"status": "operator_confirmed", "started": started, "accepted": 0,
+                                     "question_ids": []}
+        self.assertEqual(runner.reconcile(state, {}, 10)["zero_accepted_streak"], 2)
+
     def test_existing_partial_source_requires_repair(self):
         partial = item(1, 1400, eds=["sturdevant-operative@7e"])
         partial["existing_source_rows"] = 1

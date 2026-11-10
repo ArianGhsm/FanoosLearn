@@ -135,8 +135,41 @@ def select_editions(item: dict) -> tuple[list[str], str | None]:
     return eds, None
 
 
-def plan_batches(items: list[dict], exclude: set[str] = frozenset()) -> tuple[list[dict], dict]:
-    """Group runnable items; residency first, national only if residency has none."""
+YIELD_PRIOR_ACCEPTED = 1.0
+YIELD_PRIOR_TRIED = 10.0
+YIELD_TERMINAL = ("operator_confirmed", "no_proposals")
+
+
+def subject_yield(state: dict, case_root: Path) -> dict[str, float]:
+    """Laplace-smoothed trusted rows per tried question, per subject.
+
+    Counts only terminal batches (operator receipt or zero proposals); timeouts and
+    resubmissions say nothing about the books. Accepted counts come from trusted
+    operator receipts via reconcile(), never from model proposals. An untried subject
+    scores 0.1, so it is tried before a subject with a measured lower yield.
+    """
+    tried: dict[str, int] = defaultdict(int)
+    accepted: dict[str, float] = defaultdict(float)
+    for bid, rec in (state.get("batches") or {}).items():
+        if rec.get("status") not in YIELD_TERMINAL:
+            continue
+        try:
+            subject = json.loads((case_root / f"v3-{bid}" / "batch.json").read_text("utf-8"))["subject"]
+        except (OSError, ValueError, KeyError):
+            continue
+        tried[subject] += len(rec.get("question_ids") or [])
+        accepted[subject] += float(rec.get("accepted") or 0)
+    return {s: (accepted[s] + YIELD_PRIOR_ACCEPTED) / (tried[s] + YIELD_PRIOR_TRIED) for s in tried}
+
+
+def plan_batches(items: list[dict], exclude: set[str] = frozenset(),
+                 yields: dict[str, float] | None = None) -> tuple[list[dict], dict]:
+    """Group runnable items; residency first, national only if residency has none.
+
+    yields (subject_yield) orders batches inside a lane/key cohort by measured trusted
+    yield so a subject that keeps producing zero rows stops monopolising sessions."""
+    yields = yields or {}
+    prior = YIELD_PRIOR_ACCEPTED / YIELD_PRIOR_TRIED
     groups: dict[tuple, list[dict]] = defaultdict(list)
     blocked: dict[str, int] = defaultdict(int)
     for it in items:
@@ -181,6 +214,7 @@ def plan_batches(items: list[dict], exclude: set[str] = frozenset()) -> tuple[li
     batches.sort(key=lambda b: (
         b["type"] != "residency",
         b["key_class"] != "final",
+        -round(yields.get(b["subject"], prior), 4),
         -len(b["question_ids"]) / max(1, len(b["selected_editions"])),
         -len(b["question_ids"]),
         len(b["selected_editions"]),
@@ -259,8 +293,13 @@ def reconcile(state: dict, receipts: dict[str, dict], now: float) -> dict:
             b["status"] = "lease_expired"
     confirmed = sorted((b for b in batches.values() if b["status"] == "operator_confirmed"),
                        key=lambda b: b["started"])
+    # A lead diagnosis (ack_zero_streak) clears the halt for batches it already examined;
+    # only batches started after it count toward the next hard stop.
+    ack = int((state.get("zero_streak_ack") or {}).get("through_started") or 0)
     streak = 0
     for b in confirmed:
+        if b["started"] <= ack:
+            continue
         streak = 0 if b["accepted"] > 0 else streak + 1
     state["zero_accepted_streak"] = streak
     state["accepted_total"] = sum(b["accepted"] for b in confirmed)
@@ -627,6 +666,25 @@ def log(event: str, **kw) -> None:
     print(json.dumps({"t": int(time.time()), "event": event, **safe}, sort_keys=True), flush=True)
 
 
+def ack_zero_streak(state: dict, diagnosis: str, now: float) -> dict:
+    """Record a lead diagnosis of the zero-accepted halt. Requires a non-trivial written
+    diagnosis; covers only operator-confirmed batches that exist now."""
+    if len(diagnosis.strip()) < 20 or len(diagnosis) > 120 or "\n" in diagnosis:
+        raise ValueError("diagnosis must be one line of 20-120 characters")
+    confirmed = [b["started"] for b in (state.get("batches") or {}).values()
+                 if b.get("status") == "operator_confirmed"]
+    if not confirmed:
+        raise ValueError("no operator-confirmed batch to acknowledge")
+    state = dict(state)
+    history = list(state.get("zero_streak_ack_history") or [])
+    entry = {"through_started": max(confirmed), "diagnosis": diagnosis.strip(), "at": int(now),
+             "streak_before": int(state.get("zero_accepted_streak", 0))}
+    history.append(entry)
+    state["zero_streak_ack"] = entry
+    state["zero_streak_ack_history"] = history[-20:]
+    return state
+
+
 def run(a) -> int:
     if os.geteuid() == 0 or a.forbidden_user_check():
         log("refused", reason="privileged_or_operator_identity")
@@ -639,6 +697,14 @@ def run(a) -> int:
         log("refused", reason="another_runner_holds_lock")
         return 3
     state_path = a.state_dir / "state.json"
+    if a.ack_zero_streak:
+        now = time.time()
+        state = reconcile(load_json(state_path, {}), trusted_receipts(a.receipts, a.trusted_uids), now)
+        state = reconcile(ack_zero_streak(state, a.ack_zero_streak, now), {}, now)
+        atomic_write(state_path, state)
+        log("zero_streak_acknowledged", through_started=state["zero_streak_ack"]["through_started"],
+            streak_after=state["zero_accepted_streak"])
+        return 0
     items = json.loads(a.manifest.read_text("utf-8"))["items"]
     template = PROMPT.read_text("utf-8")
     executed = 0
@@ -658,10 +724,12 @@ def run(a) -> int:
             blockers.append("before_provider_reset")
         if a.deadline_utc and now >= a.deadline_utc.timestamp():
             blockers.append("48h_deadline_reached")
-        batches, blocked = plan_batches(items, excluded_ids(state))
+        yields = subject_yield(state, a.case_root)
+        batches, blocked = plan_batches(items, excluded_ids(state), yields)
         log("plan", batches=len(batches), questions=sum(len(b["question_ids"]) for b in batches),
             lane=batches[0]["lane"] if batches else None, blocked=json.dumps(blocked)[:120],
             free_gib=round(free / 1024 ** 3, 2), blockers=",".join(blockers) or None,
+            yields=json.dumps({k[:6]: round(v, 3) for k, v in sorted(yields.items())})[:120],
             accepted_total=state.get("accepted_total", 0), unverified=state.get("unverified_staged", 0))
         if a.dry_run:
             if batches:
@@ -777,6 +845,8 @@ def parse(argv=None):
     p.add_argument("--not-before-utc", type=lambda s: datetime.fromisoformat(s.replace("Z", "+00:00")))
     p.add_argument("--deadline-utc", type=lambda s: datetime.fromisoformat(s.replace("Z", "+00:00")))
     p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--ack-zero-streak", metavar="DIAGNOSIS", default="",
+                   help="lead only: record a one-line diagnosis that clears the current zero-accepted halt")
     p.add_argument("--session-cmd", nargs="+",
                    default=["/mnt/workspace/home/bin/claude", "--print", "--model", "opus",
                             "--effort", "medium", "--permission-mode", "auto",
