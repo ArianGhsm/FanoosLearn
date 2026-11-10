@@ -33,7 +33,8 @@ UUID_RE=re.compile(r'^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$')
 RESET_RE=re.compile(r'resets?\s+(\d{1,2}):(\d{2})\s*(am|pm)\s*\(UTC\)',re.I)
 RATE_RE=re.compile(r'rate[_ -]?limit|usage[_ -]?limit|session[_ -]?limit|\b429\b',re.I)
 PROVIDER_RESET=dt.datetime(2026,11,10,1,10,tzinfo=UTC)
-WORKER=pwd.getpwnam('fanoosworker')
+try:WORKER=pwd.getpwnam('fanoosworker')
+except KeyError:WORKER=None  # host-only account; any privileged use then fails closed
 MODEL='/mnt/workspace/home/bin/claude'
 SCHEMA={'type':'object','additionalProperties':False,'properties':{
  'batch_id':{'type':'string'},'verdicts':{'type':'array','items':{
