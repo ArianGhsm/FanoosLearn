@@ -260,6 +260,7 @@ def excluded_ids(state: dict) -> set[str]:
     attempts = state.get("attempts", {})
     out = set()
     for b in state.get("batches", {}).values():
+        # "resubmitted" records are skipped: their successor carries the same ids.
         if b["status"] not in ("leased", "staged", "operator_confirmed", "failed", "no_proposals"):
             continue
         retry = set(b.get("unreached", [])) if b["status"] in ("operator_confirmed", "no_proposals") else set()
@@ -275,6 +276,74 @@ def unreached_ids(case_dir: Path) -> list[str]:
     rows = d.get("decisions", []) if isinstance(d, dict) else []
     return [str(r["question_id"]) for r in rows if isinstance(r, dict) and r.get("decision") == "pending"
             and r.get("reason") == "not_reached_in_session" and r.get("question_id")]
+
+
+RESUBMIT_AFTER_S = 3600
+
+
+def resubmit_stale(state: dict, queue: Path, case_root: Path, now: float) -> list[tuple[str, str]]:
+    """One-time resubmission of staged batches the host QA can no longer reach.
+
+    Host QA counts failures per batch id and skips an id after three; it also
+    reviews requests oldest-first. A request whose draft was rewritten AFTER
+    the request (offline normalization of a pre-normalize packet) may have
+    exhausted that counter on the old, unreviewable content with zero model
+    spend. Such a batch, still without a receipt an hour later, is copied to a
+    fresh id and the old request is withdrawn (renamed, never deleted).
+    Bounded: a resubmitted batch is never resubmitted again. Requests of
+    failed batches are withdrawn so they cannot hold the oldest-first slot.
+    """
+    done = []
+    batches = state.get("batches", {})
+    for bid, b in list(batches.items()):
+        req = queue / f"{bid}.json"
+        if not req.is_file() or req.is_symlink():
+            continue
+        if b["status"] == "failed":
+            req.rename(queue / f"{bid}.json.withdrawn-failed")
+            done.append((bid, "withdrawn_failed"))
+            continue
+        if b["status"] != "staged" or b.get("resubmitted_from"):
+            continue
+        case = case_root / f"v3-{bid}"
+        draft = case / "decisions.draft.json"
+        try:
+            request = json.loads(req.read_text("utf-8"))
+            changed_after = draft.stat().st_mtime > float(request["created"]) + 60
+        except (OSError, ValueError, KeyError, TypeError):
+            continue
+        if not changed_after or now - float(request["created"]) < RESUBMIT_AFTER_S:
+            continue
+        new = hashlib.sha256(f"{bid}:resubmit".encode()).hexdigest()[:16]
+        if new in batches or (case_root / f"v3-{new}").exists():
+            continue
+        new_case = case_root / f"v3-{new}"
+        tmp_case = case_root / f".v3-{new}.tmp"
+        shutil.rmtree(tmp_case, ignore_errors=True)
+        tmp_case.mkdir(mode=0o750)
+        try:
+            for f in sorted(case.iterdir()):
+                if f.is_file() and not f.is_symlink():
+                    shutil.copy2(f, tmp_case / f.name)
+            batch = json.loads((tmp_case / "batch.json").read_text("utf-8"))
+            batch["batch_id"] = new
+            atomic_write(tmp_case / "batch.json", batch)
+            d = json.loads((tmp_case / "decisions.draft.json").read_text("utf-8"))
+            d["batch_id"] = new
+            atomic_write(tmp_case / "decisions.draft.json", d)
+            tmp_case.rename(new_case)
+        finally:
+            shutil.rmtree(tmp_case, ignore_errors=True)
+        counts = staged_counts(new_case)
+        write_request(queue, batch, new_case, counts, now)
+        req.rename(queue / f"{bid}.json.withdrawn-resubmitted-{new}")
+        batches[new] = {**b, "status": "staged", "started": int(now), "drafted": counts["drafted"],
+                        "accepted": 0, "resubmitted_from": bid}
+        b["status"] = "resubmitted"
+        b["resubmitted_as"] = new
+        done.append((bid, new))
+    state["unverified_staged"] = sum(1 for b in batches.values() if b["status"] == "staged")
+    return done
 
 
 def guard(state: dict, now: float, free_bytes: int, max_unverified: int) -> list[str]:
@@ -428,6 +497,9 @@ def run(a) -> int:
     for _ in range(a.max_batches):
         now = time.time()
         state = reconcile(load_json(state_path, {}), trusted_receipts(a.receipts, a.trusted_uids), now)
+        if not a.dry_run:
+            for old_id, outcome in resubmit_stale(state, a.queue, a.case_root, now):
+                log("resubmit", batch_id=old_id, outcome=outcome)
         atomic_write(state_path, state)
         free = shutil.disk_usage(a.case_root).free
         blockers = guard(state, now, free, a.max_unverified)

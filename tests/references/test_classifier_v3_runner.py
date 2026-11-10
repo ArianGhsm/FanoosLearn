@@ -125,6 +125,61 @@ class StateAndReceipts(unittest.TestCase):
         st = runner.reconcile(st, {"y": rc["y"]}, time.time())
         self.assertEqual(st["zero_accepted_streak"], 0)
 
+    def _stale_case(self, d, created, draft_mtime):
+        queue, cases = Path(d, "q"), Path(d, "c")
+        case = cases / "v3-aaaaaaaaaaaaaaaa"
+        case.mkdir(parents=True)
+        (case / "batch.json").write_text(json.dumps({"batch_id": "aaaaaaaaaaaaaaaa", "question_ids": ["1"],
+                                                     "selected_editions": ["e@1"], "proxy_basis": None,
+                                                     "key_class": "final"}))
+        (case / "session.out").write_text(json.dumps({"session_id": "s"}))
+        draft = case / "decisions.draft.json"
+        draft.write_text(json.dumps({"batch_id": "aaaaaaaaaaaaaaaa",
+                                     "decisions": [{"question_id": "1", "decision": "proposed"}]}))
+        os.utime(draft, (draft_mtime, draft_mtime))
+        queue.mkdir()
+        (queue / "aaaaaaaaaaaaaaaa.json").write_text(json.dumps({"created": created}))
+        st = {"batches": {"aaaaaaaaaaaaaaaa": {"status": "staged", "started": 1, "question_ids": ["1"],
+                                               "accepted": 0, "drafted": 1, "unreached": ["2"]},
+                          "bbbbbbbbbbbbbbbb": {"status": "failed", "started": 1, "question_ids": ["3"],
+                                               "accepted": 0}}}
+        (queue / "bbbbbbbbbbbbbbbb.json").write_text("{}")
+        return queue, cases, st
+
+    def test_renormalized_stale_batch_resubmitted_once(self):
+        now = time.time()
+        with tempfile.TemporaryDirectory() as d:
+            queue, cases, st = self._stale_case(d, now - 7200, now - 3600)
+            done = runner.resubmit_stale(st, queue, cases, now)
+            new = [n for o, n in done if o == "aaaaaaaaaaaaaaaa"][0]
+            self.assertIn(("bbbbbbbbbbbbbbbb", "withdrawn_failed"), done)
+            self.assertEqual(st["batches"]["aaaaaaaaaaaaaaaa"]["status"], "resubmitted")
+            self.assertEqual(st["batches"][new]["resubmitted_from"], "aaaaaaaaaaaaaaaa")
+            self.assertEqual(st["unverified_staged"], 1)
+            self.assertEqual(sorted(p.name for p in queue.glob("*.json")), [f"{new}.json"])
+            req = json.loads((queue / f"{new}.json").read_text())
+            self.assertEqual((req["batch_id"], req["case_dir"]), (new, str(cases / f"v3-{new}")))
+            for f in ("batch.json", "decisions.draft.json"):
+                self.assertEqual(json.loads((cases / f"v3-{new}" / f).read_text())["batch_id"], new)
+            self.assertTrue((cases / "v3-aaaaaaaaaaaaaaaa" / "session.out").exists())
+            # successor never resubmitted again; ids stay excluded, unreached carried
+            self.assertEqual(runner.resubmit_stale(st, queue, cases, now + 10 ** 5), [])
+            self.assertIn("1", runner.excluded_ids(st))
+            st["batches"][new]["status"] = "operator_confirmed"
+            self.assertNotIn("2", runner.excluded_ids(st))
+
+    def test_fresh_or_unchanged_batch_not_resubmitted(self):
+        now = time.time()
+        with tempfile.TemporaryDirectory() as d:
+            queue, cases, st = self._stale_case(d, now - 7200, now - 7200)
+            self.assertEqual([n for o, n in runner.resubmit_stale(st, queue, cases, now)
+                              if o == "aaaaaaaaaaaaaaaa"], [])
+        with tempfile.TemporaryDirectory() as d:
+            queue, cases, st = self._stale_case(d, now - 600, now - 60)
+            self.assertEqual([n for o, n in runner.resubmit_stale(st, queue, cases, now)
+                              if o == "aaaaaaaaaaaaaaaa"], [])
+            self.assertEqual(st["batches"]["aaaaaaaaaaaaaaaa"]["status"], "staged")
+
     def test_disk_and_backoff_guards(self):
         now = time.time()
         r = runner.guard({"quota_backoff_until": now + 60}, now, 2 * 1024 ** 3, 2)
