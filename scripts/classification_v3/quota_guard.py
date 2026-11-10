@@ -74,8 +74,14 @@ def parse_status(raw,now=None):
    resets[name]=reset_time(m.group(2),now)
  if five is None or weekly is None:
   raise ValueError('both 5h and weekly subscription usage percentages are required')
- if any(x is None for x in resets.values()):
-  raise ValueError('usage reset times missing')
+ # Immediately after a session resets, Claude may emit "Current session:
+ # 0% used" without the next reset timestamp. This is a legitimate
+ # zero-usage window. Never guess the next reset time: check again in
+ # max 300s; once usage rises the provider normally reports its clock.
+ if resets.get('five_hour') is None and five!=0:
+  raise ValueError('five-hour reset missing for nonzero usage')
+ if resets.get('week_all') is None and weekly!=0:
+  raise ValueError('weekly reset missing for nonzero usage')
  return {'five_hour_pct':five,'week_all_pct':weekly,'resets_utc':resets,
          'fetched_at_utc':now.isoformat(),'source':'claude_code_builtin_slash_usage',
          'model_cost_usd':0}
@@ -116,21 +122,25 @@ def status_with_cache(max_age,timeout,force=False):
   atomic_json(p,data)
   return data,'fresh'
 
-def check(d,session_limit=75,week_limit=80):
+def check(d,session_limit=75,week_limit=80,now=None):
  if not 10<=session_limit<=95 or not 10<=week_limit<=95:
   raise ValueError('unsafe reserve threshold')
  five,weekly=d['five_hour_pct'],d['week_all_pct']
- now=dt.datetime.now(UTC)
+ now=now or dt.datetime.now(UTC)
  reasons=[]
  if five>=session_limit:
   reasons.append('five_hour_headroom_reserved')
  if weekly>=week_limit:
   reasons.append('weekly_headroom_reserved')
  for kind in ('five_hour','week_all'):
-  if kind in ('five_hour','week_all'):
-   reset=dt.datetime.fromisoformat(d['resets_utc'][kind])
-   if reset<now-dt.timedelta(minutes=10):
-    reasons.append('stale_usage_reset')
+  value=d['resets_utc'].get(kind)
+  if not value:
+   if d[kind+'_pct']!=0:
+    reasons.append('missing_nonzero_reset')
+   continue
+  reset=dt.datetime.fromisoformat(value)
+  if reset<now-dt.timedelta(minutes=10):
+   reasons.append('stale_usage_reset')
  return not reasons,reasons
 
 def main(argv=None):

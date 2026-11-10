@@ -23,15 +23,28 @@ class QuotaGuardTests(unittest.TestCase):
   self.assertEqual(d['five_hour_pct'],31)
   self.assertEqual(d['week_all_pct'],16)
   self.assertEqual(d['resets_utc']['five_hour'],'2026-11-10T06:10:00+00:00')
-  self.assertTrue(check(d)[0])
+  self.assertTrue(check(d,now=NOW)[0])
+ def test_fresh_reset_zero_pct_without_a_reset_timestamp(self):
+  raw={'type':'result','is_error':False,'total_cost_usd':0,
+       'result':'Current session: 0% used\nCurrent week (all models): 17% used · resets Nov 15, 11am (UTC)'}
+  parsed=parse_status(json.dumps(raw),NOW)
+  self.assertEqual(parsed['five_hour_pct'],0)
+  self.assertIsNone(parsed['resets_utc']['five_hour'])
+  self.assertTrue(check(parsed,now=NOW)[0])
+
+ def test_nonzero_usage_without_reset_fails_closed(self):
+  raw={'type':'result','is_error':False,'total_cost_usd':0,
+       'result':'Current session: 22% used\nCurrent week (all models): 17% used · resets Nov 15, 11am (UTC)'}
+  with self.assertRaises(ValueError):parse_status(json.dumps(raw),NOW)
+
  def test_session_reserve_threshold(self):
-  self.assertTrue(check(status(74,16))[0])
-  ok,errors=check(status(75,16))
+  self.assertTrue(check(status(74,16),now=NOW)[0])
+  ok,errors=check(status(75,16),now=NOW)
   self.assertFalse(ok)
   self.assertIn('five_hour_headroom_reserved',errors)
  def test_weekly_reserve_threshold(self):
-  self.assertTrue(check(status(25,79))[0])
-  self.assertFalse(check(status(25,80))[0])
+  self.assertTrue(check(status(25,79),now=NOW)[0])
+  self.assertFalse(check(status(25,80),now=NOW)[0])
  def test_fail_closed_missing_bar(self):
   with self.assertRaises(ValueError):
    parse_status(json.dumps({'type':'result','is_error':False,
