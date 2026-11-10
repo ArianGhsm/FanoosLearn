@@ -158,6 +158,66 @@ class Prevalidate(unittest.TestCase):
                                    "evidence": "four words of evidence", "reference_year": 1406,
                                    "classification_basis": "retrospective_proxy_1397_plus", "proxy_note": "n"})
 
+    def test_legacy_evidence_quote_is_preserved_exactly_and_validated(self):
+        """Production old drafts used evidence_quote; cannot throw KeyError forever."""
+        legacy = dict(self.ROW)
+        legacy.pop("quote")
+        legacy["evidence_quote"] = "original PDF words present here exactly"
+        seen = []
+        def validator(study, decisions, tmp):
+            seen.extend(decisions)
+            return {7}, {}
+        with tempfile.TemporaryDirectory() as d, tempfile.TemporaryDirectory() as t:
+            import os
+            os.environ["V3_TMP_ROOT"] = t
+            try:
+                case = self._case(d, [legacy])
+                out = normalize.prevalidate_case(case, validator)
+                self.assertEqual(out, {"validated": 1, "demoted_by_validator": 0})
+                stored = json.loads((case / "decisions.draft.json").read_text())
+                self.assertEqual(stored["decisions"][0]["quote"],
+                                 legacy["evidence_quote"])
+                self.assertEqual(stored["decisions"][0]["evidence_quote"],
+                                 legacy["evidence_quote"])
+                self.assertEqual(seen[0]["evidence"],legacy["evidence_quote"])
+                self.assertEqual(list(Path(t).iterdir()), [])
+            finally:
+                del os.environ["V3_TMP_ROOT"]
+
+    def test_legacy_short_quote_demoted_without_any_validator_invocation(self):
+        legacy = dict(self.ROW)
+        legacy.pop("quote")
+        legacy["evidence_quote"] = "only three words"
+        def must_not_call(*args):
+            raise AssertionError("should never validate unsupported quote")
+        with tempfile.TemporaryDirectory() as d, tempfile.TemporaryDirectory() as t:
+            import os
+            os.environ["V3_TMP_ROOT"] = t
+            try:
+                case = self._case(d, [legacy])
+                counts = normalize.prevalidate_case(case, must_not_call)
+                self.assertEqual(counts, {"validated": 0, "demoted_by_validator": 1})
+                out = json.loads((case / "decisions.draft.json").read_text())
+                self.assertEqual(out["decisions"][0]["decision"], "pending")
+                self.assertIn("exact_quote_missing_or_too_short",out["decisions"][0]["pending_reason"])
+            finally:
+                del os.environ["V3_TMP_ROOT"]
+
+    def test_normalize_legacy_quote_field_to_canonical_proposal(self):
+        legacy = row()
+        legacy["evidence_quote"] = legacy.pop("quote")
+        d,c=run([legacy])
+        self.assertEqual(c, {"proposed": 1, "demoted": 0})
+        self.assertEqual(d["decisions"][0]["quote"],"four words of quote")
+
+    def test_model_missing_exact_evidence_is_scientifically_pending(self):
+        incomplete = row()
+        incomplete.pop("quote")
+        d,c=run([incomplete])
+        self.assertEqual(c, {"proposed": 0, "demoted": 1})
+        self.assertEqual(d["decisions"][0]["pending_reason"],
+                         "exact_quote_missing_or_too_short")
+
     def test_clean_without_write_and_error_leave_bytes(self):
         with tempfile.TemporaryDirectory() as d, tempfile.TemporaryDirectory() as t:
             import os

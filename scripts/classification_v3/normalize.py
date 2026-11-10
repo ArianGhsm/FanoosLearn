@@ -59,6 +59,26 @@ def _demote(row: dict, reason: str) -> dict:
     return {**row, "decision": "pending", "pending_reason": reason}
 
 
+def exact_quote(row: dict) -> str | None:
+    """Canonicalize legacy model evidence_quote to publisher's exact quote key.
+
+    No paraphrase, token reconstruction, or text substitution is allowed.
+    The original model-provided evidence is copied byte-for-byte; the trusted
+    source validator subsequently checks its literal presence on the PDF page.
+    """
+    canonical = row.get("quote")
+    legacy = row.get("evidence_quote")
+    if isinstance(canonical, str) and canonical.strip():
+        value = canonical
+    elif isinstance(legacy, str) and legacy.strip():
+        value = legacy
+    else:
+        return None
+    if not 4 <= len(value.split()) or len(value) > 300:
+        return None
+    return value
+
+
 def normalize(draft: dict, questions: list[dict], batch: dict, chapter_of, reference_year_of,
               scope_of=None) -> tuple[dict, dict]:
     """Returns (normalized draft, counts). chapter_of(edition, sha, page) -> str|None;
@@ -95,7 +115,10 @@ def normalize(draft: dict, questions: list[dict], batch: dict, chapter_of, refer
                   "chapter_outside_official_scope" if _outside_scope(scope_of, q["year"], ed, chapter) else None)
         if reason:
             out.append(_demote(row, reason)); counts["demoted"] += 1; continue
-        norm = {**row, **ident, "key_class": key_class, "basis": basis, "node_id": chapter,
+        quote = exact_quote(row)
+        if quote is None:
+            out.append(_demote(row, "exact_quote_missing_or_too_short")); counts["demoted"] += 1; continue
+        norm = {**row, **ident, "quote": quote, "key_class": key_class, "basis": basis, "node_id": chapter,
                 "reference_year": ref_year,
                 "newer_editions_searched": list(row.get("newer_editions_searched") or [])}
         if basis == "retrospective_proxy_1397_plus" and is_retrospective(q["year"]):
@@ -275,9 +298,27 @@ def prevalidate_case(case_dir: Path, validator=trusted_validator, write_if_clean
         if r.get("decision") == "proposed":
             by_year.setdefault(r["year"], []).append(r)
     rejected: dict[tuple[int, int], str] = {}
+    # Prior to the schema correction, some existing staged drafts had only
+    # evidence_quote and no quote, which caused KeyError on EVERY timed pass.
+    # Read model evidence exactly as written; never invent missing evidence.
+    fixed_rows = []
+    for row in rows:
+        if row.get("decision") != "proposed":
+            fixed_rows.append(row)
+            continue
+        quote = exact_quote(row)
+        if quote is None:
+            rejected[(row["year"], row["number"])] = "exact_quote_missing_or_too_short"
+            fixed_rows.append(row)
+        else:
+            fixed_rows.append({**row, "quote": quote})
+    valid_by_year: dict[int, list[dict]] = {}
+    for row in fixed_rows:
+        if row.get("decision") == "proposed" and (row["year"], row["number"]) not in rejected:
+            valid_by_year.setdefault(row["year"], []).append(row)
     tmp_root = Path(tempfile.mkdtemp(prefix="v3-prevalidate-", dir=os.environ.get("V3_TMP_ROOT", "/srv/fanoos/shared/research/tmp")))
     try:
-        for year, group in sorted(by_year.items()):
+        for year, group in sorted(valid_by_year.items()):
             tmp = tmp_root / str(year)
             tmp.mkdir()
             good, why = validator(case_dir / f"study-{year}.json", [publisher_decision(r) for r in group], tmp)
@@ -289,7 +330,7 @@ def prevalidate_case(case_dir: Path, validator=trusted_validator, write_if_clean
     if not rejected and not write_if_clean:
         return {"validated": sum(len(g) for g in by_year.values()), "demoted_by_validator": 0}
     out = [(_demote(r, "trusted_validator_rejected: " + rejected[(r["year"], r["number"])])
-            if r.get("decision") == "proposed" and (r["year"], r["number"]) in rejected else r) for r in rows]
+            if r.get("decision") == "proposed" and (r["year"], r["number"]) in rejected else r) for r in fixed_rows]
     _write(draft_p, {**draft, "decisions": out, "prevalidated_by": "classification_v3.normalize.prevalidate_case"})
     return {"validated": sum(len(g) for g in by_year.values()) - len(rejected), "demoted_by_validator": len(rejected)}
 
