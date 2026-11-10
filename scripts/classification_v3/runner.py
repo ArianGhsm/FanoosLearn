@@ -249,7 +249,7 @@ def reconcile(state: dict, receipts: dict[str, dict], now: float) -> dict:
 def excluded_ids(state: dict) -> set[str]:
     """Ids already leased/staged/confirmed are never re-dispatched by the runner."""
     return {q for b in state.get("batches", {}).values()
-            if b["status"] in ("leased", "staged", "operator_confirmed", "failed")
+            if b["status"] in ("leased", "staged", "operator_confirmed", "failed", "no_proposals")
             for q in b["question_ids"]}
 
 
@@ -463,6 +463,11 @@ def run(a) -> int:
             rec["status"] = "lease_expired"  # requeue after backoff; nothing staged as accepted
         elif res["rc"] != 0 or res["killed"] or counts.get("draft_missing"):
             rec["status"] = "failed"  # held for operator inspection, never retried blindly
+        elif counts["drafted"] == 0:
+            # Nothing for QA: do not consume an unverified slot or invite a
+            # zero-accepted receipt. Ids stay excluded until an operator re-plans.
+            rec["status"] = "no_proposals"
+            rec["drafted"] = 0
         else:
             rec["status"] = "staged"
             rec["drafted"] = counts["drafted"]

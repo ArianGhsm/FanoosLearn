@@ -194,5 +194,34 @@ class Session(unittest.TestCase):
             self.assertEqual(list(d.glob("v3-run-*")), [])  # temp cleaned
 
 
+    def test_zero_proposal_session_is_not_queued_for_qa(self):
+        with tempfile.TemporaryDirectory() as d:
+            d = Path(d)
+            (d / "m.json").write_text(json.dumps({"items": [item(i, 1400, eds=["a@1"]) for i in (1, 2)]}))
+            script = d / "fake.py"
+            script.write_text("import json,sys,glob,pathlib\nsys.stdin.read()\n"
+                              "c=pathlib.Path(glob.glob(sys.argv[1]+'/v3-*')[0])\n"
+                              "(c/'decisions.draft.json').write_text(json.dumps({'decisions':"
+                              "[{'question_id':'a','decision':'pending'}]}))\n")
+            orig = runner.live_absent
+            runner.live_absent = lambda ids: set(ids)
+            try:
+                args = ["--manifest", str(d / "m.json"), "--state-dir", str(d / "st"),
+                        "--case-root", str(d / "cases"), "--queue", str(d / "q"),
+                        "--receipts", str(d / "r"), "--trusted-uid", "982", "--tmp-root", str(d),
+                        "--workdir", str(d), "--max-batches", "1", "--max-unverified", "1",
+                        "--session-cmd", sys.executable, str(script), str(d / "cases")]
+                (d / "cases").mkdir()
+                runner.run(runner.parse(args))
+            finally:
+                runner.live_absent = orig
+            st = json.loads((d / "st/state.json").read_text())
+            (b,) = st["batches"].values()
+            self.assertEqual((b["status"], b["drafted"]), ("no_proposals", 0))
+            self.assertEqual(st.get("unverified_staged", 0), 0)
+            self.assertEqual(list((d / "q").glob("*.json")) if (d / "q").exists() else [], [])
+            self.assertTrue(set(b["question_ids"]) <= runner.excluded_ids(st))
+
+
 if __name__ == "__main__":
     unittest.main()
