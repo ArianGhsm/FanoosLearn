@@ -246,11 +246,35 @@ def reconcile(state: dict, receipts: dict[str, dict], now: float) -> dict:
     return state
 
 
+MAX_ATTEMPTS = 3
+
+
 def excluded_ids(state: dict) -> set[str]:
-    """Ids already leased/staged/confirmed are never re-dispatched by the runner."""
-    return {q for b in state.get("batches", {}).values()
-            if b["status"] in ("leased", "staged", "operator_confirmed", "failed", "no_proposals")
-            for q in b["question_ids"]}
+    """Ids already leased/staged/confirmed are never re-dispatched by the runner.
+
+    Exception: ids a finished session never reached (draft reason
+    not_reached_in_session) return to the queue once their batch is terminal
+    (operator_confirmed or no_proposals), at most MAX_ATTEMPTS sessions each.
+    QA-rejected or researched-pending ids stay excluded.
+    """
+    attempts = state.get("attempts", {})
+    out = set()
+    for b in state.get("batches", {}).values():
+        if b["status"] not in ("leased", "staged", "operator_confirmed", "failed", "no_proposals"):
+            continue
+        retry = set(b.get("unreached", [])) if b["status"] in ("operator_confirmed", "no_proposals") else set()
+        out |= {q for q in b["question_ids"] if q not in retry or attempts.get(q, 1) >= MAX_ATTEMPTS}
+    return out
+
+
+def unreached_ids(case_dir: Path) -> list[str]:
+    try:
+        d = json.loads((case_dir / "decisions.draft.json").read_text("utf-8"))
+    except (OSError, ValueError):
+        return []
+    rows = d.get("decisions", []) if isinstance(d, dict) else []
+    return [str(r["question_id"]) for r in rows if isinstance(r, dict) and r.get("decision") == "pending"
+            and r.get("reason") == "not_reached_in_session" and r.get("question_id")]
 
 
 def guard(state: dict, now: float, free_bytes: int, max_unverified: int) -> list[str]:
@@ -440,7 +464,14 @@ def run(a) -> int:
             continue
         bid = batch["batch_id"]
         case_dir = a.case_root / f"v3-{bid}"
+        if bid in state["batches"]:  # same id set re-dispatched: keep the old record and case
+            stamp = int(now)
+            state.setdefault("superseded", []).append({"batch_id": bid, "at": stamp, **state["batches"][bid]})
+            if case_dir.exists():
+                case_dir.rename(a.case_root / f".prev-v3-{bid}-{stamp}")
         case_dir.mkdir(parents=True, exist_ok=True, mode=0o750)
+        for q in batch["question_ids"]:
+            state.setdefault("attempts", {})[q] = state.get("attempts", {}).get(q, 0) + 1
         atomic_write(case_dir / "batch.json", batch)
         state["batches"][bid] = {"status": "leased", "started": int(now), "lease_expires": now + LEASE_S,
                                  "question_ids": batch["question_ids"], "accepted": 0}
@@ -478,6 +509,7 @@ def run(a) -> int:
             rec["status"] = "staged"
             rec["drafted"] = counts["drafted"]
             write_request(a.queue, batch, case_dir, counts, now)
+        rec["unreached"] = [q for q in unreached_ids(case_dir) if q in set(batch["question_ids"])]
         rec.update({k: res[k] for k in ("rc", "killed", "seconds")})
         atomic_write(state_path, state)
         executed += 1

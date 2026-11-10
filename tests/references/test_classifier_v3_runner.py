@@ -256,6 +256,23 @@ class Session(unittest.TestCase):
             (b,) = json.loads((d / "st/state.json").read_text())["batches"].values()
             self.assertEqual(b["status"], "staged")
 
+    def test_unreached_ids_return_after_terminal_batch_with_attempt_cap(self):
+        st = {"batches": {"b": {"status": "no_proposals", "question_ids": ["x", "y"], "unreached": ["y"]},
+                          "s": {"status": "staged", "question_ids": ["z"], "unreached": ["z"]}},
+              "attempts": {"x": 1, "y": 1, "z": 1}}
+        self.assertEqual(runner.excluded_ids(st), {"x", "z"})
+        st["attempts"]["y"] = runner.MAX_ATTEMPTS
+        self.assertEqual(runner.excluded_ids(st), {"x", "y", "z"})
+
+    def test_unreached_ids_reads_only_not_reached_pending(self):
+        with tempfile.TemporaryDirectory() as d:
+            Path(d, "decisions.draft.json").write_text(json.dumps({"decisions": [
+                {"question_id": "a", "decision": "pending", "reason": "not_reached_in_session"},
+                {"question_id": "b", "decision": "pending", "reason": "answer_not_located"},
+                {"question_id": "c", "decision": "proposed"}]}))
+            self.assertEqual(runner.unreached_ids(Path(d)), ["a"])
+            self.assertEqual(runner.unreached_ids(Path(d, "missing")), [])
+
 
 if __name__ == "__main__":
     unittest.main()
