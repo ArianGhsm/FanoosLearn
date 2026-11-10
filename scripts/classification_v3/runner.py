@@ -447,6 +447,12 @@ def run(a) -> int:
         atomic_write(state_path, state)
         tmp = Path(tempfile.mkdtemp(prefix=f"v3-run-{bid}-", dir=a.tmp_root))
         try:
+            # Non-model prep: SELECT-only questions + page leads, so the session
+            # starts reading pages. A prep failure never blocks the session.
+            try:
+                log("prep", batch_id=bid, **{k: json.dumps(v)[:200] for k, v in getattr(a, "prepare", lambda *_: {})(case_dir, batch).items()})
+            except Exception as exc:
+                log("prep_failed", batch_id=bid, error=type(exc).__name__)
             remaining = int(a.deadline_utc.timestamp() - time.time()) if a.deadline_utc else a.timeout
             if remaining < 10:
                 raise Blocked("48h_deadline_reached_before_model")
@@ -513,7 +519,13 @@ def parse(argv=None):
     if not a.dry_run and not a.trusted_uids:
         p.error("--trusted-uid (operator receipt owner) is required for execution")
     a.forbidden_user_check = lambda: _username() == "fanoosupd"
+    a.prepare = lambda case, batch: _prepare(case, batch)  # late-bound for tests
     return a
+
+
+def _prepare(case_dir: Path, batch: dict) -> dict:
+    from classification_v3 import prep
+    return prep.prepare(case_dir, batch)
 
 
 def _username() -> str:

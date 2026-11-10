@@ -20,6 +20,26 @@ from terms import c1_terms  # noqa: E402  (cycle-1 accepted bridge, 2026-11-09)
 MAP = HERE.parents[1] / "data/bank/reference-chapter-pages.json"
 
 
+def study_rows(study) -> list[dict]:
+    """Accept a bare list or the exporter's study-only/1 envelope.
+
+    Exporter rows carry number/answer and list choices; scanner rows need
+    id/key and dict choices. Image choices contribute their text only.
+    """
+    rows = study.get("questions", []) if isinstance(study, dict) else list(study)
+    out = []
+    for q in rows:
+        ch = q.get("choices") or {}
+        if isinstance(ch, list):
+            ch = {str(i + 1): (c.get("text", "") if isinstance(c, dict) else str(c)) for i, c in enumerate(ch)}
+        key = q.get("key")
+        if key is None and isinstance(q.get("answer"), dict) and q["answer"].get("choice") is not None:
+            key = str(q["answer"]["choice"])
+        qid = q.get("id") or q.get("question_id") or q.get("number")
+        out.append({**q, "id": str(qid), "choices": ch, "key": None if key is None else str(key)})
+    return out
+
+
 def runs_for(edition):
     return json.load(open(MAP))["editions"].get(edition, {}).get("runs", [])
 
@@ -39,8 +59,8 @@ def main(argv=None) -> int:
                "map_missing": [e for e in groups if not runs_for(e)]}
     elif a.cmd == "scan":
         from verified_reference_pdf import open_verified_reference
-        rows = [q for q in json.load(open(a.study))]
-        queries = [Query.build(str(q["id"]), *c1_terms(q["stem"], q["choices"], q.get("key"))) for q in rows]
+        rows = study_rows(json.load(open(a.study)))
+        queries = [Query.build(q["id"], *c1_terms(q["stem"], q["choices"], q["key"])) for q in rows]
         pdf = open_verified_reference(a.edition); runs = runs_for(a.edition)
         ranking, stats = scan_edition(pdf, queries)
         res = {"edition": a.edition, "pdf_sha256": pdf.source_sha256, "stats": stats,

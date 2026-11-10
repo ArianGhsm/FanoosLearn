@@ -173,8 +173,10 @@ class Session(unittest.TestCase):
                               "c=pathlib.Path(glob.glob(sys.argv[1]+'/v3-*')[0])\n"
                               "(c/'decisions.draft.json').write_text(json.dumps({'decisions':"
                               "[{'question_id':'a','decision':'proposed'},{'question_id':'b','decision':'pending'}]}))\n")
-            orig = runner.live_absent
+            orig, orig_prep = runner.live_absent, runner._prepare
             runner.live_absent = lambda ids: set(ids)
+            prepped = []
+            runner._prepare = lambda case, batch: prepped.append(batch["batch_id"]) or {"questions": 2}
             try:
                 args = ["--manifest", str(d / "m.json"), "--state-dir", str(d / "st"),
                         "--case-root", str(d / "cases"), "--queue", str(d / "q"),
@@ -184,7 +186,8 @@ class Session(unittest.TestCase):
                 (d / "cases").mkdir()
                 self.assertEqual(runner.run(runner.parse(args)), 4)  # stops awaiting receipts
             finally:
-                runner.live_absent = orig
+                runner.live_absent, runner._prepare = orig, orig_prep
+            self.assertTrue(prepped)  # non-model prep runs before every session
             st = json.loads((d / "st/state.json").read_text())
             self.assertEqual(st["accepted_total"], 0)
             (b,) = st["batches"].values()
@@ -203,8 +206,10 @@ class Session(unittest.TestCase):
                               "c=pathlib.Path(glob.glob(sys.argv[1]+'/v3-*')[0])\n"
                               "(c/'decisions.draft.json').write_text(json.dumps({'decisions':"
                               "[{'question_id':'a','decision':'pending'}]}))\n")
-            orig = runner.live_absent
+            orig, orig_prep = runner.live_absent, runner._prepare
             runner.live_absent = lambda ids: set(ids)
+            prepped = []
+            runner._prepare = lambda case, batch: prepped.append(batch["batch_id"]) or {"questions": 2}
             try:
                 args = ["--manifest", str(d / "m.json"), "--state-dir", str(d / "st"),
                         "--case-root", str(d / "cases"), "--queue", str(d / "q"),
@@ -214,13 +219,42 @@ class Session(unittest.TestCase):
                 (d / "cases").mkdir()
                 runner.run(runner.parse(args))
             finally:
-                runner.live_absent = orig
+                runner.live_absent, runner._prepare = orig, orig_prep
+            self.assertTrue(prepped)  # non-model prep runs before every session
             st = json.loads((d / "st/state.json").read_text())
             (b,) = st["batches"].values()
             self.assertEqual((b["status"], b["drafted"]), ("no_proposals", 0))
             self.assertEqual(st.get("unverified_staged", 0), 0)
             self.assertEqual(list((d / "q").glob("*.json")) if (d / "q").exists() else [], [])
             self.assertTrue(set(b["question_ids"]) <= runner.excluded_ids(st))
+
+    def test_prep_failure_does_not_block_session(self):
+        with tempfile.TemporaryDirectory() as d:
+            d = Path(d)
+            (d / "m.json").write_text(json.dumps({"items": [item(1, 1400, eds=["a@1"])]}))
+            script = d / "fake.py"
+            script.write_text("import json,sys,glob,pathlib\nsys.stdin.read()\n"
+                              "c=pathlib.Path(glob.glob(sys.argv[1]+'/v3-*')[0])\n"
+                              "(c/'decisions.draft.json').write_text(json.dumps({'decisions':"
+                              "[{'question_id':'a','decision':'proposed'}]}))\n")
+            orig, orig_prep = runner.live_absent, runner._prepare
+            runner.live_absent = lambda ids: set(ids)
+
+            def boom(case, batch):
+                raise RuntimeError("db down")
+            runner._prepare = boom
+            try:
+                args = ["--manifest", str(d / "m.json"), "--state-dir", str(d / "st"),
+                        "--case-root", str(d / "cases"), "--queue", str(d / "q"),
+                        "--receipts", str(d / "r"), "--trusted-uid", "982", "--tmp-root", str(d),
+                        "--workdir", str(d), "--max-batches", "1", "--max-unverified", "1",
+                        "--session-cmd", sys.executable, str(script), str(d / "cases")]
+                (d / "cases").mkdir()
+                runner.run(runner.parse(args))
+            finally:
+                runner.live_absent, runner._prepare = orig, orig_prep
+            (b,) = json.loads((d / "st/state.json").read_text())["batches"].values()
+            self.assertEqual(b["status"], "staged")
 
 
 if __name__ == "__main__":
