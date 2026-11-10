@@ -22,7 +22,7 @@ from runner import scan_quota
 UTC=dt.timezone.utc
 CLI='/mnt/workspace/home/bin/claude'
 WHITELIST={'PATH','HOME','LANG','LC_ALL','TZ','USER','LOGNAME','CLAUDE_CONFIG_DIR'}
-DEFAULT_CMD=[CLI,'--print','--model','opus','--effort','high',
+DEFAULT_CMD=[CLI,'--print','--model','opus','--effort','medium',
  '--permission-mode','auto','--tools','Bash,Read,Write,Edit,Glob,Grep',
  '--add-dir','/srv/fanoos/shared/research','--add-dir','/srv/fanoos/current',
  '--add-dir','/mnt/workspace/FanoosLearn-classifier-v3','--output-format','json']
