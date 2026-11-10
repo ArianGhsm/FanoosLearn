@@ -97,6 +97,23 @@ def key_class(item: dict) -> str:
     return "voided" if s == "voided" else "final" if s in ("final", "amended") else "provisional"
 
 
+_VALIDATOR_EDITIONS: dict = {}
+
+
+def validator_editions(kind, year, subject) -> set[str]:
+    """Eligible editions the pinned production validator selects for this sitting/subject.
+    Empty set = unknown (catalog unreadable or no rows): the planner then keeps the manifest set."""
+    key = (kind, year, subject)
+    if key not in _VALIDATOR_EDITIONS:
+        try:
+            from classification_v3.normalize import official_rows
+            rows = official_rows(str(kind), int(year), str(subject))
+            _VALIDATOR_EDITIONS[key] = {e for e, r in rows.items() if r.get("_eligible", True) is not False}
+        except Exception:
+            _VALIDATOR_EDITIONS[key] = set()
+    return _VALIDATOR_EDITIONS[key]
+
+
 def select_editions(item: dict) -> tuple[list[str], str | None]:
     """Return (selected newest-first edition set, block reason)."""
     if item["lane"] == "residency_dental_proxy_policy":
@@ -106,6 +123,11 @@ def select_editions(item: dict) -> tuple[list[str], str | None]:
     else:
         eds = item.get("ready_editions") or []  # official list, SQL newest-first
     eds = newest_per_family(eds)
+    allowed = validator_editions(item.get("type", "residency"), item.get("year"), item.get("subject"))
+    if allowed and eds:
+        eds = [e for e in eds if e in allowed]
+        if not eds:
+            return [], "no_validator_selected_edition"
     if not eds:
         return [], "no_ready_edition"
     if any(not EDITION_RE.match(e) for e in eds):

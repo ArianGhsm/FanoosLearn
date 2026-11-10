@@ -4,7 +4,18 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 
-from classification_v3 import manifest, orchestrator  # noqa: E402
+from classification_v3 import manifest, orchestrator, runner  # noqa: E402
+
+_ORIG_VALIDATOR_EDITIONS = runner.validator_editions
+
+
+def setUpModule():
+    # Synthetic fixture editions are not in the real catalog; the filter is tested in the runner suite.
+    runner.validator_editions = lambda kind, year, subject: set()
+
+
+def tearDownModule():
+    runner.validator_editions = _ORIG_VALIDATOR_EDITIONS
 
 SHA = "a" * 64
 PDFS = {"neville-oral-pathology@5e": SHA}

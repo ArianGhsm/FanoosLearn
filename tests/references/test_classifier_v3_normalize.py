@@ -66,6 +66,40 @@ class Normalize(unittest.TestCase):
         self.assertEqual(run([row()], questions=[q(also=[3])])[0]["decisions"][0]["pending_reason"],
                          "official_key_not_single_final")
 
+    def test_same_lineage_note_is_generated_and_passes_policy_check(self):
+        from same_lineage_proxy_policy import valid_proxy_note
+        batch = {**BATCH, "proxy_basis": "same_lineage_proxy"}
+        model_row = row(edition_basis="same_lineage_proxy", note_fa="model wording without years")
+        d, c = normalize.normalize({"decisions": [model_row]}, [{**q(), "year": 1396}], batch,
+                                   lambda e, s, p: "2", lambda e, s: 1406)
+        (r,) = d["decisions"]
+        self.assertEqual(c, {"proposed": 1, "demoted": 0})
+        self.assertEqual(r["note_fa"], normalize.same_lineage_note(1406, 1396))
+        self.assertTrue(valid_proxy_note(r["note_fa"], 1396, 1406))
+
+    def test_chapter_outside_official_scope_demotes_before_validator(self):
+        calls = []
+
+        def scope_of(year, edition):
+            calls.append((year, edition))
+            return {"1", "2"} if edition == "little@10e" else None
+        ok = normalize.normalize({"decisions": [row()]}, [q()], BATCH, lambda e, s, p: "2",
+                                 lambda e, s: 1406, scope_of)[0]["decisions"][0]
+        self.assertEqual(ok["decision"], "proposed")
+        out = normalize.normalize({"decisions": [row(chapter_number="7")]}, [q()], BATCH,
+                                  lambda e, s, p: "7", lambda e, s: 1406, scope_of)[0]["decisions"][0]
+        self.assertEqual((out["decision"], out["pending_reason"]), ("pending", "chapter_outside_official_scope"))
+        unlisted = normalize.normalize({"decisions": [row(chapter_number="9")]}, [q()], BATCH, lambda e, s, p: "9",
+                                       lambda e, s: 1406, lambda y, e: None)[0]["decisions"][0]
+        self.assertEqual(unlisted["decision"], "proposed")
+        self.assertEqual(calls[0], (1392, "little@10e"))
+
+    def test_scope_chapters_from_validity_row(self):
+        self.assertIsNone(normalize.scope_chapters({"scope_chapters": []}))
+        self.assertIsNone(normalize.scope_chapters(None))
+        self.assertEqual(normalize.scope_chapters({"scope_chapters": [{"number": 10}, {"number": "2"}]}),
+                         ["2", "10"])
+
     def test_study_docs_match_exporter_shape_and_skip_sourced(self):
         docs = normalize.study_docs([q(), {**q(QID2, 50), "source_rows": 1}], BATCH)
         self.assertEqual(list(docs), [1392])

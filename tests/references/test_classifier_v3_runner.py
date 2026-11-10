@@ -25,13 +25,19 @@ def item(qid, year, lane="residency_dental_ready", subject="oral-pathology", eds
 _ORIG_PREVALIDATE = runner._prevalidate
 
 
+_ORIG_VALIDATOR_EDITIONS = runner.validator_editions
+
+
 def setUpModule():
     # Session tests never reach the production validator; revalidation has its own tests.
     runner._prevalidate = lambda case, write_if_clean: {"demoted_by_validator": 0}
+    # Planning fixtures use synthetic editions; the catalog filter has its own test.
+    runner.validator_editions = lambda kind, year, subject: set()
 
 
 def tearDownModule():
     runner._prevalidate = _ORIG_PREVALIDATE
+    runner.validator_editions = _ORIG_VALIDATOR_EDITIONS
 
 
 class PromptKillTime(unittest.TestCase):
@@ -116,6 +122,30 @@ class Planning(unittest.TestCase):
         self.assertEqual(sum(blocked.values()), 2)
         with self.assertRaises(runner.Blocked):
             runner.live_absent(["1 OR 1=1"])
+
+
+class ValidatorEditionFilter(unittest.TestCase):
+    def setUp(self):
+        self.addCleanup(setattr, runner, "validator_editions", runner.validator_editions)
+
+    def item(self, eds):
+        return {"lane": "residency_dental_proxy_policy", "type": "residency", "year": 1396,
+                "subject": "pediatric-dentistry", "proxy_candidates_ordered": True,
+                "proxy_candidate_editions": eds}
+
+    def test_drops_editions_the_validator_never_selects(self):
+        runner.validator_editions = lambda k, y, s: {"mcdonald-avery-pediatric@11e"}
+        self.assertEqual(runner.select_editions(self.item(["mcdonald-avery-pediatric@11e", "nowak-pediatric@6e"])),
+                         (["mcdonald-avery-pediatric@11e"], None))
+        self.assertEqual(runner.select_editions(self.item(["nowak-pediatric@6e"])),
+                         ([], "no_validator_selected_edition"))
+
+    def test_unknown_catalog_keeps_manifest_set(self):
+        runner.validator_editions = lambda k, y, s: set()
+        self.assertEqual(runner.select_editions(self.item(["nowak-pediatric@6e"]))[0], ["nowak-pediatric@6e"])
+
+    def test_real_catalog_lookup_fails_soft(self):
+        self.assertEqual(_ORIG_VALIDATOR_EDITIONS("residency", "not-a-year", "x"), set())
 
 
 class StateAndReceipts(unittest.TestCase):

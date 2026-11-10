@@ -44,13 +44,26 @@ def study_docs(questions: list[dict], batch: dict) -> dict[int, dict]:
     return docs
 
 
+_FA_DIGITS = str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹")
+
+
+def same_lineage_note(reference_year: int, exam_year: int) -> str:
+    """Policy label (not science): names both years and states the exam-year
+    edition's official status is unverified, as valid_proxy_note requires."""
+    return (f"این ارجاع پروکسی هم‌تبار از فهرست رسمی سال {str(int(reference_year)).translate(_FA_DIGITS)}"
+            f" برای آزمون سال {str(int(exam_year)).translate(_FA_DIGITS)}"
+            " است؛ رسمی بودن این ویرایش برای سال آزمون تأیید نشده است.")
+
+
 def _demote(row: dict, reason: str) -> dict:
     return {**row, "decision": "pending", "pending_reason": reason}
 
 
-def normalize(draft: dict, questions: list[dict], batch: dict, chapter_of, reference_year_of) -> tuple[dict, dict]:
+def normalize(draft: dict, questions: list[dict], batch: dict, chapter_of, reference_year_of,
+              scope_of=None) -> tuple[dict, dict]:
     """Returns (normalized draft, counts). chapter_of(edition, sha, page) -> str|None;
-    reference_year_of(edition, subject) -> int|None. Neither consults the model."""
+    reference_year_of(edition, subject) -> int|None; optional scope_of(exam_year, edition)
+    -> set of in-scope chapter numbers or None (no explicit list). None consults the model."""
     from retrospective_reference_policy import is_retrospective, retrospective_note
     by_id = {q["id"]: q for q in questions}
     out, counts = [], {"proposed": 0, "demoted": 0}
@@ -78,7 +91,8 @@ def normalize(draft: dict, questions: list[dict], batch: dict, chapter_of, refer
                   "official_key_not_single_final" if key_class != batch["key_class"] else
                   "edition_sha_page_not_on_verified_map" if not chapter else
                   "chapter_disagrees_with_page_map" if model_ch is not None and str(model_ch) != chapter else
-                  "reference_year_unavailable" if not isinstance(ref_year, int) or ref_year < 1397 else None)
+                  "reference_year_unavailable" if not isinstance(ref_year, int) or ref_year < 1397 else
+                  "chapter_outside_official_scope" if _outside_scope(scope_of, q["year"], ed, chapter) else None)
         if reason:
             out.append(_demote(row, reason)); counts["demoted"] += 1; continue
         norm = {**row, **ident, "key_class": key_class, "basis": basis, "node_id": chapter,
@@ -86,6 +100,8 @@ def normalize(draft: dict, questions: list[dict], batch: dict, chapter_of, refer
                 "newer_editions_searched": list(row.get("newer_editions_searched") or [])}
         if basis == "retrospective_proxy_1397_plus" and is_retrospective(q["year"]):
             norm["note_fa"] = retrospective_note(ref_year, q["year"])
+        elif basis == "same_lineage_proxy":
+            norm["note_fa"] = same_lineage_note(ref_year, q["year"])
         elif not (row.get("note_fa") or row.get("persian_note")):
             out.append(_demote(row, "proxy_note_missing")); counts["demoted"] += 1; continue
         else:
@@ -95,6 +111,13 @@ def normalize(draft: dict, questions: list[dict], batch: dict, chapter_of, refer
         counts["proposed"] += 1
     return {**draft, "batch_id": batch["batch_id"], "normalized_by": "classification_v3.normalize",
             "decisions": out}, counts
+
+
+def _outside_scope(scope_of, year, edition, chapter) -> bool:
+    if scope_of is None:
+        return False
+    listed = scope_of(year, edition)
+    return bool(listed) and str(chapter) not in listed
 
 
 def _write(path: Path, obj) -> None:
@@ -149,12 +172,59 @@ def normalize_case(case_dir: Path, batch: dict, chapter_of=chapter_from_map, ref
         return {"already": True}
     if not (case_dir / "decisions.model.json").exists():
         _write(case_dir / "decisions.model.json", draft)
-    norm, counts = normalize(draft, questions, batch, chapter_of, reference_year_of)
+    try:
+        scope_of = scope_lookup(batch.get("type", "residency"), batch["subject"])
+    except Exception:  # the pinned validator still enforces scope downstream
+        scope_of = None
+    norm, counts = normalize(draft, questions, batch, chapter_of, reference_year_of, scope_of)
     _write(draft_p, norm)
     return counts
 
 
 PROD = Path("/srv/fanoos/current")
+
+
+def official_rows(exam_type: str, year: int, subject: str, bank: Path | None = None) -> dict:
+    """{edition: validity row} chosen exactly as the pinned apply_classification.py does."""
+    from retrospective_reference_policy import is_retrospective, selected_reference_rows
+    from same_lineage_proxy_policy import is_proxy_exam_year, selected_non_residency_proxy_rows
+    from same_lineage_proxy_policy import selected_reference_rows as same_lineage_rows
+    bank = bank or PROD / "data/bank"
+    catalog = json.loads((bank / "catalog.json").read_text("utf-8"))
+    pdfs = json.loads((bank / "reference-pdfs.json").read_text("utf-8"))["editions"]
+    runs = json.loads((bank / "reference-chapter-pages.json").read_text("utf-8"))["editions"]
+    if is_retrospective(year):
+        rows = selected_reference_rows(catalog, exam_type, year, subject, pdfs, runs)
+    elif exam_type == "residency" and is_proxy_exam_year(year):
+        rows = same_lineage_rows(catalog, exam_type, year, subject, pdfs, runs)
+    elif exam_type in ("national", "board", "promotion"):
+        rows = selected_non_residency_proxy_rows(catalog, exam_type, year, subject, pdfs, runs) or [
+            v for v in catalog["validity"] if v.get("exam_type") == exam_type and int(v["year"]) == year
+            and v.get("subject") == subject and v.get("official") is True]
+    else:
+        rows = [v for v in catalog["validity"] if v.get("exam_type") == exam_type
+                and int(v["year"]) == year and v.get("subject") == subject]
+    out: dict = {}
+    for row in rows:
+        out.setdefault(row["edition"], row)
+    return out
+
+
+def scope_chapters(row: dict | None):
+    """Sorted explicit in-scope chapter numbers, or None when the row lists none."""
+    listed = (row or {}).get("scope_chapters") or []
+    return sorted({str(item["number"]) for item in listed}, key=lambda c: (len(c), c)) or None
+
+
+def scope_lookup(exam_type: str, subject: str, bank: Path | None = None):
+    cache: dict = {}
+
+    def scope_of(year, edition):
+        if year not in cache:
+            cache[year] = official_rows(exam_type, int(year), subject, bank)
+        found = scope_chapters(cache[year].get(edition))
+        return set(found) if found else None
+    return scope_of
 REJECTED_RE = __import__("re").compile(r"^REJECTED Q(\d+): (.{1,160})", __import__("re").M)
 
 

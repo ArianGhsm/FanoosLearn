@@ -66,6 +66,23 @@ class Prep(unittest.TestCase):
             self.assertEqual(res["editions"], {"a@1": "ok", "b@2": "prep_time_budget"})
             self.assertEqual(sorted(p.name for p in Path(d).iterdir()), ["questions.json"])
 
+    def test_prepare_marks_official_scope_on_leads(self):
+        qs = prep.rows_to_questions([self.ROW])
+        leads = {"a@1": {"pdf_sha256": "f" * 64, "page_count": 9,
+                         "by_question": {qs[0]["id"]: [{"page": 4, "score": 3.0, "chapter": "2"},
+                                                       {"page": 7, "score": 2.0, "chapter": "5"}]}}}
+        year = qs[0]["year"]
+        with tempfile.TemporaryDirectory() as d:
+            prep.prepare(Path(d), {"batch_id": "b", "question_ids": [qs[0]["id"]], "selected_editions": ["a@1", "c@3"]},
+                         fetch=lambda ids: qs, scan=lambda q, e, b: leads,
+                         scope_fn=lambda q, b: {year: {"a@1": ["2"], "c@3": None}})
+            (doc_q,) = json.loads(Path(d, "questions.json").read_text())["questions"]
+            self.assertEqual([x["in_scope"] for x in doc_q["page_leads"]["a@1"]], [True, False])
+            self.assertEqual(doc_q["official_scope_chapters"], {"a@1": ["2"], "c@3": None})
+
+    def test_scope_failure_is_not_fatal(self):
+        self.assertEqual(prep.official_scope([{"year": 1392}], {"selected_editions": []}), {})
+
     def test_invalid_ids_refused_before_sql(self):
         with self.assertRaises(ValueError):
             prep.fetch_questions(["1; DROP TABLE x"])

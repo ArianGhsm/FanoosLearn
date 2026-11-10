@@ -96,11 +96,34 @@ def scan_leads(questions: list[dict], editions: list[str], budget_s: float, top:
     return leads
 
 
-def prepare(case_dir: Path, batch: dict, budget_s: float = 150.0, fetch=fetch_questions, scan=scan_leads) -> dict:
+def official_scope(questions: list[dict], batch: dict) -> dict:
+    """{exam_year: {edition: [in-scope chapters] | None}} from the pinned catalog,
+    selected exactly as the production validator selects it (None = no explicit list)."""
+    try:
+        from classification_v3.normalize import official_rows, scope_chapters
+        out = {}
+        for year in sorted({q["year"] for q in questions}):
+            rows = official_rows(batch.get("type", "residency"), int(year), batch["subject"])
+            out[year] = {ed: scope_chapters(rows.get(ed)) for ed in batch["selected_editions"]}
+        return out
+    except Exception:  # scope hints are optional; the trusted validator still enforces scope
+        return {}
+
+
+def prepare(case_dir: Path, batch: dict, budget_s: float = 150.0, fetch=fetch_questions, scan=scan_leads,
+            scope_fn=official_scope) -> dict:
     questions = fetch(batch["question_ids"])
     leads = scan(questions, batch["selected_editions"], budget_s) if questions else {}
+    scope = scope_fn(questions, batch)
     for q in questions:
         q["page_leads"] = {ed: v.get("by_question", {}).get(q["id"], []) for ed, v in leads.items()}
+        allowed = scope.get(q["year"], {})
+        for ed, items in q["page_leads"].items():
+            listed = allowed.get(ed)
+            for lead in items if listed else []:
+                if isinstance(lead, dict) and lead.get("chapter") not in (None, ""):
+                    lead["in_scope"] = str(lead["chapter"]) in listed
+        q["official_scope_chapters"] = {ed: allowed.get(ed) for ed in batch["selected_editions"]}
     doc = {"format": "fanoos.classification.v3-prep/1", "batch_id": batch["batch_id"],
            "notes": "Private SELECT-only prep. Page leads are scanner hints, not evidence. Never import.",
            "editions": {ed: {k: v for k, v in info.items() if k != "by_question"} for ed, info in leads.items()},
