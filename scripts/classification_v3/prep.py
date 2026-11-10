@@ -22,7 +22,7 @@ sys.path[:0] = [str(HERE.parent), str(HERE), str(HERE.parent / "references")]
 # HEX keeps multi-line/tabbed Persian text intact through mysql --batch.
 QUESTIONS_SQL = """SET SESSION group_concat_max_len=1048576;
 SELECT q.id, et.type_key, si.exam_year, si.exam_round, q.number_in_sitting, HEX(q.stem),
- (SELECT GROUP_CONCAT(CONCAT(c.position, ':', HEX(IFNULL(c.text, ''))) ORDER BY c.position SEPARATOR ',')
+ (SELECT GROUP_CONCAT(CONCAT(c.position, ':', HEX(IFNULL(c.text, '')), ':', IFNULL(HEX(c.image), 'N')) ORDER BY c.position SEPARATOR ',')
    FROM bank_question_choices c WHERE c.question_id=q.id AND c.workspace_id=q.workspace_id),
  (SELECT CONCAT_WS('|', IFNULL(a.choice_position,''), IFNULL(a.also_correct_positions,''), a.status)
    FROM bank_official_answers a WHERE a.question_id=q.id AND a.workspace_id=q.workspace_id
@@ -51,11 +51,14 @@ def rows_to_questions(rows: list[list[str]]) -> list[dict]:
     out = []
     for r in rows:
         qid, typ, year, rnd, num, stem_hex, ch_hex, ans, n_src, n_full = r
-        pairs = [c.split(":", 1) for c in ch_hex.split(",")] if ch_hex and ch_hex != "NULL" else []
-        choices = [dec(h) for _, h in sorted(pairs, key=lambda x: int(x[0]))]
+        parts = [(c.split(":", 2) + ["N"])[:3] for c in ch_hex.split(",")] if ch_hex and ch_hex != "NULL" else []
+        parts.sort(key=lambda x: int(x[0]))
+        choices = [dec(h) for _, h, _ in parts]
+        # Exporter shape (export_server_candidates.php): image choices are {text, image}.
+        study_choices = [dec(h) if img == "N" else {"text": dec(h), "image": dec(img)} for _, h, img in parts]
         answer = parse_answer("" if ans == "NULL" else ans)
         out.append({"id": qid, "type": typ, "year": int(year), "round": int(rnd), "number": int(num),
-                    "stem": dec(stem_hex), "choices": choices, "answer": answer,
+                    "stem": dec(stem_hex), "choices": choices, "study_choices": study_choices, "answer": answer,
                     "key": None if answer["choice"] is None else str(answer["choice"]),
                     "source_rows": int(n_src), "complete_source_rows": int(n_full)})
     return out

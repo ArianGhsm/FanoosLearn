@@ -177,6 +177,8 @@ class Session(unittest.TestCase):
             runner.live_absent = lambda ids: set(ids)
             prepped = []
             runner._prepare = lambda case, batch: prepped.append(batch["batch_id"]) or {"questions": 2}
+            orig_norm, normalized = runner._normalize, []
+            runner._normalize = lambda case, batch: normalized.append(batch["batch_id"]) or {"proposed": 1}
             try:
                 args = ["--manifest", str(d / "m.json"), "--state-dir", str(d / "st"),
                         "--case-root", str(d / "cases"), "--queue", str(d / "q"),
@@ -186,7 +188,8 @@ class Session(unittest.TestCase):
                 (d / "cases").mkdir()
                 self.assertEqual(runner.run(runner.parse(args)), 4)  # stops awaiting receipts
             finally:
-                runner.live_absent, runner._prepare = orig, orig_prep
+                runner.live_absent, runner._prepare, runner._normalize = orig, orig_prep, orig_norm
+            self.assertTrue(normalized)  # trusted normalization runs before the QA request
             self.assertTrue(prepped)  # non-model prep runs before every session
             st = json.loads((d / "st/state.json").read_text())
             self.assertEqual(st["accepted_total"], 0)
@@ -228,7 +231,7 @@ class Session(unittest.TestCase):
             self.assertEqual(list((d / "q").glob("*.json")) if (d / "q").exists() else [], [])
             self.assertTrue(set(b["question_ids"]) <= runner.excluded_ids(st))
 
-    def test_prep_failure_does_not_block_session(self):
+    def test_prep_failure_still_runs_session_but_holds_batch_from_qa(self):
         with tempfile.TemporaryDirectory() as d:
             d = Path(d)
             (d / "m.json").write_text(json.dumps({"items": [item(1, 1400, eds=["a@1"])]}))
@@ -254,7 +257,11 @@ class Session(unittest.TestCase):
             finally:
                 runner.live_absent, runner._prepare = orig, orig_prep
             (b,) = json.loads((d / "st/state.json").read_text())["batches"].values()
-            self.assertEqual(b["status"], "staged")
+            # The session still ran (seconds recorded); without prep questions.json the
+            # trusted normalization cannot build QA study files, so nothing reaches QA.
+            self.assertIn("seconds", b)
+            self.assertEqual(b["status"], "failed")
+            self.assertFalse((d / "q").exists() and list((d / "q").glob("*.json")))
 
     def test_unreached_ids_return_after_terminal_batch_with_attempt_cap(self):
         st = {"batches": {"b": {"status": "no_proposals", "question_ids": ["x", "y"], "unreached": ["y"]},

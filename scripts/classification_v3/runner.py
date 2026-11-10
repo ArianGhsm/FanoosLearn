@@ -506,9 +506,23 @@ def run(a) -> int:
             rec["status"] = "no_proposals"
             rec["drafted"] = 0
         else:
-            rec["status"] = "staged"
-            rec["drafted"] = counts["drafted"]
-            write_request(a.queue, batch, case_dir, counts, now)
+            # Trusted non-model normalization: identity/policy fields from prep + catalog,
+            # exporter-identical study files for host QA. Failure leaves the batch unstaged.
+            try:
+                log("normalize", batch_id=bid, **{k: v for k, v in getattr(a, "normalize", lambda *_: {})(case_dir, batch).items()})
+                counts = staged_counts(case_dir)
+            except Exception as exc:
+                log("normalize_failed", batch_id=bid, error=type(exc).__name__)
+                counts = {**counts, "normalize_failed": True}
+            if counts.get("normalize_failed"):
+                rec["status"] = "failed"
+            elif counts["drafted"] == 0:
+                rec["status"] = "no_proposals"
+                rec["drafted"] = 0
+            else:
+                rec["status"] = "staged"
+                rec["drafted"] = counts["drafted"]
+                write_request(a.queue, batch, case_dir, counts, now)
         rec["unreached"] = [q for q in unreached_ids(case_dir) if q in set(batch["question_ids"])]
         rec.update({k: res[k] for k in ("rc", "killed", "seconds")})
         atomic_write(state_path, state)
@@ -552,12 +566,18 @@ def parse(argv=None):
         p.error("--trusted-uid (operator receipt owner) is required for execution")
     a.forbidden_user_check = lambda: _username() == "fanoosupd"
     a.prepare = lambda case, batch: _prepare(case, batch)  # late-bound for tests
+    a.normalize = lambda case, batch: _normalize(case, batch)
     return a
 
 
 def _prepare(case_dir: Path, batch: dict) -> dict:
     from classification_v3 import prep
     return prep.prepare(case_dir, batch)
+
+
+def _normalize(case_dir: Path, batch: dict) -> dict:
+    from classification_v3 import normalize
+    return normalize.normalize_case(case_dir, batch)
 
 
 def _username() -> str:
