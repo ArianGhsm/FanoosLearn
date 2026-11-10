@@ -269,6 +269,10 @@ def reconcile(state: dict, receipts: dict[str, dict], now: float) -> dict:
 
 
 MAX_ATTEMPTS = 3
+RETRY_MAX_ATTEMPTS = 2
+# Owner-forbidden ids, never dispatched: 1391 residency endodontics Q178
+# (official key 1 conflicts with text supporting an additional choice 3).
+NEVER_DISPATCH = frozenset({"01a12826-2ef4-7417-9a3d-4824491ef393"})
 
 
 def excluded_ids(state: dict) -> set[str]:
@@ -280,14 +284,60 @@ def excluded_ids(state: dict) -> set[str]:
     QA-rejected or researched-pending ids stay excluded.
     """
     attempts = state.get("attempts", {})
-    out = set()
+    out = set(NEVER_DISPATCH)
     for b in state.get("batches", {}).values():
         # "resubmitted" records are skipped: their successor carries the same ids.
         if b["status"] not in ("leased", "staged", "operator_confirmed", "failed", "no_proposals"):
             continue
-        retry = set(b.get("unreached", [])) if b["status"] in ("operator_confirmed", "no_proposals") else set()
-        out |= {q for q in b["question_ids"] if q not in retry or attempts.get(q, 1) >= MAX_ATTEMPTS}
+        terminal = b["status"] in ("operator_confirmed", "no_proposals")
+        unreached = set(b.get("unreached", [])) if terminal else set()
+        # Located-but-mechanically-rejected or lead-only misses get ONE more
+        # session (now with find_pages + in-session quote check); never more.
+        retry_once = set(b.get("retryable", [])) if terminal else set()
+        out |= {q for q in b["question_ids"]
+                if not ((q in unreached and attempts.get(q, 1) < MAX_ATTEMPTS)
+                        or (q in retry_once and attempts.get(q, 1) < RETRY_MAX_ATTEMPTS))}
     return out
+
+
+# Pending reasons that reflect search/mechanics, not science: retry once.
+RETRYABLE_RE = re.compile(
+    r"not[_ -]?located|unlocated|not[_ ]found|no[_ ](direct[_ ]|explicit[_ ])?(answer[_ -]bearing[_ ])?passage"
+    r"|lead|not an exact|not exact|inexact|quote|proxy requires a note|note naming", re.I)
+# Scientific or policy outcomes: never retried automatically.
+FINAL_PENDING_RE = re.compile(
+    r"conflict|contradict|below[_ ]?(0?\.85|confidence)|low[_ ]confidence|confidence\s*<|indirect"
+    r"|outside (the official|scope)|outside[_ ]scope|evidence[_ ]insufficient|finder_searched|voided|figure|fig\b",
+    re.I)
+
+
+def retryable_ids(case_dir: Path) -> list[str]:
+    """Pending ids whose reason is a lead miss / inexact quote / proxy-note rejection."""
+    try:
+        d = json.loads((case_dir / "decisions.draft.json").read_text("utf-8"))
+    except (OSError, ValueError):
+        return []
+    out = []
+    for r in d.get("decisions", []) if isinstance(d, dict) else []:
+        if not isinstance(r, dict) or r.get("decision") != "pending" or not r.get("question_id"):
+            continue
+        why = str(r.get("reason") or r.get("pending_reason") or "")
+        if why == "not_reached_in_session" or not why or FINAL_PENDING_RE.search(why):
+            continue
+        if RETRYABLE_RE.search(why):
+            out.append(str(r["question_id"]))
+    return out
+
+
+def backfill_retryable(state: dict, case_root: Path) -> int:
+    """One-time: terminal batches researched before retry tracking get their retryable ids."""
+    n = 0
+    for bid, b in state.get("batches", {}).items():
+        if b["status"] in ("operator_confirmed", "no_proposals") and "retryable" not in b:
+            ids = set(b["question_ids"])
+            b["retryable"] = [q for q in retryable_ids(case_root / f"v3-{bid}") if q in ids]
+            n += 1
+    return n
 
 
 def unreached_ids(case_dir: Path) -> list[str]:
@@ -595,6 +645,7 @@ def run(a) -> int:
     for _ in range(a.max_batches):
         now = time.time()
         state = reconcile(load_json(state_path, {}), trusted_receipts(a.receipts, a.trusted_uids), now)
+        backfill_retryable(state, a.case_root)
         if not a.dry_run:
             for old_id, outcome in revalidate_staged(state, a.queue, a.case_root, now, a.prevalidate):
                 log("revalidate", batch_id=old_id, outcome=outcome)
@@ -698,6 +749,7 @@ def run(a) -> int:
                 for _, outcome in revalidate_staged({"batches": {bid: rec}}, a.queue, a.case_root, now, a.prevalidate):
                     log("revalidate", batch_id=bid, outcome=outcome)
         rec["unreached"] = [q for q in unreached_ids(case_dir) if q in set(batch["question_ids"])]
+        rec["retryable"] = [q for q in retryable_ids(case_dir) if q in set(batch["question_ids"])]
         rec.update({k: res[k] for k in ("rc", "killed", "seconds")})
         atomic_write(state_path, state)
         executed += 1

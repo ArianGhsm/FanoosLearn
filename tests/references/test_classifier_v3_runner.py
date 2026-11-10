@@ -450,9 +450,9 @@ class Session(unittest.TestCase):
         st = {"batches": {"b": {"status": "no_proposals", "question_ids": ["x", "y"], "unreached": ["y"]},
                           "s": {"status": "staged", "question_ids": ["z"], "unreached": ["z"]}},
               "attempts": {"x": 1, "y": 1, "z": 1}}
-        self.assertEqual(runner.excluded_ids(st), {"x", "z"})
+        self.assertEqual(runner.excluded_ids(st) - runner.NEVER_DISPATCH, {"x", "z"})
         st["attempts"]["y"] = runner.MAX_ATTEMPTS
-        self.assertEqual(runner.excluded_ids(st), {"x", "y", "z"})
+        self.assertEqual(runner.excluded_ids(st) - runner.NEVER_DISPATCH, {"x", "y", "z"})
 
     def test_unreached_ids_reads_only_not_reached_pending(self):
         with tempfile.TemporaryDirectory() as d:
@@ -462,6 +462,50 @@ class Session(unittest.TestCase):
                 {"question_id": "c", "decision": "proposed"}]}))
             self.assertEqual(runner.unreached_ids(Path(d)), ["a"])
             self.assertEqual(runner.unreached_ids(Path(d, "missing")), [])
+
+    def test_retryable_ids_classify_pending_reasons(self):
+        rows = [("a", "searched_leads_no_passage (McDonald p120)"),
+                ("b", "trusted_validator_rejected: evidence is not an exact case/punctuation match"),
+                ("c", "trusted_validator_rejected: same-lineage proxy requires a note naming years"),
+                ("d", "key_conflict: official key contradicts Neville p571"),
+                ("e", "low_confidence: p134 mapping unclear"),
+                ("f", "trusted_validator_rejected: chapter 18 is outside the official year-specific scope"),
+                ("g", "answer only in Fig 8.24 diagram; text does not state it"),
+                ("h", "not_reached_in_session"),
+                ("i", "finder_searched: not located in in-scope chapters"),
+                ("j", "evidence_insufficient"),
+                ("k", "not located in 6e (no cement trail passage).")]
+        with tempfile.TemporaryDirectory() as d:
+            Path(d, "decisions.draft.json").write_text(json.dumps({"decisions": [
+                {"question_id": q, "decision": "pending", "reason": r} for q, r in rows]
+                + [{"question_id": "p", "decision": "proposed", "reason": "not located"}]}))
+            self.assertEqual(runner.retryable_ids(Path(d)), ["a", "b", "c", "k"])
+            self.assertEqual(runner.retryable_ids(Path(d, "missing")), [])
+
+    def test_retryable_ids_return_once_and_never_dispatch_is_permanent(self):
+        forbidden = next(iter(runner.NEVER_DISPATCH))
+        st = {"batches": {"b": {"status": "operator_confirmed", "question_ids": ["x", "r", forbidden],
+                                "retryable": ["r", forbidden], "unreached": [forbidden]},
+                          "s": {"status": "staged", "question_ids": ["z"], "retryable": ["z"]}},
+              "attempts": {"x": 1, "r": 1, "z": 1, forbidden: 1}}
+        self.assertEqual(runner.excluded_ids(st), {"x", "z", forbidden})
+        st["attempts"]["r"] = runner.RETRY_MAX_ATTEMPTS
+        self.assertIn("r", runner.excluded_ids(st))
+
+    def test_backfill_retryable_only_terminal_batches_without_key(self):
+        with tempfile.TemporaryDirectory() as d:
+            for bid in ("t", "u", "w"):
+                Path(d, f"v3-{bid}").mkdir()
+                Path(d, f"v3-{bid}", "decisions.draft.json").write_text(json.dumps({"decisions": [
+                    {"question_id": "q" + bid, "decision": "pending", "reason": "not_located on leads"},
+                    {"question_id": "zz", "decision": "pending", "reason": "not_located on leads"}]}))
+            st = {"batches": {"t": {"status": "no_proposals", "question_ids": ["qt"]},
+                              "u": {"status": "staged", "question_ids": ["qu"]},
+                              "w": {"status": "operator_confirmed", "question_ids": ["qw"], "retryable": []}}}
+            self.assertEqual(runner.backfill_retryable(st, Path(d)), 1)
+            self.assertEqual(st["batches"]["t"]["retryable"], ["qt"])   # foreign id zz dropped
+            self.assertNotIn("retryable", st["batches"]["u"])
+            self.assertEqual(st["batches"]["w"]["retryable"], [])
 
 
 if __name__ == "__main__":

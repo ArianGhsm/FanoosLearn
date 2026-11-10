@@ -14,7 +14,17 @@ Rules:
    a SELECT-only live query) holds every batch id with exam year/round/number, stem,
    choices (1-based list), latest official answer, source_rows/complete_source_rows and
    page_leads per edition (page/score/chapter scanner hints, NOT evidence). Do not
-   re-export, re-map ids or re-scan; skip any question whose complete_source_rows > 0.
+   re-export or re-map ids; skip any question whose complete_source_rows > 0.
+   Prep leads come from a small Persian glossary and often miss. FIRST, translate every
+   question into 4-10 English textbook terms/phrases (stem concept + keyed answer
+   concept; synonyms the book would use) in {{CASE_DIR}}/terms.json as
+   {"<question_id>": ["term", ["exact phrase", 2.0], ...]} and run ONCE per edition:
+     python3 -B scripts/classification_v3/find_pages.py search --case {{CASE_DIR}} \
+       --edition <edition> --terms {{CASE_DIR}}/terms.json
+   (~40-80 s; one RAM-only pass over that edition's official in-scope chapter pages,
+   ranked pages + short windows for every question). Windows are pointers, not quotes.
+   Re-run for individual questions with different terms when the top pages miss. Delete
+   terms.json before you finish.
    If questions.json is missing, fall back to read-only SELECTs via
    `mysql --defaults-extra-file=/etc/fanoos/mysql-migrator.cnf fanoos_prod`.
    A helper failure is never a reason to stop: read candidate pages directly with
@@ -29,7 +39,11 @@ Rules:
    The quote is checked by the production validator against that page's text: copy it
    character-for-character (same case, punctuation, hyphens, spacing) from ONE contiguous
    run of the page text you read; do not paraphrase, join columns or fix typos. A quote
-   that is not an exact substring is rejected and the whole question is lost.
+   that is not an exact substring is rejected and the whole question is lost. Use 8-40
+   words (never fewer than 4 per "..."-joined fragment), not starting/ending next to a page
+   number. Check each quote before recording it:
+     python3 -B scripts/classification_v3/find_pages.py quote --edition <ed> --page <n> --quote "<q>"
+   (the production exact-fragment rule); fix it on the page until "ok": true.
 4. Proxy basis (residency 1391-1396): use the newest edition of each family first; step
    back one edition only if the page is absent; record reference_year,
    newer_editions_searched and basis. 1396 = same_lineage_proxy. The Persian proxy note
@@ -40,11 +54,15 @@ Rules:
    null in that map for 1396 is not selectable. A page whose chapter is outside the list is
    NOT a proposal: outside-scope only via the documented outside_scope_exam_question route
    (after checking in-scope chapters); scope_unverified only via its operator.
-   Unlocated -> pending, never none.
+   Unlocated -> pending, never none. When a question stays pending after find_pages,
+   start its reason with "finder_searched:" (it is then not retried automatically);
+   reasons naming a key conflict, low confidence, figure-only or outside-scope are final.
 6. Voided keys: still need chapter+page; never treat voided as a final key.
 7. Write {{CASE_DIR}}/decisions.draft.json as {"decisions":[{"question_id","decision":
    "proposed"|"pending", ...evidence fields}]} and run ONLY the read-only precheck/validator,
-   saving {{CASE_DIR}}/precheck.json. Rewrite the draft (write a temp file, then rename)
+   saving {{CASE_DIR}}/precheck.json. Before finishing also run
+   `python3 -B scripts/classification_v3/find_pages.py check-draft --case {{CASE_DIR}}` and
+   fix or demote (pending, reason "quote_unfixable") every failing proposal. Rewrite the draft (write a temp file, then rename)
    after EVERY question, so a session killed at its time limit keeps finished work.
    The session is killed at {{KILL_AT_UTC}} (UTC). Run `date -u` after each question and keep
    working through the remaining questions until about 60 seconds before that time; do not
