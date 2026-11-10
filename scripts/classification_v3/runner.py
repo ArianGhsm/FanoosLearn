@@ -281,7 +281,7 @@ def live_absent(ids: list[str]) -> set[str]:
 
 
 # ---------------------------------------------------------------- session
-def render_prompt(batch: dict, case_dir: Path, template: str) -> str:
+def render_prompt(batch: dict, case_dir: Path, template: str, kill_at_utc: str = "unknown") -> str:
     for e in batch["selected_editions"]:
         if not EDITION_RE.match(e):
             raise Blocked("edition_key_invalid")
@@ -294,7 +294,8 @@ def render_prompt(batch: dict, case_dir: Path, template: str) -> str:
             .replace("{{EDITIONS}}", ", ".join(batch["selected_editions"]))
             .replace("{{PROXY_BASIS}}", batch["proxy_basis"] or "none (official exam-year list)")
             .replace("{{KEY_CLASS}}", batch["key_class"])
-            .replace("{{YEARS}}", ", ".join(str(y) for y in batch["years"])))
+            .replace("{{YEARS}}", ", ".join(str(y) for y in batch["years"]))
+            .replace("{{KILL_AT_UTC}}", kill_at_utc))
 
 
 def scan_quota(text: str) -> tuple[bool, int | None]:
@@ -449,8 +450,10 @@ def run(a) -> int:
             remaining = int(a.deadline_utc.timestamp() - time.time()) if a.deadline_utc else a.timeout
             if remaining < 10:
                 raise Blocked("48h_deadline_reached_before_model")
-            res = run_session(a.session_cmd, render_prompt(batch, case_dir, template),
-                              a.workdir, case_dir / "session.out", min(a.timeout, remaining))
+            limit = min(a.timeout, remaining)
+            kill_at = datetime.fromtimestamp(time.time() + limit, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            res = run_session(a.session_cmd, render_prompt(batch, case_dir, template, kill_at),
+                              a.workdir, case_dir / "session.out", limit)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
         counts = staged_counts(case_dir)

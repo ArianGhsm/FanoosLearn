@@ -22,6 +22,16 @@ def item(qid, year, lane="residency_dental_ready", subject="oral-pathology", eds
             "proxy_candidate_editions": proxy or [], "proxy_candidates_ordered": ordered}
 
 
+class PromptKillTime(unittest.TestCase):
+    def test_researcher_prompt_carries_absolute_kill_time(self):
+        batch = {"batch_id": "b1", "subject": "orthodontics", "type": "residency",
+                 "selected_editions": ["proffit-orthodontics@6e"], "proxy_basis": None,
+                 "key_class": "final", "years": [1391]}
+        text = runner.render_prompt(batch, Path("/x"), runner.PROMPT.read_text(), "2026-11-10T03:40:00Z")
+        self.assertIn("killed at 2026-11-10T03:40:00Z", text)
+        self.assertNotIn("{{", text)
+
+
 class Planning(unittest.TestCase):
     def test_groups_across_years_by_selected_edition_set(self):
         items = [item(i, 1399 + i % 3, eds=["neville@5e"]) for i in range(1, 61)]
