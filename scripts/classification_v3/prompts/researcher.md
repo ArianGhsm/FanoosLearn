@@ -12,6 +12,10 @@ private files inside {{CASE_DIR}}.
 Rules:
 1. Export the source-only study for these ids from the live DB (SELECT-only exporter)
    into {{CASE_DIR}}; confirm each still has no same-row node_id+pdf_page+pdf_sha256 source.
+   The study is keyed by exam year + question number, not id: that is expected, not a
+   blocker. Map each id to (year, round, number) and check its source rows with read-only
+   SELECTs via `mysql --defaults-extra-file=/etc/fanoos/mysql-migrator.cnf fanoos_prod`.
+   A format mismatch in a helper is never a reason to stop: continue question by question.
 2. Verify each PDF with scripts/references/verified_reference_pdf.py; record its SHA-256.
    Read ONE physical page at a time in memory; never create extracted text, OCR,
    whole-book text, caches or search indexes; never copy a PDF.
