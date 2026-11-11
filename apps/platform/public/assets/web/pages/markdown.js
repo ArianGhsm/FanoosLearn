@@ -1,7 +1,8 @@
 import { faOptionLetters, faText } from './runner-view.js';
+import { EMPHASIS, inlineRuns, isTableRule, tableCells } from './markdown-rules.js';
 
 /*
- * A deliberately tiny Markdown renderer for explanation text.
+ * A deliberately tiny Markdown renderer for explanation and lesson text.
  *
  * Explanations arrive as Markdown (headings, bold, lists) and are the most
  * valuable thing a student reads after an exam, so rendering them flat loses
@@ -11,28 +12,59 @@ import { faOptionLetters, faText } from './runner-view.js';
  * emits an HTML string is exactly the wrong tool here.
  *
  * Supported, because that is what the content actually uses: `## heading`,
- * `**bold**`, `- item` / `* item`, and blank-line-separated paragraphs.
- * Anything else renders as its literal text rather than disappearing.
+ * `**bold**`, `- item` / `* item`, blank-line-separated paragraphs, tables
+ * written `| a | b |` (a `|---|` line makes the first row the header), and
+ * semantic emphasis `{{term:…}}`, `{{key:…}}`, `{{note:…}}`, `{{warn:…}}`
+ * (markdown-rules.js). Anything else renders as its literal text rather
+ * than disappearing.
  */
 
-/** Splits a line into text and bold runs. */
+const fa = (text) => faText(faOptionLetters(text));
+
+/** Appends a line's text, bold and emphasis runs to target. */
 function inline(target, text) {
-    const pattern = /\*\*([^*]+)\*\*/g;
-    let index = 0;
-    let match;
-    while ((match = pattern.exec(text)) !== null) {
-        if (match.index > index) {
-            target.append(document.createTextNode(faText(faOptionLetters(text.slice(index, match.index)))));
+    for (const run of inlineRuns(text)) {
+        if (run.kind === 'text') {
+            target.append(document.createTextNode(fa(run.text)));
+            continue;
         }
         const strong = document.createElement('strong');
-        strong.textContent = faText(faOptionLetters(match[1]));
+        if (run.kind !== 'bold') {
+            strong.className = `x-em x-em--${run.kind}`;
+            const label = document.createElement('span');
+            label.className = 'x-sr';
+            label.textContent = `${EMPHASIS[run.kind]}: `;
+            strong.append(label);
+        }
+        strong.append(document.createTextNode(fa(run.text)));
         target.append(strong);
-        index = match.index + match[0].length;
-    }
-    if (index < text.length) {
-        target.append(document.createTextNode(faText(faOptionLetters(text.slice(index)))));
     }
     return target;
+}
+
+function table(rows) {
+    const wrap = document.createElement('div');
+    wrap.className = 'x-md__table';
+    const node = document.createElement('table');
+    const hasHead = rows.length > 1 && isTableRule(rows[1]);
+    const width = Math.max(...rows.filter((r) => !isTableRule(r)).map((r) => r.length));
+    const row = (cells, tag) => {
+        const tr = document.createElement('tr');
+        for (let i = 0; i < width; i += 1) tr.append(inline(document.createElement(tag), cells[i] ?? ''));
+        return tr;
+    };
+    if (hasHead) {
+        const thead = document.createElement('thead');
+        thead.append(row(rows[0], 'th'));
+        node.append(thead);
+    }
+    const tbody = document.createElement('tbody');
+    for (const cells of rows.slice(hasHead ? 2 : 0)) {
+        if (!isTableRule(cells)) tbody.append(row(cells, 'td'));
+    }
+    node.append(tbody);
+    wrap.append(node);
+    return wrap;
 }
 
 export function renderMarkdown(source) {
@@ -42,6 +74,7 @@ export function renderMarkdown(source) {
 
     let paragraph = null;
     let list = null;
+    let rows = null;
 
     const closeParagraph = () => {
         if (paragraph) root.append(paragraph);
@@ -51,9 +84,23 @@ export function renderMarkdown(source) {
         if (list) root.append(list);
         list = null;
     };
+    const closeTable = () => {
+        if (rows) root.append(table(rows));
+        rows = null;
+    };
 
     for (const raw of lines) {
         const line = raw.trim();
+
+        const cells = tableCells(line);
+        if (cells) {
+            closeParagraph();
+            closeList();
+            if (!rows) rows = [];
+            rows.push(cells);
+            continue;
+        }
+        closeTable();
 
         if (line === '') {
             closeParagraph();
@@ -91,5 +138,6 @@ export function renderMarkdown(source) {
 
     closeParagraph();
     closeList();
+    closeTable();
     return root;
 }

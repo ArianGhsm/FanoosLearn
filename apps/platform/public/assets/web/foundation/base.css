@@ -458,3 +458,61 @@ body {
     margin-top: 64px;
     background: var(--surface-muted);
 }
+
+/* Semantic emphasis and tables in rendered Markdown (markdown.js), shared by
+   lessons and explanations. Each kind differs by shape as well as colour. */
+
+.x-sr {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.x-em--term {
+    color: var(--info);
+}
+
+.x-em--key {
+    color: var(--accent-strong);
+    background: var(--accent-soft);
+    border-radius: 4px;
+    padding-inline: 0.15em;
+}
+
+.x-em--note {
+    color: var(--success);
+}
+
+.x-em--warn {
+    color: var(--warning);
+    text-decoration: underline wavy;
+    text-underline-offset: 0.25em;
+}
+
+.x-md__table {
+    max-inline-size: 100%;
+    overflow-x: auto;
+    margin-block: var(--space-3);
+}
+
+.x-md__table table {
+    inline-size: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-sm, 0.95rem);
+    line-height: 1.8;
+}
+
+.x-md__table th,
+.x-md__table td {
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--border-strong);
+    text-align: start;
+    vertical-align: top;
+}
+
+.x-md__table th {
+    background: var(--surface-muted);
+}
