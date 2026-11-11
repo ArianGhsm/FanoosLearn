@@ -55,10 +55,17 @@ DEFAULT_MAX_UNVERIFIED = 2
 # a 14-id session was killed at 691s with no output, so keep batches small.
 BATCH_MIN, BATCH_MAX = 8, 10
 LEASE_S = 3 * 3600
+# A staged batch whose independent QA verdict is older than this, without a trusted receipt,
+# is "operator_stalled" (e.g. quarantined by the host publisher). It stops holding a research
+# slot, but at most MAX_STALLED such batches are tolerated. It is never counted as accepted and
+# stays staged, so a later receipt still confirms it.
+OPERATOR_STALL_S = 3600
+MAX_STALLED = 2
 SESSION_TIMEOUT_S = 480
 ID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")  # UUID only
 EDITION_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,80}@[a-z0-9][a-z0-9._-]{0,40}$")
 SUBJECT_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,60}$")
+HEX_ID_RE = re.compile(r"^[0-9a-f]{16}$")  # batch id
 RECEIPT_FORMAT = "fanoos.classifier-v3.operator-status.v1"
 REQUEST_FORMAT = "fanoos.classifier-v3.operator-request.v1"
 ENV_KEEP = ("PATH", "HOME", "LANG", "LC_ALL", "TZ", "USER", "LOGNAME")
@@ -533,6 +540,23 @@ def resubmit_stale(state: dict, queue: Path, case_root: Path, now: float) -> lis
     return done
 
 
+def operator_stalled(state: dict, qa_dir: Path, now: float, own_uid: int | None = None) -> list[str]:
+    """Staged ids whose host-written QA verdict is older than OPERATOR_STALL_S (stat only)."""
+    own_uid = os.getuid() if own_uid is None else own_uid
+    out = []
+    for bid, b in (state.get("batches") or {}).items():
+        if b.get("status") != "staged" or not HEX_ID_RE.fullmatch(bid):
+            continue
+        try:
+            st = (qa_dir / f"{bid}.json").lstat()
+        except OSError:
+            continue
+        # Only a verdict written by another identity (the host QA) counts; never our own file.
+        if stat.S_ISREG(st.st_mode) and st.st_uid != own_uid and now - st.st_mtime > OPERATOR_STALL_S:
+            out.append(bid)
+    return sorted(out)
+
+
 def guard(state: dict, now: float, free_bytes: int, max_unverified: int) -> list[str]:
     reasons = []
     if free_bytes < MIN_FREE_BYTES:
@@ -541,7 +565,10 @@ def guard(state: dict, now: float, free_bytes: int, max_unverified: int) -> list
         reasons.append("provider_retry_after_backoff")
     if state.get("zero_accepted_streak", 0) >= MAX_ZERO_ACCEPTED:
         reasons.append("hard_stop_two_zero_accepted_batches")
-    if state.get("unverified_staged", 0) >= max_unverified:
+    stalled = len(state.get("operator_stalled") or [])
+    if stalled >= MAX_STALLED:
+        reasons.append("operator_stalled_needs_host_review")
+    if state.get("unverified_staged", 0) - min(stalled, MAX_STALLED - 1) >= max_unverified:
         reasons.append("awaiting_trusted_operator_receipt")
     return reasons
 
@@ -717,6 +744,9 @@ def run(a) -> int:
                 log("revalidate", batch_id=old_id, outcome=outcome)
             for old_id, outcome in resubmit_stale(state, a.queue, a.case_root, now):
                 log("resubmit", batch_id=old_id, outcome=outcome)
+        state["operator_stalled"] = operator_stalled(state, a.queue.parent / "qa-approved", now)
+        for bid in state["operator_stalled"]:
+            log("operator_stalled", batch_id=bid)
         atomic_write(state_path, state)
         free = shutil.disk_usage(a.case_root).free
         blockers = guard(state, now, free, a.max_unverified)

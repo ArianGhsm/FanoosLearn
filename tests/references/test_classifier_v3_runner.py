@@ -209,6 +209,34 @@ class StateAndReceipts(unittest.TestCase):
         self.assertEqual(st["accepted_total"], 0)
         self.assertIn("awaiting_trusted_operator_receipt", runner.guard(st, time.time(), 10 ** 12, 1))
 
+    def test_operator_stalled_frees_one_slot_then_halts(self):
+        import tempfile as _tf
+        with _tf.TemporaryDirectory() as d:
+            qa = Path(d)
+            st = {"batches": {"aaaaaaaaaaaaaaaa": {"status": "staged", "started": 1, "accepted": 0},
+                              "bbbbbbbbbbbbbbbb": {"status": "staged", "started": 2, "accepted": 0}}}
+            st = runner.reconcile(st, {}, time.time())
+            for bid in st["batches"]:
+                (qa / f"{bid}.json").write_text("{}")
+            old = time.time() - runner.OPERATOR_STALL_S - 60
+            os.utime(qa / "aaaaaaaaaaaaaaaa.json", (old, old))
+            now = time.time()
+            # Our own file never counts as a host QA verdict.
+            self.assertEqual(runner.operator_stalled(st, qa, now), [])
+            other = os.getuid() + 1
+            st["operator_stalled"] = runner.operator_stalled(st, qa, now, own_uid=other)
+            self.assertEqual(st["operator_stalled"], ["aaaaaaaaaaaaaaaa"])
+            self.assertEqual(runner.guard(st, now, 10 ** 12, 2), [])
+            self.assertEqual(st["accepted_total"], 0)
+            os.utime(qa / "bbbbbbbbbbbbbbbb.json", (old, old))
+            st["operator_stalled"] = runner.operator_stalled(st, qa, now, own_uid=other)
+            g = runner.guard(st, now, 10 ** 12, 2)
+            self.assertIn("operator_stalled_needs_host_review", g)
+            self.assertEqual(g, ["operator_stalled_needs_host_review"])
+            # A later trusted receipt still confirms the stalled batch.
+            st = runner.reconcile(st, {"aaaaaaaaaaaaaaaa": {"accepted_source_rows": 1}}, now)
+            self.assertEqual(st["accepted_total"], 1)
+
     def test_two_confirmed_zero_batches_hard_stop(self):
         b = lambda t: {"status": "staged", "started": t, "question_ids": [], "accepted": 0}
         st = {"batches": {"x": b(1), "y": b(2)}}
