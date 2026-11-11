@@ -107,3 +107,8 @@ MedoFast's AI study assistant (گوربک), group purchase and gift plans. They 
 ## Score
 
 Counted rows: 49. ✅ today: 49 (100 %). Target: 40 (≥ 80 %).
+
+These rows count **features**, not content. As of 2026-11-11 no question has
+an explanation and no lesson, capsule or mind map is published; the plan to
+fill them for residency 1406, and the lesson-reader gaps found in a second
+MedoFast review, are in 11_STUDY_CONTENT_1406_PLAN.md.
