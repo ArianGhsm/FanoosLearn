@@ -109,9 +109,14 @@ content each such question also needs:
   question whose answer changed or whose topic left the 1406 scope gets a
   labelled note, not a silent explanation (principles §1.4).
 
-**Phase 0 output** (read-only): a per-edition, per-chapter count of questions
-that are (a) complete on the 1406 edition, (b) complete on an older edition
-and mappable, (c) unclassified. This sets the order of everything below.
+**Phase 0 result** (2026-11-11, read-only;
+`docs/ops/RESIDENCY_1406_CONTENT_COVERAGE_20261111.md`): of 2,963 residency
+questions with a book reference, **1,826 have a verified page on a 1406
+edition inside its 1406 scope** and can be explained now; 707 are classified
+only on an older edition of a 1406 book (mostly oral pathology, periodontics,
+oral medicine, endodontics) and need a 1406 page; 78 sit in chapters outside
+the 1406 scope; 351 have no usable source. `bank_edition_mappings`,
+`bank_explanations` and `bank_visuals` are empty.
 
 ## 5. House style (adapted from MedoFast, written for FANOOS)
 
@@ -162,7 +167,7 @@ and deployed through the updater (principles §5).
 
 | Phase | Deliverable | Done when |
 |---|---|---|
-| **0. Measure** | Read-only 1406 coverage report (§4) and the PDF/map re-check (§2), recorded as an ops doc with counts only | per-chapter counts exist for all 19 editions |
+| **0. Measure** ✅ 2026-11-11 | Read-only 1406 coverage report (§4) and the PDF/map re-check (§2), recorded as an ops doc with counts only | done: `docs/ops/RESIDENCY_1406_CONTENT_COVERAGE_20261111.md` |
 | **1. Lesson reader** | Paged reader with TOC, progress bar, resume, go-to-page, final summary table; emphasis markup in `markdown.js` and the lesson contract; lesson ↔ edition/chapter/concepts/questions links and `from`; report on a lesson | tests for the renderer and the reader; a sample lesson renders on phone and desktop, light and dark |
 | **2. Lesson index** | Per subject: chapters in 1406 scope ordered by question count, per-user progress, «test this chapter» (existing builder) | index matches Phase 0 counts |
 | **3. Explanation pipeline** | Batch tool: select questions with a verified 1406 page → read the cited page(s) in memory → draft explanation → validators (official key, cited page supports the claim, scope, confidence ≥ 0.85) → `draft` → import; reviewed rows never overwritten | a pilot batch for one chapter passes the validators and renders in the review |
