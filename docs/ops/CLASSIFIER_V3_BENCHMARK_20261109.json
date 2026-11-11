@@ -1,0 +1,71 @@
+{
+ "edition": "neville-oral-pathology@5e",
+ "pdf_sha256": "4d35199b9cda526997717802e174144071d38f0179e725e7ed6a90b2f98565ac",
+ "page_count": 983,
+ "scan": {
+  "pages_scanned": 983,
+  "noise_pages": 130,
+  "scan_seconds": 106.74,
+  "terms": 106
+ },
+ "wall_seconds": 108.43,
+ "cpu_seconds": 4.12,
+ "pages_per_sec": 9.21,
+ "max_rss_mib": 21.4,
+ "questions_in_group": 32,
+ "per_type": {
+  "board": {
+   "gold": 8,
+   "top1": 2,
+   "top3": 6,
+   "top5": 6,
+   "fp_top5": 34,
+   "missing": 0,
+   "missing_with_candidates": 0,
+   "no_key": 0
+  },
+  "promotion": {
+   "gold": 8,
+   "top1": 4,
+   "top3": 5,
+   "top5": 5,
+   "fp_top5": 24,
+   "missing": 0,
+   "missing_with_candidates": 0,
+   "no_key": 0
+  },
+  "national": {
+   "gold": 8,
+   "top1": 3,
+   "top3": 5,
+   "top5": 6,
+   "fp_top5": 21,
+   "missing": 0,
+   "missing_with_candidates": 0,
+   "no_key": 0
+  },
+  "residency": {
+   "gold": 8,
+   "top1": 5,
+   "top3": 5,
+   "top5": 5,
+   "fp_top5": 16,
+   "missing": 0,
+   "missing_with_candidates": 0,
+   "no_key": 0
+  }
+ },
+ "total": {
+  "gold": 32,
+  "top1": 14,
+  "top3": 21,
+  "top5": 22,
+  "fp_top5": 95,
+  "missing": 0,
+  "missing_with_candidates": 0,
+  "no_key": 0
+ },
+ "verified_committed": 0,
+ "note": "candidate pages only; not accepted classifications",
+ "warning": "Initial zero-missing result was a sampling SQL bug; see CLASSIFIER_V3_BENCHMARK_20261109_CORRECTED.json."
+}

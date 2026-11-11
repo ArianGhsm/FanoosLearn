@@ -616,6 +616,34 @@ official status, cross exam types or create validity rows. Residency
 1397/1398 keep their named exceptions. Implementation and operation are specified in
 `docs/ops/SAME_LINEAGE_PROXY_CLASSIFICATION_20261022.md`.
 
+**2026-11-09 — high-throughput chapter classification clarification
+(consistent with the 2026-10-13 and 2026-10-23 owner rules):** The unit of
+retrieval is a batch of questions sharing an approved exact reference
+edition, not one Claude agent per question. A deterministic process may
+open one numbered page of the verified private PDF at a time, score multiple
+queries in RAM, discard the page immediately and retain only page numbers,
+numeric retrieval scores and short source evidence permitted by the PDF
+policy. No full-book/page-text export, persisted text index, OCR corpus or
+private PDF copy is allowed. A retrieved candidate is **not** a verified
+classification: exact-edition SHA, physical PDF page, same-edition chapter
+map, answer-bearing evidence, scope/edition eligibility and independent
+audit must pass. Never deduplicate distinct question IDs merely because
+their text/choices are identical across exam sittings or types.
+
+Independently verified source-only batches may be inserted through the
+approved guarded `fanoosupd` operator with a new live study export,
+verified backup no older than four hours, source-only dry run and
+independent readback, without waiting for the rest of the year. An
+unresolved question, official-key exception, unavailable chapter map or
+`manual_reconciliation_required` is a separately tracked blocker and
+must never be invented away or retried blindly. **Public publication of
+an entire year** remains blocked until its full scientific coverage and
+authorized exception checks are complete. Report retrieval hits,
+independently audited rows and committed/read-back rows as distinct
+metrics. The owner's four-to-five-day throughput goal is measured only
+using the final verified/committed rate; a page-retrieval benchmark alone
+does not establish feasibility.
+
 ## 7. Open implementation items (do not assume completed)
 
 - Rebuild the 10 ineligible chapter maps directly from their current approved

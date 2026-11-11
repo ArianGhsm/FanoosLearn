@@ -1,0 +1,13 @@
+# Research-only cadence: one Opus attempt every ~25min, pauses when 2 batches
+# await trusted independent QA / operator receipts or provider quota backoff.
+[Unit]
+Description=FanoosLearn V3 research-only cadence
+
+[Timer]
+OnBootSec=15min
+OnUnitInactiveSec=25min
+RandomizedDelaySec=3min
+Persistent=false
+
+[Install]
+WantedBy=timers.target

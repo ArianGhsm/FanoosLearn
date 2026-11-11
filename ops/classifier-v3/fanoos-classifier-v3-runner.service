@@ -1,0 +1,21 @@
+# Research-only, WORKER-SANDBOXED host unit. DO NOT install until pilot passes.
+# Never execute from production /srv/fanoos/current; the V3 branch is not deployed.
+[Unit]
+Description=FanoosLearn Classifier V3 Opus research (read-only production)
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=!/srv/fanoos/shared/research/classification/v3-runner/STOP
+
+[Service]
+Type=oneshot
+User=fanoosworker
+Nice=10
+NoNewPrivileges=yes
+PrivateTmp=yes
+CPUQuota=120%
+MemoryHigh=2G
+MemoryMax=3G
+TimeoutStartSec=18min
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStartPre=/usr/local/sbin/fanoosworker-shell /bin/bash -c 'cd /mnt/workspace/FanoosLearn-classifier-v3 && /usr/bin/python3 -B scripts/classification_v3/manifest.py --queue-out /srv/fanoos/shared/research/classification/agent-queue/current-manifest.json > /dev/null'
+ExecStart=/usr/local/sbin/fanoosworker-shell /usr/bin/python3 -B /mnt/workspace/FanoosLearn-classifier-v3/scripts/classification_v3/runner.py --manifest /srv/fanoos/shared/research/classification/agent-queue/current-manifest.json --state-dir /srv/fanoos/shared/research/classification/v3-runner/state --case-root /srv/fanoos/shared/research/classification/v3-runner/cases --queue /srv/fanoos/shared/research/classification/v3-runner/operator-requests --receipts /srv/fanoos/shared/research/classification/v3-runner/operator-receipts --trusted-uid 982 --max-batches 1 --max-unverified 2 --timeout 690
