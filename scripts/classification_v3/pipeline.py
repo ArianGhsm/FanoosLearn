@@ -18,6 +18,7 @@ from pathlib import Path
 MIN_CONFIDENCE = 0.85
 MIN_QUOTE_WORDS = 4
 MAX_QUOTE_WORDS = 40
+ELLIPSIS = re.compile(r"\.\.\.|…")
 SHA = re.compile(r"^[a-f0-9]{64}$")
 SCOPE = {"in_scope", "outside_scope_exam_question", "scope_unverified"}
 EXEMPT = "residency_english_official_key"
@@ -111,10 +112,15 @@ def verify_decision(d: Decision, page_text: str, runs: list, approved_sha: str, 
         fail.append("edition_chapter_map_missing")
     elif mapped is None or str(mapped) != str(d.node_id):
         fail.append("chapter_not_from_same_edition_map")
-    words = d.quote.split()
-    if not MIN_QUOTE_WORDS <= len(words) <= MAX_QUOTE_WORDS:
+    # Same fragment rule as apply_classification: '...'-joined fragments, each
+    # >=4 words and verbatim on the page (whole-string matching wrongly
+    # rejected 20 such rows before QA).
+    pieces = [f.strip() for f in ELLIPSIS.split(d.quote) if f.strip()]
+    words = sum(len(p.split()) for p in pieces)
+    if (not pieces or not MIN_QUOTE_WORDS <= words <= MAX_QUOTE_WORDS
+            or any(len(p.split()) < MIN_QUOTE_WORDS for p in pieces)):
         fail.append("quote_length")
-    elif _norm(d.quote) not in _norm(page_text):
+    elif any(_norm(p) not in _norm(page_text) for p in pieces):
         fail.append("quote_not_verbatim_on_page")
     if d.confidence < MIN_CONFIDENCE:
         fail.append("low_confidence")

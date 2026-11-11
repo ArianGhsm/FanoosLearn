@@ -55,6 +55,9 @@ def same_lineage_note(reference_year: int, exam_year: int) -> str:
             " است؛ رسمی بودن این ویرایش برای سال آزمون تأیید نشده است.")
 
 
+EXAM_YEAR_BASIS = "official_exam_year"
+
+
 def _demote(row: dict, reason: str) -> dict:
     return {**row, "decision": "pending", "pending_reason": reason}
 
@@ -107,7 +110,7 @@ def normalize(draft: dict, questions: list[dict], batch: dict, chapter_of, refer
         model_ch = row.get("node_id") if row.get("node_id") is not None else row.get("chapter_number")
         ref_year = reference_year_of(ed, batch["subject"]) if chapter else None
         reason = (f"identity_mismatch:{','.join(clash)}" if clash else
-                  "basis_mismatch" if model_basis not in (None, basis) else
+                  "basis_mismatch" if model_basis not in (None, basis or EXAM_YEAR_BASIS) else
                   "official_key_not_single_final" if key_class != batch["key_class"] else
                   "edition_sha_page_not_on_verified_map" if not chapter else
                   "chapter_disagrees_with_page_map" if model_ch is not None and str(model_ch) != chapter else
@@ -125,6 +128,9 @@ def normalize(draft: dict, questions: list[dict], batch: dict, chapter_of, refer
             norm["note_fa"] = retrospective_note(ref_year, q["year"])
         elif basis == "same_lineage_proxy":
             norm["note_fa"] = same_lineage_note(ref_year, q["year"])
+        elif basis is None:
+            # Exact exam-year edition: no proxy note; the validator rejects proxy metadata.
+            norm["note_fa"] = ""
         elif not (row.get("note_fa") or row.get("persian_note")):
             out.append(_demote(row, "proxy_note_missing")); counts["demoted"] += 1; continue
         else:
@@ -252,11 +258,15 @@ REJECTED_RE = __import__("re").compile(r"^REJECTED Q(\d+): (.{1,160})", __import
 
 
 def publisher_decision(row: dict) -> dict:
-    """Exactly the decision shape operator_publisher.process_group hands the validator."""
+    """Exactly the decision shape operator_publisher.process_group hands the validator.
+
+    Exam-year rows (basis None) carry no proxy metadata: apply_classification
+    rejects reference_year/classification_basis/proxy_note on them."""
     val = {"number": row["number"], "edition": row["edition"], "chapter": str(row["node_id"]),
-           "page": row["pdf_page"], "confidence": float(row["confidence"]), "evidence": row["quote"],
-           "reference_year": row["reference_year"], "classification_basis": row["basis"],
-           "proxy_note": row.get("note_fa") or ""}
+           "page": row["pdf_page"], "confidence": float(row["confidence"]), "evidence": row["quote"]}
+    if row.get("basis") is not None:
+        val.update({"reference_year": row["reference_year"], "classification_basis": row["basis"],
+                    "proxy_note": row.get("note_fa") or ""})
     if row.get("newer_editions_searched"):
         val["newer_editions_searched"] = row["newer_editions_searched"]
     return val

@@ -77,6 +77,25 @@ class Normalize(unittest.TestCase):
         self.assertEqual(r["note_fa"], normalize.same_lineage_note(1406, 1396))
         self.assertTrue(valid_proxy_note(r["note_fa"], 1396, 1406))
 
+    def test_exam_year_row_passes_without_proxy_note_or_metadata(self):  # national lane 2026-11-11
+        batch = {**BATCH, "type": "national", "proxy_basis": None}
+        nq = {**q(), "type": "national", "year": 1404, "round": 2}
+        for model_basis in ("official_exam_year", None):
+            d, c = normalize.normalize({"decisions": [row(edition_basis=model_basis, note_fa="")]}, [nq], batch,
+                                       lambda e, s, p: "2", lambda e, s: 1404)
+            (r,) = d["decisions"]
+            self.assertEqual(c, {"proposed": 1, "demoted": 0}, model_basis)
+            self.assertIsNone(r["basis"])
+            val = normalize.publisher_decision(r)
+            for k in ("reference_year", "classification_basis", "proxy_note"):
+                self.assertNotIn(k, val)
+        d, c = normalize.normalize({"decisions": [row(edition_basis="same_lineage_proxy")]}, [nq], batch,
+                                   lambda e, s, p: "2", lambda e, s: 1404)
+        self.assertEqual(d["decisions"][0]["pending_reason"], "basis_mismatch")
+        proxy = normalize.publisher_decision({**r, "basis": "same_lineage_proxy", "reference_year": 1406,
+                                              "note_fa": "n"})
+        self.assertEqual((proxy["classification_basis"], proxy["reference_year"]), ("same_lineage_proxy", 1406))
+
     def test_chapter_outside_official_scope_demotes_before_validator(self):
         calls = []
 

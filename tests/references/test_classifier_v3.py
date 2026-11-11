@@ -79,6 +79,18 @@ class V3(unittest.TestCase):
         self.assertIn("quote_length", P.verify_decision(dec(quote="Nikolsky sign"), PAGE, RUNS, SHA, 20))
         self.assertIn("quote_length", P.verify_decision(dec(quote="positive Nikolsky sign"), PAGE, RUNS, SHA, 20))
 
+    def test_ellipsis_fragments_match_production_rule(self):  # regression 2026-11-11
+        page = PAGE + " Biopsy confirms suprabasal clefting with tombstone basal cells."
+        ok = "intraepithelial acantholysis with a positive ... suprabasal clefting with tombstone basal cells"
+        self.assertEqual(P.verify_decision(dec(quote=ok), page, RUNS, SHA, 20), [])
+        self.assertEqual(P.verify_decision(dec(quote=ok.replace("...", "…")), page, RUNS, SHA, 20), [])
+        self.assertIn("quote_length", P.verify_decision(
+            dec(quote="intraepithelial acantholysis with a positive ... tombstone basal cells"), page, RUNS, SHA, 20))
+        self.assertIn("quote_not_verbatim_on_page", P.verify_decision(
+            dec(quote="intraepithelial acantholysis with a positive ... subepithelial clefting with tombstone cells"),
+            page, RUNS, SHA, 20))
+        self.assertIn("quote_length", P.verify_decision(dec(quote="... ..."), page, RUNS, SHA, 20))
+
     def test_precheck_never_approves(self):  # regression B
         self.assertEqual(P.precheck([]), "audit_pending")
 

@@ -169,6 +169,25 @@ def subject_yield(state: dict, case_root: Path) -> dict[str, float]:
     return {s: (accepted[s] + YIELD_PRIOR_ACCEPTED) / (tried[s] + YIELD_PRIOR_TRIED) for s in tried}
 
 
+def one_round_per_year_chunks(members: list[dict]) -> list[list[dict]]:
+    """Chunks of <= BATCH_MAX with a single round per year.
+
+    normalize.study_docs writes one exporter-identical study file per year and
+    raises mixed_round_or_type_in_year otherwise; national years have two rounds,
+    so mixed chunks failed after the model session (aa27b7ed, c957906a)."""
+    chunks, pending = [], list(members)
+    while pending:
+        chunk, rounds, rest = [], {}, []
+        for m in pending:
+            if len(chunk) < BATCH_MAX and rounds.setdefault(m["year"], m.get("round")) == m.get("round"):
+                chunk.append(m)
+            else:
+                rest.append(m)
+        chunks.append(chunk)
+        pending = rest
+    return chunks
+
+
 def plan_batches(items: list[dict], exclude: set[str] = frozenset(),
                  yields: dict[str, float] | None = None) -> tuple[list[dict], dict]:
     """Group runnable items; residency first, national only if residency has none.
@@ -206,8 +225,7 @@ def plan_batches(items: list[dict], exclude: set[str] = frozenset(),
     for key in sorted(groups):
         _, lane, kind, subject, eds, basis, kcls = key
         members = sorted(groups[key], key=lambda i: (i["year"], str(i["question_id"])))
-        for i in range(0, len(members), BATCH_MAX):
-            chunk = members[i:i + BATCH_MAX]
+        for chunk in one_round_per_year_chunks(members):
             ids = [str(m["question_id"]) for m in chunk]
             bid = hashlib.sha256(json.dumps([lane, subject, list(eds), basis, kcls, ids])
                                  .encode()).hexdigest()[:16]
@@ -540,6 +558,86 @@ def resubmit_stale(state: dict, queue: Path, case_root: Path, now: float) -> lis
     return done
 
 
+def split_mixed_round_failed(state: dict, queue: Path, case_root: Path, now: float,
+                             normalize, prevalidate) -> list[tuple[str, str]]:
+    """Re-stage researched drafts whose normalize failed only on mixed rounds.
+
+    A batch planned before one_round_per_year_chunks could hold two rounds of one
+    year; normalize then raised mixed_round_or_type_in_year and the drafted
+    proposals never reached QA. No model call: the case (session.out included,
+    for QA independence) is copied once per single-round chunk, filtered to that
+    chunk's ids, then normalized and prevalidated like a fresh session. Bounded:
+    the old batch becomes "resubmitted" and is never split again.
+    """
+    done = []
+    batches = state.get("batches", {})
+    for bid, b in list(batches.items()):
+        if b["status"] != "failed" or b.get("killed") or b.get("rc") or b.get("split_into"):
+            continue
+        case = case_root / f"v3-{bid}"
+        try:
+            qs = json.loads((case / "questions.json").read_text("utf-8"))["questions"]
+            draft = json.loads((case / "decisions.draft.json").read_text("utf-8"))
+        except (OSError, ValueError, KeyError, TypeError):
+            continue
+        if draft.get("normalized_by") or not isinstance(draft.get("decisions"), list):
+            continue
+        rows = [q for q in qs if str(q.get("id")) in set(b["question_ids"])]
+        if len({q["round"] for q in rows}) < 2:
+            continue
+        per_year = defaultdict(set)
+        for q in rows:
+            per_year[q["year"]].add(q["round"])
+        if all(len(r) == 1 for r in per_year.values()):
+            continue
+        chunks = one_round_per_year_chunks(
+            [{"question_id": str(q["id"]), "year": q["year"], "round": q["round"]}
+             for q in sorted(rows, key=lambda q: (q["year"], q["number"]))])
+        new_ids = []
+        for n, chunk in enumerate(chunks):
+            ids = [m["question_id"] for m in chunk]
+            new = hashlib.sha256(f"{bid}:split-round:{n}".encode()).hexdigest()[:16]
+            if new in batches or (case_root / f"v3-{new}").exists():
+                continue
+            new_case, batch = copy_case(case_root, case, new)
+            keep = set(ids)
+            batch["question_ids"] = ids
+            batch["years"] = sorted({m["year"] for m in chunk})
+            atomic_write(new_case / "batch.json", batch)
+            d = json.loads((new_case / "decisions.draft.json").read_text("utf-8"))
+            d["decisions"] = [r for r in d["decisions"] if str(r.get("question_id")) in keep]
+            atomic_write(new_case / "decisions.draft.json", d)
+            p = json.loads((new_case / "questions.json").read_text("utf-8"))
+            p["questions"] = [q for q in p["questions"] if str(q.get("id")) in keep]
+            atomic_write(new_case / "questions.json", p)
+            for stale in new_case.glob("study-*.json"):
+                stale.unlink()
+            rec = {"status": "no_proposals", "started": int(now), "question_ids": ids, "accepted": 0,
+                   "drafted": 0, "split_from": bid, "rc": 0, "killed": False}
+            if staged_counts(new_case)["drafted"]:
+                try:
+                    normalize(new_case, batch)
+                except Exception as exc:
+                    rec["status"] = "failed"
+                    rec["split_error"] = type(exc).__name__
+                sc = staged_counts(new_case)
+                if rec["status"] != "failed" and sc["drafted"]:
+                    rec.update(status="staged", drafted=sc["drafted"])
+            rec["unreached"] = [q for q in unreached_ids(new_case) if q in keep]
+            rec["retryable"] = [q for q in retryable_ids(new_case) if q in keep]
+            batches[new] = rec
+            new_ids.append(new)
+            if rec["status"] == "staged":
+                for _, outcome in revalidate_staged({"batches": {new: rec}}, queue, case_root, now, prevalidate):
+                    done.append((new, f"split_from:{bid}:{outcome}"))
+            else:
+                done.append((new, f"split_from:{bid}:{rec['status']}"))
+        b["status"] = "resubmitted"
+        b["split_into"] = new_ids
+    state["unverified_staged"] = sum(1 for b in batches.values() if b["status"] == "staged")
+    return done
+
+
 def operator_stalled(state: dict, qa_dir: Path, now: float, own_uid: int | None = None) -> list[str]:
     """Staged ids whose host-written QA verdict is older than OPERATOR_STALL_S (stat only)."""
     own_uid = os.getuid() if own_uid is None else own_uid
@@ -744,6 +842,9 @@ def run(a) -> int:
                 log("revalidate", batch_id=old_id, outcome=outcome)
             for old_id, outcome in resubmit_stale(state, a.queue, a.case_root, now):
                 log("resubmit", batch_id=old_id, outcome=outcome)
+            for new_id, outcome in split_mixed_round_failed(state, a.queue, a.case_root, now,
+                                                            a.normalize, a.prevalidate):
+                log("split_mixed_round", batch_id=new_id, outcome=outcome)
         state["operator_stalled"] = operator_stalled(state, a.queue.parent / "qa-approved", now)
         for bid in state["operator_stalled"]:
             log("operator_stalled", batch_id=bid)

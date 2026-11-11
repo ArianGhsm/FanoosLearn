@@ -344,10 +344,11 @@ def process_group(request,group,bid):
     continue
    val={'number':n,'edition':q['edition'],
      'chapter':str(q['node_id']),'page':q['pdf_page'],
-     'confidence':float(q['confidence']),'evidence':q['quote'],
-     'reference_year':q['reference_year'],
-     'classification_basis':q['basis'],
-     'proxy_note':q.get('note_fa') or ''}
+     'confidence':float(q['confidence']),'evidence':q['quote']}
+   if q['basis'] is not None:
+    # Exam-year rows (basis None) must not carry proxy metadata: the validator rejects it.
+    val.update({'reference_year':q['reference_year'],'classification_basis':q['basis'],
+                'proxy_note':q.get('note_fa') or ''})
    if q.get('newer_editions_searched'):
     val['newer_editions_searched']=q['newer_editions_searched']
    decisions.append(val)

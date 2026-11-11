@@ -58,6 +58,22 @@ class Planning(unittest.TestCase):
         self.assertEqual(batches[0]["selected_editions"], ["neville@5e"])
         self.assertEqual(sorted({y for b in batches for y in b["years"]}), [1399, 1400, 1401])
 
+    def test_national_batch_never_mixes_rounds_of_one_year(self):  # aa27b7ed / c957906a
+        items = []
+        for i, (year, rnd) in enumerate([(1404, 1), (1404, 2), (1404, 1), (1405, 1), (1404, 2), (1403, 2)], 1):
+            it = item(i, year, lane="national_dental_same_edition_ready", subject="endodontics",
+                      eds=["torabinejad@6e"], kind="national")
+            it["round"] = rnd
+            items.append(it)
+        batches, _ = runner.plan_batches(items)
+        by_id = {it["question_id"]: it for it in items}
+        self.assertEqual(sorted(q for b in batches for q in b["question_ids"]), sorted(by_id))
+        for b in batches:
+            seen = {}
+            for q in b["question_ids"]:
+                self.assertEqual(seen.setdefault(by_id[q]["year"], by_id[q]["round"]), by_id[q]["round"])
+        self.assertEqual(len(batches), 2)
+
     def test_newest_per_family_not_whole_candidate_bundle(self):
         it = item(1, 1393, lane="residency_dental_proxy_policy",
                   proxy=["neville@5e", "neville@4e", "regezi@7e"])
@@ -406,6 +422,64 @@ class StateAndReceipts(unittest.TestCase):
     def test_quota_scan(self):
         self.assertEqual(runner.scan_quota('{"error":"rate_limit","retry-after": 120}'), (True, 120))
         self.assertEqual(runner.scan_quota("ok"), (False, None))
+
+
+class SplitMixedRound(unittest.TestCase):
+    """aa27b7ed/c957906a: researched drafts lost to mixed_round_or_type_in_year."""
+
+    def _case(self, d):
+        cases, queue = Path(d) / "cases", Path(d) / "queue"
+        case = cases / "v3-aaaaaaaaaaaaaaaa"
+        case.mkdir(parents=True)
+        rows = [(U(1), 1404, 1), (U(2), 1404, 2), (U(3), 1405, 1)]
+        (case / "batch.json").write_text(json.dumps({"batch_id": "aaaaaaaaaaaaaaaa", "type": "national",
+                                                     "question_ids": [r[0] for r in rows], "years": [1404, 1405],
+                                                     "selected_editions": ["t@6e"], "proxy_basis": None,
+                                                     "key_class": "final"}))
+        (case / "questions.json").write_text(json.dumps({"batch_id": "aaaaaaaaaaaaaaaa", "questions": [
+            {"id": q, "year": y, "round": r, "number": i} for i, (q, y, r) in enumerate(rows)]}))
+        (case / "decisions.draft.json").write_text(json.dumps({"batch_id": "aaaaaaaaaaaaaaaa", "decisions": [
+            {"question_id": U(1), "decision": "pending", "reason": "key_conflict"},
+            {"question_id": U(2), "decision": "proposed"},
+            {"question_id": U(3), "decision": "proposed"}]}))
+        (case / "session.out").write_text("{}")
+        (case / "study-1404.json").write_text("{}")
+        st = {"batches": {"aaaaaaaaaaaaaaaa": {"status": "failed", "rc": 0, "killed": False, "started": 1,
+                                               "question_ids": [r[0] for r in rows], "accepted": 0}}}
+        return cases, queue, st
+
+    def test_split_restages_each_round_once_without_model(self):
+        normalized = []
+        with tempfile.TemporaryDirectory() as d:
+            cases, queue, st = self._case(d)
+            done = runner.split_mixed_round_failed(
+                st, queue, cases, 100.0, lambda c, b: normalized.append(sorted(b["question_ids"])) or {},
+                lambda c, w: {"demoted_by_validator": 0})
+            old = st["batches"]["aaaaaaaaaaaaaaaa"]
+            self.assertEqual(old["status"], "resubmitted")
+            self.assertEqual(len(old["split_into"]), 2)
+            subs = [st["batches"][n] for n in old["split_into"]]
+            self.assertEqual(sorted(q for b in subs for q in b["question_ids"]), [U(1), U(2), U(3)])
+            self.assertEqual([b["status"] for b in subs], ["staged", "staged"])
+            self.assertEqual(sorted(b["drafted"] for b in subs), [1, 1])
+            self.assertEqual(len(normalized), 2)
+            for n in old["split_into"]:
+                case = cases / f"v3-{n}"
+                self.assertTrue((case / "session.out").exists())
+                self.assertFalse(list(case.glob("study-*.json")))
+                self.assertTrue((queue / f"{n}.json").exists())
+            self.assertEqual(st["unverified_staged"], 2)
+            self.assertEqual(len(done), 2)
+            # Bounded: never split twice, ids stay excluded via successors.
+            self.assertEqual(runner.split_mixed_round_failed(st, queue, cases, 200.0, None, None), [])
+            self.assertTrue({U(1), U(2), U(3)} <= runner.excluded_ids(st))
+
+    def test_killed_or_single_round_failures_untouched(self):
+        with tempfile.TemporaryDirectory() as d:
+            cases, queue, st = self._case(d)
+            st["batches"]["aaaaaaaaaaaaaaaa"]["killed"] = True
+            self.assertEqual(runner.split_mixed_round_failed(st, queue, cases, 1.0, None, None), [])
+            self.assertEqual(st["batches"]["aaaaaaaaaaaaaaaa"]["status"], "failed")
 
 
 class Session(unittest.TestCase):
