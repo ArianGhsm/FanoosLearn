@@ -41,7 +41,7 @@ final class LessonsPage
             </select>
             <input class="f-input" id="lesson-topic" maxlength="120" placeholder="درس یا مبحث (مثلاً اندودانتیکس)" aria-label="مبحث">
         </div>
-        <textarea class="f-input" id="lesson-body" rows="10" placeholder="متن درسنامه. تیترها با ## و فهرست‌ها با - شروع می‌شوند." aria-label="متن" required></textarea>
+        <textarea class="f-input" id="lesson-body" rows="10" placeholder="متن درسنامه. هر «## تیتر» یک صفحه است، فهرست‌ها با - و تأکیدها {{key:…}}، {{term:…}}، {{note:…}}، {{warn:…}} (راهنما: docs/product/12_LESSON_FORMAT.md)." aria-label="متن" required></textarea>
         <div class="b-actions"><button class="f-btn f-btn--primary" type="submit" id="lesson-save">ذخیره به‌صورت پیش‌نویس</button></div>
         <p class="f-tiny" id="lesson-status" aria-live="polite"></p>
     </form>

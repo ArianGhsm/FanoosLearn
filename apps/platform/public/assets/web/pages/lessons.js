@@ -1,12 +1,12 @@
 /*
  * درسنامه‌ها: the library (data-page="library") and the reader
- * (data-page="lesson"). Written lessons render through renderMarkdown,
+ * (data-page="lesson"). Written lessons read page by page (lesson-reader.js),
  * flashcards flip, and anything else is a file fetched through the
  * protected delivery flow (issue -> consume -> download). Every API string
  * goes in through textContent or renderMarkdown.
  */
 import { api, describeError } from '../foundation/api.js';
-import { renderMarkdown } from './markdown.js';
+import { lessonBody } from './lesson-reader.js';
 import { watermarkImage } from './watermark.js';
 import { kindOf, lessonShape, parseCards, typeLabel } from './lessons-rules.js';
 import { matches } from './bank-rules.js';
@@ -129,7 +129,7 @@ async function library() {
         type.addEventListener('change', () => {
             text.placeholder = type.value === 'flashcards'
                 ? 'هر خط یک کارت: روی کارت :: پشت کارت'
-                : 'متن درسنامه. تیترها با ## و فهرست‌ها با - شروع می‌شوند.';
+                : 'متن درسنامه. هر «## تیتر» یک صفحه است، فهرست‌ها با - و تأکیدها {{key:…}}، {{term:…}}، {{note:…}}، {{warn:…}} (راهنما: docs/product/12_LESSON_FORMAT.md).';
         });
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
@@ -233,8 +233,7 @@ async function lesson() {
     const shape = lessonShape(data.content);
     let body;
     if (shape.kind === 'text') {
-        body = renderMarkdown(shape.body);
-        body.classList.add('l-reader__body');
+        body = lessonBody(id, shape.body);
     } else if (shape.kind === 'cards') {
         body = flashcards(shape.cards);
     } else {

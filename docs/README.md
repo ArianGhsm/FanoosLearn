@@ -19,6 +19,8 @@
   (exam runner, sign-up and disciplines, payments, account merge). They
   describe the code as it is; where they speak of medical banks or
   universities, the principles take precedence.
+- [`product/12_LESSON_FORMAT.md`](product/12_LESSON_FORMAT.md) — how a
+  lesson is written so it reads as paged micro-lesson: pages, emphasis, tables.
 
 ## Architecture and contracts
 
