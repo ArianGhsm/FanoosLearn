@@ -7,7 +7,7 @@
  */
 import { api, describeError } from '../foundation/api.js';
 import { bidiNodes, el, faDigits, faText, notice, questionImageUrl, renderFigure } from './runner-view.js';
-import { renderMarkdown } from './markdown.js';
+import { renderExplanation } from './explanation-view.js';
 
 const CHOICE_LETTERS = ['الف', 'ب', 'ج', 'د', 'ه', 'و', 'ز', 'ح', 'ط', 'ی'];
 
@@ -37,9 +37,8 @@ function card(question) {
         choices,
         question.explanation
             ? el('section', { className: 'x-explanation' },
-                el('h3', { text: 'چرا؟' }),
-                renderMarkdown(question.explanation),
-                el('p', { className: 'x-explanation__origin', text: 'این توضیح با کمک هوش مصنوعی تهیه شده است.' }))
+                el('h3', { text: 'پاسخ تشریحی' }),
+                renderExplanation(question.explanation))
             : el('p', { className: 'f-tiny', text: 'برای این سؤال توضیحی ثبت نشده است.' }));
 }
 

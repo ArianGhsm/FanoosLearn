@@ -20,6 +20,7 @@
   describe the code as it is; where they speak of medical banks or
   universities, the principles take precedence.
 - [`product/12_LESSON_FORMAT.md`](product/12_LESSON_FORMAT.md) — how a
+- [`product/13_EXPLANATION_CARD.md`](product/13_EXPLANATION_CARD.md) — the explanation card in the runner and the 10-question pilot.
   lesson is written so it reads as paged micro-lesson: pages, emphasis, tables.
 
 ## Architecture and contracts

@@ -2088,3 +2088,135 @@ body.x-focus .f-page {
         opacity: 0.25;
     }
 }
+
+/* ------------------------------------------------------------- explanation card
+ * One explanation (explanation-view.js): reasoning, the book, the other
+ * choices, tip and trap, the book line. Colours are the runner's own: success
+ * for the answer, danger for a rejected choice, info for the book, warning
+ * for the trap -- the same meanings the choices above already use. */
+
+.x-exp {
+    display: grid;
+    gap: var(--space-3);
+}
+
+.x-exp__answer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.x-exp__answer-note {
+    color: var(--text-secondary);
+    font-size: var(--text-xs);
+}
+
+.x-exp__head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+    font-size: var(--text-sm);
+    font-weight: 700;
+}
+
+.x-exp__ref {
+    padding: var(--space-3) var(--space-4);
+    border-inline-start: 3px solid var(--info);
+    border-radius: var(--radius-sm);
+    background: var(--info-soft);
+}
+
+.x-exp__ref .x-exp__head { color: var(--info); }
+
+.x-exp__others .x-exp__head { color: var(--text-secondary); }
+
+.x-exp__options {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.x-exp__option {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+}
+
+.x-exp__option.is-picked {
+    border-color: var(--danger);
+}
+
+.x-exp__letter {
+    flex: none;
+    display: grid;
+    place-items: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding-inline: var(--space-1);
+    border-radius: 999px;
+    background: var(--surface-strong);
+    font-size: var(--text-xs);
+    font-weight: 700;
+}
+
+.x-exp__option.is-wrong .x-exp__letter { background: var(--danger-soft); color: var(--danger); }
+.x-exp__option.is-true .x-exp__letter { background: var(--success-soft); color: var(--success); }
+
+.x-exp__option-text { flex: 1; min-width: 0; }
+.x-exp__option-text .x-md p { margin: 0; }
+
+.x-exp__tag {
+    display: inline-block;
+    margin-inline-end: var(--space-1);
+    margin-bottom: var(--space-1);
+    padding: 0 var(--space-2);
+    border-radius: 999px;
+    font-size: var(--text-2xs);
+    font-weight: 700;
+    line-height: 1.8;
+}
+
+.x-exp__option.is-wrong .x-exp__tag { background: var(--danger-soft); color: var(--danger); }
+.x-exp__option.is-true .x-exp__tag { background: var(--success-soft); color: var(--success); }
+.x-exp__option .x-exp__tag.is-picked { background: var(--surface-strong); color: var(--text-secondary); }
+
+.x-exp__callout {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+}
+
+.x-exp__callout .x-md p:last-child { margin-bottom: 0; }
+.x-exp__callout.is-tip { background: var(--accent-soft); }
+.x-exp__callout.is-tip .x-exp__head { color: var(--accent); }
+.x-exp__callout.is-trap { background: var(--warning-soft); }
+.x-exp__callout.is-trap .x-exp__head { color: var(--warning); }
+
+.x-exp__source {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+    padding-top: var(--space-3);
+    border-top: 1px dashed var(--border-strong);
+    color: var(--text-secondary);
+    font-size: var(--text-xs);
+}
+
+.x-exp__source-label { font-weight: 700; }
+.x-exp__source-text { unicode-bidi: plaintext; }
+
+.x-exp .x-explanation__origin { margin-top: 0; }
