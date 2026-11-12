@@ -145,20 +145,52 @@ the 1406 scope; 351 have no usable source. `bank_edition_mappings`,
 - Original wording only. No sentence, table or figure is reproduced from the
   book beyond a short term or value needed to state a fact.
 
-### 5.2 Explanations (one per question)
+### 5.2 Explanations (one per question) — template, 2026-11-12
 
-Uses the existing `explanation` fields (06 §2):
+Settled from 36 MedoFast explanations across four subjects (structure only:
+length, block order, option tags, emphasis, images; no text kept) and the
+FANOOS rules above. What MedoFast almost never has and FANOOS always has:
+the source line (1 of 36 cited anything).
 
-| Field | Content |
+**Length follows observed difficulty** (MedoFast: easy ≈ 86 words, medium ≈
+101, hard ≈ 184): ≥ 75 % correct 50–90 words; 50–74 % 80–120; < 50 % or new
+120–200; a clinical card up to 200. A voided question gets one line: that it
+was voided, and why when known.
+
+**Order**
+
+1. «پاسخ: گزینه‌ی …» (every accepted option when `also_correct`).
+2. If `currency` is not `current` for 1406: that notice first.
+3. Core: 2–6 bullets, one fact each, paraphrased from the 1406 page. The
+   bullet that proves the answer ends «(تأیید گزینه‌ی N)»; a fact that rules
+   an option out ends «(رد گزینه‌ی N)». **Every option gets a tag**, inline
+   when facts and options line up, otherwise in a closing
+   «بررسی سایر گزینه‌ها:» block (one line per option).
+4. Optional «نکته‌ی آزمون» / «دام رایج», only when real (about 1 in 8).
+5. Source line: `Book edition · فصل N · ص printed` (PDF page and SHA-256
+   stay in `explanation.from`), then links to the chapter's lesson / mind map.
+
+**By question type**
+
+| Type | Shape |
 |---|---|
-| answer line | «پاسخ: گزینه‌ی …» (all accepted options when `also_correct`) |
-| `short` | 1–3 sentences: why this option is right |
-| `reference` | the fact from the 1406 page, paraphrased, with the key part emphasised |
-| `why_wrong` | one line per wrong option |
-| `tip` | the exam point to remember (نکته‌ی آزمون) |
-| `trap` | the usual mistake (دام رایج), when there is one |
-| `location` / `from` | edition · chapter · page; PDF page and SHA-256 |
-| `currency` | when the official answer is not current under 1406, say so first |
+| recall / concept | core bullets; one «پس / چون» mechanism sentence when it helps memory |
+| negative («به جز»، «نادرست») | first line «سؤال دنبال گزینه‌ی نادرست است»; true options «(درست — رد گزینه‌ی N)», the answer «(نادرست — تأیید گزینه‌ی N)» |
+| multi-statement | each statement ✓ / ✗ with a reason, then the count |
+| clinical scenario | card: «یافته‌ی کلیدی» → «تشخیص / اقدام» → «چرا بقیه نه» |
+| comparison / classification | a small table (`| a | b |`) |
+| image | first where to look, then the reading |
+
+**Writing**: semi-colloquial Persian to «تو», short sentences; English terms
+as in the book with Persian on first use; 2–6 emphases, at most one per
+bullet (`{{key:…}}` the asked fact, `{{term:…}}` a term, `{{warn:…}}` an
+exception; 12_LESSON_FORMAT.md). Every claim is on the cited page or on a
+page added to `from`; reasons for wrong options that come from another page
+cite it too, or the line is left out.
+
+Fields: `short` = answer line + proving bullet; `reference` = core bullets;
+`why_wrong` = per-option lines; `tip`, `trap`; `location`, `from`;
+`confidence` ≥ 0.85 to publish.
 
 ## 6. Phases
 
