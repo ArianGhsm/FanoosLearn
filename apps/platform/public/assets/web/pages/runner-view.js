@@ -11,7 +11,7 @@ import {
     ATTEMPT_FILTERS, answeredCount, isAnswered, isExplanationShown, isFlagged, isStruck, isTimeCritical,
     progressPercent, remainingSeconds, unansweredPositions, visiblePositions,
 } from './runner-state.js';
-import { renderMarkdown } from './markdown.js';
+import { renderExplanation } from './explanation-view.js';
 import { highlightSegments } from './runner-study.js';
 import { choiceShareLabel, statsLines } from './question-stats.js';
 import { questionFacts } from './question-facts.js';
@@ -264,6 +264,9 @@ const ICONS = {
     // A magnifier: open an image full size.
     zoom: 'M11 4a7 7 0 100 14 7 7 0 000-14zM20 20l-4-4M11 8v6M8 11h6',
     close: 'M6 6l12 12M18 6L6 18',
+    // A bulb: the exam tip.
+    bulb: 'M9 18h6M10 21h4M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z',
+    list: 'M9 6h11M9 12h11M9 18h11M4 6h.5M4 12h.5M4 18h.5',
 };
 
 export function icon(name, { filled = false } = {}) {
@@ -633,8 +636,7 @@ function renderReveal(reveal, question, chosen, { explanationVisible = true, onS
             on: { click: onShowExplanation },
         })
         : (reveal.explanation
-            ? el('div', {}, renderMarkdown(reveal.explanation),
-                el('p', { className: 'x-explanation__origin', text: 'این توضیح با کمک هوش مصنوعی تهیه شده است.' }))
+            ? renderExplanation(reveal.explanation, { chosen: chosen ?? null, showAnswer: false })
             : el('p', { className: 'f-tiny', text: 'برای این سؤال توضیحی ثبت نشده است.' }));
 
     return el('section', { className: `x-revealed${right ? ' is-right' : ''}` },
@@ -1145,9 +1147,8 @@ export function renderReviewQuestion(entry, position, questionCount, actions, as
                 : null,
             entry.explanation
                 ? el('section', { className: 'x-explanation' },
-                    el('h3', { text: 'چرا؟' }),
-                    renderMarkdown(entry.explanation),
-                    el('p', { className: 'x-explanation__origin', text: 'این توضیح با کمک هوش مصنوعی تهیه شده است.' }))
+                    el('h3', { text: 'پاسخ تشریحی' }),
+                    renderExplanation(entry.explanation, { chosen: entry.selected ?? null }))
                 : el('p', { className: 'f-tiny', text: 'برای این سؤال توضیحی ثبت نشده است.' }),
             renderQuestionStats(entry.stats ?? null)),
         el('p', { className: 'x-review__done' },
