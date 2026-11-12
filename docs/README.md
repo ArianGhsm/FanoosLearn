@@ -13,6 +13,8 @@
   — the question bank's design and build order. **Current direction.**
 - [`product/10_VISUALS.md`](product/10_VISUALS.md) — mind maps, flowcharts,
   tables and capsules: what they are, how one is made from the book pages.
+- [`product/11_STUDY_CONTENT_1406_PLAN.md`](product/11_STUDY_CONTENT_1406_PLAN.md)
+  — plan for lessons, explanations and review for residency 1406, in MedoFast's style
 - [`product/07_COMPETITOR_FEATURES.md`](product/07_COMPETITOR_FEATURES.md)
   — every option MedoFast and Parseh offer, and which ones FANOOS has.
 - `product/01`–`04` — features built before the dental pivot that still run
