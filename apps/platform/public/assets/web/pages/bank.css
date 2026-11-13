@@ -1671,3 +1671,18 @@ a.b-card:focus-visible {
     .b-exam, .b-exam__mark, .b-exam__check { transition: none; }
     .b-exam.is-active .b-exam__mark { transform: none; }
 }
+
+/* The chosen exam row, clean: its tint laid over the paper, not over the
+   hairline colour behind the grid; a real check mark. */
+.b-exam.is-active { background: linear-gradient(var(--h-soft), var(--h-soft)), var(--surface); }
+.b-exam.is-active:hover { background: linear-gradient(var(--h-soft), var(--h-soft)), var(--surface-muted); }
+
+.b-exam.is-active .b-exam__check::after {
+    inset: auto;
+    top: 4px;
+    left: 4px;
+    width: 9px;
+    height: 5px;
+    border-width: 0 0 2px 2px;
+    transform: rotate(-45deg);
+}
