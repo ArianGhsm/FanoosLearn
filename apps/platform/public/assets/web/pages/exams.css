@@ -477,3 +477,19 @@
     color: var(--text-secondary);
     font-size: var(--text-xs);
 }
+
+/* A topic map is a wide picture: give it the card's full width, never the
+   question figure's height cap; tap opens it full size. */
+.x-topic .x-figure {
+    max-inline-size: none;
+    margin: 0;
+}
+
+.x-topic .x-figure__img {
+    inline-size: 100%;
+    max-inline-size: none;
+    max-block-size: none;
+    block-size: auto;
+    border-radius: var(--radius-md);
+    cursor: zoom-in;
+}

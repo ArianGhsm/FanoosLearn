@@ -27,8 +27,13 @@ from xml.sax.saxutils import escape
 
 from PIL import ImageFont
 
-FONT_DIR = pathlib.Path('/usr/share/fonts/truetype/vazirmatn')
-FONTS = {w: str(FONT_DIR / f'Vazirmatn-{w}.ttf') for w in ('Regular', 'Medium', 'SemiBold', 'Bold')}
+# YekanBakh (the site's subset: Persian letters only) for Persian, Vazirmatn
+# for Latin words and anything YekanBakh lacks -- fontconfig falls back the
+# same way when rsvg draws, so measuring by runs matches the picture.
+YEKAN_DIR = pathlib.Path.home() / '.local/share/fonts/yekanbakh'
+VAZIR_DIR = pathlib.Path('/usr/share/fonts/truetype/vazirmatn')
+FAMILY = 'Yekan Bakh, Vazirmatn'
+BOLD = {'Regular': False, 'Medium': False, 'SemiBold': True, 'Bold': True}
 FA = str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹')
 
 
@@ -52,18 +57,41 @@ GAP_X = 44
 GAP_Y = 9
 MARGIN = 36
 
-_fonts: dict[tuple[str, float], ImageFont.FreeTypeFont] = {}
+_fonts: dict[tuple[str, bool, float], ImageFont.FreeTypeFont] = {}
+_yekan_chars: set[int] | None = None
 
 
-def font(weight: str, size: float) -> ImageFont.FreeTypeFont:
-    key = (weight, size)
+def font(family: str, bold: bool, size: float) -> ImageFont.FreeTypeFont:
+    key = (family, bold, size)
     if key not in _fonts:
-        _fonts[key] = ImageFont.truetype(FONTS[weight], round(size * 4), layout_engine=ImageFont.Layout.RAQM)
+        path = (YEKAN_DIR / f'YekanBakh-{"Bold" if bold else "Regular"}-fa.ttf' if family == 'yekan'
+                else VAZIR_DIR / f'Vazirmatn-{"Bold" if bold else "Regular"}.ttf')
+        _fonts[key] = ImageFont.truetype(str(path), round(size * 4), layout_engine=ImageFont.Layout.RAQM)
     return _fonts[key]
 
 
+def yekan_chars() -> set[int]:
+    global _yekan_chars
+    if _yekan_chars is None:
+        from fontTools.ttLib import TTFont
+        _yekan_chars = set(TTFont(str(YEKAN_DIR / 'YekanBakh-Regular-fa.ttf')).getBestCmap())
+    return _yekan_chars
+
+
 def width(text: str, weight: str, size: float) -> float:
-    return font(weight, size).getlength(text, direction='rtl') / 4
+    bold, have = BOLD[weight], yekan_chars()
+    total, run, family = 0.0, '', None
+    for ch in text:
+        fam = 'yekan' if ord(ch) in have else 'vazir'
+        if family is not None and fam != family and ch != ' ':
+            total += font(family, bold, size).getlength(run, direction='rtl')
+            run = ''
+        if ch != ' ' or family is None:
+            family = fam
+        run += ch
+    if run:
+        total += font(family or 'yekan', bold, size).getlength(run, direction='rtl')
+    return total / 4
 
 
 def wrap(text: str, weight: str, size: float, max_w: float) -> list[str]:
@@ -173,7 +201,7 @@ def text_block(node: Node, cx: float, color: str, note_color: str) -> list[str]:
     for line in node.lines:
         y += st['size'] * st['line']
         out.append(f'<text x="{cx:.1f}" y="{y - st["size"] * (st["line"] - 1) / 2 - 2:.1f}" font-size="{st["size"]}" '
-                   f'font-weight="{ {"Regular": 400, "Medium": 500, "SemiBold": 600, "Bold": 700}[st["weight"]] }" '
+                   f'font-weight="{700 if BOLD[st["weight"]] else 400}" '
                    f'fill="{color}">{escape(fa(line))}</text>')
     for line in node.note_lines:
         y += NOTE['size'] * NOTE['line']
@@ -202,7 +230,7 @@ def svg(visual: dict, logo_b64: str | None, source_line: str) -> tuple[str, floa
 
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{W:.0f}" height="{H:.0f}" '
-        f'viewBox="0 0 {W:.0f} {H:.0f}" font-family="Vazirmatn" direction="rtl" text-anchor="middle">',
+        f'viewBox="0 0 {W:.0f} {H:.0f}" font-family="{FAMILY}" direction="rtl" text-anchor="middle">',
         '<defs>'
         '<linearGradient id="brand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5a6c"/>'
         '<stop offset="0.55" stop-color="#ef4056"/><stop offset="1" stop-color="#e0344b"/></linearGradient>'
@@ -227,7 +255,7 @@ def svg(visual: dict, logo_b64: str | None, source_line: str) -> tuple[str, floa
     parts.append('<g>' + ''.join(wm) + '</g>')
 
     # Title strip.
-    parts.append(f'<text x="{W / 2:.1f}" y="{MARGIN + 6:.1f}" font-size="13" font-weight="600" fill="{MUTED}">'
+    parts.append(f'<text x="{W / 2:.1f}" y="{MARGIN + 6:.1f}" font-size="13" font-weight="700" fill="{MUTED}">'
                  f'جمع‌بندی مبحث · {escape(fa(visual["title"]))}</text>')
 
     # Connectors under the boxes.
