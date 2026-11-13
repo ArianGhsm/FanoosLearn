@@ -137,48 +137,13 @@
     to { background-position: -200% 0; }
 }
 
-.f-home__switch {
-    margin-top: var(--space-6);
-    margin-bottom: 0;
-    text-align: center;
-}
 
 /* ------------------------------------------------------------ chooser */
 
-.f-home__panel h2 {
-    font-size: var(--text-xl);
-}
 
-.f-home__workspaces {
-    display: grid;
-    gap: var(--space-2);
-}
 
-.f-home__workspace {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-    align-items: flex-start;
-    text-align: start;
-    padding: var(--space-4);
-    font: inherit;
-    color: inherit;
-    cursor: pointer;
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    transition: border-color var(--motion-fast) var(--ease), background var(--motion-fast) var(--ease);
-}
 
-.f-home__workspace:hover:not(:disabled) {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-}
 
-.f-home__workspace:disabled {
-    opacity: 0.6;
-    cursor: progress;
-}
 
 @media (max-width: 720px) {
     .f-hello {
@@ -436,4 +401,167 @@
 }
 @media (max-width: 720px) {
     .f-hello { align-items: flex-start; padding: var(--space-5); }
+}
+
+/* ------------------------------------------------------------- today and courses as rows
+ * (2026-11-14) Today at a glance as one list: an icon in its own hue, what it
+ * is (with the goal bar for points), the number large, a chevron. Three
+ * columns where there is room, one per row on a phone. The courses follow the
+ * same row grammar. */
+
+.f-today {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1px;
+    margin: 0 0 var(--space-6);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--border);
+    overflow: hidden;
+}
+
+@media (min-width: 860px) {
+    .f-today { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.f-today__row {
+    --h: var(--info);
+    --h-soft: var(--info-soft);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 76px;
+    padding: 14px 16px;
+    background: var(--surface);
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: background 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.f-today__row[data-hue="warning"] { --h: var(--warning); --h-soft: var(--warning-soft); }
+.f-today__row[data-hue="coin"] { --h: #d99a00; --h-soft: rgba(255, 190, 40, 0.16); }
+.f-today__row:hover { background: var(--surface-muted); }
+.f-today__row:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+
+.f-today__icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    inline-size: 44px;
+    block-size: 44px;
+    border-radius: 13px;
+    background: var(--h-soft);
+    color: var(--h);
+}
+
+.f-today__icon svg,
+.f-today__go,
+.f-course-row__go {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.f-today__icon svg { inline-size: 22px; block-size: 22px; }
+
+.f-today__text { flex: 1; min-width: 0; display: grid; gap: 6px; }
+.f-today__label { font-weight: 700; font-size: var(--text-base); }
+.f-today__hint { color: var(--text-secondary); font-size: var(--text-xs); }
+
+.f-today__bar {
+    display: block;
+    block-size: 6px;
+    border-radius: 999px;
+    background: var(--surface-strong);
+    overflow: hidden;
+}
+
+.f-today__bar i {
+    display: block;
+    inline-size: var(--done, 0%);
+    block-size: 100%;
+    border-radius: inherit;
+    background: var(--h);
+    transition: inline-size 400ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.f-today__value {
+    flex: none;
+    color: var(--h);
+    font-size: 1.25rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.f-today__go,
+.f-course-row__go {
+    flex: none;
+    inline-size: 18px;
+    block-size: 18px;
+    color: var(--text-tertiary);
+    transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), color 160ms;
+}
+
+.f-today__row:hover .f-today__go { color: var(--h); transform: translateX(-3px); }
+
+/* Courses: the same row grammar. */
+.f-courses-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--border);
+    overflow: hidden;
+}
+
+@media (min-width: 860px) {
+    .f-courses-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.f-course-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 64px;
+    margin: 0;
+    padding: 12px 16px;
+    border: 0;
+    border-radius: 0;
+    background: var(--surface);
+    box-shadow: none;
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: background 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.f-course-row:hover { background: var(--surface-muted); transform: none; box-shadow: none; }
+
+.f-course-row__mark {
+    flex: none;
+    display: grid;
+    place-items: center;
+    inline-size: 38px;
+    block-size: 38px;
+    border-radius: 11px;
+    background: var(--hue-subject-soft);
+    color: var(--hue-subject);
+    font-weight: 700;
+}
+
+.f-course-row__title { flex: 1; min-width: 0; font-weight: 700; }
+.f-course-row__count { flex: none; color: var(--text-secondary); font-size: var(--text-sm); }
+.f-course-row:hover .f-course-row__go { color: var(--hue-subject); transform: translateX(-3px); }
+
+@media (max-width: 640px) {
+    .f-today__row { min-height: 68px; padding: 12px 14px; gap: 12px; }
+    .f-today__icon { inline-size: 40px; block-size: 40px; border-radius: 12px; }
+    .f-today__value { font-size: 1.1rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .f-today__row, .f-today__go, .f-course-row, .f-course-row__go, .f-today__bar i { transition: none; }
+    .f-today__row:hover .f-today__go, .f-course-row:hover .f-course-row__go { transform: none; }
 }

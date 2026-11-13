@@ -1,19 +1,12 @@
 /*
- * Home.
- *
- * Two jobs, depending on which variant the server rendered: choosing a
- * workspace (the chooser), or showing the selected workspace's courses as a
- * place to start. Selecting a workspace is a server-side change to the
- * session, so the page reloads afterwards and every subsequent page is
- * rendered for the new workspace.
+ * Home: today at a glance and the courses to start from. FANOOS is one
+ * dental workspace, chosen by the server; there is no chooser here.
  */
 import { api, describeError } from '../foundation/api.js';
 
-const list = document.getElementById('workspace-list');
 const courses = document.getElementById('home-courses');
 const workspaceId = document.querySelector('meta[name="fanoos-workspace"]')?.content ?? '';
 
-if (list) loadWorkspaces();
 if (courses && workspaceId) loadCourses();
 if (document.getElementById('today') && workspaceId) loadToday();
 
@@ -51,6 +44,17 @@ function text(tag, className, value) {
     return node;
 }
 
+function chevron() {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.classList.add('f-course-row__go');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', 'M15 5l-7 7 7 7');
+    svg.append(path);
+    return svg;
+}
+
 function faDigits(value) {
     return String(value).replace(/[0-9]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)]);
 }
@@ -71,10 +75,12 @@ async function loadCourses() {
             const row = document.createElement('a');
             row.className = 'f-course-row';
             row.href = `/app/exams#course=${encodeURIComponent(entry.course_id)}`;
+            const title = String(entry.course_title || 'بدون عنوان');
             row.append(
-                text('span', 'f-course-row__title', String(entry.course_title || 'بدون عنوان')),
+                text('span', 'f-course-row__mark', title.trim().charAt(0)),
+                text('span', 'f-course-row__title', title),
                 text('span', 'f-course-row__count', `${faDigits(entry.exam_count)} آزمون`),
-                text('span', 'f-course-row__go', '←'),
+                chevron(),
             );
             return row;
         }));
@@ -85,81 +91,7 @@ async function loadCourses() {
     }
 }
 
-function renderEmpty() {
-    const wrap = document.createElement('div');
-    wrap.className = 'f-empty';
-    wrap.append(
-        text('div', 'f-empty__title', 'هنوز فضایی برایت باز نشده'),
-        text('p', '', 'اگر رشته‌ات را موقع ثبت‌نام انتخاب کرده‌ای، آزمون‌هایش به محض آماده شدن همین‌جا ظاهر می‌شوند.'),
-    );
-    list.replaceChildren(wrap);
-}
 
-function renderError(message, retry) {
-    const wrap = document.createElement('div');
-    wrap.className = 'f-notice f-notice--error';
-    const body = document.createElement('div');
-    body.className = 'f-notice__body';
-    body.append(text('div', 'f-notice__title', 'فهرست خوانده نشد'), text('p', '', message));
-    if (retry) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'f-btn f-btn--ghost';
-        button.textContent = 'تلاش دوباره';
-        button.addEventListener('click', loadWorkspaces);
-        body.append(button);
-    }
-    wrap.append(body);
-    list.replaceChildren(wrap);
-}
 
-function renderChoices(workspaces) {
-    const items = workspaces.map((workspace) => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'f-home__workspace';
-        button.append(
-            text('strong', '', String(workspace.name || 'فضای بی‌نام')),
-            text('span', 'f-muted', [workspace.institution_name, workspace.program_name, workspace.cohort_label]
-                .filter(Boolean).join(' · ')),
-        );
-        button.addEventListener('click', () => select(workspace.id, button));
-        return button;
-    });
 
-    const wrap = document.createElement('div');
-    wrap.className = 'f-home__workspaces';
-    wrap.append(...items);
-    list.replaceChildren(wrap);
-}
 
-async function loadWorkspaces() {
-    list.setAttribute('aria-busy', 'true');
-    list.replaceChildren(text('p', 'f-muted', 'در حال خواندن فهرست…'));
-    try {
-        const account = await api.get('/account');
-        const workspaces = Array.isArray(account?.workspaces) ? account.workspaces : [];
-        if (workspaces.length === 0) {
-            renderEmpty();
-            return;
-        }
-        renderChoices(workspaces);
-    } catch (error) {
-        renderError(describeError(error), true);
-    } finally {
-        list.setAttribute('aria-busy', 'false');
-    }
-}
-
-async function select(id, button) {
-    const previous = button.textContent;
-    button.disabled = true;
-    try {
-        await api.post('/workspaces/select', { workspace_id: String(id) });
-        window.location.assign('/app');
-    } catch (error) {
-        button.disabled = false;
-        button.textContent = previous;
-        renderError(describeError(error), false);
-    }
-}

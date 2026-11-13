@@ -87,7 +87,6 @@ final class AccountPage
         <p class="a-profile__name">{$name}</p>
         <p class="a-profile__space">{$workspace}</p>
     </div>
-    <a class="a-profile__switch" href="/app?switch=1">{$switchIcon}<span>تغییر فضا</span></a>
 </section>
 
 <nav class="a-list" aria-label="بخش‌های من">

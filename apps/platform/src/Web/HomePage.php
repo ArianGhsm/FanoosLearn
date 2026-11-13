@@ -20,13 +20,10 @@ final class HomePage
     }
 
     /**
-     * @param bool $forceChooser the visitor explicitly asked to switch class
-     *     (`/app?switch=1`), so show the chooser even though the session
-     *     already has one selected.
      * @param array<string, mixed>|null $profile the website sign-up profile, if any
      * @param bool $welcome the visitor has just created their account
      */
-    public function render(ViewerContext $viewer, bool $forceChooser = false, ?array $profile = null, bool $welcome = false): string
+    public function render(ViewerContext $viewer, ?array $profile = null, bool $welcome = false): string
     {
         $firstName = trim((string) ($profile['first_name'] ?? ''));
         $name = $this->renderer->escape($firstName !== '' ? $firstName : $viewer->displayName);
@@ -38,16 +35,13 @@ final class HomePage
         if (($profile['institution_name'] ?? '') !== '') {
             $facts[] = '<span class="f-hello__fact"><i>دانشگاه</i>' . $this->renderer->escape((string) $profile['institution_name']) . '</span>';
         }
-        if ($viewer->workspaceName !== null && $viewer->workspaceName !== '') {
-            $facts[] = '<span class="f-hello__fact"><i>فضا</i>' . $this->renderer->escape($viewer->workspaceName) . '</span>';
-        }
         $factsHtml = $facts === [] ? '' : '<div class="f-hello__facts">' . implode('', $facts) . '</div>';
 
         $lede = $welcome
             ? 'حسابت ساخته شد. آزمون‌های رشته‌ات آماده‌اند؛ از هر درسی که دوست داری شروع کن.'
             : 'امروز سراغ کدام درس برویم؟';
 
-        $chooser = $viewer->workspaceId === null || $forceChooser;
+        $chooser = $viewer->workspaceId === null;
 
         $hello = <<<HTML
 <section class="f-hello">
@@ -61,20 +55,32 @@ HTML;
 
         $today = <<<'HTML'
 <section class="f-today" id="today" aria-label="امروز" hidden>
-    <a class="f-today__item" href="/app/points">
-        <span class="f-today__label">امتیاز امروز</span>
+    <a class="f-today__row" href="/app/points" data-hue="warning">
+        <span class="f-today__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg></span>
+        <span class="f-today__text">
+            <span class="f-today__label">امتیاز امروز</span>
+            <span class="f-today__bar" aria-hidden="true"><i id="today-bar"></i></span>
+        </span>
         <strong class="f-today__value" id="today-points">—</strong>
-        <span class="f-today__bar" aria-hidden="true"><i id="today-bar"></i></span>
+        <svg class="f-today__go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
     </a>
-    <a class="f-today__item" href="/app/progress#review">
-        <span class="f-today__label">مرور امروز</span>
+    <a class="f-today__row" href="/app/progress#review" data-hue="info">
+        <span class="f-today__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></span>
+        <span class="f-today__text">
+            <span class="f-today__label">مرور امروز</span>
+            <span class="f-today__hint" id="today-review-note"></span>
+        </span>
         <strong class="f-today__value" id="today-review">—</strong>
-        <span class="f-tiny" id="today-review-note"></span>
+        <svg class="f-today__go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
     </a>
-    <a class="f-today__item f-today__item--coins" href="/app/points#coin-shop">
-        <span class="f-today__label">سکه</span>
+    <a class="f-today__row" href="/app/points#coin-shop" data-hue="coin">
+        <span class="f-today__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M9.5 10h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3h4"/></svg></span>
+        <span class="f-today__text">
+            <span class="f-today__label">سکه</span>
+            <span class="f-today__hint">خرج کردن در فروشگاه سکه</span>
+        </span>
         <strong class="f-today__value" id="today-coins">—</strong>
-        <span class="f-tiny">خرج کردن</span>
+        <svg class="f-today__go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
     </a>
 </section>
 HTML;
@@ -82,12 +88,9 @@ HTML;
 
         $body = $chooser
             ? <<<'HTML'
-<section class="f-card f-home__panel" aria-labelledby="pick-title">
-    <h2 id="pick-title">فضای آموزشی‌ات را انتخاب کن</h2>
-    <p class="f-muted">برای دیدن آزمون‌ها و بقیه بخش‌ها، اول مشخص کن کدام فضا.</p>
-    <div id="workspace-list" aria-busy="true">
-        <p class="f-muted">در حال خواندن فهرست…</p>
-    </div>
+<section class="f-card f-empty" aria-labelledby="pick-title">
+    <h2 class="f-empty__title" id="pick-title">حسابت هنوز به فانوس وصل نشده</h2>
+    <p>اگر تازه ثبت‌نام کرده‌ای چند دقیقه‌ی دیگر دوباره سر بزن؛ اگر درست نشد، از <a href="/support">پشتیبانی</a> بپرس.</p>
 </section>
 HTML
             : <<<HTML
@@ -104,9 +107,6 @@ HTML
     </div>
 </section>
 
-<p class="f-tiny f-home__switch">
-    فضای دیگری هم داری؟ <a href="/app?switch=1">فضای آموزشی را عوض کن</a>
-</p>
 HTML;
 
         return $this->renderer->render([
