@@ -131,7 +131,7 @@ function draw() {
     if (banner) frame.append(banner);
     if (pageError) frame.append(pageError);
 
-    if (phase === 'intro' && assessment) {
+    if (phase === 'intro' && assessment && introAllowed) {
         frame.append(renderIntro(assessment, { start, openSettings, openHistory }));
     } else if (phase === 'question' && state) {
         const question = questions.get(state.position);
@@ -210,6 +210,9 @@ function showError(error, retry) {
     } else if (error instanceof ApiError && error.code === 'exam_window_closed') {
         pageError = notice('warning', 'مهلت شرکت در این آزمون تمام شده',
             'رتبه‌بندی فقط برای کسانی است که در مهلت شرکت کردند. همچنان می‌توانی آن را در حالت «تمرین» یا «یادگیری» بزنی.', null);
+    } else if (error instanceof ApiError && error.code === 'attempt_mode_locked') {
+        pageError = notice('warning', 'این دور دیگر آزمون رسمی نمی‌شود',
+            'پاسخ بعضی سؤال‌ها را در این دور دیده‌ای؛ برای آزمون رسمی، بعد از ثبت این دور یک دور تازه در حالت «آزمون» شروع کن.', null);
     } else if (error instanceof ApiError && error.isRateLimited) {
         const seconds = error.retryAfterSeconds ?? 2;
         pageError = notice('warning', 'کمی آهسته‌تر', `چند ثانیه صبر کن و دوباره تلاش کن (حدود ${seconds} ثانیه).`, retry ? { label: 'تلاش دوباره', onClick: retry } : null);
@@ -257,6 +260,41 @@ async function loadAssessment() {
         showError(error, loadAssessment);
     }
     draw();
+}
+
+/*
+ * No start page (owner, 2026-11-14): the exam opens straight onto its first
+ * question in the student's last mode -- «یادگیری» by default, where each
+ * answer shows its explanation at once -- and the mode is switched from the
+ * exam's own header. The intro stays only to explain why an exam cannot open
+ * (no attempts left, not open yet, closed).
+ */
+const MODE_KEY = 'fanoos.exam.mode';
+
+function preferredMode() {
+    try {
+        const mode = localStorage.getItem(MODE_KEY);
+        if (mode === 'learning' || mode === 'practice' || mode === 'assessment') return mode;
+    } catch {
+        // storage unavailable: the default below
+    }
+    return 'learning';
+}
+
+let introAllowed = false;
+
+async function autoStart() {
+    const used = Number(assessment?.attempts_used || 0);
+    const max = Number(assessment?.max_attempts || 0);
+    const resumable = Boolean(assessment?.active_attempt_id);
+    if (phase === 'intro' && assessment && !pageError && (resumable || max === 0 || used < max)) {
+        await start(resumable ? null : preferredMode());
+    }
+    // Whatever kept the exam from opening, the intro says it.
+    if (phase === 'intro') {
+        introAllowed = true;
+        draw();
+    }
 }
 
 async function start(mode) {
@@ -661,6 +699,27 @@ const questionActions = {
         draw();
     },
 
+    async setMode(mode) {
+        if (!state || state.mode === mode) return;
+        try {
+            const result = await transport.setMode(state.attemptId, mode);
+            state.mode = result?.mode ?? mode;
+            try {
+                localStorage.setItem(MODE_KEY, state.mode);
+            } catch {
+                // storage unavailable: the mode still applies to this attempt
+            }
+            clearError();
+            draw();
+            // Switching into learning on an answered question shows its answer now.
+            if (state.mode !== 'assessment' && state.answers[String(state.position)] !== undefined && !state.reveals.has(state.position)) {
+                questionActions.reveal();
+            }
+        } catch (error) {
+            showError(error, null);
+            draw();
+        }
+    },
     choose(index) {
         setAnswer(state, state.position, index);
         sync.schedule();
@@ -1161,4 +1220,4 @@ watchConnection((online) => {
     draw();
 });
 
-if (root && assessmentId) loadAssessment();
+if (root && assessmentId) loadAssessment().then(autoStart);

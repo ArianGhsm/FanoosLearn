@@ -20,7 +20,7 @@
 import { api, describeError } from '../foundation/api.js';
 import { el, faDigits, faText, kindLabel, notice } from './runner-view.js';
 import { groupSittings, specialtiesByType } from './bank-rules.js';
-import { paperGroup } from './bank-papers.js';
+import { paperIndex } from './bank-papers.js';
 import { goalPicker, readGoal } from './exam-goal.js';
 
 const list = document.getElementById('catalog');
@@ -259,9 +259,9 @@ async function loadPapers() {
     let goal = readGoal(bank.types.map((type) => type.key));
     const draw = () => {
         const groups = groupSittings(bank.sittings, goal);
-        papers.replaceChildren(...(groups.length > 0
-            ? groups.map(paperGroup)
-            : [el('p', { className: 'f-muted', text: 'برای این آزمون هنوز سؤالی منتشر نشده.' })]));
+        papers.replaceChildren(groups.length > 0
+            ? paperIndex(groups)
+            : el('p', { className: 'f-muted', text: 'برای این آزمون هنوز سؤالی منتشر نشده.' }));
     };
     document.getElementById('goal-slot').replaceChildren(goalPicker({
         types: bank.types,

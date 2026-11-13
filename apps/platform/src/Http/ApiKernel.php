@@ -723,6 +723,11 @@ final class ApiKernel
         if ($request->method === 'GET' && $suffix === '/mistakes-review') {
             return ['status' => 200, 'data' => $this->requireExams()->mistakesReview($session->userId, $workspaceId)];
         }
+        if ($request->method === 'POST' && preg_match('#^/attempts/([0-9a-f-]+)/mode$#', $suffix, $match)) {
+            return ['status' => 200, 'data' => $this->requireExams()->changeAttemptMode(
+                $session->userId, $workspaceId, $match[1], (string) ($request->body['mode'] ?? ''),
+            )];
+        }
         if ($request->method === 'PATCH' && preg_match('#^/attempts/([0-9a-f-]+)$#', $suffix, $match)) {
             $answers = is_array($request->body['answers'] ?? null) ? $request->body['answers'] : [];
             return ['status' => 200, 'data' => $this->requireExams()->saveProgress(

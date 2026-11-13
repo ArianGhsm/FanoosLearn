@@ -38,6 +38,11 @@ export class ExamTransport {
         );
     }
 
+    /** Switch this attempt's mode from inside the exam (ExamService::changeAttemptMode). */
+    setMode(attemptId, mode) {
+        return this.api.post(`${this.base}/attempts/${encodeURIComponent(attemptId)}/mode`, { mode });
+    }
+
     reveal(attemptId, position) {
         return this.api.get(`${this.base}/attempts/${encodeURIComponent(attemptId)}/questions/${position}/reveal`);
     }

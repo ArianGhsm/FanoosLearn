@@ -1387,3 +1387,157 @@ a.b-card:focus-visible {
     border-bottom: 1px solid var(--border-strong);
 }
 .b-exam { border-color: var(--border-strong); }
+
+/* ------------------------------------------------------------- papers as rows
+ * (bank-papers.js, 2026-11-14) One list per exam type, a row per year: a
+ * coloured mark, the name, the count, a chevron. A year of specialty papers
+ * opens in place. One surface per list, hairlines between rows: scanned like
+ * a list, not hunted across a grid of boxes. */
+
+.b-papers { margin-bottom: var(--space-6); }
+
+.b-papers__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-2);
+}
+
+.b-papers__title { margin: 0 0 var(--space-2); font-size: var(--text-lg); }
+.b-papers__head .b-papers__title { margin: 0; }
+.b-papers__count { color: var(--text-tertiary); font-size: var(--text-xs); }
+
+.b-rows {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface);
+    overflow: hidden;
+}
+
+.b-rows__item + .b-rows__item { border-top: 1px solid var(--border); }
+
+.b-row {
+    --h: var(--info);
+    --h-soft: var(--info-soft);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: 60px;
+    padding: 10px 16px;
+    color: var(--text-primary);
+    text-decoration: none;
+    cursor: pointer;
+    list-style: none;
+    transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.b-row::-webkit-details-marker { display: none; }
+.b-row:hover { background: var(--surface-muted); }
+.b-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.b-row[data-hue="accent"] { --h: var(--accent); --h-soft: var(--accent-soft); }
+.b-row[data-hue="subject"] { --h: var(--hue-subject); --h-soft: var(--hue-subject-soft); }
+.b-row[data-hue="tag"] { --h: var(--hue-tag); --h-soft: var(--hue-tag-soft); }
+.b-row[data-hue="difficulty"] { --h: var(--hue-difficulty); --h-soft: var(--hue-difficulty-soft); }
+.b-row[data-hue="source"] { --h: var(--hue-source); --h-soft: var(--hue-source-soft); }
+.b-row[data-hue="success"] { --h: var(--success); --h-soft: var(--success-soft); }
+.b-row[data-hue="info"] { --h: var(--info); --h-soft: var(--info-soft); }
+
+.b-row__mark {
+    flex: none;
+    display: grid;
+    place-items: center;
+    inline-size: 38px;
+    block-size: 38px;
+    border-radius: 11px;
+    background: var(--h-soft);
+    color: var(--h);
+    font-weight: 700;
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+}
+
+.b-row__title { flex: 1; min-width: 0; font-weight: 700; font-size: var(--text-base); }
+.b-row__meta { flex: none; color: var(--text-secondary); font-size: var(--text-sm); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.b-row__chevron {
+    flex: none;
+    inline-size: 18px;
+    block-size: 18px;
+    color: var(--text-tertiary);
+    transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* A year that opens: its chevron turns down, its specialties hang under it. */
+.b-rowgroup[open] > summary .b-row__chevron { transform: rotate(-90deg); }
+.b-rowgroup[open] > summary { background: var(--surface-muted); }
+
+.b-rows--sub {
+    margin: 0;
+    border: 0;
+    border-top: 1px solid var(--border);
+    border-radius: 0;
+    background: color-mix(in srgb, var(--surface-muted) 55%, var(--surface));
+}
+
+.b-rows--sub .b-row { min-height: 52px; padding-inline-start: 32px; }
+.b-rows--sub .b-row__mark { inline-size: 30px; block-size: 30px; border-radius: 9px; font-size: var(--text-xs); }
+.b-rows--sub .b-row__title { font-weight: 400; }
+
+@media (max-width: 640px) {
+    .b-row { padding: 10px 12px; gap: 10px; }
+    .b-row__meta { font-size: var(--text-xs); }
+    .b-rows--sub .b-row { padding-inline-start: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .b-row, .b-row__chevron { transition: none; }
+}
+
+/* ------------------------------------------------------- the catalogue as rows */
+
+.x-cards,
+.x-courses {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface);
+    overflow: hidden;
+}
+
+.x-cards > .x-card,
+.x-courses > .x-course {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin: 0;
+    padding: 12px 16px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    transform: none;
+}
+
+.x-cards > .x-card + .x-card,
+.x-courses > .x-course + .x-course { border-top: 1px solid var(--border); }
+
+.x-courses > .x-course:hover,
+.x-cards > .x-card:hover { background: var(--surface-muted); transform: none; box-shadow: none; }
+
+.x-card__body { flex: 1; min-width: 0; }
+.x-card__title { margin: 0 0 4px; font-size: var(--text-base); }
+.x-card__side { display: flex; align-items: center; gap: var(--space-3); flex: none; }
+.x-course__title { flex: 1; min-width: 0; font-weight: 700; }
+.x-course__count { color: var(--text-secondary); font-size: var(--text-sm); }
+
+@media (max-width: 640px) {
+    .x-cards > .x-card { flex-wrap: wrap; }
+    .x-card__side { inline-size: 100%; justify-content: space-between; }
+}

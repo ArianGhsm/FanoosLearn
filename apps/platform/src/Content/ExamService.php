@@ -758,6 +758,43 @@ SQL, [
      * @param array<string, mixed> $answers
      * @return array{attempt_id:string,revision:int,status:string}
      */
+    /**
+     * Switch an in-progress attempt between learning, practice and a scored
+     * sitting from inside the exam page (owner, 2026-11-14: no separate start
+     * page; the mode is an option of the exam itself). One rule keeps the
+     * score honest: once an answer has been revealed in this attempt it can
+     * never become a scored sitting.
+     *
+     * @return array{attempt_id: string, mode: string}
+     */
+    public function changeAttemptMode(string $userId, string $workspaceId, string $attemptId, string $mode, ?int $now = null): array
+    {
+        if (!in_array($mode, ['assessment', 'learning', 'practice'], true)) {
+            throw new PlatformException('attempt_mode_invalid', 'Attempt mode is invalid.', 422);
+        }
+
+        return Transaction::run($this->database, function () use ($userId, $workspaceId, $attemptId, $mode, $now): array {
+            $attempt = $this->attempt($userId, $workspaceId, $attemptId, true);
+            if ($attempt['status'] !== 'in_progress') {
+                throw new PlatformException('attempt_state_conflict', 'Only an in-progress attempt can change mode.', 409);
+            }
+            if ((string) $attempt['mode'] === $mode) {
+                return ['attempt_id' => $attemptId, 'mode' => $mode];
+            }
+            $revealed = json_decode((string) ($attempt['revealed_json'] ?? '[]'), true);
+            if ($mode === 'assessment' && is_array($revealed) && $revealed !== []) {
+                throw new PlatformException('attempt_mode_locked', 'Answers were already revealed in this attempt; it cannot become a scored sitting.', 409);
+            }
+            ExamScheduleService::guard($this->database, $workspaceId, (string) $attempt['assessment_id'], $mode, $now);
+            $this->execute(
+                'UPDATE exam_attempts SET mode = :mode WHERE id = :attempt AND workspace_id = :workspace AND user_id = :user',
+                ['mode' => $mode, 'attempt' => $attemptId, 'workspace' => $workspaceId, 'user' => $userId],
+            );
+
+            return ['attempt_id' => $attemptId, 'mode' => $mode];
+        });
+    }
+
     public function saveProgress(string $userId, string $workspaceId, string $attemptId, int $expectedRevision, array $answers, ?int $now = null): array
     {
         return Transaction::run($this->database, function () use ($userId, $workspaceId, $attemptId, $expectedRevision, $answers, $now): array {

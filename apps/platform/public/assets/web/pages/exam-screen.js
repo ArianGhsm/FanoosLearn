@@ -62,6 +62,7 @@ function header(state, saveStatus, actions, flags, kit) {
                 el('strong', { className: 'e-top__count', text: `سؤال ${faDigits(state.position)}` }),
                 el('span', { className: 'e-top__of', text: `از ${faDigits(state.questionCount)}` }),
                 el('span', { className: 'e-top__done', text: `${faDigits(answeredNow)} پاسخ‌داده`, attrs: { role: 'status' } })),
+            modeSwitch(state, actions, kit),
             flags.turbo ? el('button', {
                 className: 'e-chip e-chip--mode', type: 'button', text: 'مرور سریع',
                 attrs: { title: 'پاسخ هر سؤال همان لحظه نشان داده می‌شود؛ برای خاموش کردن بزن' },
@@ -88,6 +89,28 @@ function header(state, saveStatus, actions, flags, kit) {
             }, icon('settings'))),
         el('div', { className: 'e-progress', attrs: { 'aria-hidden': 'true' } },
             el('span', { className: 'e-progress__fill', attrs: { style: `inline-size:${kit.progressPercent(state)}%` } })));
+}
+
+const MODES = [
+    ['learning', 'یادگیری', 'هر سؤال را که جواب دادی، پاسخ و توضیحش همان‌جا می‌آید'],
+    ['practice', 'تمرین', 'درست یا غلط بودن را می‌بینی؛ توضیح با یک ضربه'],
+    ['assessment', 'آزمون', 'مثل جلسه‌ی واقعی؛ پاسخ‌ها بعد از ثبت'],
+];
+
+/* The exam's mode, switched in place (no start page). */
+function modeSwitch(state, actions, kit) {
+    const { el } = kit;
+    if (!actions.setMode) return null;
+    const select = el('select', {
+        className: `e-mode is-${state.mode}`,
+        attrs: { 'aria-label': 'حالت آزمون', title: 'حالت آزمون' },
+        on: { change: (event) => actions.setMode(event.target.value) },
+    }, ...MODES.map(([value, label, hint]) => {
+        const option = el('option', { text: label, attrs: { value, title: hint } });
+        if (value === state.mode) option.selected = true;
+        return option;
+    }));
+    return el('label', { className: 'e-mode__wrap' }, select);
 }
 
 /* ------------------------------------------------------------------ sheet */
