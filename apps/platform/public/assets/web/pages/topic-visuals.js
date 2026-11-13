@@ -1,6 +1,7 @@
 import { api } from '../foundation/api.js';
 import { renderMindmap } from './mindmap-view.js';
 import { renderMarkdown } from './markdown.js';
+import { renderFigure } from './runner-view.js';
 
 /*
  * «جمع‌بندی مبحث»: the published mind maps (and capsules) of the topic a
@@ -39,7 +40,12 @@ function one(visual) {
     summary.className = 'x-topic__summary';
     summary.append(text('span', 'x-topic__badge', visual.kind === 'mindmap' ? '🧠 نقشه‌ی ذهنی' : '💊 کپسول'), text('span', 'x-topic__title', visual.title));
     box.append(summary);
-    if (visual.format === 'tree' && visual.tree) box.append(renderMindmap(visual.tree, { compact: true }));
+    if (visual.has_image) {
+        // The designed picture (scripts/visuals/render_mindmap.py), served
+        // with the student's access; renderFigure gives it the zoom.
+        const base = `/workspaces/${encodeURIComponent(workspaceId())}`;
+        box.append(renderFigure(`/api/v1${base}/bank/visuals/${encodeURIComponent(visual.key)}/image`, visual.title));
+    } else if (visual.format === 'tree' && visual.tree) box.append(renderMindmap(visual.tree, { compact: true }));
     else if (visual.format === 'markdown' && visual.markdown) box.append(renderMarkdown(visual.markdown));
     const foot = document.createElement('p');
     foot.className = 'x-topic__foot';
