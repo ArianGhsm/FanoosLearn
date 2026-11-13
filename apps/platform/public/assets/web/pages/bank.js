@@ -74,6 +74,7 @@ function studyButton(text, body, tone = 'ghost') {
  * the exam also becomes the student's «آزمون من» for the other pages.
  */
 const VIEWS = ['years', 'subjects', 'books'];
+const EXAM_HUE = { residency: 'accent', national: 'info', promotion: 'subject', board: 'tag' };
 
 async function overview() {
     const search = document.getElementById('bank-search');
@@ -121,13 +122,17 @@ async function overview() {
     // Step one: the exam, as four cards in the order students look for them.
     const typeButtons = types.map((t) => {
         const years = yearsOfType(all.sittings, t.key);
+        // One row per exam (owner, 2026-11-14): a mark in the exam's hue, its name,
+        // how many questions and which years, and a check on the chosen one.
         const button = el('button', 'b-exam');
         button.type = 'button';
         button.setAttribute('role', 'tab');
-        button.append(el('strong', 'b-exam__name', t.name));
-        button.append(el('span', 'b-exam__count', t.questions > 0 ? `${faDigits(t.questions)} سؤال` : 'به‌زودی'));
+        button.dataset.hue = EXAM_HUE[t.key] ?? 'info';
         const span = years.length > 0 ? yearSpan(years[years.length - 1].year, years[0].year, faDigits) : null;
-        if (span) button.append(el('span', 'b-exam__years', span));
+        const text = el('span', 'b-exam__text');
+        text.append(el('strong', 'b-exam__name', t.name));
+        text.append(el('span', 'b-exam__count', [t.questions > 0 ? `${faDigits(t.questions)} سؤال` : 'به‌زودی', span].filter(Boolean).join(' · ')));
+        button.append(el('span', 'b-exam__mark', String(t.name).trim().charAt(0)), text, el('span', 'b-exam__check'));
         button.addEventListener('click', () => {
             if (t.key === type) return;
             type = t.key;

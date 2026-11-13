@@ -1541,3 +1541,133 @@ a.b-card:focus-visible {
     .x-cards > .x-card { flex-wrap: wrap; }
     .x-card__side { inline-size: 100%; justify-content: space-between; }
 }
+
+/* ------------------------------------------------------------- exam types as rows
+ * (2026-11-14) The four exams as one list: a mark in the exam's hue, the
+ * name, its questions and years, and a check on the chosen one. Two columns
+ * on a wide screen, one on a phone; the chosen row is tinted, not flooded. */
+
+.b-exams {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--border);
+    overflow: hidden;
+}
+
+@media (max-width: 720px) {
+    .b-exams { grid-template-columns: minmax(0, 1fr); }
+}
+
+.b-exam,
+.b-exam.is-active {
+    --h: var(--info);
+    --h-soft: var(--info-soft);
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    min-height: 72px;
+    padding: 12px 16px;
+    border: 0;
+    border-radius: 0;
+    background: var(--surface);
+    color: var(--text-primary);
+    box-shadow: none;
+    transition: background 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.b-exam[data-hue="accent"] { --h: var(--accent); --h-soft: var(--accent-soft); }
+.b-exam[data-hue="subject"] { --h: var(--hue-subject); --h-soft: var(--hue-subject-soft); }
+.b-exam[data-hue="tag"] { --h: var(--hue-tag); --h-soft: var(--hue-tag-soft); }
+
+.b-exam:hover { background: var(--surface-muted); box-shadow: none; }
+.b-exam:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+.b-exam.is-active { background: var(--h-soft); }
+
+.b-exam__mark {
+    flex: none;
+    display: grid;
+    place-items: center;
+    inline-size: 44px;
+    block-size: 44px;
+    border-radius: 13px;
+    background: var(--h-soft);
+    color: var(--h);
+    font-size: var(--text-base);
+    font-weight: 700;
+    transition: background 160ms, color 160ms, transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.b-exam.is-active .b-exam__mark { background: var(--h); color: #fff; transform: scale(1.04); }
+
+.b-exam__text { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.b-exam__name { font-size: var(--text-base); }
+.b-exam__count { color: var(--text-secondary); font-size: var(--text-sm); opacity: 1; }
+.b-exam.is-active .b-exam__name { color: var(--h); }
+
+/* The chosen one: a filled circle with a check; the rest an empty ring. */
+.b-exam__check {
+    flex: none;
+    position: relative;
+    inline-size: 22px;
+    block-size: 22px;
+    border: 2px solid var(--border-strong);
+    border-radius: 50%;
+    transition: background 160ms, border-color 160ms;
+}
+
+.b-exam.is-active .b-exam__check { border-color: var(--h); background: var(--h); }
+
+.b-exam.is-active .b-exam__check::after {
+    content: "";
+    position: absolute;
+    inset: 4px 6px 6px 5px;
+    border: solid #fff;
+    border-width: 0 0 2px 2px;
+    transform: rotate(-45deg);
+}
+
+/* Subjects as rows too, same family. */
+.b-cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--border);
+    overflow: hidden;
+}
+
+@media (max-width: 720px) {
+    .b-cards { grid-template-columns: minmax(0, 1fr); }
+}
+
+.b-cards > .b-card {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: "mark title count" "mark meta meta";
+    align-items: center;
+    column-gap: 14px;
+    row-gap: 2px;
+    min-height: 68px;
+    margin: 0;
+    padding: 12px 16px;
+    border: 0;
+    border-radius: 0;
+    background: var(--surface);
+    box-shadow: none;
+    transform: none;
+}
+
+.b-cards > .b-card:hover { background: var(--surface-muted); transform: none; box-shadow: none; }
+.b-cards > .b-card .b-card__mark { grid-area: mark; margin: 0; }
+.b-cards > .b-card .b-card__title { grid-area: title; margin: 0; font-size: var(--text-base); }
+.b-cards > .b-card .b-card__count { grid-area: count; margin: 0; }
+.b-cards > .b-card .b-card__meta { grid-area: meta; margin: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+    .b-exam, .b-exam__mark, .b-exam__check { transition: none; }
+    .b-exam.is-active .b-exam__mark { transform: none; }
+}
