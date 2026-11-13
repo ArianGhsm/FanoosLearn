@@ -243,6 +243,11 @@ SQL);
         $chapters = $this->visualChapters($workspaceId);
         $out = [];
         foreach ($rows as $row) {
+            // "<key>.m" is the phone layout of <key>'s map: shown under questions in
+            // its pair, never as a second entry in the library.
+            if (str_ends_with((string) $row['visual_key'], '.m')) {
+                continue;
+            }
             $refs = $chapters[(string) $row['id']] ?? [];
             if (($filters['subject'] ?? '') !== '' && $row['subject_key'] !== $filters['subject']) {
                 continue;
@@ -360,7 +365,7 @@ WHERE question.workspace_id = :workspace AND question.question_key = :question
                         WHERE source.question_id = question.id AND node.parent_id IS NOT NULL))
 GROUP BY visual.visual_key
 ORDER BY closeness, visual.visual_key
-LIMIT 4
+LIMIT 8
 SQL);
         $query->execute(['workspace' => $workspaceId, 'question' => $questionKey]);
         $visuals = [];

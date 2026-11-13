@@ -316,6 +316,159 @@ def svg(visual: dict, logo_b64: str | None, source_line: str) -> tuple[str, floa
     return '\n'.join(parts), W, H
 
 
+# --------------------------------------------------------------- portrait
+# The phone version: the same map read top to bottom at 400 px, so its text
+# is phone-sized at the screen's own width. The topic on top, each branch a
+# coloured label, its items as full-width boxes hung from a line in the
+# branch's hue, deeper items indented under theirs.
+
+P_W = 400
+P_M = 18
+P_STYLE = {
+    0: dict(size=19, weight='Bold', pad_x=16, pad_y=11, line=1.55, radius=14),
+    1: dict(size=15.5, weight='Bold', pad_x=13, pad_y=7, line=1.6, radius=10),
+    2: dict(size=14, weight='Regular', pad_x=12, pad_y=7, line=1.75, radius=9),
+    3: dict(size=13, weight='Regular', pad_x=11, pad_y=6, line=1.75, radius=8),
+}
+P_NOTE = dict(size=11.5, weight='Regular', line=1.6)
+P_INDENT = 20
+
+
+def p_box(item: dict, depth: int, avail: float, shrink: bool) -> dict:
+    st = P_STYLE[min(depth, 3)]
+    text = str(item.get('text', '')).strip()
+    note = str(item.get('note', '') or '').strip()
+    inner = avail - 2 * st['pad_x']
+    lines = wrap(text, st['weight'], st['size'], inner)
+    notes = wrap(note, P_NOTE['weight'], P_NOTE['size'], inner) if note else []
+    w = avail
+    if shrink:
+        tw = max(width(l, st['weight'], st['size']) for l in lines)
+        nw = max((width(l, P_NOTE['weight'], P_NOTE['size']) for l in notes), default=0)
+        w = min(avail, max(tw, nw) + 2 * st['pad_x'])
+    h = len(lines) * st['size'] * st['line'] + len(notes) * P_NOTE['size'] * P_NOTE['line'] + 2 * st['pad_y']
+    return dict(st=st, lines=lines, notes=notes, w=w, h=h)
+
+
+def p_text(box: dict, right: float, top: float, color: str, note_color: str, center_x: float | None = None) -> list[str]:
+    st = box['st']
+    anchor = 'middle' if center_x is not None else 'start'
+    x = center_x if center_x is not None else right - st['pad_x']
+    out, y = [], top + st['pad_y']
+    weight = 700 if BOLD[st['weight']] else 400
+    for line in box['lines']:
+        y += st['size'] * st['line']
+        out.append(f'<text x="{x:.1f}" y="{y - st["size"] * (st["line"] - 1) / 2 - 2:.1f}" text-anchor="{anchor}" '
+                   f'font-size="{st["size"]}" font-weight="{weight}" fill="{color}">{escape(fa(line))}</text>')
+    for line in box['notes']:
+        y += P_NOTE['size'] * P_NOTE['line']
+        out.append(f'<text x="{x:.1f}" y="{y - P_NOTE["size"] * (P_NOTE["line"] - 1) / 2 - 1.5:.1f}" text-anchor="{anchor}" '
+                   f'font-size="{P_NOTE["size"]}" font-weight="400" fill="{note_color}">{escape(fa(line))}</text>')
+    return out
+
+
+def svg_portrait(visual: dict, logo_b64: str | None, source_line: str) -> tuple[str, float, float]:
+    W = P_W
+    right_edge = W - P_M
+    inner = W - 2 * P_M
+    body: list[str] = []
+    lines: list[str] = []
+    y = P_M + 34
+
+    tree = visual['tree']
+    rb = p_box(tree, 0, inner, False)
+    body.append(f'<rect x="{P_M}" y="{y:.1f}" width="{inner:.1f}" height="{rb["h"]:.1f}" rx="{rb["st"]["radius"]}" '
+                f'fill="url(#brand)" filter="url(#glow)"/>')
+    body += p_text(rb, right_edge, y, '#ffffff', '#ffe3e7', center_x=W / 2)
+    y += rb['h'] + 24
+
+    def items(children: list, depth: int, right: float, hue: str, y: float) -> float:
+        rail_x = right - 9
+        first_mid = last_mid = None
+        for child in children:
+            box_right = right - P_INDENT
+            box = p_box(child, depth, box_right - P_M, False)
+            x = box_right - box['w']
+            fill = tint(hue, 0.10) if depth == 2 else '#ffffff'
+            stroke = tint(hue, 0.42) if depth == 2 else tint(hue, 0.55)
+            body.append(f'<rect x="{x:.1f}" y="{y:.1f}" width="{box["w"]:.1f}" height="{box["h"]:.1f}" '
+                        f'rx="{box["st"]["radius"]}" fill="{fill}" stroke="{stroke}" stroke-width="1.1"/>')
+            body.extend(p_text(box, box_right, y, INK, MUTED))
+            mid = y + min(box['h'] / 2, 22)
+            lines.append(f'<path d="M{rail_x:.1f},{mid - 8:.1f} Q{rail_x:.1f},{mid:.1f} {box_right:.1f},{mid:.1f}" '
+                         f'fill="none" stroke="{hue}" stroke-width="1.6" stroke-opacity="0.8" stroke-linecap="round"/>')
+            first_mid = mid if first_mid is None else first_mid
+            last_mid = mid
+            y += box['h'] + 7
+            kids = child.get('children') or []
+            if kids:
+                y = items(kids, depth + 1, box_right, hue, y)
+        if first_mid is not None:
+            lines.append(f'<line x1="{rail_x:.1f}" y1="{first_mid - 30:.1f}" x2="{rail_x:.1f}" y2="{last_mid - 8:.1f}" '
+                         f'stroke="{hue}" stroke-width="1.6" stroke-opacity="0.8" stroke-linecap="round"/>')
+        return y
+
+    for index, branch in enumerate(tree.get('children') or []):
+        hue = HUES[index % len(HUES)]
+        bb = p_box(branch, 1, inner, True)
+        x = right_edge - bb['w']
+        body.append(f'<rect x="{x:.1f}" y="{y:.1f}" width="{bb["w"]:.1f}" height="{bb["h"]:.1f}" rx="{bb["st"]["radius"]}" '
+                    f'fill="{hue}" filter="url(#lift)"/>')
+        body.extend(p_text(bb, right_edge, y, '#ffffff', tint('#ffffff', 0.85)))
+        y += bb['h'] + 8
+        kids = branch.get('children') or []
+        if kids:
+            y = items(kids, 2, right_edge, hue, y)
+        y += 16
+
+    H = y + 70
+    parts = chrome(W, H, step_x=180, step_y=120)
+    parts.append(f'<text x="{W / 2:.1f}" y="{P_M + 14:.1f}" font-size="12" font-weight="700" fill="{MUTED}">'
+                 f'جمع‌بندی مبحث · {escape(fa(visual["title"]))}</text>')
+    parts.append('<g>' + ''.join(lines) + '</g>')
+    parts += body
+    fy = H - 44
+    parts.append(f'<line x1="{P_M}" y1="{fy - 6:.1f}" x2="{W - P_M:.1f}" y2="{fy - 6:.1f}" stroke="#e4e6eb" stroke-width="1"/>')
+    parts.append(f'<text x="{W - P_M:.1f}" y="{fy + 14:.1f}" text-anchor="start" font-size="11" fill="{MUTED}">{escape(source_line)}</text>')
+    sx = P_M
+    if logo_b64:
+        parts.append(f'<image x="{sx}" y="{fy + 20:.1f}" width="20" height="20" xlink:href="data:image/png;base64,{logo_b64}" '
+                     f'href="data:image/png;base64,{logo_b64}"/>')
+        sx += 25
+    parts.append(f'<text x="{sx:.1f}" y="{fy + 35:.1f}" direction="ltr" text-anchor="start" font-size="12" font-weight="700" fill="#ef4056">فانوس</text>')
+    parts.append(f'<text x="{sx + 40:.1f}" y="{fy + 35:.1f}" direction="ltr" text-anchor="start" font-size="10.5" fill="{MUTED}">fanooslearn.ir</text>')
+    parts.append('</svg>')
+    return '\n'.join(parts), W, H
+
+
+def chrome(W: float, H: float, step_x: int = 230, step_y: int = 130) -> list[str]:
+    """The SVG head, the paper and the faint watermark both layouts share."""
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{W:.0f}" height="{H:.0f}" '
+        f'viewBox="0 0 {W:.0f} {H:.0f}" font-family="{FAMILY}" direction="rtl" text-anchor="middle">',
+        '<defs>'
+        '<linearGradient id="brand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5a6c"/>'
+        '<stop offset="0.55" stop-color="#ef4056"/><stop offset="1" stop-color="#e0344b"/></linearGradient>'
+        '<filter id="lift" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="3" stdDeviation="4" '
+        'flood-color="#101a29" flood-opacity="0.12"/></filter>'
+        '<filter id="glow" x="-30%" y="-40%" width="160%" height="200%"><feDropShadow dx="0" dy="6" stdDeviation="8" '
+        'flood-color="#ef4056" flood-opacity="0.30"/></filter>'
+        '<pattern id="dots" width="18" height="18" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="#e6e8ee"/></pattern>'
+        '</defs>',
+        f'<rect width="{W:.0f}" height="{H:.0f}" rx="22" fill="#ffffff"/>',
+        f'<rect x="8" y="8" width="{W - 16:.0f}" height="{H - 16:.0f}" rx="16" fill="url(#dots)"/>',
+    ]
+    wm = []
+    for row in range(int(H // step_y) + 2):
+        for col in range(int(W // step_x) + 2):
+            x = col * step_x + (row % 2) * step_x / 2
+            y = row * step_y + 40
+            wm.append(f'<text x="{x:.0f}" y="{y:.0f}" transform="rotate(-24 {x:.0f} {y:.0f})" font-size="18" '
+                      f'font-weight="700" fill="#101a29" fill-opacity="0.022">فانوس · fanooslearn.ir</text>')
+    parts.append('<g>' + ''.join(wm) + '</g>')
+    return parts
+
+
 def source_line(visual: dict, editions: dict[str, str]) -> str:
     frm = visual.get('from') or {}
     ref = frm.get('ref', '')
@@ -356,6 +509,19 @@ def main() -> int:
         item['image'] = png_path.name
         result['visuals'].append(item)
         print(f'{png_path.name}  {w:.0f}x{h:.0f}', file=sys.stderr)
+        # The phone version, its own visual "<key>.m" with the same links;
+        # the site pairs the two and shows each at its own screen width.
+        pdoc, pw, ph = svg_portrait(visual, logo, source_line(visual, books))
+        p_svg = out / f'{visual["key"]}.m.svg'
+        p_png = out / f'{visual["key"]}.m.png'
+        p_svg.write_text(pdoc, encoding='utf-8')
+        subprocess.run(['rsvg-convert', '-z', '3', '-o', str(p_png), str(p_svg)], check=True)
+        p_svg.unlink()
+        mobile = dict(item)
+        mobile['key'] = visual['key'] + '.m'
+        mobile['image'] = p_png.name
+        result['visuals'].append(mobile)
+        print(f'{p_png.name}  {pw:.0f}x{ph:.0f}', file=sys.stderr)
     pathlib.Path(args.import_file).write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     return 0
 

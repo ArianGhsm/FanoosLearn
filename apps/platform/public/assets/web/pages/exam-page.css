@@ -801,3 +801,147 @@ body.x-runner-page .x-question__card.is-entering .x-choices__item { animation: n
 /* Emphasis inside the explanation: coloured words, not highlighter blocks. */
 body.x-runner-page .x-exp .x-em--key { padding: 0; background: none; color: var(--accent); }
 body.x-runner-page .x-exp .x-em--term { padding: 0; background: none; color: var(--info); }
+/* --------------------------------------------- selection reads as "mine", not "wrong" */
+
+/* Chosen is ink, not the brand red: before the verdict, red would read as an error. */
+body.x-runner-page .x-choice.is-selected {
+    background: var(--surface-muted);
+}
+
+body.x-runner-page .x-choice.is-selected .x-choice__letter {
+    border-color: var(--page-ink);
+    background: var(--page-ink);
+    color: var(--page-paper);
+}
+
+/* ------------------------------------------------------------- the topic map */
+
+body.x-runner-page .x-topic__open {
+    display: block;
+    inline-size: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: zoom-in;
+}
+
+body.x-runner-page .x-topic__img,
+.x-topic__img {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+}
+
+.x-topic__viewer {
+    inline-size: min(100vw, 1400px);
+    max-inline-size: 100vw;
+    block-size: 100dvh;
+    max-block-size: 100dvh;
+    margin: auto;
+    padding: 0;
+    border: 0;
+    background: var(--surface);
+    overflow: auto;
+}
+
+.x-topic__viewer::backdrop { background: rgba(16, 26, 41, 0.6); }
+.x-topic__viewer img { display: block; inline-size: 100%; block-size: auto; }
+
+.x-topic__viewer-close {
+    position: sticky;
+    top: 12px;
+    float: inline-end;
+    z-index: 1;
+    margin: 12px;
+    inline-size: 44px;
+    block-size: 44px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--text-primary);
+    color: var(--surface);
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+
+/* ------------------------------------------------------------- phones, done properly */
+
+@media (max-width: 640px) {
+    /* The page is the paper: no card floating on a grey ground. */
+    body.x-runner-page { --page-ground: var(--surface); }
+
+    body.x-runner-page .x-question { padding-inline: 16px; }
+
+    body.x-runner-page .x-bar {
+        margin-inline: -16px;
+        padding-inline: 8px;
+        background: color-mix(in srgb, var(--page-paper) 92%, transparent);
+    }
+
+    body.x-runner-page .x-question__card {
+        margin-inline: -16px;
+        padding: var(--space-2) 2px var(--space-5);
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    body.x-runner-page .x-question__foot {
+        flex-direction: column-reverse;
+        align-items: stretch;
+        gap: var(--space-2);
+    }
+
+    body.x-runner-page .x-question__reveal {
+        justify-content: center;
+        min-height: 48px;
+        margin: 0;
+    }
+
+    body.x-runner-page .x-question__clear { align-self: flex-start; }
+
+    /* Stepping: back as a square, forward takes the rest; the map does "first unanswered". */
+    body.x-runner-page .x-nav {
+        display: grid;
+        grid-template-columns: 52px 1fr;
+        gap: var(--space-2);
+        margin: 0 -16px;
+        padding: var(--space-2) 16px calc(var(--space-2) + env(safe-area-inset-bottom));
+        border-top: 1px solid var(--page-rule);
+        background: color-mix(in srgb, var(--page-paper) 94%, transparent);
+    }
+
+    body.x-runner-page .x-nav__gap { display: none; }
+
+    body.x-runner-page .x-nav__prev {
+        justify-content: center;
+        padding: 0;
+        min-width: 52px;
+    }
+
+    body.x-runner-page .x-revealed { margin-top: var(--space-6); }
+    body.x-runner-page .x-exp__ref,
+    body.x-runner-page .x-exp__callout { padding: var(--space-3) var(--space-4); }
+}
+/* ------------------------------------------------------------- one gutter */
+
+/* runner-skin.css insets every child of the card by --x-card-pad. The sheet
+   owns the gutter now, once, so the children sit on the sheet's padding:
+   no doubled inset on desktop, no text on the screen edge on a phone. */
+body.x-runner-page .x-question__card { --x-card-pad: 0px; }
+
+body.x-runner-page .x-question__card > * {
+    margin-inline: 0;
+}
+
+body.x-runner-page .x-question__prompt { padding-inline: 0; }
+
+@media (max-width: 640px) {
+    body.x-runner-page .x-question__card {
+        padding: var(--space-3) 20px var(--space-5);
+    }
+
+    body.x-runner-page .x-choices { margin-inline: -8px; }
+    body.x-runner-page .x-choice { padding-inline-start: 8px; }
+}
