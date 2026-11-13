@@ -853,3 +853,43 @@ body.x-runner-page.x-focus .f-page { padding-bottom: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) { .e-facts { animation: none; } }
+
+/* ------------------------------------------- compact facts; a header that fits a phone */
+
+.e-facts .x-question__meta {
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.e-facts .x-question__chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 6px;
+}
+
+.e-facts .x-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    inline-size: auto;
+    padding: 3px 10px;
+    font-size: var(--text-xs);
+    line-height: 1.6;
+}
+
+.e-facts .x-chip svg { inline-size: 14px; block-size: 14px; }
+
+.e-facts .x-source { padding: 8px 12px; gap: 8px; }
+.e-facts .x-source__icon { inline-size: 24px; block-size: 24px; }
+.e-facts .x-source__chapter { font-size: var(--text-sm); line-height: 1.6; }
+.e-facts .x-source__book { font-size: var(--text-2xs, 0.72rem); }
+
+@media (max-width: 640px) {
+    .e-top__of { display: none; }
+    .e-mode { min-height: 32px; padding-inline: 10px 26px; background-position: left 8px center; }
+    .e-timer { padding: 4px 8px; font-size: var(--text-sm); }
+    .e-top__row .e-icon { inline-size: 38px; block-size: 38px; }
+}
