@@ -733,3 +733,60 @@ body.x-runner-page ::selection { background: var(--accent-soft); }
 @media (max-width: 900px) {
     .x-topic__viewer img { inline-size: 240vw; max-inline-size: none; }
 }
+/* ------------------------------------------- the question's facts, contained */
+
+/* runner-skin.css places these in named grid areas of the old header; here
+   they are a plain stack that wraps inside the sheet. */
+.e-facts .x-question__meta {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: none;
+    gap: 10px;
+}
+
+.e-facts .x-question__meta > *,
+.e-facts .x-source,
+.e-facts .x-question__chips { grid-area: auto; min-width: 0; max-inline-size: 100%; }
+
+.e-facts .x-question__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.e-facts .x-chip { max-inline-size: 100%; white-space: normal; }
+.e-facts .x-chip__text { white-space: normal; overflow-wrap: anywhere; }
+
+.e-facts .x-source {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 0;
+    border-radius: 14px;
+    background: var(--info-soft);
+}
+
+.e-facts .x-source__icon { background: var(--surface); color: var(--info); }
+.e-facts .x-source__body { display: grid; gap: 4px; min-width: 0; }
+.e-facts .x-source__chapter { overflow-wrap: anywhere; }
+
+.e-facts .x-source__book {
+    white-space: normal;
+    overflow: visible;
+    overflow-wrap: anywhere;
+    text-align: left;
+    line-height: 1.6;
+}
+
+.e-facts .x-source__scope-note { white-space: normal; color: var(--warning); font-size: var(--text-xs); }
+
+/* ------------------------------------------- no empty tail on a phone */
+
+/* The old runner reserved 76px under the page for its fixed bar. The new
+   stepping bar is part of the page, so the page ends with it; on a phone a
+   short question's sheet stretches to the screen instead of leaving white. */
+body.x-runner-page.x-focus .f-page { padding-bottom: 0; }
+
+@media (max-width: 640px) {
+    body.x-runner-page.x-focus .f-page { padding-inline: 0; }
+    .e-exam { display: flex; flex-direction: column; min-block-size: 100dvh; }
+    .e-body { flex: 1; display: flex; flex-direction: column; }
+    .e-main { flex: 1; display: flex; flex-direction: column; }
+    .e-sheet { flex: 1; }
+}
