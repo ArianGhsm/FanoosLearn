@@ -325,3 +325,155 @@
     border-color: var(--border-strong);
     box-shadow: none;
 }
+
+/* ------------------------------------------------------------- mind map (mindmap-view.js)
+ * The topic in a gradient pill, each branch a card in its own hue, leaves
+ * as dotted rows, deeper levels indented with a line. Hues are the site's
+ * category tokens, so light and dark themes follow. */
+
+.x-mind {
+    display: grid;
+    gap: var(--space-3);
+}
+
+.x-mind__root {
+    justify-self: center;
+    display: grid;
+    justify-items: center;
+    gap: 2px;
+    max-inline-size: 100%;
+    padding: var(--space-2) var(--space-5);
+    border-radius: 999px;
+    background: var(--accent-gradient);
+    color: var(--text-on-accent);
+    text-align: center;
+    box-shadow: 0 6px 18px rgba(239, 64, 86, 0.22);
+}
+
+.x-mind__root-text { font-size: var(--text-lg); font-weight: 700; }
+.x-mind__root-note { font-size: var(--text-xs); opacity: 0.9; }
+
+.x-mind__branches {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 2px dashed var(--border-strong);
+}
+
+.x-mind__branch {
+    --h: var(--info);
+    --h-soft: var(--info-soft);
+    padding: var(--space-3);
+    border: 1px solid var(--border);
+    border-top: 4px solid var(--h);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+}
+
+.x-mind__branch.is-h1 { --h: var(--hue-subject); --h-soft: var(--hue-subject-soft); }
+.x-mind__branch.is-h2 { --h: var(--hue-tag); --h-soft: var(--hue-tag-soft); }
+.x-mind__branch.is-h3 { --h: var(--hue-source); --h-soft: var(--hue-source-soft); }
+.x-mind__branch.is-h4 { --h: var(--hue-difficulty); --h-soft: var(--hue-difficulty-soft); }
+
+.x-mind__branch-head {
+    display: grid;
+    gap: 2px;
+    margin-bottom: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    background: var(--h-soft);
+}
+
+.x-mind__branch-text { color: var(--h); font-weight: 700; }
+
+.x-mind__leaves {
+    display: grid;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.x-mind__leaves .x-mind__leaves {
+    margin-top: var(--space-1);
+    margin-inline-start: var(--space-2);
+    padding-inline-start: var(--space-3);
+    border-inline-start: 2px solid var(--h-soft);
+}
+
+.x-mind__leaf {
+    position: relative;
+    padding-inline-start: var(--space-3);
+    line-height: 1.75;
+    font-size: var(--text-sm);
+}
+
+.x-mind__leaf::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0.75em;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--h);
+}
+
+.x-mind__text { display: block; }
+
+.x-mind__note {
+    display: block;
+    color: var(--text-secondary);
+    font-size: var(--text-xs);
+}
+
+.x-mind--compact .x-mind__root-text { font-size: var(--text-base); }
+.x-mind--compact .x-mind__branches { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+
+/* «جمع‌بندی مبحث» under a question (topic-visuals.js). */
+.x-topic {
+    display: grid;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border);
+}
+
+.x-topic__head { margin: 0; font-size: var(--text-base); }
+
+.x-topic__item {
+    padding: var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface-muted);
+}
+
+.x-topic__summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.x-topic__badge {
+    padding: 0 var(--space-2);
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: var(--text-xs);
+}
+
+.x-topic__foot {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin: var(--space-3) 0 0;
+    color: var(--text-secondary);
+    font-size: var(--text-xs);
+}

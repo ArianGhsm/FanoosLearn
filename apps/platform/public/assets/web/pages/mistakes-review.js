@@ -8,6 +8,7 @@
 import { api, describeError } from '../foundation/api.js';
 import { bidiNodes, el, faDigits, faText, notice, questionImageUrl, renderFigure } from './runner-view.js';
 import { renderExplanation } from './explanation-view.js';
+import { renderTopicVisuals } from './topic-visuals.js';
 
 const CHOICE_LETTERS = ['الف', 'ب', 'ج', 'د', 'ه', 'و', 'ز', 'ح', 'ط', 'ی'];
 
@@ -39,7 +40,8 @@ function card(question) {
             ? el('section', { className: 'x-explanation' },
                 el('h3', { text: 'پاسخ تشریحی' }),
                 renderExplanation(question.explanation))
-            : el('p', { className: 'f-tiny', text: 'برای این سؤال توضیحی ثبت نشده است.' }));
+            : el('p', { className: 'f-tiny', text: 'برای این سؤال توضیحی ثبت نشده است.' }),
+        renderTopicVisuals(question.question_id));
 }
 
 async function load() {

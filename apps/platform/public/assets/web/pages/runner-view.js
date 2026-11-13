@@ -12,6 +12,7 @@ import {
     progressPercent, remainingSeconds, unansweredPositions, visiblePositions,
 } from './runner-state.js';
 import { renderExplanation } from './explanation-view.js';
+import { renderTopicVisuals } from './topic-visuals.js';
 import { highlightSegments } from './runner-study.js';
 import { choiceShareLabel, statsLines } from './question-stats.js';
 import { questionFacts } from './question-facts.js';
@@ -642,6 +643,7 @@ function renderReveal(reveal, question, chosen, { explanationVisible = true, onS
     return el('section', { className: `x-revealed${right ? ' is-right' : ''}` },
         el('p', { className: 'x-revealed__head', text: verdict }),
         explanationBody,
+        explanationVisible ? renderTopicVisuals(question?.id ?? question?.question_id) : null,
         el('p', { className: 'f-tiny', text: 'این سؤال در کارنامه به‌عنوان «پاسخ دیده‌شده» علامت می‌خورد.' }));
 }
 
@@ -1150,6 +1152,7 @@ export function renderReviewQuestion(entry, position, questionCount, actions, as
                     el('h3', { text: 'پاسخ تشریحی' }),
                     renderExplanation(entry.explanation, { chosen: entry.selected ?? null }))
                 : el('p', { className: 'f-tiny', text: 'برای این سؤال توضیحی ثبت نشده است.' }),
+            renderTopicVisuals(entry.id ?? entry.question_id),
             renderQuestionStats(entry.stats ?? null)),
         el('p', { className: 'x-review__done' },
             el('a', { attrs: { href: '/app/exams' }, text: 'پایان مرور و بازگشت به فهرست آزمون‌ها' })));

@@ -612,6 +612,9 @@ final class ApiKernel
                 $image = $this->examImages->open($this->bank->visualImage($session->userId, $workspaceId, $match[1]));
                 return new BinaryResponse(200, $image['stream'], $image['mime'], $image['length'], [], 'inline', 'private, max-age=86400');
             }
+            if ($request->method === 'GET' && preg_match('#^/bank/questions/([a-z0-9][a-z0-9-]{0,79})/visuals$#', $suffix, $match)) {
+                return ['status' => 200, 'data' => $this->bank->questionVisuals($session->userId, $workspaceId, $match[1])];
+            }
             if ($request->method === 'GET' && $suffix === '/bank/books') {
                 return ['status' => 200, 'data' => $this->bank->books($session->userId, $workspaceId, isset($request->query['type']) ? (string) $request->query['type'] : null)];
             }

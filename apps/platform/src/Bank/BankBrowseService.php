@@ -334,6 +334,43 @@ SQL);
         ];
     }
 
+    /**
+     * The published visuals of the topic a question belongs to («جمع‌بندی
+     * مبحث» under its explanation): linked to the question itself, to one of
+     * its concepts, or to one of its source nodes or their parent node, so a
+     * map made once for a topic or chapter reaches every question of it.
+     * Closest links first, at most four.
+     *
+     * @return array{question: string, visuals: list<array<string, mixed>>}
+     */
+    public function questionVisuals(string $userId, string $workspaceId, string $questionKey): array
+    {
+        $this->access->requireWorkspace($userId, $workspaceId, 'exam.take');
+        $query = $this->database->prepare(<<<'SQL'
+SELECT visual.visual_key,
+       MIN(CASE WHEN link.question_id = question.id THEN 0 WHEN link.concept_id IS NOT NULL THEN 1 ELSE 2 END) AS closeness
+FROM bank_questions question
+JOIN bank_visual_links link ON link.workspace_id = question.workspace_id
+JOIN bank_visuals visual ON visual.id = link.visual_id AND visual.status = 'published'
+WHERE question.workspace_id = :workspace AND question.question_key = :question
+  AND (link.question_id = question.id
+    OR link.concept_id IN (SELECT qc.concept_id FROM bank_question_concepts qc WHERE qc.question_id = question.id)
+    OR link.node_id IN (SELECT source.node_id FROM bank_question_sources source WHERE source.question_id = question.id AND source.node_id IS NOT NULL)
+    OR link.node_id IN (SELECT node.parent_id FROM bank_question_sources source JOIN bank_reference_nodes node ON node.id = source.node_id
+                        WHERE source.question_id = question.id AND node.parent_id IS NOT NULL))
+GROUP BY visual.visual_key
+ORDER BY closeness, visual.visual_key
+LIMIT 4
+SQL);
+        $query->execute(['workspace' => $workspaceId, 'question' => $questionKey]);
+        $visuals = [];
+        foreach ($query->fetchAll() as $row) {
+            $visuals[] = $this->visual($userId, $workspaceId, (string) $row['visual_key']);
+        }
+
+        return ['question' => $questionKey, 'visuals' => $visuals];
+    }
+
     /** The image key of a published image visual, for GET .../image. */
     public function visualImage(string $userId, string $workspaceId, string $key): string
     {
