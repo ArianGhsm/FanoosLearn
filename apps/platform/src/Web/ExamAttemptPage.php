@@ -53,7 +53,7 @@ HTML;
             'title' => 'آزمون | فانوس',
             'description' => 'شرکت در آزمون.',
             'bodyClass' => 'x-runner-page',
-            'stylesheets' => ['/assets/fonts/yekanbakh/fonts.css', '/assets/web/pages/exams.css', '/assets/web/pages/runner.css', '/assets/web/pages/runner-skin.css'],
+            'stylesheets' => ['/assets/fonts/yekanbakh/fonts.css', '/assets/web/pages/exams.css', '/assets/web/pages/runner.css', '/assets/web/pages/runner-skin.css', '/assets/web/pages/exam-page.css'],
             'modules' => ['/assets/web/pages/runner.js'],
             'viewer' => $viewer,
             'activeNav' => 'exams',

@@ -265,6 +265,10 @@ const ICONS = {
     // A magnifier: open an image full size.
     zoom: 'M11 4a7 7 0 100 14 7 7 0 000-14zM20 20l-4-4M11 8v6M8 11h6',
     close: 'M6 6l12 12M18 6L6 18',
+    // A struck word: cross a choice out.
+    strike: 'M4 12h16M8 7.5c.6-1.6 2.1-2.5 4-2.5 2.4 0 4 1.3 4 3M8 16c.4 1.8 2 3 4 3 2.3 0 4-1.2 4-3',
+    undo: 'M9 7L5 11l4 4M5 11h9a5 5 0 010 10h-3',
+    eye: 'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12zM12 9.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z',
     // A bulb: the exam tip.
     bulb: 'M9 18h6M10 21h4M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z',
     list: 'M9 6h11M9 12h11M9 18h11M4 6h.5M4 12h.5M4 18h.5',
@@ -514,7 +518,6 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
                 : null,
             el('button', {
                 className: 'x-choice__strike', type: 'button',
-                text: struck ? '↺' : '✕',
                 attrs: {
                     'aria-label': struck
                         ? `برگرداندن گزینه ${CHOICE_LETTERS[index] ?? index + 1}`
@@ -522,7 +525,7 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
                     title: struck ? 'برگرداندن' : 'این گزینه را خط بزن',
                 },
                 on: { click: () => actions.strike(index) },
-            })));
+            }, icon(struck ? 'undo' : 'strike'))));
     });
 
     const flagged = isFlagged(state, position);
@@ -541,7 +544,11 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
         },
     },
         el('header', { className: 'x-question__head' },
-            renderQuestionMeta(question, state.sourceVisible === true || selected !== undefined || reveal !== null),
+            el('span', { className: 'x-question__no', text: faDigits(position), attrs: { 'aria-label': `سؤال ${faDigits(position)}` } }),
+            // Blind until answered: subject, topic, chapter and source wait for the answer
+            // (owner 2026-11-13), unless the set was opened by chapter and the student knows it.
+            (state.sourceVisible === true || selected !== undefined || reveal !== null)
+                ? renderQuestionMeta(question, true) : null,
             el('div', { className: 'x-question__tools' },
                 !study ? null : el('button', {
                     className: `x-tool x-bookmark${study.bookmarked ? ' is-on' : ''}`, type: 'button',
@@ -562,9 +569,9 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
                 on: { click: actions.clear },
             }),
             state.mode !== 'learning' || reveal ? null : el('button', {
-                className: 'f-btn f-btn--ghost x-question__reveal', type: 'button', text: 'بلد نیستم، پاسخ را نشانم بده',
+                className: 'x-question__reveal', type: 'button',
                 on: { click: actions.reveal },
-            })),
+            }, icon('eye'), el('span', { text: 'بلد نیستم، پاسخ را نشانم بده' }))),
         reveal ? renderReveal(reveal, question, selected, {
             // Learning always shows the explanation alongside the verdict;
             // practice tells you right/wrong at once but keeps the
@@ -573,8 +580,10 @@ export function renderQuestion(state, question, saveStatus, actions, reveal = nu
             explanationVisible: state.mode !== 'practice' || isExplanationShown(state, position),
             onShowExplanation: actions.showExplanation,
         }) : null,
-        renderQuestionStats(question.stats ?? null),
-        renderStudy(question, study, actions),
+        // The numbers and the study tools are part of learning from the question, so they
+        // come with the answer, not before it.
+        reveal ? renderQuestionStats(question.stats ?? null) : null,
+        (selected !== undefined || reveal) ? renderStudy(question, study, actions) : null,
         renderWatermark());
 
     // The end gutter stays empty: اسکرول عمودی کنار سؤال. There is nothing
