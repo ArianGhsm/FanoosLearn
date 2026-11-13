@@ -816,3 +816,40 @@ body.x-runner-page.x-focus .f-page { padding-bottom: 0; }
 .e-mode.is-practice { background-color: var(--hue-subject-soft); color: var(--hue-subject); }
 .e-mode.is-assessment { background-color: var(--accent-soft); color: var(--accent); }
 .e-mode:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ------------------------------------------- denser type, facts above the stem (2026-11-14) */
+
+.e-sheet .x-question__prompt {
+    margin-bottom: var(--space-4);
+    font-size: calc(1.0625rem * var(--x-question-font-scale, 1));
+    line-height: 1.95;
+}
+
+.e-choices { gap: 8px; }
+
+.e-choice {
+    min-height: 52px;
+    padding-block: 8px;
+    font-size: calc(1rem * var(--x-question-font-scale, 1));
+    line-height: 1.8;
+}
+
+.e-choice__letter { inline-size: 32px; block-size: 32px; border-radius: 10px; }
+
+.e-facts {
+    margin: 0 0 var(--space-4);
+    padding: 0 0 var(--space-4);
+    border-top: 0;
+    border-bottom: 1px dashed var(--e-rule);
+    animation: e-rise 240ms var(--e-ease) both;
+}
+
+@media (max-width: 640px) {
+    .e-sheet .x-question__prompt { font-size: calc(1rem * var(--x-question-font-scale, 1)); line-height: 1.9; }
+    .e-choice { min-height: 50px; font-size: calc(0.9375rem * var(--x-question-font-scale, 1)); }
+    .e-choice__letter { inline-size: 30px; block-size: 30px; }
+    .e-sheet__head { margin-bottom: var(--space-3); }
+    .e-qno { min-inline-size: 38px; block-size: 38px; font-size: 1rem; border-radius: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) { .e-facts { animation: none; } }

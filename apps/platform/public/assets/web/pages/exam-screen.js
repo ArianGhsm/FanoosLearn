@@ -194,12 +194,14 @@ function sheet(state, question, actions, reveal, study, enter, kit, ctx) {
         },
     },
         head,
+        // Which exam, question, subject and topic: shown once answered, above the
+        // stem where a student looks for it (owner, 2026-11-14).
+        facts ? el('div', { className: 'e-facts' }, facts) : null,
         kit.renderStem(question, study),
         kit.stemFigure(state.assessmentId, question),
         choices,
         foot,
         ctx.learned ? after(state, question, actions, reveal, study, kit, ctx) : null,
-        facts ? el('div', { className: 'e-facts' }, facts) : null,
         kit.renderWatermark());
 }
 
