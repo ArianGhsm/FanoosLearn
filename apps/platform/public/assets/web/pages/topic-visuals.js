@@ -67,16 +67,15 @@ function openViewer(src, alt) {
     dialog.addEventListener('close', () => dialog.remove(), { once: true });
     document.body.append(dialog);
     dialog.showModal();
+    // Wider than the screen on a phone: start in the middle, where the topic is.
+    image.addEventListener('load', () => { dialog.scrollLeft = -(dialog.scrollWidth - dialog.clientWidth) / 2; }, { once: true });
 }
 
 function picture({ wide, phone }) {
+    // One picture on every screen (owner, 2026-11-13): the same map a desktop
+    // shows, fitted to the column; a tap opens it full screen to zoom and pan.
+    void phone;
     const pic = document.createElement('picture');
-    if (phone && phone.has_image) {
-        const source = document.createElement('source');
-        source.media = '(max-width: 640px)';
-        source.srcset = imageUrl(phone.key);
-        pic.append(source);
-    }
     const image = document.createElement('img');
     image.className = 'x-topic__img';
     image.src = imageUrl(wide.key);
@@ -90,7 +89,7 @@ function picture({ wide, phone }) {
     open.className = 'x-topic__open';
     open.setAttribute('aria-label', `نمایش «${wide.title}» در تمام صفحه`);
     open.addEventListener('click', () => openViewer(image.currentSrc || image.src, wide.title));
-    open.append(pic);
+    open.append(pic, text('span', 'x-topic__zoom', 'بزرگ‌نمایی'));
     return open;
 }
 

@@ -13,6 +13,7 @@ import {
 } from './runner-state.js';
 import { renderExplanation } from './explanation-view.js';
 import { renderTopicVisuals } from './topic-visuals.js';
+import { renderExamScreen } from './exam-screen.js';
 import { highlightSegments } from './runner-study.js';
 import { choiceShareLabel, statsLines } from './question-stats.js';
 import { questionFacts } from './question-facts.js';
@@ -265,6 +266,8 @@ const ICONS = {
     // A magnifier: open an image full size.
     zoom: 'M11 4a7 7 0 100 14 7 7 0 000-14zM20 20l-4-4M11 8v6M8 11h6',
     close: 'M6 6l12 12M18 6L6 18',
+    map: 'M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14',
+    note: 'M4 20h4l10-10-4-4L4 16v4zM13.5 6.5l4 4',
     // A struck word: cross a choice out.
     strike: 'M4 12h16M8 7.5c.6-1.6 2.1-2.5 4-2.5 2.4 0 4 1.3 4 3M8 16c.4 1.8 2 3 4 3 2.3 0 4-1.2 4-3',
     undo: 'M9 7L5 11l4 4M5 11h9a5 5 0 010 10h-3',
@@ -483,6 +486,14 @@ export function isAccepted(answer, alsoCorrect, index) {
 
 /** One question with its choices. */
 export function renderQuestion(state, question, saveStatus, actions, reveal = null, study = null, enter = null, flags = {}) {
+    // The redesigned question screen (exam-screen.js, 2026-11-13). The pieces below it
+    // stay here and are handed in, so behaviour lives in one place.
+    return renderExamScreen({ state, question, saveStatus, actions, reveal, study, enter, flags }, {
+        el, icon, faDigits, faText, bidiNodes, CHOICE_LETTERS, isAccepted, isStruck, isFlagged, isAnswered,
+        answeredCount, progressPercent, remainingSeconds, isTimeCritical, unansweredPositions, isExplanationShown,
+        choiceImageUrl, openLightbox, stemFigure, renderStem, renderStudy, renderQuestionMeta, renderQuestionStats,
+        renderWatermark, formatRemaining, saveLabel, renderExplanation, renderTopicVisuals,
+    });
     const position = state.position;
     const selected = state.answers[String(position)];
 

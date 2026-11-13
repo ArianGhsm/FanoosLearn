@@ -38,7 +38,7 @@ HTML;
             'description' => 'سؤال‌هایی که پیش‌تر غلط پاسخ داده‌ای.',
             // The same sheet the questions were answered on.
             'bodyClass' => 'x-runner-page',
-            'stylesheets' => ['/assets/web/pages/exams.css', '/assets/web/pages/runner.css', '/assets/web/pages/runner-skin.css', '/assets/web/pages/exam-page.css'],
+            'stylesheets' => ['/assets/web/pages/exams.css', '/assets/web/pages/runner.css', '/assets/web/pages/runner-skin.css', '/assets/web/pages/exam-screen.css'],
             'modules' => ['/assets/web/pages/mistakes-review.js'],
             'viewer' => $viewer,
             'activeNav' => 'exams',
