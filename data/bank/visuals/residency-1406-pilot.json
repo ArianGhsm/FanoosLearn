@@ -1,0 +1,368 @@
+{
+  "format": "fanoos.bank.visuals/1",
+  "notes": "Pilot topic mind maps for the 10 pilot explanation questions (residency 1406 editions). Written from the verified PDF pages named in each `from`.",
+  "visuals": [
+    {
+      "key": "periodontics.trauma-from-occlusion.map",
+      "kind": "mindmap",
+      "title": "ترومای اکلوزالی و پریودنشیوم",
+      "subject": "periodontics",
+      "tree": {
+        "text": "ترومای اکلوزالی",
+        "note": "Carranza · فصل ۳۲",
+        "children": [
+          { "text": "کجا اثر می‌کند؟", "children": [
+            { "text": "بافت‌های نگهدارنده: لیگامان و استخوان" },
+            { "text": "لثه‌ی مارژینال درگیر نمی‌شود", "note": "خون‌رسانی‌اش حتی با انسداد عروق PDL حفظ می‌شود" }
+          ] },
+          { "text": "چه چیزی ایجاد نمی‌کند", "children": [
+            { "text": "پاکت پریودنتال" },
+            { "text": "ژنژیویت" },
+            { "text": "افزایش مایع شیار لثه" },
+            { "text": "شروع پریودنتیت", "note": "ورکشاپ جهانی ۲۰۱۷" }
+          ] },
+          { "text": "بدون التهاب", "children": [
+            { "text": "فقط تطابق با نیروی بیشتر" },
+            { "text": "تحلیل استخوان و لقی برگشت‌پذیر" }
+          ] },
+          { "text": "با التهاب (پریودنتیت)", "children": [
+            { "text": "«ناحیه‌ی هم‌تخریبی» گلیکمن" },
+            { "text": "تغییر شکل کرست", "children": [
+              { "text": "پهن شدن فضای PDL مارژینال" },
+              { "text": "باریک شدن استخوان بین‌دندانی" },
+              { "text": "ضخیم شدن قفسه‌مانند لبه" }
+            ] },
+            { "text": "تحلیل زاویه‌دار، پاکت اینترابونی" }
+          ] },
+          { "text": "درمان", "children": [
+            { "text": "اولویت: کنترل التهاب" },
+            { "text": "تنظیم اکلوزال با توجه به راحتی و عملکرد" }
+          ] }
+        ]
+      },
+      "chapters": ["carranza-periodontology@14e#ch32"],
+      "questions": ["residency-1404-1-116"],
+      "from": { "ref": "carranza-periodontology@14e", "pdf_page_from": 777, "pdf_page_to": 778 },
+      "status": "published", "origin": "ai", "confidence": 0.85
+    },
+    {
+      "key": "oral-pathology.aneurysmal-bone-cyst.map",
+      "kind": "mindmap",
+      "title": "کیست استخوانی آنوریسمال (ABC)",
+      "subject": "oral-pathology",
+      "tree": {
+        "text": "Aneurysmal bone cyst",
+        "note": "Neville · فصل ۱۴",
+        "children": [
+          { "text": "ماهیت", "children": [
+            { "text": "فضاهای پرخون در استخوان، با بافت همبند سلولی و استخوان واکنشی" },
+            { "text": "پوشش اپیتلیالی ندارد", "note": "سودوکیست است، نه کیست حقیقی" },
+            { "text": "اولیه (de novo) یا ثانویه (همراه ضایعه‌ی دیگر)" }
+          ] },
+          { "text": "اتیولوژی", "children": [
+            { "text": "نظریه‌ی واکنشی/همودینامیک (تروما، مالفورماسیون عروقی)" },
+            { "text": "حدود ۱۵٪ موارد فکی همراه ضایعه‌ی دیگر" },
+            { "text": "اولیه‌ها: جابه‌جایی ژن USP6 روی 17p13", "note": "شایع‌ترین: t(16;17) ← USP6-CDH11" }
+          ] },
+          { "text": "جراحی", "children": [
+            { "text": "خونریزی تیره‌ی وریدی" },
+            { "text": "نمای «اسفنج خیس‌خورده از خون»" }
+          ] },
+          { "text": "هیستوپاتولوژی", "children": [
+            { "text": "فضاهای پرخون بدون اندوتلیوم و اپیتلیوم" },
+            { "text": "سلول‌های دوکی و غول‌آسای چندهسته‌ای" },
+            { "text": "استئوئید و استخوان woven" }
+          ] },
+          { "text": "درمان", "children": [
+            { "text": "کورتاژ یا انوکلئیشن" },
+            { "text": "رزکسیون: ضایعه‌ی وسیع یا عودکننده" }
+          ] }
+        ]
+      },
+      "questions": ["residency-1405-1-054"],
+      "from": { "ref": "neville-oral-pathology@5e", "pdf_page_from": 648, "pdf_page_to": 649 },
+      "status": "published", "origin": "ai", "confidence": 0.85
+    },
+    {
+      "key": "oral-medicine.erythema-multiforme.map",
+      "kind": "mindmap",
+      "title": "اریتم مولتی‌فرم (EM)",
+      "subject": "oral-medicine",
+      "tree": {
+        "text": "Erythema multiforme",
+        "note": "Burket · فصل ۳ · ضایعات متعدد حاد",
+        "children": [
+          { "text": "تعریف", "children": [
+            { "text": "بیماری التهابی حاد و خودمحدود پوست و مخاط" },
+            { "text": "واکنش ازدیاد حساسیت" }
+          ] },
+          { "text": "محرک‌ها", "children": [
+            { "text": "عفونت، به‌ویژه HSV (شایع‌ترین)", "note": "در EM عودکننده، محصولات ژنی HSV در ۷۱ تا ۸۱٪" },
+            { "text": "داروها: NSAID، ضدتشنج‌ها" },
+            { "text": "بنزوئیک اسید (نگه‌دارنده‌ی غذا)" }
+          ] },
+          { "text": "پاتوژنز", "children": [
+            { "text": "ازدیاد حساسیت تأخیری با واسطه‌ی سلول T علیه آنتی‌ژن HSV" },
+            { "text": "تولید اینترفرون گاما" }
+          ] },
+          { "text": "انواع", "children": [
+            { "text": "EM minor: کمتر از ۱۰٪ پوست، درگیری مخاطی کم یا هیچ" },
+            { "text": "EM major: پوست بیشتر + دهان و مخاط‌های دیگر" },
+            { "text": "نوع فقط دهانی هم هست" },
+            { "text": "SJS و TEN از EM جدا هستند" }
+          ] }
+        ]
+      },
+      "chapters": ["burket-oral-medicine@13e#ch03.s01"],
+      "questions": ["residency-1405-1-061"],
+      "from": { "ref": "burket-oral-medicine@13e", "pdf_page_from": 68, "pdf_page_to": 69 },
+      "status": "published", "origin": "ai", "confidence": 0.85
+    },
+    {
+      "key": "endodontics.periapical-healing.map",
+      "kind": "mindmap",
+      "title": "ترمیم ضایعه‌ی پری‌اپیکال",
+      "subject": "endodontics",
+      "tree": {
+        "text": "ترمیم پری‌اپیکال",
+        "note": "Torabinejad · فصل ۱",
+        "children": [
+          { "text": "روند بعد از حذف محرک", "children": [
+            { "text": "التهاب کم می‌شود؛ فیبروبلاست و سلول اندوتلیال زیاد" },
+            { "text": "استخوان تحلیل‌رفته ← استخوان جدید" },
+            { "text": "سمان و عاج تحلیل‌رفته ← سمان سلولار" },
+            { "text": "PDL: اولین بافت درگیر، آخرین بافت ترمیم‌شده" }
+          ] },
+          { "text": "نمای بافت‌شناسی", "children": [
+            { "text": "رسوب سمان" },
+            { "text": "افزایش عروق" },
+            { "text": "فعالیت فیبروبلاست و استئوبلاست" }
+          ] },
+          { "text": "ترمیم ناکامل", "children": [
+            { "text": "تغییر الگوی فیبر یا استخوان" },
+            { "text": "رادیوگرافی: لامینا دورای پهن، شکل تغییر کرده‌ی استخوان" },
+            { "text": "عامل: اندازه‌ی ضایعه، آسیب استروما" }
+          ] },
+          { "text": "عوامل مؤثر بر ترمیم", "children": [
+            { "text": "لکوپنی، خون‌رسانی ضعیف، سوءتغذیه" },
+            { "text": "کورتیکواستروئیدها و بیماری سیستمیک" },
+            { "text": "دیابت: میزان ترمیم کمتر بعد از درمان ریشه" }
+          ] }
+        ]
+      },
+      "questions": ["residency-1405-1-021"],
+      "from": { "ref": "torabinejad-endodontics@6e", "pdf_page_from": 24, "pdf_page_to": 25 },
+      "status": "published", "origin": "ai", "confidence": 0.85
+    },
+    {
+      "key": "dental-materials.elastic-properties.map",
+      "kind": "mindmap",
+      "title": "مدول الاستیسیته، ارتجاعیت و چقرمگی",
+      "subject": "dental-materials",
+      "tree": {
+        "text": "خواص الاستیک",
+        "note": "Craig · فصل ۴ · خواص مکانیکی",
+        "children": [
+          { "text": "مدول الاستیسیته (E)", "children": [
+            { "text": "نسبت تنش به کرنش در محدوده‌ی الاستیک", "note": "قانون هوک: E = σ/ε" },
+            { "text": "نشان‌دهنده‌ی سفتی (stiffness)" },
+            { "text": "شیب بخش خطی منحنی" },
+            { "text": "واحد: MPa یا GPa" }
+          ] },
+          { "text": "ارتجاعیت (Resilience)", "children": [
+            { "text": "مقاومت در برابر تغییر شکل دائمی" },
+            { "text": "انرژی لازم تا حد تناسب" },
+            { "text": "سطح زیر بخش الاستیک منحنی" },
+            { "text": "مهم در سیم ارتودنسی" }
+          ] },
+          { "text": "چقرمگی (Toughness)", "children": [
+            { "text": "سطح زیر کل منحنی تا شکست" }
+          ] },
+          { "text": "ازدیاد طول (Elongation)", "children": [
+            { "text": "زیر حد تناسب: برگشت‌پذیر" },
+            { "text": "بعد از حد تناسب: دائمی" }
+          ] },
+          { "text": "سیم Ni-Ti", "children": [
+            { "text": "منحنی بارگذاری و باربرداری متفاوت = هیسترزیس" }
+          ] }
+        ]
+      },
+      "chapters": ["craig-restorative-materials@14e#ch04.s01"],
+      "questions": ["residency-1405-1-211"],
+      "from": { "ref": "craig-restorative-materials@14e", "pdf_page_from": 46, "pdf_page_to": 48 },
+      "status": "published", "origin": "ai", "confidence": 0.85
+    },
+    {
+      "key": "periodontics.gingival-keratinization.map",
+      "kind": "mindmap",
+      "title": "کراتینیزاسیون اپیتلیوم لثه",
+      "subject": "periodontics",
+      "tree": {
+        "text": "کراتینیزاسیون",
+        "note": "Carranza · فصل ۴",
+        "children": [
+          { "text": "تغییرات سلول از لایه‌ی پایه تا شاخی", "children": [
+            { "text": "صاف شدن سلول، تونوفیلامنت بیشتر" },
+            { "text": "دسموزوم + گرانول کراتوهیالین در لایه‌ی گرانولار" },
+            { "text": "از بین رفتن هسته و اندامک‌ها در لایه‌ی شاخی" },
+            { "text": "کراتین (فیلاگرین، لوریکرین، اینوولوکرین) + لیپید" }
+          ] },
+          { "text": "ارتوکراتین", "children": [
+            { "text": "لایه‌ی شاخی بدون هسته" },
+            { "text": "لایه‌ی گرانولار مشخص (کراتوهیالین)" },
+            { "text": "فقط بخش‌هایی از اپیتلیوم خارجی لثه" }
+          ] },
+          { "text": "پاراکراتین", "children": [
+            { "text": "هسته‌های پیکنوتیک در لایه‌ی شاخی" },
+            { "text": "گرانول‌ها پراکنده؛ لایه‌ی گرانولار شکل نمی‌گیرد" }
+          ] },
+          { "text": "غیرکراتینیزه", "children": [
+            { "text": "نه لایه‌ی گرانولار، نه شاخی" },
+            { "text": "سلول‌های سطحی هسته‌ی زنده دارند" },
+            { "text": "مثال: col" }
+          ] }
+        ]
+      },
+      "questions": ["residency-1405-1-111"],
+      "from": { "ref": "carranza-periodontology@14e", "pdf_page_from": 70, "pdf_page_to": 71 },
+      "status": "published", "origin": "ai", "confidence": 0.85
+    },
+    {
+      "key": "pediatric-dentistry.extra-cusps-globodontia.map",
+      "kind": "mindmap",
+      "title": "دنس اواژیناتوس، کاسپ تالون و گلوبودونشیا",
+      "subject": "pediatric-dentistry",
+      "tree": {
+        "text": "ناهنجاری‌های شکل تاج",
+        "note": "McDonald & Avery · فصل ۳",
+        "children": [
+          { "text": "دنس اواژیناتوس", "children": [
+            { "text": "کاسپ اضافه روی سطح اکلوزال دندان‌های خلفی" }
+          ] },
+          { "text": "کاسپ تالون", "children": [
+            { "text": "همان دنس اواژیناتوس در دندان قدامی" },
+            { "text": "شکل چنگال عقاب" },
+            { "text": "شیار عمیق: سیل و پیگیری پوسیدگی" },
+            { "text": "کاهش تدریجی کاسپ + فلوراید؛ احتمال درمان ریشه" },
+            { "text": "ارتودنسی اگر دندان را جابه‌جا کند" }
+          ] },
+          { "text": "گلوبودونشیا", "children": [
+            { "text": "ناحیه‌ی مولر و کانین؛ انسیزورها درگیر نمی‌شوند" },
+            { "text": "خلفی‌ها: بزرگ، گلوبولار، بدون کاسپ و شیار مشخص" },
+            { "text": "کانین‌ها: هیپوپلازی مینا" },
+            { "text": "شیری‌ها شدیدتر از دائمی‌ها" },
+            { "text": "لثه‌ی ملتهب یا بزرگ، تأخیر رویش" },
+            { "text": "نشانه‌ی شاخص سندرم اتودنتال" }
+          ] }
+        ]
+      },
+      "chapters": ["mcdonald-avery-pediatric@11e#ch03.s05"],
+      "questions": ["residency-1405-1-173"],
+      "from": { "ref": "mcdonald-avery-pediatric@11e", "pdf_page_from": 57, "pdf_page_to": 58 },
+      "status": "published", "origin": "ai", "confidence": 0.85
+    },
+    {
+      "key": "prosthodontics.occlusal-rest-seat.map",
+      "kind": "mindmap",
+      "title": "رست اکلوزال و رست گسترش‌یافته",
+      "subject": "prosthodontics",
+      "tree": {
+        "text": "رست اکلوزال",
+        "note": "McCracken · فصل ۶",
+        "children": [
+          { "text": "شکل رست سیت", "children": [
+            { "text": "مثلثی گرد، رأس به سمت مرکز اکلوزال" },
+            { "text": "طول = عرض؛ قاعده حداقل ۲٫۵ mm" },
+            { "text": "کاهش ریج مارژینال حدود ۱٫۵ mm" },
+            { "text": "کف قاشقی و پایین‌تر از ریج مارژینال" },
+            { "text": "زاویه با مینور کانکتور کمتر از ۹۰ درجه" }
+          ] },
+          { "text": "اگر زاویه بیش از ۹۰ درجه شود", "children": [
+            { "text": "نیرو در محور طولی منتقل نمی‌شود" },
+            { "text": "لغزش پروتز و نیروی ارتودنتیک روی پایه" }
+          ] },
+          { "text": "رست گسترش‌یافته", "children": [
+            { "text": "کلاس II مد ۱ و کلاس III با مولر خلفی تیلت‌شده‌ی مزیالی" },
+            { "text": "بیش از نصف عرض مزیودیستال" },
+            { "text": "حدود یک‌سوم عرض باکولینگوال" },
+            { "text": "ضخامت فلز حداقل ۱ mm" }
+          ] },
+          { "text": "پایه‌ی به‌شدت تیلت‌شده", "children": [
+            { "text": "رست به شکل آنله" },
+            { "text": "بول ۱ تا ۲ mm باکال و لینگوال برای ثبات" }
+          ] }
+        ]
+      },
+      "chapters": ["mccracken-rpd@13e#ch06.s02", "mccracken-rpd@13e#ch06.s03"],
+      "questions": ["residency-1405-1-082"],
+      "from": { "ref": "mccracken-rpd@13e", "pdf_page_from": 71, "pdf_page_to": 72 },
+      "status": "published", "origin": "ai", "confidence": 0.85
+    },
+    {
+      "key": "oral-surgery.physical-examination.map",
+      "kind": "mindmap",
+      "title": "معاینه‌ی فیزیکی قبل از جراحی",
+      "subject": "oral-surgery",
+      "tree": {
+        "text": "معاینه‌ی فیزیکی",
+        "note": "Hupp · فصل ۱",
+        "children": [
+          { "text": "شروع", "children": [
+            { "text": "علائم حیاتی: غربالگری و مقدار پایه" }
+          ] },
+          { "text": "مشاهده (Inspection)", "note": "همیشه انجام شود", "children": [
+            { "text": "مو، قرینگی و تناسب صورت" },
+            { "text": "حرکات چشم، رنگ ملتحمه" },
+            { "text": "باز بودن هر طرف بینی" },
+            { "text": "ضایعه‌ی پوستی، توده‌ی گردن و صورت" },
+            { "text": "داخل دهان: اوروفارنکس، زبان، کف دهان، مخاط" }
+          ] },
+          { "text": "لمس (Palpation)", "children": [
+            { "text": "TMJ، غدد بزاقی، تیروئید" },
+            { "text": "غدد لنفاوی" },
+            { "text": "سفتی بافت نرم، درد، فلوکتواسیون" }
+          ] },
+          { "text": "دق (Percussion)", "children": [
+            { "text": "دندان‌ها و سینوس‌های پارانازال" }
+          ] },
+          { "text": "سمع (Auscultation)", "children": [
+            { "text": "بیشتر برای TMJ" }
+          ] }
+        ]
+      },
+      "chapters": ["hupp-oral-surgery@7e#ch01.s02"],
+      "questions": ["residency-1405-1-131"],
+      "from": { "ref": "hupp-oral-surgery@7e", "pdf_page_from": 20, "pdf_page_to": 21 },
+      "status": "published", "origin": "ai", "confidence": 0.85
+    },
+    {
+      "key": "community-dentistry.population-movement.map",
+      "kind": "mindmap",
+      "title": "شاخص‌های حرکت جمعیت",
+      "subject": "community-dentistry",
+      "tree": {
+        "text": "حرکت جمعیت",
+        "note": "سلامت دهان و دندانپزشکی اجتماعی · فصل ۴",
+        "children": [
+          { "text": "نرخ رشد جمعیت", "children": [
+            { "text": "مهم برای پیش‌بینی جمعیت آینده" },
+            { "text": "برای حفظ رفاه: رشد اقتصادی ۳ تا ۵ برابر رشد جمعیت" }
+          ] },
+          { "text": "افزایش طبیعی جمعیت", "children": [
+            { "text": "تعداد موالید منهای تعداد مرگ در یک سال" },
+            { "text": "مهاجرت حساب نمی‌شود" }
+          ] },
+          { "text": "زمان دو برابر شدن جمعیت", "children": [
+            { "text": "رشد بالاتر ← زمان کوتاه‌تر" },
+            { "text": "لازم برای برنامه‌ریزی امکانات رفاهی و بهداشتی" },
+            { "text": "ایران ۲۳ سال، ایتالیا ۳۵ سال" }
+          ] }
+        ]
+      },
+      "chapters": ["national-oral-health@1394#ch04"],
+      "questions": ["residency-1405-1-222"],
+      "from": { "ref": "national-oral-health@1394", "pdf_page_from": 56, "pdf_page_to": 57 },
+      "status": "published", "origin": "ai", "confidence": 0.85
+    }
+  ]
+}

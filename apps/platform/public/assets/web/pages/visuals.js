@@ -9,6 +9,7 @@ import { api, describeError } from '../foundation/api.js';
 import { faDigits } from './question-stats.js';
 import { matches } from './bank-rules.js';
 import { KIND_LABELS, inline, parseMarkdown } from './visuals-rules.js';
+import { renderMindmap } from './mindmap-view.js';
 
 const workspaceId = document.querySelector('meta[name="fanoos-workspace"]')?.content ?? '';
 const base = `/workspaces/${encodeURIComponent(workspaceId)}`;
@@ -188,7 +189,7 @@ async function visual() {
     const parts = [head];
 
     const body = el('section', 'f-card v-body');
-    if (data.format === 'tree' && data.tree) body.append(mindmap(data.tree));
+    if (data.format === 'tree' && data.tree) body.append(renderMindmap(data.tree));
     else if (data.format === 'markdown') body.append(markdown(data.markdown));
     else if (data.has_image) {
         const image = el('img', 'v-image');

@@ -1,14 +1,16 @@
 /*
- * The signed-in home: a greeting set on the paper, the three things to do,
- * and the courses as a list. No banner, no rainbow: the page is a table of
- * contents, and it should read like one.
+ * The signed-in home: a greeting set on the paper, today at a glance, the
+ * main menu and the busiest courses. No banner, no tiles: the page is a
+ * table of contents, so everything on it is a row -- an icon in its hue,
+ * what it is, a value or a one-line purpose, a chevron. The exams page's
+ * tools use the same grammar, so the two pages read as one site.
  */
 
 .f-hello {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    gap: var(--space-5);
+    gap: var(--space-4) var(--space-5);
     margin-bottom: var(--space-6);
     padding-bottom: var(--space-5);
     border-bottom: 1px solid var(--border);
@@ -19,421 +21,332 @@
 }
 
 .f-hello__title {
-    margin-bottom: var(--space-1);
-    font-size: var(--text-3xl);
+    margin: 0;
+    font-size: var(--text-2xl);
+    line-height: 1.4;
 }
 
 .f-hello__lede {
-    margin: 0;
+    margin: var(--space-1) 0 0;
     color: var(--text-secondary);
 }
 
 .f-hello__facts {
     display: flex;
     flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: var(--space-2) var(--space-4);
-    margin-top: var(--space-3);
-    font-size: var(--text-sm);
+    gap: var(--space-2);
 }
 
 .f-hello__fact {
     display: inline-flex;
     align-items: baseline;
     gap: var(--space-1);
-    color: var(--text-primary);
-    font-weight: var(--weight-medium);
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    font-size: var(--text-sm);
+    font-weight: 600;
 }
 
 .f-hello__fact i {
+    color: var(--text-secondary);
     font-style: normal;
-    font-weight: var(--weight-body);
+    font-weight: 400;
     font-size: var(--text-xs);
-    color: var(--text-tertiary);
 }
 
-/* The lantern stays out of the greeting: it is already the site's mark. */
-.f-hello__mark {
-    display: none;
-}
+/* ------------------------------------------------------------- sections */
 
-/* ------------------------------------------------------------ actions */
+.f-home__section {
+    margin-top: var(--space-7);
+}
 
 .f-home__head {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    margin-bottom: var(--space-3);
+    gap: var(--space-3);
 }
 
-.f-home__head h2 {
-    margin: 0;
+.f-home__h {
+    margin: 0 0 var(--space-3);
     font-size: var(--text-lg);
 }
 
 .f-home__all {
+    color: var(--accent-strong);
     font-size: var(--text-sm);
-    font-weight: var(--weight-medium);
+    font-weight: 600;
 }
 
-/* One sheet, rows inside it, two columns where there is room. */
-.f-courses-grid {
+/* ------------------------------------------------------------- lists and rows */
+
+.f-list {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: var(--space-6);
-    padding: 0 var(--space-5);
-    background: var(--surface);
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1px;
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    /* Each row draws the rule under it; the sheet clips the last one. */
+    border-radius: var(--radius-lg);
+    background: var(--border);
     overflow: hidden;
 }
 
-.f-course-row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    min-height: 54px;
-    margin-bottom: -1px;
-    color: var(--text-primary);
-    border-bottom: 1px solid var(--border);
-}
-
-.f-course-row:hover {
-    text-decoration: none;
-    color: var(--accent);
-}
-
-.f-course-row__title {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-weight: var(--weight-medium);
-}
-
-.f-course-row__count {
-    flex: none;
-    font-size: var(--text-xs);
-    color: var(--text-tertiary);
-}
-
-.f-course-row__go {
-    flex: none;
-    color: var(--text-tertiary);
-}
-
-.f-course-skel {
-    height: 22px;
-    margin-block: 16px;
-    border-radius: var(--radius-sm);
-    background: linear-gradient(90deg, var(--surface-strong), var(--surface-muted), var(--surface-strong));
-    background-size: 200% 100%;
-    animation: f-shimmer 1.3s linear infinite;
-}
-
-@keyframes f-shimmer {
-    to { background-position: -200% 0; }
-}
-
-.f-home__switch {
-    margin-top: var(--space-6);
-    margin-bottom: 0;
-    text-align: center;
-}
-
-/* ------------------------------------------------------------ chooser */
-
-.f-home__panel h2 {
-    font-size: var(--text-xl);
-}
-
-.f-home__workspaces {
-    display: grid;
-    gap: var(--space-2);
-}
-
-.f-home__workspace {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-    align-items: flex-start;
-    text-align: start;
-    padding: var(--space-4);
-    font: inherit;
-    color: inherit;
-    cursor: pointer;
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    transition: border-color var(--motion-fast) var(--ease), background var(--motion-fast) var(--ease);
-}
-
-.f-home__workspace:hover:not(:disabled) {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-}
-
-.f-home__workspace:disabled {
-    opacity: 0.6;
-    cursor: progress;
-}
-
-@media (max-width: 720px) {
-    .f-hello {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--space-2);
-        margin-bottom: var(--space-5);
-    }
-
-    .f-hello__title {
-        font-size: var(--text-2xl);
-    }
-
-    .f-hello__facts {
-        justify-content: flex-start;
-    }
-
-    .f-courses-grid {
-        grid-template-columns: 1fr;
-        padding-inline: var(--space-4);
-    }
-}
-
-/* ------------------------------------------------------------ today */
-
-.f-today {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-3);
-    margin-bottom: var(--space-6);
-}
-
-.f-today[hidden] {
+.f-list[hidden] {
     display: none;
 }
 
-.f-today__item {
-    display: grid;
-    gap: 2px;
-    padding: var(--space-3) var(--space-4);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+.f-list__note {
+    margin: 0;
+    padding: var(--space-4);
     background: var(--surface);
-    color: var(--text-primary);
-    text-decoration: none;
-    transition: border-color var(--motion-fast) var(--ease), transform var(--motion-fast) var(--ease);
-}
-
-.f-today__item:hover {
-    border-color: var(--border-strong);
-    text-decoration: none;
-    transform: translateY(-1px);
-}
-
-.f-today__label {
-    font-size: var(--text-xs);
     color: var(--text-secondary);
 }
 
-.f-today__value {
-    font-size: var(--text-xl);
+.f-row {
+    --h: var(--accent);
+    --h-soft: var(--accent-soft);
+    /* Text in a hue is mixed toward the ink so a number or letter stays
+     * readable (4.5:1) where the bright hue alone is not; icons keep the hue. */
+    --h-ink: color-mix(in oklab, var(--h) 62%, var(--text-primary));
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 68px;
+    padding: 12px 16px;
+    background: var(--surface);
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: background 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.f-today__bar {
-    height: 5px;
-    margin-top: var(--space-1);
+.f-row:hover {
+    background: var(--surface-muted);
+    text-decoration: none;
+}
+
+.f-row:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -3px;
+}
+
+.f-row[data-hue="subject"] { --h: var(--hue-subject); --h-soft: var(--hue-subject-soft); }
+.f-row[data-hue="difficulty"] { --h: var(--hue-difficulty); --h-soft: var(--hue-difficulty-soft); }
+.f-row[data-hue="tag"] { --h: var(--hue-tag); --h-soft: var(--hue-tag-soft); }
+.f-row[data-hue="source"] { --h: var(--hue-source); --h-soft: var(--hue-source-soft); }
+.f-row[data-hue="info"] { --h: var(--info); --h-soft: var(--info-soft); }
+.f-row[data-hue="success"] { --h: var(--success); --h-soft: var(--success-soft); }
+.f-row[data-hue="warning"] { --h: var(--warning); --h-soft: var(--warning-soft); }
+.f-row[data-hue="danger"] { --h: var(--danger); --h-soft: var(--danger-soft); }
+.f-row[data-hue="coin"] { --h: #c98a00; --h-soft: rgba(255, 190, 40, 0.16); }
+
+.f-row__icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    inline-size: 42px;
+    block-size: 42px;
+    border-radius: 12px;
+    background: var(--h-soft);
+    color: var(--h);
+}
+
+.f-row__icon svg,
+.f-row__go {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.f-row__icon svg {
+    inline-size: 22px;
+    block-size: 22px;
+}
+
+.f-row__mark {
+    color: var(--h-ink);
+    font-weight: 700;
+}
+
+.f-row__text {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+}
+
+.f-row__label {
+    font-weight: 700;
+    font-size: var(--text-base);
+}
+
+.f-row__hint {
+    overflow: hidden;
+    color: var(--text-secondary);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.f-row__meta {
+    flex: none;
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+}
+
+.f-row__value {
+    flex: none;
+    color: var(--h-ink);
+    font-size: var(--text-xl);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.f-row__go {
+    flex: none;
+    inline-size: 18px;
+    block-size: 18px;
+    color: var(--text-tertiary);
+    transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), color 160ms;
+}
+
+.f-row:hover .f-row__go {
+    color: var(--h);
+    transform: translateX(-3px);
+}
+
+.f-row__bar {
+    display: block;
+    block-size: 6px;
     border-radius: var(--radius-pill);
     background: var(--surface-strong);
     overflow: hidden;
 }
 
-.f-today__bar i {
+.f-row__bar i {
     display: block;
-    height: 100%;
-    width: var(--done, 0%);
+    inline-size: var(--done, 0%);
+    block-size: 100%;
     border-radius: inherit;
-    background: var(--accent);
-    transition: width 600ms var(--ease);
+    background: var(--h);
+    transition: inline-size 400ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.f-today__item--coins .f-today__value {
-    color: var(--warning);
+.f-row--skel {
+    background: linear-gradient(90deg, var(--surface) 30%, var(--surface-muted) 50%, var(--surface) 70%) 0 0 / 300% 100%;
+    animation: f-shimmer 1.4s linear infinite;
 }
 
-/* -------------------------------------------------------- main menu */
-
-.f-menu {
-    margin-bottom: var(--space-6);
+@keyframes f-shimmer {
+    to { background-position: -300% 0; }
 }
 
-.f-menu__title {
-    margin: 0 0 var(--space-4);
-    font-size: var(--text-xl);
-}
+/* ------------------------------------------------------------- main menu */
 
-.f-menu__group + .f-menu__group {
-    margin-top: var(--space-5);
+.f-menu__groups {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+    align-items: start;
 }
 
 .f-menu__group-title {
-    margin: 0 0 var(--space-3);
+    margin: 0 0 var(--space-2);
+    color: var(--text-secondary);
     font-size: var(--text-sm);
-    font-weight: var(--weight-medium);
-    color: var(--text-secondary);
+    font-weight: 600;
 }
 
-/*
- * Each group is one row, at every width, six tiles wide, so a tile is the
- * same size in every group. Where six do not fit (a phone) the row scrolls
- * sideways, a tile at a time. A tile's words stay on one line.
- */
-.f-menu__grid {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: calc((100% - 5 * var(--space-3)) / 6);
-    gap: var(--space-3);
-    padding: 4px 2px 8px;
-    margin: -4px -2px -8px;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
+/* Rows arrive once, quickly, top to bottom -- a hint of order, not a show. */
+.f-menu .f-row,
+.f-today .f-row {
+    animation: f-row-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(var(--i, 0) * 24ms);
 }
 
-.f-menu__grid::-webkit-scrollbar {
-    display: none;
+.f-menu .f-row:nth-child(2), .f-today .f-row:nth-child(2) { --i: 1; }
+.f-menu .f-row:nth-child(3), .f-today .f-row:nth-child(3) { --i: 2; }
+.f-menu .f-row:nth-child(4) { --i: 3; }
+.f-menu .f-row:nth-child(5) { --i: 4; }
+.f-menu .f-row:nth-child(6) { --i: 5; }
+
+@keyframes f-row-in {
+    from { opacity: 0; transform: translateY(6px); }
 }
 
-.f-tile {
-    --hue: var(--accent);
-    --hue-soft: var(--accent-soft);
-    display: grid;
-    align-content: start;
-    gap: 2px;
-    min-width: 0;
-    padding: var(--space-4) var(--space-3);
-    border: 1px solid transparent;
-    border-radius: var(--radius-lg);
-    background: var(--surface);
-    box-shadow: var(--shadow-soft);
-    color: var(--text-primary);
-    text-decoration: none;
-    transition: border-color var(--motion-fast) var(--ease), transform var(--motion-fast) var(--ease), box-shadow var(--motion-fast) var(--ease);
-}
+/* ------------------------------------------------------------- wider screens */
 
-.f-tile {
-    scroll-snap-align: start;
-}
-
-.f-tile:hover,
-.f-tile:focus-visible {
-    border-color: var(--hue);
-    box-shadow: var(--shadow-lift);
-    transform: translateY(-2px);
-}
-
-.f-tile[data-hue="subject"] { --hue: var(--hue-subject); --hue-soft: var(--hue-subject-soft); }
-.f-tile[data-hue="difficulty"] { --hue: var(--hue-difficulty); --hue-soft: var(--hue-difficulty-soft); }
-.f-tile[data-hue="tag"] { --hue: var(--hue-tag); --hue-soft: var(--hue-tag-soft); }
-.f-tile[data-hue="source"] { --hue: var(--hue-source); --hue-soft: var(--hue-source-soft); }
-.f-tile[data-hue="success"] { --hue: var(--success); --hue-soft: var(--success-soft); }
-.f-tile[data-hue="warning"] { --hue: var(--warning); --hue-soft: var(--warning-soft); }
-.f-tile[data-hue="danger"] { --hue: var(--danger); --hue-soft: var(--danger-soft); }
-
-/* A large two-tone icon straight on the white tile, the way MedoFast's
-   menu draws its illustrations: the outline in the tile's colour, the
-   shapes filled with a wash of it. No badge behind it. */
-.f-tile__icon {
-    display: grid;
-    place-items: center;
-    width: 56px;
-    height: 56px;
-    margin-bottom: var(--space-2);
-    color: var(--hue);
-}
-
-.f-tile__icon svg {
-    width: 44px;
-    height: 44px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.7;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-/* Only closed shapes take the wash; an open stroke filled would draw a wedge. */
-.f-tile__icon :is(rect, circle, path[d$="z"]) {
-    fill: var(--hue-soft);
-}
-
-.f-tile__label,
-.f-tile__hint {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.f-tile__label {
-    font-weight: var(--weight-strong);
-}
-
-.f-tile__hint {
-    font-size: var(--text-xs);
-    color: var(--text-secondary);
-}
-
-@media (max-width: 720px) {
+@media (min-width: 860px) {
     .f-today {
-        gap: var(--space-2);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
-    .f-today__item {
-        padding: var(--space-2) var(--space-3);
+    /* Columns, not a grid: the groups differ in length and flow to balance. */
+    .f-menu__groups {
+        display: block;
+        columns: 2;
+        column-gap: var(--space-5);
     }
 
-    .f-today__value {
+    .f-menu__group {
+        break-inside: avoid;
+        margin-bottom: var(--space-5);
+    }
+
+    .f-list--split {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* ------------------------------------------------------------- phones */
+
+@media (max-width: 640px) {
+    .f-hello {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .f-hello__title {
+        font-size: var(--text-xl);
+    }
+
+    .f-home__section {
+        margin-top: var(--space-6);
+    }
+
+    .f-row {
+        min-height: 62px;
+        padding: 10px 14px;
+        gap: 12px;
+    }
+
+    .f-row__icon {
+        inline-size: 38px;
+        block-size: 38px;
+        border-radius: 11px;
+    }
+
+    .f-row__value {
         font-size: var(--text-lg);
     }
-
-    .f-menu__grid {
-        grid-auto-columns: calc((100% - 2 * var(--space-2)) / 3.4);
-        gap: var(--space-2);
-    }
-
-    .f-tile {
-        justify-items: center;
-        text-align: center;
-        padding: var(--space-3) var(--space-1);
-    }
-
-    .f-tile__hint {
-        display: none;
-    }
-
-    .f-tile__label {
-        font-size: var(--text-sm);
-    }
 }
 
-.f-hello {
-    align-items: center;
-    padding: var(--space-6);
-    border: 0;
-    border-radius: var(--radius-lg);
-    background: var(--accent-soft);
-}
+@media (prefers-reduced-motion: reduce) {
+    .f-row,
+    .f-row__go,
+    .f-row__bar i {
+        transition: none;
+    }
 
-.f-hello__title { line-height: 1.5; }
-.f-today__item, .f-menu .f-tile, .f-courses-grid {
-    border: 1px solid var(--border-strong);
-    box-shadow: none;
-}
-.f-menu .f-tile:hover, .f-menu .f-tile:focus-visible {
-    box-shadow: var(--shadow-soft);
-}
-@media (max-width: 720px) {
-    .f-hello { align-items: flex-start; padding: var(--space-5); }
+    .f-menu .f-row,
+    .f-today .f-row,
+    .f-row--skel {
+        animation: none;
+    }
+
+    .f-row:hover .f-row__go {
+        transform: none;
+    }
 }

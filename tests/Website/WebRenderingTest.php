@@ -159,13 +159,13 @@ final class WebRenderingTest
     private function homeGreetsWithTheProfileWhenThereIsOne(PageRenderer $renderer): void
     {
         $viewer = new ViewerContext('u1', 'نام نمایشی', 'c', 'w1', 'بانک');
-        $html = (new HomePage($renderer))->render($viewer, false, [
+        $html = (new HomePage($renderer))->render($viewer, [
             'first_name' => '<b>سارا</b>', 'discipline_name' => 'رشته‌ی آزمایشی', 'institution_name' => null,
         ], true);
         $this->assert(str_contains($html, '&lt;b&gt;سارا'), 'The greeting must use the profile first name, escaped.');
         $this->assert(str_contains($html, 'رشته‌ی آزمایشی'), 'The greeting must name the field of study.');
         $this->assert(str_contains($html, 'حسابت ساخته شد'), 'A just-created account must be welcomed.');
-        $this->assert(str_contains($html, 'id="home-courses"'), 'Home must have the course grid when a workspace is selected.');
+        $this->assert(str_contains($html, 'id="home-courses"'), 'Home must have the course list when a workspace is selected.');
     }
 
     private function signedInPagesCarryTheCsrfTokenAndTheChrome(PageRenderer $renderer): void
@@ -178,7 +178,7 @@ final class WebRenderingTest
             'A signed-in page must embed the CSRF token for its scripts.',
         );
         $this->assert(str_contains($html, 'f-header'), 'A signed-in page must render the shared chrome.');
-        $this->assert(str_contains($html, 'دندانپزشکی ۱۴۰۲'), 'The chrome must name the selected workspace.');
+        $this->assert(!str_contains($html, 'switch=1'), 'FANOOS is one workspace: the chrome must not offer a switch.');
         $this->assert(str_contains($html, 'href="/app/exams/custom"'), 'Home must offer the custom practice builder.');
         $custom = (new CustomPracticePage($renderer))->render($viewer);
         $this->assert(
@@ -259,7 +259,7 @@ final class WebRenderingTest
         // منوی اصلی: every section is one tap from home, and the header carries today's points.
         $home = (new HomePage($renderer))->render($viewer);
         foreach (['/app/bank', '/app/exams/custom', '/app/plan', '/app/points', '/app/rooms', '/app/saved', '/app/affiliate', '/support'] as $href) {
-            $this->assert(str_contains($home, 'class="f-tile" href="' . $href . '"'), "The main menu must offer {$href}.");
+            $this->assert(str_contains($home, 'class="f-row" href="' . $href . '"'), "The main menu must offer {$href}.");
         }
         $this->assert(str_contains($home, 'id="today"') && str_contains($home, 'id="f-stats"') && str_contains($home, 'header-stats.js'), 'Home must carry the today strip and the header points.');
         $this->assert(!str_contains((new HomePage($renderer))->render(new ViewerContext('u1', 'آرین', 'c', null, null)), 'id="f-stats"'), 'Without a workspace there are no points to show.');
@@ -269,8 +269,8 @@ final class WebRenderingTest
             'A viewer with a workspace lands on their areas, not the chooser.',
         );
         $this->assert(
-            str_contains((new HomePage($renderer))->render($viewer, true), 'workspace-list'),
-            'Asking to switch must actually reach the chooser.',
+            !str_contains((new HomePage($renderer))->render($viewer), 'switch=1'),
+            'There is one workspace, so home must not offer a switch.',
         );
     }
 
@@ -385,7 +385,7 @@ final class WebRenderingTest
         $withBots = (new AccountPage($renderer))->render(new ViewerContext('u1', 'آرین', 'c', 'w1', 'کلاس'), ['bale' => 'fanooslearnbot', 'telegram' => '<bad name>']);
         $this->assert(str_contains($withBots, 'data-bale-bot="fanooslearnbot"'), 'The account page must know the Bale bot to open.');
         $this->assert(!str_contains($withBots, 'data-telegram-bot'), 'A malformed bot username must not reach a link.');
-        $this->assert(str_contains($account, 'href="/app?switch=1"'), 'The account page must let the viewer change workspace.');
+        $this->assert(!str_contains($account, 'switch=1'), 'There is one workspace, so the account page must not offer a switch.');
     }
 
 

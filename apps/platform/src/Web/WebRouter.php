@@ -156,7 +156,6 @@ final class WebRouter
                 ? $this->redirect('/login')
                 : $this->page(200, (new HomePage($this->renderer))->render(
                     $viewer,
-                    isset($query['switch']),
                     $this->profile($viewer->userId),
                     isset($query['welcome']),
                 ));
@@ -329,13 +328,27 @@ final class WebRouter
             return null;
         }
 
+        // FANOOS is one dental workspace (owner, 2026-11-14): there is nothing to
+        // choose, so a session without one is given the account's workspace here
+        // and the header no longer offers a switch.
+        $selectedWorkspaceId = $session->selectedWorkspaceId;
+        $workspaces = is_array($account['workspaces'] ?? null) ? $account['workspaces'] : [];
+        if ($selectedWorkspaceId === null && isset($workspaces[0]['id'])) {
+            try {
+                $this->auth->selectWorkspace($session, (string) $workspaces[0]['id']);
+                $selectedWorkspaceId = (string) $workspaces[0]['id'];
+            } catch (Throwable) {
+                $selectedWorkspaceId = null;
+            }
+        }
+
         $workspaceName = null;
         $canManageCatalog = false;
         $canReviewContent = false;
         $permissionKeys = [];
-        if ($session->selectedWorkspaceId !== null) {
-            foreach ($account['workspaces'] ?? [] as $workspace) {
-                if (($workspace['id'] ?? null) === $session->selectedWorkspaceId) {
+        if ($selectedWorkspaceId !== null) {
+            foreach ($workspaces as $workspace) {
+                if (($workspace['id'] ?? null) === $selectedWorkspaceId) {
                     $workspaceName = (string) ($workspace['name'] ?? '');
                     $canManageCatalog = in_array('commerce.manage_catalog', (array) ($workspace['permission_keys'] ?? []), true);
                     $canReviewContent = in_array('exam.review', (array) ($workspace['permission_keys'] ?? []), true);
@@ -355,7 +368,7 @@ final class WebRouter
             $session->userId,
             (string) ($person['display_name'] ?? ''),
             $session->csrfToken,
-            $session->selectedWorkspaceId,
+            $selectedWorkspaceId,
             $workspaceName === '' ? null : $workspaceName,
             $canManageCatalog,
             $canReviewContent,

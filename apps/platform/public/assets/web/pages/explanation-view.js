@@ -64,7 +64,11 @@ export function renderExplanation(markdown, { chosen = null, showAnswer = true }
     const picked = chosenLetter(LETTERS, chosen);
     for (const section of parts.sections) {
         if (section.kind === 'reference') {
-            root.append(el('section', { className: 'x-exp__ref' },
+            // A quote from the book reads in the book's own direction: mostly Latin letters is an
+            // English passage (left to right), otherwise Persian.
+            const latin = (section.body.match(/[A-Za-z]/g) || []).length;
+            const persian = (section.body.match(/[؀-ۿ]/g) || []).length;
+            root.append(el('section', { className: 'x-exp__ref', attrs: { dir: latin > persian ? 'ltr' : 'rtl' } },
                 head('book', 'از رفرنس'), renderMarkdown(section.body)));
         } else if (section.kind === 'options') {
             if (parts.options.length === 0 && section.body === '') continue;

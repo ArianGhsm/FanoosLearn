@@ -8,10 +8,11 @@ namespace Fanoos\Platform\Web;
  * The signed-in home.
  *
  * With a workspace selected it is a starting point: who you are and in which
- * field, the two things you came to do, and the courses to pick from --
+ * field, today at a glance, the courses to pick from -- first, because
+ * starting one is why the student came -- and then the main menu. Courses are
  * filled in by the page script from the same catalogue API the exams page
- * reads, so the numbers are never a second, drifting copy. Without one it is
- * the workspace chooser.
+ * reads, so the numbers are never a second, drifting copy. Without one it
+ * says the account is not connected yet and where to ask.
  */
 final class HomePage
 {
@@ -20,13 +21,10 @@ final class HomePage
     }
 
     /**
-     * @param bool $forceChooser the visitor explicitly asked to switch class
-     *     (`/app?switch=1`), so show the chooser even though the session
-     *     already has one selected.
      * @param array<string, mixed>|null $profile the website sign-up profile, if any
      * @param bool $welcome the visitor has just created their account
      */
-    public function render(ViewerContext $viewer, bool $forceChooser = false, ?array $profile = null, bool $welcome = false): string
+    public function render(ViewerContext $viewer, ?array $profile = null, bool $welcome = false): string
     {
         $firstName = trim((string) ($profile['first_name'] ?? ''));
         $name = $this->renderer->escape($firstName !== '' ? $firstName : $viewer->displayName);
@@ -38,16 +36,13 @@ final class HomePage
         if (($profile['institution_name'] ?? '') !== '') {
             $facts[] = '<span class="f-hello__fact"><i>دانشگاه</i>' . $this->renderer->escape((string) $profile['institution_name']) . '</span>';
         }
-        if ($viewer->workspaceName !== null && $viewer->workspaceName !== '') {
-            $facts[] = '<span class="f-hello__fact"><i>فضا</i>' . $this->renderer->escape($viewer->workspaceName) . '</span>';
-        }
         $factsHtml = $facts === [] ? '' : '<div class="f-hello__facts">' . implode('', $facts) . '</div>';
 
         $lede = $welcome
             ? 'حسابت ساخته شد. آزمون‌های رشته‌ات آماده‌اند؛ از هر درسی که دوست داری شروع کن.'
             : 'امروز سراغ کدام درس برویم؟';
 
-        $chooser = $viewer->workspaceId === null || $forceChooser;
+        $chooser = $viewer->workspaceId === null;
 
         $hello = <<<HTML
 <section class="f-hello">
@@ -60,21 +55,33 @@ final class HomePage
 HTML;
 
         $today = <<<'HTML'
-<section class="f-today" id="today" aria-label="امروز" hidden>
-    <a class="f-today__item" href="/app/points">
-        <span class="f-today__label">امتیاز امروز</span>
-        <strong class="f-today__value" id="today-points">—</strong>
-        <span class="f-today__bar" aria-hidden="true"><i id="today-bar"></i></span>
+<section class="f-list f-today" id="today" aria-label="امروز" hidden>
+    <a class="f-row" href="/app/points" data-hue="warning">
+        <span class="f-row__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg></span>
+        <span class="f-row__text">
+            <span class="f-row__label">امتیاز امروز</span>
+            <span class="f-row__bar" aria-hidden="true"><i id="today-bar"></i></span>
+        </span>
+        <strong class="f-row__value" id="today-points">—</strong>
+        <svg class="f-row__go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
     </a>
-    <a class="f-today__item" href="/app/progress#review">
-        <span class="f-today__label">مرور امروز</span>
-        <strong class="f-today__value" id="today-review">—</strong>
-        <span class="f-tiny" id="today-review-note"></span>
+    <a class="f-row" href="/app/progress#review" data-hue="info">
+        <span class="f-row__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></span>
+        <span class="f-row__text">
+            <span class="f-row__label">مرور امروز</span>
+            <span class="f-row__hint" id="today-review-note"></span>
+        </span>
+        <strong class="f-row__value" id="today-review">—</strong>
+        <svg class="f-row__go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
     </a>
-    <a class="f-today__item f-today__item--coins" href="/app/points#coin-shop">
-        <span class="f-today__label">سکه</span>
-        <strong class="f-today__value" id="today-coins">—</strong>
-        <span class="f-tiny">خرج کردن</span>
+    <a class="f-row" href="/app/points#coin-shop" data-hue="coin">
+        <span class="f-row__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M9.5 10h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3h4"/></svg></span>
+        <span class="f-row__text">
+            <span class="f-row__label">سکه</span>
+            <span class="f-row__hint">خرج کردن در فروشگاه سکه</span>
+        </span>
+        <strong class="f-row__value" id="today-coins">—</strong>
+        <svg class="f-row__go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
     </a>
 </section>
 HTML;
@@ -82,31 +89,25 @@ HTML;
 
         $body = $chooser
             ? <<<'HTML'
-<section class="f-card f-home__panel" aria-labelledby="pick-title">
-    <h2 id="pick-title">فضای آموزشی‌ات را انتخاب کن</h2>
-    <p class="f-muted">برای دیدن آزمون‌ها و بقیه بخش‌ها، اول مشخص کن کدام فضا.</p>
-    <div id="workspace-list" aria-busy="true">
-        <p class="f-muted">در حال خواندن فهرست…</p>
-    </div>
+<section class="f-card f-empty" aria-labelledby="pick-title">
+    <h2 class="f-empty__title" id="pick-title">حسابت هنوز به فانوس وصل نشده</h2>
+    <p>اگر تازه ثبت‌نام کرده‌ای چند دقیقه‌ی دیگر دوباره سر بزن؛ اگر درست نشد، از <a href="/support">پشتیبانی</a> بپرس.</p>
 </section>
 HTML
             : <<<HTML
 {$today}
-{$menu}
-<section class="f-home__courses" aria-labelledby="courses-title">
+<section class="f-home__section" aria-labelledby="courses-title">
     <div class="f-home__head">
-        <h2 id="courses-title">درس‌ها</h2>
+        <h2 class="f-home__h" id="courses-title">درس‌ها</h2>
         <a href="/app/exams" class="f-home__all">همه‌ی درس‌ها</a>
     </div>
-    <div class="f-courses-grid" id="home-courses" aria-busy="true">
-        <span class="f-course-skel"></span><span class="f-course-skel"></span><span class="f-course-skel"></span>
-        <span class="f-course-skel"></span><span class="f-course-skel"></span><span class="f-course-skel"></span>
+    <div class="f-list f-list--split" id="home-courses" aria-busy="true">
+        <span class="f-row f-row--skel"></span><span class="f-row f-row--skel"></span><span class="f-row f-row--skel"></span>
+        <span class="f-row f-row--skel"></span><span class="f-row f-row--skel"></span><span class="f-row f-row--skel"></span>
     </div>
 </section>
+{$menu}
 
-<p class="f-tiny f-home__switch">
-    فضای دیگری هم داری؟ <a href="/app?switch=1">فضای آموزشی را عوض کن</a>
-</p>
 HTML;
 
         return $this->renderer->render([
@@ -120,13 +121,14 @@ HTML;
     }
 
     /**
-     * منوی اصلی: every part of the site as a tile, in four groups, the way a
+     * منوی اصلی: every part of the site as a row, in four groups, the way a
      * student looks for it -- the bank and exams, studying, their own
      * record, and the rest. One list, so a new section is added in one place.
      */
     private function menu(): string
     {
-        // Each group is one row (home.css); on a phone the row scrolls sideways.
+        // Each group is a short list of rows -- icon, name, one-line purpose,
+        // chevron -- the same grammar as the exams page's tools (home.css).
         $groups = [
             'بانک و آزمون' => [
                 ['/app/bank', 'بانک سؤال', 'به تفکیک درس و سال', 'subject', '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H10v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M10 4h4v16h-4z"/><path d="m14.5 4.6 3.9-1 2.6 15.4-3.9 1z"/>'],
@@ -157,18 +159,23 @@ HTML;
             ],
         ];
 
-        $html = '<nav class="f-menu" aria-labelledby="menu-title"><h2 class="f-menu__title" id="menu-title">منوی اصلی</h2>';
-        foreach ($groups as $group => $tiles) {
-            $html .= '<section class="f-menu__group"><h3 class="f-menu__group-title">' . $this->renderer->escape($group) . '</h3><div class="f-menu__grid">';
-            foreach ($tiles as [$href, $label, $hint, $hue, $icon]) {
-                $html .= '<a class="f-tile" href="' . $this->renderer->escape($href) . '" data-hue="' . $hue . '">'
-                    . '<span class="f-tile__icon" aria-hidden="true"><svg viewBox="0 0 24 24">' . $icon . '</svg></span>'
-                    . '<span class="f-tile__label">' . $this->renderer->escape($label) . '</span>'
-                    . '<span class="f-tile__hint">' . $this->renderer->escape($hint) . '</span>'
+        $chevron = '<svg class="f-row__go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
+        $html = '<nav class="f-home__section f-menu" aria-labelledby="menu-title"><h2 class="f-home__h" id="menu-title">منوی اصلی</h2><div class="f-menu__groups">';
+        $index = 0;
+        foreach ($groups as $group => $rows) {
+            $index++;
+            $html .= '<section class="f-menu__group" aria-labelledby="menu-group-' . $index . '"><h3 class="f-menu__group-title" id="menu-group-' . $index . '">' . $this->renderer->escape($group) . '</h3><div class="f-list">';
+            foreach ($rows as [$href, $label, $hint, $hue, $icon]) {
+                $html .= '<a class="f-row" href="' . $this->renderer->escape($href) . '" data-hue="' . $hue . '">'
+                    . '<span class="f-row__icon" aria-hidden="true"><svg viewBox="0 0 24 24">' . $icon . '</svg></span>'
+                    . '<span class="f-row__text"><span class="f-row__label">' . $this->renderer->escape($label) . '</span>'
+                    . '<span class="f-row__hint">' . $this->renderer->escape($hint) . '</span></span>'
+                    . $chevron
                     . '</a>';
             }
             $html .= '</div></section>';
         }
+        $html .= '</div>';
 
         return $html . '</nav>';
     }
