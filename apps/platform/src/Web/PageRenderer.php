@@ -138,22 +138,12 @@ final class PageRenderer
                 . '</a>';
         }
 
-        // The workspace is where the student is working, and choosing another
-        // one is the only thing to do with it -- so it is the switch.
-        $workspace = $viewer->workspaceName === null
-            ? ''
-            : '<a class="f-header__workspace" href="/app?switch=1" title="عوض کردن فضای آموزشی">'
-                . '<span>' . $this->escape($viewer->workspaceName) . '</span>'
-                . '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>'
-                . '</a>';
-
         $name = trim($viewer->displayName);
         $initial = preg_match('/^./us', $name, $first) === 1 ? $first[0] : '؟';
         $current = $activeNav === 'account' ? ' aria-current="page"' : '';
 
         return '<header class="f-header"><div class="f-header__inner">'
             . '<a class="f-brand" href="/app">' . PublicChrome::LANTERN . '<span class="f-brand__name">فانوس</span></a>'
-            . $workspace
             . '<nav class="f-nav" aria-label="بخش‌های اصلی">' . $items . '</nav>'
             . '<button class="f-theme" id="f-theme" type="button" aria-label="تیره یا روشن" title="تیره یا روشن">'
             . '<svg class="f-theme__moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>'

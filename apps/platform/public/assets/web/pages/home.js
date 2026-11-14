@@ -35,7 +35,8 @@ async function loadToday() {
     }
 }
 
-const TILE_LIMIT = 10;
+// The busiest courses; the exams page lists them all.
+const COURSE_LIMIT = 6;
 
 function text(tag, className, value) {
     const node = document.createElement(tag);
@@ -48,7 +49,7 @@ function chevron() {
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('viewBox', '0 0 24 24');
     svg.setAttribute('aria-hidden', 'true');
-    svg.classList.add('f-course-row__go');
+    svg.classList.add('f-row__go');
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('d', 'M15 5l-7 7 7 7');
     svg.append(path);
@@ -59,39 +60,34 @@ function faDigits(value) {
     return String(value).replace(/[0-9]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)]);
 }
 
-
 async function loadCourses() {
     try {
         const payload = await api.get(`/workspaces/${encodeURIComponent(workspaceId)}/assessment-courses`);
         const entries = (Array.isArray(payload) ? payload : [])
             .filter((entry) => entry.course_id && Number(entry.exam_count) > 0)
             .sort((a, b) => Number(b.exam_count) - Number(a.exam_count))
-            .slice(0, TILE_LIMIT);
+            .slice(0, COURSE_LIMIT);
         if (entries.length === 0) {
-            courses.replaceChildren(text('p', 'f-muted', 'هنوز آزمونی در این فضا منتشر نشده. به محض انتشار، درس‌ها همین‌جا ظاهر می‌شوند.'));
+            courses.replaceChildren(text('p', 'f-list__note', 'هنوز آزمونی در این فضا منتشر نشده. به محض انتشار، درس‌ها همین‌جا ظاهر می‌شوند.'));
             return;
         }
         courses.replaceChildren(...entries.map((entry) => {
             const row = document.createElement('a');
-            row.className = 'f-course-row';
+            row.className = 'f-row';
+            row.dataset.hue = 'subject';
             row.href = `/app/exams#course=${encodeURIComponent(entry.course_id)}`;
             const title = String(entry.course_title || 'بدون عنوان');
             row.append(
-                text('span', 'f-course-row__mark', title.trim().charAt(0)),
-                text('span', 'f-course-row__title', title),
-                text('span', 'f-course-row__count', `${faDigits(entry.exam_count)} آزمون`),
+                text('span', 'f-row__icon f-row__mark', title.trim().charAt(0)),
+                text('span', 'f-row__text f-row__label', title),
+                text('span', 'f-row__meta', `${faDigits(entry.exam_count)} آزمون`),
                 chevron(),
             );
             return row;
         }));
     } catch (error) {
-        courses.replaceChildren(text('p', 'f-muted', `درس‌ها خوانده نشد: ${describeError(error)}`));
+        courses.replaceChildren(text('p', 'f-list__note', `درس‌ها خوانده نشد: ${describeError(error)}`));
     } finally {
         courses.setAttribute('aria-busy', 'false');
     }
 }
-
-
-
-
-
